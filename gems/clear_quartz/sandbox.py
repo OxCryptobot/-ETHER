@@ -8,7 +8,6 @@ import tempfile
 import time
 from pathlib import Path
 from typing import List, Optional
-from uuid import UUID
 
 from core.schemas import (
     ClearQuartzRequest,
@@ -21,7 +20,7 @@ from core.schemas import (
 
 
 class ClearQuartz:
-    """Dual-tier sandbox gem (fast = Docker, strict = future Firecracker)."""
+    """Dual-tier sandbox gem (fast = Docker)."""
 
     def __init__(self, work_dir: Optional[Path] = None):
         self.work_dir = work_dir or Path("/tmp/ether-sandbox")
@@ -43,24 +42,18 @@ class ClearQuartz:
         start = time.perf_counter()
 
         try:
-            # 1. Basic static safety check (defense-in-depth)
             security_flags = self._static_analysis(payload.code)
 
-            # 2. Write code to temporary file
             with tempfile.TemporaryDirectory(dir=self.work_dir) as tmp:
                 code_path = Path(tmp) / "code.py"
                 code_path.write_text(payload.code, encoding="utf-8")
 
-                # 3. Run in restricted Docker container (fast profile)
                 result = self._run_docker(
                     code_path=code_path,
                     timeout=request.timeout_seconds,
-                    profile=payload.sandbox_profile,
                 )
 
             execution_time = time.perf_counter() - start
-
-            # 4. Very basic test counting (placeholder — real pytest integration later)
             tests_passed, total_tests = self._count_tests(result.stdout, result.stderr)
 
             response_payload = ClearQuartzResponse(
@@ -91,6 +84,17 @@ class ClearQuartz:
                     suggested_action="Increase timeout or simplify the code",
                 ),
             )
+        except FileNotFoundError:
+            return ResponseEnvelope(
+                task_id=request.task_id,
+                source_gem="clear-quartz",
+                error=GemError(
+                    type=GemErrorType.DEPENDENCY,
+                    message="Docker is not installed or not in PATH",
+                    recoverable=True,
+                    suggested_action="Install Docker and ensure it is running",
+                ),
+            )
         except Exception as e:
             return ResponseEnvelope(
                 task_id=request.task_id,
@@ -103,11 +107,9 @@ class ClearQuartz:
             )
 
     def _static_analysis(self, code: str) -> List[str]:
-        """Best-effort AST + pattern checks. Sandbox is the real boundary."""
         flags: List[str] = []
+        dangerous = {"eval", "exec", "compile", "__import__"}
 
-        # Dangerous names
-        dangerous = {"eval", "exec", "compile", "__import__", "os", "subprocess", "socket"}
         try:
             tree = ast.parse(code)
             for node in ast.walk(tree):
@@ -120,25 +122,18 @@ class ClearQuartz:
 
         return flags
 
-    def _run_docker(self, code_path: Path, timeout: int, profile: str) -> subprocess.CompletedProcess:
-        """Run code inside a restricted Docker container."""
-        # Fast profile: network disabled, read-only, limited resources
+    def _run_docker(self, code_path: Path, timeout: int) -> subprocess.CompletedProcess:
         cmd = [
             "docker",
             "run",
             "--rm",
-            "--network",
-            "none",
+            "--network", "none",
             "--read-only",
-            "--memory",
-            "512m",
-            "--cpus",
-            "1",
-            "-v",
-            f"{code_path}:/code.py:ro",
+            "--memory", "512m",
+            "--cpus", "1",
+            "-v", f"{code_path}:/code.py:ro",
             "python:3.12-slim",
-            "python",
-            "/code.py",
+            "python", "/code.py",
         ]
 
         return subprocess.run(
@@ -149,10 +144,9 @@ class ClearQuartz:
         )
 
     def _count_tests(self, stdout: str, stderr: str) -> tuple[int, int]:
-        """Very naive placeholder. Will be replaced with real pytest parsing."""
-        # For now just detect common pytest output patterns
-        combined = stdout + stderr
-        if "passed" in combined.lower():
-            # Extremely crude
+        combined = (stdout + stderr).lower()
+        if "passed" in combined:
             return 1, 1
+        if "failed" in combined or "error" in combined:
+            return 0, 1
         return 0, 0

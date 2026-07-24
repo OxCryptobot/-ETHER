@@ -1,0 +1,49 @@
+# config/manifest.yaml
+# Immutable bootstrap configuration for @ETHER
+
+grandidierite:
+  allowed_imports:
+    - requests
+    - json
+    - pathlib
+    - datetime
+    - re
+    - collections
+    - typing
+    - dataclasses
+  forbidden_imports:
+    - os
+    - subprocess
+    - socket
+    - ctypes
+    - sys
+    - importlib
+    - builtins
+  forbidden_patterns:
+    - "eval\\("
+    - "exec\\("
+    - "__import__"
+    - "compile\\("
+    - "getattr\\(__builtins__"
+  max_recursion_depth: 3
+  sandbox_required: true
+  approval_required: true
+  tool_ttl_seconds: 604800        # 7 days in quarantine
+  max_tools_per_session: 5
+
+sandbox:
+  default_profile: fast
+  memory_limit_mb: 2048
+  cpu_limit: 2
+  network: disabled
+  read_only: true
+
+orchestrator:
+  max_retries: 3
+  max_loops: 5
+  default_timeout_seconds: 60
+
+models:
+  primary: "qwen3-coder-next:32b-q4_k_m"
+  router: "phi3:mini"
+  embed: "nomic-embed-text"

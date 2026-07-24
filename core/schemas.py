@@ -34,7 +34,7 @@ class ChatMessage(BaseModel):
 # ---------- Clear Quartz ----------
 class ClearQuartzRequest(BaseModel):
     code: str
-    language: Literal["python", "javascript", "rust", "go"]
+    language: Literal["python", "javascript", "rust", "go"] = "python"
     test_cases: List[str] = Field(default_factory=list)
     sandbox_profile: Literal["fast", "strict"] = "fast"
 
@@ -42,7 +42,7 @@ class ClearQuartzRequest(BaseModel):
 class ClearQuartzResponse(BaseModel):
     stdout: str = ""
     stderr: str = ""
-    exit_code: int
+    exit_code: int = 0
     total_tests: int = 0
     tests_passed: int = 0
     security_flags: List[str] = Field(default_factory=list)
@@ -72,9 +72,136 @@ class RoseQuartzResponse(BaseModel):
     confidence_score: float = 0.0
 
 
-# ---------- Union types ----------
-GemRequestPayload = Union[ClearQuartzRequest, RoseQuartzRequest]
-GemResponsePayload = Union[ClearQuartzResponse, RoseQuartzResponse]
+# ---------- Citrine ----------
+class CitrineRequest(BaseModel):
+    action: Literal["search", "add", "delete"] = "search"
+    query: Optional[str] = None
+    collection: str = "code"
+    top_k: int = 5
+    documents: Optional[List[Dict[str, Any]]] = None
+    filters: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RetrievalResult(BaseModel):
+    id: str
+    text: str
+    score: float
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CitrineResponse(BaseModel):
+    results: List[RetrievalResult] = Field(default_factory=list)
+    collection: str = "code"
+    action: str = "search"
+
+
+# ---------- Selenite ----------
+class PlanStep(BaseModel):
+    id: int
+    action: str
+    target: str
+    deps: List[int] = Field(default_factory=list)
+    description: str = ""
+
+
+class ExecutionPlan(BaseModel):
+    steps: List[PlanStep] = Field(default_factory=list)
+    reasoning: str = ""
+
+
+class SeleniteRequest(BaseModel):
+    user_query: str
+    available_tools: List[str] = Field(default_factory=list)
+    context: List[Dict[str, Any]] = Field(default_factory=list)
+    max_plan_depth: int = 5
+
+
+class SeleniteResponse(BaseModel):
+    plan: ExecutionPlan
+    needs_tool: bool = False
+    tool_request: Optional[Dict[str, Any]] = None
+    confidence_score: float = 0.7
+
+
+# ---------- Amethyst ----------
+class AmethystRequest(BaseModel):
+    action: Literal["log", "analyze", "recommend"] = "log"
+    interaction: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AmethystResponse(BaseModel):
+    status: str
+    recommendation: Optional[str] = None
+
+
+# ---------- Black Tourmaline ----------
+class BlackTourmalineRequest(BaseModel):
+    artifact: str
+    artifact_type: Literal["code", "tool", "config", "plan"] = "code"
+    policy_profile: Literal["strict", "standard"] = "standard"
+
+
+class PolicyViolation(BaseModel):
+    rule: str
+    severity: str
+    message: str
+
+
+class BlackTourmalineResponse(BaseModel):
+    approved: bool
+    violations: List[PolicyViolation] = Field(default_factory=list)
+    risk_score: float = 0.0
+
+
+# ---------- Labradorite ----------
+class LabradoriteRequest(BaseModel):
+    code: str
+    language: str = "python"
+    baseline: Optional[str] = None
+
+
+class LabradoriteResponse(BaseModel):
+    complexity_score: float = 0.5
+    critique: str = ""
+    suggested_improvements: List[str] = Field(default_factory=list)
+    confidence_score: float = 0.6
+
+
+# ---------- Grandidierite ----------
+class GrandidieriteRequest(BaseModel):
+    tool_request: Dict[str, Any] = Field(default_factory=dict)
+    template_id: str = "basic_python_tool"
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+class GrandidieriteResponse(BaseModel):
+    generated_code: str = ""
+    template_used: str = ""
+    validation_status: Literal["pending", "passed", "failed"] = "pending"
+
+
+# ---------- Unions ----------
+GemRequestPayload = Union[
+    ClearQuartzRequest,
+    RoseQuartzRequest,
+    CitrineRequest,
+    SeleniteRequest,
+    AmethystRequest,
+    BlackTourmalineRequest,
+    LabradoriteRequest,
+    GrandidieriteRequest,
+]
+
+GemResponsePayload = Union[
+    ClearQuartzResponse,
+    RoseQuartzResponse,
+    CitrineResponse,
+    SeleniteResponse,
+    AmethystResponse,
+    BlackTourmalineResponse,
+    LabradoriteResponse,
+    GrandidieriteResponse,
+]
 
 
 class Envelope(BaseModel):
@@ -90,7 +217,7 @@ class Envelope(BaseModel):
         "grandidierite",
     ]
     payload: GemRequestPayload
-    timeout_seconds: int = 60  # single source of truth
+    timeout_seconds: int = 60
 
 
 class ResponseEnvelope(BaseModel):

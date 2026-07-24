@@ -2,29 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-from pydantic import BaseModel, Field
-
-from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
-
-
-class GrandidieriteRequest(BaseModel):
-    tool_request: Dict[str, Any] = Field(default_factory=dict)
-    template_id: str = "basic_python_tool"
-    context: Dict[str, Any] = Field(default_factory=dict)
-
-
-class GrandidieriteResponse(BaseModel):
-    generated_code: str = ""
-    template_used: str = ""
-    validation_status: str = "pending"  # pending | passed | failed
+from core.schemas import (
+    Envelope,
+    ResponseEnvelope,
+    GemError,
+    GemErrorType,
+    GrandidieriteRequest,
+    GrandidieriteResponse,
+)
 
 
 class Grandidierite:
-    """Template-based tool generation with strict guardrails.
-
-    Real generation + AST + sandbox validation will be expanded later.
-    """
+    """Template-based tool generation with guardrails."""
 
     TEMPLATES = {
         "basic_python_tool": '''def {name}({args}):
@@ -36,9 +25,13 @@ class Grandidierite:
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
-            data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
-            tool_req = data.get("tool_request", {})
-            template_id = data.get("template_id", "basic_python_tool")
+            if isinstance(request.payload, GrandidieriteRequest):
+                tool_req = request.payload.tool_request
+                template_id = request.payload.template_id
+            else:
+                data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
+                tool_req = data.get("tool_request", {})
+                template_id = data.get("template_id", "basic_python_tool")
 
             name = tool_req.get("name", "new_tool")
             args = tool_req.get("args", "")
@@ -56,7 +49,7 @@ class Grandidierite:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="grandidierite",
-                payload=payload,  # type: ignore
+                payload=payload,
             )
         except Exception as e:
             return ResponseEnvelope(

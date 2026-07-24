@@ -5,26 +5,20 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
-from uuid import UUID
+from typing import Any, Dict
 
-from pydantic import BaseModel, Field
-
-from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
-
-
-class AmethystRequest(BaseModel):
-    action: str = "log"  # log | analyze | recommend
-    interaction: Dict[str, Any] = Field(default_factory=dict)
-
-
-class AmethystResponse(BaseModel):
-    status: str
-    recommendation: Optional[str] = None
+from core.schemas import (
+    Envelope,
+    ResponseEnvelope,
+    GemError,
+    GemErrorType,
+    AmethystRequest,
+    AmethystResponse,
+)
 
 
 class Amethyst:
-    """Phase 1: interaction logging only. LoRA comes later."""
+    """Phase 1: interaction logging only."""
 
     def __init__(self, log_dir: Path | None = None):
         self.log_dir = log_dir or Path("memory/interactions")
@@ -32,11 +26,16 @@ class Amethyst:
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
-            data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
-            action = data.get("action", "log")
+            if isinstance(request.payload, AmethystRequest):
+                action = request.payload.action
+                interaction = request.payload.interaction
+            else:
+                data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
+                action = data.get("action", "log")
+                interaction = data.get("interaction", {})
 
             if action == "log":
-                self._log(data.get("interaction", {}))
+                self._log(interaction)
                 payload = AmethystResponse(status="logged")
             else:
                 payload = AmethystResponse(status="not_implemented_yet")
@@ -44,7 +43,7 @@ class Amethyst:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="amethyst",
-                payload=payload,  # type: ignore
+                payload=payload,
             )
         except Exception as e:
             return ResponseEnvelope(

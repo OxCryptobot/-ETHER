@@ -5,27 +5,16 @@ from __future__ import annotations
 import ast
 import re
 from typing import List
-from pydantic import BaseModel, Field
 
-from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
-
-
-class BlackTourmalineRequest(BaseModel):
-    artifact: str
-    artifact_type: str = "code"  # code | tool | config | plan
-    policy_profile: str = "standard"
-
-
-class PolicyViolation(BaseModel):
-    rule: str
-    severity: str
-    message: str
-
-
-class BlackTourmalineResponse(BaseModel):
-    approved: bool
-    violations: List[PolicyViolation] = Field(default_factory=list)
-    risk_score: float = 0.0
+from core.schemas import (
+    Envelope,
+    ResponseEnvelope,
+    GemError,
+    GemErrorType,
+    BlackTourmalineRequest,
+    BlackTourmalineResponse,
+    PolicyViolation,
+)
 
 
 class BlackTourmaline:
@@ -41,8 +30,11 @@ class BlackTourmaline:
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
-            data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
-            artifact = data.get("artifact", "")
+            if isinstance(request.payload, BlackTourmalineRequest):
+                artifact = request.payload.artifact
+            else:
+                data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
+                artifact = data.get("artifact", "")
 
             violations = self._scan(artifact)
             risk = min(1.0, len(violations) * 0.35)
@@ -57,7 +49,7 @@ class BlackTourmaline:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="black-tourmaline",
-                payload=payload,  # type: ignore
+                payload=payload,
             )
         except Exception as e:
             return ResponseEnvelope(
@@ -79,7 +71,6 @@ class BlackTourmaline:
                     )
                 )
 
-        # Basic AST check
         try:
             tree = ast.parse(code)
             for node in ast.walk(tree):

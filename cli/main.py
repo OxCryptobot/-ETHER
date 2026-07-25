@@ -45,7 +45,7 @@ def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.1")
     if verbose:
         console.print("Pipeline: plan → code → sandbox → audit (+ optional critique)")
-        console.print("Gems: 8  |  License: MIT")
+        console.print("Gems: 8  |  Flywheel: confidence-gated")
 
 
 @app.command()
@@ -53,18 +53,16 @@ def which() -> None:
     console.print(f"python: {sys.executable}")
     console.print(f"cwd: {Path.cwd()}")
     console.print(f"manifest: {Path('config/manifest.yaml').resolve()}")
-    console.print(f"runs: {Path('memory/runs').resolve()}")
 
 
 @app.command()
 def env() -> None:
     for k in [
         "OLLAMA_BASE_URL",
-        "QDRANT_URL",
         "ETHER_PRIMARY_MODEL",
         "ETHER_EMBED_MODEL",
         "ETHER_SANDBOX_TIMEOUT",
-        "ETHER_LLM_PLAN",
+        "ETHER_SANDBOX_RETRY",
         "ETHER_FLYWHEEL_MIN_CONFIDENCE",
         "ETHER_FLYWHEEL_MAX_RETRIES",
     ]:
@@ -83,14 +81,8 @@ def status() -> None:
     table.add_column("Gem")
     table.add_column("Registered")
     for g in [
-        "clear-quartz",
-        "rose-quartz",
-        "citrine",
-        "selenite",
-        "amethyst",
-        "black-tourmaline",
-        "labradorite",
-        "grandidierite",
+        "clear-quartz", "rose-quartz", "citrine", "selenite",
+        "amethyst", "black-tourmaline", "labradorite", "grandidierite",
     ]:
         table.add_row(g, "yes" if g in gems else "no")
     console.print(table)
@@ -171,9 +163,7 @@ def run(
     if result.generated_code:
         console.print(Syntax(_safe(result.generated_code), "python", theme="monokai", line_numbers=True))
     if result.sandbox:
-        console.print(
-            f"Sandbox exit={result.sandbox.exit_code} time={result.sandbox.execution_time}s"
-        )
+        console.print(f"Sandbox exit={result.sandbox.exit_code} time={result.sandbox.execution_time}s")
         if result.sandbox.stdout:
             console.print(f"  stdout: {_safe(result.sandbox.stdout.strip())[:500]}")
         if result.sandbox.stderr:
@@ -183,34 +173,31 @@ def run(
     if result.critique:
         console.print(f"Critique: {_safe(result.critique.critique)}")
     for st in result.stages:
-        console.print(
-            f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}"
-        )
+        console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}")
     console.print(f"Confidence: {result.confidence:.3f}")
 
 
 @app.command()
 def flywheel(
-    push: bool = typer.Option(False, "--push", help="Push ONLY if confidence+audit gates pass"),
+    push: bool = typer.Option(False, "--push", help="Push ONLY if gates pass"),
+    status: bool = typer.Option(False, "--status", help="Show last flywheel report"),
     min_confidence: float = typer.Option(0.7, "--min-confidence"),
     max_retries: int = typer.Option(3, "--max-retries"),
     no_doctor: bool = typer.Option(False, "--no-doctor"),
 ) -> None:
-    """Agentic pull → test → pipeline gate → optional push."""
+    """Agentic pull → test → pipeline confidence gate → optional push."""
     from scripts.flywheel import main as flywheel_main
 
-    argv = [
-        "--min-confidence",
-        str(min_confidence),
-        "--max-retries",
-        str(max_retries),
-    ]
-    if push:
-        argv.append("--push")
-    if no_doctor:
-        argv.append("--no-doctor")
-    code = flywheel_main(argv)
-    raise typer.Exit(code)
+    argv: list[str] = []
+    if status:
+        argv.append("--status")
+    else:
+        argv.extend(["--min-confidence", str(min_confidence), "--max-retries", str(max_retries)])
+        if push:
+            argv.append("--push")
+        if no_doctor:
+            argv.append("--no-doctor")
+    raise typer.Exit(flywheel_main(argv))
 
 
 @app.command()
@@ -234,20 +221,11 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
     files = [path] if path.is_file() else list(path.rglob("*.py"))
     for f in files:
         try:
-            docs.append(
-                {
-                    "text": f.read_text(encoding="utf-8", errors="ignore"),
-                    "metadata": {"path": as_posix_str(f)},
-                }
-            )
+            docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}})
         except Exception:
             pass
     res = build_default_registry().execute(
-        Envelope(
-            task_id=uuid4(),
-            target_gem="citrine",
-            payload=CitrineRequest(action="add", collection=collection, documents=docs),
-        )
+        Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="add", collection=collection, documents=docs))
     )
     if res.error:
         print_error(res.error.message)
@@ -258,11 +236,7 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
 @app.command()
 def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     res = build_default_registry().execute(
-        Envelope(
-            task_id=uuid4(),
-            target_gem="citrine",
-            payload=CitrineRequest(action="search", query=query, collection=collection, top_k=top_k),
-        )
+        Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="search", query=query, collection=collection, top_k=top_k))
     )
     if res.error:
         print_error(res.error.message)
@@ -282,9 +256,7 @@ def runs() -> None:
     for f in files:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
-            console.print(
-                f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {_safe(str(data.get('objective', ''))[:60])}"
-            )
+            console.print(f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {_safe(str(data.get('objective', ''))[:60])}")
         except Exception:
             console.print(f.name)
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -33,11 +34,24 @@ def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
 
 @app.command()
 def which() -> None:
-    """Show useful paths for debugging."""
     console.print(f"python: {sys.executable}")
     console.print(f"cwd: {Path.cwd()}")
     console.print(f"manifest: {Path('config/manifest.yaml').resolve()}")
     console.print(f"runs: {Path('memory/runs').resolve()}")
+
+
+@app.command()
+def env() -> None:
+    """Print effective environment configuration."""
+    keys = [
+        "OLLAMA_BASE_URL",
+        "QDRANT_URL",
+        "ETHER_PRIMARY_MODEL",
+        "ETHER_EMBED_MODEL",
+        "ETHER_SANDBOX_TIMEOUT",
+    ]
+    for k in keys:
+        console.print(f"{k}={os.getenv(k, '')}")
 
 
 @app.command()

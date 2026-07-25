@@ -48,13 +48,29 @@ class RoseQuartz:
                 source_gem="rose-quartz",
                 error=GemError(
                     type=GemErrorType.DEPENDENCY,
-                    message="Cannot connect to Ollama",
+                    message="Cannot connect to Ollama at " + self.ollama_base_url,
                     recoverable=True,
-                    suggested_action="Start Ollama: ollama serve",
+                    suggested_action="Start Ollama (`ollama serve`) and ensure OLLAMA_BASE_URL is correct",
                 ),
             )
-        except Exception as e:
+        except httpx.HTTPStatusError as e:
+            body = e.response.text[:300]
+            if e.response.status_code == 404 or "not found" in body.lower():
+                msg = f"Model '{model}' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL."
+            else:
+                msg = f"Ollama HTTP {e.response.status_code}: {body}"
             # try fallback once
+            if model != self.fallback_model:
+                try:
+                    return self._call(request.task_id, payload, self.fallback_model)
+                except Exception:
+                    pass
+            return ResponseEnvelope(
+                task_id=request.task_id,
+                source_gem="rose-quartz",
+                error=GemError(type=GemErrorType.DEPENDENCY, message=msg, recoverable=True, suggested_action=f"ollama pull {model}"),
+            )
+        except Exception as e:
             if model != self.fallback_model:
                 try:
                     return self._call(request.task_id, payload, self.fallback_model)

@@ -5,41 +5,39 @@ Local-first, self-extending, verified agentic coding system.
 ## Setup
 
 ```bash
-# 1. Python
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-
-# 2. Docker (for Clear Quartz sandbox)
-# Install Docker Desktop / engine and ensure `docker ps` works
-
-# 3. Ollama (for Rose Quartz + embeddings)
-# https://ollama.com — then:
-ollama pull nomic-embed-text
-# ollama pull <your-coder-model>
-
-# 4. Qdrant (optional, for Citrine memory)
-docker run -d -p 6333:6333 qdrant/qdrant
-
-# 5. Env
-cp .env.example .env   # edit if needed
+cp .env.example .env
 ```
+
+Requires **Docker** + **Ollama** for the full pipeline. See [docs/models.md](docs/models.md) and [docs/setup-windows.md](docs/setup-windows.md).
 
 ## Usage
 
 ```bash
-ether status
+ether doctor
 ether plan "add auth"
 ether run "write a function that reverses a string"
-ether run "..." --json
+ether run "..." --json --critique
 ether audit path/to/file.py
 ether index ./src
-ether search "authentication helper"
+ether search "authentication"
+ether runs
+ether env
+ether which
 pytest
-bash scripts/run_tests.sh
+python scripts/smoke_test.py
 ```
 
-## Architecture
+## Docs
 
-8 gems · typed Envelope protocol · state machine · Docker sandbox as security boundary.
+- [STATUS.md](STATUS.md) — live progress
+- [Architecture](docs/architecture.md)
+- [Threat model](docs/threat-model.md)
+- [Security policy](SECURITY.md)
+- [v0.2 roadmap](docs/v0.2-roadmap.md)
+- [Contributing](CONTRIBUTING.md)
 
-See [STATUS.md](STATUS.md).
+## License
+
+MIT

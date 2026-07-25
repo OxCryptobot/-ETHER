@@ -1,35 +1,25 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 11:35 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 11:40 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: **~95%**
+> **Overall**: **~96%**
 
-## Progress
+## Batches 1–12 complete
 
-| Layer | % |
-|-------|---|
-| Foundation | 100% |
-| Gems basic | 100% |
-| End-to-end | 92% |
-| Docs/DX | 95% |
-| **Overall** | **95%** |
+## Batch 12 delivered
+- Clearer Rose Quartz model-not-found / Ollama errors
+- `ether env`
+- LangGraph Selenite skeleton (`gems/selenite/langgraph_skeleton.py`)
+- README links to security/roadmap/docs
 
-## Batches 1–11 complete
-
-## Batch 11 delivered
-- Stage `duration_ms`
-- SECURITY.md
-- docs/models.md, limits.md, v0.2-roadmap.md
-- `ether which`
-
-## Next 10 (batch 12)
-1. Rose Quartz model-not-found clearer errors
-2. Selenite optional LLM plan path
-3. CLI helper module to cut duplication
-4. Integration test for plan path
-5. `SECURITY.md` link from README
-6. Add badges section placeholder in README
-7. Gem health ping command
-8. Normalize Windows path display in search
-9. Add `ether env` to print effective config
-10. Start LangGraph Selenite skeleton file
+## Next 10 (batch 13)
+1. CLI helper module (reduce duplication)
+2. Integration test for Selenite plan path
+3. Optional LLM-assisted Selenite plan flag
+4. Search path normalization on Windows
+5. Gem health ping
+6. README badge placeholders
+7. Ensure smoke test still pure-python
+8. Add `docs/faq.md`
+9. Tidy pyproject scripts entry
+10. Begin implementing LangGraph draft node for Selenite

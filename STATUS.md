@@ -1,51 +1,39 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 10:50 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 10:52 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE
 
-## Progress
+## Overall ~75%
 
-| Layer | % |
-|-------|---|
-| Foundation | 100% |
-| Gems basic | 100% |
-| Gem depth | 50% |
-| End-to-end | 75% |
-| **Overall** | **~70%** |
+## Batch 1 ✅ Complete
+## Batch 2 ✅ Complete (this commit)
 
-## Completed (batch 1)
+### Batch 2 delivered
+1. ✅ `.env.example`
+2. ✅ Grandidierite writes to `tools/quarantine/`
+3. ✅ `ether index <path>` for Citrine
+4. ✅ Mocked pipeline integration test
+5. ✅ CLI expanded
 
-1. ✅ Harden pipeline + stage tracking
-2. ✅ CLI `ether run --json`
-3. ✅ Unit tests (schemas + orchestrator)
-4. ✅ Improved Selenite heuristics
-5. ✅ Amethyst auto-logging in pipeline
-6. ✅ Better Clear Quartz test parsing
-7. ✅ `ether audit <file>`
-8. ✅ Config loader (`core/config.py`)
-9. ✅ Black Tourmaline reads manifest patterns
-10. ✅ README refresh
+## Next 10 Tasks (batch 3)
 
-## Next 10 Tasks (batch 2)
-
-1. Add pytest to CI-style local script
-2. Improve Rose Quartz model fallback + streaming option
-3. Citrine: index a local folder of code
-4. Wire Labradorite into pipeline (optional critique stage)
-5. Grandidierite: write generated tools into tools/quarantine/
-6. Add `.env.example` + settings for Ollama/Qdrant URLs
-7. Orchestrator: expose needs_tool → Grandidierite path
-8. CLI: `ether index <path>` for Citrine
-9. Fix any import/package issues for `pip install -e .`
-10. Add simple integration test for pipeline (mocked gems)
+1. Load Ollama/Qdrant URLs from env in Rose Quartz + Citrine
+2. Optional Labradorite critique stage in pipeline (`--critique`)
+3. `scripts/run_tests.sh` helper
+4. Improve Rose Quartz fallback chain
+5. Add `ether search "query"` for Citrine retrieval
+6. Persist pipeline results to `memory/runs/`
+7. Package data files correctly in pyproject.toml
+8. Add ruff config + format pass notes
+9. Document Docker + Ollama setup in README
+10. Add `needs_tool` path stub from Selenite → Grandidierite
 
 ## Commands
-
 ```bash
 ether status
-ether plan "..."
 ether run "..."
 ether run "..." --json
 ether audit file.py
+ether index ./src
 pytest
 ```

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -20,6 +19,7 @@ from core.schemas import (
     ClearQuartzRequest,
     RoseQuartzRequest,
     BlackTourmalineRequest,
+    CitrineRequest,
     ChatMessage,
 )
 
@@ -92,65 +92,84 @@ def run(
     objective: str = typer.Argument(...),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON result"),
 ) -> None:
-    """Full pipeline: plan → code → sandbox → audit."""
     result = Pipeline().run(objective)
-
     if json_out:
         console.print_json(result.model_dump_json())
         if result.status == "error":
             raise typer.Exit(1)
         return
-
     if result.status == "error":
         console.print(Panel(f"[red]{result.error}[/]", title="Pipeline Error"))
         raise typer.Exit(1)
-
     if result.plan:
         console.print("[bold]Plan[/]")
         for s in result.plan.steps:
             console.print(f"  {s.id}. [{s.action}] {s.description}")
         console.print()
-
     if result.generated_code:
         console.print("[bold]Code[/]")
         console.print(Syntax(result.generated_code, "python", theme="monokai", line_numbers=True))
         console.print()
-
     if result.sandbox:
-        console.print("[bold]Sandbox[/]")
-        console.print(f"  exit={result.sandbox.exit_code}  time={result.sandbox.execution_time}s")
-        console.print(f"  flags={result.sandbox.security_flags or 'clean'}")
-        console.print()
-
+        console.print(f"[bold]Sandbox[/] exit={result.sandbox.exit_code} time={result.sandbox.execution_time}s")
     if result.audit:
         tag = "[green]APPROVED[/]" if result.audit.approved else "[red]REJECTED[/]"
         console.print(f"[bold]Audit[/] {tag} risk={result.audit.risk_score}")
-
     color = "green" if result.confidence >= 0.7 else "yellow" if result.confidence >= 0.4 else "red"
     console.print(f"[bold]Confidence:[/] [{color}]{result.confidence:.3f}[/{color}]")
 
 
 @app.command()
-def audit(
-    path: Path = typer.Argument(..., exists=True, readable=True),
-) -> None:
-    """Run Black Tourmaline security audit on a file."""
+def audit(path: Path = typer.Argument(..., exists=True, readable=True)) -> None:
     code = path.read_text(encoding="utf-8")
     registry = build_default_registry()
     req = Envelope(
         task_id=uuid4(),
         target_gem="black-tourmaline",
-        payload=BlackTourmalineRequest(artifact=code, artifact_type="code"),
+        payload=BlackTourmalineRequest(artifact=code),
     )
     res = registry.execute(req)
     if res.error:
         console.print(f"[red]{res.error.message}[/]")
         raise typer.Exit(1)
-    payload = res.payload
-    tag = "[green]APPROVED[/]" if payload.approved else "[red]REJECTED[/]"
-    console.print(f"{tag}  risk={payload.risk_score}")
-    for v in payload.violations:
+    p = res.payload
+    tag = "[green]APPROVED[/]" if p.approved else "[red]REJECTED[/]"
+    console.print(f"{tag}  risk={p.risk_score}")
+    for v in p.violations:
         console.print(f"  [{v.severity}] {v.rule}: {v.message}")
+
+
+@app.command()
+def index(
+    path: Path = typer.Argument(..., exists=True),
+    collection: str = typer.Option("code", help="Qdrant collection name"),
+) -> None:
+    """Index a file or directory of code into Citrine."""
+    registry = build_default_registry()
+    docs = []
+    if path.is_file():
+        docs.append({"text": path.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": str(path)}})
+    else:
+        for f in path.rglob("*.py"):
+            try:
+                docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": str(f)}})
+            except Exception:
+                continue
+
+    if not docs:
+        console.print("[yellow]No files found to index.[/]")
+        return
+
+    req = Envelope(
+        task_id=uuid4(),
+        target_gem="citrine",
+        payload=CitrineRequest(action="add", collection=collection, documents=docs),
+    )
+    res = registry.execute(req)
+    if res.error:
+        console.print(f"[red]{res.error.message}[/]")
+        raise typer.Exit(1)
+    console.print(f"[green]Indexed {len(docs)} documents into collection '{collection}'[/]")
 
 
 if __name__ == "__main__":

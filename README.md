@@ -1,44 +1,45 @@
 # @ETHER
 
-**Local-first, self-extending, verified agentic coding system**
+Local-first, self-extending, verified agentic coding system.
 
-## Quick Start
+## Setup
 
 ```bash
-git clone https://github.com/OxCryptobot/-ETHER.git
-cd -ETHER
+# 1. Python
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-ether status
-ether plan "add user authentication"
-ether run "write a function that reverses a string"
-ether run "write a fibonacci function" --json
-ether audit path/to/file.py
-pytest
+# 2. Docker (for Clear Quartz sandbox)
+# Install Docker Desktop / engine and ensure `docker ps` works
+
+# 3. Ollama (for Rose Quartz + embeddings)
+# https://ollama.com — then:
+ollama pull nomic-embed-text
+# ollama pull <your-coder-model>
+
+# 4. Qdrant (optional, for Citrine memory)
+docker run -d -p 6333:6333 qdrant/qdrant
+
+# 5. Env
+cp .env.example .env   # edit if needed
 ```
 
-**Requires**: Python 3.11+, Docker, Ollama (for local LLM + embeddings)
+## Usage
+
+```bash
+ether status
+ether plan "add auth"
+ether run "write a function that reverses a string"
+ether run "..." --json
+ether audit path/to/file.py
+ether index ./src
+ether search "authentication helper"
+pytest
+bash scripts/run_tests.sh
+```
 
 ## Architecture
 
-8 gems · typed Envelope protocol · exhaustive state machine · Docker sandbox as security boundary
+8 gems · typed Envelope protocol · state machine · Docker sandbox as security boundary.
 
-| Gem | Role |
-|-----|------|
-| Clear Quartz | Sandbox execution |
-| Rose Quartz | Local LLM routing |
-| Citrine | Memory (Qdrant + embeddings) |
-| Selenite | Planner |
-| Amethyst | Interaction logging |
-| Black Tourmaline | Security audit |
-| Labradorite | Critique |
-| Grandidierite | Controlled tool generation |
-
-## Status
-
-See [STATUS.md](STATUS.md) for live progress.
-
-## License
-
-MIT
+See [STATUS.md](STATUS.md).

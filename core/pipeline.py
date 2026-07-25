@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List
@@ -23,6 +24,7 @@ from core.schemas import (
     LabradoriteRequest,
     LabradoriteResponse,
     AmethystRequest,
+    GrandidieriteRequest,
     ChatMessage,
     ExecutionPlan,
 )
@@ -37,6 +39,7 @@ class StageResult(BaseModel):
     stage: str
     success: bool
     detail: str = ""
+    duration_ms: float = 0.0
 
 
 class PipelineResult(BaseModel):
@@ -69,70 +72,60 @@ class Pipeline:
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "60"))
 
         try:
+            t0 = time.perf_counter()
             plan_req = Envelope(task_id=task_id, target_gem="selenite", payload=SeleniteRequest(user_query=objective))
             plan_res = self.registry.execute(plan_req)
             self.orchestrator.process_response(plan_req, plan_res)
             if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
-                return self._fail(result, "plan", plan_res.error.message if plan_res.error else "plan failed")
+                return self._fail(result, "plan", plan_res.error.message if plan_res.error else "plan failed", t0)
             result.plan = plan_res.payload.plan
-            result.stages.append(StageResult(stage="plan", success=True, detail=f"{len(result.plan.steps)} steps"))
+            result.stages.append(StageResult(stage="plan", success=True, detail=f"{len(result.plan.steps)} steps", duration_ms=(time.perf_counter()-t0)*1000))
 
-            # needs_tool path (stub): if planner requests a tool, try Grandidierite
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
-                from core.schemas import GrandidieriteRequest
-                g_req = Envelope(
-                    task_id=task_id,
-                    target_gem="grandidierite",
-                    payload=GrandidieriteRequest(tool_request=plan_res.payload.tool_request),
-                )
+                t1 = time.perf_counter()
+                g_req = Envelope(task_id=task_id, target_gem="grandidierite", payload=GrandidieriteRequest(tool_request=plan_res.payload.tool_request))
                 g_res = self.registry.execute(g_req)
-                result.stages.append(StageResult(stage="extend", success=not bool(g_res.error), detail="grandidierite"))
+                result.stages.append(StageResult(stage="extend", success=not bool(g_res.error), detail="grandidierite", duration_ms=(time.perf_counter()-t1)*1000))
 
+            t2 = time.perf_counter()
             prompt = f"Write Python code for:\n{objective}\n\nPlan:\n{result.plan.model_dump_json(indent=2)}\n\nReturn only code, no markdown."
-            code_req = Envelope(
-                task_id=task_id,
-                target_gem="rose-quartz",
-                payload=RoseQuartzRequest(messages=[ChatMessage(role="user", content=prompt)], prefer_local=prefer_local),
-            )
+            code_req = Envelope(task_id=task_id, target_gem="rose-quartz", payload=RoseQuartzRequest(messages=[ChatMessage(role="user", content=prompt)], prefer_local=prefer_local))
             code_res = self.registry.execute(code_req)
             self.orchestrator.process_response(code_req, code_res)
             if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
-                return self._fail(result, "code", code_res.error.message if code_res.error else "code failed")
-
+                return self._fail(result, "code", code_res.error.message if code_res.error else "code failed", t2)
             generated = self._strip(code_res.payload.content)
             if len(generated) > MAX_CODE_CHARS:
-                return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars")
+                return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars", t2)
             result.generated_code = generated
-            result.stages.append(StageResult(stage="code", success=True, detail=f"{len(generated)} chars"))
+            result.stages.append(StageResult(stage="code", success=True, detail=f"{len(generated)} chars", duration_ms=(time.perf_counter()-t2)*1000))
 
-            sand_req = Envelope(
-                task_id=task_id,
-                target_gem="clear-quartz",
-                payload=ClearQuartzRequest(code=generated),
-                timeout_seconds=timeout,
-            )
+            t3 = time.perf_counter()
+            sand_req = Envelope(task_id=task_id, target_gem="clear-quartz", payload=ClearQuartzRequest(code=generated), timeout_seconds=timeout)
             sand_res = self.registry.execute(sand_req)
             self.orchestrator.process_response(sand_req, sand_res)
             if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
-                return self._fail(result, "sandbox", sand_res.error.message if sand_res.error else "sandbox failed")
+                return self._fail(result, "sandbox", sand_res.error.message if sand_res.error else "sandbox failed", t3)
             result.sandbox = sand_res.payload
             result.confidence = compute_clear_quartz_confidence(sand_res.payload)
-            result.stages.append(StageResult(stage="sandbox", success=sand_res.payload.exit_code == 0, detail=f"exit={sand_res.payload.exit_code}"))
+            result.stages.append(StageResult(stage="sandbox", success=sand_res.payload.exit_code == 0, detail=f"exit={sand_res.payload.exit_code}", duration_ms=(time.perf_counter()-t3)*1000))
 
+            t4 = time.perf_counter()
             audit_req = Envelope(task_id=task_id, target_gem="black-tourmaline", payload=BlackTourmalineRequest(artifact=generated))
             audit_res = self.registry.execute(audit_req)
             if not audit_res.error and isinstance(audit_res.payload, BlackTourmalineResponse):
                 result.audit = audit_res.payload
                 if not audit_res.payload.approved:
                     result.confidence = min(result.confidence, 0.3)
-                result.stages.append(StageResult(stage="audit", success=audit_res.payload.approved, detail=f"risk={audit_res.payload.risk_score}"))
+                result.stages.append(StageResult(stage="audit", success=audit_res.payload.approved, detail=f"risk={audit_res.payload.risk_score}", duration_ms=(time.perf_counter()-t4)*1000))
 
             if critique:
+                t5 = time.perf_counter()
                 crit_req = Envelope(task_id=task_id, target_gem="labradorite", payload=LabradoriteRequest(code=generated))
                 crit_res = self.registry.execute(crit_req)
                 if not crit_res.error and isinstance(crit_res.payload, LabradoriteResponse):
                     result.critique = crit_res.payload
-                    result.stages.append(StageResult(stage="critique", success=True, detail=crit_res.payload.critique[:80]))
+                    result.stages.append(StageResult(stage="critique", success=True, detail=crit_res.payload.critique[:80], duration_ms=(time.perf_counter()-t5)*1000))
 
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()
@@ -140,12 +133,12 @@ class Pipeline:
             self._log(result)
             return result
         except Exception as e:
-            return self._fail(result, "exception", str(e))
+            return self._fail(result, "exception", str(e), time.perf_counter())
 
-    def _fail(self, result: PipelineResult, stage: str, msg: str) -> PipelineResult:
+    def _fail(self, result: PipelineResult, stage: str, msg: str, t0: float) -> PipelineResult:
         result.status = "error"
         result.error = msg
-        result.stages.append(StageResult(stage=stage, success=False, detail=msg))
+        result.stages.append(StageResult(stage=stage, success=False, detail=msg, duration_ms=max(0.0, (time.perf_counter()-t0)*1000)))
         result.finished_at = datetime.now(timezone.utc).isoformat()
         self._persist(result)
         self._log(result)
@@ -168,21 +161,6 @@ class Pipeline:
 
     def _log(self, result: PipelineResult) -> None:
         try:
-            self.registry.execute(
-                Envelope(
-                    task_id=result.task_id,
-                    target_gem="amethyst",
-                    payload=AmethystRequest(
-                        action="log",
-                        interaction={
-                            "task_id": str(result.task_id),
-                            "objective": result.objective,
-                            "status": result.status,
-                            "confidence": result.confidence,
-                            "error": result.error,
-                        },
-                    ),
-                )
-            )
+            self.registry.execute(Envelope(task_id=result.task_id, target_gem="amethyst", payload=AmethystRequest(action="log", interaction={"task_id": str(result.task_id), "objective": result.objective, "status": result.status, "confidence": result.confidence, "error": result.error})))
         except Exception:
             pass

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 from pathlib import Path
 from uuid import uuid4
 
@@ -28,6 +29,15 @@ def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     if verbose:
         console.print("Pipeline: plan → code → sandbox → audit (+ optional critique)")
         console.print("Gems: 8  |  License: MIT")
+
+
+@app.command()
+def which() -> None:
+    """Show useful paths for debugging."""
+    console.print(f"python: {sys.executable}")
+    console.print(f"cwd: {Path.cwd()}")
+    console.print(f"manifest: {Path('config/manifest.yaml').resolve()}")
+    console.print(f"runs: {Path('memory/runs').resolve()}")
 
 
 @app.command()
@@ -60,11 +70,9 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         build_default_registry()
     except Exception:
         checks["registry"] = False
-
     if json_out:
         console.print_json(json.dumps(checks))
         raise typer.Exit(0 if all(checks.values()) else 1)
-
     for name, ok in checks.items():
         console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
 
@@ -88,8 +96,7 @@ def plan(prompt: str) -> None:
 @app.command()
 def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique: bool = typer.Option(False, "--critique")) -> None:
     if not objective.strip():
-        console.print("[red]Objective cannot be empty.[/]")
-        raise typer.Exit(1)
+        console.print("[red]Objective cannot be empty.[/]"); raise typer.Exit(1)
     result = Pipeline().run(objective, critique=critique)
     if json_out:
         console.print_json(result.model_dump_json()); raise typer.Exit(0 if result.status == "complete" else 1)
@@ -107,7 +114,7 @@ def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique
     if result.critique:
         console.print(f"Critique: {result.critique.critique}")
     for st in result.stages:
-        console.print(f"  stage:{st.stage:10} ok={st.success} {st.detail}")
+        console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {st.detail}")
     console.print(f"Confidence: {result.confidence:.3f}")
 
 
@@ -144,8 +151,7 @@ def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     if res.error:
         console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
     for r in res.payload.results:  # type: ignore
-        path = r.metadata.get("path", r.id)
-        console.print(f"[{r.score:.3f}] {path}\n  {r.text[:200]}\n")
+        console.print(f"[{r.score:.3f}] {r.metadata.get('path', r.id)}\n  {r.text[:200]}\n")
 
 
 @app.command()

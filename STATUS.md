@@ -1,31 +1,16 @@
 # @ETHER Live Status
 
-> **Autonomous mode available** — no manual PowerShell after start
+> **Still working** — autonomy on local + v0.2 features landing
 
-## Hands-off start (once)
+## Live
+- Autonomous flywheel: PASS/FAIL reports push to git
+- Model: `qwen2.5-coder:3b` on Nitro 5
 
-```powershell
-cd C:\Users\Otcde\ETHER
-git pull origin main
-copy .env.example .env   # only if .env missing
-powershell -ExecutionPolicy Bypass -File .\scripts\autonomy.ps1
-```
+## Just shipped
+- Smart Python **chunking** (`core/chunking.py`) for Citrine
+- **Multi-file context** injection in pipeline (`core/context.py`, `ETHER_USE_CONTEXT=1`)
 
-Or:
-
-```powershell
-ether flywheel --autonomous
-```
-
-## Behavior
-- Loads `.env` automatically (model, thresholds, interval)
-- Loop: pull → smoke → pytest → agentic pipeline → **push only if gates pass**
-- Gates: sandbox exit 0 + audit approved + confidence ≥ 0.7
-- Retries failed agentic runs until max retries
-- Heartbeat: `memory/flywheel/heartbeat.txt`
-- Last report: `memory/flywheel/latest.json`
-
-## Check without touching the loop
-```powershell
-ether flywheel --status
-```
+## Next
+- Benchmark harness
+- Streaming tokens
+- Promote approval UX

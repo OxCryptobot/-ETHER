@@ -1,4 +1,4 @@
-"""Citrine — Qdrant + Ollama embeddings."""
+"""Citrine — Qdrant + Ollama embeddings with smart chunking."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import httpx
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
+from core.chunking import chunk_python_source
 from core.schemas import (
     Envelope,
     ResponseEnvelope,
@@ -54,7 +55,7 @@ class Citrine:
         try:
             resp = self.http.post(
                 f"{self.ollama_url}/api/embeddings",
-                json={"model": self.embed_model, "prompt": text},
+                json={"model": self.embed_model, "prompt": text[:8000]},
             )
             resp.raise_for_status()
             return resp.json()["embedding"]
@@ -78,7 +79,11 @@ class Citrine:
                 return ResponseEnvelope(
                     task_id=request.task_id,
                     source_gem="citrine",
-                    error=GemError(type=GemErrorType.UNKNOWN, message=f"Unsupported action {payload.action}", recoverable=False),
+                    error=GemError(
+                        type=GemErrorType.UNKNOWN,
+                        message=f"Unsupported action {payload.action}",
+                        recoverable=False,
+                    ),
                 )
 
             return ResponseEnvelope(task_id=request.task_id, source_gem="citrine", payload=out)
@@ -93,7 +98,11 @@ class Citrine:
         if not query:
             return []
         try:
-            hits = self.client.search(collection_name=collection, query_vector=self._embed(query), limit=top_k)
+            hits = self.client.search(
+                collection_name=collection,
+                query_vector=self._embed(query),
+                limit=top_k,
+            )
             return [
                 RetrievalResult(
                     id=str(h.id),
@@ -109,12 +118,25 @@ class Citrine:
     def _add(self, collection: str, documents: List[Dict[str, Any]]) -> None:
         if not documents:
             return
-        points = [
-            qmodels.PointStruct(
-                id=str(uuid4()),
-                vector=self._embed(doc.get("text", "")),
-                payload={"text": doc.get("text", ""), **doc.get("metadata", {})},
-            )
-            for doc in documents
-        ]
-        self.client.upsert(collection_name=collection, points=points)
+        points = []
+        for doc in documents:
+            text = doc.get("text", "")
+            meta = dict(doc.get("metadata") or {})
+            path = str(meta.get("path", ""))
+            # Smart-chunk Python sources; keep small docs as-is
+            if path.endswith(".py") or "def " in text or "class " in text:
+                pieces = chunk_python_source(text, path=path)
+            else:
+                pieces = [{"text": text, "metadata": meta}] if text.strip() else []
+
+            for piece in pieces:
+                payload = {"text": piece["text"], **meta, **piece.get("metadata", {})}
+                points.append(
+                    qmodels.PointStruct(
+                        id=str(uuid4()),
+                        vector=self._embed(piece["text"]),
+                        payload=payload,
+                    )
+                )
+        if points:
+            self.client.upsert(collection_name=collection, points=points)

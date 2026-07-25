@@ -31,6 +31,7 @@ from core.schemas import (
 from core.registry import GemRegistry, build_default_registry
 from core.orchestrator import Orchestrator
 from core.confidence import compute_clear_quartz_confidence
+from core.context import gather_workspace_context, context_enabled
 
 MAX_CODE_CHARS = 50_000
 
@@ -55,6 +56,7 @@ class PipelineResult(BaseModel):
     error: Optional[str] = None
     stages: List[StageResult] = Field(default_factory=list)
     retries: int = 0
+    context_chars: int = 0
     started_at: str = ""
     finished_at: str = ""
 
@@ -104,7 +106,6 @@ class Pipeline:
                 )
             )
 
-            # optional tool extension
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
                 g_req = Envelope(
@@ -122,9 +123,33 @@ class Pipeline:
                     )
                 )
 
+            # --- WORKSPACE CONTEXT (multi-file) ---
+            context_block = ""
+            if context_enabled():
+                tctx = time.perf_counter()
+                try:
+                    context_block = gather_workspace_context(Path.cwd(), query=objective)
+                    result.context_chars = len(context_block)
+                    result.stages.append(
+                        StageResult(
+                            stage="context",
+                            success=True,
+                            detail=f"{result.context_chars} chars",
+                            duration_ms=(time.perf_counter() - tctx) * 1000,
+                        )
+                    )
+                except Exception as e:
+                    result.stages.append(
+                        StageResult(
+                            stage="context",
+                            success=False,
+                            detail=str(e)[:120],
+                            duration_ms=(time.perf_counter() - tctx) * 1000,
+                        )
+                    )
+
             # --- CODE + SANDBOX (with optional one retry) ---
             generated = ""
-            sand_payload: Optional[ClearQuartzResponse] = None
             attempt = 0
             max_attempts = 2 if allow_retry else 1
             last_err = ""
@@ -136,8 +161,10 @@ class Pipeline:
                     prompt = (
                         f"Write Python code for:\n{objective}\n\n"
                         f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
-                        "Return only executable Python code, no markdown fences."
                     )
+                    if context_block:
+                        prompt += f"Relevant workspace context:\n{context_block}\n\n"
+                    prompt += "Return only executable Python code, no markdown fences."
                 else:
                     result.retries += 1
                     prompt = (
@@ -236,7 +263,6 @@ class Pipeline:
                     )
                 )
 
-            # --- CRITIQUE (optional) ---
             if critique:
                 t5 = time.perf_counter()
                 crit_req = Envelope(
@@ -311,6 +337,7 @@ class Pipeline:
                             "status": result.status,
                             "confidence": result.confidence,
                             "retries": result.retries,
+                            "context_chars": result.context_chars,
                             "error": result.error,
                         },
                     ),

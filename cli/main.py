@@ -28,7 +28,7 @@ console = Console()
 
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    console.print("[bold cyan]@ETHER[/] v0.1.0")
+    console.print("[bold cyan]@ETHER[/] v0.1.1")
     if verbose:
         console.print("Pipeline: plan → code → sandbox → audit (+ optional critique)")
         console.print("Gems: 8  |  License: MIT")
@@ -44,7 +44,7 @@ def which() -> None:
 
 @app.command()
 def env() -> None:
-    for k in ["OLLAMA_BASE_URL", "QDRANT_URL", "ETHER_PRIMARY_MODEL", "ETHER_EMBED_MODEL", "ETHER_SANDBOX_TIMEOUT"]:
+    for k in ["OLLAMA_BASE_URL", "QDRANT_URL", "ETHER_PRIMARY_MODEL", "ETHER_EMBED_MODEL", "ETHER_SANDBOX_TIMEOUT", "ETHER_LLM_PLAN"]:
         console.print(f"{k}={os.getenv(k, '')}")
 
 

@@ -21,8 +21,6 @@ from core.schemas import (
 
 
 class ClearQuartz:
-    """Docker-based sandbox gem."""
-
     def __init__(self, work_dir: Optional[Path] = None):
         self.work_dir = work_dir or Path("/tmp/ether-sandbox")
         self.work_dir.mkdir(parents=True, exist_ok=True)
@@ -32,11 +30,7 @@ class ClearQuartz:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="clear-quartz",
-                error=GemError(
-                    type=GemErrorType.UNKNOWN,
-                    message="Invalid payload type for Clear Quartz",
-                    recoverable=False,
-                ),
+                error=GemError(type=GemErrorType.UNKNOWN, message="Invalid payload type for Clear Quartz", recoverable=False),
             )
 
         payload = request.payload
@@ -76,7 +70,7 @@ class ClearQuartz:
                     type=GemErrorType.TIMEOUT,
                     message=f"Sandbox timed out after {request.timeout_seconds}s",
                     recoverable=True,
-                    suggested_action="Increase timeout or simplify the code",
+                    suggested_action="Increase ETHER_SANDBOX_TIMEOUT or simplify the code",
                 ),
             )
         except FileNotFoundError:
@@ -87,7 +81,7 @@ class ClearQuartz:
                     type=GemErrorType.DEPENDENCY,
                     message="Docker is not installed or not in PATH",
                     recoverable=True,
-                    suggested_action="Install Docker and ensure it is running",
+                    suggested_action="Install Docker and ensure `docker ps` works",
                 ),
             )
         except Exception as e:
@@ -107,8 +101,8 @@ class ClearQuartz:
                     flags.append(f"dangerous_name:{node.id}")
                 if isinstance(node, ast.Attribute) and node.attr in {"system", "popen", "eval", "exec"}:
                     flags.append(f"dangerous_attr:{node.attr}")
-        except SyntaxError:
-            flags.append("syntax_error")
+        except SyntaxError as e:
+            flags.append(f"syntax_error: line {getattr(e, 'lineno', '?')}: {e.msg}")
         return flags
 
     def _run_docker(self, code_path: Path, timeout: int) -> subprocess.CompletedProcess:
@@ -125,26 +119,19 @@ class ClearQuartz:
         return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
     def _count_tests(self, stdout: str, stderr: str) -> Tuple[int, int]:
-        """Parse common pytest / unittest output patterns."""
         combined = stdout + "\n" + stderr
-
-        # pytest: "5 passed", "3 failed, 2 passed"
         m = re.search(r"(\d+)\s+passed", combined)
         passed = int(m.group(1)) if m else 0
         m = re.search(r"(\d+)\s+failed", combined)
         failed = int(m.group(1)) if m else 0
-
         if passed or failed:
             return passed, passed + failed
-
-        # unittest: "Ran 3 tests"
         m = re.search(r"Ran\s+(\d+)\s+tests?", combined)
         if m:
             total = int(m.group(1))
             if "OK" in combined:
                 return total, total
             return 0, total
-
         if "passed" in combined.lower():
             return 1, 1
         if "failed" in combined.lower() or "error" in combined.lower():

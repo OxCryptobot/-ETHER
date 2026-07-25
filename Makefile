@@ -1,4 +1,4 @@
-.PHONY: install test smoke status run
+.PHONY: install test smoke status doctor run
 
 install:
 	pip install -e ".[dev]"
@@ -11,6 +11,9 @@ smoke:
 
 status:
 	ether status
+
+doctor:
+	ether doctor
 
 run:
 	ether run "$(OBJ)"

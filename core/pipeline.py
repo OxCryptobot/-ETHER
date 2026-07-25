@@ -54,6 +54,7 @@ class PipelineResult(BaseModel):
     status: str = "complete"
     error: Optional[str] = None
     stages: List[StageResult] = Field(default_factory=list)
+    retries: int = 0
     started_at: str = ""
     finished_at: str = ""
 
@@ -68,64 +69,192 @@ class Pipeline:
     def run(self, objective: str, prefer_local: bool = True, critique: bool = False) -> PipelineResult:
         task_id = uuid4()
         self.orchestrator.start(task_id)
-        result = PipelineResult(task_id=task_id, objective=objective, started_at=datetime.now(timezone.utc).isoformat())
-        timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "60"))
+        result = PipelineResult(
+            task_id=task_id,
+            objective=objective,
+            started_at=datetime.now(timezone.utc).isoformat(),
+        )
+        timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
+        allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
 
         try:
+            # --- PLAN ---
             t0 = time.perf_counter()
-            plan_req = Envelope(task_id=task_id, target_gem="selenite", payload=SeleniteRequest(user_query=objective))
+            plan_req = Envelope(
+                task_id=task_id,
+                target_gem="selenite",
+                payload=SeleniteRequest(user_query=objective),
+            )
             plan_res = self.registry.execute(plan_req)
             self.orchestrator.process_response(plan_req, plan_res)
             if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
-                return self._fail(result, "plan", plan_res.error.message if plan_res.error else "plan failed", t0)
+                return self._fail(
+                    result,
+                    "plan",
+                    plan_res.error.message if plan_res.error else "plan failed",
+                    t0,
+                )
             result.plan = plan_res.payload.plan
-            result.stages.append(StageResult(stage="plan", success=True, detail=f"{len(result.plan.steps)} steps", duration_ms=(time.perf_counter()-t0)*1000))
+            result.stages.append(
+                StageResult(
+                    stage="plan",
+                    success=True,
+                    detail=f"{len(result.plan.steps)} steps",
+                    duration_ms=(time.perf_counter() - t0) * 1000,
+                )
+            )
 
+            # optional tool extension
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
-                g_req = Envelope(task_id=task_id, target_gem="grandidierite", payload=GrandidieriteRequest(tool_request=plan_res.payload.tool_request))
+                g_req = Envelope(
+                    task_id=task_id,
+                    target_gem="grandidierite",
+                    payload=GrandidieriteRequest(tool_request=plan_res.payload.tool_request),
+                )
                 g_res = self.registry.execute(g_req)
-                result.stages.append(StageResult(stage="extend", success=not bool(g_res.error), detail="grandidierite", duration_ms=(time.perf_counter()-t1)*1000))
+                result.stages.append(
+                    StageResult(
+                        stage="extend",
+                        success=not bool(g_res.error),
+                        detail="grandidierite",
+                        duration_ms=(time.perf_counter() - t1) * 1000,
+                    )
+                )
 
-            t2 = time.perf_counter()
-            prompt = f"Write Python code for:\n{objective}\n\nPlan:\n{result.plan.model_dump_json(indent=2)}\n\nReturn only code, no markdown."
-            code_req = Envelope(task_id=task_id, target_gem="rose-quartz", payload=RoseQuartzRequest(messages=[ChatMessage(role="user", content=prompt)], prefer_local=prefer_local))
-            code_res = self.registry.execute(code_req)
-            self.orchestrator.process_response(code_req, code_res)
-            if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
-                return self._fail(result, "code", code_res.error.message if code_res.error else "code failed", t2)
-            generated = self._strip(code_res.payload.content)
-            if len(generated) > MAX_CODE_CHARS:
-                return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars", t2)
-            result.generated_code = generated
-            result.stages.append(StageResult(stage="code", success=True, detail=f"{len(generated)} chars", duration_ms=(time.perf_counter()-t2)*1000))
+            # --- CODE + SANDBOX (with optional one retry) ---
+            generated = ""
+            sand_payload: Optional[ClearQuartzResponse] = None
+            attempt = 0
+            max_attempts = 2 if allow_retry else 1
+            last_err = ""
 
-            t3 = time.perf_counter()
-            sand_req = Envelope(task_id=task_id, target_gem="clear-quartz", payload=ClearQuartzRequest(code=generated), timeout_seconds=timeout)
-            sand_res = self.registry.execute(sand_req)
-            self.orchestrator.process_response(sand_req, sand_res)
-            if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
-                return self._fail(result, "sandbox", sand_res.error.message if sand_res.error else "sandbox failed", t3)
-            result.sandbox = sand_res.payload
-            result.confidence = compute_clear_quartz_confidence(sand_res.payload)
-            result.stages.append(StageResult(stage="sandbox", success=sand_res.payload.exit_code == 0, detail=f"exit={sand_res.payload.exit_code}", duration_ms=(time.perf_counter()-t3)*1000))
+            while attempt < max_attempts:
+                attempt += 1
+                t2 = time.perf_counter()
+                if attempt == 1:
+                    prompt = (
+                        f"Write Python code for:\n{objective}\n\n"
+                        f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
+                        "Return only executable Python code, no markdown fences."
+                    )
+                else:
+                    result.retries += 1
+                    prompt = (
+                        f"The previous code failed in the sandbox.\n"
+                        f"Objective: {objective}\n\n"
+                        f"Broken code:\n{generated}\n\n"
+                        f"Sandbox stderr:\n{last_err}\n\n"
+                        "Write fixed, complete, executable Python code only. No markdown."
+                    )
 
+                code_req = Envelope(
+                    task_id=task_id,
+                    target_gem="rose-quartz",
+                    payload=RoseQuartzRequest(
+                        messages=[ChatMessage(role="user", content=prompt)],
+                        prefer_local=prefer_local,
+                    ),
+                )
+                code_res = self.registry.execute(code_req)
+                self.orchestrator.process_response(code_req, code_res)
+                if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
+                    return self._fail(
+                        result,
+                        "code",
+                        code_res.error.message if code_res.error else "code failed",
+                        t2,
+                    )
+                generated = self._strip(code_res.payload.content)
+                if len(generated) > MAX_CODE_CHARS:
+                    return self._fail(
+                        result,
+                        "code",
+                        f"Generated code exceeds {MAX_CODE_CHARS} chars",
+                        t2,
+                    )
+                result.generated_code = generated
+                result.stages.append(
+                    StageResult(
+                        stage="code" if attempt == 1 else "code_retry",
+                        success=True,
+                        detail=f"{len(generated)} chars",
+                        duration_ms=(time.perf_counter() - t2) * 1000,
+                    )
+                )
+
+                t3 = time.perf_counter()
+                sand_req = Envelope(
+                    task_id=task_id,
+                    target_gem="clear-quartz",
+                    payload=ClearQuartzRequest(code=generated),
+                    timeout_seconds=timeout,
+                )
+                sand_res = self.registry.execute(sand_req)
+                self.orchestrator.process_response(sand_req, sand_res)
+                if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
+                    return self._fail(
+                        result,
+                        "sandbox",
+                        sand_res.error.message if sand_res.error else "sandbox failed",
+                        t3,
+                    )
+                sand_payload = sand_res.payload
+                result.sandbox = sand_payload
+                result.confidence = compute_clear_quartz_confidence(sand_payload)
+                ok = sand_payload.exit_code == 0
+                result.stages.append(
+                    StageResult(
+                        stage="sandbox" if attempt == 1 else "sandbox_retry",
+                        success=ok,
+                        detail=f"exit={sand_payload.exit_code}",
+                        duration_ms=(time.perf_counter() - t3) * 1000,
+                    )
+                )
+                if ok:
+                    break
+                last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
+
+            # --- AUDIT ---
             t4 = time.perf_counter()
-            audit_req = Envelope(task_id=task_id, target_gem="black-tourmaline", payload=BlackTourmalineRequest(artifact=generated))
+            audit_req = Envelope(
+                task_id=task_id,
+                target_gem="black-tourmaline",
+                payload=BlackTourmalineRequest(artifact=generated),
+            )
             audit_res = self.registry.execute(audit_req)
             if not audit_res.error and isinstance(audit_res.payload, BlackTourmalineResponse):
                 result.audit = audit_res.payload
                 if not audit_res.payload.approved:
                     result.confidence = min(result.confidence, 0.3)
-                result.stages.append(StageResult(stage="audit", success=audit_res.payload.approved, detail=f"risk={audit_res.payload.risk_score}", duration_ms=(time.perf_counter()-t4)*1000))
+                result.stages.append(
+                    StageResult(
+                        stage="audit",
+                        success=audit_res.payload.approved,
+                        detail=f"risk={audit_res.payload.risk_score}",
+                        duration_ms=(time.perf_counter() - t4) * 1000,
+                    )
+                )
 
+            # --- CRITIQUE (optional) ---
             if critique:
                 t5 = time.perf_counter()
-                crit_req = Envelope(task_id=task_id, target_gem="labradorite", payload=LabradoriteRequest(code=generated))
+                crit_req = Envelope(
+                    task_id=task_id,
+                    target_gem="labradorite",
+                    payload=LabradoriteRequest(code=generated),
+                )
                 crit_res = self.registry.execute(crit_req)
                 if not crit_res.error and isinstance(crit_res.payload, LabradoriteResponse):
                     result.critique = crit_res.payload
-                    result.stages.append(StageResult(stage="critique", success=True, detail=crit_res.payload.critique[:80], duration_ms=(time.perf_counter()-t5)*1000))
+                    result.stages.append(
+                        StageResult(
+                            stage="critique",
+                            success=True,
+                            detail=crit_res.payload.critique[:80],
+                            duration_ms=(time.perf_counter() - t5) * 1000,
+                        )
+                    )
 
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()
@@ -138,7 +267,14 @@ class Pipeline:
     def _fail(self, result: PipelineResult, stage: str, msg: str, t0: float) -> PipelineResult:
         result.status = "error"
         result.error = msg
-        result.stages.append(StageResult(stage=stage, success=False, detail=msg, duration_ms=max(0.0, (time.perf_counter()-t0)*1000)))
+        result.stages.append(
+            StageResult(
+                stage=stage,
+                success=False,
+                detail=msg,
+                duration_ms=max(0.0, (time.perf_counter() - t0) * 1000),
+            )
+        )
         result.finished_at = datetime.now(timezone.utc).isoformat()
         self._persist(result)
         self._log(result)
@@ -155,12 +291,30 @@ class Pipeline:
 
     def _persist(self, result: PipelineResult) -> None:
         try:
-            (self.runs_dir / f"{result.task_id}.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
+            (self.runs_dir / f"{result.task_id}.json").write_text(
+                result.model_dump_json(indent=2), encoding="utf-8"
+            )
         except Exception:
             pass
 
     def _log(self, result: PipelineResult) -> None:
         try:
-            self.registry.execute(Envelope(task_id=result.task_id, target_gem="amethyst", payload=AmethystRequest(action="log", interaction={"task_id": str(result.task_id), "objective": result.objective, "status": result.status, "confidence": result.confidence, "error": result.error})))
+            self.registry.execute(
+                Envelope(
+                    task_id=result.task_id,
+                    target_gem="amethyst",
+                    payload=AmethystRequest(
+                        action="log",
+                        interaction={
+                            "task_id": str(result.task_id),
+                            "objective": result.objective,
+                            "status": result.status,
+                            "confidence": result.confidence,
+                            "retries": result.retries,
+                            "error": result.error,
+                        },
+                    ),
+                )
+            )
         except Exception:
             pass

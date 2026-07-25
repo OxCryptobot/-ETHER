@@ -1,38 +1,51 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 10:48 (UTC-5)  
-> **Agent state**: 🟢 ACTIVE  
-> **Current task**: Hardening pipeline + next 10 tasks
+> **Last heartbeat**: 2026-07-25 10:50 (UTC-5)  
+> **Agent state**: 🟢 ACTIVE
 
----
+## Progress
 
-## Quick Glance
+| Layer | % |
+|-------|---|
+| Foundation | 100% |
+| Gems basic | 100% |
+| Gem depth | 50% |
+| End-to-end | 75% |
+| **Overall** | **~70%** |
 
-| Layer | Progress |
-|-------|----------|
-| **Foundation** | ██████████ 100% |
-| **Gems (basic)** | ██████████ 100% |
-| **Gem Depth** | ████░░░░░░ 40% |
-| **End-to-End Flow** | ███████░░░ 70% |
-| **Overall** | ██████░░░░ **65%** |
+## Completed (batch 1)
 
----
+1. ✅ Harden pipeline + stage tracking
+2. ✅ CLI `ether run --json`
+3. ✅ Unit tests (schemas + orchestrator)
+4. ✅ Improved Selenite heuristics
+5. ✅ Amethyst auto-logging in pipeline
+6. ✅ Better Clear Quartz test parsing
+7. ✅ `ether audit <file>`
+8. ✅ Config loader (`core/config.py`)
+9. ✅ Black Tourmaline reads manifest patterns
+10. ✅ README refresh
 
-## Next 10 Tasks
+## Next 10 Tasks (batch 2)
 
-1. ✅ Harden pipeline (stage tracking + Amethyst logging)
-2. 🔄 Expand CLI `ether run` + `--json`
-3. ⏳ Unit tests for schemas + orchestrator
-4. ⏳ Improve Selenite planner
-5. ✅ Wire Amethyst into pipeline
-6. ⏳ Better Clear Quartz test parsing
-7. ⏳ `ether audit <file>` command
-8. ⏳ Config loader from manifest.yaml
-9. ⏳ Tighten Black Tourmaline from manifest
-10. ⏳ README refresh
+1. Add pytest to CI-style local script
+2. Improve Rose Quartz model fallback + streaming option
+3. Citrine: index a local folder of code
+4. Wire Labradorite into pipeline (optional critique stage)
+5. Grandidierite: write generated tools into tools/quarantine/
+6. Add `.env.example` + settings for Ollama/Qdrant URLs
+7. Orchestrator: expose needs_tool → Grandidierite path
+8. CLI: `ether index <path>` for Citrine
+9. Fix any import/package issues for `pip install -e .`
+10. Add simple integration test for pipeline (mocked gems)
 
----
+## Commands
 
-## How to check progress
-
-Just refresh: https://github.com/OxCryptobot/-ETHER/blob/main/STATUS.md
+```bash
+ether status
+ether plan "..."
+ether run "..."
+ether run "..." --json
+ether audit file.py
+pytest
+```

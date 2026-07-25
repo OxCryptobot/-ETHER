@@ -1,4 +1,4 @@
-"""Black Tourmaline — security scanning and policy enforcement."""
+"""Black Tourmaline — security scanning using manifest patterns."""
 
 from __future__ import annotations
 
@@ -15,18 +15,23 @@ from core.schemas import (
     BlackTourmalineResponse,
     PolicyViolation,
 )
+from core.config import load_config
 
 
 class BlackTourmaline:
-    """Static security and policy checks."""
+    """Static security and policy checks driven by manifest."""
 
-    FORBIDDEN_PATTERNS = [
-        (r"eval\s*\(", "dangerous_eval"),
-        (r"exec\s*\(", "dangerous_exec"),
-        (r"__import__\s*\(", "dangerous_import"),
-        (r"os\.system\s*\(", "os_system"),
-        (r"subprocess\.(?:call|run|Popen)", "subprocess"),
-    ]
+    def __init__(self):
+        cfg = load_config()
+        self.patterns = list(cfg.grandidierite.forbidden_patterns)
+        # Always include core dangerous calls
+        self.patterns.extend([
+            r"eval\s*\(",
+            r"exec\s*\(",
+            r"__import__\s*\(",
+            r"os\.system\s*\(",
+            r"subprocess\.(?:call|run|Popen)",
+        ])
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
@@ -40,16 +45,14 @@ class BlackTourmaline:
             risk = min(1.0, len(violations) * 0.35)
             approved = risk < 0.5
 
-            payload = BlackTourmalineResponse(
-                approved=approved,
-                violations=violations,
-                risk_score=round(risk, 2),
-            )
-
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="black-tourmaline",
-                payload=payload,
+                payload=BlackTourmalineResponse(
+                    approved=approved,
+                    violations=violations,
+                    risk_score=round(risk, 2),
+                ),
             )
         except Exception as e:
             return ResponseEnvelope(
@@ -61,15 +64,18 @@ class BlackTourmaline:
     def _scan(self, code: str) -> List[PolicyViolation]:
         violations: List[PolicyViolation] = []
 
-        for pattern, rule in self.FORBIDDEN_PATTERNS:
-            if re.search(pattern, code):
-                violations.append(
-                    PolicyViolation(
-                        rule=rule,
-                        severity="high",
-                        message=f"Matched forbidden pattern: {rule}",
+        for pattern in self.patterns:
+            try:
+                if re.search(pattern, code):
+                    violations.append(
+                        PolicyViolation(
+                            rule=pattern[:40],
+                            severity="high",
+                            message=f"Matched forbidden pattern: {pattern}",
+                        )
                     )
-                )
+            except re.error:
+                continue
 
         try:
             tree = ast.parse(code)

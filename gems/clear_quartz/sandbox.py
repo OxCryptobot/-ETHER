@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import ast
+import re
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from core.schemas import (
     ClearQuartzRequest,
@@ -20,7 +21,7 @@ from core.schemas import (
 
 
 class ClearQuartz:
-    """Dual-tier sandbox gem (fast = Docker)."""
+    """Docker-based sandbox gem."""
 
     def __init__(self, work_dir: Optional[Path] = None):
         self.work_dir = work_dir or Path("/tmp/ether-sandbox")
@@ -38,7 +39,7 @@ class ClearQuartz:
                 ),
             )
 
-        payload: ClearQuartzRequest = request.payload
+        payload = request.payload
         start = time.perf_counter()
 
         try:
@@ -47,30 +48,24 @@ class ClearQuartz:
             with tempfile.TemporaryDirectory(dir=self.work_dir) as tmp:
                 code_path = Path(tmp) / "code.py"
                 code_path.write_text(payload.code, encoding="utf-8")
-
-                result = self._run_docker(
-                    code_path=code_path,
-                    timeout=request.timeout_seconds,
-                )
+                result = self._run_docker(code_path, request.timeout_seconds)
 
             execution_time = time.perf_counter() - start
             tests_passed, total_tests = self._count_tests(result.stdout, result.stderr)
 
-            response_payload = ClearQuartzResponse(
-                stdout=result.stdout,
-                stderr=result.stderr,
-                exit_code=result.returncode,
-                total_tests=total_tests,
-                tests_passed=tests_passed,
-                security_flags=security_flags,
-                execution_time=round(execution_time, 3),
-                static_analysis_score=0.0 if security_flags else 1.0,
-            )
-
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="clear-quartz",
-                payload=response_payload,
+                payload=ClearQuartzResponse(
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    exit_code=result.returncode,
+                    total_tests=total_tests,
+                    tests_passed=tests_passed,
+                    security_flags=security_flags,
+                    execution_time=round(execution_time, 3),
+                    static_analysis_score=0.0 if security_flags else 1.0,
+                ),
             )
 
         except subprocess.TimeoutExpired:
@@ -99,17 +94,12 @@ class ClearQuartz:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="clear-quartz",
-                error=GemError(
-                    type=GemErrorType.RUNTIME,
-                    message=str(e),
-                    recoverable=True,
-                ),
+                error=GemError(type=GemErrorType.RUNTIME, message=str(e), recoverable=True),
             )
 
     def _static_analysis(self, code: str) -> List[str]:
         flags: List[str] = []
         dangerous = {"eval", "exec", "compile", "__import__"}
-
         try:
             tree = ast.parse(code)
             for node in ast.walk(tree):
@@ -119,14 +109,11 @@ class ClearQuartz:
                     flags.append(f"dangerous_attr:{node.attr}")
         except SyntaxError:
             flags.append("syntax_error")
-
         return flags
 
     def _run_docker(self, code_path: Path, timeout: int) -> subprocess.CompletedProcess:
         cmd = [
-            "docker",
-            "run",
-            "--rm",
+            "docker", "run", "--rm",
             "--network", "none",
             "--read-only",
             "--memory", "512m",
@@ -135,18 +122,31 @@ class ClearQuartz:
             "python:3.12-slim",
             "python", "/code.py",
         ]
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
-        return subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+    def _count_tests(self, stdout: str, stderr: str) -> Tuple[int, int]:
+        """Parse common pytest / unittest output patterns."""
+        combined = stdout + "\n" + stderr
 
-    def _count_tests(self, stdout: str, stderr: str) -> tuple[int, int]:
-        combined = (stdout + stderr).lower()
-        if "passed" in combined:
+        # pytest: "5 passed", "3 failed, 2 passed"
+        m = re.search(r"(\d+)\s+passed", combined)
+        passed = int(m.group(1)) if m else 0
+        m = re.search(r"(\d+)\s+failed", combined)
+        failed = int(m.group(1)) if m else 0
+
+        if passed or failed:
+            return passed, passed + failed
+
+        # unittest: "Ran 3 tests"
+        m = re.search(r"Ran\s+(\d+)\s+tests?", combined)
+        if m:
+            total = int(m.group(1))
+            if "OK" in combined:
+                return total, total
+            return 0, total
+
+        if "passed" in combined.lower():
             return 1, 1
-        if "failed" in combined or "error" in combined:
+        if "failed" in combined.lower() or "error" in combined.lower():
             return 0, 1
         return 0, 0

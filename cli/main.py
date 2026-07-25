@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from uuid import uuid4
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.syntax import Syntax
-from uuid import uuid4
 
 from core.registry import build_default_registry
 from core.pipeline import Pipeline
@@ -16,6 +19,7 @@ from core.schemas import (
     SeleniteRequest,
     ClearQuartzRequest,
     RoseQuartzRequest,
+    BlackTourmalineRequest,
     ChatMessage,
 )
 
@@ -29,151 +33,124 @@ console = Console()
 
 @app.command()
 def version() -> None:
-    """Show version information."""
     console.print("[bold cyan]@ETHER[/] v0.1.0")
-    console.print("Local-first super-agentic coding system")
 
 
 @app.command()
 def status() -> None:
-    """Show system status and registered gems."""
     registry = build_default_registry()
     gems = registry.list_gems()
-
     table = Table(title="@ETHER Status")
     table.add_column("Component", style="cyan")
     table.add_column("Status", style="green")
-
-    table.add_row("Core Schemas", "✓")
-    table.add_row("Orchestrator", "✓")
-    table.add_row("Registry", "✓")
-    table.add_row("Pipeline", "✓")
-
+    for name in ["Core", "Orchestrator", "Registry", "Pipeline"]:
+        table.add_row(name, "✓")
     for gem in [
-        "clear-quartz",
-        "rose-quartz",
-        "citrine",
-        "selenite",
-        "amethyst",
-        "black-tourmaline",
-        "labradorite",
-        "grandidierite",
+        "clear-quartz", "rose-quartz", "citrine", "selenite",
+        "amethyst", "black-tourmaline", "labradorite", "grandidierite",
     ]:
-        icon = "✓" if gem in gems else "✗"
-        table.add_row(gem, icon)
-
+        table.add_row(gem, "✓" if gem in gems else "✗")
     console.print(table)
-    console.print(f"\n[dim]Registered gems: {len(gems)}/8[/]")
+    console.print(f"[dim]Registered: {len(gems)}/8[/]")
 
 
 @app.command("run-gem")
-def run_gem(
-    gem: str = typer.Argument(..., help="Gem name"),
-    prompt: str = typer.Option("Hello from @ETHER", help="Input"),
-) -> None:
-    """Run a single gem directly."""
+def run_gem(gem: str, prompt: str = "Hello") -> None:
     registry = build_default_registry()
-
-    try:
-        if gem == "selenite":
-            payload = SeleniteRequest(user_query=prompt)
-        elif gem == "clear-quartz":
-            payload = ClearQuartzRequest(code=prompt)
-        elif gem == "rose-quartz":
-            payload = RoseQuartzRequest(messages=[ChatMessage(role="user", content=prompt)])
-        else:
-            payload = SeleniteRequest(user_query=prompt)
-
-        request = Envelope(task_id=uuid4(), target_gem=gem, payload=payload)  # type: ignore
-        response = registry.execute(request)
-
-        if response.error:
-            console.print(Panel(f"[red]{response.error.message}[/]", title="Error"))
-        else:
-            console.print(Panel(str(response.payload), title=f"{gem} Response"))
-    except Exception as e:
-        console.print(f"[red]Failed: {e}[/]")
+    if gem == "selenite":
+        payload = SeleniteRequest(user_query=prompt)
+    elif gem == "clear-quartz":
+        payload = ClearQuartzRequest(code=prompt)
+    elif gem == "rose-quartz":
+        payload = RoseQuartzRequest(messages=[ChatMessage(role="user", content=prompt)])
+    else:
+        payload = SeleniteRequest(user_query=prompt)
+    req = Envelope(task_id=uuid4(), target_gem=gem, payload=payload)  # type: ignore
+    res = registry.execute(req)
+    if res.error:
+        console.print(f"[red]{res.error.message}[/]")
+    else:
+        console.print(Panel(str(res.payload), title=gem))
 
 
 @app.command()
-def plan(
-    prompt: str = typer.Argument(..., help="What should @ETHER plan?"),
-) -> None:
-    """Generate a plan using Selenite."""
+def plan(prompt: str) -> None:
     registry = build_default_registry()
-    request = Envelope(
-        task_id=uuid4(),
-        target_gem="selenite",
-        payload=SeleniteRequest(user_query=prompt),
-    )
-    response = registry.execute(request)
-
-    if response.error:
-        console.print(f"[red]Error: {response.error.message}[/]")
+    req = Envelope(task_id=uuid4(), target_gem="selenite", payload=SeleniteRequest(user_query=prompt))
+    res = registry.execute(req)
+    if res.error:
+        console.print(f"[red]{res.error.message}[/]")
         return
-
-    plan_data = response.payload
-    console.print(Panel(f"[bold]Query:[/] {prompt}", title="Selenite Plan"))
-
-    if hasattr(plan_data, "plan"):
-        for step in plan_data.plan.steps:
-            deps = f" (deps {step.deps})" if step.deps else ""
-            console.print(f"  {step.id}. [{step.action}] {step.description}{deps}")
-        console.print(f"\n[dim]{plan_data.plan.reasoning}[/]")
-    else:
-        console.print(plan_data)
+    p = res.payload
+    if hasattr(p, "plan"):
+        for s in p.plan.steps:
+            console.print(f"  {s.id}. [{s.action}] {s.description}")
 
 
 @app.command()
 def run(
-    objective: str = typer.Argument(..., help="What should @ETHER accomplish?"),
+    objective: str = typer.Argument(...),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON result"),
 ) -> None:
-    """Run full pipeline: plan → code → sandbox → audit."""
-    console.print(f"[bold cyan]@ETHER[/] running: {objective}\n")
+    """Full pipeline: plan → code → sandbox → audit."""
+    result = Pipeline().run(objective)
 
-    pipeline = Pipeline()
-    result = pipeline.run(objective)
+    if json_out:
+        console.print_json(result.model_dump_json())
+        if result.status == "error":
+            raise typer.Exit(1)
+        return
 
     if result.status == "error":
         console.print(Panel(f"[red]{result.error}[/]", title="Pipeline Error"))
-        raise typer.Exit(code=1)
+        raise typer.Exit(1)
 
-    # Plan
     if result.plan:
         console.print("[bold]Plan[/]")
-        for step in result.plan.steps:
-            console.print(f"  {step.id}. [{step.action}] {step.description}")
+        for s in result.plan.steps:
+            console.print(f"  {s.id}. [{s.action}] {s.description}")
         console.print()
 
-    # Code
     if result.generated_code:
-        console.print("[bold]Generated Code[/]")
+        console.print("[bold]Code[/]")
         console.print(Syntax(result.generated_code, "python", theme="monokai", line_numbers=True))
         console.print()
 
-    # Sandbox
     if result.sandbox:
         console.print("[bold]Sandbox[/]")
-        console.print(f"  exit_code : {result.sandbox.exit_code}")
-        console.print(f"  time      : {result.sandbox.execution_time}s")
-        console.print(f"  security  : {result.sandbox.security_flags or 'clean'}")
-        if result.sandbox.stdout:
-            console.print(f"  stdout    : {result.sandbox.stdout[:300]}")
-        if result.sandbox.stderr:
-            console.print(f"  stderr    : {result.sandbox.stderr[:300]}")
+        console.print(f"  exit={result.sandbox.exit_code}  time={result.sandbox.execution_time}s")
+        console.print(f"  flags={result.sandbox.security_flags or 'clean'}")
         console.print()
 
-    # Audit
     if result.audit:
-        status = "[green]APPROVED[/]" if result.audit.approved else "[red]REJECTED[/]"
-        console.print(f"[bold]Audit[/] {status}  risk={result.audit.risk_score}")
-        for v in result.audit.violations:
-            console.print(f"  - [{v.severity}] {v.rule}: {v.message}")
-        console.print()
+        tag = "[green]APPROVED[/]" if result.audit.approved else "[red]REJECTED[/]"
+        console.print(f"[bold]Audit[/] {tag} risk={result.audit.risk_score}")
 
-    # Confidence
     color = "green" if result.confidence >= 0.7 else "yellow" if result.confidence >= 0.4 else "red"
     console.print(f"[bold]Confidence:[/] [{color}]{result.confidence:.3f}[/{color}]")
+
+
+@app.command()
+def audit(
+    path: Path = typer.Argument(..., exists=True, readable=True),
+) -> None:
+    """Run Black Tourmaline security audit on a file."""
+    code = path.read_text(encoding="utf-8")
+    registry = build_default_registry()
+    req = Envelope(
+        task_id=uuid4(),
+        target_gem="black-tourmaline",
+        payload=BlackTourmalineRequest(artifact=code, artifact_type="code"),
+    )
+    res = registry.execute(req)
+    if res.error:
+        console.print(f"[red]{res.error.message}[/]")
+        raise typer.Exit(1)
+    payload = res.payload
+    tag = "[green]APPROVED[/]" if payload.approved else "[red]REJECTED[/]"
+    console.print(f"{tag}  risk={payload.risk_score}")
+    for v in payload.violations:
+        console.print(f"  [{v.severity}] {v.rule}: {v.message}")
 
 
 if __name__ == "__main__":

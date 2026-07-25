@@ -17,7 +17,6 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
-# Auto-load .env so no manual $env: sets are required
 try:
     from core.dotenv import load_dotenv
 
@@ -52,7 +51,7 @@ def _safe(text: str) -> str:
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.1")
     if verbose:
-        console.print("Autonomous flywheel: ether flywheel --autonomous")
+        console.print("Dashboard: ether dashboard → http://127.0.0.1:8787")
 
 
 @app.command()
@@ -200,7 +199,17 @@ def flywheel(
     if status:
         argv.append("--status")
     elif autonomous:
-        argv.extend(["--autonomous", "--interval", str(interval), "--min-confidence", str(min_confidence), "--max-retries", str(max_retries)])
+        argv.extend(
+            [
+                "--autonomous",
+                "--interval",
+                str(interval),
+                "--min-confidence",
+                str(min_confidence),
+                "--max-retries",
+                str(max_retries),
+            ]
+        )
         if no_doctor:
             argv.append("--no-doctor")
     else:
@@ -210,6 +219,19 @@ def flywheel(
         if no_doctor:
             argv.append("--no-doctor")
     raise typer.Exit(flywheel_main(argv))
+
+
+@app.command()
+def dashboard(
+    host: str = typer.Option("127.0.0.1", "--host"),
+    port: int = typer.Option(8787, "--port"),
+) -> None:
+    """Launch interactive live matrix dashboard (web UI)."""
+    console.print(f"[bold cyan]@ETHER Dashboard[/] → http://{host}:{port}")
+    console.print("Shows flywheel, runs, heartbeat, gems, gates, connections. Ctrl+C to stop.")
+    import uvicorn
+
+    uvicorn.run("dashboard.app:app", host=host, port=port, reload=False)
 
 
 @app.command()
@@ -233,11 +255,17 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
     files = [path] if path.is_file() else list(path.rglob("*.py"))
     for f in files:
         try:
-            docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}})
+            docs.append(
+                {"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}}
+            )
         except Exception:
             pass
     res = build_default_registry().execute(
-        Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="add", collection=collection, documents=docs))
+        Envelope(
+            task_id=uuid4(),
+            target_gem="citrine",
+            payload=CitrineRequest(action="add", collection=collection, documents=docs),
+        )
     )
     if res.error:
         print_error(res.error.message)
@@ -248,7 +276,11 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
 @app.command()
 def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     res = build_default_registry().execute(
-        Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="search", query=query, collection=collection, top_k=top_k))
+        Envelope(
+            task_id=uuid4(),
+            target_gem="citrine",
+            payload=CitrineRequest(action="search", query=query, collection=collection, top_k=top_k),
+        )
     )
     if res.error:
         print_error(res.error.message)
@@ -268,7 +300,9 @@ def runs() -> None:
     for f in files:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
-            console.print(f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {_safe(str(data.get('objective', ''))[:60])}")
+            console.print(
+                f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {_safe(str(data.get('objective', ''))[:60])}"
+            )
         except Exception:
             console.print(f.name)
 

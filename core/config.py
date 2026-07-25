@@ -1,4 +1,4 @@
-"""Load @ETHER configuration from config/manifest.yaml."""
+"""Load and validate @ETHER configuration."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 
 class GrandidieriteConfig(BaseModel):
@@ -53,4 +53,7 @@ def load_config(path: Path | None = None) -> EtherConfig:
     if not path.exists():
         return EtherConfig()
     data: Dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return EtherConfig(**data)
+    try:
+        return EtherConfig(**data)
+    except ValidationError as e:
+        raise RuntimeError(f"Invalid manifest at {path}: {e}") from e

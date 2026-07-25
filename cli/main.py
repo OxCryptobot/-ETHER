@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from rich.syntax import Syntax
 
 from core.registry import build_default_registry
 from core.pipeline import Pipeline
+from core.config import load_config
 from core.schemas import (
     Envelope,
     SeleniteRequest,
@@ -31,6 +33,11 @@ def version() -> None:
 
 @app.command()
 def status() -> None:
+    try:
+        load_config()
+        console.print("[green]manifest:[/] ok")
+    except Exception as e:
+        console.print(f"[red]manifest:[/] {e}")
     gems = build_default_registry().list_gems()
     table = Table(title="@ETHER")
     table.add_column("Gem")
@@ -42,11 +49,9 @@ def status() -> None:
 
 @app.command()
 def gems() -> None:
-    """List registered gems with class names."""
     reg = build_default_registry()
     for name in reg.list_gems():
-        g = reg.get(name)
-        console.print(f"  {name:20} {type(g).__name__}")
+        console.print(f"  {name:20} {type(reg.get(name)).__name__}")
 
 
 @app.command()
@@ -62,7 +67,7 @@ def plan(prompt: str) -> None:
 def run(
     objective: str,
     json_out: bool = typer.Option(False, "--json"),
-    critique: bool = typer.Option(False, "--critique", help="Run Labradorite critique stage"),
+    critique: bool = typer.Option(False, "--critique"),
 ) -> None:
     result = Pipeline().run(objective, critique=critique)
     if json_out:
@@ -81,8 +86,6 @@ def run(
         console.print(f"Audit approved={result.audit.approved} risk={result.audit.risk_score}")
     if result.critique:
         console.print(f"Critique: {result.critique.critique}")
-        for s in result.critique.suggested_improvements:
-            console.print(f"  - {s}")
     console.print(f"Confidence: {result.confidence:.3f}")
 
 
@@ -120,6 +123,21 @@ def search(query: str, collection: str = "code", top_k: int = 5) -> None:
         console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
     for r in res.payload.results:  # type: ignore
         console.print(f"[{r.score:.3f}] {r.metadata.get('path', r.id)}\n  {r.text[:200]}\n")
+
+
+@app.command()
+def runs() -> None:
+    """List recent pipeline runs from memory/runs/."""
+    runs_dir = Path("memory/runs")
+    if not runs_dir.exists():
+        console.print("[dim]No runs yet.[/]"); return
+    files = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]
+    for f in files:
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            console.print(f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {data.get('objective', '')[:60]}")
+        except Exception:
+            console.print(f"{f.name}")
 
 
 if __name__ == "__main__":

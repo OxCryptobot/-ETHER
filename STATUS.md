@@ -1,25 +1,25 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 12:10 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 12:15 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: **~99%**
+> **Overall**: **~99.5%** (v0.1.x feature-complete; depth work continues into v0.2)
 
-## Batches 1–18 complete
+## Batches 1–19 complete
 
-## Batch 18 delivered
-- Registry KeyError test
-- FAQ + models docs for `ETHER_LLM_PLAN`
-- LangGraph draft/critique stubs expanded
-- CHANGELOG updated
+## Batch 19 delivered
+- README documents `ETHER_LLM_PLAN`
+- v0.2 roadmap notes experimental flags
+- Core package exports polished
+- Release checklist linked from README
 
-## Next 10 (batch 19)
-1. Wire optional LangGraph path behind env flag (experimental)
-2. README mention of ETHER_LLM_PLAN
-3. More offline tests if gaps remain
-4. Final v0.1.1 checklist tick-down
-5. Stabilize package exports
-6. Ensure smoke_test still runs pure-python
-7. Cross-link release checklist
-8. Minor code comment cleanups
-9. Confirm STATUS accuracy
-10. Start real v0.2 LangGraph integration branch notes
+## Next 10 (batch 20)
+1. Tick v0.1.1 checklist items that are docs-only
+2. Add offline test for LangGraph skeleton draft/critique functions
+3. Small README consistency pass
+4. Confirm smoke + unit test files exist and are coherent
+5. Add note in CHANGELOG about registry errors
+6. Freeze command list if needed
+7. Optional: version bump messaging to 0.1.1 in pyproject when ready
+8. Keep improving planner quality toward v0.2
+9. Watch for any import cycles
+10. Continue autonomous depth work

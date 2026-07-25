@@ -1,8 +1,8 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-24 19:26 (UTC-5)  
+> **Last heartbeat**: 2026-07-24 20:43 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Current task**: Wiring end-to-end Orchestrator flow
+> **Current task**: End-to-end pipeline live
 
 ---
 
@@ -13,8 +13,8 @@
 | **Foundation** | ██████████ 100% |
 | **Gems (basic)** | ██████████ 100% |
 | **Gem Depth** | ████░░░░░░ 40% |
-| **End-to-End Flow** | ██░░░░░░░░ 20% |
-| **Overall** | █████░░░░░ **52%** |
+| **End-to-End Flow** | ██████░░░░ 60% |
+| **Overall** | ██████░░░░ **62%** |
 
 ---
 
@@ -22,51 +22,40 @@
 
 | Component | Status | Health | Notes |
 |-----------|--------|--------|-------|
-| Core Schemas | ✅ | 🟢 | Fully typed for all 8 gems |
-| Orchestrator | ✅ | 🟢 | State machine complete |
-| Registry | ✅ | 🟢 | Dispatch working |
-| CLI | ✅ | 🟢 | `status` / `plan` / `run-gem` |
-| Clear Quartz | ✅ | 🟢 | Docker sandbox live |
-| Rose Quartz | ✅ | 🟢 | Ollama routing live |
-| Citrine | ✅ | 🟢 | Real embeddings added |
-| Selenite | ✅ | 🟡 | Rule-based (LangGraph next) |
-| Amethyst | ✅ | 🟡 | Logging only |
-| Black Tourmaline | ✅ | 🟢 | Static security |
-| Labradorite | ✅ | 🟡 | Basic critique |
-| Grandidierite | ✅ | 🟡 | Template generation |
-
-**Legend**: 🟢 Healthy & useful · 🟡 Basic / needs depth · 🔴 Broken / blocked
+| Core Schemas | ✅ | 🟢 | Fully typed |
+| Orchestrator | ✅ | 🟢 | State machine |
+| Registry | ✅ | 🟢 | Dispatch |
+| **Pipeline** | ✅ | 🟢 | plan→code→sandbox→audit |
+| CLI | ✅ | 🟢 | now includes `ether run` |
+| Clear Quartz | ✅ | 🟢 | Docker sandbox |
+| Rose Quartz | ✅ | 🟢 | Ollama routing |
+| Citrine | ✅ | 🟢 | Real embeddings |
+| Selenite | ✅ | 🟡 | Rule-based |
+| Amethyst | ✅ | 🟡 | Logging |
+| Black Tourmaline | ✅ | 🟢 | Security |
+| Labradorite | ✅ | 🟡 | Critique |
+| Grandidierite | ✅ | 🟡 | Templates |
 
 ---
 
-## Activity Feed (latest first)
+## Activity Feed
 
 | Time | Event |
 |------|-------|
-| 19:26 | Improved live status system |
-| 19:02 | Citrine real Ollama embeddings |
-| 18:31 | First STATUS.md created |
-| 17:20 | All 8 gems basic implementations complete |
-| 16:00 | Selenite planner added |
-| 15:00 | Citrine + Rose Quartz + Clear Quartz |
+| 20:43 | Fixed pipeline + added `ether run` command |
+| 19:26 | Improved STATUS system |
+| 19:02 | Citrine real embeddings |
+| 17:20 | All 8 gems present |
 
 ---
 
-## Current Focus
+## How to use right now
 
-```text
-[=====>                ] Wiring end-to-end Orchestrator flow
+```bash
+pip install -e .
+ether status
+ether plan "add user auth"
+ether run "write a function that reverses a string"
 ```
 
-**Next concrete steps**
-1. Make Orchestrator call gems in sequence
-2. Add `ether run "..."` command that uses the full pipeline
-3. Improve Selenite planning quality
-
----
-
-## How to stay updated
-
-- **Refresh this file**: https://github.com/OxCryptobot/-ETHER/blob/main/STATUS.md
-- **Local**: `python scripts/status_watch.py`
-- **CLI**: `ether status`
+Requires: Docker + Ollama running locally.

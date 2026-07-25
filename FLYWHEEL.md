@@ -1,33 +1,36 @@
-# @ETHER Flywheel
+# @ETHER Flywheel (agentic)
 
-> Bootstrap file. Overwritten by `scripts/flywheel.py` each cycle.
+> Overwritten each cycle by `scripts/flywheel.py`.
 
-## Quick start (PowerShell)
+## Policy (non-negotiable)
+1. **smoke + pytest must pass**
+2. **pipeline sandbox exit = 0**
+3. **audit.approved = true**
+4. **confidence >= threshold** (default **0.7**)
+5. If gates fail → **retry** (self-heal) up to N times
+6. **`--push` only commits/pushes when all gates pass**
+
+## PowerShell
 
 ```powershell
 cd C:\Users\Otcde\ETHER
+git pull origin main
+
+# verify only (no push)
 .\scripts\flywheel.ps1
+
+# push ONLY if confidence+audit clean
 .\scripts\flywheel.ps1 -Push
-.\scripts\flywheel.ps1 -Loop 300 -Push
+
+# stricter gate + more self-heal attempts
+.\scripts\flywheel.ps1 -Push -MinConfidence 0.8 -MaxRetries 5
 ```
 
-Or pure Python:
-
-```powershell
-python scripts/flywheel.py
-python scripts/flywheel.py --push
-python scripts/flywheel.py --loop 300 --push
+## Env knobs
+```env
+ETHER_FLYWHEEL_MIN_CONFIDENCE=0.7
+ETHER_FLYWHEEL_MAX_RETRIES=3
+ETHER_FLYWHEEL_PUSH=0
+ETHER_PRIMARY_MODEL=qwen2.5-coder:3b
+ETHER_SANDBOX_RETRY=1
 ```
-
-## What it does
-1. `git pull --ff-only origin main`
-2. smoke test + pytest
-3. optional `ether doctor`
-4. writes `memory/flywheel/latest.json` + appends history
-5. updates this `FLYWHEEL.md`
-6. with `--push` / `ETHER_FLYWHEEL_PUSH=1`: commits **only** flywheel artifacts and pushes
-
-## Safety
-- Never force-push
-- Only stages `FLYWHEEL.md` and `memory/flywheel/*`
-- Push is opt-in

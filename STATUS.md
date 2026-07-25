@@ -1,40 +1,26 @@
 # @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 16:10 (UTC-5)
+> **Last heartbeat**: 2026-07-25 16:15 (UTC-5)
 > **Agent state**: ACTIVE
-> **Overall**: **v0.2 + local flywheel**
+> **Overall**: **agentic flywheel gated by confidence + audit**
 
-## Progress
-
-| Layer | % |
-|-------|---|
-| Foundation | 100% |
-| Gems / pipeline | 100% (verified) |
-| v0.1.x | 100% |
-| v0.2 | ~40% |
-| **Flywheel** | **v1 shipped** |
-
-## New: local flywheel
-Autonomous pull → test → report → optional push loop for Windows PowerShell.
+## Flywheel policy
+- No timer-based blind push
+- Retries until confidence/audit pass (or max retries)
+- **Push blocked** unless:
+  - smoke + pytest pass
+  - sandbox exit 0
+  - audit approved
+  - confidence ≥ min (default 0.7)
 
 ```powershell
-cd C:\Users\Otcde\ETHER
 git pull origin main
-.\scripts\flywheel.ps1
-.\scripts\flywheel.ps1 -Push
-.\scripts\flywheel.ps1 -Loop 300 -Push
+.\scripts\flywheel.ps1 -Push -MinConfidence 0.7 -MaxRetries 3
 ```
 
-## Batch 21 highlights
-- Hardware-aware defaults (`qwen2.5-coder:3b`)
-- Sandbox retry
-- Confidence 1.0 on clean verified runs
-- LangGraph optional path
-- **Flywheel automation**
+## Stack verified
+- Nitro 5 · GTX 1650 4GB · `qwen2.5-coder:3b`
+- Pipeline confidence can hit 1.0 on clean runs
 
-## Still open (v0.2)
-- Citrine chunking
-- Multi-file context
-- Benchmark harness
-- Streaming tokens
-- Promote approval UX
+## v0.2 open
+- Citrine chunking · multi-file context · benchmarks · streaming · promote UX

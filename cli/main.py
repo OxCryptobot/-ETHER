@@ -17,6 +17,14 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
+# Auto-load .env so no manual $env: sets are required
+try:
+    from core.dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    pass
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -44,15 +52,13 @@ def _safe(text: str) -> str:
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.1")
     if verbose:
-        console.print("Pipeline: plan → code → sandbox → audit (+ optional critique)")
-        console.print("Gems: 8  |  Flywheel: confidence-gated")
+        console.print("Autonomous flywheel: ether flywheel --autonomous")
 
 
 @app.command()
 def which() -> None:
     console.print(f"python: {sys.executable}")
     console.print(f"cwd: {Path.cwd()}")
-    console.print(f"manifest: {Path('config/manifest.yaml').resolve()}")
 
 
 @app.command()
@@ -60,11 +66,11 @@ def env() -> None:
     for k in [
         "OLLAMA_BASE_URL",
         "ETHER_PRIMARY_MODEL",
-        "ETHER_EMBED_MODEL",
-        "ETHER_SANDBOX_TIMEOUT",
         "ETHER_SANDBOX_RETRY",
+        "ETHER_FLYWHEEL_PUSH",
         "ETHER_FLYWHEEL_MIN_CONFIDENCE",
         "ETHER_FLYWHEEL_MAX_RETRIES",
+        "ETHER_FLYWHEEL_INTERVAL",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
@@ -179,18 +185,24 @@ def run(
 
 @app.command()
 def flywheel(
-    push: bool = typer.Option(False, "--push", help="Push ONLY if gates pass"),
-    status: bool = typer.Option(False, "--status", help="Show last flywheel report"),
+    push: bool = typer.Option(False, "--push"),
+    status: bool = typer.Option(False, "--status"),
+    autonomous: bool = typer.Option(False, "--autonomous", help="Hands-off continuous gated loop"),
     min_confidence: float = typer.Option(0.7, "--min-confidence"),
     max_retries: int = typer.Option(3, "--max-retries"),
+    interval: int = typer.Option(900, "--interval", help="Seconds between autonomous cycles"),
     no_doctor: bool = typer.Option(False, "--no-doctor"),
 ) -> None:
-    """Agentic pull → test → pipeline confidence gate → optional push."""
+    """Autonomous pull → test → confidence gate → optional push."""
     from scripts.flywheel import main as flywheel_main
 
     argv: list[str] = []
     if status:
         argv.append("--status")
+    elif autonomous:
+        argv.extend(["--autonomous", "--interval", str(interval), "--min-confidence", str(min_confidence), "--max-retries", str(max_retries)])
+        if no_doctor:
+            argv.append("--no-doctor")
     else:
         argv.extend(["--min-confidence", str(min_confidence), "--max-retries", str(max_retries)])
         if push:

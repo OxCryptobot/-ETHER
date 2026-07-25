@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
-"""@ETHER agentic flywheel
+"""@ETHER agentic flywheel — synergistic with Pipeline + confidence gates.
 
-Gates:
-  - smoke + pytest must pass
-  - ether pipeline must produce audit.approved == True
-  - confidence >= ETHER_FLYWHEEL_MIN_CONFIDENCE (default 0.7)
+Push only when:
+  smoke + pytest pass
+  sandbox exit == 0
+  audit.approved
+  confidence >= min threshold
 
-If confidence/audit fail → retry pipeline (self-heal) up to N times.
-Push is allowed ONLY when all gates pass.
-
-Usage:
-  python scripts/flywheel.py
-  python scripts/flywheel.py --push
-  python scripts/flywheel.py --push --min-confidence 0.8 --max-retries 3
+Otherwise retry agentic pipeline until max retries, then block push.
 """
 
 from __future__ import annotations
@@ -28,6 +23,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 REPORT_DIR = ROOT / "memory" / "flywheel"
 REPORT_PATH = REPORT_DIR / "latest.json"
 HISTORY_PATH = REPORT_DIR / "history.jsonl"
@@ -39,11 +37,17 @@ DEFAULT_OBJECTIVE = (
 )
 
 
-def run(cmd: List[str], timeout: int = 600, env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+def _env() -> Dict[str, str]:
+    env = os.environ.copy()
+    # ensure editable package + repo imports resolve in child processes
+    pp = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(ROOT) + (os.pathsep + pp if pp else "")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    return env
+
+
+def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
     started = time.perf_counter()
-    merged = os.environ.copy()
-    if env:
-        merged.update(env)
     try:
         p = subprocess.run(
             cmd,
@@ -51,12 +55,12 @@ def run(cmd: List[str], timeout: int = 600, env: Optional[Dict[str, str]] = None
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=merged,
+            env=_env(),
         )
         return {
             "cmd": cmd,
             "returncode": p.returncode,
-            "stdout": (p.stdout or "")[-6000:],
+            "stdout": (p.stdout or "")[-8000:],
             "stderr": (p.stderr or "")[-4000:],
             "duration_s": round(time.perf_counter() - started, 3),
             "ok": p.returncode == 0,
@@ -81,15 +85,25 @@ def run(cmd: List[str], timeout: int = 600, env: Optional[Dict[str, str]] = None
         }
 
 
-def git(*args: str, timeout: int = 120) -> Dict[str, Any]:
-    return run(["git", *args], timeout=timeout)
+def git(*args: str) -> Dict[str, Any]:
+    return run(["git", *args], timeout=120)
+
+
+def print_step(name: str, data: Dict[str, Any]) -> None:
+    flag = "OK" if data.get("ok") else "FAIL"
+    print(f"  [{flag}] {name} ({data.get('duration_s', 0)}s)")
+    if not data.get("ok"):
+        err = (data.get("stderr") or data.get("stdout") or "").strip()
+        if err:
+            print("    ---")
+            for line in err.splitlines()[-20:]:
+                print(f"    {line}")
+            print("    ---")
 
 
 def run_pipeline_once(objective: str) -> Dict[str, Any]:
-    """Run in-process pipeline for confidence/audit gates."""
     started = time.perf_counter()
     try:
-        sys.path.insert(0, str(ROOT))
         from core.pipeline import Pipeline
 
         result = Pipeline().run(objective, critique=False)
@@ -121,12 +135,7 @@ def run_pipeline_once(objective: str) -> Dict[str, Any]:
         }
 
 
-def agentic_verify(
-    objective: str,
-    min_confidence: float,
-    max_retries: int,
-) -> Dict[str, Any]:
-    """Retry pipeline until confidence + audit gates pass or attempts exhausted."""
+def agentic_verify(objective: str, min_confidence: float, max_retries: int) -> Dict[str, Any]:
     attempts: List[Dict[str, Any]] = []
     best: Optional[Dict[str, Any]] = None
 
@@ -134,11 +143,6 @@ def agentic_verify(
         print(f"  [agentic] attempt {i}/{max_retries} ...")
         r = run_pipeline_once(objective)
         r["attempt"] = i
-        attempts.append(r)
-
-        if best is None or r["confidence"] > best["confidence"]:
-            best = r
-
         gate = (
             r.get("status") == "complete"
             and r.get("sandbox_exit") == 0
@@ -146,18 +150,15 @@ def agentic_verify(
             and float(r.get("confidence") or 0.0) >= min_confidence
         )
         r["gate_pass"] = gate
+        attempts.append(r)
+        if best is None or r["confidence"] > best["confidence"]:
+            best = r
         print(
             f"  [agentic] conf={r['confidence']:.3f} audit={r['audit_approved']} "
             f"sandbox={r['sandbox_exit']} gate={'PASS' if gate else 'FAIL'}"
         )
         if gate:
-            return {
-                "ok": True,
-                "attempts": attempts,
-                "final": r,
-                "best": best,
-                "reason": "gates_passed",
-            }
+            return {"ok": True, "attempts": attempts, "final": r, "best": best, "reason": "gates_passed"}
 
     return {
         "ok": False,
@@ -179,20 +180,22 @@ def cycle(
     ts = datetime.now(timezone.utc).isoformat()
     steps: Dict[str, Any] = {}
 
-    # 1) pull latest code
     steps["pull"] = git("pull", "--ff-only", "origin", "main")
+    print_step("pull", steps["pull"])
 
-    # 2) static quality gates
     py = sys.executable
     steps["smoke"] = run([py, "scripts/smoke_test.py"], timeout=120)
+    print_step("smoke", steps["smoke"])
+
     steps["pytest"] = run([py, "-m", "pytest", "-q", "--tb=line"], timeout=300)
+    print_step("pytest", steps["pytest"])
+
     if run_doctor:
         steps["doctor"] = run([py, "-c", "from cli.main import app; app(['doctor'])"], timeout=60)
+        print_step("doctor", steps["doctor"])
 
     static_ok = steps["smoke"]["ok"] and steps["pytest"]["ok"]
 
-    # 3) agentic confidence gate (only if static ok)
-    agentic: Dict[str, Any]
     if not static_ok:
         agentic = {
             "ok": False,
@@ -201,16 +204,13 @@ def cycle(
             "final": None,
             "best": None,
         }
-        print("  [agentic] skipped — smoke/pytest failed")
+        print("  [agentic] skipped — fix smoke/pytest first")
     else:
         agentic = agentic_verify(objective, min_confidence=min_confidence, max_retries=max_retries)
 
     gates_pass = static_ok and agentic["ok"]
-    conf = 0.0
-    audit = False
-    if agentic.get("final"):
-        conf = float(agentic["final"].get("confidence") or 0.0)
-        audit = bool(agentic["final"].get("audit_approved"))
+    conf = float((agentic.get("final") or {}).get("confidence") or 0.0)
+    audit = bool((agentic.get("final") or {}).get("audit_approved"))
 
     report: Dict[str, Any] = {
         "timestamp": ts,
@@ -232,7 +232,8 @@ def cycle(
                 "ok": data["ok"],
                 "returncode": data["returncode"],
                 "duration_s": data["duration_s"],
-                "stderr_tail": (data.get("stderr") or "")[-400:],
+                "stderr_tail": (data.get("stderr") or "")[-500:],
+                "stdout_tail": (data.get("stdout") or "")[-500:],
             }
             for name, data in steps.items()
         },
@@ -259,52 +260,21 @@ def cycle(
     with HISTORY_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(report) + "\n")
 
-    # markdown dashboard
     lines = [
         "# @ETHER Flywheel (agentic)",
         "",
         f"> Last cycle: **{ts}**  ",
-        f"> Host: `{report['host']}`  ",
         f"> Result: **{'PASS — push allowed' if gates_pass else 'FAIL — push blocked'}**  ",
-        f"> Confidence: **{conf:.3f}** (min {min_confidence})  ",
-        f"> Audit approved: **{audit}**",
+        f"> Confidence: **{conf:.3f}** (min {min_confidence}) · Audit: **{audit}**",
         "",
-        "## Gates",
-        f"- static (smoke+pytest): {'PASS' if static_ok else 'FAIL'}",
-        f"- agentic (sandbox+audit+confidence): {'PASS' if agentic['ok'] else 'FAIL'} ({agentic.get('reason')})",
-        "",
-        "| Step | OK | Duration | Code |",
-        "|------|----|----------|------|",
+        "| Step | OK | Duration |",
+        "|------|----|----------|",
     ]
     for name, data in report["steps"].items():
-        lines.append(
-            f"| {name} | {'yes' if data['ok'] else 'NO'} | {data['duration_s']}s | {data['returncode']} |"
-        )
+        lines.append(f"| {name} | {'yes' if data['ok'] else 'NO'} | {data['duration_s']}s |")
     lines.append("")
-    lines.append("## Agentic attempts")
-    if report["agentic"]["attempts"]:
-        lines.append("| Attempt | Confidence | Audit | Sandbox | Gate |")
-        lines.append("|---------|------------|-------|---------|------|")
-        for a in report["agentic"]["attempts"]:
-            lines.append(
-                f"| {a['attempt']} | {a['confidence']:.3f} | {a['audit_approved']} | "
-                f"{a['sandbox_exit']} | {'PASS' if a.get('gate_pass') else 'FAIL'} |"
-            )
-    else:
-        lines.append("_No agentic attempts (static failed or skipped)._")
-    lines.extend(
-        [
-            "",
-            "## Policy",
-            "- **No push** unless static + agentic gates pass",
-            "- Agentic retries until confidence/audit met or max retries",
-            "- Only `FLYWHEEL.md` and `memory/flywheel/*` are committed",
-            "",
-        ]
-    )
     FLYWHEEL_MD.write_text("\n".join(lines), encoding="utf-8")
 
-    # 4) push ONLY if gates pass
     if do_push or os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1":
         if not gates_pass:
             report["pushed"] = False
@@ -321,49 +291,39 @@ def cycle(
                 if commit["ok"] or commit["returncode"] == 0:
                     push = git("push", "origin", "HEAD")
                     report["pushed"] = push["ok"]
-                    report["push_stderr"] = (push.get("stderr") or "")[-300:]
                     print(f"  [push] {'OK' if push['ok'] else 'FAILED'}")
                 else:
                     report["pushed"] = False
-                    report["push_stderr"] = (commit.get("stderr") or "")[-300:]
+                    print(f"  [push] commit failed: {(commit.get('stderr') or '')[-200:]}")
             else:
                 report["pushed"] = True
-                report["push_stderr"] = "nothing to commit"
                 print("  [push] nothing to commit")
         REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     return report
 
 
-def main() -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="@ETHER agentic flywheel")
-    parser.add_argument("--push", action="store_true", help="push ONLY if gates pass")
+    parser.add_argument("--push", action="store_true")
     parser.add_argument(
         "--min-confidence",
         type=float,
         default=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")),
-        help="minimum confidence to allow push (default 0.7)",
     )
     parser.add_argument(
         "--max-retries",
         type=int,
         default=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
-        help="agentic pipeline retries until gates pass",
     )
     parser.add_argument(
         "--objective",
         type=str,
         default=os.getenv("ETHER_FLYWHEEL_OBJECTIVE", DEFAULT_OBJECTIVE),
-        help="coding objective used for confidence gate",
     )
     parser.add_argument("--no-doctor", action="store_true")
-    parser.add_argument(
-        "--loop",
-        type=int,
-        default=0,
-        help="optional outer loop seconds (0=once). Still never pushes unless gates pass.",
-    )
-    args = parser.parse_args()
+    parser.add_argument("--loop", type=int, default=0)
+    args = parser.parse_args(argv)
 
     def once() -> int:
         report = cycle(
@@ -391,7 +351,7 @@ def main() -> int:
     if args.loop <= 0:
         return once()
 
-    print(f"Flywheel outer loop every {args.loop}s (push still gated). Ctrl+C to stop.")
+    print(f"Outer loop every {args.loop}s (push still gated). Ctrl+C to stop.")
     while True:
         code = once()
         print(f"--- sleep {args.loop}s (last exit={code}) ---")

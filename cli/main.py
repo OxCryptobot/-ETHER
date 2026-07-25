@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
-# Windows consoles often default to cp1252; force UTF-8 early.
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -36,7 +35,6 @@ console = Console(force_terminal=True, soft_wrap=True)
 
 
 def _safe(text: str) -> str:
-    """Strip/replace characters that still break some Windows terminals."""
     if text is None:
         return ""
     return text.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
@@ -60,7 +58,16 @@ def which() -> None:
 
 @app.command()
 def env() -> None:
-    for k in ["OLLAMA_BASE_URL", "QDRANT_URL", "ETHER_PRIMARY_MODEL", "ETHER_EMBED_MODEL", "ETHER_SANDBOX_TIMEOUT", "ETHER_LLM_PLAN"]:
+    for k in [
+        "OLLAMA_BASE_URL",
+        "QDRANT_URL",
+        "ETHER_PRIMARY_MODEL",
+        "ETHER_EMBED_MODEL",
+        "ETHER_SANDBOX_TIMEOUT",
+        "ETHER_LLM_PLAN",
+        "ETHER_FLYWHEEL_MIN_CONFIDENCE",
+        "ETHER_FLYWHEEL_MAX_RETRIES",
+    ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
 
@@ -176,8 +183,34 @@ def run(
     if result.critique:
         console.print(f"Critique: {_safe(result.critique.critique)}")
     for st in result.stages:
-        console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}")
+        console.print(
+            f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}"
+        )
     console.print(f"Confidence: {result.confidence:.3f}")
+
+
+@app.command()
+def flywheel(
+    push: bool = typer.Option(False, "--push", help="Push ONLY if confidence+audit gates pass"),
+    min_confidence: float = typer.Option(0.7, "--min-confidence"),
+    max_retries: int = typer.Option(3, "--max-retries"),
+    no_doctor: bool = typer.Option(False, "--no-doctor"),
+) -> None:
+    """Agentic pull → test → pipeline gate → optional push."""
+    from scripts.flywheel import main as flywheel_main
+
+    argv = [
+        "--min-confidence",
+        str(min_confidence),
+        "--max-retries",
+        str(max_retries),
+    ]
+    if push:
+        argv.append("--push")
+    if no_doctor:
+        argv.append("--no-doctor")
+    code = flywheel_main(argv)
+    raise typer.Exit(code)
 
 
 @app.command()

@@ -1,26 +1,25 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 11:50 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 11:55 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: **~97.5%**
+> **Overall**: **~98%**
 
-## Batches 1–14 complete
+## Batches 1–15 complete
 
-## Batch 14 delivered
-- docs/cli.md command list
-- `.gitattributes`
-- `make doctor`
-- release checklist for v0.1.1
-- Clear Quartz syntax error detail
+## Batch 15 delivered
+- Pipeline plan-failure test
+- `core/paths.py`
+- CONTRIBUTING tests section
+- README → docs/cli.md
 
-## Next 10 (batch 15)
+## Next 10 (batch 16)
 1. Optional LLM-assisted Selenite plan
-2. LangGraph draft node implementation start
-3. More pipeline edge-case tests
-4. Path normalization for Windows search results
-5. README link to docs/cli.md
-6. Ensure package imports work from installed wheel assumptions
-7. Add `ether --help` polish notes
-8. Minor Amethyst log rotation note
-9. Add CONTRIBUTING test section
-10. Keep pushing depth on planner quality
+2. LangGraph draft node body
+3. Use as_posix in search display
+4. Amethyst log retention note
+5. More edge tests (code stage failure)
+6. docs polish pass
+7. Ensure smoke + unit tests stay green conceptually
+8. Minor registry error surface
+9. Add example env for DeepSeek fallback
+10. Continue v0.2 planner work

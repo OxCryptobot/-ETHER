@@ -1,9 +1,6 @@
 # Contributing to @ETHER
 
-## For collaborators (including Queensone)
-
-1. Accept the GitHub invite to the private repo
-2. Clone and setup:
+## Setup
 
 ```bash
 git clone https://github.com/OxCryptobot/-ETHER.git
@@ -13,27 +10,28 @@ pip install -e ".[dev]"
 cp .env.example .env
 ```
 
-3. Run smoke test (no Docker/Ollama needed):
+## Tests
 
 ```bash
-python scripts/smoke_test.py
-pytest
+python scripts/smoke_test.py   # no Docker/Ollama required
+pytest                         # unit + mocked integration
+make test
 ```
 
-4. Branch workflow:
+## Branch workflow
 
 ```bash
 git checkout -b feature/my-change
-# ... edit ...
+# edit
 git add -A && git commit -m "feat: ..."
 git push -u origin feature/my-change
 ```
 
-5. Open a PR against `main`.
+Open a PR against `main`.
 
 ## Architecture rules
 
-- All gem I/O goes through `Envelope` / `ResponseEnvelope`
-- No `Dict[str, Any]` as primary gem contracts
+- Gem I/O via `Envelope` / `ResponseEnvelope`
+- No untyped `Dict[str, Any]` as primary contracts
 - Sandbox is the real security boundary
-- Update `STATUS.md` when you complete a meaningful chunk of work
+- Update `STATUS.md` for meaningful progress

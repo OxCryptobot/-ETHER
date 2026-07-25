@@ -32,6 +32,8 @@ pytest
 python scripts/smoke_test.py
 ```
 
+Full command list: [docs/cli.md](docs/cli.md)
+
 ## Docs
 
 - [STATUS.md](STATUS.md)

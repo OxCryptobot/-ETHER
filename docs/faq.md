@@ -14,3 +14,10 @@ Generated tools land in quarantine until you run `ether promote`.
 
 **Can I run without Qdrant?**  
 Yes. Memory features degrade; planning/coding/sandbox still work.
+
+**How do I enable LLM-assisted planning?**  
+```bash
+export ETHER_LLM_PLAN=1
+ether plan "implement caching layer"
+```
+Falls back to rules if the model call fails.

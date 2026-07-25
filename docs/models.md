@@ -18,4 +18,5 @@ Configure via `.env`:
 ETHER_PRIMARY_MODEL=...
 ETHER_EMBED_MODEL=nomic-embed-text
 OLLAMA_BASE_URL=http://localhost:11434
+ETHER_LLM_PLAN=0   # set to 1 for LLM-assisted Selenite plans
 ```

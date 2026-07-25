@@ -18,6 +18,7 @@ from rich.syntax import Syntax
 from core.registry import build_default_registry
 from core.pipeline import Pipeline
 from core.config import load_config
+from core.paths import as_posix_str
 from core.schemas import Envelope, SeleniteRequest, BlackTourmalineRequest, CitrineRequest
 from cli.helpers import print_error, print_ok
 
@@ -93,7 +94,6 @@ def gems() -> None:
 
 @app.command()
 def ping() -> None:
-    """Ping each registered gem with a harmless request where possible."""
     reg = build_default_registry()
     for name in reg.list_gems():
         try:
@@ -155,7 +155,7 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
     files = [path] if path.is_file() else list(path.rglob("*.py"))
     for f in files:
         try:
-            docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": str(f)}})
+            docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}})
         except Exception:
             pass
     res = build_default_registry().execute(Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="add", collection=collection, documents=docs)))
@@ -170,7 +170,8 @@ def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     if res.error:
         print_error(res.error.message); raise typer.Exit(1)
     for r in res.payload.results:  # type: ignore
-        console.print(f"[{r.score:.3f}] {r.metadata.get('path', r.id)}\n  {r.text[:200]}\n")
+        path = as_posix_str(r.metadata.get("path", r.id))
+        console.print(f"[{r.score:.3f}] {path}\n  {r.text[:200]}\n")
 
 
 @app.command()

@@ -1,25 +1,25 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 11:55 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 12:00 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: **~98%**
+> **Overall**: **~98.5%**
 
-## Batches 1–15 complete
+## Batches 1–16 complete
 
-## Batch 15 delivered
-- Pipeline plan-failure test
-- `core/paths.py`
-- CONTRIBUTING tests section
-- README → docs/cli.md
+## Batch 16 delivered
+- Code-stage failure pipeline test
+- Search/index path posix normalization
+- Amethyst retention note
+- Env example clarifies fallback model
 
-## Next 10 (batch 16)
-1. Optional LLM-assisted Selenite plan
-2. LangGraph draft node body
-3. Use as_posix in search display
-4. Amethyst log retention note
-5. More edge tests (code stage failure)
-6. docs polish pass
-7. Ensure smoke + unit tests stay green conceptually
-8. Minor registry error surface
-9. Add example env for DeepSeek fallback
-10. Continue v0.2 planner work
+## Next 10 (batch 17)
+1. Optional LLM-assisted Selenite plan path
+2. Implement LangGraph draft node (partial)
+3. Registry missing-gem clearer error
+4. docs/changelog cross-links
+5. Add test for confidence security floor
+6. Minor README polish
+7. Ensure STATUS stays accurate
+8. Quarantine empty-state already done
+9. Prepare remaining v0.1.1 checklist items
+10. Keep advancing planner depth

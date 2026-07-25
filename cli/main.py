@@ -23,8 +23,11 @@ console = Console()
 
 
 @app.command()
-def version() -> None:
+def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.0")
+    if verbose:
+        console.print("Pipeline: plan → code → sandbox → audit (+ optional critique)")
+        console.print("Gems: 8  |  License: MIT")
 
 
 @app.command()
@@ -43,20 +46,15 @@ def status() -> None:
 
 @app.command()
 def doctor() -> None:
-    checks = [
+    for name, ok in [
         ("docker", shutil.which("docker") is not None),
         ("ollama", shutil.which("ollama") is not None),
-    ]
-    try:
-        load_config(); checks.append(("manifest", True))
-    except Exception:
-        checks.append(("manifest", False))
-    try:
-        build_default_registry(); checks.append(("registry", True))
-    except Exception:
-        checks.append(("registry", False))
-    for name, ok in checks:
+    ]:
         console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
+    try:
+        load_config(); console.print("  [green]✓[/] manifest")
+    except Exception:
+        console.print("  [red]✗[/] manifest")
 
 
 @app.command()
@@ -93,6 +91,8 @@ def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique
         console.print(f"Audit approved={result.audit.approved} risk={result.audit.risk_score}")
     if result.critique:
         console.print(f"Critique: {result.critique.critique}")
+    for st in result.stages:
+        console.print(f"  stage:{st.stage:10} ok={st.success} {st.detail}")
     console.print(f"Confidence: {result.confidence:.3f}")
 
 
@@ -147,16 +147,36 @@ def runs() -> None:
 
 
 @app.command()
-def promote(filename: str = typer.Argument(..., help="Filename inside tools/quarantine/")) -> None:
-    """Promote a quarantined tool to tools/persistent/."""
+def promote(filename: str) -> None:
     src = Path("tools/quarantine") / filename
-    dst_dir = Path("tools/persistent")
-    dst_dir.mkdir(parents=True, exist_ok=True)
+    dst_dir = Path("tools/persistent"); dst_dir.mkdir(parents=True, exist_ok=True)
     if not src.exists():
         console.print(f"[red]Not found:[/] {src}"); raise typer.Exit(1)
     dst = dst_dir / src.name
     dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
     console.print(f"[green]Promoted[/] {src} → {dst}")
+
+
+@app.command()
+def quarantine() -> None:
+    """List tools in quarantine."""
+    d = Path("tools/quarantine")
+    files = sorted(p for p in d.glob("*.py")) if d.exists() else []
+    if not files:
+        console.print("[dim]Quarantine empty.[/]"); return
+    for f in files:
+        console.print(f"  {f.name}")
+
+
+@app.command()
+def tools() -> None:
+    """List persistent tools."""
+    d = Path("tools/persistent")
+    files = sorted(p for p in d.glob("*.py")) if d.exists() else []
+    if not files:
+        console.print("[dim]No persistent tools.[/]"); return
+    for f in files:
+        console.print(f"  {f.name}")
 
 
 if __name__ == "__main__":

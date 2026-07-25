@@ -2,6 +2,8 @@
 
 Local-first, self-extending, verified agentic coding system.
 
+<!-- badges: add CI badges when public workflows exist -->
+
 ## Setup
 
 ```bash
@@ -16,6 +18,7 @@ Requires **Docker** + **Ollama** for the full pipeline. See [docs/models.md](doc
 
 ```bash
 ether doctor
+ether ping
 ether plan "add auth"
 ether run "write a function that reverses a string"
 ether run "..." --json --critique
@@ -31,10 +34,11 @@ python scripts/smoke_test.py
 
 ## Docs
 
-- [STATUS.md](STATUS.md) — live progress
+- [STATUS.md](STATUS.md)
 - [Architecture](docs/architecture.md)
 - [Threat model](docs/threat-model.md)
 - [Security policy](SECURITY.md)
+- [FAQ](docs/faq.md)
 - [v0.2 roadmap](docs/v0.2-roadmap.md)
 - [Contributing](CONTRIBUTING.md)
 

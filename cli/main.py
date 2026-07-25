@@ -19,6 +19,7 @@ from core.registry import build_default_registry
 from core.pipeline import Pipeline
 from core.config import load_config
 from core.schemas import Envelope, SeleniteRequest, BlackTourmalineRequest, CitrineRequest
+from cli.helpers import print_error, print_ok
 
 app = typer.Typer(name="ether", help="@ETHER", add_completion=False)
 console = Console()
@@ -42,24 +43,16 @@ def which() -> None:
 
 @app.command()
 def env() -> None:
-    """Print effective environment configuration."""
-    keys = [
-        "OLLAMA_BASE_URL",
-        "QDRANT_URL",
-        "ETHER_PRIMARY_MODEL",
-        "ETHER_EMBED_MODEL",
-        "ETHER_SANDBOX_TIMEOUT",
-    ]
-    for k in keys:
+    for k in ["OLLAMA_BASE_URL", "QDRANT_URL", "ETHER_PRIMARY_MODEL", "ETHER_EMBED_MODEL", "ETHER_SANDBOX_TIMEOUT"]:
         console.print(f"{k}={os.getenv(k, '')}")
 
 
 @app.command()
 def status() -> None:
     try:
-        load_config(); console.print("[green]manifest:[/] ok")
+        load_config(); print_ok("manifest: ok")
     except Exception as e:
-        console.print(f"[red]manifest:[/] {e}")
+        print_error(f"manifest: {e}")
     gems = build_default_registry().list_gems()
     table = Table(title="@ETHER")
     table.add_column("Gem"); table.add_column("Registered")
@@ -99,10 +92,22 @@ def gems() -> None:
 
 
 @app.command()
+def ping() -> None:
+    """Ping each registered gem with a harmless request where possible."""
+    reg = build_default_registry()
+    for name in reg.list_gems():
+        try:
+            reg.get(name)
+            console.print(f"  [green]✓[/] {name}")
+        except Exception as e:
+            console.print(f"  [red]✗[/] {name}: {e}")
+
+
+@app.command()
 def plan(prompt: str) -> None:
     res = build_default_registry().execute(Envelope(task_id=uuid4(), target_gem="selenite", payload=SeleniteRequest(user_query=prompt)))
     if res.error:
-        console.print(f"[red]{res.error.message}[/]"); return
+        print_error(res.error.message); return
     for s in res.payload.plan.steps:  # type: ignore
         console.print(f"  {s.id}. [{s.action}] {s.description}")
 
@@ -110,7 +115,7 @@ def plan(prompt: str) -> None:
 @app.command()
 def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique: bool = typer.Option(False, "--critique")) -> None:
     if not objective.strip():
-        console.print("[red]Objective cannot be empty.[/]"); raise typer.Exit(1)
+        print_error("Objective cannot be empty."); raise typer.Exit(1)
     result = Pipeline().run(objective, critique=critique)
     if json_out:
         console.print_json(result.model_dump_json()); raise typer.Exit(0 if result.status == "complete" else 1)
@@ -137,7 +142,7 @@ def audit(path: Path = typer.Argument(..., exists=True)) -> None:
     code = path.read_text(encoding="utf-8")
     res = build_default_registry().execute(Envelope(task_id=uuid4(), target_gem="black-tourmaline", payload=BlackTourmalineRequest(artifact=code)))
     if res.error:
-        console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
+        print_error(res.error.message); raise typer.Exit(1)
     p = res.payload
     console.print(f"approved={p.approved} risk={p.risk_score}")  # type: ignore
     for v in p.violations:  # type: ignore
@@ -155,15 +160,15 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
             pass
     res = build_default_registry().execute(Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="add", collection=collection, documents=docs)))
     if res.error:
-        console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
-    console.print(f"Indexed {len(docs)} docs")
+        print_error(res.error.message); raise typer.Exit(1)
+    print_ok(f"Indexed {len(docs)} docs")
 
 
 @app.command()
 def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     res = build_default_registry().execute(Envelope(task_id=uuid4(), target_gem="citrine", payload=CitrineRequest(action="search", query=query, collection=collection, top_k=top_k)))
     if res.error:
-        console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
+        print_error(res.error.message); raise typer.Exit(1)
     for r in res.payload.results:  # type: ignore
         console.print(f"[{r.score:.3f}] {r.metadata.get('path', r.id)}\n  {r.text[:200]}\n")
 
@@ -193,7 +198,7 @@ def clean_runs(force: bool = typer.Option(False, "--force")) -> None:
         return
     for f in files:
         f.unlink(missing_ok=True)
-    console.print(f"[green]Deleted {len(files)} runs.[/]")
+    print_ok(f"Deleted {len(files)} runs.")
 
 
 @app.command()
@@ -201,10 +206,10 @@ def promote(filename: str) -> None:
     src = Path("tools/quarantine") / filename
     dst_dir = Path("tools/persistent"); dst_dir.mkdir(parents=True, exist_ok=True)
     if not src.exists():
-        console.print(f"[red]Not found:[/] {src}"); raise typer.Exit(1)
+        print_error(f"Not found: {src}"); raise typer.Exit(1)
     dst = dst_dir / src.name
     dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
-    console.print(f"[green]Promoted[/] {src} → {dst}")
+    print_ok(f"Promoted {src} → {dst}")
 
 
 @app.command()

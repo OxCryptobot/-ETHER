@@ -1,25 +1,26 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 11:40 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 11:45 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: **~96%**
+> **Overall**: **~97%**
 
-## Batches 1–12 complete
+## Batches 1–13 complete
 
-## Batch 12 delivered
-- Clearer Rose Quartz model-not-found / Ollama errors
-- `ether env`
-- LangGraph Selenite skeleton (`gems/selenite/langgraph_skeleton.py`)
-- README links to security/roadmap/docs
+## Batch 13 delivered
+- docs/faq.md
+- Selenite plan unit test
+- `cli/helpers.py`
+- `ether ping`
+- README badge placeholder + FAQ link
 
-## Next 10 (batch 13)
-1. CLI helper module (reduce duplication)
-2. Integration test for Selenite plan path
-3. Optional LLM-assisted Selenite plan flag
-4. Search path normalization on Windows
-5. Gem health ping
-6. README badge placeholders
-7. Ensure smoke test still pure-python
-8. Add `docs/faq.md`
-9. Tidy pyproject scripts entry
-10. Begin implementing LangGraph draft node for Selenite
+## Next 10 (batch 14)
+1. Optional LLM-assisted Selenite plan flag
+2. Start filling LangGraph draft node
+3. Search path normalization
+4. More pipeline mocked edge-case tests
+5. Document `ether ping` in README (done)
+6. Add `make doctor` target
+7. Tighten Clear Quartz syntax error messaging
+8. Add `.gitattributes` for LF
+9. Snapshot current CLI command list in docs
+10. Prepare v0.1.1 release checklist

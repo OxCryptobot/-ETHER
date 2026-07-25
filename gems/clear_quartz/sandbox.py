@@ -21,8 +21,15 @@ from core.schemas import (
 
 
 class ClearQuartz:
+    """Docker-based sandbox.
+
+    Uses `docker run -i ... python -` and feeds code on stdin so Windows
+    does not need fragile bind-mount path translation.
+    """
+
     def __init__(self, work_dir: Optional[Path] = None):
-        self.work_dir = work_dir or Path("/tmp/ether-sandbox")
+        # kept for compatibility; not required for stdin mode
+        self.work_dir = work_dir or Path(tempfile.gettempdir()) / "ether-sandbox"
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
@@ -30,7 +37,11 @@ class ClearQuartz:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="clear-quartz",
-                error=GemError(type=GemErrorType.UNKNOWN, message="Invalid payload type for Clear Quartz", recoverable=False),
+                error=GemError(
+                    type=GemErrorType.UNKNOWN,
+                    message="Invalid payload type for Clear Quartz",
+                    recoverable=False,
+                ),
             )
 
         payload = request.payload
@@ -38,12 +49,7 @@ class ClearQuartz:
 
         try:
             security_flags = self._static_analysis(payload.code)
-
-            with tempfile.TemporaryDirectory(dir=self.work_dir) as tmp:
-                code_path = Path(tmp) / "code.py"
-                code_path.write_text(payload.code, encoding="utf-8")
-                result = self._run_docker(code_path, request.timeout_seconds)
-
+            result = self._run_docker(payload.code, request.timeout_seconds)
             execution_time = time.perf_counter() - start
             tests_passed, total_tests = self._count_tests(result.stdout, result.stderr)
 
@@ -105,18 +111,30 @@ class ClearQuartz:
             flags.append(f"syntax_error: line {getattr(e, 'lineno', '?')}: {e.msg}")
         return flags
 
-    def _run_docker(self, code_path: Path, timeout: int) -> subprocess.CompletedProcess:
+    def _run_docker(self, code: str, timeout: int) -> subprocess.CompletedProcess:
+        """Run code in Docker by feeding stdin (Windows-safe)."""
         cmd = [
-            "docker", "run", "--rm",
-            "--network", "none",
-            "--read-only",
-            "--memory", "512m",
-            "--cpus", "1",
-            "-v", f"{code_path}:/code.py:ro",
+            "docker",
+            "run",
+            "--rm",
+            "-i",
+            "--network",
+            "none",
+            "--memory",
+            "512m",
+            "--cpus",
+            "1",
             "python:3.12-slim",
-            "python", "/code.py",
+            "python",
+            "-",
         ]
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return subprocess.run(
+            cmd,
+            input=code,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
 
     def _count_tests(self, stdout: str, stderr: str) -> Tuple[int, int]:
         combined = stdout + "\n" + stderr

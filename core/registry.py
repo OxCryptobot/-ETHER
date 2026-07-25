@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, Type, Any, Callable
+from typing import Dict, Any
 
 from core.schemas import Envelope, ResponseEnvelope
 
 
 class GemRegistry:
-    """Simple in-process registry that maps gem names to executable instances."""
-
     def __init__(self):
         self._gems: Dict[str, Any] = {}
 
@@ -18,7 +16,8 @@ class GemRegistry:
 
     def get(self, name: str) -> Any:
         if name not in self._gems:
-            raise KeyError(f"Gem '{name}' is not registered")
+            known = ", ".join(sorted(self._gems)) or "<none>"
+            raise KeyError(f"Gem '{name}' is not registered. Known gems: {known}")
         return self._gems[name]
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
@@ -30,55 +29,21 @@ class GemRegistry:
 
 
 def build_default_registry() -> GemRegistry:
-    """Create and populate the default registry with all available gems."""
     registry = GemRegistry()
-
-    try:
-        from gems.clear_quartz import ClearQuartz
-        registry.register("clear-quartz", ClearQuartz())
-    except Exception:
-        pass
-
-    try:
-        from gems.rose_quartz import RoseQuartz
-        registry.register("rose-quartz", RoseQuartz())
-    except Exception:
-        pass
-
-    try:
-        from gems.citrine import Citrine
-        registry.register("citrine", Citrine())
-    except Exception:
-        pass
-
-    try:
-        from gems.selenite import Selenite
-        registry.register("selenite", Selenite())
-    except Exception:
-        pass
-
-    try:
-        from gems.amethyst import Amethyst
-        registry.register("amethyst", Amethyst())
-    except Exception:
-        pass
-
-    try:
-        from gems.black_tourmaline import BlackTourmaline
-        registry.register("black-tourmaline", BlackTourmaline())
-    except Exception:
-        pass
-
-    try:
-        from gems.labradorite import Labradorite
-        registry.register("labradorite", Labradorite())
-    except Exception:
-        pass
-
-    try:
-        from gems.grandidierite import Grandidierite
-        registry.register("grandidierite", Grandidierite())
-    except Exception:
-        pass
-
+    loaders = [
+        ("clear-quartz", "gems.clear_quartz", "ClearQuartz"),
+        ("rose-quartz", "gems.rose_quartz", "RoseQuartz"),
+        ("citrine", "gems.citrine", "Citrine"),
+        ("selenite", "gems.selenite", "Selenite"),
+        ("amethyst", "gems.amethyst", "Amethyst"),
+        ("black-tourmaline", "gems.black_tourmaline", "BlackTourmaline"),
+        ("labradorite", "gems.labradorite", "Labradorite"),
+        ("grandidierite", "gems.grandidierite", "Grandidierite"),
+    ]
+    for name, module_name, cls_name in loaders:
+        try:
+            mod = __import__(module_name, fromlist=[cls_name])
+            registry.register(name, getattr(mod, cls_name)())
+        except Exception:
+            pass
     return registry

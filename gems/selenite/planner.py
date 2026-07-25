@@ -54,7 +54,6 @@ class Selenite:
             )
 
     def _llm_plan(self, query: str, max_depth: int) -> ExecutionPlan | None:
-        """Best-effort LLM plan sketch; falls back silently."""
         try:
             from gems.rose_quartz import RoseQuartz
             from uuid import uuid4
@@ -74,15 +73,21 @@ class Selenite:
                 return None
             text = getattr(res.payload, "content", "")
             steps: List[PlanStep] = []
-            for i, line in enumerate(text.splitlines(), start=1):
-                line = line.strip(" -	")
+            for line in text.splitlines():
+                line = line.strip(" -\t")
                 if not line:
                     continue
-                # strip leading numbers
                 while line and (line[0].isdigit() or line[0] in ".):"):
                     line = line[1:].strip()
                 if line:
-                    steps.append(PlanStep(id=len(steps)+1, action="step", target="code", description=line[:200]))
+                    steps.append(
+                        PlanStep(
+                            id=len(steps) + 1,
+                            action="step",
+                            target="code",
+                            description=line[:200],
+                        )
+                    )
                 if len(steps) >= max_depth:
                     break
             if not steps:
@@ -95,34 +100,34 @@ class Selenite:
         q = query.lower()
         if any(w in q for w in ["refactor", "restructure", "clean up"]):
             steps = [
-                PlanStep(1, "analyze", "codebase", [], "Map current structure and dependencies"),
-                PlanStep(2, "design", "target_structure", [1], "Design improved structure"),
-                PlanStep(3, "migrate", "code", [2], "Apply refactoring changes"),
-                PlanStep(4, "test", "sandbox", [3], "Verify behavior unchanged"),
-                PlanStep(5, "validate", "security", [4], "Security and quality audit"),
+                PlanStep(id=1, action="analyze", target="codebase", description="Map current structure and dependencies"),
+                PlanStep(id=2, action="design", target="target_structure", deps=[1], description="Design improved structure"),
+                PlanStep(id=3, action="migrate", target="code", deps=[2], description="Apply refactoring changes"),
+                PlanStep(id=4, action="test", target="sandbox", deps=[3], description="Verify behavior unchanged"),
+                PlanStep(id=5, action="validate", target="security", deps=[4], description="Security and quality audit"),
             ]
         elif any(w in q for w in ["add", "implement", "create", "write", "build", "make"]):
             steps = [
-                PlanStep(1, "analyze", "codebase", [], "Understand current structure"),
-                PlanStep(2, "generate", "code", [1], "Generate the required code"),
-                PlanStep(3, "test", "sandbox", [2], "Run in Clear Quartz sandbox"),
-                PlanStep(4, "validate", "security", [3], "Security and quality check"),
+                PlanStep(id=1, action="analyze", target="codebase", description="Understand current structure"),
+                PlanStep(id=2, action="generate", target="code", deps=[1], description="Generate the required code"),
+                PlanStep(id=3, action="test", target="sandbox", deps=[2], description="Run in Clear Quartz sandbox"),
+                PlanStep(id=4, action="validate", target="security", deps=[3], description="Security and quality check"),
             ]
         elif any(w in q for w in ["fix", "debug", "error", "bug", "broken"]):
             steps = [
-                PlanStep(1, "reproduce", "error", [], "Reproduce the issue"),
-                PlanStep(2, "diagnose", "root_cause", [1], "Find root cause"),
-                PlanStep(3, "fix", "code", [2], "Apply fix"),
-                PlanStep(4, "test", "sandbox", [3], "Verify fix in sandbox"),
+                PlanStep(id=1, action="reproduce", target="error", description="Reproduce the issue"),
+                PlanStep(id=2, action="diagnose", target="root_cause", deps=[1], description="Find root cause"),
+                PlanStep(id=3, action="fix", target="code", deps=[2], description="Apply fix"),
+                PlanStep(id=4, action="test", target="sandbox", deps=[3], description="Verify fix in sandbox"),
             ]
         elif any(w in q for w in ["explain", "what", "how", "document"]):
             steps = [
-                PlanStep(1, "retrieve", "context", [], "Gather relevant code/docs"),
-                PlanStep(2, "synthesize", "explanation", [1], "Produce clear explanation"),
+                PlanStep(id=1, action="retrieve", target="context", description="Gather relevant code/docs"),
+                PlanStep(id=2, action="synthesize", target="explanation", deps=[1], description="Produce clear explanation"),
             ]
         else:
             steps = [
-                PlanStep(1, "understand", "request", [], "Parse user intent"),
-                PlanStep(2, "respond", "user", [1], "Generate response"),
+                PlanStep(id=1, action="understand", target="request", description="Parse user intent"),
+                PlanStep(id=2, action="respond", target="user", deps=[1], description="Generate response"),
             ]
         return ExecutionPlan(steps=steps[:max_depth], reasoning=f"Plan for: {query[:120]}")

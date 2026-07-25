@@ -67,6 +67,6 @@
 
 ## How to stay updated
 
-- **Refresh this file**: `STATUS.md`
-- **Local live view**: run `python scripts/status_watch.py`
+- **Refresh this file**: https://github.com/OxCryptobot/-ETHER/blob/main/STATUS.md
+- **Local**: `python scripts/status_watch.py`
 - **CLI**: `ether status`

@@ -22,8 +22,10 @@ from core.schemas import (
 class Selenite:
     """Hierarchical planner.
 
-    Default: fast rule-based plans.
-    Optional: set ETHER_LLM_PLAN=1 to ask Rose Quartz for a plan sketch.
+    Order of preference:
+    1. LangGraph path when ETHER_LANGGRAPH=1 (optional)
+    2. LLM-assisted plan when ETHER_LLM_PLAN=1
+    3. Fast rule-based plans (default)
     """
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
@@ -36,9 +38,20 @@ class Selenite:
                 user_query = data.get("user_query", str(request.payload))
                 max_depth = data.get("max_plan_depth", 5)
 
-            if os.getenv("ETHER_LLM_PLAN", "0") == "1":
-                plan = self._llm_plan(user_query, max_depth) or self._create_plan(user_query, max_depth)
-            else:
+            plan: ExecutionPlan | None = None
+
+            if os.getenv("ETHER_LANGGRAPH", "0") == "1":
+                try:
+                    from gems.selenite.graph import build_plan_with_graph
+
+                    plan = build_plan_with_graph(user_query, max_depth)
+                except Exception:
+                    plan = None
+
+            if plan is None and os.getenv("ETHER_LLM_PLAN", "0") == "1":
+                plan = self._llm_plan(user_query, max_depth)
+
+            if plan is None:
                 plan = self._create_plan(user_query, max_depth)
 
             return ResponseEnvelope(
@@ -97,37 +110,18 @@ class Selenite:
             return None
 
     def _create_plan(self, query: str, max_depth: int) -> ExecutionPlan:
-        q = query.lower()
-        if any(w in q for w in ["refactor", "restructure", "clean up"]):
-            steps = [
-                PlanStep(id=1, action="analyze", target="codebase", description="Map current structure and dependencies"),
-                PlanStep(id=2, action="design", target="target_structure", deps=[1], description="Design improved structure"),
-                PlanStep(id=3, action="migrate", target="code", deps=[2], description="Apply refactoring changes"),
-                PlanStep(id=4, action="test", target="sandbox", deps=[3], description="Verify behavior unchanged"),
-                PlanStep(id=5, action="validate", target="security", deps=[4], description="Security and quality audit"),
-            ]
-        elif any(w in q for w in ["add", "implement", "create", "write", "build", "make"]):
-            steps = [
-                PlanStep(id=1, action="analyze", target="codebase", description="Understand current structure"),
-                PlanStep(id=2, action="generate", target="code", deps=[1], description="Generate the required code"),
-                PlanStep(id=3, action="test", target="sandbox", deps=[2], description="Run in Clear Quartz sandbox"),
-                PlanStep(id=4, action="validate", target="security", deps=[3], description="Security and quality check"),
-            ]
-        elif any(w in q for w in ["fix", "debug", "error", "bug", "broken"]):
-            steps = [
-                PlanStep(id=1, action="reproduce", target="error", description="Reproduce the issue"),
-                PlanStep(id=2, action="diagnose", target="root_cause", deps=[1], description="Find root cause"),
-                PlanStep(id=3, action="fix", target="code", deps=[2], description="Apply fix"),
-                PlanStep(id=4, action="test", target="sandbox", deps=[3], description="Verify fix in sandbox"),
-            ]
-        elif any(w in q for w in ["explain", "what", "how", "document"]):
-            steps = [
-                PlanStep(id=1, action="retrieve", target="context", description="Gather relevant code/docs"),
-                PlanStep(id=2, action="synthesize", target="explanation", deps=[1], description="Produce clear explanation"),
-            ]
-        else:
-            steps = [
-                PlanStep(id=1, action="understand", target="request", description="Parse user intent"),
-                PlanStep(id=2, action="respond", target="user", deps=[1], description="Generate response"),
-            ]
+        # Prefer shared graph catalog when available (no LangGraph runtime required)
+        try:
+            from gems.selenite.graph import _classify_intent, _steps_for_intent
+
+            intent = _classify_intent(query)
+            steps = _steps_for_intent(intent, max_depth)
+            return ExecutionPlan(steps=steps, reasoning=f"Rule plan intent={intent}: {query[:100]}")
+        except Exception:
+            pass
+
+        steps = [
+            PlanStep(id=1, action="understand", target="request", description="Parse user intent"),
+            PlanStep(id=2, action="respond", target="user", deps=[1], description="Generate response"),
+        ]
         return ExecutionPlan(steps=steps[:max_depth], reasoning=f"Plan for: {query[:120]}")

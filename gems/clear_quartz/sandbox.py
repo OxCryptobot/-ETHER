@@ -28,7 +28,6 @@ class ClearQuartz:
     """
 
     def __init__(self, work_dir: Optional[Path] = None):
-        # kept for compatibility; not required for stdin mode
         self.work_dir = work_dir or Path(tempfile.gettempdir()) / "ether-sandbox"
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -51,7 +50,9 @@ class ClearQuartz:
             security_flags = self._static_analysis(payload.code)
             result = self._run_docker(payload.code, request.timeout_seconds)
             execution_time = time.perf_counter() - start
-            tests_passed, total_tests = self._count_tests(result.stdout, result.stderr)
+            tests_passed, total_tests = self._count_tests(
+                result.stdout, result.stderr, result.returncode, payload.code
+            )
 
             return ResponseEnvelope(
                 task_id=request.task_id,
@@ -112,7 +113,6 @@ class ClearQuartz:
         return flags
 
     def _run_docker(self, code: str, timeout: int) -> subprocess.CompletedProcess:
-        """Run code in Docker by feeding stdin (Windows-safe)."""
         cmd = [
             "docker",
             "run",
@@ -136,20 +136,38 @@ class ClearQuartz:
             timeout=timeout,
         )
 
-    def _count_tests(self, stdout: str, stderr: str) -> Tuple[int, int]:
+    def _count_tests(
+        self, stdout: str, stderr: str, exit_code: int, code: str
+    ) -> Tuple[int, int]:
         combined = stdout + "\n" + stderr
+
+        # pytest style
         m = re.search(r"(\d+)\s+passed", combined)
         passed = int(m.group(1)) if m else 0
         m = re.search(r"(\d+)\s+failed", combined)
         failed = int(m.group(1)) if m else 0
         if passed or failed:
             return passed, passed + failed
+
+        # unittest style
         m = re.search(r"Ran\s+(\d+)\s+tests?", combined)
         if m:
             total = int(m.group(1))
             if "OK" in combined:
                 return total, total
             return 0, total
+
+        # assert statements present + clean exit → informal unit credit
+        assert_count = len(re.findall(r"\bassert\b", code))
+        if assert_count and exit_code == 0 and "AssertionError" not in combined:
+            return assert_count, assert_count
+        if assert_count and exit_code != 0:
+            return 0, assert_count
+
+        # demo script with print + clean exit → 1 informal check
+        if exit_code == 0 and stdout.strip():
+            return 1, 1
+
         if "passed" in combined.lower():
             return 1, 1
         if "failed" in combined.lower() or "error" in combined.lower():

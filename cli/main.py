@@ -45,13 +45,28 @@ def status() -> None:
 
 
 @app.command()
-def doctor() -> None:
-    for name, ok in [("docker", shutil.which("docker") is not None), ("ollama", shutil.which("ollama") is not None)]:
-        console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
+def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
+    checks = {
+        "docker": shutil.which("docker") is not None,
+        "ollama": shutil.which("ollama") is not None,
+        "manifest": True,
+        "registry": True,
+    }
     try:
-        load_config(); console.print("  [green]✓[/] manifest")
+        load_config()
     except Exception:
-        console.print("  [red]✗[/] manifest")
+        checks["manifest"] = False
+    try:
+        build_default_registry()
+    except Exception:
+        checks["registry"] = False
+
+    if json_out:
+        console.print_json(json.dumps(checks))
+        raise typer.Exit(0 if all(checks.values()) else 1)
+
+    for name, ok in checks.items():
+        console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
 
 
 @app.command()
@@ -72,6 +87,9 @@ def plan(prompt: str) -> None:
 
 @app.command()
 def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique: bool = typer.Option(False, "--critique")) -> None:
+    if not objective.strip():
+        console.print("[red]Objective cannot be empty.[/]")
+        raise typer.Exit(1)
     result = Pipeline().run(objective, critique=critique)
     if json_out:
         console.print_json(result.model_dump_json()); raise typer.Exit(0 if result.status == "complete" else 1)
@@ -126,7 +144,8 @@ def search(query: str, collection: str = "code", top_k: int = 5) -> None:
     if res.error:
         console.print(f"[red]{res.error.message}[/]"); raise typer.Exit(1)
     for r in res.payload.results:  # type: ignore
-        console.print(f"[{r.score:.3f}] {r.metadata.get('path', r.id)}\n  {r.text[:200]}\n")
+        path = r.metadata.get("path", r.id)
+        console.print(f"[{r.score:.3f}] {path}\n  {r.text[:200]}\n")
 
 
 @app.command()
@@ -144,7 +163,7 @@ def runs() -> None:
 
 
 @app.command("clean-runs")
-def clean_runs(force: bool = typer.Option(False, "--force", help="Delete without confirmation")) -> None:
+def clean_runs(force: bool = typer.Option(False, "--force")) -> None:
     runs_dir = Path("memory/runs")
     files = list(runs_dir.glob("*.json")) if runs_dir.exists() else []
     if not files:

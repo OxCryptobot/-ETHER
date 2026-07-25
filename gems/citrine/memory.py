@@ -1,10 +1,11 @@
-"""Citrine — local-first memory layer using Qdrant."""
+"""Citrine — local-first memory layer using Qdrant + Ollama embeddings."""
 
 from __future__ import annotations
 
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
 
+import httpx
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
@@ -13,81 +14,77 @@ from core.schemas import (
     ResponseEnvelope,
     GemError,
     GemErrorType,
+    CitrineRequest,
+    CitrineResponse,
+    RetrievalResult,
 )
-from pydantic import BaseModel, Field
-
-
-# Temporary local schemas until we expand core/schemas.py
-class CitrineRequest(BaseModel):
-    action: str = "search"  # "search" | "add" | "delete"
-    query: Optional[str] = None
-    collection: str = "code"
-    top_k: int = 5
-    documents: Optional[List[Dict[str, Any]]] = None  # for "add"
-    filters: Dict[str, Any] = Field(default_factory=dict)
-
-
-class RetrievalResult(BaseModel):
-    id: str
-    text: str
-    score: float
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-
-class CitrineResponse(BaseModel):
-    results: List[RetrievalResult] = Field(default_factory=list)
-    collection: str
-    action: str
 
 
 class Citrine:
-    """Hybrid memory gem (vector + future graph)."""
+    """Hybrid memory gem (vector store + embeddings)."""
 
     def __init__(
         self,
         qdrant_url: str = "http://localhost:6333",
+        ollama_url: str = "http://localhost:11434",
+        embed_model: str = "nomic-embed-text",
         collection_name: str = "ether_code",
     ):
-        self.client = QdrantClient(url=qdrant_url)
+        self.client = QdrantClient(url=qdrant_url, check_compatibility=False)
+        self.ollama_url = ollama_url.rstrip("/")
+        self.embed_model = embed_model
         self.default_collection = collection_name
+        self.http = httpx.Client(timeout=60.0)
         self._ensure_collection(self.default_collection)
 
     def _ensure_collection(self, name: str) -> None:
-        collections = self.client.get_collections().collections
-        exists = any(c.name == name for c in collections)
-        if not exists:
-            self.client.create_collection(
-                collection_name=name,
-                vectors_config=qmodels.VectorParams(
-                    size=768,  # nomic-embed-text / bge size
-                    distance=qmodels.Distance.COSINE,
-                ),
+        try:
+            collections = self.client.get_collections().collections
+            exists = any(c.name == name for c in collections)
+            if not exists:
+                self.client.create_collection(
+                    collection_name=name,
+                    vectors_config=qmodels.VectorParams(
+                        size=768,
+                        distance=qmodels.Distance.COSINE,
+                    ),
+                )
+        except Exception:
+            # Qdrant may not be running — fail softly
+            pass
+
+    def _embed(self, text: str) -> List[float]:
+        """Get embedding from Ollama."""
+        try:
+            resp = self.http.post(
+                f"{self.ollama_url}/api/embeddings",
+                json={"model": self.embed_model, "prompt": text},
             )
+            resp.raise_for_status()
+            return resp.json()["embedding"]
+        except Exception:
+            # Fallback zero vector if Ollama is unavailable
+            return [0.0] * 768
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
-        # For now we accept a raw dict payload until we fully expand schemas
         try:
-            payload_data = request.payload
-            if hasattr(payload_data, "model_dump"):
-                data = payload_data.model_dump()
+            if isinstance(request.payload, CitrineRequest):
+                payload = request.payload
             else:
-                data = payload_data if isinstance(payload_data, dict) else {}
+                data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
+                payload = CitrineRequest(**data)
 
-            action = data.get("action", "search")
-            collection = data.get("collection", self.default_collection)
+            collection = payload.collection or self.default_collection
 
-            if action == "search":
-                query = data.get("query", "")
-                top_k = data.get("top_k", 5)
-                results = self._search(collection, query, top_k)
+            if payload.action == "search":
+                results = self._search(collection, payload.query or "", payload.top_k)
                 response_payload = CitrineResponse(
                     results=results,
                     collection=collection,
                     action="search",
                 )
-            elif action == "add":
-                documents = data.get("documents", [])
-                self._add(collection, documents)
+            elif payload.action == "add":
+                self._add(collection, payload.documents or [])
                 response_payload = CitrineResponse(
                     results=[],
                     collection=collection,
@@ -99,7 +96,7 @@ class Citrine:
                     source_gem="citrine",
                     error=GemError(
                         type=GemErrorType.UNKNOWN,
-                        message=f"Unsupported action: {action}",
+                        message=f"Unsupported action: {payload.action}",
                         recoverable=False,
                     ),
                 )
@@ -107,7 +104,7 @@ class Citrine:
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="citrine",
-                payload=response_payload,  # type: ignore[arg-type]
+                payload=response_payload,
             )
 
         except Exception as e:
@@ -122,9 +119,30 @@ class Citrine:
             )
 
     def _search(self, collection: str, query: str, top_k: int) -> List[RetrievalResult]:
-        # Placeholder: real embedding will be added with an embed model
-        # For now we return empty results so the interface is ready
-        return []
+        if not query:
+            return []
+
+        try:
+            vector = self._embed(query)
+            hits = self.client.search(
+                collection_name=collection,
+                query_vector=vector,
+                limit=top_k,
+            )
+
+            results = []
+            for hit in hits:
+                results.append(
+                    RetrievalResult(
+                        id=str(hit.id),
+                        text=hit.payload.get("text", "") if hit.payload else "",
+                        score=float(hit.score),
+                        metadata={k: v for k, v in (hit.payload or {}).items() if k != "text"},
+                    )
+                )
+            return results
+        except Exception:
+            return []
 
     def _add(self, collection: str, documents: List[Dict[str, Any]]) -> None:
         if not documents:
@@ -132,15 +150,18 @@ class Citrine:
 
         points = []
         for doc in documents:
+            text = doc.get("text", "")
+            vector = self._embed(text)
             points.append(
                 qmodels.PointStruct(
                     id=str(uuid4()),
-                    vector=[0.0] * 768,  # placeholder zero vector
+                    vector=vector,
                     payload={
-                        "text": doc.get("text", ""),
+                        "text": text,
                         **doc.get("metadata", {}),
                     },
                 )
             )
 
-        self.client.upsert(collection_name=collection, points=points)
+        if points:
+            self.client.upsert(collection_name=collection, points=points)

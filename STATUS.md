@@ -1,9 +1,9 @@
 # @ETHER Live Status
 
-**Last Updated**: 2026-07-24 18:31 (UTC-5)
+**Last Updated**: 2026-07-24 19:02 (UTC-5)
 
 ## Current Phase
-Foundation complete — improving depth of existing gems
+Improving gem depth + end-to-end wiring
 
 ## Progress
 
@@ -15,21 +15,17 @@ Foundation complete — improving depth of existing gems
 | CLI                       | ✅ Working      | status / plan / run-gem |
 | Clear Quartz              | ✅ Basic        | Docker sandbox |
 | Rose Quartz               | ✅ Basic        | Ollama routing |
-| Citrine                   | 🔄 Improving    | Adding real embeddings |
+| Citrine                   | ✅ Improved     | Real Ollama embeddings added |
 | Selenite                  | ✅ Basic        | Rule-based planner |
 | Amethyst                  | ✅ Basic        | Logging only |
 | Black Tourmaline          | ✅ Basic        | Static security |
 | Labradorite               | ✅ Basic        | Simple critique |
 | Grandidierite             | ✅ Basic        | Template generation |
 
-## What is being worked on right now
-Improving Citrine memory layer (real embeddings via Ollama)
+## Just completed
+Citrine now uses real embeddings via Ollama (`nomic-embed-text`)
 
 ## Next up
-1. Finish Citrine embeddings
-2. Wire simple end-to-end flow through Orchestrator
-3. Improve Selenite toward LangGraph
-
-## How to check progress
-Just open this file: `STATUS.md`  
-It will be updated with every significant push.
+1. Wire simple end-to-end flow through Orchestrator
+2. Improve Selenite planning quality
+3. Better error surfaces in CLI

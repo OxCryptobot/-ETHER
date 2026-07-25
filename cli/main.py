@@ -46,10 +46,7 @@ def status() -> None:
 
 @app.command()
 def doctor() -> None:
-    for name, ok in [
-        ("docker", shutil.which("docker") is not None),
-        ("ollama", shutil.which("ollama") is not None),
-    ]:
+    for name, ok in [("docker", shutil.which("docker") is not None), ("ollama", shutil.which("ollama") is not None)]:
         console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
     try:
         load_config(); console.print("  [green]✓[/] manifest")
@@ -146,6 +143,20 @@ def runs() -> None:
             console.print(f.name)
 
 
+@app.command("clean-runs")
+def clean_runs(force: bool = typer.Option(False, "--force", help="Delete without confirmation")) -> None:
+    runs_dir = Path("memory/runs")
+    files = list(runs_dir.glob("*.json")) if runs_dir.exists() else []
+    if not files:
+        console.print("[dim]No runs to clean.[/]"); return
+    if not force:
+        console.print(f"Will delete {len(files)} run files. Re-run with --force to confirm.")
+        return
+    for f in files:
+        f.unlink(missing_ok=True)
+    console.print(f"[green]Deleted {len(files)} runs.[/]")
+
+
 @app.command()
 def promote(filename: str) -> None:
     src = Path("tools/quarantine") / filename
@@ -159,7 +170,6 @@ def promote(filename: str) -> None:
 
 @app.command()
 def quarantine() -> None:
-    """List tools in quarantine."""
     d = Path("tools/quarantine")
     files = sorted(p for p in d.glob("*.py")) if d.exists() else []
     if not files:
@@ -170,7 +180,6 @@ def quarantine() -> None:
 
 @app.command()
 def tools() -> None:
-    """List persistent tools."""
     d = Path("tools/persistent")
     files = sorted(p for p in d.glob("*.py")) if d.exists() else []
     if not files:

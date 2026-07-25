@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -32,6 +33,23 @@ def snapshot() -> dict:
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True, "service": "ether-dashboard"}
+
+
+@app.websocket("/ws")
+async def ws_feed(ws: WebSocket) -> None:
+    await ws.accept()
+    try:
+        while True:
+            data = collect_snapshot()
+            await ws.send_json(data)
+            await asyncio.sleep(2.5)
+    except WebSocketDisconnect:
+        return
+    except Exception:
+        try:
+            await ws.close()
+        except Exception:
+            pass
 
 
 def main() -> None:

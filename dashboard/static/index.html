@@ -3,231 +3,344 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>@ETHER Live Matrix</title>
+  <title>@ETHER Control Matrix</title>
   <style>
     :root {
-      --bg: #070b14;
-      --panel: #0f172a;
-      --panel2: #111827;
-      --border: #1f2a44;
-      --text: #e5eefc;
-      --muted: #8aa0bf;
-      --good: #22c55e;
-      --bad: #ef4444;
-      --warn: #f59e0b;
+      --bg: #060a12;
+      --panel: #0c1424;
+      --line: #1c2a45;
+      --text: #e8eefc;
+      --muted: #8b9bb8;
+      --good: #34d399;
+      --bad: #f87171;
       --accent: #38bdf8;
-      --violet: #a78bfa;
+      --violet: #c4b5fd;
+      --warn: #fbbf24;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #12203a 0%, var(--bg) 55%);
+      font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(900px 500px at 0% 0%, #13233f, var(--bg));
       color: var(--text);
-      min-height: 100vh;
     }
     header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 22px; border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(8px); position: sticky; top: 0; background: rgba(7,11,20,.85); z-index: 10;
+      position: sticky; top: 0; z-index: 20;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 14px 18px; border-bottom: 1px solid var(--line);
+      background: rgba(6,10,18,.9); backdrop-filter: blur(10px);
     }
-    h1 { margin: 0; font-size: 18px; letter-spacing: .08em; }
-    h1 span { color: var(--accent); }
-    .badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border);
-      background: var(--panel); font-size: 12px; color: var(--muted);
+    .brand { font-weight: 700; letter-spacing: .06em; }
+    .brand span { color: var(--accent); }
+    .live {
+      display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px;
+      border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px;
     }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
-    .dot.on { background: var(--good); box-shadow: 0 0 12px var(--good); }
+    .dot.on { background: var(--good); box-shadow: 0 0 10px var(--good); }
     .dot.off { background: var(--bad); }
-    main { padding: 18px; display: grid; gap: 14px; }
-    .grid { display: grid; gap: 14px; grid-template-columns: repeat(12, 1fr); }
+
+    nav.tabs {
+      display: flex; gap: 8px; padding: 12px 18px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--line);
+    }
+    nav.tabs button {
+      background: transparent; color: var(--muted); border: 1px solid var(--line);
+      border-radius: 999px; padding: 7px 12px; cursor: pointer; font-size: 12px;
+    }
+    nav.tabs button.active {
+      color: var(--text); border-color: var(--accent); background: rgba(56,189,248,.08);
+    }
+
+    main { padding: 16px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
     .card {
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
-      border: 1px solid var(--border); border-radius: 14px; padding: 14px;
-      min-height: 110px;
+      background: linear-gradient(180deg, #0e1730, var(--panel));
+      border: 1px solid var(--line); border-radius: 14px; padding: 14px;
     }
-    .card h2 { margin: 0 0 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-    .span3 { grid-column: span 3; } .span4 { grid-column: span 4; } .span6 { grid-column: span 6; } .span8 { grid-column: span 8; } .span12 { grid-column: span 12; }
-    @media (max-width: 1000px) {
-      .span3,.span4,.span6,.span8,.span12 { grid-column: span 12; }
+    .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s6 { grid-column: span 6; }
+    .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
+    @media (max-width: 960px) { .s3,.s4,.s6,.s8,.s12 { grid-column: span 12; } }
+
+    h2 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .big { font-size: 26px; font-weight: 700; }
+    .ok { color: var(--good); } .bad { color: var(--bad); } .info { color: var(--accent); }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .flow { display: flex; flex-wrap: wrap; gap: 8px; }
+    .flow .step {
+      flex: 1 1 110px; min-width: 100px; border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px; background: rgba(255,255,255,.02);
     }
-    .metric { font-size: 28px; font-weight: 700; }
-    .metric small { font-size: 12px; color: var(--muted); font-weight: 500; }
-    .ok { color: var(--good); } .fail { color: var(--bad); } .info { color: var(--accent); }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
-    th { color: var(--muted); font-weight: 600; }
-    .pill {
-      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
-      border: 1px solid var(--border);
-    }
-    .pill.ok { background: rgba(34,197,94,.12); color: var(--good); }
-    .pill.fail { background: rgba(239,68,68,.12); color: var(--bad); }
-    .bar-wrap { display: flex; gap: 4px; align-items: end; height: 54px; }
-    .bar { width: 10px; border-radius: 4px 4px 0 0; background: var(--border); }
+    .flow .n { font-size: 11px; color: var(--accent); }
+    .flow .t { font-weight: 600; margin: 4px 0; }
+    .flow .d { font-size: 11px; color: var(--muted); }
+
+    .bars { display: flex; align-items: end; gap: 4px; height: 64px; margin-bottom: 10px; }
+    .bar { width: 12px; border-radius: 4px 4px 0 0; background: var(--line); }
     .bar.pass { background: var(--good); } .bar.fail { background: var(--bad); }
-    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; }
-    .kv div { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
-    .kv b { display: block; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; }
+    .pill.ok { color: var(--good); background: rgba(52,211,153,.1); }
+    .pill.bad { color: var(--bad); background: rgba(248,113,113,.1); }
+
+    .gem, .skill, .tool {
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.02);
+    }
+    .list { display: grid; gap: 8px; }
+    .list.two { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { .list.two { grid-template-columns: 1fr; } }
+    .gem .id { font-weight: 600; } .gem .role { color: var(--muted); font-size: 12px; }
+    .tag { display: inline-block; margin-top: 6px; font-size: 10px; color: var(--violet); border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; }
+
     pre {
-      white-space: pre-wrap; word-break: break-word; background: rgba(0,0,0,.25);
-      border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 11px; color: #cbd5e1;
-      max-height: 220px; overflow: auto;
+      margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 11px; color: #cbd5e1;
+      background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+      max-height: 280px; overflow: auto;
     }
-    .gems { display: flex; flex-wrap: wrap; gap: 8px; }
-    .gem {
-      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
-      background: rgba(56,189,248,.06); font-size: 12px;
-    }
-    footer { color: var(--muted); font-size: 11px; padding: 8px 18px 20px; }
+    footer { color: var(--muted); font-size: 11px; padding: 6px 18px 18px; }
   </style>
 </head>
 <body>
   <header>
-    <h1><span>@ETHER</span> LIVE MATRIX</h1>
-    <div class="badge"><span id="hbDot" class="dot"></span> <span id="hbText">connecting…</span></div>
+    <div class="brand"><span>@ETHER</span> CONTROL MATRIX</div>
+    <div class="live"><span id="dot" class="dot"></span><span id="liveText">connecting…</span></div>
   </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="workflow">Workflow</button>
+    <button data-tab="runs">Runs & tests</button>
+    <button data-tab="gems">Gems & tools</button>
+    <button data-tab="bench">Benchmarks</button>
+    <button data-tab="raw">Raw / docs</button>
+  </nav>
+
   <main>
-    <div class="grid">
-      <section class="card span3"><h2>Quality gate</h2><div class="metric" id="quality">—</div></section>
-      <section class="card span3"><h2>Confidence</h2><div class="metric info" id="confidence">—</div></section>
-      <section class="card span3"><h2>Pass rate</h2><div class="metric" id="passRate">—</div></section>
-      <section class="card span3"><h2>Heartbeat</h2><div class="metric" style="font-size:14px" id="heartbeat">—</div></section>
+    <!-- OVERVIEW -->
+    <section class="panel active" id="tab-overview">
+      <div class="grid">
+        <div class="card s3"><h2>Gate</h2><div class="big" id="quality">—</div><div class="sub" id="reason">—</div></div>
+        <div class="card s3"><h2>Confidence</h2><div class="big info" id="conf">—</div><div class="sub">min gate from policy</div></div>
+        <div class="card s3"><h2>Flywheel pass rate</h2><div class="big" id="fwRate">—</div><div class="sub" id="cycles">—</div></div>
+        <div class="card s3"><h2>Model</h2><div class="big" style="font-size:16px" id="model">—</div><div class="sub" id="hb">heartbeat —</div></div>
 
-      <section class="card span6">
-        <h2>Flywheel cycle matrix</h2>
-        <div class="bar-wrap" id="bars"></div>
-        <table id="stepsTable"><thead><tr><th>Step</th><th>OK</th><th>ms</th></tr></thead><tbody></tbody></table>
-      </section>
+        <div class="card s8">
+          <h2>Recent flywheel cycles</h2>
+          <div class="bars" id="bars"></div>
+          <table><thead><tr><th>Step</th><th>Status</th><th>Time</th></tr></thead><tbody id="stepsBody"></tbody></table>
+        </div>
+        <div class="card s4">
+          <h2>Connections</h2>
+          <div class="list" id="connections"></div>
+        </div>
+      </div>
+    </section>
 
-      <section class="card span6">
-        <h2>Connections / policy</h2>
-        <div class="kv" id="policy"></div>
-      </section>
+    <!-- WORKFLOW -->
+    <section class="panel" id="tab-workflow">
+      <div class="grid">
+        <div class="card s12">
+          <h2>End-to-end workflow</h2>
+          <div class="flow" id="flow"></div>
+          <p class="sub" style="margin-top:12px">Each autonomy cycle walks this path. FAIL after max retries still publishes an audit report to git, then the local loop continues.</p>
+        </div>
+        <div class="card s6">
+          <h2>Active skills</h2>
+          <div class="list" id="skills"></div>
+        </div>
+        <div class="card s6">
+          <h2>Policy</h2>
+          <div class="list" id="policy"></div>
+        </div>
+      </div>
+    </section>
 
-      <section class="card span8">
-        <h2>Pipeline runs (recent)</h2>
-        <table id="runsTable">
-          <thead><tr><th>Status</th><th>Conf</th><th>Objective</th><th>Stages</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </section>
+    <!-- RUNS -->
+    <section class="panel" id="tab-runs">
+      <div class="grid">
+        <div class="card s12">
+          <h2>Pipeline runs</h2>
+          <table>
+            <thead><tr><th>Status</th><th>Conf</th><th>Retries</th><th>Objective</th><th>Stages</th></tr></thead>
+            <tbody id="runsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-      <section class="card span4">
-        <h2>Gems</h2>
-        <div class="gems" id="gems"></div>
-      </section>
+    <!-- GEMS -->
+    <section class="panel" id="tab-gems">
+      <div class="grid">
+        <div class="card s8">
+          <h2>Gems (8)</h2>
+          <div class="list two" id="gems"></div>
+        </div>
+        <div class="card s4">
+          <h2>Tools</h2>
+          <h3 style="font-size:12px;color:var(--muted)">Persistent</h3>
+          <div class="list" id="toolsP"></div>
+          <h3 style="font-size:12px;color:var(--muted);margin-top:12px">Quarantine</h3>
+          <div class="list" id="toolsQ"></div>
+        </div>
+      </div>
+    </section>
 
-      <section class="card span6">
-        <h2>STATUS.md</h2>
-        <pre id="statusMd"></pre>
-      </section>
-      <section class="card span6">
-        <h2>FLYWHEEL.md</h2>
-        <pre id="flywheelMd"></pre>
-      </section>
+    <!-- BENCH -->
+    <section class="panel" id="tab-bench">
+      <div class="grid">
+        <div class="card s3"><h2>FW cycles</h2><div class="big" id="bCycles">—</div></div>
+        <div class="card s3"><h2>FW pass %</h2><div class="big" id="bFw">—</div></div>
+        <div class="card s3"><h2>Run success %</h2><div class="big" id="bRun">—</div></div>
+        <div class="card s3"><h2>Avg confidence</h2><div class="big info" id="bConf">—</div></div>
+        <div class="card s12"><h2>Last fail reason</h2><div id="bFail" class="sub">—</div></div>
+      </div>
+    </section>
 
-      <section class="card span12">
-        <h2>Latest flywheel JSON</h2>
-        <pre id="latestJson"></pre>
-      </section>
-    </div>
+    <!-- RAW -->
+    <section class="panel" id="tab-raw">
+      <div class="grid">
+        <div class="card s6"><h2>STATUS.md</h2><pre id="statusMd"></pre></div>
+        <div class="card s6"><h2>FLYWHEEL.md</h2><pre id="flyMd"></pre></div>
+        <div class="card s12"><h2>Latest report JSON</h2><pre id="latest"></pre></div>
+      </div>
+    </section>
   </main>
-  <footer>Auto-refresh 3s · API <code>/api/snapshot</code> · local only 127.0.0.1:8787</footer>
+  <footer>WebSocket live feed · fallback poll 3s · http://127.0.0.1:8787</footer>
 
 <script>
-async function refresh() {
+const tabs = document.querySelectorAll('nav.tabs button');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(btn => btn.addEventListener('click', () => {
+  tabs.forEach(b => b.classList.remove('active'));
+  panels.forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+}));
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pct(x){return x==null?'—':Math.round(x*100)+'%';}
+
+function render(d){
+  const s = d.summary || {};
+  const ok = s.quality_pass === true;
+  const q = document.getElementById('quality');
+  q.textContent = ok ? 'PASS' : (s.quality_pass === false ? 'FAIL' : '—');
+  q.className = 'big ' + (ok ? 'ok' : 'bad');
+  document.getElementById('reason').textContent = s.reason || '—';
+  document.getElementById('conf').textContent = s.confidence != null ? Number(s.confidence).toFixed(3) : '—';
+  document.getElementById('fwRate').textContent = pct(s.flywheel_pass_rate);
+  document.getElementById('cycles').textContent = (s.cycles ?? 0) + ' cycles logged';
+  document.getElementById('model').textContent = s.model || '—';
+  document.getElementById('hb').textContent = d.heartbeat ? ('heartbeat ' + d.heartbeat) : 'no heartbeat yet';
+
+  const dot = document.getElementById('dot');
+  dot.className = 'dot ' + (d.heartbeat ? 'on' : 'off');
+  document.getElementById('liveText').textContent = d.heartbeat ? ('live · ' + (s.model||'')) : 'waiting for autonomy';
+
+  // bars
+  const bars = document.getElementById('bars'); bars.innerHTML = '';
+  (d.history||[]).slice(0,30).reverse().forEach(h => {
+    const b = document.createElement('div');
+    b.className = 'bar ' + (h.ok ? 'pass' : 'fail');
+    b.style.height = (14 + Math.round((h.conf||0)*48)) + 'px';
+    b.title = `${h.ts||''} conf=${h.conf}`;
+    bars.appendChild(b);
+  });
+
+  document.getElementById('stepsBody').innerHTML = (d.matrix_steps||[]).map(st =>
+    `<tr><td>${esc(st.name)}</td><td><span class="pill ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms} ms</td></tr>`
+  ).join('');
+
+  const c = d.connections || {};
+  document.getElementById('connections').innerHTML = [
+    ['Docker', c.docker?'yes':'no'],
+    ['Ollama', c.ollama?'yes':'no'],
+    ['Ollama URL', c.ollama_url],
+    ['Qdrant', c.qdrant_url],
+  ].map(([k,v]) => `<div class="skill"><b>${esc(k)}</b><div class="sub">${esc(v)}</div></div>`).join('');
+
+  document.getElementById('flow').innerHTML = (d.workflow||[]).map(w =>
+    `<div class="step"><div class="n">STEP ${w.id}</div><div class="t">${esc(w.name)}</div><div class="d">${esc(w.desc)}</div></div>`
+  ).join('');
+
+  document.getElementById('skills').innerHTML = (d.skills||[]).map(sk =>
+    `<div class="skill"><b>${esc(sk.name)}</b><div class="sub">${esc(sk.status)}</div></div>`
+  ).join('');
+
+  const p = d.policy || {};
+  document.getElementById('policy').innerHTML = [
+    ['Min confidence', p.min_confidence],
+    ['Max retries', p.max_retries],
+    ['Interval', (p.interval_s||0)+'s'],
+    ['Push reports', p.push?'on':'off'],
+    ['Sandbox retry', p.sandbox_retry?'on':'off'],
+    ['Workspace context', p.use_context?'on':'off'],
+  ].map(([k,v]) => `<div class="skill"><b>${esc(k)}</b><div class="sub">${esc(v)}</div></div>`).join('');
+
+  document.getElementById('runsBody').innerHTML = (d.runs||[]).slice(0,15).map(r => {
+    const stages = (r.stages||[]).map(x => x.stage + (x.success?'✓':'✗')).join(' ');
+    return `<tr>
+      <td><span class="pill ${r.status==='complete'?'ok':'bad'}">${esc(r.status)}</span></td>
+      <td>${r.confidence!=null?Number(r.confidence).toFixed(2):'—'}</td>
+      <td>${r.retries||0}</td>
+      <td>${esc(r.objective)}</td>
+      <td>${esc(stages)}</td></tr>`;
+  }).join('');
+
+  document.getElementById('gems').innerHTML = (d.gems||[]).map(g =>
+    `<div class="gem"><div class="id">${esc(g.id)}</div><div class="role">${esc(g.role)}</div><span class="tag">${esc(g.layer)}</span></div>`
+  ).join('');
+
+  const t = d.tools || {};
+  document.getElementById('toolsP').innerHTML = (t.persistent||[]).length
+    ? t.persistent.map(x => `<div class="tool">${esc(x)}</div>`).join('')
+    : '<div class="sub">none yet</div>';
+  document.getElementById('toolsQ').innerHTML = (t.quarantine||[]).length
+    ? t.quarantine.map(x => `<div class="tool">${esc(x)}</div>`).join('')
+    : '<div class="sub">empty</div>';
+
+  const b = d.benchmarks || {};
+  document.getElementById('bCycles').textContent = b.flywheel_cycles ?? '—';
+  document.getElementById('bFw').textContent = pct(b.flywheel_pass_rate);
+  document.getElementById('bRun').textContent = pct(b.pipeline_success_rate);
+  document.getElementById('bConf').textContent = b.avg_confidence != null ? Number(b.avg_confidence).toFixed(3) : '—';
+  document.getElementById('bFail').textContent = b.last_fail_reason || 'no fail on record';
+
+  document.getElementById('statusMd').textContent = (d.docs||{}).status || '';
+  document.getElementById('flyMd').textContent = (d.docs||{}).flywheel || '';
+  document.getElementById('latest').textContent = JSON.stringify(d.latest || {}, null, 2);
+}
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  ws.onopen = () => { document.getElementById('liveText').textContent = 'websocket live'; };
+  ws.onmessage = (ev) => { try { render(JSON.parse(ev.data)); } catch(e) {} };
+  ws.onclose = () => {
+    document.getElementById('dot').className = 'dot off';
+    document.getElementById('liveText').textContent = 'reconnecting…';
+    setTimeout(connect, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+// fallback poll if WS blocked
+async function poll() {
   try {
-    const res = await fetch('/api/snapshot');
-    const d = await res.json();
-    const m = d.matrix || {};
-    const latest = (d.flywheel || {}).latest || {};
-    const gates = latest.gates || {};
-
-    const ok = m.quality_pass === true;
-    const qEl = document.getElementById('quality');
-    qEl.textContent = ok ? 'PASS' : (m.quality_pass === false ? 'FAIL' : '—');
-    qEl.className = 'metric ' + (ok ? 'ok' : 'fail');
-
-    document.getElementById('confidence').textContent =
-      (m.confidence != null ? Number(m.confidence).toFixed(3) : '—');
-
-    const pr = d.flywheel.pass_rate;
-    document.getElementById('passRate').textContent =
-      pr == null ? '—' : (Math.round(pr * 100) + '%');
-
-    document.getElementById('heartbeat').textContent = d.heartbeat || 'no heartbeat yet';
-    const ageOk = !!d.heartbeat;
-    const dot = document.getElementById('hbDot');
-    dot.className = 'dot ' + (ageOk ? 'on' : 'off');
-    document.getElementById('hbText').textContent =
-      ageOk ? ('live · ' + (d.connections.primary_model || 'model?')) : 'waiting for autonomy';
-
-    // bars
-    const bars = document.getElementById('bars');
-    bars.innerHTML = '';
-    (m.recent_pass_fail || []).slice(0, 24).reverse().forEach(x => {
-      const b = document.createElement('div');
-      b.className = 'bar ' + (x.ok ? 'pass' : 'fail');
-      const h = 12 + Math.round((x.conf || 0) * 40);
-      b.style.height = h + 'px';
-      b.title = (x.ts || '') + ' conf=' + x.conf;
-      bars.appendChild(b);
-    });
-
-    // steps
-    const st = document.querySelector('#stepsTable tbody');
-    st.innerHTML = '';
-    (m.steps || []).forEach(s => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${s.name}</td><td><span class="pill ${s.ok ? 'ok' : 'fail'}">${s.ok ? 'OK' : 'FAIL'}</span></td><td>${s.ms}</td>`;
-      st.appendChild(tr);
-    });
-
-    // policy / connections
-    const p = d.policy || {}, c = d.connections || {};
-    document.getElementById('policy').innerHTML = [
-      ['Model', c.primary_model || '—'],
-      ['Docker', c.docker ? 'yes' : 'no'],
-      ['Ollama', c.ollama ? 'yes' : 'no'],
-      ['Min conf', p.min_confidence],
-      ['Max retries', p.max_retries],
-      ['Interval', p.interval + 's'],
-      ['Push', p.push ? 'on' : 'off'],
-      ['Context', p.use_context ? 'on' : 'off'],
-    ].map(([k,v]) => `<div><b>${k}</b>${v}</div>`).join('');
-
-    // runs
-    const rt = document.querySelector('#runsTable tbody');
-    rt.innerHTML = '';
-    (d.runs || []).slice(0, 12).forEach(r => {
-      const stages = (r.stages || []).map(s => s.stage + (s.success ? '✓' : '✗')).join(' ');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td><span class="pill ${r.status==='complete'?'ok':'fail'}">${r.status}</span></td>
-        <td>${r.confidence != null ? Number(r.confidence).toFixed(2) : '—'}</td>
-        <td>${escapeHtml(r.objective || '')}</td>
-        <td>${escapeHtml(stages)}</td>`;
-      rt.appendChild(tr);
-    });
-
-    document.getElementById('gems').innerHTML =
-      (d.gems.registered || []).map(g => `<div class="gem">${g}</div>`).join('');
-
-    document.getElementById('statusMd').textContent = d.workspace.status_md || '';
-    document.getElementById('flywheelMd').textContent = d.workspace.flywheel_md || '';
-    document.getElementById('latestJson').textContent = JSON.stringify(latest, null, 2);
-  } catch (e) {
-    document.getElementById('hbText').textContent = 'API offline';
-    document.getElementById('hbDot').className = 'dot off';
-  }
+    const r = await fetch('/api/snapshot');
+    render(await r.json());
+  } catch(e) {}
 }
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
-}
-refresh();
-setInterval(refresh, 3000);
+poll();
+connect();
+setInterval(poll, 5000);
 </script>
 </body>
 </html>

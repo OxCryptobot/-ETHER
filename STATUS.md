@@ -1,41 +1,40 @@
 # @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 15:55 (UTC-5)
+> **Last heartbeat**: 2026-07-25 16:10 (UTC-5)
 > **Agent state**: ACTIVE
-> **Overall**: **v0.2 batch 21 progressing**
+> **Overall**: **v0.2 + local flywheel**
 
 ## Progress
 
 | Layer | % |
 |-------|---|
 | Foundation | 100% |
-| Gems basic | 100% |
-| End-to-end pipeline | 100% (verified Windows) |
+| Gems / pipeline | 100% (verified) |
 | v0.1.x | 100% |
-| **v0.2** | **~35%** |
+| v0.2 | ~40% |
+| **Flywheel** | **v1 shipped** |
 
-## Batch 21 done so far
-1. Hardware-aware `.env.example` (3B default)
-2. Sandbox auto-retry on failure
-3. Fairer confidence for exit=0 demo runs (no longer stuck at 0.35)
-4. Informal test credit (print stdout / asserts)
-5. Optional LangGraph path (`ETHER_LANGGRAPH=1`) + shared intent catalog
+## New: local flywheel
+Autonomous pull → test → report → optional push loop for Windows PowerShell.
 
-## Verified hardware
-- Nitro 5 · GTX 1650 4GB · 12GB RAM · `qwen2.5-coder:3b`
+```powershell
+cd C:\Users\Otcde\ETHER
+git pull origin main
+.\scripts\flywheel.ps1
+.\scripts\flywheel.ps1 -Push
+.\scripts\flywheel.ps1 -Loop 300 -Push
+```
 
-## Still open
-- Citrine smarter chunking
+## Batch 21 highlights
+- Hardware-aware defaults (`qwen2.5-coder:3b`)
+- Sandbox retry
+- Confidence 1.0 on clean verified runs
+- LangGraph optional path
+- **Flywheel automation**
+
+## Still open (v0.2)
+- Citrine chunking
 - Multi-file context
 - Benchmark harness
 - Streaming tokens
-- Human approval UX for promote
-- Stronger pytest injection in sandbox
-
-## Pull
-```powershell
-git pull origin main
-$env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b"
-ether run "write a python function is_even(n) and print(is_even(4))"
-# expect Confidence closer to ~0.55–0.60 now on clean demo runs
-```
+- Promote approval UX

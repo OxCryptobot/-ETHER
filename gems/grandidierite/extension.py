@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -13,6 +14,13 @@ from core.schemas import (
     GrandidieriteRequest,
     GrandidieriteResponse,
 )
+
+
+def _sanitize_name(name: str) -> str:
+    name = re.sub(r"[^0-9a-zA-Z_]", "_", name.strip()) or "new_tool"
+    if name[0].isdigit():
+        name = f"tool_{name}"
+    return name[:64]
 
 
 class Grandidierite:
@@ -37,13 +45,12 @@ class Grandidierite:
                 tool_req = data.get("tool_request", {})
                 template_id = data.get("template_id", "basic_python_tool")
 
-            name = tool_req.get("name", "new_tool")
+            name = _sanitize_name(str(tool_req.get("name", "new_tool")))
             args = tool_req.get("args", "")
             docstring = tool_req.get("docstring", "Auto-generated tool")
             template = self.TEMPLATES.get(template_id, self.TEMPLATES["basic_python_tool"])
             code = template.format(name=name, args=args, docstring=docstring)
 
-            # Write to quarantine
             ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             out = self.quarantine_dir / f"{name}_{ts}.py"
             out.write_text(code, encoding="utf-8")

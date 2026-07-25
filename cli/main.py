@@ -16,12 +16,7 @@ from rich.syntax import Syntax
 from core.registry import build_default_registry
 from core.pipeline import Pipeline
 from core.config import load_config
-from core.schemas import (
-    Envelope,
-    SeleniteRequest,
-    BlackTourmalineRequest,
-    CitrineRequest,
-)
+from core.schemas import Envelope, SeleniteRequest, BlackTourmalineRequest, CitrineRequest
 
 app = typer.Typer(name="ether", help="@ETHER", add_completion=False)
 console = Console()
@@ -35,14 +30,12 @@ def version() -> None:
 @app.command()
 def status() -> None:
     try:
-        load_config()
-        console.print("[green]manifest:[/] ok")
+        load_config(); console.print("[green]manifest:[/] ok")
     except Exception as e:
         console.print(f"[red]manifest:[/] {e}")
     gems = build_default_registry().list_gems()
     table = Table(title="@ETHER")
-    table.add_column("Gem")
-    table.add_column("Registered")
+    table.add_column("Gem"); table.add_column("Registered")
     for g in ["clear-quartz","rose-quartz","citrine","selenite","amethyst","black-tourmaline","labradorite","grandidierite"]:
         table.add_row(g, "yes" if g in gems else "no")
     console.print(table)
@@ -50,25 +43,20 @@ def status() -> None:
 
 @app.command()
 def doctor() -> None:
-    """Check local dependencies."""
-    checks = []
-    checks.append(("docker", shutil.which("docker") is not None))
-    checks.append(("ollama", shutil.which("ollama") is not None))
+    checks = [
+        ("docker", shutil.which("docker") is not None),
+        ("ollama", shutil.which("ollama") is not None),
+    ]
     try:
-        load_config()
-        checks.append(("manifest", True))
+        load_config(); checks.append(("manifest", True))
     except Exception:
         checks.append(("manifest", False))
     try:
-        build_default_registry()
-        checks.append(("registry", True))
+        build_default_registry(); checks.append(("registry", True))
     except Exception:
         checks.append(("registry", False))
-
     for name, ok in checks:
         console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
-    if not all(ok for _, ok in checks):
-        console.print("[yellow]Some checks failed. Docker + Ollama required for full pipeline.[/]")
 
 
 @app.command()
@@ -88,15 +76,10 @@ def plan(prompt: str) -> None:
 
 
 @app.command()
-def run(
-    objective: str,
-    json_out: bool = typer.Option(False, "--json"),
-    critique: bool = typer.Option(False, "--critique"),
-) -> None:
+def run(objective: str, json_out: bool = typer.Option(False, "--json"), critique: bool = typer.Option(False, "--critique")) -> None:
     result = Pipeline().run(objective, critique=critique)
     if json_out:
-        console.print_json(result.model_dump_json())
-        raise typer.Exit(0 if result.status == "complete" else 1)
+        console.print_json(result.model_dump_json()); raise typer.Exit(0 if result.status == "complete" else 1)
     if result.status == "error":
         console.print(Panel(f"[red]{result.error}[/]", title="Error")); raise typer.Exit(1)
     if result.plan:
@@ -161,6 +144,19 @@ def runs() -> None:
             console.print(f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {data.get('objective', '')[:60]}")
         except Exception:
             console.print(f.name)
+
+
+@app.command()
+def promote(filename: str = typer.Argument(..., help="Filename inside tools/quarantine/")) -> None:
+    """Promote a quarantined tool to tools/persistent/."""
+    src = Path("tools/quarantine") / filename
+    dst_dir = Path("tools/persistent")
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    if not src.exists():
+        console.print(f"[red]Not found:[/] {src}"); raise typer.Exit(1)
+    dst = dst_dir / src.name
+    dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    console.print(f"[green]Promoted[/] {src} → {dst}")
 
 
 if __name__ == "__main__":

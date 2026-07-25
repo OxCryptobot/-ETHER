@@ -1,26 +1,27 @@
 # 🚀 @ETHER Live Status
 
-> **Last heartbeat**: 2026-07-25 11:05 (UTC-5)  
+> **Last heartbeat**: 2026-07-25 11:10 (UTC-5)  
 > **Agent state**: 🟢 ACTIVE  
-> **Overall**: ~85%
+> **Overall**: ~88%
 
-## Batches: 1✅ 2✅ 3✅ 4✅ 5✅
+## Batches 1–6 complete
 
-## Batch 5 delivered
-- LICENSE (MIT)
-- CHANGELOG.md (v0.1.0)
-- CONTRIBUTING.md (for Queensone + collaborators)
-- `ether runs`
-- Manifest validation on `ether status`
+## Batch 6 delivered
+- `ether doctor`
+- Makefile
+- Code size cap before sandbox
+- docs/architecture.md
+- needs_tool → Grandidierite stub in pipeline
+- pyproject includes config
 
-## Next 10 (batch 6)
-1. Selenite needs_tool → Grandidierite pipeline branch
-2. Cap generated code size before sandbox
-3. Structured logging helper
-4. Clearer Ollama/Docker missing errors in CLI
-5. pyproject include config/manifest.yaml
-6. Add Makefile with common targets
-7. Pre-commit style notes in CONTRIBUTING
-8. Gem health check command `ether doctor`
-9. Rate-limit / max tokens guard in Rose Quartz request
-10. Snapshot overall architecture diagram in docs/
+## Next 10 (batch 7)
+1. Real LangGraph planner skeleton for Selenite
+2. Streaming support flag for Rose Quartz
+3. Better Docker-not-found / Ollama-not-found UX in pipeline errors
+4. Promote tool from quarantine CLI command
+5. Add `memory/runs/.gitkeep`
+6. Harden Grandidierite name sanitization
+7. Add type ignores cleanup where safe
+8. Snapshot dependency versions lock notes
+9. Add example prompts doc
+10. Performance timing on each pipeline stage (already partial)

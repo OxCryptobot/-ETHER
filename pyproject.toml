@@ -36,6 +36,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["core", "gems", "cli"]
 
+[tool.hatch.build]
+include = [
+    "config/manifest.yaml",
+    "STATUS.md",
+    "README.md",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

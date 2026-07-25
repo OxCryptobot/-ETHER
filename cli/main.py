@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 from uuid import uuid4
 
@@ -45,6 +46,29 @@ def status() -> None:
     for g in ["clear-quartz","rose-quartz","citrine","selenite","amethyst","black-tourmaline","labradorite","grandidierite"]:
         table.add_row(g, "yes" if g in gems else "no")
     console.print(table)
+
+
+@app.command()
+def doctor() -> None:
+    """Check local dependencies."""
+    checks = []
+    checks.append(("docker", shutil.which("docker") is not None))
+    checks.append(("ollama", shutil.which("ollama") is not None))
+    try:
+        load_config()
+        checks.append(("manifest", True))
+    except Exception:
+        checks.append(("manifest", False))
+    try:
+        build_default_registry()
+        checks.append(("registry", True))
+    except Exception:
+        checks.append(("registry", False))
+
+    for name, ok in checks:
+        console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
+    if not all(ok for _, ok in checks):
+        console.print("[yellow]Some checks failed. Docker + Ollama required for full pipeline.[/]")
 
 
 @app.command()
@@ -127,7 +151,6 @@ def search(query: str, collection: str = "code", top_k: int = 5) -> None:
 
 @app.command()
 def runs() -> None:
-    """List recent pipeline runs from memory/runs/."""
     runs_dir = Path("memory/runs")
     if not runs_dir.exists():
         console.print("[dim]No runs yet.[/]"); return
@@ -137,7 +160,7 @@ def runs() -> None:
             data = json.loads(f.read_text(encoding="utf-8"))
             console.print(f"{data.get('started_at', '?'):25} {data.get('status', '?'):10} {data.get('objective', '')[:60]}")
         except Exception:
-            console.print(f"{f.name}")
+            console.print(f.name)
 
 
 if __name__ == "__main__":

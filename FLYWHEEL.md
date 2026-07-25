@@ -1,8 +1,13 @@
 # @ETHER Flywheel (autonomous)
 
-> Last cycle: **2026-07-25T22:13:00.282770+00:00**  
+> Last cycle: **2026-07-25T22:16:03.193584+00:00**  
 > Result: **PASS**  
 > Confidence: **1.000** (min 0.7) · Audit: **True**  
-> Pushed: **False** · Model: `qwen2.5-coder:3b`
+> Report pushed: **False** · Model: `qwen2.5-coder:3b`  
+> Reason: `gates_passed`
 
-Hands-off launcher: `scripts/autonomy.ps1` or `ether flywheel --autonomous`
+## Policy
+- Agentic retries until gates pass or max retries
+- **PASS** → push success report
+- **FAIL after max retries** → push FAIL report for remote audit/review
+- Local loop always continues (flywheel)

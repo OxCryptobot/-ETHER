@@ -1,0 +1,84 @@
+{
+  "tiers": [
+    {
+      "name": "tier0_basics",
+      "tasks": [
+        {
+          "id": "even",
+          "title": "is_even",
+          "objective": "Write only Python: def is_even(n):\n    return n % 2 == 0\nprint(is_even(4))\nprint(is_even(5))"
+        },
+        {
+          "id": "add",
+          "title": "add",
+          "objective": "Write only Python: def add(a, b):\n    return a + b\nprint(add(2, 3))"
+        },
+        {
+          "id": "reverse",
+          "title": "reverse_string",
+          "objective": "Write only Python: def reverse_string(s):\n    return s[::-1]\nprint(reverse_string('ether'))"
+        }
+      ]
+    },
+    {
+      "name": "tier1_loops",
+      "tasks": [
+        {
+          "id": "fact",
+          "title": "factorial",
+          "objective": "Write only Python: def factorial(n):\n    r = 1\n    for i in range(2, n+1):\n        r *= i\n    return r\nprint(factorial(5))"
+        },
+        {
+          "id": "sum_list",
+          "title": "sum_list",
+          "objective": "Write only Python: def sum_list(xs):\n    return sum(xs)\nprint(sum_list([1,2,3,4]))"
+        },
+        {
+          "id": "vowels",
+          "title": "count_vowels",
+          "objective": "Write only Python: def count_vowels(s):\n    return sum(1 for ch in s.lower() if ch in 'aeiou')\nprint(count_vowels('education'))"
+        }
+      ]
+    },
+    {
+      "name": "tier2_structures",
+      "tasks": [
+        {
+          "id": "unique",
+          "title": "unique",
+          "objective": "Write only Python: def unique(xs):\n    out = []\n    for x in xs:\n        if x not in out:\n            out.append(x)\n    return out\nprint(unique([1,2,2,3,1,4]))"
+        },
+        {
+          "id": "flatten",
+          "title": "flatten",
+          "objective": "Write only Python: def flatten(xss):\n    return [x for xs in xss for x in xs]\nprint(flatten([[1,2],[3],[4,5]]))"
+        },
+        {
+          "id": "merge",
+          "title": "merge_sorted",
+          "objective": "Write only Python: def merge_sorted(a, b):\n    i = j = 0\n    out = []\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    out.extend(a[i:]); out.extend(b[j:])\n    return out\nprint(merge_sorted([1,3,5],[2,4,6]))"
+        }
+      ]
+    },
+    {
+      "name": "tier3_algorithms",
+      "tasks": [
+        {
+          "id": "gcd",
+          "title": "gcd",
+          "objective": "Write only Python: def gcd(a, b):\n    while b:\n        a, b = b, a % b\n    return a\nprint(gcd(48, 18))"
+        },
+        {
+          "id": "binsearch",
+          "title": "binary_search",
+          "objective": "Write only Python: def binary_search(arr, target):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        if arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\nprint(binary_search([1,3,5,7,9], 7))"
+        },
+        {
+          "id": "palindrome",
+          "title": "is_palindrome",
+          "objective": "Write only Python: def is_palindrome(s):\n    t = ''.join(ch.lower() for ch in s if ch.isalnum())\n    return t == t[::-1]\nprint(is_palindrome('A man a plan a canal Panama'))"
+        }
+      ]
+    }
+  ]
+}

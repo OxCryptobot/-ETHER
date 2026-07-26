@@ -56,9 +56,6 @@ def _safe(text: str) -> str:
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.1")
-    if verbose:
-        console.print("Dashboard: ether dashboard → http://127.0.0.1:8787")
-        console.print("Fabricate: ether fabricate --name my_tool --purpose '...')")
 
 
 @app.command()
@@ -72,10 +69,10 @@ def env() -> None:
     for k in [
         "OLLAMA_BASE_URL",
         "ETHER_PRIMARY_MODEL",
-        "ETHER_SANDBOX_RETRY",
         "ETHER_LEARNING",
+        "ETHER_TOOL_ASSIST",
         "ETHER_AUTO_PROMOTE",
-        "ETHER_FABRICATE_STUB_ONLY",
+        "ETHER_AUTO_FABRICATE_ON_FAIL",
         "ETHER_FLYWHEEL_PUSH",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
@@ -149,7 +146,10 @@ def plan(prompt: str) -> None:
     if res.error:
         print_error(res.error.message)
         return
-    for s in res.payload.plan.steps:  # type: ignore
+    payload = res.payload
+    if getattr(payload, "needs_tool", False):
+        console.print(f"[yellow]tool_request[/] {payload.tool_request}")  # type: ignore
+    for s in payload.plan.steps:  # type: ignore
         console.print(f"  {s.id}. [{s.action}] {_safe(s.description)}")
 
 
@@ -184,7 +184,9 @@ def run(
         console.print(f"Audit approved={result.audit.approved} risk={result.audit.risk_score}")
     for st in result.stages:
         console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}")
-    console.print(f"Confidence: {result.confidence:.3f}  strategy={getattr(result, 'strategy', '')} reward={getattr(result, 'reward', 0):.3f}")
+    console.print(
+        f"Confidence: {result.confidence:.3f}  strategy={getattr(result, 'strategy', '')} reward={getattr(result, 'reward', 0):.3f}"
+    )
 
 
 @app.command()
@@ -204,7 +206,15 @@ def flywheel(
         argv.append("--status")
     elif autonomous:
         argv.extend(
-            ["--autonomous", "--interval", str(interval), "--min-confidence", str(min_confidence), "--max-retries", str(max_retries)]
+            [
+                "--autonomous",
+                "--interval",
+                str(interval),
+                "--min-confidence",
+                str(min_confidence),
+                "--max-retries",
+                str(max_retries),
+            ]
         )
         if no_doctor:
             argv.append("--no-doctor")
@@ -228,14 +238,32 @@ def dashboard(
     uvicorn.run("dashboard.app:app", host=host, port=port, reload=False)
 
 
+@app.command("learn-stats")
+def learn_stats_cmd() -> None:
+    """Show bandit strategy leaderboard + fail streak."""
+    from cli.commands_learn import learn_stats
+
+    data = learn_stats()
+    console.print_json(json.dumps(data))
+    ranked = (data.get("bandit") or {}).get("arms") or {}
+    table = Table(title="Strategy arms")
+    table.add_column("Strategy")
+    table.add_column("Pulls")
+    table.add_column("Mean reward")
+    for name, stats in sorted(ranked.items(), key=lambda kv: kv[1].get("mean_reward", 0), reverse=True):
+        table.add_row(name, str(stats.get("pulls", 0)), f"{stats.get('mean_reward', 0):.4f}")
+    console.print(table)
+    streak = data.get("fail_streak") or {}
+    console.print(f"fail_streak={streak.get('streak', 0)} proposed={streak.get('proposed')}")
+
+
 @app.command()
 def fabricate(
-    name: str = typer.Option(..., "--name", help="Tool function/file name"),
-    purpose: str = typer.Option(..., "--purpose", help="What the tool should do"),
-    stub_only: bool = typer.Option(False, "--stub-only", help="Skip LLM implement"),
-    auto_promote: bool = typer.Option(False, "--auto-promote", help="Promote if gates pass"),
+    name: str = typer.Option(..., "--name"),
+    purpose: str = typer.Option(..., "--purpose"),
+    stub_only: bool = typer.Option(False, "--stub-only"),
+    auto_promote: bool = typer.Option(False, "--auto-promote"),
 ) -> None:
-    """Automated tool fabrication: implement → safety → sandbox → audit → optional promote."""
     if auto_promote:
         os.environ["ETHER_AUTO_PROMOTE"] = "1"
     if stub_only:
@@ -265,10 +293,9 @@ def fabricate(
         console.print(raw)
         raise typer.Exit(0)
     console.print_json(json.dumps(data))
-    status = data.get("validation_status")
-    if status in {"failed"}:
+    if data.get("validation_status") == "failed":
         raise typer.Exit(1)
-    print_ok(f"fabricate status={status} quarantine={data.get('quarantine_path')}")
+    print_ok(f"fabricate status={data.get('validation_status')} quarantine={data.get('quarantine_path')}")
 
 
 @app.command("tool-list")
@@ -285,10 +312,7 @@ def tool_list() -> None:
 
 
 @app.command("tool-run")
-def tool_run(
-    name: str = typer.Argument(...),
-    payload: str = typer.Option("{}", "--payload"),
-) -> None:
+def tool_run(name: str = typer.Argument(...), payload: str = typer.Option("{}", "--payload")) -> None:
     from gems.grandidierite.registry import run_tool
 
     try:

@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Side-by-side log scaffold — records @ETHER results for a fixed holdout slice.
-
-Fill Aider/Continue columns manually per METHODOLOGY.md protocol.
-"""
+"""Side-by-side log runner — records @ETHER results for holdout tasks (manual peers)."""
 
 from __future__ import annotations
 
@@ -29,58 +26,55 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=10)
     args = ap.parse_args()
 
-    tasks = json.loads(HOLDOUT.read_text(encoding="utf-8")).get("tasks") or []
-    tasks = tasks[: args.limit]
+    data = json.loads(HOLDOUT.read_text(encoding="utf-8"))
+    tasks = list(data.get("tasks") or [])[: args.limit]
     pipe = Pipeline()
     rows = []
     t0 = time.perf_counter()
     for i, t in enumerate(tasks, 1):
-        tid = t.get("id")
-        print(f"[{i}/{len(tasks)}] {tid}", flush=True)
+        print(f"[compare {i}/{len(tasks)}] {t.get('id')} ...", flush=True)
+        st = time.perf_counter()
         r = pipe.run(t["objective"])
+        ms = round((time.perf_counter() - st) * 1000, 1)
         ok = r.status == "complete" and r.sandbox and r.sandbox.exit_code == 0
-        ms = sum(s.duration_ms for s in r.stages)
         rows.append(
             {
-                "id": tid,
+                "id": t.get("id"),
                 "ether_ok": ok,
-                "ether_ms": round(ms, 1),
-                "ether_conf": r.confidence,
-                "ether_burst": r.used_burst,
+                "ether_ms": ms,
+                "confidence": r.confidence,
+                "verification_score": r.verification_score,
+                "strategy": r.strategy,
+                "used_burst": r.used_burst,
                 "aider_ok": None,
                 "continue_ok": None,
                 "cursor_ok": None,
                 "notes": "",
             }
         )
-        print(f"  ether_ok={ok} ms={ms:.0f}", flush=True)
+        print(f"  ether_ok={ok} ms={ms}", flush=True)
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+    day = datetime.now(timezone.utc).strftime("%Y%m%d")
     out_dir = ROOT / "memory" / "bench"
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"compare_{stamp}.json"
-    md = out_dir / f"compare_{stamp}.md"
-    payload = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "n": len(rows),
-        "duration_s": round(time.perf_counter() - t0, 2),
-        "rows": rows,
-    }
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    path = out_dir / f"compare_{day}.md"
     lines = [
-        f"# Compare {stamp}",
+        f"# Side-by-side compare {day}",
         "",
-        "| id | ETHER | ms | conf | burst | Aider | Continue | Cursor | notes |",
-        "|----|-------|---:|-----:|-------|-------|----------|--------|-------|",
+        "Fill peer columns manually after running the same tasks in other tools.",
+        "",
+        "| Task | ETHER | ms | conf | Aider | Continue | Cursor | notes |",
+        "|------|------:|---:|-----:|------:|---------:|-------:|-------|",
     ]
-    for r in rows:
+    for row in rows:
         lines.append(
-            f"| {r['id']} | {r['ether_ok']} | {r['ether_ms']} | {r['ether_conf']} | {r['ether_burst']} |  |  |  |  |"
+            f"| {row['id']} | {row['ether_ok']} | {row['ether_ms']} | {row['confidence']} |  |  |  |  |"
         )
     lines.append("")
-    lines.append("_Fill other tools manually. Do not claim winners without complete columns._")
-    md.write_text("\n".join(lines), encoding="utf-8")
-    print(json.dumps({"path": str(path), "md": str(md), "n": len(rows)}, indent=2))
+    lines.append(f"_Generated in {round(time.perf_counter()-t0,1)}s_")
+    path.write_text("\n".join(lines), encoding="utf-8")
+    (out_dir / f"compare_{day}.json").write_text(json.dumps({"rows": rows}, indent=2), encoding="utf-8")
+    print(json.dumps({"path": str(path), "n": len(rows)}, indent=2))
     return 0
 
 

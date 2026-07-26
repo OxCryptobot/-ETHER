@@ -1,4 +1,4 @@
-"""Curriculum — graded tasks, vault sync, failure-driven sampling, scratch tier."""
+"""Curriculum — graded tasks, vault sync, failure-driven + scratch tier blend."""
 
 from __future__ import annotations
 
@@ -116,11 +116,9 @@ def sync_from_vault() -> Dict[str, Any]:
 def load_tiers() -> List[Dict[str, Any]]:
     path = CUR_DIR / "tiers.json"
     if not path.exists():
-        tiers: List[Dict[str, Any]] = []
-    else:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        tiers = list(data.get("tiers") or [])
-
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    tiers = list(data.get("tiers") or [])
     if MINED_PATH.exists():
         try:
             mined = json.loads(MINED_PATH.read_text(encoding="utf-8")).get("tasks") or []
@@ -133,20 +131,15 @@ def load_tiers() -> List[Dict[str, Any]]:
                 tiers[-1].setdefault("tasks", []).extend(extra)
         except Exception:
             pass
-
-    # blend scratch multifile-style tasks into highest tier
-    if SCRATCH_PATH.exists():
+    # blend scratch multifile tasks into top tier
+    if SCRATCH_PATH.exists() and tiers:
         try:
             sc = json.loads(SCRATCH_PATH.read_text(encoding="utf-8"))
-            tasks = list(sc.get("tasks") or [])
-            if tasks:
-                if not tiers:
-                    tiers = [{"name": sc.get("name") or "scratch", "tasks": tasks}]
-                else:
-                    tiers[-1].setdefault("tasks", []).extend(tasks)
+            extra = list(sc.get("tasks") or [])
+            if extra:
+                tiers[-1].setdefault("tasks", []).extend(extra)
         except Exception:
             pass
-
     return tiers
 
 

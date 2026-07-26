@@ -4,302 +4,718 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>@ETHER Control Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:#04070f; --panel:#0a1220; --line:#1a2740; --text:#e7eefc;
-      --muted:#7f91b0; --good:#34d399; --bad:#f87171; --accent:#38bdf8;
-      --violet:#a78bfa; --warn:#fbbf24; --term:#0b1220;
+      --bg: #0b0f17;
+      --surface: #121826;
+      --surface-2: #182033;
+      --border: #2a3548;
+      --text: #eef2f8;
+      --muted: #94a3b8;
+      --faint: #64748b;
+      --good: #3ecf8e;
+      --bad: #f07178;
+      --accent: #5b9fd4;
+      --violet: #9b8cff;
+      --warn: #e6b450;
+      --radius: 12px;
+      --font: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      background:radial-gradient(1000px 600px at 10% -10%,#12203a 0%,var(--bg) 55%);color:var(--text)}
-    header{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;
-      gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(4,7,15,.92);backdrop-filter:blur(12px)}
-    .brand{font-weight:800;letter-spacing:.08em}.brand span{color:var(--accent)}
-    .live{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;
-      border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-    .dot{width:9px;height:9px;border-radius:50%;background:var(--warn)}
-    .dot.on{background:var(--good);box-shadow:0 0 12px var(--good);animation:pulse 1.2s infinite}
-    .dot.off{background:var(--bad)}
-    .dot.busy{background:var(--accent);box-shadow:0 0 14px var(--accent);animation:pulse .6s infinite}
-    @keyframes pulse{0%{opacity:1}50%{opacity:.45}100%{opacity:1}}
-    @keyframes scan{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}
-    nav.tabs{display:flex;gap:8px;padding:10px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-    nav.tabs button{background:transparent;color:var(--muted);border:1px solid var(--line);
-      border-radius:999px;padding:7px 12px;cursor:pointer;font-size:12px}
-    nav.tabs button.active{color:var(--text);border-color:var(--accent);background:rgba(56,189,248,.08)}
-    main{padding:14px}
-    .panel{display:none}.panel.active{display:block}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-    .card{background:linear-gradient(180deg,#0d162c,var(--panel));border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;overflow:hidden}
-    .card.live-glow::after{content:"";position:absolute;left:0;right:0;height:40%;top:0;pointer-events:none;
-      background:linear-gradient(180deg,rgba(56,189,248,.07),transparent);animation:scan 2.8s linear infinite}
-    .s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:span 6}.s8{grid-column:span 8}.s12{grid-column:span 12}
-    @media (max-width:1000px){.s3,.s4,.s6,.s8,.s12{grid-column:span 12}}
-    h2{margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    .big{font-size:24px;font-weight:700}.ok{color:var(--good)}.bad{color:var(--bad)}.info{color:var(--accent)}
-    .sub{color:var(--muted);font-size:12px;margin-top:4px}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px}
-    .pill.ok{color:var(--good);background:rgba(52,211,153,.1)}
-    .pill.bad{color:var(--bad);background:rgba(248,113,113,.1)}
-    .pill.queue{color:var(--warn);background:rgba(251,191,36,.1)}
-    table{width:100%;border-collapse:collapse;font-size:12px}
-    th,td{text-align:left;padding:7px 5px;border-bottom:1px solid var(--line);vertical-align:top}
-    th{color:var(--muted)}
-    .term{
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.45;
-      background:var(--term);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
-      height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
     }
-    .term .l-ok{color:var(--good)}.term .l-err{color:var(--bad)}.term .l-warn{color:var(--warn)}
-    .term .l-git{color:var(--violet)}.term .l-live{color:var(--accent)}.term .l-info{color:var(--muted)}
-    .term .ts{color:#4b5d7a;margin-right:6px}
-    .codepane{
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;
-      background:#070d18;border:1px solid var(--line);border-radius:12px;padding:10px;
-      height:340px;overflow:auto;white-space:pre;color:#d7e3ff
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
-    .stage-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-    .stage-chip{font-size:11px;padding:4px 8px;border-radius:8px;border:1px solid var(--line)}
-    .stage-chip.ok{border-color:rgba(52,211,153,.4);color:var(--good)}
-    .stage-chip.bad{border-color:rgba(248,113,113,.4);color:var(--bad)}
-    .bars{display:flex;align-items:end;gap:4px;height:56px;margin-bottom:8px}
-    .bar{width:11px;border-radius:4px 4px 0 0;background:var(--line)}
-    .bar.pass{background:var(--good)}.bar.fail{background:var(--bad)}
-    .list{display:grid;gap:8px}.list.two{grid-template-columns:1fr 1fr}
-    .skill,.gem,.tool{border:1px solid var(--line);border-radius:12px;padding:10px;background:rgba(255,255,255,.02)}
-    .ticker{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
-    .ticker b{color:var(--text)}
-    footer{color:var(--muted);font-size:11px;padding:6px 16px 16px}
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .brand strong {
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    .brand strong em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .brand small {
+      color: var(--faint);
+      font-size: 12px;
+      font-weight: 400;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--faint);
+      flex-shrink: 0;
+    }
+    .dot.on { background: var(--good); box-shadow: 0 0 0 3px rgba(62,207,142,.2); }
+    .dot.busy { background: var(--accent); box-shadow: 0 0 0 3px rgba(91,159,212,.25); animation: blink 1s infinite; }
+    .dot.off { background: var(--bad); }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Tabs */
+    nav.tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 24px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      overflow-x: auto;
+    }
+    nav.tabs button {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    nav.tabs button:hover { color: var(--text); }
+    nav.tabs button.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    main { padding: 20px 24px 32px; max-width: 1400px; margin: 0 auto; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Layout */
+    .row {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-5 { grid-column: span 5; }
+    .col-6 { grid-column: span 6; }
+    .col-7 { grid-column: span 7; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+    @media (max-width: 960px) {
+      .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 { grid-column: span 12; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      min-height: 100px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin: 0 0 6px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 14px;
+      line-height: 1.45;
+    }
+    .metric {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .metric.sm { font-size: 18px; font-weight: 600; }
+    .metric.ok { color: var(--good); }
+    .metric.bad { color: var(--bad); }
+    .metric.accent { color: var(--accent); }
+    .hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Terminal / chat */
+    .terminal {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.65;
+      background: #0a0e16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      height: 420px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .terminal .line {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(42,53,72,.35);
+    }
+    .terminal .line:last-child { border-bottom: none; }
+    .terminal .ts {
+      color: var(--faint);
+      font-size: 12px;
+      padding-top: 1px;
+    }
+    .terminal .msg { word-break: break-word; white-space: pre-wrap; }
+    .terminal .ok .msg { color: var(--good); }
+    .terminal .err .msg { color: var(--bad); }
+    .terminal .warn .msg { color: var(--warn); }
+    .terminal .git .msg { color: var(--violet); }
+    .terminal .live .msg { color: var(--accent); }
+    .terminal .info .msg { color: var(--muted); }
+    .terminal .empty {
+      color: var(--faint);
+      padding: 24px 8px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* Code panel */
+    .codebox {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+      background: #0a0e16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      height: 420px;
+      overflow: auto;
+      white-space: pre;
+      color: #d5deec;
+      margin: 0;
+    }
+
+    /* Sandbox out */
+    .io-box {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      background: #0a0e16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      min-height: 140px;
+      max-height: 220px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .io-box .label {
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 8px;
+    }
+    .io-box .stdout { color: var(--good); }
+    .io-box .stderr { color: var(--bad); margin-top: 10px; }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      text-align: left;
+      color: var(--faint);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(42,53,72,.6);
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+    .badge.ok { color: var(--good); background: rgba(62,207,142,.1); border-color: rgba(62,207,142,.35); }
+    .badge.bad { color: var(--bad); background: rgba(240,113,120,.1); border-color: rgba(240,113,120,.35); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface-2);
+    }
+    .chip.ok { color: var(--good); border-color: rgba(62,207,142,.35); }
+    .chip.bad { color: var(--bad); border-color: rgba(240,113,120,.35); }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 64px;
+    }
+    .bar {
+      flex: 1;
+      max-width: 14px;
+      border-radius: 4px 4px 0 0;
+      background: var(--border);
+      min-height: 6px;
+    }
+    .bar.pass { background: var(--good); }
+    .bar.fail { background: var(--bad); }
+
+    .item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: var(--surface-2);
+      margin-bottom: 8px;
+    }
+    .item b { display: block; margin-bottom: 4px; }
+    .item span { color: var(--muted); font-size: 12px; }
+
+    footer {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px 28px;
+      color: var(--faint);
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand"><span>@ETHER</span> CONTROL MATRIX <span style="font-weight:500;color:var(--muted);font-size:12px">v2 LIVE</span></div>
-    <div class="ticker" id="ticker"></div>
-    <div class="live"><span id="dot" class="dot"></span><span id="liveText">connecting…</span></div>
+    <div class="brand">
+      <strong><em>@ETHER</em> Control Matrix</strong>
+      <small>Local agent ops console · live sandbox, flywheel, git</small>
+    </div>
+    <div class="status-pill">
+      <span id="dot" class="dot"></span>
+      <span id="liveText">Connecting…</span>
+    </div>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button data-tab="overview" class="active">Overview · Live</button>
+  <nav class="tabs">
+    <button data-tab="overview" class="active">Overview</button>
     <button data-tab="workflow">Workflow</button>
     <button data-tab="runs">Runs</button>
-    <button data-tab="gems">Gems & tools</button>
+    <button data-tab="gems">Gems &amp; tools</button>
     <button data-tab="bench">Benchmarks</button>
-    <button data-tab="raw">Raw</button>
+    <button data-tab="raw">Diagnostics</button>
   </nav>
 
   <main>
+    <!-- OVERVIEW -->
     <section class="panel active" id="tab-overview">
-      <div class="grid">
-        <div class="card s3"><h2>Gate</h2><div class="big" id="quality">—</div><div class="sub" id="reason">—</div></div>
-        <div class="card s3"><h2>Confidence</h2><div class="big info" id="conf">—</div><div class="sub" id="scores">exec / ver</div></div>
-        <div class="card s3"><h2>Pull</h2><div class="big" id="pull">—</div><div class="sub" id="pullDetail">—</div></div>
-        <div class="card s3"><h2>Model</h2><div class="big" style="font-size:15px" id="model">—</div><div class="sub" id="hb">heartbeat —</div></div>
+      <div class="row">
+        <div class="card col-3">
+          <p class="card-title">Quality gate</p>
+          <p class="card-desc">Overall flywheel result after tests + sandbox + audit.</p>
+          <div class="metric" id="quality">—</div>
+          <div class="hint" id="reason">Waiting for a cycle…</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Confidence</p>
+          <p class="card-desc">Combined execution + verification score (0–1).</p>
+          <div class="metric accent" id="conf">—</div>
+          <div class="hint">Gate typically requires ≥ 0.70</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Git pull</p>
+          <p class="card-desc">Sync with origin/main at the start of each cycle.</p>
+          <div class="metric" id="pull">—</div>
+          <div class="hint" id="pullDetail">—</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Model</p>
+          <p class="card-desc">Primary local LLM used by Rose Quartz.</p>
+          <div class="metric sm" id="model">—</div>
+          <div class="hint" id="hb">No heartbeat yet</div>
+        </div>
+      </div>
 
-        <div class="card s7 live-glow">
-          <h2>Live CLI · flywheel · git · stages</h2>
-          <div class="term" id="term"></div>
+      <div class="row">
+        <div class="card col-7">
+          <p class="card-title">Activity feed</p>
+          <p class="card-desc">Live stream of flywheel steps, pipeline stages, sandbox events, and git commits. Updates about every second.</p>
+          <div class="terminal" id="term">
+            <div class="empty">No events yet.<br/>Start the desktop launcher or run flywheel to see activity here.</div>
+          </div>
         </div>
-        <div class="card s5 live-glow">
-          <h2>Sandbox code · last generated</h2>
-          <div class="codepane" id="codepane">// waiting for pipeline output…</div>
+        <div class="card col-5">
+          <p class="card-title">Generated code</p>
+          <p class="card-desc">Latest Python produced by the agent and sent to the sandbox.</p>
+          <pre class="codebox" id="codepane"># Code will appear here after a pipeline run.</pre>
         </div>
+      </div>
 
-        <div class="card s6">
-          <h2>Sandbox stdout / stderr</h2>
-          <div class="term" style="height:160px" id="sandOut"></div>
+      <div class="row">
+        <div class="card col-6">
+          <p class="card-title">Sandbox output</p>
+          <p class="card-desc">stdout and stderr from the last Clear Quartz execution.</p>
+          <div class="io-box" id="sandOut">
+            <div class="label">Waiting for sandbox results…</div>
+          </div>
         </div>
-        <div class="card s6">
-          <h2>Current work</h2>
-          <div class="big" style="font-size:16px" id="workPhase">—</div>
-          <div class="sub" id="workObjective">—</div>
-          <div class="stage-row" id="workStages"></div>
-          <table style="margin-top:10px"><thead><tr><th>Step</th><th>Status</th><th>ms</th><th>Error</th></tr></thead><tbody id="stepsBody"></tbody></table>
+        <div class="card col-6">
+          <p class="card-title">Current work</p>
+          <p class="card-desc">Active stage and objective, plus the last flywheel step table.</p>
+          <div class="metric sm" id="workPhase">Idle</div>
+          <div class="hint" id="workObjective">No objective in progress</div>
+          <div class="chips" id="workStages"></div>
+          <table style="margin-top:16px">
+            <thead>
+              <tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="stepsBody">
+              <tr><td colspan="4" style="color:var(--faint)">No flywheel steps yet</td></tr>
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        <div class="card s12">
-          <h2>Flywheel history</h2>
+      <div class="row">
+        <div class="card col-12">
+          <p class="card-title">Flywheel history</p>
+          <p class="card-desc">Each bar is one cycle. Height ≈ confidence. Green = pass, red = fail.</p>
           <div class="bars" id="bars"></div>
         </div>
       </div>
     </section>
 
+    <!-- WORKFLOW -->
     <section class="panel" id="tab-workflow">
-      <div class="grid">
-        <div class="card s12"><h2>Workflow</h2><div class="list two" id="flow"></div></div>
-        <div class="card s6"><h2>Skills</h2><div class="list" id="skills"></div></div>
-        <div class="card s6"><h2>Policy</h2><div class="list" id="policy"></div></div>
+      <div class="row">
+        <div class="card col-12">
+          <p class="card-title">Pipeline stages</p>
+          <p class="card-desc">How a coding request moves through the eight gems.</p>
+          <div id="flow"></div>
+        </div>
+        <div class="card col-6">
+          <p class="card-title">Active capabilities</p>
+          <p class="card-desc">Features currently enabled in this runtime.</p>
+          <div id="skills"></div>
+        </div>
+        <div class="card col-6">
+          <p class="card-title">Policy</p>
+          <p class="card-desc">Gate thresholds and autonomy settings from environment / .env.</p>
+          <div id="policy"></div>
+        </div>
       </div>
     </section>
 
+    <!-- RUNS -->
     <section class="panel" id="tab-runs">
-      <div class="grid"><div class="card s12"><h2>Pipeline runs</h2>
-        <table><thead><tr><th>Status</th><th>Conf</th><th>Retries</th><th>Objective</th><th>Stages</th></tr></thead><tbody id="runsBody"></tbody></table>
-      </div></div>
+      <div class="row">
+        <div class="card col-12">
+          <p class="card-title">Recent pipeline runs</p>
+          <p class="card-desc">Persisted under memory/runs. Status, confidence, and stage trail.</p>
+          <table>
+            <thead>
+              <tr><th>Status</th><th>Conf</th><th>Retries</th><th>Objective</th><th>Stages</th></tr>
+            </thead>
+            <tbody id="runsBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
+    <!-- GEMS -->
     <section class="panel" id="tab-gems">
-      <div class="grid">
-        <div class="card s8"><h2>Gems</h2><div class="list two" id="gems"></div></div>
-        <div class="card s4"><h2>Tools</h2><div id="toolsP"></div><div id="toolsQ" style="margin-top:10px"></div></div>
+      <div class="row">
+        <div class="card col-8">
+          <p class="card-title">Gems</p>
+          <p class="card-desc">Modular intelligence components of @ETHER.</p>
+          <div id="gems" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+        </div>
+        <div class="card col-4">
+          <p class="card-title">Persistent tools</p>
+          <p class="card-desc">Promoted tools available to the agent.</p>
+          <div id="toolsP"></div>
+          <p class="card-title" style="margin-top:18px">Quarantine</p>
+          <p class="card-desc">Fabricated tools waiting for promote.</p>
+          <div id="toolsQ"></div>
+        </div>
       </div>
     </section>
 
+    <!-- BENCH -->
     <section class="panel" id="tab-bench">
-      <div class="grid">
-        <div class="card s3"><h2>FW cycles</h2><div class="big" id="bCycles">—</div></div>
-        <div class="card s3"><h2>FW pass %</h2><div class="big" id="bFw">—</div></div>
-        <div class="card s3"><h2>Run success %</h2><div class="big" id="bRun">—</div></div>
-        <div class="card s3"><h2>Avg conf</h2><div class="big info" id="bConf">—</div></div>
+      <div class="row">
+        <div class="card col-3">
+          <p class="card-title">Flywheel cycles</p>
+          <div class="metric" id="bCycles">—</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Flywheel pass rate</p>
+          <div class="metric" id="bFw">—</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Pipeline success</p>
+          <div class="metric" id="bRun">—</div>
+        </div>
+        <div class="card col-3">
+          <p class="card-title">Avg confidence</p>
+          <div class="metric accent" id="bConf">—</div>
+        </div>
       </div>
     </section>
 
+    <!-- RAW -->
     <section class="panel" id="tab-raw">
-      <div class="grid">
-        <div class="card s12"><h2>Latest JSON</h2><pre id="latest" style="white-space:pre-wrap;font-size:11px;max-height:420px;overflow:auto"></pre></div>
+      <div class="row">
+        <div class="card col-12">
+          <p class="card-title">Latest flywheel report</p>
+          <p class="card-desc">Raw JSON from memory/flywheel/latest.json for debugging.</p>
+          <pre class="codebox" id="latest" style="height:480px"></pre>
+        </div>
       </div>
     </section>
   </main>
-  <footer>WS ~0.9s · poll 3s · local only http://127.0.0.1:8787</footer>
+
+  <footer>
+    Live WebSocket ~0.9s · HTTP poll 3s fallback · Local only — http://127.0.0.1:8787
+  </footer>
 
 <script>
-const tabs=document.querySelectorAll('nav.tabs button');
-const panels=document.querySelectorAll('.panel');
-tabs.forEach(btn=>btn.addEventListener('click',()=>{
-  tabs.forEach(b=>b.classList.remove('active'));
-  panels.forEach(p=>p.classList.remove('active'));
+const tabs = document.querySelectorAll('nav.tabs button');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(btn => btn.addEventListener('click', () => {
+  tabs.forEach(b => b.classList.remove('active'));
+  panels.forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
 }));
 
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function pct(x){return x==null?'—':Math.round(x*100)+'%';}
-let lastTermHash='';
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function pct(x) { return x == null ? '—' : Math.round(x * 100) + '%'; }
 
-function render(d){
-  const s=d.summary||{};
-  const ok=s.quality_pass===true;
-  const q=document.getElementById('quality');
-  q.textContent=ok?'PASS':(s.quality_pass===false?'FAIL':'—');
-  q.className='big '+(ok?'ok':'bad');
-  document.getElementById('reason').textContent=s.reason||'—';
-  document.getElementById('conf').textContent=s.confidence!=null?Number(s.confidence).toFixed(3):'—';
-  document.getElementById('model').textContent=s.model||'—';
-  document.getElementById('hb').textContent=d.heartbeat?('heartbeat '+d.heartbeat):'no heartbeat';
+let lastTermKey = '';
 
-  const pullStep=(d.matrix_steps||[]).find(x=>x.name==='pull')||{};
-  const pullEl=document.getElementById('pull');
-  pullEl.textContent=pullStep.ok===true?'OK':(pullStep.ok===false?'FAIL':'—');
-  pullEl.className='big '+(pullStep.ok?'ok':'bad');
-  document.getElementById('pullDetail').textContent=pullStep.error||(pullStep.ms!=null?pullStep.ms+' ms':'—');
+function render(d) {
+  const s = d.summary || {};
+  const ok = s.quality_pass === true;
+  const q = document.getElementById('quality');
+  q.textContent = ok ? 'PASS' : (s.quality_pass === false ? 'FAIL' : '—');
+  q.className = 'metric ' + (ok ? 'ok' : (s.quality_pass === false ? 'bad' : ''));
+  document.getElementById('reason').textContent = s.reason || 'Waiting for a cycle…';
+  document.getElementById('conf').textContent = s.confidence != null ? Number(s.confidence).toFixed(3) : '—';
+  document.getElementById('model').textContent = s.model || 'not set';
+  document.getElementById('hb').textContent = d.heartbeat ? ('Last heartbeat: ' + d.heartbeat) : 'No heartbeat yet';
 
-  const cw=d.current_work||{};
-  const console=d.console||{};
-  const busy=!!console.active || (cw.phase&&String(cw.phase).startsWith('live'));
-  const dot=document.getElementById('dot');
-  dot.className='dot '+(busy?'busy':(d.heartbeat?'on':'off'));
-  document.getElementById('liveText').textContent=busy?'CODING LIVE':(d.heartbeat?'websocket live':'waiting');
+  const pullStep = (d.matrix_steps || []).find(x => x.name === 'pull') || {};
+  const pullEl = document.getElementById('pull');
+  if (pullStep.ok === true) { pullEl.textContent = 'OK'; pullEl.className = 'metric ok'; }
+  else if (pullStep.ok === false) { pullEl.textContent = 'FAIL'; pullEl.className = 'metric bad'; }
+  else { pullEl.textContent = '—'; pullEl.className = 'metric'; }
+  document.getElementById('pullDetail').textContent =
+    pullStep.error || (pullStep.ms != null ? (pullStep.ms + ' ms') : 'No pull data yet');
 
-  document.getElementById('ticker').innerHTML=[
-    `<span>cycles <b>${(d.history||[]).length}</b></span>`,
-    `<span>fail streak <b>${s.fail_streak||0}</b></span>`,
-    `<span>tasks <b>${s.tasks_progress_pct||0}%</b></span>`,
-    `<span>ws <b>0.9s</b></span>`
-  ].join('');
+  const consoleData = d.console || {};
+  const cw = d.current_work || {};
+  const busy = !!consoleData.active || (cw.phase && String(cw.phase).startsWith('live'));
+  const dot = document.getElementById('dot');
+  dot.className = 'dot ' + (busy ? 'busy' : (d.heartbeat ? 'on' : 'off'));
+  document.getElementById('liveText').textContent = busy
+    ? 'Agent coding…'
+    : (d.heartbeat ? 'Connected · live' : 'Waiting for runtime');
 
-  // terminal
-  const term=document.getElementById('term');
-  const lines=console.lines||[];
-  const hash=JSON.stringify(lines).slice(0,200);
-  const html=lines.map(L=>{
-    const cls='l-'+(L.level||'info');
-    const ts=(L.ts||'').toString().slice(11,19);
-    return `<div class="${cls}"><span class="ts">${esc(ts)}</span>${esc(L.text)}</div>`;
-  }).join('')||'<div class="l-info">waiting for events… run flywheel or ether run</div>';
-  if(hash!==lastTermHash){
-    const nearBottom=term.scrollTop+term.clientHeight>=term.scrollHeight-40;
-    term.innerHTML=html;
-    if(nearBottom) term.scrollTop=term.scrollHeight;
-    lastTermHash=hash;
+  // Terminal — readable rows
+  const term = document.getElementById('term');
+  const lines = consoleData.lines || [];
+  const key = lines.map(l => l.text).join('|').slice(0, 300);
+  if (key !== lastTermKey) {
+    const nearBottom = term.scrollTop + term.clientHeight >= term.scrollHeight - 48;
+    if (!lines.length) {
+      term.innerHTML = '<div class="empty">No events yet.<br/>Start the desktop launcher or run flywheel to see activity here.</div>';
+    } else {
+      term.innerHTML = lines.map(L => {
+        const lvl = L.level || 'info';
+        const ts = (L.ts || '').toString();
+        const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+        return `<div class="line ${esc(lvl)}"><div class="ts">${esc(clock || '--:--:--')}</div><div class="msg">${esc(L.text)}</div></div>`;
+      }).join('');
+    }
+    if (nearBottom || !lastTermKey) term.scrollTop = term.scrollHeight;
+    lastTermKey = key;
   }
 
-  document.getElementById('codepane').textContent=console.code_preview||'// no generated code yet — run: python -m cli.main flywheel --push';
-  const so=console.sandbox_stdout||'';
-  const se=console.sandbox_stderr||'';
-  document.getElementById('sandOut').innerHTML=
-    (so?`<div class="l-ok">$ stdout\n${esc(so)}</div>`:'')+
-    (se?`<div class="l-err">$ stderr\n${esc(se)}</div>`:'')+
-    (!so&&!se?'<div class="l-info">no sandbox output yet</div>':'');
+  document.getElementById('codepane').textContent =
+    consoleData.code_preview || '# Code will appear here after a pipeline run.';
 
-  document.getElementById('workPhase').textContent=cw.phase||'idle';
-  document.getElementById('workObjective').textContent=cw.objective||'—';
-  document.getElementById('workStages').innerHTML=(cw.stages||[]).map(st=>
-    `<span class="stage-chip ${st.ok?'ok':'bad'}">${esc(st.stage)}${st.ms!=null?' '+Math.round(st.ms)+'ms':''}</span>`
-  ).join('')||'<span class="sub">no stages</span>';
+  const so = consoleData.sandbox_stdout || '';
+  const se = consoleData.sandbox_stderr || '';
+  let io = '';
+  if (so) io += '<div class="label">stdout</div><div class="stdout">' + esc(so) + '</div>';
+  if (se) io += '<div class="label" style="margin-top:12px">stderr</div><div class="stderr">' + esc(se) + '</div>';
+  if (!so && !se) io = '<div class="label">Waiting for sandbox results…</div>';
+  document.getElementById('sandOut').innerHTML = io;
 
-  document.getElementById('stepsBody').innerHTML=(d.matrix_steps||[]).map(st=>
-    `<tr><td>${esc(st.name)}</td><td><span class="pill ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms??'—'}</td><td class="sub">${esc(st.error||'')}</td></tr>`
-  ).join('');
+  document.getElementById('workPhase').textContent = cw.phase || 'Idle';
+  document.getElementById('workObjective').textContent = cw.objective || 'No objective in progress';
+  document.getElementById('workStages').innerHTML = (cw.stages || []).map(st =>
+    `<span class="chip ${st.ok ? 'ok' : 'bad'}">${esc(st.stage)}${st.ms != null ? ' · ' + Math.round(st.ms) + 'ms' : ''}</span>`
+  ).join('') || '';
 
-  const bars=document.getElementById('bars'); bars.innerHTML='';
-  (d.history||[]).slice(0,36).reverse().forEach(h=>{
-    const b=document.createElement('div');
-    b.className='bar '+(h.ok?'pass':'fail');
-    b.style.height=(12+Math.round((h.conf||0)*44))+'px';
-    b.title=`${h.ts||''} conf=${h.conf}`;
+  const steps = d.matrix_steps || [];
+  document.getElementById('stepsBody').innerHTML = steps.length
+    ? steps.map(st => `<tr>
+        <td>${esc(st.name)}</td>
+        <td><span class="badge ${st.ok ? 'ok' : 'bad'}">${st.ok ? 'OK' : 'FAIL'}</span></td>
+        <td>${st.ms != null ? st.ms + ' ms' : '—'}</td>
+        <td style="color:var(--muted)">${esc(st.error || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="color:var(--faint)">No flywheel steps yet</td></tr>';
+
+  const bars = document.getElementById('bars');
+  bars.innerHTML = '';
+  (d.history || []).slice(0, 40).reverse().forEach(h => {
+    const b = document.createElement('div');
+    b.className = 'bar ' + (h.ok ? 'pass' : 'fail');
+    b.style.height = (10 + Math.round((h.conf || 0) * 50)) + 'px';
+    b.title = (h.ts || '') + ' · conf=' + h.conf;
     bars.appendChild(b);
   });
 
-  document.getElementById('flow').innerHTML=(d.workflow||[]).map(w=>
-    `<div class="skill"><b>STEP ${w.id} · ${esc(w.name)}</b><div class="sub">${esc(w.desc)}</div></div>`
+  document.getElementById('flow').innerHTML = (d.workflow || []).map(w =>
+    `<div class="item"><b>Step ${w.id} — ${esc(w.name)}</b><span>${esc(w.desc)}</span></div>`
   ).join('');
-  document.getElementById('skills').innerHTML=(d.skills||[]).map(sk=>
-    `<div class="skill"><b>${esc(sk.name)}</b><div class="sub">${esc(sk.status)}</div></div>`
+  document.getElementById('skills').innerHTML = (d.skills || []).map(sk =>
+    `<div class="item"><b>${esc(sk.name)}</b><span>${esc(sk.status)}</span></div>`
+  ).join('') || '<div class="hint">No skills reported</div>';
+
+  const p = d.policy || {};
+  document.getElementById('policy').innerHTML = [
+    ['Minimum confidence', p.min_confidence],
+    ['Max retries', p.max_retries],
+    ['Cycle interval', (p.interval_s || 0) + 's'],
+    ['Soft pull', p.pull_soft ? 'on' : 'off'],
+    ['Git auto-reset', p.git_reset_ok ? 'on' : 'off'],
+  ].map(([k, v]) => `<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('');
+
+  document.getElementById('runsBody').innerHTML = (d.runs || []).slice(0, 20).map(r => {
+    const stages = (r.stages || []).map(x => x.stage + (x.success ? '✓' : '✗')).join(' · ');
+    return `<tr>
+      <td><span class="badge ${r.status === 'complete' ? 'ok' : 'bad'}">${esc(r.status)}</span></td>
+      <td>${r.confidence != null ? Number(r.confidence).toFixed(2) : '—'}</td>
+      <td>${r.retries || 0}</td>
+      <td>${esc(r.objective)}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(stages)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="color:var(--faint)">No runs yet</td></tr>';
+
+  document.getElementById('gems').innerHTML = (d.gems || []).map(g =>
+    `<div class="item"><b>${esc(g.id)}</b><span>${esc(g.role)} · ${esc(g.layer)}</span></div>`
   ).join('');
-  const p=d.policy||{};
-  document.getElementById('policy').innerHTML=[
-    ['Min confidence',p.min_confidence],['Max retries',p.max_retries],
-    ['Interval',(p.interval_s||0)+'s'],['Pull soft',p.pull_soft],
-    ['Git reset ok',p.git_reset_ok],['Warm sandbox',p.warm_sandbox]
-  ].map(([k,v])=>`<div class="skill"><b>${esc(k)}</b><div class="sub">${esc(v)}</div></div>`).join('');
 
-  document.getElementById('runsBody').innerHTML=(d.runs||[]).slice(0,20).map(r=>{
-    const stages=(r.stages||[]).map(x=>x.stage+(x.success?'✓':'✗')).join(' ');
-    return `<tr><td><span class="pill ${r.status==='complete'?'ok':'bad'}">${esc(r.status)}</span></td>
-      <td>${r.confidence!=null?Number(r.confidence).toFixed(2):'—'}</td><td>${r.retries||0}</td>
-      <td>${esc(r.objective)}</td><td>${esc(stages)}</td></tr>`;
-  }).join('');
+  const t = d.tools || {};
+  document.getElementById('toolsP').innerHTML = (t.persistent || []).length
+    ? t.persistent.map(x => `<div class="item"><b>${esc(x)}</b></div>`).join('')
+    : '<div class="hint">None promoted yet</div>';
+  document.getElementById('toolsQ').innerHTML = (t.quarantine || []).length
+    ? t.quarantine.map(x => `<div class="item"><b>${esc(x)}</b></div>`).join('')
+    : '<div class="hint">Empty</div>';
 
-  document.getElementById('gems').innerHTML=(d.gems||[]).map(g=>
-    `<div class="gem"><b>${esc(g.id)}</b><div class="sub">${esc(g.role)} · ${esc(g.layer)}</div></div>`
-  ).join('');
-  const t=d.tools||{};
-  document.getElementById('toolsP').innerHTML='<div class="sub">Persistent</div>'+(t.persistent||[]).map(x=>`<div class="tool">${esc(x)}</div>`).join('')||'<div class="sub">none</div>';
-  document.getElementById('toolsQ').innerHTML='<div class="sub">Quarantine</div>'+(t.quarantine||[]).map(x=>`<div class="tool">${esc(x)}</div>`).join('')||'<div class="sub">empty</div>';
-
-  const b=d.benchmarks||{};
-  document.getElementById('bCycles').textContent=b.flywheel_cycles??'—';
-  document.getElementById('bFw').textContent=pct(b.flywheel_pass_rate);
-  document.getElementById('bRun').textContent=pct(b.pipeline_success_rate);
-  document.getElementById('bConf').textContent=b.avg_confidence!=null?Number(b.avg_confidence).toFixed(3):'—';
-  document.getElementById('latest').textContent=JSON.stringify(d.latest||{},null,2);
+  const b = d.benchmarks || {};
+  document.getElementById('bCycles').textContent = b.flywheel_cycles ?? '—';
+  document.getElementById('bFw').textContent = pct(b.flywheel_pass_rate);
+  document.getElementById('bRun').textContent = pct(b.pipeline_success_rate);
+  document.getElementById('bConf').textContent = b.avg_confidence != null ? Number(b.avg_confidence).toFixed(3) : '—';
+  document.getElementById('latest').textContent = JSON.stringify(d.latest || {}, null, 2);
 }
 
-function connect(){
-  const proto=location.protocol==='https:'?'wss':'ws';
-  const ws=new WebSocket(`${proto}://${location.host}/ws`);
-  ws.onopen=()=>{document.getElementById('liveText').textContent='websocket live'};
-  ws.onmessage=(ev)=>{try{render(JSON.parse(ev.data))}catch(e){}};
-  ws.onclose=()=>{
-    document.getElementById('dot').className='dot off';
-    document.getElementById('liveText').textContent='reconnecting…';
-    setTimeout(connect,1500);
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(proto + '://' + location.host + '/ws');
+  ws.onopen = () => { document.getElementById('liveText').textContent = 'Connected · live'; };
+  ws.onmessage = (ev) => { try { render(JSON.parse(ev.data)); } catch (e) {} };
+  ws.onclose = () => {
+    document.getElementById('dot').className = 'dot off';
+    document.getElementById('liveText').textContent = 'Reconnecting…';
+    setTimeout(connect, 1500);
   };
-  ws.onerror=()=>ws.close();
+  ws.onerror = () => ws.close();
 }
-async function poll(){try{const r=await fetch('/api/snapshot');render(await r.json())}catch(e){}}
-poll();connect();setInterval(poll,3000);
+
+async function poll() {
+  try {
+    const r = await fetch('/api/snapshot');
+    render(await r.json());
+  } catch (e) {}
+}
+
+poll();
+connect();
+setInterval(poll, 3000);
 </script>
 </body>
 </html>

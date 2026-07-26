@@ -1,4 +1,4 @@
-"""Gem registry — import side-effect wires pipeline boot hooks."""
+"""Gem registry."""
 
 from __future__ import annotations
 
@@ -22,26 +22,25 @@ class GemRegistry:
         if gem is None:
             return ResponseEnvelope(
                 task_id=request.task_id,
-                source_gem=request.target_gem,  # type: ignore
+                source_gem=request.target_gem,  # type: ignore[arg-type]
                 error=GemError(
                     type=GemErrorType.UNKNOWN,
                     message=f"Unknown gem: {request.target_gem}",
                     recoverable=False,
                 ),
             )
-        return gem.execute(request)  # type: ignore
+        return gem.execute(request)  # type: ignore[attr-defined]
 
 
 def build_default_registry() -> GemRegistry:
     from gems.clear_quartz.sandbox import ClearQuartz
     from gems.rose_quartz.router import RoseQuartz
     from gems.selenite.planner import Selenite
-    from gems.black_tourmaline.auditor import BlackTourmaline
-    from gems.labradorite.critic import Labradorite
-    from gems.amethyst.logger import Amethyst
-    from gems.grandidierite.fabricator import Grandidierite
+    from gems.black_tourmaline.security import BlackTourmaline
+    from gems.labradorite.profiler import Labradorite
+    from gems.amethyst.evolution import Amethyst
+    from gems.grandidierite.extension import Grandidierite
 
-    # optional citrine
     reg = GemRegistry()
     reg.register("clear-quartz", ClearQuartz())
     reg.register("rose-quartz", RoseQuartz())

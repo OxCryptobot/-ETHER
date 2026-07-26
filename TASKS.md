@@ -1,23 +1,24 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 (76–81 shipped)
+**Updated:** 2026-07-26 (76–81)
 
 ## Done
 | # | Item |
 |---|------|
-| 66–75 | Intelligence, rewards, burst-on-fail, test_synth, onboarding |
-| **76** | `core/ledger.py` + Matrix collector ledger fields |
-| **77** | expand_holdout.py (40 tasks) |
-| **78–81** | pipeline_hooks, patch_loop, **bandit_context**, **prepare_code**, scratch tier |
-| **79** | `scripts/compare_run.py` → memory/bench/compare_YYYYMMDD.* |
-| **80** | scratch_multifile curriculum tier |
+| 66–75 | Intelligence scoreboard, process rewards, burst-on-fail, test_synth, onboarding |
+| **76** | `core/ledger.py` cost/latency ledger (Matrix already reads it) |
+| **77** | `scripts/expand_holdout.py` |
+| **78–81** | pipeline_hooks + pipeline_boot wires contextual bandit + code prep |
+| **79** | `scripts/compare_run.py` side-by-side scaffold |
+| **80** | `memory/curriculum/scratch_tier.json` |
 
-## Next (optional stretch)
+## Next
 | # | Task |
 |---|------|
-| 82 | Matrix UI cards for ledger avg_run_ms / burst calls |
-| 83 | Auto-append compare table into SCOREBOARD.md |
-| 84 | Rate-card optional $ estimate in ledger |
+| 82 | Blend scratch_tier into curriculum load_tiers |
+| 83 | Matrix UI cards for ledger avg_ms / burst |
+| 84 | Auto-write SCOREBOARD after compare_run |
+| 85 | Stabilize Windows daemon one-window path |
 
 ```powershell
 git fetch origin; git reset --hard origin/main

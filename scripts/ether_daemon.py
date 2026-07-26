@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-process daemon with curriculum intelligence cycles."""
+"""@ETHER single-process daemon with curriculum + tool reconcile."""
 
 from __future__ import annotations
 
@@ -36,6 +36,7 @@ except Exception:
 PY = sys.executable
 INTERVAL = int(os.getenv("ETHER_DAEMON_INTERVAL", os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))
 BATCH_INTERVAL = int(os.getenv("ETHER_BATCH_INTERVAL", "1800"))
+RECONCILE_EVERY = int(os.getenv("ETHER_RECONCILE_EVERY_N", "3"))
 BENCH_EVERY = int(os.getenv("ETHER_BENCH_EVERY_N", "6"))
 RUN_DASH = os.getenv("ETHER_DAEMON_DASHBOARD", "1") == "1"
 RUN_FLYWHEEL = os.getenv("ETHER_DAEMON_FLYWHEEL", "1") == "1"
@@ -125,15 +126,17 @@ def flywheel_loop() -> None:
         heartbeat()
         _cycle_n += 1
         log(f"smart cycle #{_cycle_n} start")
-        # prefer curriculum-aware cycle
         smart = ROOT / "scripts" / "run_smart_cycle.py"
         if smart.exists():
             code = run_cmd([PY, str(smart)], timeout=2400)
         else:
             code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
         log(f"smart cycle exit={code}")
+        if RECONCILE_EVERY > 0 and _cycle_n % RECONCILE_EVERY == 0:
+            log("tool reconcile")
+            run_cmd([PY, str(ROOT / "scripts" / "reconcile_tools.py")], timeout=120)
         if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
-            log("bench guardian refresh")
+            log("bench refresh")
             run_cmd([PY, str(ROOT / "scripts" / "bench.py")], timeout=3600)
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
@@ -165,7 +168,7 @@ def dashboard_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DAEMON — intelligence enabled", flush=True)
+    print("  @ETHER DAEMON — intelligence + tool reconcile", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
     if not acquire_lock():

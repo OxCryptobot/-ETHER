@@ -20,7 +20,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Dashboard", version="0.2.0")
+app = FastAPI(title="@ETHER Dashboard", version="0.3.0")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -28,6 +28,11 @@ if STATIC.exists():
 
 class PromoteBody(BaseModel):
     filename: str
+
+
+class ReconcileBody(BaseModel):
+    dry_run: bool = False
+    threshold: float = 0.82
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -49,7 +54,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.2.0"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.3.0"}
 
 
 @app.post("/api/promote")
@@ -68,6 +73,13 @@ def promote(body: PromoteBody) -> dict:
     return {"ok": True, "from": name, "to": dest_name}
 
 
+@app.post("/api/reconcile-tools")
+def reconcile_tools(body: ReconcileBody) -> dict:
+    from core.tool_reconcile import reconcile
+
+    return reconcile(promote_threshold=body.threshold, dry_run=body.dry_run)
+
+
 @app.websocket("/ws")
 async def ws_feed(ws: WebSocket) -> None:
     await ws.accept()
@@ -76,7 +88,7 @@ async def ws_feed(ws: WebSocket) -> None:
             data = collect_snapshot()
             data["console"] = build_console()
             await ws.send_json(data)
-            await asyncio.sleep(0.9)  # near real-time
+            await asyncio.sleep(0.9)
     except WebSocketDisconnect:
         return
     except Exception:

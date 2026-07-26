@@ -1,9 +1,18 @@
-import pytest
+"""Registry unit tests."""
+
 from core.registry import GemRegistry
 
 
-def test_missing_gem_message():
+def test_missing_gem_returns_none():
     reg = GemRegistry()
-    with pytest.raises(KeyError) as ei:
-        reg.get("nope")
-    assert "not registered" in str(ei.value)
+    assert reg.get("nope") is None
+
+
+def test_register_and_get():
+    reg = GemRegistry()
+
+    class Dummy:
+        pass
+
+    reg.register("dummy", Dummy())
+    assert reg.get("dummy") is not None

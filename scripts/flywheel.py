@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER autonomous agentic flywheel with git self-heal."""
+"""@ETHER autonomous agentic flywheel — git → local → sandbox → git (rinse, repeat)."""
 
 from __future__ import annotations
 
@@ -196,7 +196,7 @@ def write_dashboard(report: Dict[str, Any]) -> None:
     outcome = "PASS" if report["ok"] else "FAIL — audit report filed"
     pull = (report.get("steps") or {}).get("pull") or {}
     lines = [
-        "# @ETHER Flywheel (autonomous)",
+        "# @ETHER Flywheel (rinse & repeat)",
         "",
         f"> Last cycle: **{report['timestamp']}**  ",
         f"> Result: **{outcome}**  ",
@@ -205,10 +205,14 @@ def write_dashboard(report: Dict[str, Any]) -> None:
         f"> Report pushed: **{report.get('pushed')}** · Model: `{report.get('model', '')}`  ",
         f"> Reason: `{g.get('agentic_reason')}`",
         "",
-        "## Policy",
-        "- Git: fetch + ff-only; ETHER_GIT_RESET_OK=1 allows hard reset",
-        "- ETHER_PULL_SOFT=1 (default): network/pull issues soft-continue",
-        "- PASS/FAIL reports both publish for audit",
+        "## Cycle",
+        "1. git pull (self-heal)",
+        "2. pip reinstall editable",
+        "3. daemon_smoke",
+        "4. smoke + pytest + doctor",
+        "5. agentic sandbox (confidence gate)",
+        "6. push PASS/FAIL report to origin",
+        "7. sleep → repeat",
         "",
     ]
     FLYWHEEL_MD.write_text("\n".join(lines), encoding="utf-8")
@@ -260,12 +264,31 @@ def cycle(
     ts = datetime.now(timezone.utc).isoformat()
     HEARTBEAT_PATH.write_text(ts, encoding="utf-8")
     steps: Dict[str, Any] = {}
+    py = sys.executable
 
+    # 1) git → local
     steps["pull"] = safe_pull(git)
     print_step("pull", steps["pull"])
-    load_dotenv(ROOT / ".env", override=False)
+    load_dotenv(ROOT / ".env", override=True)
 
-    py = sys.executable
+    # 2) reinstall so new modules from pull are importable
+    steps["reinstall"] = run([py, "-m", "pip", "install", "-e", ".[dev]", "-q"], timeout=300)
+    # soft: never block agentic solely on pip noise
+    if not steps["reinstall"]["ok"]:
+        steps["reinstall"]["soft"] = True
+        steps["reinstall"]["ok"] = True
+    print_step("reinstall", steps["reinstall"])
+
+    # 3) daemon smoke (hard if script present)
+    daemon_script = ROOT / "scripts" / "test_daemon_smoke.py"
+    if daemon_script.exists():
+        steps["daemon_smoke"] = run([py, str(daemon_script)], timeout=120)
+        print_step("daemon_smoke", steps["daemon_smoke"])
+    else:
+        steps["daemon_smoke"] = {"ok": True, "soft": True, "duration_s": 0, "error_brief": "skipped"}
+        print_step("daemon_smoke", steps["daemon_smoke"])
+
+    # 4) classic static gates
     steps["smoke"] = run([py, "scripts/smoke_test.py"], timeout=120)
     print_step("smoke", steps["smoke"])
     steps["pytest"] = run([py, "-m", "pytest", "-q", "--tb=line"], timeout=300)
@@ -274,7 +297,21 @@ def cycle(
         steps["doctor"] = run([py, "-c", "from cli.main import app; app(['doctor'])"], timeout=60)
         print_step("doctor", steps["doctor"])
 
-    static_ok = steps["smoke"]["ok"] and steps["pytest"]["ok"]
+    # 5) optional one batch-queue tick (soft — never blocks gates)
+    if os.getenv("ETHER_FLYWHEEL_BATCH_TICK", "1") == "1":
+        bw = ROOT / "scripts" / "batch_worker.py"
+        if bw.exists():
+            steps["batch_tick"] = run([py, str(bw)], timeout=600)
+            steps["batch_tick"]["soft"] = True
+            # soft: do not fail static on batch failures
+            steps["batch_tick"]["ok"] = True
+            print_step("batch_tick", steps["batch_tick"])
+
+    static_ok = (
+        steps["smoke"]["ok"]
+        and steps["pytest"]["ok"]
+        and steps.get("daemon_smoke", {}).get("ok", True)
+    )
     if not static_ok:
         agentic = {
             "ok": False,
@@ -383,17 +420,22 @@ def show_status() -> int:
         print("No flywheel report yet.")
         return 1
     data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
-    print(json.dumps({
-        "timestamp": data.get("timestamp"),
-        "ok": data.get("ok"),
-        "quality_pass": data.get("quality_pass", data.get("ok")),
-        "pushed": data.get("pushed"),
-        "confidence": data.get("gates", {}).get("confidence"),
-        "audit_approved": data.get("gates", {}).get("audit_approved"),
-        "pull_ok": data.get("gates", {}).get("pull_ok"),
-        "model": data.get("model"),
-        "agentic_reason": data.get("gates", {}).get("agentic_reason"),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "timestamp": data.get("timestamp"),
+                "ok": data.get("ok"),
+                "quality_pass": data.get("quality_pass", data.get("ok")),
+                "pushed": data.get("pushed"),
+                "confidence": data.get("gates", {}).get("confidence"),
+                "audit_approved": data.get("gates", {}).get("audit_approved"),
+                "pull_ok": data.get("gates", {}).get("pull_ok"),
+                "model": data.get("model"),
+                "agentic_reason": data.get("gates", {}).get("agentic_reason"),
+            },
+            indent=2,
+        )
+    )
     return 0 if data.get("ok") else 1
 
 
@@ -403,10 +445,26 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--push", action="store_true")
     parser.add_argument("--status", action="store_true")
     parser.add_argument("--autonomous", action="store_true")
-    parser.add_argument("--min-confidence", type=float, default=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")))
-    parser.add_argument("--max-retries", type=int, default=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")))
-    parser.add_argument("--interval", type=int, default=int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))
-    parser.add_argument("--objective", type=str, default=os.getenv("ETHER_FLYWHEEL_OBJECTIVE", DEFAULT_OBJECTIVE))
+    parser.add_argument(
+        "--min-confidence",
+        type=float,
+        default=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")),
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")),
+    )
+    parser.add_argument(
+        "--objective",
+        type=str,
+        default=os.getenv("ETHER_FLYWHEEL_OBJECTIVE", DEFAULT_OBJECTIVE),
+    )
     parser.add_argument("--no-doctor", action="store_true")
     parser.add_argument("--loop", type=int, default=0)
     args = parser.parse_args(argv)
@@ -426,23 +484,29 @@ def main(argv: Optional[List[str]] = None) -> int:
             objective=args.objective,
             run_doctor=not args.no_doctor,
         )
-        print(json.dumps({
-            "ok": report["ok"],
-            "quality_pass": report.get("quality_pass", report["ok"]),
-            "pushed": report.get("pushed", False),
-            "confidence": report["gates"]["confidence"],
-            "audit_approved": report["gates"]["audit_approved"],
-            "pull_ok": report["gates"].get("pull_ok"),
-            "agentic_reason": report["gates"].get("agentic_reason"),
-            "timestamp": report["timestamp"],
-        }, indent=2), flush=True)
+        print(
+            json.dumps(
+                {
+                    "ok": report["ok"],
+                    "quality_pass": report.get("quality_pass", report["ok"]),
+                    "pushed": report.get("pushed", False),
+                    "confidence": report["gates"]["confidence"],
+                    "audit_approved": report["gates"]["audit_approved"],
+                    "pull_ok": report["gates"].get("pull_ok"),
+                    "agentic_reason": report["gates"].get("agentic_reason"),
+                    "timestamp": report["timestamp"],
+                },
+                indent=2,
+            ),
+            flush=True,
+        )
         return 0 if report["ok"] else 1
 
     if not continuous:
         return once()
 
     print(
-        f"@ETHER AUTONOMOUS on — interval={interval}s model={os.getenv('ETHER_PRIMARY_MODEL', '')}",
+        f"@ETHER RINSE-REPEAT on — interval={interval}s model={os.getenv('ETHER_PRIMARY_MODEL', '')}",
         flush=True,
     )
     while True:

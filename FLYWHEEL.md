@@ -1,13 +1,37 @@
-# @ETHER Flywheel (autonomous)
+# @ETHER Flywheel — rinse & repeat
 
-> Last cycle: **2026-07-26T03:59:02.223733+00:00**  
-> Result: **PASS**  
-> Confidence: **1.000** (min 0.7) · Audit: **True**  
-> Pull: **OK**  * branch            main       -> FETCH_HEAD  
-> Report pushed: **False** · Model: `qwen2.5-coder:3b`  
-> Reason: `gates_passed`
+## Loop (git ↔ local ↔ sandbox ↔ git)
 
-## Policy
-- Git: fetch + ff-only; ETHER_GIT_RESET_OK=1 allows hard reset
-- ETHER_PULL_SOFT=1 (default): network/pull issues soft-continue
-- PASS/FAIL reports both publish for audit
+```
+origin/main
+    │ pull (self-heal)
+    ▼
+local tree + pip install -e .[dev]
+    │
+    ├─ daemon_smoke
+    ├─ smoke + pytest + doctor
+    ├─ batch_tick (soft)
+    ├─ agentic: plan → code → sandbox → audit → confidence gate
+    │
+    ▼
+commit + push PASS/FAIL report → origin/main
+    │ sleep interval
+    └─ repeat
+```
+
+## Start continuous (local)
+
+```powershell
+cd C:\Users\Otcde\ETHER
+$env:ETHER_GIT_RESET_OK = "1"
+$env:ETHER_FLYWHEEL_PUSH = "1"
+$env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b"
+
+# one cycle
+.\.venv\Scripts\python.exe -m cli.main flywheel --push
+
+# rinse and repeat forever
+.\.venv\Scripts\python.exe -m cli.main flywheel --autonomous --interval 900 --push
+```
+
+Or install the Windows daemon (`scripts\install_windows_daemon.ps1`) so this survives logout of the chat.

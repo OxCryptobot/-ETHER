@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-process daemon with curriculum + tool reconcile."""
+"""@ETHER single-process daemon — smart cycle, reconcile, bench, quiz."""
 
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
 os.environ.setdefault("ETHER_CURRICULUM", "1")
 os.environ.setdefault("ETHER_EXPERIENCE", "1")
 os.environ.setdefault("ETHER_BENCH_GUARDIAN", "1")
+os.environ.setdefault("ETHER_BURST_ON_FAIL", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
@@ -38,6 +39,7 @@ INTERVAL = int(os.getenv("ETHER_DAEMON_INTERVAL", os.getenv("ETHER_FLYWHEEL_INTE
 BATCH_INTERVAL = int(os.getenv("ETHER_BATCH_INTERVAL", "1800"))
 RECONCILE_EVERY = int(os.getenv("ETHER_RECONCILE_EVERY_N", "3"))
 BENCH_EVERY = int(os.getenv("ETHER_BENCH_EVERY_N", "6"))
+QUIZ_EVERY = int(os.getenv("ETHER_QUIZ_EVERY_N", "8"))
 RUN_DASH = os.getenv("ETHER_DAEMON_DASHBOARD", "1") == "1"
 RUN_FLYWHEEL = os.getenv("ETHER_DAEMON_FLYWHEEL", "1") == "1"
 RUN_BATCH = os.getenv("ETHER_DAEMON_BATCH", "1") == "1"
@@ -121,7 +123,7 @@ def run_cmd(args: list[str], timeout: int = 3600) -> int:
 
 def flywheel_loop() -> None:
     global _cycle_n
-    log(f"smart flywheel interval={INTERVAL}s")
+    log(f"smart flywheel interval={INTERVAL}s quiz_every={QUIZ_EVERY}")
     while not _stop.is_set():
         heartbeat()
         _cycle_n += 1
@@ -132,12 +134,20 @@ def flywheel_loop() -> None:
         else:
             code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
         log(f"smart cycle exit={code}")
+
         if RECONCILE_EVERY > 0 and _cycle_n % RECONCILE_EVERY == 0:
             log("tool reconcile")
             run_cmd([PY, str(ROOT / "scripts" / "reconcile_tools.py")], timeout=120)
+
         if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
-            log("bench refresh")
-            run_cmd([PY, str(ROOT / "scripts" / "bench.py")], timeout=3600)
+            log("fast bench")
+            run_cmd([PY, str(ROOT / "scripts" / "bench.py"), "--fast"], timeout=1800)
+
+        if QUIZ_EVERY > 0 and _cycle_n % QUIZ_EVERY == 0:
+            log("holdout quiz sample")
+            run_cmd([PY, str(ROOT / "scripts" / "quiz.py"), "--limit", "5"], timeout=1800)
+            run_cmd([PY, "-c", "from core.scoreboard import write_scoreboard; write_scoreboard()"], timeout=30)
+
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
                 return
@@ -168,7 +178,7 @@ def dashboard_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DAEMON — intelligence + tool reconcile", flush=True)
+    print("  @ETHER DAEMON — cycle + bench + quiz + reconcile", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
     if not acquire_lock():

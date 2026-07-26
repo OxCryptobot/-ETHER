@@ -1,19 +1,36 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26
+**Updated:** 2026-07-26 (batch 66–70 shipped)
 
-## Done — Intelligence v1
-- Curriculum tiers + promote/demote
-- Experience vault PASS/FAIL + retrieval
-- Bench guardian freeze on regression
-- Pipeline + flywheel wiring
-- Single-process daemon ops
-
-## Next — Intelligence v2
-| # | Task |
+## Done — Intelligence + Scoreboard
+| # | Item |
 |---|------|
-| 61 | Flywheel main() always resolve_objective via curriculum helper |
-| 62 | Matrix panels: tier, vault counts, guardian frozen |
-| 63 | Auto-run bench every N flywheel cycles |
-| 64 | Git-history curriculum miner |
-| 65 | Process-reward shaping (plan/compile/test steps) |
+| — | Curriculum + vault + bandit + guardian |
+| — | Daemon / flywheel / Matrix Intelligence tab |
+| — | Tool reconcile quarantine→persistent |
+| — | Holdout quiz + fast bench + SCOREBOARD |
+| — | Honest test counts (print ≠ tests) |
+| — | Rose Quartz burst (Groq/xAI compatible) |
+| 61–65 | Closed: curriculum path, matrix intel, auto-bench, miner, partial process rewards |
+| **66** | TASKS board refreshed |
+| **67** | Process rewards (plan / first-compile / verify / burst cost) |
+| **68** | Multifile prompt + repo_map assist; apply_patch tool present |
+| **69** | Burst-on-fail on sandbox retry (`ETHER_BURST_ON_FAIL=1`) |
+| **70** | Daemon: quiz every N cycles + scoreboard rewrite |
+
+## Next — Credibility & hard tasks
+| # | Priority | Task |
+|---|----------|------|
+| 71 | P1 | Side-by-side methodology vs Aider/Continue (manual protocol in METHODOLOGY) |
+| 72 | P1 | Property/test synthesis before sandbox |
+| 73 | P1 | Cousin one-page onboarding |
+| 74 | P1 | Full multifile pipeline: generate diff → apply_patch → re-test |
+| 75 | P2 | Contextual bandit (tier, fail_kind features) |
+| 76 | P2 | Cost/latency ledger dashboard panel |
+| 77 | P2 | Expand holdout quiz to 40 tasks |
+
+## Ops cadence (daemon)
+1. Smart cycle (curriculum objective)
+2. Every 3: tool reconcile
+3. Every 6: `bench.py --fast`
+4. Every 8: `quiz.py --limit 5` + scoreboard

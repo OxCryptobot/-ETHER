@@ -42,6 +42,7 @@ def record(
     task_id: str = "",
     verification_score: float = 0.0,
     total_tests: int = 0,
+    skip_curriculum: bool = False,
 ) -> None:
     if not experience_enabled():
         return
@@ -71,8 +72,13 @@ def record(
         except Exception:
             pass
 
-    # curriculum: only verified path advances tier (handled in record_outcome)
-    if os.getenv("ETHER_CURRICULUM", "1") == "1":
+    # Prefer flywheel/smart_cycle to call curriculum with full scores.
+    # Only auto-update curriculum here when explicitly allowed.
+    if (
+        not skip_curriculum
+        and os.getenv("ETHER_CURRICULUM", "1") == "1"
+        and os.getenv("ETHER_EXPERIENCE_CURRICULUM", "0") == "1"
+    ):
         try:
             from core.curriculum import record_outcome
 
@@ -114,7 +120,7 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
         key=lambda x: x[0],
         reverse=True,
     )
-    # prefer fails matching kind when repairing
+
     def fail_score(r: Dict[str, Any]) -> float:
         base = _overlap(objective, r.get("objective", ""))
         if fail_kind and (r.get("fail_kind") or "") == fail_kind:
@@ -138,7 +144,6 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
             f"Fail kind: {r.get('fail_kind') or 'runtime'}\n"
             f"Stderr: {(r.get('stderr') or '')[:220]}\n"
         )
-    # inject failure-graph template if kind known
     if fail_kind:
         try:
             from core.failure_graph import repair_hint

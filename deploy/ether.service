@@ -1,0 +1,18 @@
+[Unit]
+Description=@ETHER autonomous daemon (Linux)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/ETHER
+Environment=ETHER_ROOT=%h/ETHER
+Environment=ETHER_GIT_RESET_OK=1
+Environment=ETHER_SANDBOX_BACKEND=local
+Environment=PYTHONUNBUFFERED=1
+# Load .env via start script
+ExecStart=/bin/bash %h/ETHER/scripts/start_daemon_linux.sh
+Restart=on-failure
+RestartSec=20
+
+[Install]
+WantedBy=default.target

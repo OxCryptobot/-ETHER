@@ -1,48 +1,44 @@
 # @ETHER — Cousin velocity sheet
 
-Two hardware profiles. **You (Linux / strong box / Qwen 3.6)** vs partner (Windows laptop).
+Two profiles: **you (Linux / strong / Qwen 3.6)** vs Windows partner.
 
 ---
 
-## Your profile (Linux · strong GPU · Qwen 3.6 · no Docker)
+## Your profile (Linux · Qwen 3.6 · no Docker)
 
 | Item | Expected |
 |------|----------|
 | OS | Linux |
-| LLM | **Qwen 3.6** via **Ollama** (Ollama may use a llama.cpp backend — fine) |
-| Sandbox | **Local subprocess** — Docker **not** required |
-| Role | Primary model quality, weekly scoreboard, hard tasks |
+| LLM | **Qwen 3.6** via **Ollama** (llama.cpp backend OK) |
+| Sandbox | `ETHER_SANDBOX_BACKEND=local` |
+| Role | Quality model, weekly scoreboard, hard tasks |
 
-### Day-0 setup (~20–30 min)
+### Day-0
 
 ```bash
 git clone https://github.com/OxCryptobot/-ETHER.git
 cd -ETHER
-# if the folder name is awkward:
-# mv -- -ETHER ETHER && cd ETHER
+# mv -- -ETHER ETHER && cd ETHER   # optional rename
 
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env
+bash scripts/linux_bootstrap.sh
+# or manual: python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
 ```
 
-Edit `.env`:
+`.env` essentials:
 
 ```env
 OLLAMA_BASE_URL=http://localhost:11434
 
-# MUST match `ollama list` exactly — Qwen 3.6 tag on your machine:
-ETHER_PRIMARY_MODEL=qwen3:latest
-# examples: qwen3:8b | qwen3:14b | qwen3:32b | whatever ollama list shows
+# Exact tag from `ollama list`. Qwen 3.6 examples on Ollama:
+#   qwen3.6:27b
+#   qwen3.6:35b
+#   or community coder tags you already pulled
+ETHER_PRIMARY_MODEL=qwen3.6:27b
 
 ETHER_EMBED_MODEL=nomic-embed-text
-ETHER_SANDBOX_TIMEOUT=120
-ETHER_SANDBOX_RETRY=1
-
-# No Docker:
 ETHER_SANDBOX_BACKEND=local
 ETHER_SANDBOX_PYTHON=python3
+ETHER_SANDBOX_TIMEOUT=120
 
 ETHER_LEARNING=1
 ETHER_CURRICULUM=1
@@ -52,98 +48,65 @@ ETHER_FLYWHEEL_PUSH=1
 ETHER_FLYWHEEL_MIN_CONFIDENCE=0.7
 ```
 
-Models:
-
 ```bash
 ollama list
-# pull only if missing — use YOUR Qwen 3.6 tag:
-# ollama pull qwen3
+# ollama pull qwen3.6:27b   # only if missing
 ollama pull nomic-embed-text
-```
 
-Smoke:
-
-```bash
 source .venv/bin/activate
-python scripts/smoke_test.py
-pytest -q
 python -m cli.main doctor
-# expect sandbox_ok ✓ without Docker when BACKEND=local
 python -m cli.main run "write a python function is_even(n) with assert is_even(4) and not is_even(5)"
 ```
 
 ### Daily
 
 ```bash
-cd /path/to/ETHER
 source .venv/bin/activate
 export ETHER_GIT_RESET_OK=1
-chmod +x scripts/start_daemon_linux.sh   # once
 ./scripts/start_daemon_linux.sh
-# or single cycle:
-# python scripts/run_smart_cycle.py
+# optional user service:
+# mkdir -p ~/.config/systemd/user && cp deploy/ether.service ~/.config/systemd/user/
+# systemctl --user daemon-reload && systemctl --user enable --now ether
 ```
 
-Dashboard: `python -m cli.main dashboard` → http://127.0.0.1:8787
-
-### Weekly (you own quality numbers)
+### Weekly (you own numbers)
 
 ```bash
-source .venv/bin/activate
 python scripts/weekly_scoreboard.py
 cat SCOREBOARD.md
-python scripts/hidden_quiz.py --limit 10
-python scripts/dataset_quiz.py --limit 8
 ```
 
-### Notes for a powerful Linux box
+### Notes
 
-- Prefer the **largest Qwen 3.6 quant you can run well** as `ETHER_PRIMARY_MODEL` — that is the advantage over the Windows 3B laptop.
-- Ollama + llama.cpp backend is fine; @ETHER only needs the OpenAI-compatible Ollama HTTP API on `11434`.
-- `ETHER_SANDBOX_BACKEND=local` is weaker isolation than Docker (trusted home use).
-- Keep cloud burst **off** by default; use ablation only when measuring.
-- Never commit `.env` or API keys.
+- Larger Qwen 3.6 quant = your advantage vs Windows 3B.
+- Local sandbox = weaker isolation than Docker (trusted use).
+- Burst off by default; ablation only for science.
+- Never commit `.env`.
 
 ### Break-glass
 
 | Symptom | Fix |
 |---------|-----|
-| Model not found | `ollama list` → exact `ETHER_PRIMARY_MODEL` |
-| Docker errors | `ETHER_SANDBOX_BACKEND=local` |
+| Model not found | exact `ollama list` tag |
+| Docker noise | `ETHER_SANDBOX_BACKEND=local` |
 | MERGE_HEAD | `git merge --abort && git fetch && git reset --hard origin/main` |
 | NOT HEALTHY | `python scripts/measurement_day.py` |
-| Wrong Python | `source .venv/bin/activate` |
 
 ---
 
-## Partner profile (Windows · lighter GPU · Docker)
-
-| Item | Expected |
-|------|----------|
-| OS | Windows |
-| LLM | e.g. `qwen2.5-coder:3b` |
-| Sandbox | Docker (or `auto` fallback) |
-| Role | Ops / daemon / Windows friction |
+## Partner (Windows · lighter · Docker/auto)
 
 ```powershell
 cd C:\Users\Otcde\ETHER
 $env:ETHER_GIT_RESET_OK = "1"
 git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+.\.venv\Scripts\python.exe -m cli.main doctor
 ```
 
----
-
-## Split of labor
+## Split
 
 | Linux cousin | Windows partner |
 |--------------|-----------------|
-| Qwen 3.6 quality + hard tasks | Daemon / flywheel on laptop |
-| Weekly scoreboard + hidden quizzes | Windows install issues |
-| Optional burst ablation | Keys only in local `.env` |
-
-## Do not
-
-- Paste API keys in chat or commit `.env`
-- Claim superiority without `SCOREBOARD.md`
-- Assume Docker on the Linux profile
+| Qwen 3.6 quality + hard quizzes | Daemon / Windows ops |
+| Weekly SCOREBOARD | Flywheel reports |

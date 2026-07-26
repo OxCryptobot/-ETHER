@@ -1,47 +1,29 @@
 # @ETHER Status
 
-**QA integrity pass (2026-07-26).** pytest green. Registry `list_gems` restored.
+**Autonomy mode is the product.** Daemon stands alone.
 
-### Run checks
-```bash
-# full (includes sandbox smoke)
-python scripts/health_check.py
+## Start (one command)
 
-# fast (skip live sandbox)
-python scripts/health_check.py --skip-sandbox
-
-# JSON for tooling
-python scripts/health_check.py --json --skip-sandbox
+```powershell
+cd C:\Users\Otcde\ETHER
+powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1
 ```
 
-Writes:
-- `memory/health/latest.json`
-- `memory/health/history.jsonl`
+Reads: [AUTONOMY.md](AUTONOMY.md)
 
-API (dashboard running):
-- `GET /api/health-check?skip_sandbox=true`
-- `POST /api/health-check` `{"skip_sandbox": true}`
+## What changed (2026-07-26 autonomy revamp)
 
-### Windows partner (after pull)
+- `core/autonomy.py` — recovery_cycle, auto-enqueue failures, guardian baseline recovery
+- Daemon runs recovery when unhealthy (cooldown), drains batch with limit, seeds queue
+- Smart cycle / flywheel: curriculum-only objectives, verification metrics, failure → batch
+- Assert nudge on all autonomous objectives
+
+## Health / tests
+
 ```powershell
-git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
-.\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
 .\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
 ```
 
-### Linux cousin
-```bash
-git fetch origin && git reset --hard origin/main
-source .venv/bin/activate && pip install -e ".[dev]" -q
-python scripts/health_check.py --skip-sandbox
-```
-
-### Known non-code gate
-`intel_gates` reports **unhealthy** when guardian is frozen (regression 1.0 → 0.8 exceeded tol). That is intentional safety data, not a code defect.
-
-Refresh:
-```powershell
-.\.venv\Scripts\python.exe .\scripts\weekly_scoreboard.py
-```
-Or, only if you intentionally accept the regression, delete `memory/bench/guardian.json` and re-run health.
+`intel_gates` red means guardian freeze or stale bench/quiz — recovery_cycle is designed to clear this without you.

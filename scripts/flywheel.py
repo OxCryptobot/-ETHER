@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER autonomous agentic flywheel.
-
-Behavior:
-  - Retry agentic pipeline until gates pass or max retries
-  - On PASS: push success report to git
-  - On FAIL after max retries: still push FAIL report to git for audit/review
-  - Local loop continues either way (flywheel effect)
-
-Only flywheel artifacts are committed (never random source changes).
-"""
+"""@ETHER autonomous agentic flywheel with git self-heal."""
 
 from __future__ import annotations
 
@@ -27,6 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.dotenv import load_dotenv  # noqa: E402
+from scripts.flywheel_git import safe_pull  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
@@ -103,7 +95,9 @@ def git(*args: str) -> Dict[str, Any]:
 
 def print_step(name: str, data: Dict[str, Any]) -> None:
     flag = "OK" if data.get("ok") else "FAIL"
-    print(f"  [{flag}] {name} ({data.get('duration_s', 0)}s)", flush=True)
+    healed = data.get("healed")
+    extra = f" healed={healed}" if healed else ""
+    print(f"  [{flag}] {name} ({data.get('duration_s', 0)}s){extra}", flush=True)
     if not data.get("ok"):
         err = (data.get("stderr") or data.get("stdout") or "").strip()
         for line in err.splitlines()[-12:]:
@@ -200,27 +194,15 @@ def write_dashboard(report: Dict[str, Any]) -> None:
         f"> Reason: `{g.get('agentic_reason')}`",
         "",
         "## Policy",
+        "- Git self-heal when ETHER_GIT_RESET_OK=1",
         "- Agentic retries until gates pass or max retries",
-        "- **PASS** → push success report",
-        "- **FAIL after max retries** → push FAIL report for remote audit/review",
-        "- Local loop always continues (flywheel)",
+        "- PASS/FAIL reports both publish for audit",
         "",
     ]
-    if not report["ok"] and report.get("agentic", {}).get("attempts"):
-        lines.append("## Failed attempts")
-        lines.append("| # | Conf | Audit | Sandbox | Gate |")
-        lines.append("|---|------|-------|---------|------|")
-        for a in report["agentic"]["attempts"]:
-            lines.append(
-                f"| {a.get('attempt')} | {a.get('confidence', 0):.3f} | {a.get('audit_approved')} | "
-                f"{a.get('sandbox_exit')} | {'PASS' if a.get('gate_pass') else 'FAIL'} |"
-            )
-        lines.append("")
     FLYWHEEL_MD.write_text("\n".join(lines), encoding="utf-8")
 
 
 def push_report(report: Dict[str, Any], ts: str) -> bool:
-    """Always push flywheel artifacts: PASS or FAIL audit report."""
     gates_pass = bool(report.get("ok"))
     conf = float(report.get("gates", {}).get("confidence") or 0.0)
     reason = report.get("gates", {}).get("agentic_reason") or "unknown"
@@ -238,22 +220,19 @@ def push_report(report: Dict[str, Any], ts: str) -> bool:
         print("  [push] nothing to commit", flush=True)
         return True
 
-    if gates_pass:
-        msg = f"flywheel PASS conf={conf:.3f} audit=ok @ {ts}"
-    else:
-        msg = f"flywheel FAIL conf={conf:.3f} reason={reason} @ {ts} (audit review)"
-
+    msg = (
+        f"flywheel PASS conf={conf:.3f} audit=ok @ {ts}"
+        if gates_pass
+        else f"flywheel FAIL conf={conf:.3f} reason={reason} @ {ts} (audit review)"
+    )
     commit = git("commit", "-m", msg)
     if not (commit["ok"] or commit["returncode"] == 0):
         print(f"  [push] commit failed: {(commit.get('stderr') or '')[-200:]}", flush=True)
         return False
-
     push = git("push", "origin", "HEAD")
     if push["ok"]:
-        kind = "PASS report" if gates_pass else "FAIL audit report"
-        print(f"  [push] OK — {kind} sent to repo", flush=True)
+        print(f"  [push] OK — {'PASS' if gates_pass else 'FAIL'} report sent", flush=True)
         return True
-
     print(f"  [push] FAILED: {(push.get('stderr') or '')[-200:]}", flush=True)
     return False
 
@@ -270,7 +249,8 @@ def cycle(
     HEARTBEAT_PATH.write_text(ts, encoding="utf-8")
     steps: Dict[str, Any] = {}
 
-    steps["pull"] = git("pull", "--ff-only", "origin", "main")
+    # P0: git self-heal
+    steps["pull"] = safe_pull(git)
     print_step("pull", steps["pull"])
     load_dotenv(ROOT / ".env", override=False)
 
@@ -301,6 +281,15 @@ def cycle(
     conf = float(final.get("confidence") or 0.0)
     audit = bool(final.get("audit_approved"))
 
+    # learning snapshot for dashboard
+    learn_snap = {}
+    try:
+        from core.learning import BanditPolicy
+
+        learn_snap = BanditPolicy().snapshot()
+    except Exception:
+        pass
+
     want_push = do_push or os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1"
 
     report: Dict[str, Any] = {
@@ -320,9 +309,15 @@ def cycle(
         },
         "objective": objective[:200],
         "steps": {
-            n: {"ok": d["ok"], "returncode": d["returncode"], "duration_s": d["duration_s"]}
+            n: {
+                "ok": d["ok"],
+                "returncode": d.get("returncode"),
+                "duration_s": d.get("duration_s"),
+                "healed": d.get("healed"),
+            }
             for n, d in steps.items()
         },
+        "learning": learn_snap,
         "agentic": {
             "ok": agentic["ok"],
             "reason": agentic.get("reason"),
@@ -339,7 +334,6 @@ def cycle(
                 for a in agentic.get("attempts", [])
             ],
         },
-        # PASS = quality gate; FAIL reports still publish for audit
         "push_allowed": True if want_push else False,
         "quality_pass": gates_pass,
         "pushed": False,
@@ -351,14 +345,10 @@ def cycle(
     write_dashboard(report)
 
     if want_push:
-        if gates_pass:
-            print("  [report] PASS — publishing success report", flush=True)
-        else:
-            print(
-                f"  [report] FAIL after retries — publishing audit report "
-                f"(conf={conf:.3f}, reason={agentic.get('reason')})",
-                flush=True,
-            )
+        print(
+            f"  [report] {'PASS' if gates_pass else 'FAIL'} — publishing report",
+            flush=True,
+        )
         report["pushed"] = push_report(report, ts)
         REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
@@ -370,54 +360,29 @@ def show_status() -> int:
         print("No flywheel report yet.")
         return 1
     data = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
-    print(
-        json.dumps(
-            {
-                "timestamp": data.get("timestamp"),
-                "ok": data.get("ok"),
-                "quality_pass": data.get("quality_pass", data.get("ok")),
-                "pushed": data.get("pushed"),
-                "confidence": data.get("gates", {}).get("confidence"),
-                "audit_approved": data.get("gates", {}).get("audit_approved"),
-                "model": data.get("model"),
-                "agentic_reason": data.get("gates", {}).get("agentic_reason"),
-                "heartbeat": HEARTBEAT_PATH.read_text(encoding="utf-8").strip()
-                if HEARTBEAT_PATH.exists()
-                else None,
-            },
-            indent=2,
-        )
-    )
+    print(json.dumps({
+        "timestamp": data.get("timestamp"),
+        "ok": data.get("ok"),
+        "quality_pass": data.get("quality_pass", data.get("ok")),
+        "pushed": data.get("pushed"),
+        "confidence": data.get("gates", {}).get("confidence"),
+        "audit_approved": data.get("gates", {}).get("audit_approved"),
+        "model": data.get("model"),
+        "agentic_reason": data.get("gates", {}).get("agentic_reason"),
+    }, indent=2))
     return 0 if data.get("ok") else 1
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     load_dotenv(ROOT / ".env")
-
     parser = argparse.ArgumentParser(description="@ETHER autonomous flywheel")
     parser.add_argument("--push", action="store_true")
     parser.add_argument("--status", action="store_true")
     parser.add_argument("--autonomous", action="store_true")
-    parser.add_argument(
-        "--min-confidence",
-        type=float,
-        default=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")),
-    )
-    parser.add_argument(
-        "--max-retries",
-        type=int,
-        default=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
-    )
-    parser.add_argument(
-        "--interval",
-        type=int,
-        default=int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")),
-    )
-    parser.add_argument(
-        "--objective",
-        type=str,
-        default=os.getenv("ETHER_FLYWHEEL_OBJECTIVE", DEFAULT_OBJECTIVE),
-    )
+    parser.add_argument("--min-confidence", type=float, default=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")))
+    parser.add_argument("--max-retries", type=int, default=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")))
+    parser.add_argument("--interval", type=int, default=int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))
+    parser.add_argument("--objective", type=str, default=os.getenv("ETHER_FLYWHEEL_OBJECTIVE", DEFAULT_OBJECTIVE))
     parser.add_argument("--no-doctor", action="store_true")
     parser.add_argument("--loop", type=int, default=0)
     args = parser.parse_args(argv)
@@ -437,29 +402,22 @@ def main(argv: Optional[List[str]] = None) -> int:
             objective=args.objective,
             run_doctor=not args.no_doctor,
         )
-        print(
-            json.dumps(
-                {
-                    "ok": report["ok"],
-                    "quality_pass": report.get("quality_pass", report["ok"]),
-                    "pushed": report.get("pushed", False),
-                    "confidence": report["gates"]["confidence"],
-                    "audit_approved": report["gates"]["audit_approved"],
-                    "agentic_reason": report["gates"].get("agentic_reason"),
-                    "timestamp": report["timestamp"],
-                },
-                indent=2,
-            ),
-            flush=True,
-        )
+        print(json.dumps({
+            "ok": report["ok"],
+            "quality_pass": report.get("quality_pass", report["ok"]),
+            "pushed": report.get("pushed", False),
+            "confidence": report["gates"]["confidence"],
+            "audit_approved": report["gates"]["audit_approved"],
+            "agentic_reason": report["gates"].get("agentic_reason"),
+            "timestamp": report["timestamp"],
+        }, indent=2), flush=True)
         return 0 if report["ok"] else 1
 
     if not continuous:
         return once()
 
     print(
-        f"@ETHER AUTONOMOUS on — interval={interval}s "
-        f"FAIL reports also pushed for audit · model={os.getenv('ETHER_PRIMARY_MODEL', '')}",
+        f"@ETHER AUTONOMOUS on — interval={interval}s model={os.getenv('ETHER_PRIMARY_MODEL', '')}",
         flush=True,
     )
     while True:

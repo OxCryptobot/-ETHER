@@ -61,7 +61,7 @@ def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
         p = subprocess.run(
             cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=timeout, env=_env()
         )
-        return {
+        out = {
             "cmd": cmd,
             "returncode": p.returncode,
             "stdout": (p.stdout or "")[-8000:],
@@ -69,6 +69,9 @@ def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
             "duration_s": round(time.perf_counter() - started, 3),
             "ok": p.returncode == 0,
         }
+        err = (out["stderr"] or out["stdout"] or "").strip()
+        out["error_brief"] = err.splitlines()[-1][:180] if err and not out["ok"] else ""
+        return out
     except subprocess.TimeoutExpired:
         return {
             "cmd": cmd,
@@ -77,6 +80,7 @@ def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
             "stderr": f"TIMEOUT after {timeout}s",
             "duration_s": round(time.perf_counter() - started, 3),
             "ok": False,
+            "error_brief": f"TIMEOUT after {timeout}s",
         }
     except Exception as e:
         return {
@@ -86,6 +90,7 @@ def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
             "stderr": str(e),
             "duration_s": round(time.perf_counter() - started, 3),
             "ok": False,
+            "error_brief": str(e)[:180],
         }
 
 
@@ -96,11 +101,16 @@ def git(*args: str) -> Dict[str, Any]:
 def print_step(name: str, data: Dict[str, Any]) -> None:
     flag = "OK" if data.get("ok") else "FAIL"
     healed = data.get("healed")
-    extra = f" healed={healed}" if healed else ""
+    soft = data.get("soft")
+    extra = ""
+    if healed:
+        extra += f" healed={healed}"
+    if soft:
+        extra += " soft"
     print(f"  [{flag}] {name} ({data.get('duration_s', 0)}s){extra}", flush=True)
-    if not data.get("ok"):
-        err = (data.get("stderr") or data.get("stdout") or "").strip()
-        for line in err.splitlines()[-12:]:
+    if not data.get("ok") or data.get("soft"):
+        err = (data.get("stderr") or data.get("stdout") or data.get("error_brief") or "").strip()
+        for line in err.splitlines()[-8:]:
             print(f"    {line}", flush=True)
 
 
@@ -184,18 +194,20 @@ def agentic_verify(objective: str, min_confidence: float, max_retries: int) -> D
 def write_dashboard(report: Dict[str, Any]) -> None:
     g = report["gates"]
     outcome = "PASS" if report["ok"] else "FAIL — audit report filed"
+    pull = (report.get("steps") or {}).get("pull") or {}
     lines = [
         "# @ETHER Flywheel (autonomous)",
         "",
         f"> Last cycle: **{report['timestamp']}**  ",
         f"> Result: **{outcome}**  ",
         f"> Confidence: **{g['confidence']:.3f}** (min {g['min_confidence']}) · Audit: **{g['audit_approved']}**  ",
+        f"> Pull: **{'OK' if pull.get('ok') else 'FAIL'}** {pull.get('error_brief') or pull.get('healed') or ''}  ",
         f"> Report pushed: **{report.get('pushed')}** · Model: `{report.get('model', '')}`  ",
         f"> Reason: `{g.get('agentic_reason')}`",
         "",
         "## Policy",
-        "- Git self-heal when ETHER_GIT_RESET_OK=1",
-        "- Agentic retries until gates pass or max retries",
+        "- Git: fetch + ff-only; ETHER_GIT_RESET_OK=1 allows hard reset",
+        "- ETHER_PULL_SOFT=1 (default): network/pull issues soft-continue",
         "- PASS/FAIL reports both publish for audit",
         "",
     ]
@@ -249,7 +261,6 @@ def cycle(
     HEARTBEAT_PATH.write_text(ts, encoding="utf-8")
     steps: Dict[str, Any] = {}
 
-    # P0: git self-heal
     steps["pull"] = safe_pull(git)
     print_step("pull", steps["pull"])
     load_dotenv(ROOT / ".env", override=False)
@@ -281,12 +292,19 @@ def cycle(
     conf = float(final.get("confidence") or 0.0)
     audit = bool(final.get("audit_approved"))
 
-    # learning snapshot for dashboard
     learn_snap = {}
     try:
         from core.learning import BanditPolicy
 
         learn_snap = BanditPolicy().snapshot()
+    except Exception:
+        pass
+
+    fail_streak = {}
+    try:
+        p = ROOT / "memory" / "learning" / "fail_streak.json"
+        if p.exists():
+            fail_streak = json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         pass
 
@@ -306,18 +324,23 @@ def cycle(
             "audit_approved": audit,
             "max_retries": max_retries,
             "agentic_reason": agentic.get("reason"),
+            "pull_ok": bool(steps["pull"].get("ok")),
+            "pull_healed": steps["pull"].get("healed"),
         },
         "objective": objective[:200],
         "steps": {
             n: {
-                "ok": d["ok"],
+                "ok": d.get("ok"),
                 "returncode": d.get("returncode"),
                 "duration_s": d.get("duration_s"),
                 "healed": d.get("healed"),
+                "soft": d.get("soft"),
+                "error_brief": d.get("error_brief") or "",
             }
             for n, d in steps.items()
         },
         "learning": learn_snap,
+        "fail_streak": fail_streak,
         "agentic": {
             "ok": agentic["ok"],
             "reason": agentic.get("reason"),
@@ -367,6 +390,7 @@ def show_status() -> int:
         "pushed": data.get("pushed"),
         "confidence": data.get("gates", {}).get("confidence"),
         "audit_approved": data.get("gates", {}).get("audit_approved"),
+        "pull_ok": data.get("gates", {}).get("pull_ok"),
         "model": data.get("model"),
         "agentic_reason": data.get("gates", {}).get("agentic_reason"),
     }, indent=2))
@@ -408,6 +432,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "pushed": report.get("pushed", False),
             "confidence": report["gates"]["confidence"],
             "audit_approved": report["gates"]["audit_approved"],
+            "pull_ok": report["gates"].get("pull_ok"),
             "agentic_reason": report["gates"].get("agentic_reason"),
             "timestamp": report["timestamp"],
         }, indent=2), flush=True)

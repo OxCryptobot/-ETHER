@@ -7,7 +7,7 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 VAULT_DIR = ROOT / "memory" / "experience"
@@ -27,8 +27,7 @@ def _overlap(a: str, b: str) -> float:
     ta, tb = _tokens(a), _tokens(b)
     if not ta or not tb:
         return 0.0
-    inter = len(ta & tb)
-    return inter / max(1, len(ta | tb))
+    return len(ta & tb) / max(1, len(ta | tb))
 
 
 def record(
@@ -60,6 +59,23 @@ def record(
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
 
+    # curriculum promote/demote tracks every vault outcome
+    if os.getenv("ETHER_CURRICULUM", "1") == "1":
+        try:
+            from core.curriculum import record_outcome
+
+            record_outcome(success, task_id=task_id or "")
+        except Exception:
+            pass
+
+    # keep health.json fresh when possible
+    try:
+        from core.health_metric import compute_health
+
+        compute_health()
+    except Exception:
+        pass
+
 
 def _read_jsonl(path: Path, limit: int = 400) -> List[Dict[str, Any]]:
     if not path.exists():
@@ -80,41 +96,31 @@ def _read_jsonl(path: Path, limit: int = 400) -> List[Dict[str, Any]]:
 
 
 def retrieve(objective: str, k: int = 3) -> Dict[str, Any]:
-    """Return few-shot block from similar PASS examples + fail hints."""
     if not experience_enabled():
         return {"block": "", "n_pass": 0, "n_fail": 0}
 
     passes = _read_jsonl(PASS_PATH)
     fails = _read_jsonl(FAIL_PATH)
-
     scored_p = sorted(
-        (( _overlap(objective, r.get("objective", "")), r) for r in passes),
+        ((_overlap(objective, r.get("objective", "")), r) for r in passes),
         key=lambda x: x[0],
         reverse=True,
     )
     scored_f = sorted(
-        (( _overlap(objective, r.get("objective", "")), r) for r in fails),
+        ((_overlap(objective, r.get("objective", "")), r) for r in fails),
         key=lambda x: x[0],
         reverse=True,
     )
-
     top_p = [r for s, r in scored_p[:k] if s > 0.05]
     top_f = [r for s, r in scored_f[:2] if s > 0.05]
-
     parts: List[str] = []
     for i, r in enumerate(top_p, 1):
         parts.append(
-            f"### Success example {i}\n"
-            f"Objective: {r.get('objective','')}\n"
-            f"Code:\n{r.get('code','')}\n"
+            f"### Success example {i}\nObjective: {r.get('objective','')}\nCode:\n{r.get('code','')}\n"
         )
     for i, r in enumerate(top_f, 1):
         parts.append(
-            f"### Related failure {i} (avoid)\n"
-            f"Objective: {r.get('objective','')}\n"
-            f"Fail kind: {r.get('fail_kind') or 'runtime'}\n"
-            f"Stderr: {(r.get('stderr') or '')[:200]}\n"
+            f"### Related failure {i} (avoid)\nObjective: {r.get('objective','')}\n"
+            f"Fail kind: {r.get('fail_kind') or 'runtime'}\nStderr: {(r.get('stderr') or '')[:200]}\n"
         )
-
-    block = "\n".join(parts)[:3500]
-    return {"block": block, "n_pass": len(top_p), "n_fail": len(top_f)}
+    return {"block": "\n".join(parts)[:3500], "n_pass": len(top_p), "n_fail": len(top_f)}

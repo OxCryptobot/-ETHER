@@ -214,7 +214,12 @@ def check_registry() -> Check:
     try:
         from core.registry import build_default_registry
 
-        gems = build_default_registry().list_gems()
+        reg = build_default_registry()
+        # Prefer list_gems; fall back to private _gems for older checkouts
+        if hasattr(reg, "list_gems"):
+            gems = list(reg.list_gems())
+        else:
+            gems = sorted(getattr(reg, "_gems", {}).keys())
         need = {
             "clear-quartz",
             "rose-quartz",
@@ -306,6 +311,12 @@ def check_intel_gates() -> Check:
         h = compute_health()
         reasons = h.get("unhealthy_reasons") or []
         ok = bool(h.get("healthy"))
+        tip = "Run python scripts/weekly_scoreboard.py to refresh bench+quiz"
+        if any("guardian" in r for r in reasons):
+            tip = (
+                "Guardian freeze active (regression detected). "
+                "Re-run weekly_scoreboard after a good bench, or clear memory/bench/guardian.json if intentional."
+            )
         return Check(
             "intel_gates",
             ok,
@@ -316,9 +327,10 @@ def check_intel_gates() -> Check:
                     "pass_rate": h.get("pass_rate"),
                     "quiz": h.get("quiz_pass_rate"),
                     "stale": h.get("stale"),
+                    "guardian_frozen": h.get("guardian_frozen"),
                 }
             ),
-            tip="Run python scripts/weekly_scoreboard.py to refresh bench+quiz",
+            tip=tip,
             duration_ms=_ms(t0),
         )
     except Exception as e:

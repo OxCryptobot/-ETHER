@@ -1,10 +1,12 @@
-"""Clear Quartz — prep hooks (test_synth/patch) + harness + honest tests."""
+"""Clear Quartz — Docker or local subprocess sandbox (ETHER_SANDBOX_BACKEND)."""
 
 from __future__ import annotations
 
 import ast
+import os
 import re
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -18,6 +20,11 @@ from core.schemas import (
     GemError,
     GemErrorType,
 )
+
+
+def sandbox_backend() -> str:
+    """docker (default) | local (no Docker; still timeout + static analysis)."""
+    return (os.getenv("ETHER_SANDBOX_BACKEND") or "docker").strip().lower()
 
 
 class ClearQuartz:
@@ -92,15 +99,26 @@ class ClearQuartz:
                     suggested_action="Increase ETHER_SANDBOX_TIMEOUT or simplify the code",
                 ),
             )
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            backend = sandbox_backend()
+            msg = (
+                "Docker is not installed or not in PATH"
+                if backend == "docker"
+                else f"Local Python runner missing: {e}"
+            )
+            hint = (
+                "Install Docker, or set ETHER_SANDBOX_BACKEND=local for subprocess execution"
+                if backend == "docker"
+                else "Ensure python3 is on PATH"
+            )
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="clear-quartz",
                 error=GemError(
                     type=GemErrorType.DEPENDENCY,
-                    message="Docker is not installed or not in PATH",
+                    message=msg,
                     recoverable=True,
-                    suggested_action="Install Docker and ensure `docker ps` works",
+                    suggested_action=hint,
                 ),
             )
         except Exception as e:
@@ -125,6 +143,9 @@ class ClearQuartz:
         return flags
 
     def _run(self, code: str, timeout: int) -> subprocess.CompletedProcess:
+        backend = sandbox_backend()
+        if backend in ("local", "subprocess", "native"):
+            return self._run_local(code, timeout)
         try:
             from gems.clear_quartz.warm import warm_enabled, run_in_warm
 
@@ -135,6 +156,26 @@ class ClearQuartz:
         except Exception:
             pass
         return self._run_docker(code, timeout)
+
+    def _run_local(self, code: str, timeout: int) -> subprocess.CompletedProcess:
+        """No Docker: run with host Python. Weaker isolation — trusted local use only."""
+        env = {
+            "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": "",
+            "HOME": tempfile.gettempdir(),
+            "TMPDIR": tempfile.gettempdir(),
+            "LANG": "C.UTF-8",
+        }
+        # Prefer python3 on Linux
+        py = os.getenv("ETHER_SANDBOX_PYTHON") or ("python3" if sys.platform != "win32" else sys.executable)
+        return subprocess.run(
+            [py, "-I", "-c", code],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env,
+            cwd=tempfile.gettempdir(),
+        )
 
     def _run_docker(self, code: str, timeout: int) -> subprocess.CompletedProcess:
         cmd = [

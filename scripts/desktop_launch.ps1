@@ -1,8 +1,10 @@
-# One-window launcher from PowerShell (no second windows)
+# One-window launcher from PowerShell
 $ErrorActionPreference = "Continue"
-Set-Location (Join-Path $PSScriptRoot "..")
+$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location $Root
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 
+$env:ETHER_ROOT = $Root
 $env:ETHER_GIT_RESET_OK = "1"
 $env:ETHER_PULL_SOFT = "1"
 $env:ETHER_FLYWHEEL_PUSH = "1"
@@ -10,6 +12,7 @@ $env:ETHER_OPEN_BROWSER = "1"
 $env:PYTHONIOENCODING = "utf-8"
 
 if (-not (Test-Path .\.venv\Scripts\python.exe)) {
+  Write-Host "Creating venv..."
   python -m venv .venv
   .\.venv\Scripts\python.exe -m pip install -U pip
   .\.venv\Scripts\python.exe -m pip install -e ".[dev]"

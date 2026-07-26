@@ -1,301 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>@ETHER Control Matrix</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg:#0b0f17; --surface:#121826; --surface-2:#182033; --border:#2a3548;
-      --text:#eef2f8; --muted:#94a3b8; --faint:#64748b; --good:#3ecf8e; --bad:#f07178;
-      --accent:#5b9fd4; --violet:#9b8cff; --warn:#e6b450; --radius:12px;
-      --font:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
-    }
-    *{box-sizing:border-box} body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:50}
-    .brand strong{font-size:15px;letter-spacing:.04em}.brand strong em{color:var(--accent);font-style:normal}
-    .brand small{display:block;color:var(--faint);font-size:12px;margin-top:2px}
-    .status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);font-size:12px;color:var(--muted)}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}.dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(62,207,142,.2)}.dot.busy{background:var(--accent);animation:blink 1s infinite}.dot.off{background:var(--bad)}
-    @keyframes blink{50%{opacity:.4}}
-    nav.tabs{display:flex;gap:4px;padding:12px 24px 0;border-bottom:1px solid var(--border);overflow-x:auto}
-    nav.tabs button{appearance:none;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:500;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-    nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent)}
-    main{padding:20px 24px 32px;max-width:1400px;margin:0 auto}.panel{display:none}.panel.active{display:block}
-    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-bottom:16px}
-    .col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-5{grid-column:span 5}.col-6{grid-column:span 6}.col-7{grid-column:span 7}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
-    @media (max-width:960px){.col-3,.col-4,.col-5,.col-6,.col-7,.col-8,.col-12{grid-column:span 12}}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
-    .card.hero{border-color:rgba(91,159,212,.45);background:linear-gradient(180deg,#152238 0%,var(--surface) 100%)}
-    .card.intel{border-color:rgba(155,140,255,.4);background:linear-gradient(180deg,#1a1730 0%,var(--surface) 100%)}
-    .card-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:0 0 6px}
-    .card-desc{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.45}
-    .metric{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.2}.metric.sm{font-size:18px;font-weight:600}
-    .metric.ok{color:var(--good)}.metric.bad{color:var(--bad)}.metric.accent{color:var(--accent)}.metric.violet{color:var(--violet)}
-    .hint{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.4}
-    .terminal{font-family:var(--mono);font-size:13px;line-height:1.65;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:16px 18px;height:420px;overflow-y:auto}
-    .terminal .line{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:4px 0;border-bottom:1px solid rgba(42,53,72,.35)}
-    .terminal .ts{color:var(--faint);font-size:12px}.terminal .msg{word-break:break-word;white-space:pre-wrap}
-    .terminal .ok .msg{color:var(--good)}.terminal .err .msg{color:var(--bad)}.terminal .live .msg{color:var(--accent)}.terminal .info .msg{color:var(--muted)}
-    .terminal .empty{color:var(--faint);padding:24px 8px;text-align:center}
-    .codebox{font-family:var(--mono);font-size:13px;line-height:1.55;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:16px 18px;height:420px;overflow:auto;white-space:pre;color:#d5deec;margin:0}
-    .io-box{font-family:var(--mono);font-size:13px;line-height:1.6;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:14px 16px;min-height:140px;max-height:220px;overflow:auto;white-space:pre-wrap}
-    .io-box .label{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
-    .io-box .stdout{color:var(--good)}.io-box .stderr{color:var(--bad);margin-top:10px}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th{text-align:left;color:var(--faint);font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border)}
-    td{padding:10px;border-bottom:1px solid rgba(42,53,72,.6);vertical-align:top}
-    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border)}
-    .badge.ok{color:var(--good);background:rgba(62,207,142,.1);border-color:rgba(62,207,142,.35)}
-    .badge.bad{color:var(--bad);background:rgba(240,113,120,.1);border-color:rgba(240,113,120,.35)}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .chip{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);color:var(--muted);background:var(--surface-2)}
-    .chip.ok{color:var(--good);border-color:rgba(62,207,142,.35)}.chip.bad{color:var(--bad);border-color:rgba(240,113,120,.35)}
-    .bars{display:flex;align-items:flex-end;gap:5px;height:64px}.bar{flex:1;max-width:14px;border-radius:4px 4px 0 0;background:var(--border);min-height:6px}.bar.pass{background:var(--good)}.bar.fail{background:var(--bad)}
-    .item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface-2);margin-bottom:8px}.item b{display:block;margin-bottom:4px}.item span{color:var(--muted);font-size:12px}
-    .cmd{font-family:var(--mono);font-size:12px;background:#0a0e16;border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--accent);margin-top:12px}
-    footer{max-width:1400px;margin:0 auto;padding:0 24px 28px;color:var(--faint);font-size:12px}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>@ETHER Control Matrix</title>
+<style>
+:root{
+  --bg:#0b0f17;--surface:#121826;--surface2:#182033;--border:#2a3548;
+  --text:#eef2f8;--muted:#94a3b8;--faint:#64748b;--good:#3ecf8e;--bad:#f07178;
+  --accent:#5b9fd4;--violet:#9b8cff;--warn:#e6b450;--radius:12px;
+  --font:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+*{box-sizing:border-box}body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:50}
+.brand strong{font-size:15px;letter-spacing:.03em}.brand strong em{color:var(--accent);font-style:normal}
+.brand small{display:block;color:var(--faint);font-size:12px;margin-top:2px}
+.status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}.dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(62,207,142,.2)}.dot.busy{background:var(--accent);animation:blink 1s infinite}.dot.off{background:var(--bad)}
+@keyframes blink{50%{opacity:.4}}
+nav.tabs{display:flex;gap:4px;padding:10px 22px 0;border-bottom:1px solid var(--border);overflow-x:auto}
+nav.tabs button{appearance:none;border:none;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:500;padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent)}
+main{padding:18px 22px 28px;max-width:1400px;margin:0 auto}.panel{display:none}.panel.active{display:block}
+.row{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:14px}
+.col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+@media(max-width:960px){.col-3,.col-4,.col-6,.col-8,.col-12{grid-column:span 12}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.card.hero{border-color:rgba(91,159,212,.4)}.card.intel{border-color:rgba(155,140,255,.35)}
+.card-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:0 0 6px;display:flex;align-items:center;gap:6px}
+.card-desc{font-size:12px;color:var(--muted);margin:0 0 12px}
+.metric{font-size:26px;font-weight:700;letter-spacing:-.02em}.metric.sm{font-size:17px;font-weight:600}
+.metric.ok{color:var(--good)}.metric.bad{color:var(--bad)}.metric.accent{color:var(--accent)}.metric.violet{color:var(--violet)}
+.hint{margin-top:6px;font-size:12px;color:var(--muted)}
+.tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--border);color:var(--faint);font-size:10px;cursor:help;position:relative}
+.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:#0a0e16;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;width:min(280px,70vw);font-size:12px;line-height:1.4;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.45);text-transform:none;letter-spacing:0;font-weight:400;white-space:normal}
+.terminal{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:14px;height:380px;overflow-y:auto}
+.terminal .line{display:grid;grid-template-columns:58px 1fr;gap:10px;padding:3px 0;border-bottom:1px solid rgba(42,53,72,.3)}
+.terminal .ts{color:var(--faint)}.terminal .msg{word-break:break-word;white-space:pre-wrap}
+.terminal .ok .msg{color:var(--good)}.terminal .err .msg,.terminal .warn .msg{color:var(--bad)}.terminal .live .msg{color:var(--accent)}.terminal .info .msg,.terminal .git .msg{color:var(--muted)}
+.terminal .empty{color:var(--faint);padding:20px;text-align:center}
+.codebox{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:14px;height:380px;overflow:auto;white-space:pre;color:#d5deec;margin:0}
+.io-box{font-family:var(--mono);font-size:12.5px;background:#0a0e16;border:1px solid var(--border);border-radius:10px;padding:12px;min-height:120px;max-height:200px;overflow:auto;white-space:pre-wrap}
+.io-box .label{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.io-box .stdout{color:var(--good)}.io-box .stderr{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--faint);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:8px;border-bottom:1px solid var(--border)}
+td{padding:9px 8px;border-bottom:1px solid rgba(42,53,72,.55);vertical-align:top}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--border)}
+.badge.ok{color:var(--good);border-color:rgba(62,207,142,.35)}.badge.bad{color:var(--bad);border-color:rgba(240,113,120,.35)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;padding:4px 9px;border-radius:8px;border:1px solid var(--border);color:var(--muted);background:var(--surface2)}
+.chip.ok{color:var(--good)}.chip.bad{color:var(--bad)}
+.item{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface2);margin-bottom:7px}.item b{display:block;margin-bottom:2px}.item span{color:var(--muted);font-size:12px}
+.btn{appearance:none;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:8px;padding:8px 12px;font:inherit;font-size:12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}.btn.primary{border-color:rgba(91,159,212,.5);color:var(--accent)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.flow-map{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flow-node{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);font-size:12px;max-width:160px}
+.flow-node b{display:block}.flow-arrow{color:var(--faint)}
+.err-banner{background:rgba(240,113,120,.12);border:1px solid rgba(240,113,120,.4);color:var(--bad);padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px}
+.cmd{font-family:var(--mono);font-size:12px;background:#0a0e16;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--accent);margin-top:10px}
+footer{max-width:1400px;margin:0 auto;padding:0 22px 24px;color:var(--faint);font-size:12px}
+</style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <strong><em>@ETHER</em> Control Matrix</strong>
-      <small>Intelligence · curriculum · experience · bench · flywheel</small>
+<header>
+  <div class="brand">
+    <strong><em>@ETHER</em> Control Matrix</strong>
+    <small>Verified coding loop · live gates · learning</small>
+  </div>
+  <div class="status-pill"><span id="dot" class="dot"></span><span id="liveText">Connecting…</span></div>
+</header>
+<nav class="tabs">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="intel">Intelligence</button>
+  <button data-tab="flywheel">Flywheel</button>
+  <button data-tab="system">System map</button>
+  <button data-tab="runs">Runs</button>
+  <button data-tab="gems">Gems &amp; tools</button>
+  <button data-tab="bench">Scoreboard</button>
+  <button data-tab="raw">Diagnostics</button>
+</nav>
+<main>
+  <div id="errBanner" class="err-banner" style="display:none"></div>
+
+  <section class="panel active" id="tab-overview">
+    <div class="row">
+      <div class="card col-12 intel">
+        <p class="card-title">Primary health <span class="tip" data-tip="Healthy only when bench/quiz metrics are fresh and not collapsing. Empty numbers mean run weekly_scoreboard.py — not a UI bug.">?</span></p>
+        <div class="row" style="margin:0">
+          <div class="col-3"><div class="hint">Bench pass rate</div><div class="metric violet" id="benchRate">—</div></div>
+          <div class="col-3"><div class="hint">Healthy</div><div class="metric sm" id="benchHealthy">—</div></div>
+          <div class="col-3"><div class="hint">Curriculum tier</div><div class="metric sm" id="curTier">—</div></div>
+          <div class="col-3"><div class="hint">Experience PASS</div><div class="metric sm" id="expPass">—</div></div>
+        </div>
+        <div class="hint" id="guardHint">—</div>
+        <div class="actions">
+          <button class="btn primary" type="button" onclick="copyCmd('python scripts/weekly_scoreboard.py')">Copy weekly scoreboard cmd</button>
+          <button class="btn" type="button" onclick="copyCmd('python -m cli.main flywheel --push')">Copy flywheel cmd</button>
+        </div>
+      </div>
     </div>
-    <div class="status-pill"><span id="dot" class="dot"></span><span id="liveText">Connecting…</span></div>
-  </header>
+    <div class="row">
+      <div class="card col-3"><p class="card-title">Quality gate <span class="tip" data-tip="Last flywheel cycle: smoke/pytest/agentic confidence gate.">?</span></p><div class="metric" id="quality">—</div><div class="hint" id="reason">—</div></div>
+      <div class="card col-3"><p class="card-title">Git pull</p><div class="metric" id="pull">—</div><div class="hint" id="pullDetail">—</div></div>
+      <div class="card col-3"><p class="card-title">Model / sandbox</p><div class="metric sm" id="model">—</div><div class="hint" id="sandboxHint">—</div></div>
+      <div class="card col-3"><p class="card-title">Autonomy</p><div class="metric sm" id="fwAuto">—</div><div class="hint" id="hb">—</div></div>
+    </div>
+    <div class="row">
+      <div class="card col-7"><p class="card-title">Activity feed</p><div class="terminal" id="term"><div class="empty">Waiting for events…</div></div></div>
+      <div class="card col-5"><p class="card-title">Generated code</p><pre class="codebox" id="codepane"># waiting</pre></div>
+    </div>
+    <div class="row">
+      <div class="card col-6"><p class="card-title">Sandbox I/O</p><div class="io-box" id="sandOut"><div class="label">No output yet</div></div></div>
+      <div class="card col-6"><p class="card-title">Flywheel steps</p>
+        <table><thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead><tbody id="stepsBody"></tbody></table>
+      </div>
+    </div>
+  </section>
 
-  <nav class="tabs">
-    <button data-tab="overview" class="active">Overview</button>
-    <button data-tab="intel">Intelligence</button>
-    <button data-tab="flywheel">Flywheel</button>
-    <button data-tab="workflow">Workflow</button>
-    <button data-tab="runs">Runs</button>
-    <button data-tab="gems">Gems &amp; tools</button>
-    <button data-tab="bench">Benchmarks</button>
-    <button data-tab="raw">Diagnostics</button>
-  </nav>
+  <section class="panel" id="tab-intel">
+    <div class="row">
+      <div class="card col-4 intel"><p class="card-title">Bench</p><div class="metric violet" id="iRate">—</div><div class="hint" id="iAvg">—</div></div>
+      <div class="card col-4"><p class="card-title">Guardian</p><div class="metric sm" id="iGuard">—</div><div class="hint" id="iGuardWhy">—</div></div>
+      <div class="card col-4"><p class="card-title">Curriculum</p><div class="metric sm" id="iTier">—</div><div class="hint" id="iWins">—</div></div>
+    </div>
+    <div class="row">
+      <div class="card col-6"><p class="card-title">Experience vault</p><div class="metric sm" id="iVault">—</div>
+        <p class="card-title" style="margin-top:12px">Recent PASS</p><div id="iPass"></div>
+        <p class="card-title" style="margin-top:12px">Recent FAIL</p><div id="iFail"></div>
+      </div>
+      <div class="card col-6"><p class="card-title">Bandit strategies</p><div id="iBandit"></div>
+        <p class="card-title" style="margin-top:12px">Failure signatures</p><div id="iFailSig"></div>
+      </div>
+    </div>
+  </section>
 
-  <main>
-    <section class="panel active" id="tab-overview">
-      <div class="row">
-        <div class="card col-12 intel">
-          <p class="card-title">Primary metric — bench pass rate</p>
-          <p class="card-desc">The only score that means the system is getting smarter. Run <code>python scripts/bench.py</code> if empty.</p>
-          <div class="row" style="margin:0">
-            <div class="col-3"><div class="hint">Pass rate</div><div class="metric violet" id="benchRate">—</div></div>
-            <div class="col-3"><div class="hint">Healthy</div><div class="metric sm" id="benchHealthy">—</div></div>
-            <div class="col-3"><div class="hint">Curriculum tier</div><div class="metric sm" id="curTier">—</div></div>
-            <div class="col-3"><div class="hint">Experience PASS</div><div class="metric sm" id="expPass">—</div></div>
-          </div>
-          <div class="hint" id="guardHint" style="margin-top:12px">—</div>
+  <section class="panel" id="tab-flywheel">
+    <div class="row">
+      <div class="card col-12 hero">
+        <p class="card-title">Loop path</p>
+        <div class="flow-map" id="flowDetailed"></div>
+        <div class="cmd">python scripts/run_smart_cycle.py · python -m cli.main flywheel --push</div>
+      </div>
+      <div class="card col-6"><p class="card-title">Gates</p><div id="fwGates"></div></div>
+      <div class="card col-6"><p class="card-title">Policy</p><div id="policy"></div></div>
+      <div class="card col-12"><p class="card-title">Last cycle steps</p>
+        <table><thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead><tbody id="stepsBody2"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-system">
+    <div class="row">
+      <div class="card col-12">
+        <p class="card-title">Gem interconnections <span class="tip" data-tip="Hover each gem. Pipeline order: plan → generate → sandbox → audit → learn/extend.">?</span></p>
+        <div class="flow-map" id="sysMap"></div>
+        <p class="card-desc" style="margin-top:12px">Selenite plans → Rose Quartz codes → Clear Quartz verifies → Black Tourmaline audits → Amethyst logs → Grandidierite may fabricate tools. Citrine/BM25 feeds context. Labradorite optional critique.</p>
+      </div>
+      <div class="card col-6"><p class="card-title">Connections</p><div id="conn"></div></div>
+      <div class="card col-6"><p class="card-title">Skills</p><div id="skills"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-runs">
+    <div class="row"><div class="card col-12"><p class="card-title">Pipeline runs</p>
+      <table><thead><tr><th>Status</th><th>Conf</th><th>Ver</th><th>Retries</th><th>Strategy</th><th>Objective</th></tr></thead><tbody id="runsBody"></tbody></table>
+    </div></div>
+  </section>
+
+  <section class="panel" id="tab-gems">
+    <div class="row">
+      <div class="card col-8"><p class="card-title">Gems</p><div id="gems" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div></div>
+      <div class="card col-4">
+        <p class="card-title">Persistent tools</p><div id="toolsP"></div>
+        <p class="card-title" style="margin-top:14px">Quarantine</p><div id="toolsQ"></div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="btnReconcile">Reconcile tools (dry-run)</button>
         </div>
+        <div class="hint" id="reconcileOut">—</div>
       </div>
+    </div>
+  </section>
 
-      <div class="row">
-        <div class="card col-12 hero">
-          <p class="card-title">Flywheel</p>
-          <p class="card-desc">Pull → tests → curriculum objective → sandbox → confidence gate → push.</p>
-          <div class="row" style="margin:0">
-            <div class="col-3"><div class="hint">Last result</div><div class="metric" id="fwResult">—</div></div>
-            <div class="col-3"><div class="hint">Confidence</div><div class="metric accent" id="fwConf">—</div></div>
-            <div class="col-3"><div class="hint">Cycles</div><div class="metric sm" id="fwCycles">—</div></div>
-            <div class="col-3"><div class="hint">Autonomy</div><div class="metric sm" id="fwAuto">—</div></div>
-          </div>
-          <div class="hint" id="fwReason" style="margin-top:12px">—</div>
-          <div class="cmd">python scripts\run_smart_cycle.py</div>
-        </div>
-      </div>
+  <section class="panel" id="tab-bench">
+    <div class="row">
+      <div class="card col-3"><p class="card-title">Bench %</p><div class="metric violet" id="bRate">—</div></div>
+      <div class="card col-3"><p class="card-title">Quiz %</p><div class="metric" id="bQuiz">—</div></div>
+      <div class="card col-3"><p class="card-title">FW pass %</p><div class="metric" id="bFw">—</div></div>
+      <div class="card col-3"><p class="card-title">Avg conf</p><div class="metric accent" id="bConf">—</div></div>
+      <div class="card col-12"><p class="card-title">SCOREBOARD.md (snippet)</p><pre class="codebox" id="scoreboard" style="height:280px"># pull latest &amp; run weekly_scoreboard.py</pre></div>
+    </div>
+  </section>
 
-      <div class="row">
-        <div class="card col-3"><p class="card-title">Quality gate</p><div class="metric" id="quality">—</div><div class="hint" id="reason">—</div></div>
-        <div class="card col-3"><p class="card-title">Git pull</p><div class="metric" id="pull">—</div><div class="hint" id="pullDetail">—</div></div>
-        <div class="card col-3"><p class="card-title">Model</p><div class="metric sm" id="model">—</div><div class="hint" id="hb">—</div></div>
-        <div class="card col-3"><p class="card-title">Fail streak</p><div class="metric sm" id="failStreak">—</div></div>
-      </div>
-
-      <div class="row">
-        <div class="card col-7"><p class="card-title">Activity feed</p><div class="terminal" id="term"><div class="empty">Waiting…</div></div></div>
-        <div class="card col-5"><p class="card-title">Generated code</p><pre class="codebox" id="codepane"># waiting</pre></div>
-      </div>
-
-      <div class="row">
-        <div class="card col-6"><p class="card-title">Sandbox I/O</p><div class="io-box" id="sandOut"><div class="label">Waiting…</div></div></div>
-        <div class="card col-6"><p class="card-title">Flywheel steps</p>
-          <table><thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead><tbody id="stepsBody"></tbody></table>
-        </div>
-      </div>
-      <div class="row"><div class="card col-12"><p class="card-title">Cycle history</p><div class="bars" id="bars"></div></div></div>
-    </section>
-
-    <section class="panel" id="tab-intel">
-      <div class="row">
-        <div class="card col-4 intel"><p class="card-title">Bench pass rate</p><div class="metric violet" id="iRate">—</div><div class="hint" id="iAvg">avg7 —</div></div>
-        <div class="card col-4"><p class="card-title">Guardian</p><div class="metric sm" id="iGuard">—</div><div class="hint" id="iGuardWhy">—</div></div>
-        <div class="card col-4"><p class="card-title">Curriculum</p><div class="metric sm" id="iTier">—</div><div class="hint" id="iWins">wins/losses</div></div>
-      </div>
-      <div class="row">
-        <div class="card col-6"><p class="card-title">Experience vault</p><div class="metric sm" id="iVault">—</div>
-          <p class="card-title" style="margin-top:14px">Recent PASS</p><div id="iPass"></div>
-          <p class="card-title" style="margin-top:14px">Recent FAIL</p><div id="iFail"></div>
-        </div>
-        <div class="card col-6"><p class="card-title">Strategy bandit</p><div id="iBandit"></div>
-          <p class="card-title" style="margin-top:14px">Top failure signatures</p><div id="iFailSig"></div>
-          <p class="card-title" style="margin-top:14px">Skills</p><div id="iSkills"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" id="tab-flywheel">
-      <div class="row">
-        <div class="card col-12 hero"><p class="card-title">Flywheel path</p><div id="flowDetailed"></div>
-          <div class="cmd">python scripts\run_smart_cycle.py<br/>python -m cli.main flywheel --autonomous --interval 900 --push</div>
-        </div>
-        <div class="card col-6"><p class="card-title">Gates</p><div id="fwGates"></div></div>
-        <div class="card col-6"><p class="card-title">Policy</p><div id="policy"></div></div>
-        <div class="card col-12"><p class="card-title">Steps</p>
-          <table><thead><tr><th>Step</th><th>Status</th><th>Time</th><th>Detail</th></tr></thead><tbody id="stepsBody2"></tbody></table>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" id="tab-workflow">
-      <div class="row">
-        <div class="card col-12"><p class="card-title">Agent stages</p><div id="flow"></div></div>
-        <div class="card col-6"><p class="card-title">Capabilities</p><div id="skills"></div></div>
-        <div class="card col-6"><p class="card-title">Current work</p><div class="metric sm" id="workPhase">Idle</div><div class="hint" id="workObjective">—</div><div class="chips" id="workStages"></div></div>
-      </div>
-    </section>
-
-    <section class="panel" id="tab-runs">
-      <div class="row"><div class="card col-12"><p class="card-title">Pipeline runs</p>
-        <table><thead><tr><th>Status</th><th>Conf</th><th>Retries</th><th>Strategy</th><th>Objective</th></tr></thead><tbody id="runsBody"></tbody></table>
-      </div></div>
-    </section>
-
-    <section class="panel" id="tab-gems">
-      <div class="row">
-        <div class="card col-8"><p class="card-title">Gems</p><div id="gems" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div></div>
-        <div class="card col-4"><p class="card-title">Persistent</p><div id="toolsP"></div><p class="card-title" style="margin-top:16px">Quarantine</p><div id="toolsQ"></div></div>
-      </div>
-    </section>
-
-    <section class="panel" id="tab-bench">
-      <div class="row">
-        <div class="card col-3"><p class="card-title">Bench pass %</p><div class="metric violet" id="bRate">—</div></div>
-        <div class="card col-3"><p class="card-title">FW cycles</p><div class="metric" id="bCycles">—</div></div>
-        <div class="card col-3"><p class="card-title">FW pass %</p><div class="metric" id="bFw">—</div></div>
-        <div class="card col-3"><p class="card-title">Avg conf</p><div class="metric accent" id="bConf">—</div></div>
-      </div>
-    </section>
-
-    <section class="panel" id="tab-raw">
-      <div class="row"><div class="card col-12"><p class="card-title">latest.json</p><pre class="codebox" id="latest" style="height:480px"></pre></div></div>
-    </section>
-  </main>
-  <footer>Primary metric = bench pass_rate · http://127.0.0.1:8787</footer>
-
+  <section class="panel" id="tab-raw">
+    <div class="row"><div class="card col-12"><p class="card-title">latest.json</p><pre class="codebox" id="latest" style="height:420px"></pre></div></div>
+  </section>
+</main>
+<footer>@ETHER Control Matrix v0.4 · local only (127.0.0.1) · metrics from memory/* · not marketing scores</footer>
 <script>
-const tabs=document.querySelectorAll('nav.tabs button');const panels=document.querySelectorAll('.panel');
-tabs.forEach(btn=>btn.addEventListener('click',()=>{tabs.forEach(b=>b.classList.remove('active'));panels.forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+btn.dataset.tab).classList.add('active');}));
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function pct(x){return x==null?'—':Math.round(x*100)+'%';}
-let lastTermKey='';
-function stepsHtml(steps){if(!steps||!steps.length)return '<tr><td colspan="4" style="color:var(--faint)">No cycle yet</td></tr>';return steps.map(st=>`<tr><td>${esc(st.name)}</td><td><span class="badge ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms!=null?st.ms+' ms':'—'}</td><td style="color:var(--muted)">${esc(st.error||'')}</td></tr>`).join('');}
+const $ = (id) => document.getElementById(id);
+const tabs = document.querySelectorAll('nav.tabs button');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(btn => btn.addEventListener('click', () => {
+  tabs.forEach(b => b.classList.remove('active'));
+  panels.forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const el = $('tab-' + btn.dataset.tab);
+  if (el) el.classList.add('active');
+}));
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pct(x){ return (x == null || x === '') ? '—' : Math.round(Number(x) * 100) + '%'; }
+function tip(html, t){ return t ? `${html} <span class="tip" data-tip="${esc(t)}">?</span>` : html; }
+function setText(id, v){ const el = $(id); if (el) el.textContent = v; }
+function setHtml(id, v){ const el = $(id); if (el) el.innerHTML = v; }
+function stepsHtml(steps){
+  if (!steps || !steps.length) return '<tr><td colspan="4" style="color:var(--faint)">No cycle data yet — run flywheel</td></tr>';
+  return steps.map(st => `<tr><td>${esc(st.name)}</td><td><span class="badge ${st.ok ? 'ok' : 'bad'}">${st.ok ? 'OK' : 'FAIL'}</span></td><td>${st.ms != null ? st.ms + ' ms' : '—'}</td><td style="color:var(--muted)">${esc(st.error || '')}</td></tr>`).join('');
+}
+function copyCmd(cmd){
+  navigator.clipboard.writeText(cmd).then(() => { setText('liveText', 'Copied: ' + cmd.slice(0,40)); }).catch(() => alert(cmd));
+}
+let lastTermKey = '';
 
 function render(d){
-  const s=d.summary||{}, i=d.intelligence||{}, ok=s.quality_pass===true;
-  const q=document.getElementById('quality');q.textContent=ok?'PASS':(s.quality_pass===false?'FAIL':'—');q.className='metric '+(ok?'ok':(s.quality_pass===false?'bad':''));
-  document.getElementById('reason').textContent=s.reason||'—';
+  try {
+    if (!d) return;
+    const banner = $('errBanner');
+    if (d.error) {
+      banner.style.display = 'block';
+      banner.textContent = 'Snapshot error: ' + d.error + (d.traceback ? ' — see Diagnostics' : '');
+    } else {
+      banner.style.display = 'none';
+    }
+    const s = d.summary || {};
+    const i = d.intelligence || {};
+    const ok = s.quality_pass === true;
 
-  // primary metric
-  document.getElementById('benchRate').textContent=i.pass_rate!=null?pct(i.pass_rate):'—';
-  const hh=document.getElementById('benchHealthy');
-  hh.textContent=i.healthy===true?'YES':(i.healthy===false?'NO':'—');
-  hh.className='metric sm '+(i.healthy===true?'ok':(i.healthy===false?'bad':''));
-  document.getElementById('curTier').textContent=i.curriculum_tier!=null?i.curriculum_tier:'0';
-  document.getElementById('expPass').textContent=i.experience_pass!=null?i.experience_pass:'0';
-  document.getElementById('guardHint').textContent=i.guardian_frozen?'GUARDIAN FROZEN: '+(i.guardian_reason||''):(i.guardian_reason||'Guardian clear');
+    const q = $('quality');
+    if (q) {
+      q.textContent = ok ? 'PASS' : (s.quality_pass === false ? 'FAIL' : '—');
+      q.className = 'metric ' + (ok ? 'ok' : (s.quality_pass === false ? 'bad' : ''));
+    }
+    setText('reason', s.reason || '—');
+    setText('benchRate', i.pass_rate != null ? pct(i.pass_rate) : '—');
+    const hh = $('benchHealthy');
+    if (hh) {
+      hh.textContent = i.healthy === true ? 'YES' : (i.healthy === false ? 'NO' : '—');
+      hh.className = 'metric sm ' + (i.healthy === true ? 'ok' : (i.healthy === false ? 'bad' : ''));
+    }
+    setText('curTier', i.curriculum_tier != null ? i.curriculum_tier : '0');
+    setText('expPass', i.experience_pass != null ? i.experience_pass : '0');
+    const reasons = (i.unhealthy_reasons || []).join('; ');
+    setText('guardHint', i.guardian_frozen ? ('GUARDIAN FROZEN: ' + (i.guardian_reason || '')) : (reasons || i.guardian_reason || 'Guardian clear · reasons empty'));
 
-  // intel tab
-  document.getElementById('iRate').textContent=i.pass_rate!=null?pct(i.pass_rate):'—';
-  document.getElementById('iAvg').textContent='avg7 '+(i.pass_rate_avg7!=null?pct(i.pass_rate_avg7):'—')+' · latency '+(i.latency_s_avg7??'—')+'s';
-  const ig=document.getElementById('iGuard');ig.textContent=i.guardian_frozen?'FROZEN':'OK';ig.className='metric sm '+(i.guardian_frozen?'bad':'ok');
-  document.getElementById('iGuardWhy').textContent=i.guardian_reason||'—';
-  document.getElementById('iTier').textContent='tier '+(i.curriculum_tier??0);
-  document.getElementById('iWins').textContent=`wins ${i.curriculum_wins??0} · losses ${i.curriculum_losses??0}`+(i.curriculum_event?' · '+i.curriculum_event:'');
-  document.getElementById('iVault').textContent=`${i.experience_pass??0} PASS · ${i.experience_fail??0} FAIL`;
-  document.getElementById('iPass').innerHTML=(i.recent_pass||[]).map(r=>`<div class="item"><b>${esc(r.title)}</b><span>${esc(r.strategy)} · conf ${r.conf}</span></div>`).join('')||'<div class="hint">None yet</div>';
-  document.getElementById('iFail').innerHTML=(i.recent_fail||[]).map(r=>`<div class="item"><b>${esc(r.title)}</b><span>${esc(r.kind)}</span></div>`).join('')||'<div class="hint">None</div>';
-  document.getElementById('iFailSig').innerHTML=(i.top_failure_signatures||[]).map(f=>`<div class="item"><b>${esc(f.kind)} × ${f.count}</b><span>${esc(f.sig)}</span></div>`).join('')||'<div class="hint">—</div>';
-  document.getElementById('iBandit').innerHTML=((d.learning||{}).ranked||[]).map(a=>`<div class="item"><b>${esc(a.strategy)}</b><span>mean ${a.mean} · pulls ${a.pulls}</span></div>`).join('')||'<div class="hint">—</div>';
-  document.getElementById('iSkills').innerHTML=(d.skills||[]).map(sk=>`<div class="item"><b>${esc(sk.name)}</b><span>${esc(sk.status)}</span></div>`).join('');
+    setText('iRate', i.pass_rate != null ? pct(i.pass_rate) : '—');
+    setText('iAvg', 'avg7 ' + (i.pass_rate_avg7 != null ? pct(i.pass_rate_avg7) : '—') + ' · lat ' + (i.latency_s_avg7 ?? '—') + 's');
+    const ig = $('iGuard');
+    if (ig) { ig.textContent = i.guardian_frozen ? 'FROZEN' : 'OK'; ig.className = 'metric sm ' + (i.guardian_frozen ? 'bad' : 'ok'); }
+    setText('iGuardWhy', i.guardian_reason || '—');
+    setText('iTier', 'tier ' + (i.curriculum_tier ?? 0));
+    setText('iWins', `wins ${i.curriculum_wins ?? 0} · losses ${i.curriculum_losses ?? 0}`);
+    setText('iVault', `${i.experience_pass ?? 0} PASS · ${i.experience_fail ?? 0} FAIL`);
+    setHtml('iPass', (i.recent_pass || []).map(r => `<div class="item"><b>${esc(r.title)}</b><span>${esc(r.strategy)} · conf ${r.conf}</span></div>`).join('') || '<div class="hint">None yet</div>');
+    setHtml('iFail', (i.recent_fail || []).map(r => `<div class="item"><b>${esc(r.title)}</b><span>${esc(r.kind)}</span></div>`).join('') || '<div class="hint">None</div>');
+    setHtml('iFailSig', (i.top_failure_signatures || []).map(f => `<div class="item"><b>${esc(f.kind)} × ${f.count}</b><span>${esc(f.sig)}</span></div>`).join('') || '<div class="hint">—</div>');
+    setHtml('iBandit', ((d.learning || {}).ranked || []).map(a => `<div class="item"><b>${esc(a.strategy)}</b><span>mean ${a.mean} · pulls ${a.pulls}</span></div>`).join('') || '<div class="hint">—</div>');
 
-  const fwR=document.getElementById('fwResult');fwR.textContent=ok?'PASS':(s.quality_pass===false?'FAIL':'IDLE');fwR.className='metric '+(ok?'ok':(s.quality_pass===false?'bad':''));
-  document.getElementById('fwConf').textContent=s.confidence!=null?Number(s.confidence).toFixed(3):'—';
-  document.getElementById('fwCycles').textContent=s.cycles!=null?s.cycles:((d.history||[]).length||'0');
-  document.getElementById('fwAuto').textContent=d.heartbeat?'RUNNING':'STOPPED';
-  document.getElementById('fwAuto').className='metric sm '+(d.heartbeat?'ok':'');
-  document.getElementById('fwReason').textContent='Reason: '+(s.reason||'—')+(s.model?' · model='+s.model:'');
-  document.getElementById('failStreak').textContent=s.fail_streak!=null?s.fail_streak:'0';
-  document.getElementById('model').textContent=s.model||'not set';
-  document.getElementById('hb').textContent=d.heartbeat?('Heartbeat: '+d.heartbeat):'No heartbeat';
+    setText('model', s.model || 'not set');
+    setText('sandboxHint', 'sandbox: ' + (s.sandbox_backend || (d.connections && d.connections.sandbox && d.connections.sandbox.effective) || '—'));
+    setText('fwAuto', d.heartbeat ? 'RUNNING' : 'STOPPED');
+    const fa = $('fwAuto'); if (fa) fa.className = 'metric sm ' + (d.heartbeat ? 'ok' : '');
+    setText('hb', d.heartbeat ? ('Heartbeat: ' + d.heartbeat) : 'No heartbeat file');
 
-  const pullStep=(d.matrix_steps||[]).find(x=>x.name==='pull')||{};
-  const pullEl=document.getElementById('pull');
-  if(pullStep.ok===true){pullEl.textContent='OK';pullEl.className='metric ok';}
-  else if(pullStep.ok===false){pullEl.textContent='FAIL';pullEl.className='metric bad';}
-  else{pullEl.textContent='—';pullEl.className='metric';}
-  document.getElementById('pullDetail').textContent=pullStep.error||(pullStep.ms!=null?pullStep.ms+' ms':'Not run');
+    const pullStep = (d.matrix_steps || []).find(x => x.name === 'pull') || {};
+    const pullEl = $('pull');
+    if (pullEl) {
+      if (pullStep.ok === true) { pullEl.textContent = 'OK'; pullEl.className = 'metric ok'; }
+      else if (pullStep.ok === false) { pullEl.textContent = 'FAIL'; pullEl.className = 'metric bad'; }
+      else { pullEl.textContent = '—'; pullEl.className = 'metric'; }
+    }
+    setText('pullDetail', pullStep.error || (pullStep.ms != null ? pullStep.ms + ' ms' : 'Not run yet'));
 
-  const consoleData=d.console||{}, cw=d.current_work||{};
-  const busy=!!consoleData.active||(cw.phase&&String(cw.phase).startsWith('live'));
-  document.getElementById('dot').className='dot '+(busy?'busy':(d.heartbeat?'on':'off'));
-  document.getElementById('liveText').textContent=busy?'Agent coding…':(d.heartbeat?'Connected · autonomy':'Connected · idle');
+    const consoleData = d.console || {};
+    const cw = d.current_work || {};
+    const busy = !!consoleData.active || (cw.phase && String(cw.phase).startsWith('live'));
+    const dot = $('dot');
+    if (dot) dot.className = 'dot ' + (busy ? 'busy' : (d.heartbeat ? 'on' : 'off'));
+    setText('liveText', busy ? 'Agent coding…' : (d.heartbeat ? 'Connected · autonomy' : 'Connected · idle'));
 
-  const term=document.getElementById('term');const lines=consoleData.lines||[];const key=lines.map(l=>l.text).join('|').slice(0,300);
-  if(key!==lastTermKey){const near=term.scrollTop+term.clientHeight>=term.scrollHeight-48;
-    term.innerHTML=lines.length?lines.map(L=>{const ts=(L.ts||'').toString();const clock=ts.includes('T')?ts.slice(11,19):ts.slice(0,8);return `<div class="line ${esc(L.level||'info')}"><div class="ts">${esc(clock||'--:--')}</div><div class="msg">${esc(L.text)}</div></div>`;}).join(''):'<div class="empty">No events yet</div>';
-    if(near||!lastTermKey)term.scrollTop=term.scrollHeight;lastTermKey=key;}
-  document.getElementById('codepane').textContent=consoleData.code_preview||'# waiting';
-  const so=consoleData.sandbox_stdout||'', se=consoleData.sandbox_stderr||'';
-  let io='';if(so)io+='<div class="label">stdout</div><div class="stdout">'+esc(so)+'</div>';if(se)io+='<div class="label" style="margin-top:12px">stderr</div><div class="stderr">'+esc(se)+'</div>';if(!so&&!se)io='<div class="label">No sandbox output</div>';
-  document.getElementById('sandOut').innerHTML=io;
+    const term = $('term');
+    const lines = consoleData.lines || [];
+    const key = lines.map(l => l.text).join('|').slice(0, 400);
+    if (term && key !== lastTermKey) {
+      const near = term.scrollTop + term.clientHeight >= term.scrollHeight - 48;
+      term.innerHTML = lines.length ? lines.map(L => {
+        const ts = (L.ts || '').toString();
+        const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+        return `<div class="line ${esc(L.level || 'info')}"><div class="ts">${esc(clock || '--:--')}</div><div class="msg">${esc(L.text)}</div></div>`;
+      }).join('') : '<div class="empty">No events yet — start flywheel or run a task</div>';
+      if (near || !lastTermKey) term.scrollTop = term.scrollHeight;
+      lastTermKey = key;
+    }
+    setText('codepane', consoleData.code_preview || '# waiting for a pipeline run');
+    const so = consoleData.sandbox_stdout || '', se = consoleData.sandbox_stderr || '';
+    let io = '';
+    if (so) io += '<div class="label">stdout</div><div class="stdout">' + esc(so) + '</div>';
+    if (se) io += '<div class="label" style="margin-top:10px">stderr</div><div class="stderr">' + esc(se) + '</div>';
+    if (!so && !se) io = '<div class="label">No sandbox output yet</div>';
+    setHtml('sandOut', io);
 
-  const steps=d.matrix_steps||[];
-  document.getElementById('stepsBody').innerHTML=stepsHtml(steps);
-  document.getElementById('stepsBody2').innerHTML=stepsHtml(steps);
-  const bars=document.getElementById('bars');bars.innerHTML='';
-  (d.history||[]).slice(0,40).reverse().forEach(h=>{const b=document.createElement('div');b.className='bar '+(h.ok?'pass':'fail');b.style.height=(10+Math.round((h.conf||0)*50))+'px';b.title=(h.ts||'')+' conf='+h.conf;bars.appendChild(b);});
+    const steps = d.matrix_steps || [];
+    setHtml('stepsBody', stepsHtml(steps));
+    setHtml('stepsBody2', stepsHtml(steps));
 
-  document.getElementById('flowDetailed').innerHTML=(d.workflow||[]).map(w=>`<div class="item"><b>${w.id}. ${esc(w.name)}</b><span>${esc(w.desc)}</span></div>`).join('');
-  document.getElementById('flow').innerHTML=document.getElementById('flowDetailed').innerHTML;
-  document.getElementById('fwGates').innerHTML=[['quality_pass',s.quality_pass],['confidence',s.confidence],['audit',s.audit],['reason',s.reason]].map(([k,v])=>`<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('');
-  const p=d.policy||{};
-  document.getElementById('policy').innerHTML=[['Min conf',p.min_confidence],['Retries',p.max_retries],['Curriculum',p.curriculum?'on':'off'],['Experience',p.experience?'on':'off'],['Guardian',p.guardian?'on':'off']].map(([k,v])=>`<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('');
-  document.getElementById('skills').innerHTML=(d.skills||[]).map(sk=>`<div class="item"><b>${esc(sk.name)}</b><span>${esc(sk.status)}</span></div>`).join('');
-  document.getElementById('workPhase').textContent=cw.phase||'Idle';
-  document.getElementById('workObjective').textContent=cw.objective||'—';
-  document.getElementById('workStages').innerHTML=(cw.stages||[]).map(st=>`<span class="chip ${st.ok?'ok':'bad'}">${esc(st.stage)}</span>`).join('');
-  document.getElementById('runsBody').innerHTML=(d.runs||[]).slice(0,20).map(r=>`<tr><td><span class="badge ${r.status==='complete'?'ok':'bad'}">${esc(r.status)}</span></td><td>${r.confidence!=null?Number(r.confidence).toFixed(2):'—'}</td><td>${r.retries||0}</td><td>${esc(r.strategy||'')}</td><td>${esc(r.objective)}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--faint)">No runs</td></tr>';
-  document.getElementById('gems').innerHTML=(d.gems||[]).map(g=>`<div class="item"><b>${esc(g.id)}</b><span>${esc(g.role)}</span></div>`).join('');
-  const t=d.tools||{};
-  document.getElementById('toolsP').innerHTML=(t.persistent||[]).map(x=>`<div class="item"><b>${esc(x)}</b></div>`).join('')||'<div class="hint">None</div>';
-  document.getElementById('toolsQ').innerHTML=(t.quarantine||[]).map(x=>`<div class="item"><b>${esc(x)}</b></div>`).join('')||'<div class="hint">Empty</div>';
-  const b=d.benchmarks||{};
-  document.getElementById('bRate').textContent=b.pass_rate!=null?pct(b.pass_rate):'—';
-  document.getElementById('bCycles').textContent=b.flywheel_cycles??'—';
-  document.getElementById('bFw').textContent=pct(b.flywheel_pass_rate);
-  document.getElementById('bConf').textContent=b.avg_confidence!=null?Number(b.avg_confidence).toFixed(3):'—';
-  document.getElementById('latest').textContent=JSON.stringify(d.latest||{},null,2);
+    setHtml('flowDetailed', (d.workflow || []).map(w =>
+      `<div class="flow-node" title="${esc(w.tip || w.desc)}"><b>${w.id}. ${esc(w.name)}</b>${esc(w.desc)}</div><span class="flow-arrow">→</span>`
+    ).join('').replace(/(<span class="flow-arrow">→<\/span>)$/, ''));
+
+    setHtml('fwGates', [['quality_pass', s.quality_pass], ['confidence', s.confidence], ['audit', s.audit], ['reason', s.reason]].map(([k, v]) =>
+      `<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join(''));
+    const p = d.policy || {};
+    setHtml('policy', [
+      ['Min conf', p.min_confidence], ['Retries', p.max_retries], ['Push', p.push],
+      ['Curriculum', p.curriculum], ['Experience', p.experience], ['Sandbox cfg', p.sandbox_backend],
+      ['Burst on fail', p.burst_on_fail]
+    ].map(([k, v]) => `<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join(''));
+
+    setHtml('sysMap', (d.gems || []).map(g =>
+      `<div class="flow-node" title="${esc(g.tip || '')}"><b>${esc(g.id)}</b>${esc(g.role)} · ${esc(g.layer)}</div>`
+    ).join(''));
+    const c = d.connections || {};
+    const sb = c.sandbox || {};
+    setHtml('conn', [
+      ['Docker', c.docker], ['Ollama', c.ollama], ['Primary model', c.primary_model],
+      ['Sandbox effective', sb.effective || c.sandbox], ['Burst enabled', c.burst],
+      ['Ollama URL', c.ollama_url]
+    ].map(([k, v]) => `<div class="item"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join(''));
+    setHtml('skills', (d.skills || []).map(sk =>
+      `<div class="item" title="${esc(sk.tip || '')}"><b>${esc(sk.name)}</b><span>${esc(sk.status)}</span></div>`
+    ).join(''));
+
+    setHtml('runsBody', (d.runs || []).slice(0, 20).map(r =>
+      `<tr><td><span class="badge ${r.status === 'complete' ? 'ok' : 'bad'}">${esc(r.status)}</span></td>` +
+      `<td>${r.confidence != null ? Number(r.confidence).toFixed(2) : '—'}</td>` +
+      `<td>${r.verification_score != null ? Number(r.verification_score).toFixed(2) : '—'}</td>` +
+      `<td>${r.retries || 0}</td><td>${esc(r.strategy || '')}</td><td>${esc(r.objective)}</td></tr>`
+    ).join('') || '<tr><td colspan="6" style="color:var(--faint)">No runs yet</td></tr>');
+
+    setHtml('gems', (d.gems || []).map(g =>
+      `<div class="item" title="${esc(g.tip || '')}"><b>${esc(g.id)}</b><span>${esc(g.role)} · layer ${esc(g.layer)}</span></div>`
+    ).join(''));
+    const t = d.tools || {};
+    setHtml('toolsP', (t.persistent || []).map(x => `<div class="item"><b>${esc(x)}</b></div>`).join('') || '<div class="hint">None</div>');
+    setHtml('toolsQ', (t.quarantine || []).map(x =>
+      `<div class="item"><b>${esc(x)}</b><button class="btn" style="margin-top:6px" data-promote="${esc(x)}">Promote</button></div>`
+    ).join('') || '<div class="hint">Empty</div>');
+    document.querySelectorAll('[data-promote]').forEach(btn => {
+      btn.onclick = async () => {
+        const filename = btn.getAttribute('data-promote');
+        try {
+          const r = await fetch('/api/promote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename }) });
+          const j = await r.json();
+          setText('reconcileOut', JSON.stringify(j));
+          poll();
+        } catch (e) { setText('reconcileOut', String(e)); }
+      };
+    });
+
+    const b = d.benchmarks || {};
+    setText('bRate', b.pass_rate != null ? pct(b.pass_rate) : '—');
+    setText('bQuiz', b.quiz_pass_rate != null ? pct(b.quiz_pass_rate) : '—');
+    setText('bFw', pct(b.flywheel_pass_rate));
+    setText('bConf', b.avg_confidence != null ? Number(b.avg_confidence).toFixed(3) : '—');
+    setText('scoreboard', (d.docs && d.docs.scoreboard) || '# SCOREBOARD empty — run python scripts/weekly_scoreboard.py');
+    setText('latest', JSON.stringify(d.latest || {}, null, 2));
+  } catch (e) {
+    const banner = $('errBanner');
+    if (banner) { banner.style.display = 'block'; banner.textContent = 'UI render error: ' + e; }
+  }
 }
-function connect(){const proto=location.protocol==='https:'?'wss':'ws';const ws=new WebSocket(proto+'://'+location.host+'/ws');
-  ws.onopen=()=>{document.getElementById('liveText').textContent='Connected · live';};
-  ws.onmessage=(ev)=>{try{render(JSON.parse(ev.data));}catch(e){}};ws.onclose=()=>{document.getElementById('dot').className='dot off';document.getElementById('liveText').textContent='Reconnecting…';setTimeout(connect,1500);};ws.onerror=()=>ws.close();}
-async function poll(){try{const r=await fetch('/api/snapshot');render(await r.json());}catch(e){}}
-poll();connect();setInterval(poll,3000);
+
+function connect(){
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(proto + '://' + location.host + '/ws');
+  ws.onopen = () => setText('liveText', 'Connected · live');
+  ws.onmessage = (ev) => { try { render(JSON.parse(ev.data)); } catch (e) {} };
+  ws.onclose = () => { const d = $('dot'); if (d) d.className = 'dot off'; setText('liveText', 'Reconnecting…'); setTimeout(connect, 1500); };
+  ws.onerror = () => ws.close();
+}
+async function poll(){
+  try { const r = await fetch('/api/snapshot'); render(await r.json()); }
+  catch (e) { setText('liveText', 'Poll failed'); }
+}
+$('btnReconcile').onclick = async () => {
+  setText('reconcileOut', 'running…');
+  try {
+    const r = await fetch('/api/reconcile-tools', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dry_run: true, threshold: 0.82 }) });
+    setText('reconcileOut', JSON.stringify(await r.json(), null, 2).slice(0, 800));
+  } catch (e) { setText('reconcileOut', String(e)); }
+};
+poll(); connect(); setInterval(poll, 3000);
 </script>
 </body>
 </html>

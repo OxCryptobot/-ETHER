@@ -1,14 +1,23 @@
 # @ETHER Live Status
 
-## Batch progress
-See `TASKS.md` for the next-10 list.
+**Board updated:** 2026-07-26 · See `TASKS.md`
 
-**Shipped this batch:**
-1. Pipeline `tool_assist` (few_shot_pack)
-2. Auto `save_success_pattern` on PASS
-3. `secret_scan` + `subprocess_audit` pre-audit stage
+## Snapshot
+| Area | State |
+|------|--------|
+| Flywheel | PASS streak (conf 1.000 cycles) |
+| Gems | 8 registered |
+| Persistent tools | Catalog live under Grandidierite |
+| Fabricate loop | implement → safety → sandbox → audit → promote gate |
+| Learning | Bandit + rewards + `ether learn-stats` |
+| Pipeline | tool_assist, tool_scan, memory_save, fail-streak hooks |
 
-`ETHER_TOOL_ASSIST=1` by default (set `0` to disable).
+## Next up (Batch 3)
+Start: **#18 AST fabricate validation** → **#14 run-tool pipeline** → **#13 promote API** → **#11 bench**
 
-## Autonomy
-Flywheel + dashboard + fabricate remain active on main.
+## Pull
+```powershell
+git pull origin main
+ether learn-stats
+ether tool-list
+```

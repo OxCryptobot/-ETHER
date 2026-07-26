@@ -1,22 +1,38 @@
 # @ETHER Status
 
-**Latest:** local sandbox tests · burst policy tests · Linux bootstrap/systemd · COUSIN Qwen 3.6 tags
+**Automated health checks are live.**
 
-### Linux cousin
+### Run checks
 ```bash
-git fetch origin && git reset --hard origin/main
-bash scripts/linux_bootstrap.sh
-# set ETHER_PRIMARY_MODEL from `ollama list` (e.g. qwen3.6:27b)
-# ETHER_SANDBOX_BACKEND=local
-python -m cli.main doctor
-python -m cli.main run "write a python function is_even(n) with assert is_even(4)"
-./scripts/start_daemon_linux.sh
+# full (includes sandbox smoke)
+python scripts/health_check.py
+
+# fast (skip live sandbox)
+python scripts/health_check.py --skip-sandbox
+
+# JSON for tooling
+python scripts/health_check.py --json --skip-sandbox
 ```
+
+Writes:
+- `memory/health/latest.json`
+- `memory/health/history.jsonl`
+
+API (dashboard running):
+- `GET /api/health-check?skip_sandbox=true`
+- `POST /api/health-check` `{"skip_sandbox": true}`
 
 ### Windows partner
 ```powershell
 git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+.\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
 .\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m cli.main doctor
+```
+
+### Linux cousin
+```bash
+git fetch origin && git reset --hard origin/main
+source .venv/bin/activate && pip install -e ".[dev]" -q
+python scripts/health_check.py --skip-sandbox
 ```

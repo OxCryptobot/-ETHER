@@ -42,8 +42,10 @@ from core.schemas import (
     GrandidieriteRequest,
 )
 from cli.helpers import print_error, print_ok
+from cli.commands_batch import batch_app
 
 app = typer.Typer(name="ether", help="@ETHER", add_completion=False)
+app.add_typer(batch_app, name="batch")
 console = Console(force_terminal=True, soft_wrap=True)
 
 
@@ -55,7 +57,7 @@ def _safe(text: str) -> str:
 
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    console.print("[bold cyan]@ETHER[/] v0.1.3")
+    console.print("[bold cyan]@ETHER[/] v0.1.4")
 
 
 @app.command()

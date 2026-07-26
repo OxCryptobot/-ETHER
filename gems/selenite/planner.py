@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from typing import List
+import re
+from typing import List, Optional, Dict, Any
 
 from core.schemas import (
     Envelope,
@@ -20,23 +21,19 @@ from core.schemas import (
 
 
 class Selenite:
-    """Hierarchical planner.
-
-    Order of preference:
-    1. LangGraph path when ETHER_LANGGRAPH=1 (optional)
-    2. LLM-assisted plan when ETHER_LLM_PLAN=1
-    3. Fast rule-based plans (default)
-    """
+    """Hierarchical planner with optional tool_request intents."""
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
             if isinstance(request.payload, SeleniteRequest):
                 user_query = request.payload.user_query
                 max_depth = request.payload.max_plan_depth
+                available_tools = list(request.payload.available_tools or [])
             else:
                 data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
                 user_query = data.get("user_query", str(request.payload))
                 max_depth = data.get("max_plan_depth", 5)
+                available_tools = list(data.get("available_tools") or [])
 
             plan: ExecutionPlan | None = None
 
@@ -54,10 +51,17 @@ class Selenite:
             if plan is None:
                 plan = self._create_plan(user_query, max_depth)
 
+            needs_tool, tool_request = self._detect_tool_intent(user_query, available_tools)
+
             return ResponseEnvelope(
                 task_id=request.task_id,
                 source_gem="selenite",
-                payload=SeleniteResponse(plan=plan, needs_tool=False, confidence_score=0.7),
+                payload=SeleniteResponse(
+                    plan=plan,
+                    needs_tool=needs_tool,
+                    tool_request=tool_request,
+                    confidence_score=0.75 if needs_tool else 0.7,
+                ),
             )
         except Exception as e:
             return ResponseEnvelope(
@@ -65,6 +69,46 @@ class Selenite:
                 source_gem="selenite",
                 error=GemError(type=GemErrorType.RUNTIME, message=str(e), recoverable=True),
             )
+
+    def _detect_tool_intent(
+        self, query: str, available_tools: List[str]
+    ) -> tuple[bool, Optional[Dict[str, Any]]]:
+        q = query.lower().strip()
+
+        # explicit fabricate
+        m = re.search(
+            r"(?:fabricate|create|build|make)\s+(?:a\s+)?tool\s+(?:named\s+|called\s+)?([a-zA-Z_][\w]*)",
+            q,
+        )
+        if m or "fabricate tool" in q or "new tool" in q:
+            name = m.group(1) if m else "auto_tool"
+            return True, {
+                "action": "fabricate",
+                "name": name,
+                "docstring": query[:240],
+                "purpose": query[:240],
+            }
+
+        # run existing tool by name
+        m2 = re.search(r"(?:run|use)\s+tool\s+([a-zA-Z_][\w]*)", q)
+        if m2:
+            return True, {"action": "run", "name": m2.group(1), "payload": {}}
+
+        # generate stub
+        if "generate tool" in q or "scaffold tool" in q:
+            return True, {
+                "action": "generate",
+                "name": "scaffolded_tool",
+                "docstring": query[:200],
+            }
+
+        # if available_tools mentions and query asks to use one
+        for t in available_tools:
+            tname = t.replace(".py", "")
+            if tname.lower() in q and any(w in q for w in ("use", "run", "call")):
+                return True, {"action": "run", "name": tname, "payload": {}}
+
+        return False, None
 
     def _llm_plan(self, query: str, max_depth: int) -> ExecutionPlan | None:
         try:
@@ -110,7 +154,6 @@ class Selenite:
             return None
 
     def _create_plan(self, query: str, max_depth: int) -> ExecutionPlan:
-        # Prefer shared graph catalog when available (no LangGraph runtime required)
         try:
             from gems.selenite.graph import _classify_intent, _steps_for_intent
 

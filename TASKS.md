@@ -1,16 +1,30 @@
-# @ETHER — Next 10 tasks (batch)
+# @ETHER Task Board
 
+## Batch 1 (closed)
 | # | Task | Status |
 |---|------|--------|
-| 1 | Pipeline `tool_assist`: few_shot_pack before code gen | **doing / shipped** |
-| 2 | Auto `save_success_pattern` on sandbox PASS | **doing / shipped** |
-| 3 | `secret_scan` + subprocess heuristics before audit | **doing / shipped** |
-| 4 | Dashboard: tools + fabricate log panel | queued |
-| 5 | Selenite emits `action: run\|fabricate` tool_requests | queued |
-| 6 | Failure-streak → propose fabricate (opt-in env) | queued |
-| 7 | Benchmark harness (HumanEval-lite / custom suite) | queued |
-| 8 | Rose Quartz token streaming to CLI/dashboard | queued |
-| 9 | `ether learn-stats` CLI for bandit leaderboard | queued |
-| 10 | Promote approval UX in dashboard (one-click promote) | queued |
+| 1 | Pipeline tool_assist few_shot | **done** |
+| 2 | save_success_pattern on PASS | **done** |
+| 3 | secret_scan + subprocess pre-audit | **done** |
 
-Update this file as items close.
+## Batch 2 (this ship)
+| # | Task | Status |
+|---|------|--------|
+| 4 | Dashboard tools + fabricate log panel | **done** |
+| 5 | Selenite tool_request intents (run/fabricate/generate) | **done** |
+| 6 | Failure-streak → propose fabricate (ETHER_AUTO_FABRICATE_ON_FAIL) | **done** |
+| 9 | `ether learn-stats` bandit CLI | **done** |
+
+## Batch 3 — next 10
+| # | Task | Status |
+|---|------|--------|
+| 11 | Benchmark harness (scripts/bench.py + sample tasks) | queued |
+| 12 | Rose Quartz streaming tokens to CLI | queued |
+| 13 | Dashboard one-click promote API | queued |
+| 14 | Wire `run` tool_request from Selenite mid-pipeline | queued |
+| 15 | Citrine index on PASS patterns | queued |
+| 16 | Flywheel includes learn-stats snapshot | queued |
+| 17 | Tool-assist repo_map for multi-file objectives | queued |
+| 18 | Harden fabricate LLM output validation (AST parse main) | queued |
+| 19 | Dashboard WebSocket promote + fabricate triggers | queued |
+| 20 | v0.2.0 release notes + VERSION bump | queued |

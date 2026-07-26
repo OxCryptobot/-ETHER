@@ -67,6 +67,9 @@ def collect_snapshot() -> Dict[str, Any]:
     last_fail = _read_json(flywheel_dir / "last_fail.json")
     history = _tail_jsonl(flywheel_dir / "history.jsonl", 50)
     heartbeat = _read_text(flywheel_dir / "heartbeat.txt").strip()
+    fabricate_log = _tail_jsonl(ROOT / "memory" / "tools" / "fabricate.jsonl", 20)
+    bandit = _read_json(ROOT / "memory" / "learning" / "bandit.json") or {}
+    fail_streak = _read_json(ROOT / "memory" / "learning" / "fail_streak.json") or {}
 
     runs: List[Dict[str, Any]] = []
     if runs_dir.exists():
@@ -83,6 +86,8 @@ def collect_snapshot() -> Dict[str, Any]:
                     "confidence": data.get("confidence"),
                     "started_at": data.get("started_at"),
                     "retries": data.get("retries", 0),
+                    "strategy": data.get("strategy"),
+                    "reward": data.get("reward"),
                     "stages": [
                         {
                             "stage": s.get("stage"),
@@ -95,7 +100,6 @@ def collect_snapshot() -> Dict[str, Any]:
                 }
             )
 
-    # simple benchmark-ish stats from runs + flywheel
     confs = [float(r["confidence"]) for r in runs if r.get("confidence") is not None]
     avg_conf = round(sum(confs) / len(confs), 3) if confs else None
     complete = sum(1 for r in runs if r.get("status") == "complete")
@@ -106,24 +110,38 @@ def collect_snapshot() -> Dict[str, Any]:
     quarantine = sorted(p.name for p in tools_q.glob("*.py")) if tools_q.exists() else []
     persistent = sorted(p.name for p in tools_p.glob("*.py")) if tools_p.exists() else []
 
+    arms = bandit.get("arms") or {}
+    bandit_ranked = sorted(
+        (
+            {
+                "strategy": k,
+                "pulls": v.get("pulls", 0),
+                "mean": round((v.get("total_reward", 0) / v["pulls"]) if v.get("pulls") else 0, 4),
+            }
+            for k, v in arms.items()
+        ),
+        key=lambda x: x["mean"],
+        reverse=True,
+    )
+
     skills = [
         {"name": "plan → code → sandbox → audit", "status": "active"},
-        {"name": "sandbox auto-retry", "status": "active" if os.getenv("ETHER_SANDBOX_RETRY", "1") == "1" else "off"},
-        {"name": "workspace context", "status": "active" if os.getenv("ETHER_USE_CONTEXT", "1") == "1" else "off"},
+        {"name": "tool_assist + scans", "status": "on" if os.getenv("ETHER_TOOL_ASSIST", "1") == "1" else "off"},
+        {"name": "learning bandit", "status": "on" if os.getenv("ETHER_LEARNING", "1") == "1" else "off"},
+        {"name": "auto fabricate on fail", "status": "on" if os.getenv("ETHER_AUTO_FABRICATE_ON_FAIL", "0") == "1" else "off"},
         {"name": "flywheel autonomy", "status": "active" if heartbeat else "idle"},
-        {"name": "FAIL audit reports to git", "status": "active"},
-        {"name": "confidence gate", "status": f">= {os.getenv('ETHER_FLYWHEEL_MIN_CONFIDENCE', '0.7')}"},
+        {"name": "fail streak", "status": str(fail_streak.get("streak", 0))},
     ]
 
     workflow = [
         {"id": 1, "name": "Pull", "desc": "git pull --ff-only"},
         {"id": 2, "name": "Static", "desc": "smoke + pytest"},
-        {"id": 3, "name": "Plan", "desc": "Selenite"},
-        {"id": 4, "name": "Context", "desc": "multi-file workspace"},
-        {"id": 5, "name": "Code", "desc": "Rose Quartz / local LLM"},
-        {"id": 6, "name": "Sandbox", "desc": "Clear Quartz Docker"},
+        {"id": 3, "name": "Plan", "desc": "Selenite (+ tool intent)"},
+        {"id": 4, "name": "Tool assist", "desc": "few_shot + scans"},
+        {"id": 5, "name": "Code", "desc": "Rose Quartz"},
+        {"id": 6, "name": "Sandbox", "desc": "Clear Quartz"},
         {"id": 7, "name": "Audit", "desc": "Black Tourmaline"},
-        {"id": 8, "name": "Report", "desc": "PASS or FAIL → git"},
+        {"id": 8, "name": "Learn / report", "desc": "Amethyst + git"},
     ]
 
     gates = (latest or {}).get("gates") or {}
@@ -145,6 +163,7 @@ def collect_snapshot() -> Dict[str, Any]:
             "runs_complete": complete,
             "runs_error": errors,
             "avg_run_confidence": avg_conf,
+            "fail_streak": fail_streak.get("streak", 0),
         },
         "workflow": workflow,
         "matrix_steps": [
@@ -162,7 +181,27 @@ def collect_snapshot() -> Dict[str, Any]:
         ],
         "runs": runs,
         "gems": GEMS,
-        "tools": {"quarantine": quarantine, "persistent": persistent},
+        "tools": {
+            "quarantine": quarantine,
+            "persistent": persistent,
+            "persistent_count": len(persistent),
+            "quarantine_count": len(quarantine),
+        },
+        "fabricate_log": [
+            {
+                "name": e.get("name"),
+                "status": e.get("validation_status"),
+                "path": e.get("quarantine_path"),
+                "promoted": e.get("promoted"),
+                "ts": e.get("timestamp"),
+            }
+            for e in fabricate_log
+        ],
+        "learning": {
+            "epsilon": bandit.get("epsilon"),
+            "ranked": bandit_ranked[:8],
+            "fail_streak": fail_streak,
+        },
         "skills": skills,
         "benchmarks": {
             "flywheel_cycles": len(history),
@@ -186,10 +225,13 @@ def collect_snapshot() -> Dict[str, Any]:
             "push": os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1",
             "sandbox_retry": os.getenv("ETHER_SANDBOX_RETRY", "1") == "1",
             "use_context": os.getenv("ETHER_USE_CONTEXT", "1") == "1",
+            "tool_assist": os.getenv("ETHER_TOOL_ASSIST", "1") == "1",
+            "auto_fabricate_on_fail": os.getenv("ETHER_AUTO_FABRICATE_ON_FAIL", "0") == "1",
         },
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:1800],
             "flywheel": _read_text(ROOT / "FLYWHEEL.md")[:1200],
+            "tasks": _read_text(ROOT / "TASKS.md")[:2000],
         },
         "latest": latest,
         "last_fail": last_fail,

@@ -1,28 +1,13 @@
 # @ETHER Status
 
-**Automated health checks are live.**
+**2026-07-26 QA audit complete.** Core integrity hardened.
 
-### Run checks
-```bash
-# full (includes sandbox smoke)
-python scripts/health_check.py
+### What was broken / fixed
+- `pytest` collection failed with `ModuleNotFoundError: No module named 'gems'` when package not editable-installed → fixed by `pythonpath = ["."]` in pyproject + `tests/conftest.py`.
+- `tests/test_registry.py` asserted KeyError that `GemRegistry.get` never raised → test rewritten to match real behavior.
+- PowerShell argv JSON to tools (`secret_scan` etc.) often produced `JSONDecodeError` → `_lib.py` coerce hardened for escaped quotes / mixed quoting.
 
-# fast (skip live sandbox)
-python scripts/health_check.py --skip-sandbox
-
-# JSON for tooling
-python scripts/health_check.py --json --skip-sandbox
-```
-
-Writes:
-- `memory/health/latest.json`
-- `memory/health/history.jsonl`
-
-API (dashboard running):
-- `GET /api/health-check?skip_sandbox=true`
-- `POST /api/health-check` `{"skip_sandbox": true}`
-
-### Windows partner
+### Run checks (after pull)
 ```powershell
 git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
@@ -30,9 +15,16 @@ git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-### Linux cousin
+Linux:
 ```bash
 git fetch origin && git reset --hard origin/main
 source .venv/bin/activate && pip install -e ".[dev]" -q
 python scripts/health_check.py --skip-sandbox
+python -m pytest -q
 ```
+
+### Health API
+- `GET /api/health-check?skip_sandbox=true`
+- `POST /api/health-check` `{"skip_sandbox": true}`
+
+Writes `memory/health/latest.json` + history.jsonl.

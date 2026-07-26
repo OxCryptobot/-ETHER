@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER daemon — stand-alone: flywheel + batch + recovery + dashboard."""
+"""@ETHER daemon — stand-alone: flywheel + batch + recovery + dashboard + watchdog."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable, Dict, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 sys.path.insert(0, str(ROOT))
@@ -57,6 +58,7 @@ HEALTH_FLAG = ROOT / "memory" / "daemon" / "healthy.json"
 _stop = threading.Event()
 _cycle_n = 0
 _last_recovery = 0.0
+_threads: Dict[str, Optional[threading.Thread]] = {"flywheel": None, "batch": None, "dashboard": None}
 
 
 def log(msg: str) -> None:
@@ -150,8 +152,16 @@ def run_cmd(args: list[str], timeout: int = 3600) -> int:
         return -1
 
 
+def boot_self_test() -> None:
+    script = ROOT / "scripts" / "self_test_autonomy.py"
+    if not script.exists():
+        log("boot self-test skipped (missing)")
+        return
+    code = run_cmd([PY, str(script)], timeout=120)
+    log(f"boot self-test exit={code}")
+
+
 def maybe_recover(h: dict) -> None:
-    """If unhealthy, run autonomy recovery (bench/quiz/baseline/guardian) with cooldown."""
     global _last_recovery
     if h.get("healthy"):
         return
@@ -175,7 +185,6 @@ def maybe_recover(h: dict) -> None:
 def flywheel_loop() -> None:
     global _cycle_n
     log(f"smart flywheel interval={INTERVAL}s")
-    # bootstrap queue once
     try:
         from core.autonomy import seed_queue_if_empty
 
@@ -184,45 +193,48 @@ def flywheel_loop() -> None:
         log(f"seed error: {e}")
 
     while not _stop.is_set():
-        heartbeat()
-        _cycle_n += 1
-        h = write_healthy_flag()
-        if not h.get("healthy"):
-            maybe_recover(h)
+        try:
+            heartbeat()
+            _cycle_n += 1
             h = write_healthy_flag()
+            if not h.get("healthy"):
+                maybe_recover(h)
+                h = write_healthy_flag()
 
-        log(f"smart cycle #{_cycle_n} start healthy={h.get('healthy')}")
-        smart = ROOT / "scripts" / "run_smart_cycle.py"
-        if smart.exists():
-            code = run_cmd([PY, str(smart)], timeout=2400)
-        else:
-            code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
-        log(f"smart cycle exit={code}")
+            log(f"smart cycle #{_cycle_n} start healthy={h.get('healthy')}")
+            smart = ROOT / "scripts" / "run_smart_cycle.py"
+            if smart.exists():
+                code = run_cmd([PY, str(smart)], timeout=2400)
+            else:
+                code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
+            log(f"smart cycle exit={code}")
 
-        if RECONCILE_EVERY > 0 and _cycle_n % RECONCILE_EVERY == 0:
-            log("tool reconcile")
-            run_cmd([PY, str(ROOT / "scripts" / "reconcile_tools.py")], timeout=120)
+            if RECONCILE_EVERY > 0 and _cycle_n % RECONCILE_EVERY == 0:
+                log("tool reconcile")
+                run_cmd([PY, str(ROOT / "scripts" / "reconcile_tools.py")], timeout=120)
 
-        if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
-            log("fast bench (scoreboard discipline)")
-            run_cmd([PY, str(ROOT / "scripts" / "bench.py"), "--fast"], timeout=1800)
-            try:
-                from core.autonomy import maybe_reset_baseline_on_recovery, reevaluate_guardian
+            if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
+                log("fast bench (scoreboard discipline)")
+                run_cmd([PY, str(ROOT / "scripts" / "bench.py"), "--fast"], timeout=1800)
+                try:
+                    from core.autonomy import maybe_reset_baseline_on_recovery, reevaluate_guardian
 
-                maybe_reset_baseline_on_recovery()
-                reevaluate_guardian()
-            except Exception as e:
-                log(f"guardian post-bench error: {e}")
-            write_healthy_flag()
+                    maybe_reset_baseline_on_recovery()
+                    reevaluate_guardian()
+                except Exception as e:
+                    log(f"guardian post-bench error: {e}")
+                write_healthy_flag()
 
-        if QUIZ_EVERY > 0 and _cycle_n % QUIZ_EVERY == 0:
-            log("holdout quiz sample")
-            run_cmd([PY, str(ROOT / "scripts" / "quiz.py"), "--limit", "5"], timeout=1800)
-            run_cmd(
-                [PY, "-c", "from core.scoreboard import write_scoreboard; write_scoreboard()"],
-                timeout=30,
-            )
-            write_healthy_flag()
+            if QUIZ_EVERY > 0 and _cycle_n % QUIZ_EVERY == 0:
+                log("holdout quiz sample")
+                run_cmd([PY, str(ROOT / "scripts" / "quiz.py"), "--limit", "5"], timeout=1800)
+                run_cmd(
+                    [PY, "-c", "from core.scoreboard import write_scoreboard; write_scoreboard()"],
+                    timeout=30,
+                )
+                write_healthy_flag()
+        except Exception as e:
+            log(f"flywheel loop error (will continue): {e}")
 
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
@@ -233,18 +245,21 @@ def flywheel_loop() -> None:
 def batch_loop() -> None:
     log(f"batch interval={BATCH_INTERVAL}s limit={BATCH_LIMIT}")
     while not _stop.is_set():
-        heartbeat()
         try:
-            from core.autonomy import seed_queue_if_empty
+            heartbeat()
+            try:
+                from core.autonomy import seed_queue_if_empty
 
-            seed_queue_if_empty()
-        except Exception:
-            pass
-        code = run_cmd(
-            [PY, str(ROOT / "scripts" / "batch_worker.py"), "--limit", str(max(1, BATCH_LIMIT))],
-            timeout=3600,
-        )
-        log(f"batch exit={code}")
+                seed_queue_if_empty()
+            except Exception:
+                pass
+            code = run_cmd(
+                [PY, str(ROOT / "scripts" / "batch_worker.py"), "--limit", str(max(1, BATCH_LIMIT))],
+                timeout=3600,
+            )
+            log(f"batch exit={code}")
+        except Exception as e:
+            log(f"batch loop error (will continue): {e}")
         for _ in range(max(120, BATCH_INTERVAL)):
             if _stop.is_set():
                 return
@@ -261,23 +276,56 @@ def dashboard_loop() -> None:
         log(f"dashboard error: {e}")
 
 
+def _start_thread(name: str, target: Callable[[], None]) -> None:
+    t = threading.Thread(target=target, name=name, daemon=True)
+    t.start()
+    _threads[name] = t
+    log(f"started thread {name}")
+
+
+def watchdog() -> None:
+    """Restart dead worker threads while daemon is alive."""
+    while not _stop.is_set():
+        time.sleep(30)
+        if _stop.is_set():
+            return
+        mapping = {
+            "flywheel": (RUN_FLYWHEEL, flywheel_loop),
+            "batch": (RUN_BATCH, batch_loop),
+            "dashboard": (RUN_DASH, dashboard_loop),
+        }
+        for name, (enabled, fn) in mapping.items():
+            if not enabled:
+                continue
+            t = _threads.get(name)
+            if t is None or not t.is_alive():
+                log(f"WATCHDOG: restarting dead thread {name}")
+                try:
+                    _start_thread(name, fn)
+                except Exception as e:
+                    log(f"WATCHDOG restart failed {name}: {e}")
+
+
 def main() -> int:
     print("=" * 60, flush=True)
     print("  @ETHER DAEMON — autonomous stand-alone mode", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print("  recovery | curriculum flywheel | batch drain | guardian", flush=True)
+    print("  recovery | curriculum | batch | guardian | watchdog", flush=True)
     print("=" * 60, flush=True)
     if not acquire_lock():
         return 2
     heartbeat()
+    boot_self_test()
     write_healthy_flag()
+
     if RUN_DASH:
-        threading.Thread(target=dashboard_loop, name="dashboard", daemon=True).start()
+        _start_thread("dashboard", dashboard_loop)
         time.sleep(1.5)
     if RUN_FLYWHEEL:
-        threading.Thread(target=flywheel_loop, name="flywheel", daemon=True).start()
+        _start_thread("flywheel", flywheel_loop)
     if RUN_BATCH:
-        threading.Thread(target=batch_loop, name="batch", daemon=True).start()
+        _start_thread("batch", batch_loop)
+    threading.Thread(target=watchdog, name="watchdog", daemon=True).start()
 
     def _sig(*_a):
         _stop.set()

@@ -1,9 +1,30 @@
-# Ensures @ETHER daemon is alive. Safe to run every few minutes from Scheduled Task.
-# No interaction required. Idempotent.
+# Ensures @ETHER daemon is alive on the REAL install path (not GH Actions _work).
+# Prefer: $env:ETHER_ROOT > C:\Users\Otcde\ETHER > script parent repo
 
 $ErrorActionPreference = "Continue"
-$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
+function Resolve-EtherRoot {
+  if ($env:ETHER_ROOT -and (Test-Path -LiteralPath $env:ETHER_ROOT)) {
+    return (Resolve-Path -LiteralPath $env:ETHER_ROOT).Path
+  }
+  $candidates = @(
+    "C:\Users\Otcde\ETHER",
+    "C:\ETHER",
+    (Join-Path $PSScriptRoot "..")
+  )
+  foreach ($c in $candidates) {
+    if (Test-Path -LiteralPath $c) {
+      $p = (Resolve-Path -LiteralPath $c).Path
+      if (Test-Path -LiteralPath (Join-Path $p "scripts\ether_daemon.py")) { return $p }
+      if (Test-Path -LiteralPath (Join-Path $p "pyproject.toml")) { return $p }
+    }
+  }
+  return (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
+}
+
+$Root = Resolve-EtherRoot
 Set-Location -LiteralPath $Root
+$env:ETHER_ROOT = $Root
 
 $Py = Join-Path $Root ".venv\Scripts\python.exe"
 $Daemon = Join-Path $Root "scripts\ether_daemon.py"
@@ -21,8 +42,10 @@ function Write-Log([string]$msg) {
   Write-Host $line
 }
 
+Write-Log "ETHER_ROOT=$Root"
+
 if (-not (Test-Path -LiteralPath $Py)) {
-  Write-Log "MISSING venv python — creating"
+  Write-Log "MISSING venv — creating"
   try {
     python -m venv .venv
     & $Py -m pip install -U pip -q
@@ -34,25 +57,20 @@ if (-not (Test-Path -LiteralPath $Py)) {
 }
 
 if (-not (Test-Path -LiteralPath $Daemon)) {
-  Write-Log "MISSING daemon script after pull attempt"
+  Write-Log "MISSING daemon — soft pull"
   try { git fetch origin 2>&1 | Out-Null; git reset --hard origin/main 2>&1 | Out-Null } catch {}
   if (-not (Test-Path -LiteralPath $Daemon)) { Write-Log "still missing daemon"; exit 1 }
 }
 
 function Test-DaemonAlive {
   if (-not (Test-Path -LiteralPath $PidFile)) { return $false }
-  try {
-    $pidVal = [int]((Get-Content -LiteralPath $PidFile -Raw).Trim())
-  } catch { return $false }
+  try { $pidVal = [int]((Get-Content -LiteralPath $PidFile -Raw).Trim()) } catch { return $false }
   if ($pidVal -le 0) { return $false }
-  try {
-    $p = Get-Process -Id $pidVal -ErrorAction Stop
-    if ($p) { return $true }
-  } catch { return $false }
+  try { $p = Get-Process -Id $pidVal -ErrorAction Stop; if ($p) { return $true } } catch { return $false }
   return $false
 }
 
-function Test-HeartbeatFresh([int]$maxAgeSec = 120) {
+function Test-HeartbeatFresh([int]$maxAgeSec = 180) {
   if (-not (Test-Path -LiteralPath $Hb)) { return $false }
   try {
     $raw = (Get-Content -LiteralPath $Hb -Raw).Trim()
@@ -72,7 +90,6 @@ if ($alive -and $fresh) {
 
 Write-Log "daemon needs start (alive=$alive fresh=$fresh)"
 
-# soft pull so code stays current without human
 try {
   $env:ETHER_GIT_RESET_OK = "1"
   git fetch origin 2>&1 | Out-Null
@@ -82,7 +99,6 @@ try {
   Write-Log "pull/install soft fail: $_"
 }
 
-# kill stale pid if process gone but file remains
 if (-not $alive -and (Test-Path $PidFile)) {
   try { Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue } catch {}
 }
@@ -96,7 +112,10 @@ $env:ETHER_GUARDIAN_AUTO_BASELINE = "1"
 $env:ETHER_DAEMON_DASHBOARD = "1"
 $env:ETHER_DAEMON_FLYWHEEL = "1"
 $env:ETHER_DAEMON_BATCH = "1"
+if (-not $env:ETHER_DAEMON_INTERVAL) { $env:ETHER_DAEMON_INTERVAL = "300" }
+if (-not $env:ETHER_BATCH_INTERVAL) { $env:ETHER_BATCH_INTERVAL = "300" }
 $env:PYTHONIOENCODING = "utf-8"
+$env:ETHER_ROOT = $Root
 
 Write-Log "starting ether_daemon.py"
 try {
@@ -106,10 +125,10 @@ try {
   exit 1
 }
 
-Start-Sleep -Seconds 8
-if (Test-DaemonAlive -or Test-HeartbeatFresh 30) {
-  Write-Log "STARTED ok"
+Start-Sleep -Seconds 10
+if (Test-DaemonAlive -or Test-HeartbeatFresh 60) {
+  Write-Log "STARTED ok — dashboard http://127.0.0.1:8787"
   exit 0
 }
-Write-Log "start did not produce heartbeat yet — will retry next ensure tick"
+Write-Log "start did not produce heartbeat yet — Ensure will retry"
 exit 0

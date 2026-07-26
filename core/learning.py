@@ -1,4 +1,4 @@
-"""Reward hygiene + expanded strategy arms + cold-arm decay."""
+"""Reward hygiene + process rewards + strategy arms."""
 
 from __future__ import annotations
 
@@ -24,9 +24,10 @@ STRATEGIES = [
     "repo_map_on",
     "repair_heavy",
     "rag_on",
+    "burst_on_fail",
 ]
 MIN_PULLS_BEFORE_GREEDY = 8
-COLD_DECAY = 0.98  # per update on untouched arms when total pulls high
+COLD_DECAY = 0.98
 
 
 def learning_enabled() -> bool:
@@ -40,23 +41,45 @@ def compute_reward(
     retries: int = 0,
     verification_score: float = 0.0,
     had_self_check: bool = False,
+    plan_ok: bool = True,
+    first_compile_ok: bool = False,
+    used_burst: bool = False,
 ) -> float:
-    """Strict reward: sandbox pass + audit + conf; soft penalty without self-check."""
+    """Gate-relevant reward with process components."""
     if exit_code is None:
         return -1.0
     if exit_code != 0:
-        return round(-0.95 + 0.03 * min(retries, 2), 4)
+        # partial credit if plan worked and we at least attempted compile
+        base = -0.95 + 0.05 * min(retries, 2)
+        if plan_ok:
+            base += 0.05
+        return round(max(-1.0, min(0.0, base)), 4)
+
     if not audit_approved:
         return -0.2
+
     conf = max(0.0, min(1.0, float(confidence)))
     ver = max(0.0, min(1.0, float(verification_score)))
-    # gate-relevant blend
-    r = 0.25 + 0.35 * conf + 0.25 * ver
-    if had_self_check:
-        r += 0.15
+
+    # outcome core
+    r = 0.15 + 0.30 * conf + 0.25 * ver
+
+    # process rewards
+    if plan_ok:
+        r += 0.08
+    if first_compile_ok:
+        r += 0.12  # first sandbox pass without retry
     else:
-        r -= 0.1
-    r -= 0.08 * min(retries, 3)
+        r -= 0.05 * min(retries, 3)
+    if had_self_check:
+        r += 0.12
+    else:
+        r -= 0.08
+
+    # slight cost for burst so local wins preferred when equal
+    if used_burst:
+        r -= 0.05
+
     return round(max(-1.0, min(1.0, r)), 4)
 
 
@@ -130,7 +153,6 @@ class BanditPolicy:
         arm = self.arms[strategy]
         arm.pulls += 1
         arm.total_reward += reward
-        # decay cold arms slightly so stale means don't dominate forever
         total_pulls = sum(a.pulls for a in self.arms.values())
         if total_pulls > 30:
             for name, a in self.arms.items():
@@ -171,4 +193,5 @@ def strategy_prompt_addon(strategy: str) -> str:
         "repo_map_on": "Prefer names/symbols consistent with the repository map.",
         "repair_heavy": "Be defensive; validate inputs; avoid edge-case crashes.",
         "rag_on": "Reuse patterns from retrieved repository snippets when relevant.",
+        "burst_on_fail": "Prefer a robust, well-tested solution; include asserts.",
     }.get(strategy, "Write clear executable code.")

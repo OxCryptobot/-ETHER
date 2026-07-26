@@ -1,4 +1,4 @@
-"""End-to-end pipeline with experience vault + retrieval intelligence."""
+"""End-to-end pipeline: experience, process rewards, burst-on-retry, multifile assist."""
 
 from __future__ import annotations
 
@@ -72,6 +72,9 @@ class PipelineResult(BaseModel):
     few_shot_chars: int = 0
     tool_output_chars: int = 0
     experience_chars: int = 0
+    used_burst: bool = False
+    first_compile_ok: bool = False
+    plan_ok: bool = False
     started_at: str = ""
     finished_at: str = ""
 
@@ -79,7 +82,7 @@ class PipelineResult(BaseModel):
 def _looks_multifile(objective: str) -> bool:
     o = objective.lower()
     return bool(
-        re.search(r"\b(class|module|package|refactor|file|project|codebase)\b", o)
+        re.search(r"\b(class|module|package|refactor|file|project|codebase|multi[- ]?file)\b", o)
         or ".py" in o
     )
 
@@ -104,6 +107,7 @@ class Pipeline:
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
         tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
+        burst_on_fail = os.getenv("ETHER_BURST_ON_FAIL", "1") == "1"
 
         strategy = self.policy.select() if learning_enabled() else "default"
         result.strategy = strategy
@@ -112,6 +116,7 @@ class Pipeline:
         tool_block = ""
         last_err = ""
         fail_kind = ""
+        first_attempt_ok = False
 
         try:
             t0 = time.perf_counter()
@@ -136,6 +141,7 @@ class Pipeline:
                     result, "plan", plan_res.error.message if plan_res.error else "plan failed", t0
                 )
             result.plan = plan_res.payload.plan
+            result.plan_ok = True
             result.stages.append(
                 StageResult(
                     stage="plan",
@@ -177,7 +183,6 @@ class Pipeline:
                             )
                         )
                 else:
-                    # freeze fabricate when bench guardian says so
                     if action in ("generate", "fabricate") and is_frozen():
                         result.stages.append(
                             StageResult(
@@ -216,7 +221,7 @@ class Pipeline:
                     if fs.get("ok") and isinstance(fs.get("result"), dict):
                         few_shot = fs["result"].get("block") or ""
                         result.few_shot_chars = len(few_shot)
-                    if _looks_multifile(objective):
+                    if _looks_multifile(objective) or strategy == "repo_map_on":
                         rm = run_tool("repo_map", {"max_files": 40})
                         if rm.get("ok"):
                             files = (rm.get("files") or [])[:15]
@@ -224,7 +229,6 @@ class Pipeline:
                                 f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files
                             ]
                             repo_map_txt = "\n".join(lines)[:2500]
-                    # experience vault retrieval
                     exp = experience_retrieve(objective, k=3)
                     exp_block = exp.get("block") or ""
                     result.experience_chars = len(exp_block)
@@ -284,41 +288,80 @@ class Pipeline:
                 attempt += 1
                 t2 = time.perf_counter()
                 write_progress(tid, objective, "code" if attempt == 1 else "code_retry")
-                if attempt == 1:
-                    prompt = (
-                        f"Write Python code for:\n{objective}\n\n"
-                        f"Strategy: {strategy_hint}\n\n"
-                        f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
-                    )
-                    if tool_block:
-                        prompt += f"Tool output:\n{tool_block}\n\n"
-                    if exp_block:
-                        prompt += f"Experience from prior runs:\n{exp_block}\n\n"
-                    if few_shot:
-                        prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
-                    if repo_map_txt:
-                        prompt += f"Repo map (symbols):\n{repo_map_txt}\n\n"
-                    if context_block:
-                        prompt += f"Relevant workspace context:\n{context_block}\n\n"
-                    prompt += "Return only executable Python code, no markdown fences."
-                else:
-                    result.retries += 1
-                    prompt = repair_prompt(objective, generated, last_err, strategy_hint)
 
-                code_req = Envelope(
-                    task_id=task_id,
-                    target_gem="rose-quartz",
-                    payload=RoseQuartzRequest(
-                        messages=[ChatMessage(role="user", content=prompt)],
-                        prefer_local=prefer_local,
-                    ),
-                )
-                code_res = self.registry.execute(code_req)
+                # burst on retry / strategy / hard multifile
+                force_burst = False
+                if attempt > 1 and burst_on_fail:
+                    force_burst = True
+                if strategy == "burst_on_fail" and attempt > 1:
+                    force_burst = True
+                if _looks_multifile(objective) and attempt > 1:
+                    force_burst = True
+
+                prev_force = os.environ.get("ETHER_FORCE_BURST")
+                if force_burst:
+                    os.environ["ETHER_FORCE_BURST"] = "1"
+                    result.used_burst = True
+
+                try:
+                    if attempt == 1:
+                        prompt = (
+                            f"Write Python code for:\n{objective}\n\n"
+                            f"Strategy: {strategy_hint}\n\n"
+                            f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
+                        )
+                        if tool_block:
+                            prompt += f"Tool output:\n{tool_block}\n\n"
+                        if exp_block:
+                            prompt += f"Experience from prior runs:\n{exp_block}\n\n"
+                        if few_shot:
+                            prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
+                        if repo_map_txt:
+                            prompt += f"Repo map (symbols):\n{repo_map_txt}\n\n"
+                        if context_block:
+                            prompt += f"Relevant workspace context:\n{context_block}\n\n"
+                        if _looks_multifile(objective):
+                            prompt += (
+                                "If multiple logical units are needed, keep them in one runnable "
+                                "module for sandbox, with asserts. Prefer pure functions.\n\n"
+                            )
+                        prompt += "Return only executable Python code, no markdown fences."
+                    else:
+                        result.retries += 1
+                        prompt = repair_prompt(objective, generated, last_err, strategy_hint)
+                        if force_burst:
+                            prompt = (
+                                "[Elevated model / burst retry]\n"
+                                + prompt
+                                + "\nInclude asserts that prove correctness.\n"
+                            )
+
+                    code_req = Envelope(
+                        task_id=task_id,
+                        target_gem="rose-quartz",
+                        payload=RoseQuartzRequest(
+                            messages=[ChatMessage(role="user", content=prompt)],
+                            prefer_local=prefer_local and not force_burst,
+                        ),
+                    )
+                    code_res = self.registry.execute(code_req)
+                finally:
+                    if force_burst:
+                        if prev_force is None:
+                            os.environ.pop("ETHER_FORCE_BURST", None)
+                        else:
+                            os.environ["ETHER_FORCE_BURST"] = prev_force
+
                 self.orchestrator.process_response(code_req, code_res)
                 if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
                     return self._fail(
                         result, "code", code_res.error.message if code_res.error else "code failed", t2
                     )
+                model_used = getattr(code_res.payload, "model_used", "") or ""
+                if model_used and model_used != os.getenv("ETHER_PRIMARY_MODEL", ""):
+                    if "llama" in model_used.lower() or "grok" in model_used.lower() or "burst" in model_used.lower():
+                        result.used_burst = True
+
                 generated = self._strip(code_res.payload.content)
                 if len(generated) > MAX_CODE_CHARS:
                     return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars", t2)
@@ -327,7 +370,7 @@ class Pipeline:
                     StageResult(
                         stage="code" if attempt == 1 else "code_retry",
                         success=True,
-                        detail=f"{len(generated)} chars strategy={strategy}",
+                        detail=f"{len(generated)} chars strategy={strategy} model={model_used or 'local'} burst={result.used_burst}",
                         duration_ms=(time.perf_counter() - t2) * 1000,
                     )
                 )
@@ -356,6 +399,9 @@ class Pipeline:
                 result.execution_score = scores["execution_score"]
                 result.verification_score = scores["verification_score"]
                 ok = sand_payload.exit_code == 0
+                if attempt == 1 and ok:
+                    first_attempt_ok = True
+                    result.first_compile_ok = True
                 result.stages.append(
                     StageResult(
                         stage="sandbox" if attempt == 1 else "sandbox_retry",
@@ -441,11 +487,17 @@ class Pipeline:
 
             exit_code = result.sandbox.exit_code if result.sandbox else None
             audit_ok = bool(result.audit and result.audit.approved)
+            had_self = bool(result.sandbox and result.sandbox.total_tests > 0)
             result.reward = compute_reward(
                 exit_code=exit_code,
                 confidence=result.confidence,
                 audit_approved=audit_ok,
                 retries=result.retries,
+                verification_score=result.verification_score,
+                had_self_check=had_self,
+                plan_ok=result.plan_ok,
+                first_compile_ok=result.first_compile_ok,
+                used_burst=result.used_burst,
             )
             if learning_enabled():
                 self.policy.update(strategy, result.reward)
@@ -453,7 +505,6 @@ class Pipeline:
             success = exit_code == 0
             record_outcome(success, error=None if success else (last_err or result.error))
 
-            # experience vault
             try:
                 experience_record(
                     objective=objective,
@@ -545,7 +596,13 @@ class Pipeline:
             )
         )
         result.reward = compute_reward(
-            exit_code=1, confidence=0.0, audit_approved=False, retries=result.retries
+            exit_code=1,
+            confidence=0.0,
+            audit_approved=False,
+            retries=result.retries,
+            plan_ok=result.plan_ok,
+            first_compile_ok=False,
+            used_burst=result.used_burst,
         )
         if learning_enabled() and result.strategy:
             try:
@@ -622,6 +679,9 @@ class Pipeline:
                             "retries": result.retries,
                             "strategy": result.strategy,
                             "reward": result.reward,
+                            "used_burst": result.used_burst,
+                            "first_compile_ok": result.first_compile_ok,
+                            "plan_ok": result.plan_ok,
                             "experience_chars": result.experience_chars,
                             "exit_code": result.sandbox.exit_code if result.sandbox else None,
                             "audit_approved": bool(result.audit and result.audit.approved),

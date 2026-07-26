@@ -1,4 +1,4 @@
-"""Clear Quartz sandbox implementation."""
+"""Clear Quartz sandbox — optional warm container."""
 
 from __future__ import annotations
 
@@ -21,12 +21,6 @@ from core.schemas import (
 
 
 class ClearQuartz:
-    """Docker-based sandbox.
-
-    Uses `docker run -i ... python -` and feeds code on stdin so Windows
-    does not need fragile bind-mount path translation.
-    """
-
     def __init__(self, work_dir: Optional[Path] = None):
         self.work_dir = work_dir or Path(tempfile.gettempdir()) / "ether-sandbox"
         self.work_dir.mkdir(parents=True, exist_ok=True)
@@ -48,7 +42,7 @@ class ClearQuartz:
 
         try:
             security_flags = self._static_analysis(payload.code)
-            result = self._run_docker(payload.code, request.timeout_seconds)
+            result = self._run(payload.code, request.timeout_seconds)
             execution_time = time.perf_counter() - start
             tests_passed, total_tests = self._count_tests(
                 result.stdout, result.stderr, result.returncode, payload.code
@@ -112,6 +106,18 @@ class ClearQuartz:
             flags.append(f"syntax_error: line {getattr(e, 'lineno', '?')}: {e.msg}")
         return flags
 
+    def _run(self, code: str, timeout: int) -> subprocess.CompletedProcess:
+        try:
+            from gems.clear_quartz.warm import warm_enabled, run_in_warm
+
+            if warm_enabled():
+                warm = run_in_warm(code, timeout)
+                if warm is not None:
+                    return warm
+        except Exception:
+            pass
+        return self._run_docker(code, timeout)
+
     def _run_docker(self, code: str, timeout: int) -> subprocess.CompletedProcess:
         cmd = [
             "docker",
@@ -140,34 +146,25 @@ class ClearQuartz:
         self, stdout: str, stderr: str, exit_code: int, code: str
     ) -> Tuple[int, int]:
         combined = stdout + "\n" + stderr
-
-        # pytest style
         m = re.search(r"(\d+)\s+passed", combined)
         passed = int(m.group(1)) if m else 0
         m = re.search(r"(\d+)\s+failed", combined)
         failed = int(m.group(1)) if m else 0
         if passed or failed:
             return passed, passed + failed
-
-        # unittest style
         m = re.search(r"Ran\s+(\d+)\s+tests?", combined)
         if m:
             total = int(m.group(1))
             if "OK" in combined:
                 return total, total
             return 0, total
-
-        # assert statements present + clean exit → informal unit credit
         assert_count = len(re.findall(r"\bassert\b", code))
         if assert_count and exit_code == 0 and "AssertionError" not in combined:
             return assert_count, assert_count
         if assert_count and exit_code != 0:
             return 0, assert_count
-
-        # demo script with print + clean exit → 1 informal check
         if exit_code == 0 and stdout.strip():
             return 1, 1
-
         if "passed" in combined.lower():
             return 1, 1
         if "failed" in combined.lower() or "error" in combined.lower():

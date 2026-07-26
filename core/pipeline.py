@@ -1,8 +1,9 @@
-"""End-to-end pipeline for @ETHER."""
+"""End-to-end pipeline — P0–P2 complete wiring."""
 
 from __future__ import annotations
 
 import os
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,10 +31,12 @@ from core.schemas import (
 )
 from core.registry import GemRegistry, build_default_registry
 from core.orchestrator import Orchestrator
-from core.confidence import compute_clear_quartz_confidence
+from core.confidence import compute_scores
 from core.context import gather_workspace_context, context_enabled
 from core.learning import BanditPolicy, compute_reward, learning_enabled, strategy_prompt_addon
 from core.fail_streak import record_outcome, maybe_propose_fabricate
+from core.progress import write_progress, clear_progress
+from core.repair import repair_prompt, classify_stderr
 
 MAX_CODE_CHARS = 50_000
 
@@ -54,6 +57,8 @@ class PipelineResult(BaseModel):
     audit: Optional[BlackTourmalineResponse] = None
     critique: Optional[LabradoriteResponse] = None
     confidence: float = 0.0
+    execution_score: float = 0.0
+    verification_score: float = 0.0
     status: str = "complete"
     error: Optional[str] = None
     stages: List[StageResult] = Field(default_factory=list)
@@ -62,8 +67,17 @@ class PipelineResult(BaseModel):
     strategy: str = "default"
     reward: float = 0.0
     few_shot_chars: int = 0
+    tool_output_chars: int = 0
     started_at: str = ""
     finished_at: str = ""
+
+
+def _looks_multifile(objective: str) -> bool:
+    o = objective.lower()
+    return bool(
+        re.search(r"\b(class|module|package|refactor|file|project|codebase)\b", o)
+        or ".py" in o
+    )
 
 
 class Pipeline:
@@ -76,6 +90,7 @@ class Pipeline:
 
     def run(self, objective: str, prefer_local: bool = True, critique: bool = False) -> PipelineResult:
         task_id = uuid4()
+        tid = str(task_id)
         self.orchestrator.start(task_id)
         result = PipelineResult(
             task_id=task_id,
@@ -88,10 +103,12 @@ class Pipeline:
 
         strategy = self.policy.select() if learning_enabled() else "default"
         result.strategy = strategy
+        write_progress(tid, objective, "start", strategy=strategy)
+
+        tool_block = ""
 
         try:
             t0 = time.perf_counter()
-            # expose persistent tool names to planner when available
             available = []
             try:
                 from gems.grandidierite.registry import list_tools
@@ -100,6 +117,7 @@ class Pipeline:
             except Exception:
                 pass
 
+            write_progress(tid, objective, "plan")
             plan_req = Envelope(
                 task_id=task_id,
                 target_gem="selenite",
@@ -121,29 +139,59 @@ class Pipeline:
                 )
             )
 
+            # Mid-pipeline tool: generate / fabricate / run
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
                 treq = dict(plan_res.payload.tool_request)
-                if "action" not in treq:
-                    treq["action"] = "generate"
-                g_req = Envelope(
-                    task_id=task_id,
-                    target_gem="grandidierite",
-                    payload=GrandidieriteRequest(tool_request=treq),
-                )
-                g_res = self.registry.execute(g_req)
-                result.stages.append(
-                    StageResult(
-                        stage="extend",
-                        success=not bool(g_res.error),
-                        detail=str(treq.get("action", "generate")),
-                        duration_ms=(time.perf_counter() - t1) * 1000,
+                action = str(treq.get("action") or "generate")
+                write_progress(tid, objective, "extend", action)
+                if action == "run":
+                    try:
+                        from gems.grandidierite.registry import run_tool
+
+                        name = str(treq.get("name") or "")
+                        payload = treq.get("payload") or {}
+                        tr = run_tool(name, payload)
+                        tool_block = str(tr)[:2000]
+                        result.tool_output_chars = len(tool_block)
+                        result.stages.append(
+                            StageResult(
+                                stage="tool_run",
+                                success=bool(tr.get("ok")),
+                                detail=name,
+                                duration_ms=(time.perf_counter() - t1) * 1000,
+                            )
+                        )
+                    except Exception as e:
+                        result.stages.append(
+                            StageResult(
+                                stage="tool_run",
+                                success=False,
+                                detail=str(e)[:120],
+                                duration_ms=(time.perf_counter() - t1) * 1000,
+                            )
+                        )
+                else:
+                    g_req = Envelope(
+                        task_id=task_id,
+                        target_gem="grandidierite",
+                        payload=GrandidieriteRequest(tool_request=treq),
                     )
-                )
+                    g_res = self.registry.execute(g_req)
+                    result.stages.append(
+                        StageResult(
+                            stage="extend",
+                            success=not bool(g_res.error),
+                            detail=action,
+                            duration_ms=(time.perf_counter() - t1) * 1000,
+                        )
+                    )
 
             few_shot = ""
+            repo_map_txt = ""
             if tool_assist:
                 t_ta = time.perf_counter()
+                write_progress(tid, objective, "tool_assist")
                 try:
                     from gems.grandidierite.registry import run_tool
 
@@ -151,11 +199,17 @@ class Pipeline:
                     if fs.get("ok") and isinstance(fs.get("result"), dict):
                         few_shot = fs["result"].get("block") or ""
                         result.few_shot_chars = len(few_shot)
+                    if _looks_multifile(objective):
+                        rm = run_tool("repo_map", {"max_files": 40})
+                        if rm.get("ok"):
+                            files = (rm.get("files") or [])[:15]
+                            lines = [f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files]
+                            repo_map_txt = "\n".join(lines)[:2500]
                     result.stages.append(
                         StageResult(
                             stage="tool_assist",
                             success=True,
-                            detail=f"few_shot={result.few_shot_chars}c",
+                            detail=f"few_shot={result.few_shot_chars}c map={len(repo_map_txt)}c",
                             duration_ms=(time.perf_counter() - t_ta) * 1000,
                         )
                     )
@@ -173,6 +227,7 @@ class Pipeline:
             use_ctx = context_enabled() and strategy != "no_context"
             if use_ctx:
                 tctx = time.perf_counter()
+                write_progress(tid, objective, "context")
                 try:
                     context_block = gather_workspace_context(Path.cwd(), query=objective)
                     result.context_chars = len(context_block)
@@ -203,27 +258,25 @@ class Pipeline:
             while attempt < max_attempts:
                 attempt += 1
                 t2 = time.perf_counter()
+                write_progress(tid, objective, "code" if attempt == 1 else "code_retry")
                 if attempt == 1:
                     prompt = (
                         f"Write Python code for:\n{objective}\n\n"
                         f"Strategy: {strategy_hint}\n\n"
                         f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
                     )
+                    if tool_block:
+                        prompt += f"Tool output:\n{tool_block}\n\n"
                     if few_shot:
                         prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
+                    if repo_map_txt:
+                        prompt += f"Repo map (symbols):\n{repo_map_txt}\n\n"
                     if context_block:
                         prompt += f"Relevant workspace context:\n{context_block}\n\n"
                     prompt += "Return only executable Python code, no markdown fences."
                 else:
                     result.retries += 1
-                    prompt = (
-                        f"The previous code failed in the sandbox.\n"
-                        f"Objective: {objective}\n\n"
-                        f"Broken code:\n{generated}\n\n"
-                        f"Sandbox stderr:\n{last_err}\n\n"
-                        f"Strategy: {strategy_hint}\n"
-                        "Write fixed, complete, executable Python code only. No markdown."
-                    )
+                    prompt = repair_prompt(objective, generated, last_err, strategy_hint)
 
                 code_req = Envelope(
                     task_id=task_id,
@@ -253,6 +306,7 @@ class Pipeline:
                 )
 
                 t3 = time.perf_counter()
+                write_progress(tid, objective, "sandbox")
                 sand_req = Envelope(
                     task_id=task_id,
                     target_gem="clear-quartz",
@@ -270,22 +324,27 @@ class Pipeline:
                     )
                 sand_payload = sand_res.payload
                 result.sandbox = sand_payload
-                result.confidence = compute_clear_quartz_confidence(sand_payload)
+                scores = compute_scores(sand_payload)
+                result.confidence = scores["confidence"]
+                result.execution_score = scores["execution_score"]
+                result.verification_score = scores["verification_score"]
                 ok = sand_payload.exit_code == 0
                 result.stages.append(
                     StageResult(
                         stage="sandbox" if attempt == 1 else "sandbox_retry",
                         success=ok,
-                        detail=f"exit={sand_payload.exit_code}",
+                        detail=f"exit={sand_payload.exit_code} exec={result.execution_score} ver={result.verification_score}",
                         duration_ms=(time.perf_counter() - t3) * 1000,
                     )
                 )
                 if ok:
                     break
                 last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
+                _ = classify_stderr(last_err)
 
             if tool_assist and generated:
                 t_sc = time.perf_counter()
+                write_progress(tid, objective, "tool_scan")
                 try:
                     from gems.grandidierite.registry import run_tool
 
@@ -314,6 +373,7 @@ class Pipeline:
                     )
 
             t4 = time.perf_counter()
+            write_progress(tid, objective, "audit")
             audit_req = Envelope(
                 task_id=task_id,
                 target_gem="black-tourmaline",
@@ -366,7 +426,6 @@ class Pipeline:
             success = exit_code == 0
             record_outcome(success, error=None if success else (last_err or result.error))
 
-            # Optional fabricate proposal after fail streak
             if not success:
                 proposal = maybe_propose_fabricate()
                 if proposal:
@@ -407,6 +466,7 @@ class Pipeline:
 
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()
+            clear_progress()
             self._persist(result)
             self._log(result, learn=True)
             return result
@@ -449,6 +509,7 @@ class Pipeline:
         except Exception:
             pass
         result.finished_at = datetime.now(timezone.utc).isoformat()
+        clear_progress()
         self._persist(result)
         self._log(result, learn=True)
         return result
@@ -483,9 +544,9 @@ class Pipeline:
                             "objective": result.objective,
                             "status": result.status,
                             "confidence": result.confidence,
+                            "execution_score": result.execution_score,
+                            "verification_score": result.verification_score,
                             "retries": result.retries,
-                            "context_chars": result.context_chars,
-                            "few_shot_chars": result.few_shot_chars,
                             "strategy": result.strategy,
                             "reward": result.reward,
                             "exit_code": result.sandbox.exit_code if result.sandbox else None,

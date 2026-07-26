@@ -35,13 +35,8 @@ main{padding:20px 24px 32px;max-width:1600px;margin:0 auto;width:100%}
 .grid.m21{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
 .grid.m12{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
 .grid.full{grid-template-columns:1fr}
-@media(max-width:1100px){
-  .grid.m4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid.m21,.grid.m12{grid-template-columns:1fr}
-}
-@media(max-width:640px){
-  .grid.m4,.grid.m2{grid-template-columns:1fr}
-}
+@media(max-width:1100px){.grid.m4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.m21,.grid.m12{grid-template-columns:1fr}}
+@media(max-width:640px){.grid.m4,.grid.m2{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;min-width:0;overflow:hidden}
 .card.hero{border-color:rgba(91,159,212,.4)}
 .card.intel{border-color:rgba(155,140,255,.35)}
@@ -70,13 +65,11 @@ main{padding:20px 24px 32px;max-width:1600px;margin:0 auto;width:100%}
 .io-box{min-height:140px;max-height:240px;overflow:auto;white-space:pre-wrap}
 .io-box .label{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
 .io-box .stdout{color:var(--good)}.io-box .stderr{color:var(--bad)}
-/* Tables — anti-squash */
 .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
 table.data{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:13px;table-layout:fixed}
 table.data th,table.data td{padding:12px 14px;border-bottom:1px solid rgba(42,53,72,.55);vertical-align:top;text-align:left}
 table.data th{color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
 table.data td{word-break:break-word;overflow-wrap:anywhere}
-/* column recipes */
 table.steps{min-width:640px}
 table.steps th:nth-child(1),table.steps td:nth-child(1){width:18%}
 table.steps th:nth-child(2),table.steps td:nth-child(2){width:12%}
@@ -115,7 +108,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
 <header>
   <div class="brand">
     <strong><em>@ETHER</em> Control Matrix</strong>
-    <small>Verified loop · gates · learning · health probes</small>
+    <small>Verified loop · gates · learning · stand-alone autonomy</small>
   </div>
   <div class="status-pill"><span id="dot" class="dot"></span><span id="liveText">Connecting…</span></div>
 </header>
@@ -125,7 +118,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
   <button data-tab="flywheel">Flywheel</button>
   <button data-tab="system">System map</button>
   <button data-tab="runs">Runs</button>
-  <button data-tab="gems">Gems &amp; tools</button>
+  <button data-tab="gems">Gems & tools</button>
   <button data-tab="bench">Scoreboard</button>
   <button data-tab="raw">Diagnostics</button>
 </nav>
@@ -135,7 +128,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
   <section class="panel active" id="tab-overview">
     <div class="grid full">
       <div class="card intel">
-        <p class="card-title">Primary health <span class="tip" data-tip="Healthy requires fresh bench + quiz (&lt;24h) and pass_rate ≥ 0.4. Empty metrics mean run weekly_scoreboard.py — not a UI bug.">?</span></p>
+        <p class="card-title">Primary health <span class="tip" data-tip="Healthy requires fresh bench + quiz and pass_rate ≥ 0.4. Daemon recovery_cycle self-heals without you.">?</span></p>
         <div class="metrics-row">
           <div><div class="hint">Bench pass rate</div><div class="metric violet" id="benchRate">—</div></div>
           <div><div class="hint">Healthy</div><div class="metric sm" id="benchHealthy">—</div></div>
@@ -144,11 +137,6 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
         </div>
         <div class="hint" id="guardHint">—</div>
         <div class="health-strip" id="autoHealth"></div>
-        <div class="actions">
-          <button class="btn primary" type="button" onclick="copyCmd('python scripts/health_check.py --skip-sandbox')">Copy health check</button>
-          <button class="btn" type="button" onclick="copyCmd('python scripts/weekly_scoreboard.py')">Copy weekly scoreboard</button>
-          <button class="btn" type="button" onclick="runHealth()">Run health API</button>
-        </div>
       </div>
     </div>
     <div class="grid m4">
@@ -156,6 +144,12 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
       <div class="card"><p class="card-title">Git pull</p><div class="metric" id="pull">—</div><div class="hint" id="pullDetail">—</div></div>
       <div class="card"><p class="card-title">Model</p><div class="metric sm" id="model">—</div><div class="hint" id="sandboxHint">—</div></div>
       <div class="card"><p class="card-title">Autonomy</p><div class="metric sm" id="fwAuto">—</div><div class="hint" id="hb">—</div></div>
+    </div>
+    <div class="grid m4">
+      <div class="card"><p class="card-title">Batch pending</p><div class="metric accent" id="batchPending">—</div><div class="hint" id="batchNext">—</div></div>
+      <div class="card"><p class="card-title">Batch done</p><div class="metric sm" id="batchDone">—</div><div class="hint" id="batchOkFail">—</div></div>
+      <div class="card"><p class="card-title">Recovery</p><div class="metric sm" id="autoEvent">—</div><div class="hint" id="autoEventTs">—</div></div>
+      <div class="card"><p class="card-title">Daemon healthy</p><div class="metric sm" id="daemonHealthy">—</div><div class="hint" id="daemonWhy">—</div></div>
     </div>
     <div class="grid m21">
       <div class="card"><p class="card-title">Activity feed</p><div class="terminal" id="term"><div class="empty">Waiting for events…</div></div></div>
@@ -190,7 +184,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
       <div class="card hero">
         <p class="card-title">Loop path</p>
         <div class="flow-map" id="flowDetailed"></div>
-        <div class="cmd">python scripts/run_smart_cycle.py · python -m cli.main flywheel --push</div>
+        <div class="cmd">daemon · run_smart_cycle · batch_worker · recovery_cycle</div>
       </div>
     </div>
     <div class="grid m2">
@@ -252,7 +246,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
       <div class="card"><p class="card-title">Avg conf</p><div class="metric accent" id="bConf">—</div></div>
     </div>
     <div class="grid full">
-      <div class="card"><p class="card-title">SCOREBOARD.md</p><pre class="codebox" id="scoreboard" style="height:300px"># run weekly_scoreboard.py</pre></div>
+      <div class="card"><p class="card-title">SCOREBOARD.md</p><pre class="codebox" id="scoreboard" style="height:300px"># autonomous recovery writes this</pre></div>
     </div>
   </section>
 
@@ -262,7 +256,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
     </div>
   </section>
 </main>
-<footer>@ETHER Control Matrix v0.4.3 · tables use horizontal scroll · 127.0.0.1 only</footer>
+<footer>@ETHER Control Matrix v0.4.4 · autonomy stand-alone · 127.0.0.1 only</footer>
 <script>
 const $=id=>document.getElementById(id);
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
@@ -273,25 +267,13 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     const el=$('tab-'+btn.dataset.tab); if(el) el.classList.add('active');
   });
 });
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));}
 function pct(x){return (x==null||x==='')?'—':Math.round(Number(x)*100)+'%';}
 function setText(id,v){const el=$(id); if(el) el.textContent=v;}
 function setHtml(id,v){const el=$(id); if(el) el.innerHTML=v;}
 function stepsHtml(steps){
-  if(!steps||!steps.length) return '<tr><td colspan="4" style="color:var(--faint)">No cycle data yet — run flywheel</td></tr>';
+  if(!steps||!steps.length) return '<tr><td colspan="4" style="color:var(--faint)">No cycle data yet</td></tr>';
   return steps.map(st=>`<tr><td>${esc(st.name)}</td><td><span class="badge ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms!=null?st.ms+' ms':'—'}</td><td>${esc(st.error||'')}</td></tr>`).join('');
-}
-function copyCmd(cmd){navigator.clipboard.writeText(cmd).then(()=>setText('liveText','Copied command')).catch(()=>alert(cmd));}
-async function runHealth(){
-  setText('liveText','Running health…');
-  try{
-    const r=await fetch('/api/health-check?skip_sandbox=true');
-    const j=await r.json();
-    const failed=(j.checks||[]).filter(c=>!c.ok).map(c=>c.id);
-    setHtml('autoHealth', `<span class="health-chip ${j.ok?'ok':'bad'}">auto-health: ${esc(j.status)}</span>`+
-      (failed.length?failed.map(f=>`<span class="health-chip bad">${esc(f)}</span>`).join(''):'<span class="health-chip ok">all probes clear</span>'));
-    setText('liveText','Health '+j.status);
-  }catch(e){setText('liveText','Health failed');}
 }
 let lastTermKey='';
 function render(d){
@@ -316,6 +298,23 @@ function render(d){
       setHtml('autoHealth', `<span class="health-chip ${ah.ok?'ok':'bad'}">auto-health: ${esc(ah.status)}</span>`+
         ((ah.failed||[]).map(f=>`<span class="health-chip bad">${esc(f)}</span>`).join('')||''));
     }
+    const bq=d.batch||{};
+    setText('batchPending', bq.pending!=null?bq.pending:'—');
+    setText('batchNext', bq.next?('next: '+bq.next):((bq.pending_titles||[])[0]||'queue idle'));
+    setText('batchDone', bq.done!=null?bq.done:'—');
+    setText('batchOkFail', `ok ${bq.done_ok??0} · fail ${bq.done_fail??0}`);
+    const au=(d.autonomy||{}).last_event||{};
+    setText('autoEvent', au.event||'—');
+    setText('autoEventTs', au.ts||'no recovery events yet');
+    const dh=d.daemon_healthy||{};
+    const dhh=$('daemonHealthy');
+    if(dhh){
+      const hv=dh.healthy;
+      dhh.textContent=hv===true?'YES':(hv===false?'NO':'—');
+      dhh.className='metric sm '+(hv===true?'ok':(hv===false?'bad':''));
+    }
+    const why=(dh.reasons||dh.unhealthy_reasons||[]).join('; ');
+    setText('daemonWhy', why||(dh.ts?('ts '+dh.ts):'—'));
     setText('iRate',i.pass_rate!=null?pct(i.pass_rate):'—');
     setText('iAvg','avg7 '+(i.pass_rate_avg7!=null?pct(i.pass_rate_avg7):'—')+' · lat '+(i.latency_s_avg7??'—')+'s');
     const ig=$('iGuard'); if(ig){ig.textContent=i.guardian_frozen?'FROZEN':'OK';ig.className='metric sm '+(i.guardian_frozen?'bad':'ok');}
@@ -380,7 +379,7 @@ function render(d){
     setText('bQuiz',b.quiz_pass_rate!=null?pct(b.quiz_pass_rate):'—');
     setText('bFw',pct(b.flywheel_pass_rate));
     setText('bConf',b.avg_confidence!=null?Number(b.avg_confidence).toFixed(3):'—');
-    setText('scoreboard',(d.docs&&d.docs.scoreboard)||'# SCOREBOARD empty — run weekly_scoreboard.py');
+    setText('scoreboard',(d.docs&&d.docs.scoreboard)||'# SCOREBOARD empty');
     setText('latest',JSON.stringify(d.latest||{},null,2));
   }catch(e){const banner=$('errBanner'); if(banner){banner.style.display='block';banner.textContent='UI render error: '+e;}}
 }

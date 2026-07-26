@@ -1,8 +1,7 @@
-"""Repair library — stderr taxonomy → fixed templates (RL-lite)."""
+"""Repair library — taxonomy + failure-graph templates (skilled retries)."""
 
 from __future__ import annotations
 
-import re
 from typing import Dict
 
 
@@ -28,30 +27,28 @@ def classify_stderr(stderr: str) -> Dict[str, str]:
 
 _TEMPLATES = {
     "SyntaxError": (
-        "Fix ALL syntax/indentation errors. Return complete executable Python only. "
-        "No markdown fences. Prefer simple statements."
+        "Fix ALL syntax/indentation errors. Valid Python only. No markdown fences."
     ),
     "NameError": (
-        "A name is undefined. Define every name before use or import the stdlib symbol. "
-        "Do not invent third-party packages."
+        "A name is undefined. Define every symbol before use; stdlib only."
     ),
     "ImportError": (
-        "Remove non-stdlib imports. Use only Python standard library available in a bare container."
+        "Remove non-stdlib imports. Bare Docker Python has no third-party packages."
     ),
     "AssertionError": (
-        "Logic failed an assert. Fix the algorithm to satisfy the stated behavior; keep asserts."
+        "Logic failed asserts. Fix the algorithm; keep the asserts."
     ),
     "TypeError": (
-        "Wrong types or arity. Match parameter types to the objective; coerce carefully."
+        "Wrong types or arity. Match the objective signatures exactly."
     ),
     "ValueError": (
-        "Invalid values. Add guards or correct the computation for edge cases."
+        "Invalid values. Handle edge cases (empty, zero, None)."
     ),
     "Timeout": (
-        "Code was too slow or hung. Use an O(n) or better approach; avoid infinite loops."
+        "Too slow or infinite loop. Use bounded O(n)/O(n log n) logic."
     ),
     "runtime": (
-        "Runtime failure. Fix the crash; keep the solution minimal and include asserts."
+        "Runtime failure. Smallest correct fix; include asserts."
     ),
 }
 
@@ -60,20 +57,42 @@ def repair_prompt(objective: str, code: str, stderr: str, strategy_hint: str = "
     info = classify_stderr(stderr)
     kind = info["kind"]
     advice = _TEMPLATES.get(kind, _TEMPLATES["runtime"])
-    # strip accidental fences in prior code for clarity
+    try:
+        from core.failure_graph import repair_hint, observe
+
+        observe(stderr, repaired_ok=False)
+        graph_hint = repair_hint(stderr)
+        if graph_hint:
+            advice = f"{advice}\nGraph template: {graph_hint}"
+    except Exception:
+        pass
+
     cleaned = code or ""
     if cleaned.strip().startswith("```"):
         lines = cleaned.split("\n")[1:]
         if lines and lines[-1].strip().startswith("```"):
             lines = lines[:-1]
         cleaned = "\n".join(lines)
-    return (
+
+    # fail-kind biased experience
+    exp_block = ""
+    try:
+        from core.experience import retrieve
+
+        exp_block = retrieve(objective, k=2, fail_kind=kind).get("block") or ""
+    except Exception:
+        pass
+
+    prompt = (
         f"Repair this failed Python solution.\n"
         f"Failure class: {kind}\n"
         f"Repair directive: {advice}\n"
-        f"Strategy: {strategy_hint or 'be defensive; include asserts'}\n\n"
+        f"Strategy: {strategy_hint or 'defensive; include asserts'}\n\n"
         f"Objective:\n{objective}\n\n"
         f"Previous code:\n{cleaned}\n\n"
         f"Stderr/stdout:\n{(stderr or '')[:1200]}\n\n"
-        f"Return only complete executable Python code. No markdown."
     )
+    if exp_block:
+        prompt += f"Related experience:\n{exp_block}\n\n"
+    prompt += "Return only complete executable Python code. No markdown."
+    return prompt

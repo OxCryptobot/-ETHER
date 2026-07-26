@@ -7,11 +7,12 @@ import os
 import random
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 CUR_DIR = ROOT / "memory" / "curriculum"
 STATE_PATH = CUR_DIR / "state.json"
+MINED_PATH = CUR_DIR / "mined_tasks.json"
 
 
 def curriculum_enabled() -> bool:
@@ -38,7 +39,21 @@ def load_tiers() -> List[Dict[str, Any]]:
     if not path.exists():
         return []
     data = json.loads(path.read_text(encoding="utf-8"))
-    return list(data.get("tiers") or [])
+    tiers = list(data.get("tiers") or [])
+    # blend mined tasks into highest tier for variety
+    if MINED_PATH.exists():
+        try:
+            mined = json.loads(MINED_PATH.read_text(encoding="utf-8")).get("tasks") or []
+            if mined and tiers:
+                extra = [
+                    {"id": t.get("id"), "title": t.get("title"), "objective": t.get("objective")}
+                    for t in mined[:15]
+                    if t.get("objective")
+                ]
+                tiers[-1].setdefault("tasks", []).extend(extra)
+        except Exception:
+            pass
+    return tiers
 
 
 def current_tier_index() -> int:
@@ -49,7 +64,6 @@ def current_tier_index() -> int:
 
 
 def sample_objective() -> Dict[str, Any]:
-    """Pick a task at the active difficulty tier."""
     tiers = load_tiers()
     if not tiers:
         return {
@@ -78,7 +92,6 @@ def sample_objective() -> Dict[str, Any]:
 
 
 def record_outcome(success: bool, task_id: str = "") -> Dict[str, Any]:
-    """Promote/demote tier based on rolling wins."""
     state = _load_state()
     tiers = load_tiers()
     promote_after = int(os.getenv("ETHER_CURRICULUM_PROMOTE_AFTER", "5"))

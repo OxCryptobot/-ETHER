@@ -1,8 +1,7 @@
-"""Classify sandbox failures for structured repair prompts."""
+"""Structured repair prompts + failure-graph hints."""
 
 from __future__ import annotations
 
-import re
 from typing import Dict
 
 
@@ -36,10 +35,27 @@ def classify_stderr(stderr: str) -> Dict[str, str]:
 
 def repair_prompt(objective: str, code: str, stderr: str, strategy_hint: str) -> str:
     info = classify_stderr(stderr)
+    graph_hint = ""
+    try:
+        from core.failure_graph import repair_hint, observe
+
+        observe(stderr, repaired_ok=False)
+        graph_hint = repair_hint(stderr)
+    except Exception:
+        graph_hint = info["hint"]
+
+    tools = ""
+    if info["kind"] == "import":
+        tools = "Prefer stdlib. Strip unknown imports."
+    elif info["kind"] == "syntax":
+        tools = "No markdown fences. Valid Python only."
+
     return (
         f"Previous code failed in sandbox.\n"
         f"Failure class: {info['kind']}\n"
         f"Repair hint: {info['hint']}\n"
+        f"Failure-graph template: {graph_hint}\n"
+        f"{tools}\n"
         f"Objective: {objective}\n\n"
         f"Broken code:\n{code}\n\n"
         f"Stderr:\n{info['excerpt']}\n\n"

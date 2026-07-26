@@ -1,7 +1,8 @@
-"""Grandidierite — controlled tool generation, registry, and execution."""
+"""Grandidierite — tool generation, fabrication pipeline, registry run/list."""
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,7 @@ from core.schemas import (
     GrandidieriteResponse,
 )
 from gems.grandidierite.registry import list_tools, run_tool
+from gems.grandidierite.fabricate import fabricate
 
 
 def _sanitize_name(name: str) -> str:
@@ -30,7 +32,6 @@ class Grandidierite:
         "basic_python_tool": '''#!/usr/bin/env python3
 """{docstring}"""
 from __future__ import annotations
-
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -56,28 +57,28 @@ if __name__ == "__main__":
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         try:
-            data: Dict[str, Any]
             if isinstance(request.payload, GrandidieriteRequest):
-                tool_req = request.payload.tool_request or {}
+                tool_req = dict(request.payload.tool_request or {})
                 template_id = request.payload.template_id
-                data = {"tool_request": tool_req, "template_id": template_id}
             else:
                 data = request.payload.model_dump() if hasattr(request.payload, "model_dump") else {}
-                tool_req = data.get("tool_request") or {}
+                tool_req = dict(data.get("tool_request") or {})
                 template_id = data.get("template_id", "basic_python_tool")
+                # allow top-level action merge
+                if "action" in data and "action" not in tool_req:
+                    tool_req["action"] = data["action"]
 
-            action = str(tool_req.get("action") or data.get("action") or "generate")
+            action = str(tool_req.get("action") or "generate")
 
             if action == "list":
                 catalog = list_tools(True)
-                code = f"# persistent={len(catalog['persistent'])} quarantine={len(catalog['quarantine'])}"
                 return ResponseEnvelope(
                     task_id=request.task_id,
                     source_gem="grandidierite",
                     payload=GrandidieriteResponse(
-                        generated_code=code,
+                        generated_code=json.dumps(catalog),
                         template_used="list",
-                        validation_status=str(catalog),
+                        validation_status="passed",
                     ),
                 )
 
@@ -89,13 +90,33 @@ if __name__ == "__main__":
                     task_id=request.task_id,
                     source_gem="grandidierite",
                     payload=GrandidieriteResponse(
-                        generated_code=str(result)[:2000],
+                        generated_code=json.dumps(result)[:4000],
                         template_used="run",
-                        validation_status="ok" if result.get("ok") else "error",
+                        validation_status="passed" if result.get("ok") else "failed",
                     ),
                 )
 
-            # default: generate into quarantine
+            if action in {"fabricate", "auto", "build"}:
+                fab = fabricate(tool_req)
+                status = fab.get("validation_status") or "pending"
+                # map to schema literals
+                if status == "promoted":
+                    v = "passed"
+                elif status == "failed":
+                    v = "failed"
+                else:
+                    v = "pending"
+                return ResponseEnvelope(
+                    task_id=request.task_id,
+                    source_gem="grandidierite",
+                    payload=GrandidieriteResponse(
+                        generated_code=json.dumps(fab)[:8000],
+                        template_used="fabricate",
+                        validation_status=v,
+                    ),
+                )
+
+            # default: scaffold-only generate into quarantine
             name = _sanitize_name(str(tool_req.get("name", "new_tool")))
             args = tool_req.get("args", "")
             docstring = tool_req.get("docstring", "Auto-generated tool")
@@ -111,7 +132,7 @@ if __name__ == "__main__":
                 payload=GrandidieriteResponse(
                     generated_code=code,
                     template_used=template_id,
-                    validation_status="pending_quarantine",
+                    validation_status="pending",
                 ),
             )
         except Exception as e:

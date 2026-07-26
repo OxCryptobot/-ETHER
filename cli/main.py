@@ -34,7 +34,13 @@ from core.registry import build_default_registry
 from core.pipeline import Pipeline
 from core.config import load_config
 from core.paths import as_posix_str
-from core.schemas import Envelope, SeleniteRequest, BlackTourmalineRequest, CitrineRequest
+from core.schemas import (
+    Envelope,
+    SeleniteRequest,
+    BlackTourmalineRequest,
+    CitrineRequest,
+    GrandidieriteRequest,
+)
 from cli.helpers import print_error, print_ok
 
 app = typer.Typer(name="ether", help="@ETHER", add_completion=False)
@@ -52,6 +58,7 @@ def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
     console.print("[bold cyan]@ETHER[/] v0.1.1")
     if verbose:
         console.print("Dashboard: ether dashboard → http://127.0.0.1:8787")
+        console.print("Fabricate: ether fabricate --name my_tool --purpose '...')")
 
 
 @app.command()
@@ -66,10 +73,10 @@ def env() -> None:
         "OLLAMA_BASE_URL",
         "ETHER_PRIMARY_MODEL",
         "ETHER_SANDBOX_RETRY",
+        "ETHER_LEARNING",
+        "ETHER_AUTO_PROMOTE",
+        "ETHER_FABRICATE_STUB_ONLY",
         "ETHER_FLYWHEEL_PUSH",
-        "ETHER_FLYWHEEL_MIN_CONFIDENCE",
-        "ETHER_FLYWHEEL_MAX_RETRIES",
-        "ETHER_FLYWHEEL_INTERVAL",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
@@ -175,24 +182,21 @@ def run(
             console.print(f"  stderr: {_safe(result.sandbox.stderr.strip())[:500]}")
     if result.audit:
         console.print(f"Audit approved={result.audit.approved} risk={result.audit.risk_score}")
-    if result.critique:
-        console.print(f"Critique: {_safe(result.critique.critique)}")
     for st in result.stages:
         console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}")
-    console.print(f"Confidence: {result.confidence:.3f}")
+    console.print(f"Confidence: {result.confidence:.3f}  strategy={getattr(result, 'strategy', '')} reward={getattr(result, 'reward', 0):.3f}")
 
 
 @app.command()
 def flywheel(
     push: bool = typer.Option(False, "--push"),
     status: bool = typer.Option(False, "--status"),
-    autonomous: bool = typer.Option(False, "--autonomous", help="Hands-off continuous gated loop"),
+    autonomous: bool = typer.Option(False, "--autonomous"),
     min_confidence: float = typer.Option(0.7, "--min-confidence"),
     max_retries: int = typer.Option(3, "--max-retries"),
-    interval: int = typer.Option(900, "--interval", help="Seconds between autonomous cycles"),
+    interval: int = typer.Option(900, "--interval"),
     no_doctor: bool = typer.Option(False, "--no-doctor"),
 ) -> None:
-    """Autonomous pull → test → confidence gate → optional push."""
     from scripts.flywheel import main as flywheel_main
 
     argv: list[str] = []
@@ -200,15 +204,7 @@ def flywheel(
         argv.append("--status")
     elif autonomous:
         argv.extend(
-            [
-                "--autonomous",
-                "--interval",
-                str(interval),
-                "--min-confidence",
-                str(min_confidence),
-                "--max-retries",
-                str(max_retries),
-            ]
+            ["--autonomous", "--interval", str(interval), "--min-confidence", str(min_confidence), "--max-retries", str(max_retries)]
         )
         if no_doctor:
             argv.append("--no-doctor")
@@ -226,12 +222,83 @@ def dashboard(
     host: str = typer.Option("127.0.0.1", "--host"),
     port: int = typer.Option(8787, "--port"),
 ) -> None:
-    """Launch interactive live matrix dashboard (web UI)."""
     console.print(f"[bold cyan]@ETHER Dashboard[/] → http://{host}:{port}")
-    console.print("Shows flywheel, runs, heartbeat, gems, gates, connections. Ctrl+C to stop.")
     import uvicorn
 
     uvicorn.run("dashboard.app:app", host=host, port=port, reload=False)
+
+
+@app.command()
+def fabricate(
+    name: str = typer.Option(..., "--name", help="Tool function/file name"),
+    purpose: str = typer.Option(..., "--purpose", help="What the tool should do"),
+    stub_only: bool = typer.Option(False, "--stub-only", help="Skip LLM implement"),
+    auto_promote: bool = typer.Option(False, "--auto-promote", help="Promote if gates pass"),
+) -> None:
+    """Automated tool fabrication: implement → safety → sandbox → audit → optional promote."""
+    if auto_promote:
+        os.environ["ETHER_AUTO_PROMOTE"] = "1"
+    if stub_only:
+        os.environ["ETHER_FABRICATE_STUB_ONLY"] = "1"
+    res = build_default_registry().execute(
+        Envelope(
+            task_id=uuid4(),
+            target_gem="grandidierite",
+            payload=GrandidieriteRequest(
+                tool_request={
+                    "action": "fabricate",
+                    "name": name,
+                    "docstring": purpose,
+                    "purpose": purpose,
+                    "stub_only": stub_only,
+                }
+            ),
+        )
+    )
+    if res.error:
+        print_error(res.error.message)
+        raise typer.Exit(1)
+    raw = res.payload.generated_code  # type: ignore
+    try:
+        data = json.loads(raw)
+    except Exception:
+        console.print(raw)
+        raise typer.Exit(0)
+    console.print_json(json.dumps(data))
+    status = data.get("validation_status")
+    if status in {"failed"}:
+        raise typer.Exit(1)
+    print_ok(f"fabricate status={status} quarantine={data.get('quarantine_path')}")
+
+
+@app.command("tool-list")
+def tool_list() -> None:
+    from gems.grandidierite.registry import list_tools
+
+    cat = list_tools()
+    console.print("[bold]persistent[/]")
+    for n in cat["persistent"]:
+        console.print(f"  {n}")
+    console.print("[bold]quarantine[/]")
+    for n in cat["quarantine"]:
+        console.print(f"  {n}")
+
+
+@app.command("tool-run")
+def tool_run(
+    name: str = typer.Argument(...),
+    payload: str = typer.Option("{}", "--payload"),
+) -> None:
+    from gems.grandidierite.registry import run_tool
+
+    try:
+        body = json.loads(payload)
+    except json.JSONDecodeError as e:
+        print_error(f"invalid JSON payload: {e}")
+        raise typer.Exit(1)
+    result = run_tool(name, body)
+    console.print_json(json.dumps(result))
+    raise typer.Exit(0 if result.get("ok") else 1)
 
 
 @app.command()
@@ -255,9 +322,7 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
     files = [path] if path.is_file() else list(path.rglob("*.py"))
     for f in files:
         try:
-            docs.append(
-                {"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}}
-            )
+            docs.append({"text": f.read_text(encoding="utf-8", errors="ignore"), "metadata": {"path": as_posix_str(f)}})
         except Exception:
             pass
     res = build_default_registry().execute(

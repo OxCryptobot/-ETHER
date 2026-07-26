@@ -1,13 +1,28 @@
 # @ETHER Status
 
-**2026-07-26 QA audit complete.** Core integrity hardened.
+**QA integrity pass (2026-07-26).** pytest green. Registry `list_gems` restored.
 
-### What was broken / fixed
-- `pytest` collection failed with `ModuleNotFoundError: No module named 'gems'` when package not editable-installed → fixed by `pythonpath = ["."]` in pyproject + `tests/conftest.py`.
-- `tests/test_registry.py` asserted KeyError that `GemRegistry.get` never raised → test rewritten to match real behavior.
-- PowerShell argv JSON to tools (`secret_scan` etc.) often produced `JSONDecodeError` → `_lib.py` coerce hardened for escaped quotes / mixed quoting.
+### Run checks
+```bash
+# full (includes sandbox smoke)
+python scripts/health_check.py
 
-### Run checks (after pull)
+# fast (skip live sandbox)
+python scripts/health_check.py --skip-sandbox
+
+# JSON for tooling
+python scripts/health_check.py --json --skip-sandbox
+```
+
+Writes:
+- `memory/health/latest.json`
+- `memory/health/history.jsonl`
+
+API (dashboard running):
+- `GET /api/health-check?skip_sandbox=true`
+- `POST /api/health-check` `{"skip_sandbox": true}`
+
+### Windows partner (after pull)
 ```powershell
 git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
@@ -15,16 +30,18 @@ git fetch origin; git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Linux:
+### Linux cousin
 ```bash
 git fetch origin && git reset --hard origin/main
 source .venv/bin/activate && pip install -e ".[dev]" -q
 python scripts/health_check.py --skip-sandbox
-python -m pytest -q
 ```
 
-### Health API
-- `GET /api/health-check?skip_sandbox=true`
-- `POST /api/health-check` `{"skip_sandbox": true}`
+### Known non-code gate
+`intel_gates` reports **unhealthy** when guardian is frozen (regression 1.0 → 0.8 exceeded tol). That is intentional safety data, not a code defect.
 
-Writes `memory/health/latest.json` + history.jsonl.
+Refresh:
+```powershell
+.\.venv\Scripts\python.exe .\scripts\weekly_scoreboard.py
+```
+Or, only if you intentionally accept the regression, delete `memory/bench/guardian.json` and re-run health.

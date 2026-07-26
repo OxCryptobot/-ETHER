@@ -1,40 +1,26 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26
+**Updated:** 2026-07-26 — autonomy revamp
 
-## Shipped
-- Dual profile docs (Linux Qwen 3.6 local sandbox / Windows Docker)
-- sandbox auto + local backend + doctor aware
-- linux_bootstrap.sh + start_daemon_linux.sh + deploy/ether.service
-- tests: test_sandbox_local, test_burst_policy, health_check, list_gems, batch_queue
-- weekly/measurement scoreboard stack
-- experience vault + failure graph + BM25 RAG
-- **QA 2026-07-26**: pytest collection, registry list_gems, tool JSON coerce for PowerShell
-- **Pipeline 2026-07-26**: force_burst via `decide_burst` + verification_score into experience
-- **Batch 2026-07-26**: `core/batch_queue.py`, multi-item drain, CLI `ether batch *`, smoke seed
+## Shipped (autonomy)
+- `core/autonomy.py` recovery + auto-enqueue + baseline recovery
+- Daemon: unhealthy → recovery_cycle; batch `--limit`; seed if empty
+- Curriculum-only objectives (assert-nudged) in smart cycle + autonomous flywheel
+- verification_score / total_tests through flywheel gates → curriculum promote
+- Failures requeued to batch automatically
+- AUTONOMY.md contract
 
-## Batch usage
+## Operator
 ```powershell
-# status
-.\.venv\Scripts\python.exe -m cli.main batch status
-
-# seed smoke tasks (if empty)
-.\.venv\Scripts\python.exe -m cli.main batch seed
-
-# process N items
-.\.venv\Scripts\python.exe -m cli.main batch run --limit 3
-
-# or via script
-.\.venv\Scripts\python.exe .\scripts\batch_worker.py --status
-.\.venv\Scripts\python.exe .\scripts\batch_worker.py --limit 3
+cd C:\Users\Otcde\ETHER
+git fetch origin; git reset --hard origin/main
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+.\.venv\Scripts\python.exe -m pytest -q
+powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1
 ```
 
-## Next ops (machines)
-1. Partner: pull → install → `pytest -q` → `batch seed` → `batch run --limit 3`
-2. Cousin: qwen3.6 tag + weekly_scoreboard
-3. Optional burst_ablation with keys in .env only
-
-## Code next
-- Surface curriculum tier into `decide_burst(..., tier=...)`
-- Dashboard panel for batch queue pending/done
-- Auto-enqueue from curriculum failures
+## Still polish (not blockers for stand-alone)
+- File lock on batch_queue.json for concurrent drain
+- Dashboard panel for batch pending/done + recovery log
+- Larger fixed holdout for statistical learning curves
+- Curriculum tier → `decide_burst(..., tier=...)`

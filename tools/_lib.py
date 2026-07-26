@@ -21,14 +21,32 @@ def _coerce_json(raw: str) -> Dict[str, Any]:
     raw = (raw or "").strip()
     if not raw:
         return {}
+
     # 1) standard JSON
     try:
         val = json.loads(raw)
         return val if isinstance(val, dict) else {"value": val}
     except json.JSONDecodeError:
         pass
-    # 2) PowerShell often passes {text: hello} or {'text': 'hello'}
-    # try single-quote → double-quote heuristic for simple objects
+
+    # 2) PowerShell often leaves escaped quotes: {\"text\": \"hello\"}
+    #    or mixes single/double quotes
+    cleaned = raw
+    # strip outer quotes if present
+    if (cleaned.startswith('"') and cleaned.endswith('"')) or (
+        cleaned.startswith("'") and cleaned.endswith("'")
+    ):
+        cleaned = cleaned[1:-1]
+    # unescape common PS escapes
+    cleaned = cleaned.replace('\\"', '"').replace("\\'", "'")
+    cleaned = cleaned.replace('\"', '"')
+    try:
+        val = json.loads(cleaned)
+        return val if isinstance(val, dict) else {"value": val}
+    except json.JSONDecodeError:
+        pass
+
+    # 3) single-quote → double-quote heuristic for simple objects
     alt = raw
     if alt.startswith("{") and "'" in alt and '"' not in alt:
         alt = alt.replace("'", '"')
@@ -37,7 +55,8 @@ def _coerce_json(raw: str) -> Dict[str, Any]:
             return val if isinstance(val, dict) else {"value": val}
         except json.JSONDecodeError:
             pass
-    # 3) key=value pairs: text=hello path=foo.py
+
+    # 4) key=value pairs: text=hello path=foo.py
     if "=" in raw and not raw.startswith("{"):
         out: Dict[str, Any] = {}
         for part in re.split(r"\s+", raw):
@@ -46,9 +65,11 @@ def _coerce_json(raw: str) -> Dict[str, Any]:
                 out[k.strip()] = v.strip().strip('"').strip("'")
         if out:
             return out
-    # 4) bare path convenience
+
+    # 5) bare path convenience
     if Path(raw).suffix or "/" in raw or "\\" in raw:
         return {"path": raw}
+
     raise json.JSONDecodeError("Could not parse tool input as JSON", raw, 0)
 
 

@@ -3,18 +3,28 @@
   "tasks": [
     {
       "id": "sc01",
-      "title": "scratch util pair",
-      "objective": "Write only Python in one module: def add(a,b): return a+b\ndef mul(a,b): return a*b\nassert add(2,3)==5 and mul(2,3)==6\nprint(add(2,3), mul(2,3))"
+      "title": "two pure fns",
+      "objective": "[HARD] Write only Python: def add(a,b): return a+b\ndef mul(a,b): return a*b\nassert add(2,3)==5 and mul(2,3)==6\nprint(add(2,3), mul(2,3))"
     },
     {
       "id": "sc02",
-      "title": "scratch parser",
-      "objective": "Write only Python: class Counter:\n    def __init__(self): self.n=0\n    def inc(self): self.n+=1; return self.n\nc=Counter(); assert c.inc()==1 and c.inc()==2\nprint(c.n)"
+      "title": "class counter",
+      "objective": "[HARD] Write only Python: class Counter:\n    def __init__(self): self.n=0\n    def inc(self): self.n+=1; return self.n\nc=Counter(); assert c.inc()==1 and c.inc()==2\nprint(c.n)"
     },
     {
       "id": "sc03",
-      "title": "scratch pipeline fns",
-      "objective": "Write only Python: def normalize(s): return s.strip().lower()\ndef tokens(s): return normalize(s).split()\nassert tokens('  Hi There ')==['hi','there']\nprint(tokens('  Hi There '))"
+      "title": "pipeline normalize",
+      "objective": "[HARD] Write only Python: def normalize(s): return s.strip().lower()\ndef tokens(s): return normalize(s).split()\nassert tokens('  Hi There ')==['hi','there']\nprint(tokens('  Hi There '))"
+    },
+    {
+      "id": "sc04",
+      "title": "scratch-style modules in one file",
+      "objective": "[HARD] Write only Python simulating two modules in one file:\n# module util\ndef clamp(x, lo, hi): return max(lo, min(hi, x))\n# module app\ndef score(x): return clamp(x, 0, 100)\nassert score(-5)==0 and score(150)==100 and score(50)==50\nprint(score(50))"
+    },
+    {
+      "id": "sc05",
+      "title": "diff-ready pair",
+      "objective": "[HARD] Write only Python: def parse_kv(s):\n    k,v=s.split('=',1); return {k.strip(): v.strip()}\ndef merge_kv(a,b):\n    d={}; d.update(a); d.update(b); return d\nassert merge_kv(parse_kv('a=1'), parse_kv('b=2'))=={'a':'1','b':'2'}\nprint(merge_kv(parse_kv('a=1'), parse_kv('b=2')))"
     }
   ]
 }

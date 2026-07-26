@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Expand holdout quiz toward 40 tasks (idempotent append)."""
+"""Expand holdout quiz toward 50 tasks (idempotent append)."""
 
 from __future__ import annotations
 
@@ -31,11 +31,25 @@ EXTRA = [
     {"id": "h38", "objective": "Write only Python: def merge_unique(a,b):\n    out=[]; seen=set()\n    for x in list(a)+list(b):\n        if x not in seen:\n            seen.add(x); out.append(x)\n    return out\nassert merge_unique([1,2],[2,3])==[1,2,3]\nprint(merge_unique([1,2],[2,3]))"},
     {"id": "h39", "objective": "Write only Python: def index_map(xs):\n    return {x:i for i,x in enumerate(xs)}\nassert index_map(['a','b'])['b']==1\nprint(index_map(['a','b']))"},
     {"id": "h40", "objective": "Write only Python: def safe_div(a,b):\n    return a/b if b else None\nassert safe_div(6,3)==2 and safe_div(1,0) is None\nprint(safe_div(6,3))"},
+    {"id": "h41", "objective": "Write only Python: def digits_sum(n):\n    return sum(int(c) for c in str(abs(n)))\nassert digits_sum(123)==6\nassert digits_sum(-45)==9\nprint(digits_sum(123))"},
+    {"id": "h42", "objective": "Write only Python: def unique_preserve(xs):\n    seen=set(); out=[]\n    for x in xs:\n        if x not in seen:\n            seen.add(x); out.append(x)\n    return out\nassert unique_preserve([1,2,1,3])==[1,2,3]\nprint(unique_preserve([1,2,1,3]))"},
+    {"id": "h43", "objective": "Write only Python: def rotate_left(xs,k):\n    if not xs: return []\n    k=k%len(xs)\n    return xs[k:]+xs[:k]\nassert rotate_left([1,2,3,4],1)==[2,3,4,1]\nprint(rotate_left([1,2,3,4],1))"},
+    {"id": "h44", "objective": "Write only Python: def is_palindrome(s):\n    t=''.join(c.lower() for c in s if c.isalnum())\n    return t==t[::-1]\nassert is_palindrome('A man a plan a canal Panama')\nassert not is_palindrome('hello')\nprint(is_palindrome('racecar'))"},
+    {"id": "h45", "objective": "Write only Python: def gcd(a,b):\n    while b: a,b=b,a%b\n    return abs(a)\nassert gcd(12,18)==6\nassert gcd(7,3)==1\nprint(gcd(12,18))"},
+    {"id": "h46", "objective": "Write only Python: def flatten_once(xs):\n    out=[]\n    for x in xs:\n        if isinstance(x, list): out.extend(x)\n        else: out.append(x)\n    return out\nassert flatten_once([1,[2,3],4])==[1,2,3,4]\nprint(flatten_once([1,[2,3],4]))"},
+    {"id": "h47", "objective": "Write only Python: def mode(xs):\n    from collections import Counter\n    if not xs: return None\n    return Counter(xs).most_common(1)[0][0]\nassert mode([1,2,2,3])==2\nprint(mode([1,2,2,3]))"},
+    {"id": "h48", "objective": "Write only Python: def binary_search(xs, target):\n    lo,hi=0,len(xs)-1\n    while lo<=hi:\n        mid=(lo+hi)//2\n        if xs[mid]==target: return mid\n        if xs[mid]<target: lo=mid+1\n        else: hi=mid-1\n    return -1\nassert binary_search([1,3,5,7],5)==2\nassert binary_search([1,3,5,7],2)==-1\nprint(binary_search([1,3,5,7],5))"},
+    {"id": "h49", "objective": "Write only Python: def transpose(m):\n    return [list(row) for row in zip(*m)] if m else []\nassert transpose([[1,2],[3,4]])==[[1,3],[2,4]]\nprint(transpose([[1,2],[3,4]]))"},
+    {"id": "h50", "objective": "Write only Python: def running_sum(xs):\n    out=[]; s=0\n    for x in xs:\n        s+=x; out.append(s)\n    return out\nassert running_sum([1,2,3])==[1,3,6]\nprint(running_sum([1,2,3]))"},
 ]
 
 
 def main() -> int:
-    data = json.loads(HOLDOUT.read_text(encoding="utf-8"))
+    HOLDOUT.parent.mkdir(parents=True, exist_ok=True)
+    if HOLDOUT.exists():
+        data = json.loads(HOLDOUT.read_text(encoding="utf-8"))
+    else:
+        data = {"tasks": []}
     tasks = list(data.get("tasks") or [])
     have = {t.get("id") for t in tasks}
     for t in EXTRA:

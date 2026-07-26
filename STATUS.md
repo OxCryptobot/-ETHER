@@ -1,16 +1,14 @@
 # @ETHER Live Status
 
-## Learning (honest)
-**Not** full RLHF / LoRA on this GPU class.
+## Batch progress
+See `TASKS.md` for the next-10 list.
 
-**Real ML-lite now in:**
-- Reward from sandbox exit + confidence + audit
-- Experience store: `memory/learning/experience.jsonl`
-- Epsilon-greedy bandit over strategies: `memory/learning/bandit.json`
-- Pipeline selects strategy each run and updates from outcome
+**Shipped this batch:**
+1. Pipeline `tool_assist` (few_shot_pack)
+2. Auto `save_success_pattern` on PASS
+3. `secret_scan` + `subprocess_audit` pre-audit stage
 
-`ETHER_LEARNING=1` (default). Disable with `0`.
+`ETHER_TOOL_ASSIST=1` by default (set `0` to disable).
 
 ## Autonomy
-Flywheel PASS/FAIL reports continue.
-Dashboard: `ether dashboard` → http://127.0.0.1:8787
+Flywheel + dashboard + fabricate remain active on main.

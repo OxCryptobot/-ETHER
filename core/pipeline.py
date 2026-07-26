@@ -65,6 +65,7 @@ class PipelineResult(BaseModel):
     context_chars: int = 0
     strategy: str = "default"
     reward: float = 0.0
+    few_shot_chars: int = 0
     started_at: str = ""
     finished_at: str = ""
 
@@ -87,8 +88,8 @@ class Pipeline:
         )
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
+        tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
 
-        # Select coding strategy (bandit)
         strategy = self.policy.select() if learning_enabled() else "default"
         result.strategy = strategy
 
@@ -118,22 +119,56 @@ class Pipeline:
                 )
             )
 
+            # Extension / fabricate hook from plan
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
+                treq = dict(plan_res.payload.tool_request)
+                # default generate; allow fabricate if specified
+                if "action" not in treq:
+                    treq["action"] = "generate"
                 g_req = Envelope(
                     task_id=task_id,
                     target_gem="grandidierite",
-                    payload=GrandidieriteRequest(tool_request=plan_res.payload.tool_request),
+                    payload=GrandidieriteRequest(tool_request=treq),
                 )
                 g_res = self.registry.execute(g_req)
                 result.stages.append(
                     StageResult(
                         stage="extend",
                         success=not bool(g_res.error),
-                        detail="grandidierite",
+                        detail=str(treq.get("action", "generate")),
                         duration_ms=(time.perf_counter() - t1) * 1000,
                     )
                 )
+
+            # --- tool_assist: few-shot from success patterns ---
+            few_shot = ""
+            if tool_assist:
+                t_ta = time.perf_counter()
+                try:
+                    from gems.grandidierite.registry import run_tool
+
+                    fs = run_tool("few_shot_pack", {"query": objective, "top_k": 2})
+                    if fs.get("ok") and isinstance(fs.get("result"), dict):
+                        few_shot = fs["result"].get("block") or ""
+                        result.few_shot_chars = len(few_shot)
+                    result.stages.append(
+                        StageResult(
+                            stage="tool_assist",
+                            success=True,
+                            detail=f"few_shot={result.few_shot_chars}c",
+                            duration_ms=(time.perf_counter() - t_ta) * 1000,
+                        )
+                    )
+                except Exception as e:
+                    result.stages.append(
+                        StageResult(
+                            stage="tool_assist",
+                            success=False,
+                            detail=str(e)[:120],
+                            duration_ms=(time.perf_counter() - t_ta) * 1000,
+                        )
+                    )
 
             context_block = ""
             use_ctx = context_enabled() and strategy != "no_context"
@@ -175,6 +210,8 @@ class Pipeline:
                         f"Strategy: {strategy_hint}\n\n"
                         f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
                     )
+                    if few_shot:
+                        prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
                     if context_block:
                         prompt += f"Relevant workspace context:\n{context_block}\n\n"
                     prompt += "Return only executable Python code, no markdown fences."
@@ -256,6 +293,36 @@ class Pipeline:
                     break
                 last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
 
+            # Pre-audit tool scans
+            if tool_assist and generated:
+                t_sc = time.perf_counter()
+                try:
+                    from gems.grandidierite.registry import run_tool
+
+                    scan = run_tool("secret_scan", {"text": generated})
+                    sub = run_tool("subprocess_audit", {"text": generated})
+                    scan_ok = bool(scan.get("ok") and (scan.get("result") or {}).get("clean", True))
+                    risky = bool((sub.get("result") or {}).get("risky"))
+                    if not scan_ok or risky:
+                        result.confidence = min(result.confidence, 0.25)
+                    result.stages.append(
+                        StageResult(
+                            stage="tool_scan",
+                            success=scan_ok and not risky,
+                            detail=f"secrets_clean={scan_ok} risky_exec={risky}",
+                            duration_ms=(time.perf_counter() - t_sc) * 1000,
+                        )
+                    )
+                except Exception as e:
+                    result.stages.append(
+                        StageResult(
+                            stage="tool_scan",
+                            success=False,
+                            detail=str(e)[:120],
+                            duration_ms=(time.perf_counter() - t_sc) * 1000,
+                        )
+                    )
+
             t4 = time.perf_counter()
             audit_req = Envelope(
                 task_id=task_id,
@@ -295,7 +362,6 @@ class Pipeline:
                         )
                     )
 
-            # Reward + learn
             exit_code = result.sandbox.exit_code if result.sandbox else None
             audit_ok = bool(result.audit and result.audit.approved)
             result.reward = compute_reward(
@@ -306,6 +372,26 @@ class Pipeline:
             )
             if learning_enabled():
                 self.policy.update(strategy, result.reward)
+
+            # Persist success patterns for future few-shot
+            if exit_code == 0 and generated and tool_assist:
+                try:
+                    from gems.grandidierite.registry import run_tool
+
+                    run_tool(
+                        "save_success_pattern",
+                        {
+                            "objective": objective,
+                            "code": generated,
+                            "confidence": result.confidence,
+                            "tags": [strategy],
+                        },
+                    )
+                    result.stages.append(
+                        StageResult(stage="memory_save", success=True, detail="success_pattern")
+                    )
+                except Exception:
+                    pass
 
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()
@@ -374,6 +460,7 @@ class Pipeline:
                             "confidence": result.confidence,
                             "retries": result.retries,
                             "context_chars": result.context_chars,
+                            "few_shot_chars": result.few_shot_chars,
                             "strategy": result.strategy,
                             "reward": result.reward,
                             "exit_code": result.sandbox.exit_code if result.sandbox else None,

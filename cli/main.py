@@ -55,7 +55,7 @@ def _safe(text: str) -> str:
 
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    console.print("[bold cyan]@ETHER[/] v0.1.1")
+    console.print("[bold cyan]@ETHER[/] v0.1.2")
 
 
 @app.command()
@@ -74,6 +74,8 @@ def env() -> None:
         "ETHER_AUTO_PROMOTE",
         "ETHER_AUTO_FABRICATE_ON_FAIL",
         "ETHER_FLYWHEEL_PUSH",
+        "ETHER_ROSE_STREAM",
+        "ETHER_ROOT",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
@@ -240,7 +242,6 @@ def dashboard(
 
 @app.command("learn-stats")
 def learn_stats_cmd() -> None:
-    """Show bandit strategy leaderboard + fail streak."""
     from cli.commands_learn import learn_stats
 
     data = learn_stats()
@@ -312,13 +313,37 @@ def tool_list() -> None:
 
 
 @app.command("tool-run")
-def tool_run(name: str = typer.Argument(...), payload: str = typer.Option("{}", "--payload")) -> None:
+def tool_run(
+    name: str = typer.Argument(...),
+    payload: str = typer.Option("{}", "--payload"),
+    payload_file: Path = typer.Option(None, "--payload-file", help="JSON file (avoids PowerShell quoting)"),
+) -> None:
+    """Run a persistent/quarantine tool. Prefer --payload-file on Windows."""
     from gems.grandidierite.registry import run_tool
 
-    try:
-        body = json.loads(payload)
-    except json.JSONDecodeError as e:
-        print_error(f"invalid JSON payload: {e}")
+    body: dict
+    if payload_file is not None:
+        if not payload_file.exists():
+            print_error(f"payload file not found: {payload_file}")
+            raise typer.Exit(1)
+        try:
+            body = json.loads(payload_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            print_error(f"invalid JSON in file: {e}")
+            raise typer.Exit(1)
+    else:
+        # stdin fallback if payload is empty marker
+        raw = payload
+        if raw in ("-", "@-"):
+            raw = sys.stdin.read()
+        try:
+            body = json.loads(raw) if raw.strip() else {}
+        except json.JSONDecodeError as e:
+            print_error(f"invalid JSON payload: {e}")
+            print_error('Tip: ether tool-run NAME --payload-file path.json')
+            raise typer.Exit(1)
+    if not isinstance(body, dict):
+        print_error("payload must be a JSON object")
         raise typer.Exit(1)
     result = run_tool(name, body)
     console.print_json(json.dumps(result))

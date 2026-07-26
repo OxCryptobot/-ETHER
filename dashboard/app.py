@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.4")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.5")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.4"
+        data["api_version"] = "0.4.5"
         try:
             from dashboard.collector_health import load_auto_health
 
@@ -58,6 +58,12 @@ def _safe_snapshot() -> dict:
         except Exception as e:
             data["batch"] = {"error": str(e)[:120]}
             data["autonomy"] = {}
+        try:
+            from core.infra_status import collect_infra
+
+            data["infra"] = collect_infra()
+        except Exception as e:
+            data["infra"] = {"overall": "unknown", "alerts": [{"level": "bad", "text": str(e)[:120]}]}
         return data
     except Exception as e:
         return {
@@ -87,6 +93,7 @@ def _safe_snapshot() -> dict:
             "auto_health": {},
             "batch": {},
             "autonomy": {},
+            "infra": {"overall": "down", "alerts": [{"level": "bad", "text": "snapshot failed"}]},
         }
 
 
@@ -103,6 +110,16 @@ def snapshot() -> dict:
     return _safe_snapshot()
 
 
+@app.get("/api/infra")
+def infra() -> dict:
+    try:
+        from core.infra_status import collect_infra
+
+        return collect_infra()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
 @app.get("/api/console")
 def console() -> dict:
     try:
@@ -115,7 +132,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.4"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.5"}
 
 
 @app.get("/api/health-check")

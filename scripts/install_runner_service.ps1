@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $RunnerDir = if ($env:ETHER_RUNNER_DIR) { $env:ETHER_RUNNER_DIR } else { "C:\actions-runner" }
 
 if (-not (Test-Path -LiteralPath (Join-Path $RunnerDir "config.cmd"))) {
-  throw "Runner not configured at $RunnerDir — run GitHub config.cmd first"
+  throw "Runner not configured at $RunnerDir - run GitHub config.cmd first"
 }
 
 Set-Location -LiteralPath $RunnerDir
@@ -27,7 +27,7 @@ if (Test-Path ".\svc.cmd") {
   & .\svc.cmd start
   & .\svc.cmd status
 } else {
-  throw "svc.cmd missing — incomplete runner package"
+  throw "svc.cmd missing - incomplete runner package"
 }
 
 # Scheduled safety net: start service every 10 min if stopped
@@ -43,5 +43,5 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description "Restart ETHER GitHub runner service if stopped" -Force | Out-Null
 
-Write-Host "OK — runner service + ETHER-RunnerService watchdog task registered"
+Write-Host "OK - runner service + ETHER-RunnerService watchdog task registered"
 Write-Host "You can close any run.cmd window."

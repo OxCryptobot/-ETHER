@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
-"""Process next items from memory/batch_queue.json via Pipeline.
-
-Local autonomy path for 'build next features' without the chat:
-  - queue holds objectives / maintenance tasks
-  - worker runs one pending item per tick
-  - results appended to memory/batch_queue/history.jsonl
-"""
+"""Process next items from memory/batch_queue.json via Pipeline."""
 
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +19,7 @@ load_dotenv(ROOT / ".env")
 
 QUEUE = ROOT / "memory" / "batch_queue.json"
 HIST = ROOT / "memory" / "batch_queue" / "history.jsonl"
+PY = sys.executable
 
 
 def load_queue() -> dict:
@@ -35,6 +31,16 @@ def load_queue() -> dict:
 def save_queue(data: dict) -> None:
     QUEUE.parent.mkdir(parents=True, exist_ok=True)
     QUEUE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def normalize_command(cmd: list) -> list[str]:
+    """Rewrite leading 'python' to this venv interpreter."""
+    if not cmd:
+        return []
+    out = [str(x) for x in cmd]
+    if out[0] in ("python", "python3", "py"):
+        out[0] = PY
+    return out
 
 
 def main() -> int:
@@ -69,12 +75,14 @@ def main() -> int:
                 }
             )
         elif kind == "command":
-            import subprocess
-
-            cmd = item.get("command") or []
-            p = subprocess.run(cmd, cwd=str(ROOT))
-            result["ok"] = p.returncode == 0
-            result["returncode"] = p.returncode
+            cmd = normalize_command(item.get("command") or [])
+            if not cmd:
+                result["error"] = "empty command"
+            else:
+                p = subprocess.run(cmd, cwd=str(ROOT))
+                result["ok"] = p.returncode == 0
+                result["returncode"] = p.returncode
+                result["command"] = cmd
         else:
             result["error"] = "unsupported or empty item"
     except Exception as e:
@@ -82,7 +90,6 @@ def main() -> int:
 
     result["finished"] = datetime.now(timezone.utc).isoformat()
     data.setdefault("done", []).append({**item, "result": result})
-    # keep done list bounded
     data["done"] = data["done"][-100:]
     data["pending"] = pending
     save_queue(data)

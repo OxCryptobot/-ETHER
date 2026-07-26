@@ -1,11 +1,10 @@
 # One-time bridge: GitHub Actions self-hosted runner on THIS Windows box.
-# After this, cloud-side agents can workflow_dispatch ensure/selftest/cycle on your host.
+# Supports win-x64 and win-arm64 (Snapdragon / Windows on ARM).
 #
-# Prereq: create a runner registration token at:
+# Prereq: registration token from:
 #   https://github.com/OxCryptobot/-ETHER/settings/actions/runners/new
-# Labels required: self-hosted, Windows, ETHER
+# Labels: self-hosted, Windows, ETHER (+ arch label auto)
 #
-# Usage:
 #   powershell -ExecutionPolicy Bypass -File .\scripts\install_self_hosted_runner.ps1 -Token XXX
 
 param(
@@ -16,9 +15,28 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Detect architecture — Windows on ARM reports ARM64
+$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+if (-not $arch) {
+  $arch = $env:PROCESSOR_ARCHITECTURE
+}
+$arch = $arch.ToUpperInvariant()
+
+if ($arch -match "ARM64|AARCH64") {
+  $runnerOsArch = "win-arm64"
+  $archLabel = "ARM64"
+} elseif ($arch -match "X86|X64|AMD64") {
+  $runnerOsArch = "win-x64"
+  $archLabel = "X64"
+} else {
+  Write-Host "Unknown arch '$arch' — defaulting to win-x64"
+  $runnerOsArch = "win-x64"
+  $archLabel = "X64"
+}
+
 Write-Host "========================================"
 Write-Host " @ETHER self-hosted runner install"
-Write-Host " This is the control-plane bridge."
+Write-Host " arch=$arch → asset=$runnerOsArch"
 Write-Host "========================================"
 
 if (-not (Test-Path $RunnerDir)) {
@@ -26,25 +44,31 @@ if (-not (Test-Path $RunnerDir)) {
 }
 Set-Location -LiteralPath $RunnerDir
 
-# Download latest runner if missing
 if (-not (Test-Path ".\config.cmd")) {
-  Write-Host "[download] actions runner"
+  Write-Host "[download] actions runner ($runnerOsArch)"
   $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/actions/runner/releases/latest"
-  $asset = $rel.assets | Where-Object { $_.name -match "win-x64-.*\.zip$" } | Select-Object -First 1
-  if (-not $asset) { throw "Could not find win-x64 runner asset" }
+  $pattern = [regex]::Escape($runnerOsArch) + ".*\.zip$"
+  $asset = $rel.assets | Where-Object { $_.name -match $pattern } | Select-Object -First 1
+  if (-not $asset) {
+    # fallback list names for debug
+    $names = ($rel.assets | ForEach-Object { $_.name }) -join ", "
+    throw "Could not find $runnerOsArch runner asset. Available: $names"
+  }
+  Write-Host "[download] $($asset.name)"
   Invoke-WebRequest -Uri $asset.browser_download_url -OutFile runner.zip
   Expand-Archive -Path runner.zip -DestinationPath . -Force
   Remove-Item runner.zip -Force
 }
 
-Write-Host "[config] registering with labels self-hosted,Windows,ETHER"
-& .\config.cmd --url $RepoUrl --token $Token --name "ether-windows-$env:COMPUTERNAME" --labels "self-hosted,Windows,ETHER" --work "_work" --unattended --replace
+$labels = "self-hosted,Windows,ETHER,$archLabel"
+Write-Host "[config] labels=$labels"
+& .\config.cmd --url $RepoUrl --token $Token --name "ether-windows-$env:COMPUTERNAME" --labels $labels --work "_work" --unattended --replace
 
 Write-Host "[service] install + start"
 & .\svc.cmd install
 & .\svc.cmd start
 
 Write-Host ""
-Write-Host "OK. Runner should show Idle at:"
+Write-Host "OK. Runner Idle at:"
 Write-Host "  https://github.com/OxCryptobot/-ETHER/settings/actions/runners"
-Write-Host "Then autonomy-host workflow can ensure daemon + E2E on this box."
+Write-Host "Asset: $runnerOsArch · labels: $labels"

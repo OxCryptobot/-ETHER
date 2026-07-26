@@ -76,14 +76,15 @@ function Start-EtherDaemon {
   $env:ETHER_AUTO_ENQUEUE = "1"
   $env:ETHER_GUARDIAN_AUTO_BASELINE = "1"
   $env:ETHER_AUTO_MODEL = "1"
+  $env:ETHER_HW_PROFILE = "host"
   $env:ETHER_DAEMON_DASHBOARD = "1"
   $env:ETHER_DAEMON_FLYWHEEL = "1"
   $env:ETHER_DAEMON_BATCH = "1"
   if (-not $env:ETHER_DAEMON_INTERVAL) { $env:ETHER_DAEMON_INTERVAL = "300" }
   if (-not $env:ETHER_BATCH_INTERVAL) { $env:ETHER_BATCH_INTERVAL = "300" }
+  if (-not $env:ETHER_PRIMARY_MODEL) { $env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b" }
   $env:PYTHONIOENCODING = "utf-8"
   $env:ETHER_ROOT = $Root
-  # auto model
   try {
     & $Py -c "from core.model_select import ensure_model_env; print(ensure_model_env())" 2>$null | ForEach-Object {
       if ($_) { $env:ETHER_PRIMARY_MODEL = "$_".Trim(); Write-Log "model=$env:ETHER_PRIMARY_MODEL" }
@@ -95,7 +96,7 @@ function Start-EtherDaemon {
 Write-Log "ETHER_ROOT=$Root"
 
 if (-not (Test-Path -LiteralPath $Py)) {
-  Write-Log "MISSING venv — creating"
+  Write-Log "MISSING venv - creating"
   python -m venv .venv
   & $Py -m pip install -U pip -q
   & $Py -m pip install -e ".[dev]" -q
@@ -116,16 +117,14 @@ if ($alive -and $fresh -and $dash) {
   exit 0
 }
 
-# Soft update code
 try {
   git fetch origin 2>&1 | Out-Null
   git reset --hard origin/main 2>&1 | Out-Null
   & $Py -m pip install -e ".[dev]" -q 2>&1 | Out-Null
 } catch {}
 
-# If process dead or dashboard down, restart cleanly
 if ($alive -and -not $dash) {
-  Write-Log "dashboard down — restarting daemon"
+  Write-Log "dashboard down - restarting daemon"
   try {
     $pidVal = [int]((Get-Content -LiteralPath $PidFile -Raw).Trim())
     Stop-Process -Id $pidVal -Force -ErrorAction SilentlyContinue
@@ -144,5 +143,5 @@ $alive2 = Test-DaemonAlive
 $dash2 = Test-PortOpen $DashPort
 Write-Log "after ensure alive=$alive2 dash=$dash2"
 if ($alive2 -or $dash2) { exit 0 }
-Write-Log "WARN still down — scheduler will retry"
+Write-Log "WARN still down - scheduler will retry"
 exit 0

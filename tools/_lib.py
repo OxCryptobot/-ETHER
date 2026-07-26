@@ -5,27 +5,61 @@ Design rules:
 - JSON in / JSON out
 - No network by default
 - Fail closed on bad input
+- PowerShell-friendly argv parsing
 """
 
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict
 
 
+def _coerce_json(raw: str) -> Dict[str, Any]:
+    raw = (raw or "").strip()
+    if not raw:
+        return {}
+    # 1) standard JSON
+    try:
+        val = json.loads(raw)
+        return val if isinstance(val, dict) else {"value": val}
+    except json.JSONDecodeError:
+        pass
+    # 2) PowerShell often passes {text: hello} or {'text': 'hello'}
+    # try single-quote → double-quote heuristic for simple objects
+    alt = raw
+    if alt.startswith("{") and "'" in alt and '"' not in alt:
+        alt = alt.replace("'", '"')
+        try:
+            val = json.loads(alt)
+            return val if isinstance(val, dict) else {"value": val}
+        except json.JSONDecodeError:
+            pass
+    # 3) key=value pairs: text=hello path=foo.py
+    if "=" in raw and not raw.startswith("{"):
+        out: Dict[str, Any] = {}
+        for part in re.split(r"\s+", raw):
+            if "=" in part:
+                k, v = part.split("=", 1)
+                out[k.strip()] = v.strip().strip('"').strip("'")
+        if out:
+            return out
+    # 4) bare path convenience
+    if Path(raw).suffix or "/" in raw or "\\" in raw:
+        return {"path": raw}
+    raise json.JSONDecodeError("Could not parse tool input as JSON", raw, 0)
+
+
 def read_input() -> Dict[str, Any]:
     if len(sys.argv) > 1:
         raw = " ".join(sys.argv[1:])
-        if raw.strip().startswith("{"):
-            return json.loads(raw)
-        # treat as path key convenience
-        return {"path": raw}
-    data = sys.stdin.read().strip()
-    if not data:
+        return _coerce_json(raw)
+    data = sys.stdin.read()
+    if not data.strip():
         return {}
-    return json.loads(data)
+    return _coerce_json(data)
 
 
 def emit(ok: bool, **payload: Any) -> None:

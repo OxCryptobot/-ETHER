@@ -1,4 +1,4 @@
-"""Clear Quartz sandbox — optional warm container."""
+"""Clear Quartz sandbox — harness + optional warm container."""
 
 from __future__ import annotations
 
@@ -39,13 +39,20 @@ class ClearQuartz:
 
         payload = request.payload
         start = time.perf_counter()
+        code = payload.code
+        try:
+            from core.assert_harness import ensure_harness
+
+            code, _ = ensure_harness(code)
+        except Exception:
+            code = payload.code
 
         try:
-            security_flags = self._static_analysis(payload.code)
-            result = self._run(payload.code, request.timeout_seconds)
+            security_flags = self._static_analysis(code)
+            result = self._run(code, request.timeout_seconds)
             execution_time = time.perf_counter() - start
             tests_passed, total_tests = self._count_tests(
-                result.stdout, result.stderr, result.returncode, payload.code
+                result.stdout, result.stderr, result.returncode, code
             )
 
             return ResponseEnvelope(

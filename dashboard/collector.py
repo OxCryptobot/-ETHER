@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -57,6 +58,131 @@ def _tail_jsonl(path: Path, limit: int = 40) -> List[Dict[str, Any]]:
     return list(reversed(rows))
 
 
+def _parse_tasks(md: str) -> Dict[str, Any]:
+    """Parse TASKS.md tables into structured batch progress."""
+    batches: List[Dict[str, Any]] = []
+    current: Optional[Dict[str, Any]] = None
+    # Match markdown table rows: | 11 | P0 | Task | ... |
+    row_re = re.compile(
+        r"^\|\s*(\d+)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|(?:\s*([^|]*?)\s*\|)?\s*$"
+    )
+    section_re = re.compile(r"^##\s+(.+)$", re.M)
+
+    lines = md.splitlines()
+    section = "unknown"
+    for line in lines:
+        sm = re.match(r"^##\s+(.+)$", line.strip())
+        if sm:
+            section = sm.group(1).strip()
+            # start new batch bucket on Batch headings
+            if "batch" in section.lower() or "done" in section.lower() or "active" in section.lower():
+                current = {"name": section, "tasks": []}
+                batches.append(current)
+            continue
+        m = row_re.match(line.strip())
+        if not m or current is None:
+            continue
+        num, col2, col3, col4 = m.group(1), m.group(2).strip(), m.group(3).strip(), (m.group(4) or "").strip()
+        # Skip header-ish
+        if num.lower() == "#" or not num.isdigit():
+            continue
+        # Heuristic: done sections vs active
+        status = "done"
+        priority = ""
+        title = col2
+        notes = col3
+        if "active" in section.lower() or "next" in section.lower() or "batch 3" in section.lower():
+            status = "queued"
+            priority = col2
+            title = col3
+            notes = col4
+        elif "done" in col2.lower() or "done" in col3.lower():
+            status = "done"
+            title = col2 if "done" not in col2.lower() else col3
+            notes = col3 if title == col2 else col4
+        # Batch 1/2 format: | # | Task | Notes |
+        if "batch 1" in section.lower() or "batch 2" in section.lower() or section.lower().startswith("done"):
+            status = "done"
+            title = col2
+            notes = col3
+            priority = ""
+        current["tasks"].append(
+            {
+                "id": int(num),
+                "title": title[:120],
+                "status": status,
+                "priority": priority[:8],
+                "notes": notes[:100],
+            }
+        )
+
+    # totals
+    all_tasks = [t for b in batches for t in b["tasks"]]
+    done = sum(1 for t in all_tasks if t["status"] == "done")
+    queued = sum(1 for t in all_tasks if t["status"] != "done")
+    return {
+        "batches": batches,
+        "totals": {"done": done, "queued": queued, "total": len(all_tasks)},
+        "progress_pct": round(100 * done / len(all_tasks), 1) if all_tasks else 0.0,
+    }
+
+
+def _current_work(runs: List[Dict[str, Any]], heartbeat: Optional[str], latest: Dict[str, Any]) -> Dict[str, Any]:
+    """Derive live coding activity from latest run + flywheel."""
+    now = datetime.now(timezone.utc)
+    latest_run = runs[0] if runs else None
+    activity = []
+    if latest_run:
+        for s in latest_run.get("stages") or []:
+            activity.append(
+                {
+                    "stage": s.get("stage"),
+                    "ok": s.get("success"),
+                    "detail": s.get("detail"),
+                    "ms": s.get("duration_ms"),
+                }
+            )
+    gates = (latest or {}).get("gates") or {}
+    steps = (latest or {}).get("steps") or {}
+    phase = "idle"
+    if heartbeat:
+        phase = "autonomy_cycle"
+    if latest_run:
+        st = latest_run.get("status")
+        if st == "complete":
+            phase = "last_run_complete"
+        elif st == "error":
+            phase = "last_run_error"
+        # if started very recently treat as hot
+        try:
+            started = latest_run.get("started_at") or ""
+            if started:
+                # crude: if stages include code/sandbox recently
+                if any(s.get("stage") in {"code", "sandbox", "tool_assist"} for s in activity):
+                    phase = "coding_pipeline"
+        except Exception:
+            pass
+
+    return {
+        "phase": phase,
+        "heartbeat": heartbeat,
+        "objective": (latest_run or {}).get("objective"),
+        "status": (latest_run or {}).get("status"),
+        "confidence": (latest_run or {}).get("confidence"),
+        "strategy": (latest_run or {}).get("strategy"),
+        "reward": (latest_run or {}).get("reward"),
+        "started_at": (latest_run or {}).get("started_at"),
+        "stages": activity,
+        "flywheel_ok": (latest or {}).get("ok"),
+        "flywheel_conf": gates.get("confidence"),
+        "matrix": [
+            {"name": k, "ok": v.get("ok"), "ms": int((v.get("duration_s") or 0) * 1000)}
+            for k, v in steps.items()
+        ],
+        "generated_at": now.isoformat(),
+    }
+
+
 def collect_snapshot() -> Dict[str, Any]:
     flywheel_dir = ROOT / "memory" / "flywheel"
     runs_dir = ROOT / "memory" / "runs"
@@ -70,6 +196,8 @@ def collect_snapshot() -> Dict[str, Any]:
     fabricate_log = _tail_jsonl(ROOT / "memory" / "tools" / "fabricate.jsonl", 20)
     bandit = _read_json(ROOT / "memory" / "learning" / "bandit.json") or {}
     fail_streak = _read_json(ROOT / "memory" / "learning" / "fail_streak.json") or {}
+    tasks_md = _read_text(ROOT / "TASKS.md")
+    tasks = _parse_tasks(tasks_md)
 
     runs: List[Dict[str, Any]] = []
     if runs_dir.exists():
@@ -124,6 +252,8 @@ def collect_snapshot() -> Dict[str, Any]:
         reverse=True,
     )
 
+    current_work = _current_work(runs, heartbeat or None, latest)
+
     skills = [
         {"name": "plan → code → sandbox → audit", "status": "active"},
         {"name": "tool_assist + scans", "status": "on" if os.getenv("ETHER_TOOL_ASSIST", "1") == "1" else "off"},
@@ -152,6 +282,8 @@ def collect_snapshot() -> Dict[str, Any]:
         "project": "@ETHER",
         "version": "0.1.1",
         "heartbeat": heartbeat or None,
+        "current_work": current_work,
+        "tasks": tasks,
         "summary": {
             "quality_pass": (latest or {}).get("ok"),
             "confidence": gates.get("confidence"),
@@ -164,6 +296,9 @@ def collect_snapshot() -> Dict[str, Any]:
             "runs_error": errors,
             "avg_run_confidence": avg_conf,
             "fail_streak": fail_streak.get("streak", 0),
+            "tasks_done": tasks.get("totals", {}).get("done"),
+            "tasks_queued": tasks.get("totals", {}).get("queued"),
+            "tasks_progress_pct": tasks.get("progress_pct"),
         },
         "workflow": workflow,
         "matrix_steps": [
@@ -231,7 +366,7 @@ def collect_snapshot() -> Dict[str, Any]:
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:1800],
             "flywheel": _read_text(ROOT / "FLYWHEEL.md")[:1200],
-            "tasks": _read_text(ROOT / "TASKS.md")[:2000],
+            "tasks": tasks_md[:2500],
         },
         "latest": latest,
         "last_fail": last_fail,

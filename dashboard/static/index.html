@@ -6,16 +6,9 @@
   <title>@ETHER Control Matrix</title>
   <style>
     :root {
-      --bg: #060a12;
-      --panel: #0c1424;
-      --line: #1c2a45;
-      --text: #e8eefc;
-      --muted: #8b9bb8;
-      --good: #34d399;
-      --bad: #f87171;
-      --accent: #38bdf8;
-      --violet: #c4b5fd;
-      --warn: #fbbf24;
+      --bg: #060a12; --panel: #0c1424; --line: #1c2a45; --text: #e8eefc;
+      --muted: #8b9bb8; --good: #34d399; --bad: #f87171; --accent: #38bdf8;
+      --violet: #c4b5fd; --warn: #fbbf24;
     }
     * { box-sizing: border-box; }
     body {
@@ -39,7 +32,6 @@
     .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
     .dot.on { background: var(--good); box-shadow: 0 0 10px var(--good); }
     .dot.off { background: var(--bad); }
-
     nav.tabs {
       display: flex; gap: 8px; padding: 12px 18px; flex-wrap: wrap;
       border-bottom: 1px solid var(--line);
@@ -51,11 +43,9 @@
     nav.tabs button.active {
       color: var(--text); border-color: var(--accent); background: rgba(56,189,248,.08);
     }
-
     main { padding: 16px; }
     .panel { display: none; }
     .panel.active { display: block; }
-
     .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
     .card {
       background: linear-gradient(180deg, #0e1730, var(--panel));
@@ -64,12 +54,10 @@
     .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s6 { grid-column: span 6; }
     .s8 { grid-column: span 8; } .s12 { grid-column: span 12; }
     @media (max-width: 960px) { .s3,.s4,.s6,.s8,.s12 { grid-column: span 12; } }
-
     h2 { margin: 0 0 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .big { font-size: 26px; font-weight: 700; }
     .ok { color: var(--good); } .bad { color: var(--bad); } .info { color: var(--accent); }
     .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-
     .flow { display: flex; flex-wrap: wrap; gap: 8px; }
     .flow .step {
       flex: 1 1 110px; min-width: 100px; border: 1px solid var(--line); border-radius: 12px;
@@ -78,18 +66,16 @@
     .flow .n { font-size: 11px; color: var(--accent); }
     .flow .t { font-weight: 600; margin: 4px 0; }
     .flow .d { font-size: 11px; color: var(--muted); }
-
     .bars { display: flex; align-items: end; gap: 4px; height: 64px; margin-bottom: 10px; }
     .bar { width: 12px; border-radius: 4px 4px 0 0; background: var(--line); }
     .bar.pass { background: var(--good); } .bar.fail { background: var(--bad); }
-
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
     th { color: var(--muted); font-weight: 600; }
     .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; }
     .pill.ok { color: var(--good); background: rgba(52,211,153,.1); }
     .pill.bad { color: var(--bad); background: rgba(248,113,113,.1); }
-
+    .pill.queue { color: var(--warn); background: rgba(251,191,36,.1); }
     .gem, .skill, .tool {
       border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.02);
     }
@@ -98,7 +84,21 @@
     @media (max-width: 700px) { .list.two { grid-template-columns: 1fr; } }
     .gem .id { font-weight: 600; } .gem .role { color: var(--muted); font-size: 12px; }
     .tag { display: inline-block; margin-top: 6px; font-size: 10px; color: var(--violet); border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; }
-
+    .prog {
+      height: 8px; background: #132033; border-radius: 99px; overflow: hidden; margin-top: 8px;
+    }
+    .prog > i {
+      display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--good));
+      width: 0%; transition: width .4s ease;
+    }
+    .stage-row {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+    }
+    .stage-chip {
+      font-size: 11px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line);
+    }
+    .stage-chip.ok { border-color: rgba(52,211,153,.4); color: var(--good); }
+    .stage-chip.bad { border-color: rgba(248,113,113,.4); color: var(--bad); }
     pre {
       margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 11px; color: #cbd5e1;
       background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
@@ -123,46 +123,44 @@
   </nav>
 
   <main>
-    <!-- OVERVIEW -->
     <section class="panel active" id="tab-overview">
       <div class="grid">
         <div class="card s3"><h2>Gate</h2><div class="big" id="quality">—</div><div class="sub" id="reason">—</div></div>
         <div class="card s3"><h2>Confidence</h2><div class="big info" id="conf">—</div><div class="sub">min gate from policy</div></div>
-        <div class="card s3"><h2>Flywheel pass rate</h2><div class="big" id="fwRate">—</div><div class="sub" id="cycles">—</div></div>
+        <div class="card s3"><h2>Task progress</h2><div class="big" id="taskPct">—</div><div class="sub" id="taskCounts">—</div><div class="prog"><i id="taskBar"></i></div></div>
         <div class="card s3"><h2>Model</h2><div class="big" style="font-size:16px" id="model">—</div><div class="sub" id="hb">heartbeat —</div></div>
 
+        <!-- LIVE CODING -->
         <div class="card s8">
-          <h2>Recent flywheel cycles</h2>
-          <div class="bars" id="bars"></div>
-          <table><thead><tr><th>Step</th><th>Status</th><th>Time</th></tr></thead><tbody id="stepsBody"></tbody></table>
+          <h2>Current work · real-time coding</h2>
+          <div class="big" style="font-size:18px" id="workPhase">—</div>
+          <div class="sub" id="workObjective">—</div>
+          <div class="sub" id="workMeta">—</div>
+          <div class="stage-row" id="workStages"></div>
+          <table style="margin-top:12px"><thead><tr><th>Flywheel step</th><th>Status</th><th>Time</th></tr></thead><tbody id="stepsBody"></tbody></table>
         </div>
         <div class="card s4">
           <h2>Connections</h2>
           <div class="list" id="connections"></div>
         </div>
+
+        <!-- BATCH TASKS -->
+        <div class="card s12">
+          <h2>Batch tasks · progress per task</h2>
+          <div class="bars" id="bars" style="margin-bottom:14px"></div>
+          <div id="batchBoard"></div>
+        </div>
       </div>
     </section>
 
-    <!-- WORKFLOW -->
     <section class="panel" id="tab-workflow">
       <div class="grid">
-        <div class="card s12">
-          <h2>End-to-end workflow</h2>
-          <div class="flow" id="flow"></div>
-          <p class="sub" style="margin-top:12px">Each autonomy cycle walks this path. FAIL after max retries still publishes an audit report to git, then the local loop continues.</p>
-        </div>
-        <div class="card s6">
-          <h2>Active skills</h2>
-          <div class="list" id="skills"></div>
-        </div>
-        <div class="card s6">
-          <h2>Policy</h2>
-          <div class="list" id="policy"></div>
-        </div>
+        <div class="card s12"><h2>End-to-end workflow</h2><div class="flow" id="flow"></div></div>
+        <div class="card s6"><h2>Active skills</h2><div class="list" id="skills"></div></div>
+        <div class="card s6"><h2>Policy</h2><div class="list" id="policy"></div></div>
       </div>
     </section>
 
-    <!-- RUNS -->
     <section class="panel" id="tab-runs">
       <div class="grid">
         <div class="card s12">
@@ -175,13 +173,9 @@
       </div>
     </section>
 
-    <!-- GEMS -->
     <section class="panel" id="tab-gems">
       <div class="grid">
-        <div class="card s8">
-          <h2>Gems (8)</h2>
-          <div class="list two" id="gems"></div>
-        </div>
+        <div class="card s8"><h2>Gems (8)</h2><div class="list two" id="gems"></div></div>
         <div class="card s4">
           <h2>Tools</h2>
           <h3 style="font-size:12px;color:var(--muted)">Persistent</h3>
@@ -192,7 +186,6 @@
       </div>
     </section>
 
-    <!-- BENCH -->
     <section class="panel" id="tab-bench">
       <div class="grid">
         <div class="card s3"><h2>FW cycles</h2><div class="big" id="bCycles">—</div></div>
@@ -203,16 +196,15 @@
       </div>
     </section>
 
-    <!-- RAW -->
     <section class="panel" id="tab-raw">
       <div class="grid">
         <div class="card s6"><h2>STATUS.md</h2><pre id="statusMd"></pre></div>
-        <div class="card s6"><h2>FLYWHEEL.md</h2><pre id="flyMd"></pre></div>
+        <div class="card s6"><h2>TASKS.md</h2><pre id="tasksMd"></pre></div>
         <div class="card s12"><h2>Latest report JSON</h2><pre id="latest"></pre></div>
       </div>
     </section>
   </main>
-  <footer>WebSocket live feed · fallback poll 3s · http://127.0.0.1:8787</footer>
+  <footer>WebSocket live · poll fallback · http://127.0.0.1:8787</footer>
 
 <script>
 const tabs = document.querySelectorAll('nav.tabs button');
@@ -235,16 +227,34 @@ function render(d){
   q.className = 'big ' + (ok ? 'ok' : 'bad');
   document.getElementById('reason').textContent = s.reason || '—';
   document.getElementById('conf').textContent = s.confidence != null ? Number(s.confidence).toFixed(3) : '—';
-  document.getElementById('fwRate').textContent = pct(s.flywheel_pass_rate);
-  document.getElementById('cycles').textContent = (s.cycles ?? 0) + ' cycles logged';
   document.getElementById('model').textContent = s.model || '—';
   document.getElementById('hb').textContent = d.heartbeat ? ('heartbeat ' + d.heartbeat) : 'no heartbeat yet';
+
+  // task progress
+  const tp = s.tasks_progress_pct != null ? s.tasks_progress_pct : 0;
+  document.getElementById('taskPct').textContent = tp + '%';
+  document.getElementById('taskCounts').textContent = (s.tasks_done||0) + ' done · ' + (s.tasks_queued||0) + ' queued';
+  document.getElementById('taskBar').style.width = Math.min(100, tp) + '%';
 
   const dot = document.getElementById('dot');
   dot.className = 'dot ' + (d.heartbeat ? 'on' : 'off');
   document.getElementById('liveText').textContent = d.heartbeat ? ('live · ' + (s.model||'')) : 'waiting for autonomy';
 
-  // bars
+  // current work
+  const cw = d.current_work || {};
+  document.getElementById('workPhase').textContent = cw.phase || 'idle';
+  document.getElementById('workObjective').textContent = cw.objective || 'No recent pipeline objective';
+  document.getElementById('workMeta').textContent =
+    `status=${cw.status||'—'} · conf=${cw.confidence!=null?Number(cw.confidence).toFixed(3):'—'} · strategy=${cw.strategy||'—'} · reward=${cw.reward!=null?Number(cw.reward).toFixed(3):'—'}`;
+  document.getElementById('workStages').innerHTML = (cw.stages||[]).map(st =>
+    `<span class="stage-chip ${st.ok?'ok':'bad'}">${esc(st.stage)}${st.ms!=null?' '+Math.round(st.ms)+'ms':''}</span>`
+  ).join('') || '<span class="sub">no stage activity</span>';
+
+  document.getElementById('stepsBody').innerHTML = (d.matrix_steps||[]).map(st =>
+    `<tr><td>${esc(st.name)}</td><td><span class="pill ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms} ms</td></tr>`
+  ).join('');
+
+  // flywheel bars
   const bars = document.getElementById('bars'); bars.innerHTML = '';
   (d.history||[]).slice(0,30).reverse().forEach(h => {
     const b = document.createElement('div');
@@ -254,9 +264,25 @@ function render(d){
     bars.appendChild(b);
   });
 
-  document.getElementById('stepsBody').innerHTML = (d.matrix_steps||[]).map(st =>
-    `<tr><td>${esc(st.name)}</td><td><span class="pill ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms} ms</td></tr>`
-  ).join('');
+  // batch board
+  const tasks = d.tasks || {};
+  const board = document.getElementById('batchBoard');
+  board.innerHTML = (tasks.batches||[]).map(batch => {
+    const rows = (batch.tasks||[]).map(t => {
+      const st = t.status === 'done' ? 'ok' : 'queue';
+      const label = t.status === 'done' ? 'DONE' : (t.priority ? t.priority : 'QUEUED');
+      return `<tr>
+        <td>#${t.id}</td>
+        <td><span class="pill ${st}">${esc(label)}</span></td>
+        <td>${esc(t.title)}</td>
+        <td class="sub">${esc(t.notes||'')}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:14px">
+      <div style="font-weight:600;margin-bottom:6px">${esc(batch.name)}</div>
+      <table><thead><tr><th>ID</th><th>Status</th><th>Task</th><th>Notes</th></tr></thead><tbody>${rows||'<tr><td colspan=4 class=sub>no rows</td></tr>'}</tbody></table>
+    </div>`;
+  }).join('') || '<div class="sub">TASKS.md not parsed yet</div>';
 
   const c = d.connections || {};
   document.getElementById('connections').innerHTML = [
@@ -279,9 +305,8 @@ function render(d){
     ['Min confidence', p.min_confidence],
     ['Max retries', p.max_retries],
     ['Interval', (p.interval_s||0)+'s'],
-    ['Push reports', p.push?'on':'off'],
-    ['Sandbox retry', p.sandbox_retry?'on':'off'],
-    ['Workspace context', p.use_context?'on':'off'],
+    ['Tool assist', p.tool_assist?'on':'off'],
+    ['Auto fabricate on fail', p.auto_fabricate_on_fail?'on':'off'],
   ].map(([k,v]) => `<div class="skill"><b>${esc(k)}</b><div class="sub">${esc(v)}</div></div>`).join('');
 
   document.getElementById('runsBody').innerHTML = (d.runs||[]).slice(0,15).map(r => {
@@ -314,7 +339,7 @@ function render(d){
   document.getElementById('bFail').textContent = b.last_fail_reason || 'no fail on record';
 
   document.getElementById('statusMd').textContent = (d.docs||{}).status || '';
-  document.getElementById('flyMd').textContent = (d.docs||{}).flywheel || '';
+  document.getElementById('tasksMd').textContent = (d.docs||{}).tasks || '';
   document.getElementById('latest').textContent = JSON.stringify(d.latest || {}, null, 2);
 }
 
@@ -330,8 +355,6 @@ function connect() {
   };
   ws.onerror = () => ws.close();
 }
-
-// fallback poll if WS blocked
 async function poll() {
   try {
     const r = await fetch('/api/snapshot');

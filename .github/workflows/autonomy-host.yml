@@ -14,7 +14,6 @@ on:
           - health
           - cycle
   schedule:
-    # keep host alive every 30 min even if ensure task fails
     - cron: "*/30 * * * *"
   push:
     branches: [main]
@@ -26,7 +25,7 @@ on:
 
 jobs:
   host:
-    # ONLY runs on a machine you own that has Ollama + Docker
+    # Windows host with Ollama + Docker — x64 or ARM64
     runs-on: [self-hosted, Windows, ETHER]
     defaults:
       run:
@@ -44,8 +43,13 @@ jobs:
 
       - name: Ensure venv + editable
         run: |
+          $py = $null
+          foreach ($c in @("python", "python3", "py")) {
+            try { $v = & $c -c "import sys; print(sys.executable)" 2>$null; if ($v) { $py = $c; break } } catch {}
+          }
+          if (-not $py) { throw "No Python on PATH (ARM64 or x64 install required)" }
           if (-not (Test-Path .\.venv\Scripts\python.exe)) {
-            python -m venv .venv
+            & $py -m venv .venv
             .\.venv\Scripts\python.exe -m pip install -U pip
           }
           .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q

@@ -1,0 +1,86 @@
+name: autonomy-host
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "ensure | selftest | health | cycle"
+        required: true
+        default: "ensure"
+        type: choice
+        options:
+          - ensure
+          - selftest
+          - health
+          - cycle
+  schedule:
+    # keep host alive every 30 min even if ensure task fails
+    - cron: "*/30 * * * *"
+  push:
+    branches: [main]
+    paths:
+      - "core/autonomy.py"
+      - "scripts/ether_daemon.py"
+      - "scripts/ensure_daemon.ps1"
+      - ".github/workflows/autonomy-host.yml"
+
+jobs:
+  host:
+    # ONLY runs on a machine you own that has Ollama + Docker
+    runs-on: [self-hosted, Windows, ETHER]
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Soft sync to main
+        run: |
+          git fetch origin
+          git reset --hard origin/main
+
+      - name: Ensure venv + editable
+        run: |
+          if (-not (Test-Path .\.venv\Scripts\python.exe)) {
+            python -m venv .venv
+            .\.venv\Scripts\python.exe -m pip install -U pip
+          }
+          .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+
+      - name: Ensure daemon alive
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.action == 'ensure' || inputs.action == 'cycle' || inputs.action == '' }}
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
+
+      - name: Offline autonomy self-test
+        if: ${{ github.event_name == 'push' || inputs.action == 'selftest' || inputs.action == 'cycle' }}
+        run: |
+          .\.venv\Scripts\python.exe .\scripts\self_test_autonomy.py
+
+      - name: Health check
+        if: ${{ inputs.action == 'health' || inputs.action == 'cycle' }}
+        run: |
+          .\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
+
+      - name: One smart cycle
+        if: ${{ inputs.action == 'cycle' }}
+        run: |
+          .\.venv\Scripts\python.exe .\scripts\run_smart_cycle.py
+        timeout-minutes: 40
+
+      - name: Upload autonomy artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ether-host-state
+          path: |
+            memory/daemon/heartbeat.txt
+            memory/daemon/healthy.json
+            memory/daemon/ensure.log
+            memory/daemon/autonomy.jsonl
+            memory/flywheel/latest.json
+            SCOREBOARD.md
+          if-no-files-found: ignore

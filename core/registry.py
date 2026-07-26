@@ -1,49 +1,67 @@
-"""Central gem registry for @ETHER."""
+"""Gem registry — import side-effect wires pipeline boot hooks."""
 
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Dict
 
-from core.schemas import Envelope, ResponseEnvelope
+from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
 
 
 class GemRegistry:
-    def __init__(self):
-        self._gems: Dict[str, Any] = {}
+    def __init__(self) -> None:
+        self._gems: Dict[str, object] = {}
 
-    def register(self, name: str, gem: Any) -> None:
+    def register(self, name: str, gem: object) -> None:
         self._gems[name] = gem
 
-    def get(self, name: str) -> Any:
-        if name not in self._gems:
-            known = ", ".join(sorted(self._gems)) or "<none>"
-            raise KeyError(f"Gem '{name}' is not registered. Known gems: {known}")
-        return self._gems[name]
+    def get(self, name: str):
+        return self._gems.get(name)
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
-        gem = self.get(request.target_gem)
-        return gem.execute(request)
-
-    def list_gems(self) -> list[str]:
-        return list(self._gems.keys())
+        gem = self._gems.get(request.target_gem)
+        if gem is None:
+            return ResponseEnvelope(
+                task_id=request.task_id,
+                source_gem=request.target_gem,  # type: ignore
+                error=GemError(
+                    type=GemErrorType.UNKNOWN,
+                    message=f"Unknown gem: {request.target_gem}",
+                    recoverable=False,
+                ),
+            )
+        return gem.execute(request)  # type: ignore
 
 
 def build_default_registry() -> GemRegistry:
-    registry = GemRegistry()
-    loaders = [
-        ("clear-quartz", "gems.clear_quartz", "ClearQuartz"),
-        ("rose-quartz", "gems.rose_quartz", "RoseQuartz"),
-        ("citrine", "gems.citrine", "Citrine"),
-        ("selenite", "gems.selenite", "Selenite"),
-        ("amethyst", "gems.amethyst", "Amethyst"),
-        ("black-tourmaline", "gems.black_tourmaline", "BlackTourmaline"),
-        ("labradorite", "gems.labradorite", "Labradorite"),
-        ("grandidierite", "gems.grandidierite", "Grandidierite"),
-    ]
-    for name, module_name, cls_name in loaders:
-        try:
-            mod = __import__(module_name, fromlist=[cls_name])
-            registry.register(name, getattr(mod, cls_name)())
-        except Exception:
-            pass
-    return registry
+    from gems.clear_quartz.sandbox import ClearQuartz
+    from gems.rose_quartz.router import RoseQuartz
+    from gems.selenite.planner import Selenite
+    from gems.black_tourmaline.auditor import BlackTourmaline
+    from gems.labradorite.critic import Labradorite
+    from gems.amethyst.logger import Amethyst
+    from gems.grandidierite.fabricator import Grandidierite
+
+    # optional citrine
+    reg = GemRegistry()
+    reg.register("clear-quartz", ClearQuartz())
+    reg.register("rose-quartz", RoseQuartz())
+    reg.register("selenite", Selenite())
+    reg.register("black-tourmaline", BlackTourmaline())
+    reg.register("labradorite", Labradorite())
+    reg.register("amethyst", Amethyst())
+    reg.register("grandidierite", Grandidierite())
+    try:
+        from gems.citrine.memory import Citrine
+
+        reg.register("citrine", Citrine())
+    except Exception:
+        pass
+
+    try:
+        from core.pipeline_boot import apply
+
+        apply()
+    except Exception:
+        pass
+
+    return reg

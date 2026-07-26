@@ -1,0 +1,13 @@
+{
+  "profile": "host",
+  "label": "Owner workstation — GTX 1650 4GB VRAM, 12GB RAM",
+  "max_param_b": 3,
+  "preferred_models": [
+    "qwen2.5-coder:3b",
+    "phi3:mini",
+    "qwen2.5-coder:1.5b",
+    "llama3.2:3b"
+  ],
+  "forbid_pull": ["7b", "14b", "32b", "13b", "16b", "6.7b"],
+  "notes": "Cousin/high-end machines set profile to cousin via ETHER_HW_PROFILE=cousin"
+}

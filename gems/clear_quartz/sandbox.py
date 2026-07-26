@@ -1,4 +1,4 @@
-"""Clear Quartz sandbox — harness + honest test counting (print ≠ tests)."""
+"""Clear Quartz sandbox — test_synth + harness + honest test counting."""
 
 from __future__ import annotations
 
@@ -41,11 +41,17 @@ class ClearQuartz:
         start = time.perf_counter()
         code = payload.code
         try:
+            from core.test_synth import synthesize_asserts
+
+            code, _ = synthesize_asserts(code, objective="")
+        except Exception:
+            pass
+        try:
             from core.assert_harness import ensure_harness
 
             code, _ = ensure_harness(code)
         except Exception:
-            code = payload.code
+            pass
 
         try:
             security_flags = self._static_analysis(code)
@@ -152,7 +158,6 @@ class ClearQuartz:
     def _count_tests(
         self, stdout: str, stderr: str, exit_code: int, code: str
     ) -> Tuple[int, int]:
-        """Honest counts: print-only success is NOT a formal test (total_tests=0)."""
         combined = stdout + "\n" + stderr
         m = re.search(r"(\d+)\s+passed", combined)
         passed = int(m.group(1)) if m else 0
@@ -171,5 +176,4 @@ class ClearQuartz:
             if exit_code == 0 and "AssertionError" not in combined:
                 return assert_count, assert_count
             return 0, assert_count
-        # No asserts / pytest → verification stays weak (total_tests=0)
         return 0, 0

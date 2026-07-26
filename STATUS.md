@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Batch 66–70 on main:** process rewards, burst-on-retry, daemon quiz, TASKS refreshed.
+**71–74 on main:** methodology protocol, test_synth, ONBOARDING.md, scratch patch_loop.
 
 ```powershell
 cd C:\Users\Otcde\ETHER
@@ -9,7 +9,6 @@ git fetch origin
 git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
 .\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe .\scripts\bootstrap_intel.py
 ```
 
-Burst-on-fail is default when `ETHER_BURST=1` and key is set; retry elevates model.
+Read: `ONBOARDING.md`, `METHODOLOGY.md`, `SCOREBOARD.md`.

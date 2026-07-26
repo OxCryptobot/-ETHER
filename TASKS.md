@@ -1,36 +1,29 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 (batch 66–70 shipped)
+**Updated:** 2026-07-26 (batch 71–74 shipped)
 
-## Done — Intelligence + Scoreboard
+## Done
 | # | Item |
 |---|------|
-| — | Curriculum + vault + bandit + guardian |
-| — | Daemon / flywheel / Matrix Intelligence tab |
-| — | Tool reconcile quarantine→persistent |
-| — | Holdout quiz + fast bench + SCOREBOARD |
-| — | Honest test counts (print ≠ tests) |
-| — | Rose Quartz burst (Groq/xAI compatible) |
-| 61–65 | Closed: curriculum path, matrix intel, auto-bench, miner, partial process rewards |
-| **66** | TASKS board refreshed |
-| **67** | Process rewards (plan / first-compile / verify / burst cost) |
-| **68** | Multifile prompt + repo_map assist; apply_patch tool present |
-| **69** | Burst-on-fail on sandbox retry (`ETHER_BURST_ON_FAIL=1`) |
-| **70** | Daemon: quiz every N cycles + scoreboard rewrite |
+| — | Intelligence v1–v2 scoreboard stack |
+| 66–70 | Process rewards, burst-on-fail, daemon quiz |
+| **71** | Side-by-side comparison protocol in METHODOLOGY.md |
+| **72** | test_synth before sandbox (+ harness) |
+| **73** | ONBOARDING.md (cousin one-pager) |
+| **74** | patch_loop for memory/scratch diffs + apply_patch tool |
 
-## Next — Credibility & hard tasks
+## Next
 | # | Priority | Task |
 |---|----------|------|
-| 71 | P1 | Side-by-side methodology vs Aider/Continue (manual protocol in METHODOLOGY) |
-| 72 | P1 | Property/test synthesis before sandbox |
-| 73 | P1 | Cousin one-page onboarding |
-| 74 | P1 | Full multifile pipeline: generate diff → apply_patch → re-test |
-| 75 | P2 | Contextual bandit (tier, fail_kind features) |
-| 76 | P2 | Cost/latency ledger dashboard panel |
-| 77 | P2 | Expand holdout quiz to 40 tasks |
+| 75 | P1 | Contextual bandit (tier, fail_kind → arm) |
+| 76 | P1 | Cost/latency ledger panel in Matrix |
+| 77 | P1 | Expand holdout quiz to 40 tasks |
+| 78 | P2 | Wire patch_loop stage explicitly in pipeline when diff detected |
+| 79 | P2 | compare_YYYYMMDD runner script for side-by-side logs |
+| 80 | P2 | Scratch multifile curriculum tier |
 
-## Ops cadence (daemon)
-1. Smart cycle (curriculum objective)
-2. Every 3: tool reconcile
-3. Every 6: `bench.py --fast`
-4. Every 8: `quiz.py --limit 5` + scoreboard
+## Daemon cadence
+1. Smart cycle
+2. /3 reconcile tools
+3. /6 fast bench
+4. /8 holdout quiz sample + scoreboard

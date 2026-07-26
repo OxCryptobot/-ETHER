@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-process daemon."""
+"""@ETHER single-process daemon with curriculum intelligence cycles."""
 
 from __future__ import annotations
 
@@ -20,6 +20,9 @@ os.chdir(ROOT)
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
 os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
+os.environ.setdefault("ETHER_CURRICULUM", "1")
+os.environ.setdefault("ETHER_EXPERIENCE", "1")
+os.environ.setdefault("ETHER_BENCH_GUARDIAN", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
@@ -33,6 +36,7 @@ except Exception:
 PY = sys.executable
 INTERVAL = int(os.getenv("ETHER_DAEMON_INTERVAL", os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))
 BATCH_INTERVAL = int(os.getenv("ETHER_BATCH_INTERVAL", "1800"))
+BENCH_EVERY = int(os.getenv("ETHER_BENCH_EVERY_N", "6"))
 RUN_DASH = os.getenv("ETHER_DAEMON_DASHBOARD", "1") == "1"
 RUN_FLYWHEEL = os.getenv("ETHER_DAEMON_FLYWHEEL", "1") == "1"
 RUN_BATCH = os.getenv("ETHER_DAEMON_BATCH", "1") == "1"
@@ -42,6 +46,7 @@ PID_PATH = ROOT / "memory" / "daemon" / "daemon.pid"
 HB_PATH = ROOT / "memory" / "daemon" / "heartbeat.txt"
 LOG_PATH = ROOT / "memory" / "daemon" / "daemon.log"
 _stop = threading.Event()
+_cycle_n = 0
 
 
 def log(msg: str) -> None:
@@ -82,7 +87,6 @@ def acquire_lock() -> bool:
             old = -1
         if old > 0 and old != os.getpid() and _pid_alive(old):
             log(f"ABORT: daemon already running pid={old}")
-            log("Run: powershell -File scripts\\stop_daemon.ps1")
             return False
     PID_PATH.write_text(str(os.getpid()), encoding="utf-8")
 
@@ -109,34 +113,28 @@ def heartbeat() -> None:
 def run_cmd(args: list[str], timeout: int = 3600) -> int:
     try:
         return subprocess.run(args, cwd=str(ROOT), env=os.environ.copy(), timeout=timeout).returncode
-    except subprocess.TimeoutExpired:
-        log(f"timeout: {args}")
-        return -1
     except Exception as e:
         log(f"cmd error: {e}")
         return -1
 
 
 def flywheel_loop() -> None:
-    log(f"flywheel interval={INTERVAL}s")
+    global _cycle_n
+    log(f"smart flywheel interval={INTERVAL}s")
     while not _stop.is_set():
         heartbeat()
-        log("flywheel cycle start")
-        code = run_cmd(
-            [
-                PY,
-                "-m",
-                "cli.main",
-                "flywheel",
-                "--push",
-                "--min-confidence",
-                os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7"),
-                "--max-retries",
-                os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3"),
-            ],
-            timeout=2400,
-        )
-        log(f"flywheel exit={code}")
+        _cycle_n += 1
+        log(f"smart cycle #{_cycle_n} start")
+        # prefer curriculum-aware cycle
+        smart = ROOT / "scripts" / "run_smart_cycle.py"
+        if smart.exists():
+            code = run_cmd([PY, str(smart)], timeout=2400)
+        else:
+            code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
+        log(f"smart cycle exit={code}")
+        if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
+            log("bench guardian refresh")
+            run_cmd([PY, str(ROOT / "scripts" / "bench.py")], timeout=3600)
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
                 return
@@ -147,7 +145,6 @@ def batch_loop() -> None:
     log(f"batch interval={BATCH_INTERVAL}s")
     while not _stop.is_set():
         heartbeat()
-        log("batch tick")
         code = run_cmd([PY, str(ROOT / "scripts" / "batch_worker.py")], timeout=3600)
         log(f"batch exit={code}")
         for _ in range(max(120, BATCH_INTERVAL)):
@@ -168,17 +165,11 @@ def dashboard_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DAEMON — single process", flush=True)
+    print("  @ETHER DAEMON — intelligence enabled", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print(f"  python={PY}", flush=True)
     print("=" * 60, flush=True)
-
-    if not (ROOT / "scripts" / "ether_daemon.py").exists():
-        log(f"FATAL: not an ETHER root: {ROOT}")
-        return 2
     if not acquire_lock():
         return 2
-
     heartbeat()
     if RUN_DASH:
         threading.Thread(target=dashboard_loop, name="dashboard", daemon=True).start()
@@ -189,7 +180,6 @@ def main() -> int:
         threading.Thread(target=batch_loop, name="batch", daemon=True).start()
 
     def _sig(*_a):
-        log("stopping")
         _stop.set()
 
     signal.signal(signal.SIGINT, _sig)
@@ -197,7 +187,6 @@ def main() -> int:
         signal.signal(signal.SIGTERM, _sig)
     except Exception:
         pass
-
     try:
         while not _stop.is_set():
             heartbeat()

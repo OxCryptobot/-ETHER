@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.1")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.2")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,13 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.1"
+        data["api_version"] = "0.4.2"
+        try:
+            from dashboard.collector_health import load_auto_health
+
+            data["auto_health"] = load_auto_health()
+        except Exception:
+            data["auto_health"] = {}
         return data
     except Exception as e:
         return {
@@ -100,12 +106,11 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.1"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.2"}
 
 
 @app.get("/api/health-check")
 def health_check(skip_sandbox: bool = True) -> dict:
-    """Run automated probes (sandbox smoke optional — default skip for UI speed)."""
     try:
         from core.health_check import run_health_checks
 

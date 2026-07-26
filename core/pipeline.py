@@ -40,6 +40,7 @@ from core.repair import repair_prompt, classify_stderr
 from core.patterns import index_pass_pattern
 from core.experience import retrieve as experience_retrieve, record as experience_record
 from core.bench_guardian import is_frozen
+from core.pipeline_burst import decide_burst
 
 MAX_CODE_CHARS = 50_000
 
@@ -107,7 +108,6 @@ class Pipeline:
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
         tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
-        burst_on_fail = os.getenv("ETHER_BURST_ON_FAIL", "1") == "1"
 
         strategy = self.policy.select() if learning_enabled() else "default"
         result.strategy = strategy
@@ -116,7 +116,6 @@ class Pipeline:
         tool_block = ""
         last_err = ""
         fail_kind = ""
-        first_attempt_ok = False
 
         try:
             t0 = time.perf_counter()
@@ -289,14 +288,13 @@ class Pipeline:
                 t2 = time.perf_counter()
                 write_progress(tid, objective, "code" if attempt == 1 else "code_retry")
 
-                # burst on retry / strategy / hard multifile
-                force_burst = False
-                if attempt > 1 and burst_on_fail:
-                    force_burst = True
-                if strategy == "burst_on_fail" and attempt > 1:
-                    force_burst = True
-                if _looks_multifile(objective) and attempt > 1:
-                    force_burst = True
+                # Single policy entry point — no duplicated inline rules
+                force_burst = decide_burst(
+                    attempt=attempt,
+                    strategy=strategy,
+                    objective=objective,
+                    tier=0,
+                )
 
                 prev_force = os.environ.get("ETHER_FORCE_BURST")
                 if force_burst:
@@ -400,7 +398,6 @@ class Pipeline:
                 result.verification_score = scores["verification_score"]
                 ok = sand_payload.exit_code == 0
                 if attempt == 1 and ok:
-                    first_attempt_ok = True
                     result.first_compile_ok = True
                 result.stages.append(
                     StageResult(
@@ -488,6 +485,7 @@ class Pipeline:
             exit_code = result.sandbox.exit_code if result.sandbox else None
             audit_ok = bool(result.audit and result.audit.approved)
             had_self = bool(result.sandbox and result.sandbox.total_tests > 0)
+            total_tests = int(result.sandbox.total_tests) if result.sandbox else 0
             result.reward = compute_reward(
                 exit_code=exit_code,
                 confidence=result.confidence,
@@ -515,6 +513,8 @@ class Pipeline:
                     stderr=last_err if not success else "",
                     fail_kind=fail_kind if not success else "",
                     task_id=tid,
+                    verification_score=result.verification_score,
+                    total_tests=total_tests,
                 )
             except Exception:
                 pass
@@ -619,6 +619,8 @@ class Pipeline:
                 stderr=msg,
                 fail_kind=stage,
                 task_id=str(result.task_id),
+                verification_score=result.verification_score,
+                total_tests=int(result.sandbox.total_tests) if result.sandbox else 0,
             )
         except Exception:
             pass

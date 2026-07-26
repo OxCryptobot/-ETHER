@@ -55,7 +55,7 @@ def _safe(text: str) -> str:
 
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    console.print("[bold cyan]@ETHER[/] v0.1.2")
+    console.print("[bold cyan]@ETHER[/] v0.1.3")
 
 
 @app.command()
@@ -69,12 +69,12 @@ def env() -> None:
     for k in [
         "OLLAMA_BASE_URL",
         "ETHER_PRIMARY_MODEL",
+        "ETHER_SANDBOX_BACKEND",
+        "ETHER_SANDBOX_PYTHON",
         "ETHER_LEARNING",
         "ETHER_TOOL_ASSIST",
-        "ETHER_AUTO_PROMOTE",
-        "ETHER_AUTO_FABRICATE_ON_FAIL",
         "ETHER_FLYWHEEL_PUSH",
-        "ETHER_ROSE_STREAM",
+        "ETHER_BURST",
         "ETHER_ROOT",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
@@ -101,11 +101,26 @@ def status() -> None:
 
 @app.command()
 def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
+    backend = (os.getenv("ETHER_SANDBOX_BACKEND") or "auto").strip().lower()
+    docker_ok = shutil.which("docker") is not None
+    py_local = os.getenv("ETHER_SANDBOX_PYTHON") or ("python3" if sys.platform != "win32" else sys.executable)
+    local_ok = shutil.which(py_local) is not None or Path(py_local).exists()
+    if backend in ("local", "subprocess", "native"):
+        sandbox_ok = local_ok
+    elif backend == "docker":
+        sandbox_ok = docker_ok
+    else:
+        sandbox_ok = docker_ok or local_ok
+
     checks = {
-        "docker": shutil.which("docker") is not None,
+        "sandbox_backend": backend,
+        "sandbox_ok": sandbox_ok,
+        "docker": docker_ok,
+        "local_python": local_ok,
         "ollama": shutil.which("ollama") is not None,
         "manifest": True,
         "registry": True,
+        "primary_model": os.getenv("ETHER_PRIMARY_MODEL", ""),
     }
     try:
         load_config()
@@ -115,11 +130,21 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         build_default_registry()
     except Exception:
         checks["registry"] = False
+
+    critical = ["sandbox_ok", "ollama", "manifest", "registry"]
+    ok_all = all(bool(checks[k]) for k in critical)
+
     if json_out:
         console.print_json(json.dumps(checks))
-        raise typer.Exit(0 if all(checks.values()) else 1)
-    for name, ok in checks.items():
-        console.print(f"  {'[green]✓[/]' if ok else '[red]✗[/]'} {name}")
+        raise typer.Exit(0 if ok_all else 1)
+    for name in ["sandbox_backend", "sandbox_ok", "docker", "local_python", "ollama", "manifest", "registry", "primary_model"]:
+        val = checks[name]
+        if name in ("sandbox_backend", "primary_model"):
+            console.print(f"  [cyan]·[/] {name}={val}")
+        else:
+            console.print(f"  {'[green]✓[/]' if val else '[red]✗[/]'} {name}")
+    if backend in ("local", "auto") and not docker_ok:
+        console.print("[dim]tip: Linux no-Docker → ETHER_SANDBOX_BACKEND=local (auto already falls back)[/]")
 
 
 @app.command()
@@ -318,7 +343,6 @@ def tool_run(
     payload: str = typer.Option("{}", "--payload"),
     payload_file: Path = typer.Option(None, "--payload-file", help="JSON file (avoids PowerShell quoting)"),
 ) -> None:
-    """Run a persistent/quarantine tool. Prefer --payload-file on Windows."""
     from gems.grandidierite.registry import run_tool
 
     body: dict
@@ -332,7 +356,6 @@ def tool_run(
             print_error(f"invalid JSON in file: {e}")
             raise typer.Exit(1)
     else:
-        # stdin fallback if payload is empty marker
         raw = payload
         if raw in ("-", "@-"):
             raw = sys.stdin.read()
@@ -340,7 +363,7 @@ def tool_run(
             body = json.loads(raw) if raw.strip() else {}
         except json.JSONDecodeError as e:
             print_error(f"invalid JSON payload: {e}")
-            print_error('Tip: ether tool-run NAME --payload-file path.json')
+            print_error("Tip: ether tool-run NAME --payload-file path.json")
             raise typer.Exit(1)
     if not isinstance(body, dict):
         print_error("payload must be a JSON object")

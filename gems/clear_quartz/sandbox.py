@@ -1,10 +1,11 @@
-"""Clear Quartz — Docker or local subprocess sandbox (ETHER_SANDBOX_BACKEND)."""
+"""Clear Quartz — Docker or local subprocess; auto-fallback when Docker missing."""
 
 from __future__ import annotations
 
 import ast
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,8 +24,16 @@ from core.schemas import (
 
 
 def sandbox_backend() -> str:
-    """docker (default) | local (no Docker; still timeout + static analysis)."""
-    return (os.getenv("ETHER_SANDBOX_BACKEND") or "docker").strip().lower()
+    """docker | local | auto (prefer docker if present, else local)."""
+    raw = (os.getenv("ETHER_SANDBOX_BACKEND") or "auto").strip().lower()
+    if raw in ("local", "subprocess", "native"):
+        return "local"
+    if raw == "docker":
+        return "docker"
+    # auto
+    if shutil.which("docker"):
+        return "docker"
+    return "local"
 
 
 class ClearQuartz:
@@ -101,15 +110,40 @@ class ClearQuartz:
             )
         except FileNotFoundError as e:
             backend = sandbox_backend()
+            # one-shot fallback docker → local
+            if backend == "docker":
+                try:
+                    result = self._run_local(payload.code if False else code, request.timeout_seconds)
+                    execution_time = time.perf_counter() - start
+                    tests_passed, total_tests = self._count_tests(
+                        result.stdout, result.stderr, result.returncode, code
+                    )
+                    flags = self._static_analysis(code)
+                    return ResponseEnvelope(
+                        task_id=request.task_id,
+                        source_gem="clear-quartz",
+                        payload=ClearQuartzResponse(
+                            stdout=result.stdout,
+                            stderr=result.stderr,
+                            exit_code=result.returncode,
+                            total_tests=total_tests,
+                            tests_passed=tests_passed,
+                            security_flags=flags + ["sandbox_fallback:local"],
+                            execution_time=round(execution_time, 3),
+                            static_analysis_score=0.0 if flags else 1.0,
+                        ),
+                    )
+                except Exception:
+                    pass
             msg = (
                 "Docker is not installed or not in PATH"
                 if backend == "docker"
                 else f"Local Python runner missing: {e}"
             )
             hint = (
-                "Install Docker, or set ETHER_SANDBOX_BACKEND=local for subprocess execution"
+                "Install Docker, or set ETHER_SANDBOX_BACKEND=local"
                 if backend == "docker"
-                else "Ensure python3 is on PATH"
+                else "Ensure python3 is on PATH or set ETHER_SANDBOX_PYTHON"
             )
             return ResponseEnvelope(
                 task_id=request.task_id,
@@ -144,7 +178,7 @@ class ClearQuartz:
 
     def _run(self, code: str, timeout: int) -> subprocess.CompletedProcess:
         backend = sandbox_backend()
-        if backend in ("local", "subprocess", "native"):
+        if backend == "local":
             return self._run_local(code, timeout)
         try:
             from gems.clear_quartz.warm import warm_enabled, run_in_warm
@@ -155,19 +189,24 @@ class ClearQuartz:
                     return warm
         except Exception:
             pass
-        return self._run_docker(code, timeout)
+        try:
+            return self._run_docker(code, timeout)
+        except FileNotFoundError:
+            return self._run_local(code, timeout)
 
     def _run_local(self, code: str, timeout: int) -> subprocess.CompletedProcess:
-        """No Docker: run with host Python. Weaker isolation — trusted local use only."""
+        """No Docker: host Python with -I. Weaker isolation — trusted local use only."""
         env = {
             "PATH": os.environ.get("PATH", ""),
             "PYTHONPATH": "",
             "HOME": tempfile.gettempdir(),
             "TMPDIR": tempfile.gettempdir(),
-            "LANG": "C.UTF-8",
+            "LANG": os.environ.get("LANG", "C.UTF-8"),
+            "LC_ALL": os.environ.get("LC_ALL", "C.UTF-8"),
         }
-        # Prefer python3 on Linux
-        py = os.getenv("ETHER_SANDBOX_PYTHON") or ("python3" if sys.platform != "win32" else sys.executable)
+        py = os.getenv("ETHER_SANDBOX_PYTHON") or (
+            "python3" if sys.platform != "win32" else sys.executable
+        )
         return subprocess.run(
             [py, "-I", "-c", code],
             capture_output=True,

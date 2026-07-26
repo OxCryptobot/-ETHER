@@ -1,29 +1,30 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 (batch 71–74 shipped)
+**Updated:** 2026-07-26 (71–75, 77–78 in flight/done)
 
 ## Done
 | # | Item |
 |---|------|
-| — | Intelligence v1–v2 scoreboard stack |
 | 66–70 | Process rewards, burst-on-fail, daemon quiz |
-| **71** | Side-by-side comparison protocol in METHODOLOGY.md |
-| **72** | test_synth before sandbox (+ harness) |
-| **73** | ONBOARDING.md (cousin one-pager) |
-| **74** | patch_loop for memory/scratch diffs + apply_patch tool |
+| 71 | Side-by-side protocol in METHODOLOGY.md |
+| 72 | test_synth + harness in Clear Quartz |
+| 73 | ONBOARDING.md |
+| 74 | patch_loop (memory/scratch only) |
+| 75 | Contextual bandit select(context) |
+| 77 | expand_holdout.py → up to 40 tasks |
+| 78 | pipeline_hooks prepare_code_for_sandbox |
 
 ## Next
-| # | Priority | Task |
-|---|----------|------|
-| 75 | P1 | Contextual bandit (tier, fail_kind → arm) |
-| 76 | P1 | Cost/latency ledger panel in Matrix |
-| 77 | P1 | Expand holdout quiz to 40 tasks |
-| 78 | P2 | Wire patch_loop stage explicitly in pipeline when diff detected |
-| 79 | P2 | compare_YYYYMMDD runner script for side-by-side logs |
-| 80 | P2 | Scratch multifile curriculum tier |
+| # | Task |
+|---|------|
+| 76 | Cost/latency ledger panel in Matrix |
+| 79 | compare_YYYYMMDD runner for side-by-side logs |
+| 80 | Scratch multifile curriculum tier |
+| 81 | Pipeline uses bandit_context + prepare_code_for_sandbox on every run |
 
-## Daemon cadence
-1. Smart cycle
-2. /3 reconcile tools
-3. /6 fast bench
-4. /8 holdout quiz sample + scoreboard
+## Pull
+```powershell
+git fetch origin; git reset --hard origin/main
+python scripts/expand_holdout.py
+pytest -q
+```

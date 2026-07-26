@@ -6,7 +6,7 @@ on:
       action:
         description: "ensure | selftest | health | cycle"
         required: true
-        default: "ensure"
+        default: "cycle"
         type: choice
         options:
           - ensure
@@ -14,77 +14,76 @@ on:
           - health
           - cycle
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/15 * * * *"
   push:
     branches: [main]
     paths:
       - "core/autonomy.py"
       - "scripts/ether_daemon.py"
       - "scripts/ensure_daemon.ps1"
+      - "dashboard/**"
       - ".github/workflows/autonomy-host.yml"
 
 jobs:
   host:
-    # Windows host with Ollama + Docker — x64 or ARM64
     runs-on: [self-hosted, Windows, ETHER]
+    env:
+      ETHER_ROOT: C:\Users\Otcde\ETHER
     defaults:
       run:
         shell: pwsh
-        working-directory: ${{ github.workspace }}
 
     steps:
-      - name: Checkout
+      - name: Checkout (control scripts)
         uses: actions/checkout@v4
 
-      - name: Soft sync to main
+      - name: Soft sync REAL install at ETHER_ROOT
         run: |
+          $root = $env:ETHER_ROOT
+          if (-not (Test-Path $root)) { throw "ETHER_ROOT missing: $root" }
+          Set-Location $root
           git fetch origin
           git reset --hard origin/main
-
-      - name: Ensure venv + editable
-        run: |
-          $py = $null
-          foreach ($c in @("python", "python3", "py")) {
-            try { $v = & $c -c "import sys; print(sys.executable)" 2>$null; if ($v) { $py = $c; break } } catch {}
-          }
-          if (-not $py) { throw "No Python on PATH (ARM64 or x64 install required)" }
           if (-not (Test-Path .\.venv\Scripts\python.exe)) {
-            & $py -m venv .venv
+            python -m venv .venv
             .\.venv\Scripts\python.exe -m pip install -U pip
           }
           .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
 
-      - name: Ensure daemon alive
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.action == 'ensure' || inputs.action == 'cycle' || inputs.action == '' }}
+      - name: Ensure daemon (dashboard + flywheel + batch)
         run: |
+          Set-Location $env:ETHER_ROOT
           powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
 
       - name: Offline autonomy self-test
         if: ${{ github.event_name == 'push' || inputs.action == 'selftest' || inputs.action == 'cycle' }}
         run: |
+          Set-Location $env:ETHER_ROOT
           .\.venv\Scripts\python.exe .\scripts\self_test_autonomy.py
 
       - name: Health check
-        if: ${{ inputs.action == 'health' || inputs.action == 'cycle' }}
+        if: ${{ inputs.action == 'health' || inputs.action == 'cycle' || github.event_name == 'schedule' }}
         run: |
+          Set-Location $env:ETHER_ROOT
           .\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
 
-      - name: One smart cycle
-        if: ${{ inputs.action == 'cycle' }}
+      - name: Smart cycle (curriculum + learn)
+        if: ${{ inputs.action == 'cycle' || github.event_name == 'schedule' }}
         run: |
+          Set-Location $env:ETHER_ROOT
           .\.venv\Scripts\python.exe .\scripts\run_smart_cycle.py
         timeout-minutes: 40
 
-      - name: Upload autonomy artifacts
+      - name: Upload host state
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ether-host-state
           path: |
-            memory/daemon/heartbeat.txt
-            memory/daemon/healthy.json
-            memory/daemon/ensure.log
-            memory/daemon/autonomy.jsonl
-            memory/flywheel/latest.json
-            SCOREBOARD.md
+            C:/Users/Otcde/ETHER/memory/daemon/heartbeat.txt
+            C:/Users/Otcde/ETHER/memory/daemon/healthy.json
+            C:/Users/Otcde/ETHER/memory/daemon/ensure.log
+            C:/Users/Otcde/ETHER/memory/daemon/autonomy.jsonl
+            C:/Users/Otcde/ETHER/memory/flywheel/latest.json
+            C:/Users/Otcde/ETHER/SCOREBOARD.md
           if-no-files-found: ignore

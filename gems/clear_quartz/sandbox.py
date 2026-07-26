@@ -1,4 +1,4 @@
-"""Clear Quartz sandbox — test_synth + harness + honest test counting."""
+"""Clear Quartz — prep hooks (test_synth/patch) + harness + honest tests."""
 
 from __future__ import annotations
 
@@ -41,17 +41,22 @@ class ClearQuartz:
         start = time.perf_counter()
         code = payload.code
         try:
-            from core.test_synth import synthesize_asserts
+            from core.pipeline_hooks import prepare_code_for_sandbox
 
-            code, _ = synthesize_asserts(code, objective="")
+            code, _meta = prepare_code_for_sandbox(code, objective="")
         except Exception:
-            pass
-        try:
-            from core.assert_harness import ensure_harness
+            try:
+                from core.test_synth import synthesize_asserts
 
-            code, _ = ensure_harness(code)
-        except Exception:
-            pass
+                code, _ = synthesize_asserts(code, objective="")
+            except Exception:
+                pass
+            try:
+                from core.assert_harness import ensure_harness
+
+                code, _ = ensure_harness(code)
+            except Exception:
+                pass
 
         try:
             security_flags = self._static_analysis(code)

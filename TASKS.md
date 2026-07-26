@@ -1,29 +1,30 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 (76–81)
+**Updated:** 2026-07-26 — through batch 81
 
-## Done
+## Done (66–81)
 | # | Item |
 |---|------|
-| 66–75 | Intelligence scoreboard, process rewards, burst-on-fail, test_synth, onboarding |
-| **76** | `core/ledger.py` cost/latency ledger (Matrix already reads it) |
-| **77** | `scripts/expand_holdout.py` |
-| **78–81** | pipeline_hooks + pipeline_boot wires contextual bandit + code prep |
-| **79** | `scripts/compare_run.py` side-by-side scaffold |
-| **80** | `memory/curriculum/scratch_tier.json` |
+| 66–70 | Process rewards, burst-on-fail, daemon quiz |
+| 71 | Side-by-side protocol |
+| 72 | test_synth |
+| 73 | ONBOARDING.md |
+| 74 | patch_loop (scratch only) |
+| 75 | Contextual bandit |
+| 76 | Ledger + Matrix fields (avg_run_ms, burst calls) |
+| 77 | expand_holdout.py |
+| 78–81 | prep hooks in Clear Quartz; bandit auto-tier; compare_run.py; scratch curriculum |
 
 ## Next
 | # | Task |
 |---|------|
-| 82 | Blend scratch_tier into curriculum load_tiers |
-| 83 | Matrix UI cards for ledger avg_ms / burst |
-| 84 | Auto-write SCOREBOARD after compare_run |
-| 85 | Stabilize Windows daemon one-window path |
+| 82 | Dashboard UI cards for ledger stage_avg_ms |
+| 83 | Full 40-task quiz weekly job |
+| 84 | Human compare fill-in for Aider/Continue columns |
 
 ```powershell
 git fetch origin; git reset --hard origin/main
-python -m pip install -e ".[dev]" -q
 python scripts/expand_holdout.py
-python -c "from core.ledger import compute_ledger; print(compute_ledger())"
+python scripts/compare_run.py --limit 5
 pytest -q
 ```

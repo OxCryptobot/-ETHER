@@ -1,4 +1,4 @@
-"""Reward hygiene + process rewards + contextual bandit bias."""
+"""Reward hygiene + process rewards + contextual bandit (auto tier)."""
 
 from __future__ import annotations
 
@@ -129,8 +129,15 @@ class BanditPolicy:
         self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def select(self, context: Optional[Dict] = None) -> str:
-        """Context bias: tier, fail_kind, multifile → preferred arms (still epsilon-greedy)."""
-        ctx = context or {}
+        ctx = dict(context or {})
+        if "tier" not in ctx:
+            try:
+                from core.curriculum import current_tier_index
+
+                ctx["tier"] = current_tier_index()
+            except Exception:
+                ctx["tier"] = 0
+
         preferred = []
         tier = int(ctx.get("tier") or 0)
         fail_kind = str(ctx.get("fail_kind") or "")

@@ -1,8 +1,8 @@
-"""Small pipeline helpers to avoid mega-diff churn."""
+"""Pipeline helpers — bandit context + sandbox prep."""
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 
 def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[str, Any]:
@@ -12,8 +12,7 @@ def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[s
 
 
 def prepare_code_for_sandbox(code: str, objective: str = "") -> Tuple[str, Dict[str, Any]]:
-    """test_synth → optional scratch patch → return code + meta."""
-    meta: Dict[str, Any] = {"synth": False, "patch": None}
+    meta: Dict[str, Any] = {"synth": False, "harness": False, "patch": None}
     try:
         from core.test_synth import synthesize_asserts
 
@@ -23,6 +22,15 @@ def prepare_code_for_sandbox(code: str, objective: str = "") -> Tuple[str, Dict[
             meta["synth"] = True
     except Exception as e:
         meta["synth_error"] = str(e)[:120]
+    try:
+        from core.assert_harness import ensure_harness
+
+        code2, mod = ensure_harness(code)
+        if mod:
+            code = code2
+            meta["harness"] = True
+    except Exception as e:
+        meta["harness_error"] = str(e)[:120]
     try:
         from core.patch_loop import maybe_patch_cycle
 

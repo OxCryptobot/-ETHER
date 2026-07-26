@@ -1,4 +1,4 @@
-"""Reward hygiene + process rewards + strategy arms."""
+"""Reward hygiene + process rewards + contextual bandit bias."""
 
 from __future__ import annotations
 
@@ -45,41 +45,30 @@ def compute_reward(
     first_compile_ok: bool = False,
     used_burst: bool = False,
 ) -> float:
-    """Gate-relevant reward with process components."""
     if exit_code is None:
         return -1.0
     if exit_code != 0:
-        # partial credit if plan worked and we at least attempted compile
         base = -0.95 + 0.05 * min(retries, 2)
         if plan_ok:
             base += 0.05
         return round(max(-1.0, min(0.0, base)), 4)
-
     if not audit_approved:
         return -0.2
-
     conf = max(0.0, min(1.0, float(confidence)))
     ver = max(0.0, min(1.0, float(verification_score)))
-
-    # outcome core
     r = 0.15 + 0.30 * conf + 0.25 * ver
-
-    # process rewards
     if plan_ok:
         r += 0.08
     if first_compile_ok:
-        r += 0.12  # first sandbox pass without retry
+        r += 0.12
     else:
         r -= 0.05 * min(retries, 3)
     if had_self_check:
         r += 0.12
     else:
         r -= 0.08
-
-    # slight cost for burst so local wins preferred when equal
     if used_burst:
         r -= 0.05
-
     return round(max(-1.0, min(1.0, r)), 4)
 
 
@@ -139,10 +128,26 @@ class BanditPolicy:
         }
         self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    def select(self) -> str:
+    def select(self, context: Optional[Dict] = None) -> str:
+        """Context bias: tier, fail_kind, multifile → preferred arms (still epsilon-greedy)."""
+        ctx = context or {}
+        preferred = []
+        tier = int(ctx.get("tier") or 0)
+        fail_kind = str(ctx.get("fail_kind") or "")
+        multifile = bool(ctx.get("multifile"))
+        if fail_kind in ("SyntaxError", "syntax", "NameError", "ImportError"):
+            preferred.extend(["repair_heavy", "with_asserts", "minimal"])
+        if multifile or tier >= 2:
+            preferred.extend(["repo_map_on", "few_shot_on", "rag_on"])
+        if tier >= 3:
+            preferred.append("burst_on_fail")
+        preferred = [p for p in preferred if p in self.arms]
+
         cold = [s for s, a in self.arms.items() if a.pulls < MIN_PULLS_BEFORE_GREEDY]
-        if cold and random.random() < 0.45:
+        if cold and random.random() < 0.35:
             return random.choice(cold)
+        if preferred and random.random() < 0.40:
+            return random.choice(preferred)
         if random.random() < self.epsilon:
             return random.choice(list(self.arms.keys()))
         return max(self.arms.items(), key=lambda kv: kv[1].mean_reward)[0]

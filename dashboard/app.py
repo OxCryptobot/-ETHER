@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.2")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.3")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.2"
+        data["api_version"] = "0.4.3"
         try:
             from dashboard.collector_health import load_auto_health
 
@@ -106,7 +106,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.2"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.3"}
 
 
 @app.get("/api/health-check")

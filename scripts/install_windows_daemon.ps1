@@ -1,7 +1,8 @@
 # Registers always-on autonomy on Windows:
-#   ETHER-Daemon  — main process at logon
-#   ETHER-Ensure  — every 5 min: start daemon if dead / heartbeat stale
-# Run once (elevated optional). After this, logon is enough.
+#   ETHER-Daemon  - main process at logon
+#   ETHER-Ensure  - every 5 min: start daemon if dead / heartbeat stale
+#
+#   powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_daemon.ps1
 
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -9,6 +10,8 @@ $Py = Join-Path $Root ".venv\Scripts\python.exe"
 $Daemon = Join-Path $Root "scripts\ether_daemon.py"
 $Ensure = Join-Path $Root "scripts\ensure_daemon.ps1"
 $Ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+# Task Scheduler rejects [TimeSpan]::MaxValue
+$RepeatFor = New-TimeSpan -Days 3650
 
 if (-not (Test-Path -LiteralPath $Py)) {
   Write-Host "[venv] creating"
@@ -48,7 +51,6 @@ function Register-EtherTask {
   Write-Host "OK registered $Name"
 }
 
-# Main daemon at logon
 $tLogon = New-ScheduledTaskTrigger -AtLogOn
 Register-EtherTask -Name "ETHER-Daemon" `
   -Execute $Py `
@@ -56,19 +58,16 @@ Register-EtherTask -Name "ETHER-Daemon" `
   -Trigger $tLogon `
   -Description "@ETHER autonomous daemon (flywheel+batch+recovery+dashboard)"
 
-# Ensure every 5 minutes forever
-$tEnsure = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration ([TimeSpan]::MaxValue)
+$tEnsure = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration $RepeatFor
 Register-EtherTask -Name "ETHER-Ensure" `
   -Execute $Ps `
   -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$Ensure`"" `
   -Trigger $tEnsure `
   -Description "@ETHER ensure daemon alive (heartbeat watchdog)"
 
-# Kick both now
 try { Start-ScheduledTask -TaskName "ETHER-Daemon" -ErrorAction SilentlyContinue } catch {}
 try { Start-ScheduledTask -TaskName "ETHER-Ensure" -ErrorAction SilentlyContinue } catch {}
 
-# Also fire ensure inline once
 & $Ps -NoProfile -ExecutionPolicy Bypass -File $Ensure
 
 Write-Host ""

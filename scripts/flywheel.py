@@ -19,6 +19,7 @@ if str(ROOT) not in sys.path:
 
 from core.dotenv import load_dotenv  # noqa: E402
 from scripts.flywheel_git import safe_pull  # noqa: E402
+from scripts.flywheel_metrics import pipeline_metrics  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
@@ -30,11 +31,12 @@ FLYWHEEL_MD = ROOT / "FLYWHEEL.md"
 HEARTBEAT_PATH = REPORT_DIR / "heartbeat.txt"
 
 DEFAULT_OBJECTIVE = (
-    "Write only this Python code with no markdown:\n"
+    "Write only Python with asserts:\n"
     "def is_even(n):\n"
     "    return n % 2 == 0\n"
-    "print(is_even(4))\n"
-    "print(is_even(5))\n"
+    "assert is_even(4) is True\n"
+    "assert is_even(5) is False\n"
+    "print('ok')\n"
 )
 
 REPORT_PATHS = [
@@ -120,29 +122,16 @@ def run_pipeline_once(objective: str) -> Dict[str, Any]:
         from core.pipeline import Pipeline
 
         result = Pipeline().run(objective, critique=False)
-        audit_ok = bool(result.audit and result.audit.approved)
-        confidence = float(result.confidence or 0.0)
-        sandbox_ok = bool(result.sandbox and result.sandbox.exit_code == 0)
-        stderr = (result.sandbox.stderr or "")[-800:] if result.sandbox else ""
-        stdout = (result.sandbox.stdout or "")[-400:] if result.sandbox else ""
-        return {
-            "ok": result.status == "complete" and sandbox_ok and audit_ok,
-            "status": result.status,
-            "confidence": confidence,
-            "audit_approved": audit_ok,
-            "sandbox_exit": result.sandbox.exit_code if result.sandbox else None,
-            "sandbox_stderr": stderr,
-            "sandbox_stdout": stdout,
-            "retries_inside_pipeline": getattr(result, "retries", 0),
-            "error": result.error,
-            "duration_s": round(time.perf_counter() - started, 3),
-            "task_id": str(result.task_id),
-        }
+        metrics = pipeline_metrics(result)
+        metrics["duration_s"] = round(time.perf_counter() - started, 3)
+        return metrics
     except Exception as e:
         return {
             "ok": False,
             "status": "exception",
             "confidence": 0.0,
+            "verification_score": 0.0,
+            "total_tests": 0,
             "audit_approved": False,
             "sandbox_exit": None,
             "sandbox_stderr": str(e),
@@ -151,6 +140,7 @@ def run_pipeline_once(objective: str) -> Dict[str, Any]:
             "error": str(e),
             "duration_s": round(time.perf_counter() - started, 3),
             "task_id": None,
+            "fail_kind": "exception",
         }
 
 
@@ -172,7 +162,8 @@ def agentic_verify(objective: str, min_confidence: float, max_retries: int) -> D
         if best is None or r["confidence"] > best["confidence"]:
             best = r
         print(
-            f"  [agentic] conf={r['confidence']:.3f} audit={r['audit_approved']} "
+            f"  [agentic] conf={r['confidence']:.3f} ver={float(r.get('verification_score') or 0):.3f} "
+            f"tests={r.get('total_tests')} audit={r['audit_approved']} "
             f"sandbox={r['sandbox_exit']} gate={'PASS' if gate else 'FAIL'}",
             flush=True,
         )
@@ -201,6 +192,7 @@ def write_dashboard(report: Dict[str, Any]) -> None:
         f"> Last cycle: **{report['timestamp']}**  ",
         f"> Result: **{outcome}**  ",
         f"> Confidence: **{g['confidence']:.3f}** (min {g['min_confidence']}) · Audit: **{g['audit_approved']}**  ",
+        f"> Ver: **{g.get('verification_score', 0)}** · tests: **{g.get('total_tests', 0)}**  ",
         f"> Pull: **{'OK' if pull.get('ok') else 'FAIL'}** {pull.get('error_brief') or pull.get('healed') or ''}  ",
         f"> Report pushed: **{report.get('pushed')}** · Model: `{report.get('model', '')}`  ",
         f"> Reason: `{g.get('agentic_reason')}`",
@@ -266,20 +258,16 @@ def cycle(
     steps: Dict[str, Any] = {}
     py = sys.executable
 
-    # 1) git → local
     steps["pull"] = safe_pull(git)
     print_step("pull", steps["pull"])
     load_dotenv(ROOT / ".env", override=True)
 
-    # 2) reinstall so new modules from pull are importable
     steps["reinstall"] = run([py, "-m", "pip", "install", "-e", ".[dev]", "-q"], timeout=300)
-    # soft: never block agentic solely on pip noise
     if not steps["reinstall"]["ok"]:
         steps["reinstall"]["soft"] = True
         steps["reinstall"]["ok"] = True
     print_step("reinstall", steps["reinstall"])
 
-    # 3) daemon smoke (hard if script present)
     daemon_script = ROOT / "scripts" / "test_daemon_smoke.py"
     if daemon_script.exists():
         steps["daemon_smoke"] = run([py, str(daemon_script)], timeout=120)
@@ -288,7 +276,6 @@ def cycle(
         steps["daemon_smoke"] = {"ok": True, "soft": True, "duration_s": 0, "error_brief": "skipped"}
         print_step("daemon_smoke", steps["daemon_smoke"])
 
-    # 4) classic static gates
     steps["smoke"] = run([py, "scripts/smoke_test.py"], timeout=120)
     print_step("smoke", steps["smoke"])
     steps["pytest"] = run([py, "-m", "pytest", "-q", "--tb=line"], timeout=300)
@@ -297,13 +284,11 @@ def cycle(
         steps["doctor"] = run([py, "-c", "from cli.main import app; app(['doctor'])"], timeout=60)
         print_step("doctor", steps["doctor"])
 
-    # 5) optional one batch-queue tick (soft — never blocks gates)
     if os.getenv("ETHER_FLYWHEEL_BATCH_TICK", "1") == "1":
         bw = ROOT / "scripts" / "batch_worker.py"
         if bw.exists():
-            steps["batch_tick"] = run([py, str(bw)], timeout=600)
+            steps["batch_tick"] = run([py, str(bw), "--limit", "1"], timeout=600)
             steps["batch_tick"]["soft"] = True
-            # soft: do not fail static on batch failures
             steps["batch_tick"]["ok"] = True
             print_step("batch_tick", steps["batch_tick"])
 
@@ -328,6 +313,8 @@ def cycle(
     final = agentic.get("final") or {}
     conf = float(final.get("confidence") or 0.0)
     audit = bool(final.get("audit_approved"))
+    ver = float(final.get("verification_score") or 0.0)
+    tests = int(final.get("total_tests") or 0)
 
     learn_snap = {}
     try:
@@ -358,6 +345,8 @@ def cycle(
             "agentic_ok": agentic["ok"],
             "min_confidence": min_confidence,
             "confidence": conf,
+            "verification_score": ver,
+            "total_tests": tests,
             "audit_approved": audit,
             "max_retries": max_retries,
             "agentic_reason": agentic.get("reason"),
@@ -385,11 +374,15 @@ def cycle(
                 {
                     "attempt": a.get("attempt"),
                     "confidence": a.get("confidence"),
+                    "verification_score": a.get("verification_score"),
+                    "total_tests": a.get("total_tests"),
                     "audit_approved": a.get("audit_approved"),
                     "sandbox_exit": a.get("sandbox_exit"),
                     "gate_pass": a.get("gate_pass"),
                     "error": a.get("error"),
                     "stderr": (a.get("sandbox_stderr") or "")[:300],
+                    "task_id": a.get("task_id"),
+                    "fail_kind": a.get("fail_kind"),
                 }
                 for a in agentic.get("attempts", [])
             ],
@@ -428,6 +421,7 @@ def show_status() -> int:
                 "quality_pass": data.get("quality_pass", data.get("ok")),
                 "pushed": data.get("pushed"),
                 "confidence": data.get("gates", {}).get("confidence"),
+                "verification_score": data.get("gates", {}).get("verification_score"),
                 "audit_approved": data.get("gates", {}).get("audit_approved"),
                 "pull_ok": data.get("gates", {}).get("pull_ok"),
                 "model": data.get("model"),
@@ -477,11 +471,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     do_push = args.push or args.autonomous or os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1"
 
     def once() -> int:
+        # Prefer curriculum when autonomous / env says so
+        objective = args.objective
+        if continuous or os.getenv("ETHER_CURRICULUM", "1") == "1":
+            try:
+                from scripts.flywheel_intelligence import resolve_objective
+
+                objective, _meta = resolve_objective(args.objective)
+            except Exception:
+                pass
         report = cycle(
             do_push=do_push,
             min_confidence=args.min_confidence,
             max_retries=max(1, args.max_retries),
-            objective=args.objective,
+            objective=objective,
             run_doctor=not args.no_doctor,
         )
         print(
@@ -491,6 +494,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     "quality_pass": report.get("quality_pass", report["ok"]),
                     "pushed": report.get("pushed", False),
                     "confidence": report["gates"]["confidence"],
+                    "verification_score": report["gates"].get("verification_score"),
+                    "total_tests": report["gates"].get("total_tests"),
                     "audit_approved": report["gates"]["audit_approved"],
                     "pull_ok": report["gates"].get("pull_ok"),
                     "agentic_reason": report["gates"].get("agentic_reason"),

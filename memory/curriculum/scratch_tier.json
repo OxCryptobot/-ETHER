@@ -1,20 +1,21 @@
 {
   "name": "scratch_multifile",
+  "description": "Objectives that produce modules under memory/scratch only",
   "tasks": [
     {
-      "id": "scratch_mod_1",
-      "title": "scratch util module",
-      "objective": "Write a single runnable Python module (not a git diff) that defines helpers add(a,b) and mul(a,b) with asserts add(2,3)==5 and mul(3,4)==12, then print both results."
+      "id": "sc01",
+      "title": "scratch util",
+      "objective": "Write a single runnable Python module (not a git diff) with def add(a,b) and assert add(2,3)==5. Keep everything in one file for sandbox."
     },
     {
-      "id": "scratch_mod_2",
+      "id": "sc02",
+      "title": "scratch stats",
+      "objective": "Write one Python file defining mean(xs) and median(xs) with asserts for [1,2,3]. Runnable in sandbox."
+    },
+    {
+      "id": "sc03",
       "title": "scratch parser",
-      "objective": "Write one Python file defining parse_kv(s) that parses 'a=1,b=2' into a dict, with asserts and a print of parse_kv('x=9,y=8')."
-    },
-    {
-      "id": "scratch_mod_3",
-      "title": "scratch class",
-      "objective": "Write a Python class Counter with inc/dec/value methods, assert sequence, print final value. Single module only."
+      "objective": "Write parse_kv(s) that parses 'a=1,b=2' into dict with asserts. Single file only."
     }
   ]
 }

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Side-by-side log runner — records @ETHER results on holdout sample for comparison tables."""
+"""Side-by-side log scaffold — records @ETHER results for a fixed holdout slice.
+
+Fill Aider/Continue columns manually per METHODOLOGY.md protocol.
+"""
 
 from __future__ import annotations
 
@@ -18,66 +21,66 @@ from core.pipeline import Pipeline
 
 load_dotenv(ROOT / ".env")
 
+HOLDOUT = ROOT / "memory" / "quizzes" / "holdout_v1.json"
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=10)
     args = ap.parse_args()
 
-    holdout = json.loads((ROOT / "memory" / "quizzes" / "holdout_v1.json").read_text(encoding="utf-8"))
-    tasks = list(holdout.get("tasks") or [])[: args.limit]
+    tasks = json.loads(HOLDOUT.read_text(encoding="utf-8")).get("tasks") or []
+    tasks = tasks[: args.limit]
     pipe = Pipeline()
     rows = []
     t0 = time.perf_counter()
-    for t in tasks:
+    for i, t in enumerate(tasks, 1):
         tid = t.get("id")
-        print(f"compare {tid} ...", flush=True)
-        st = time.perf_counter()
+        print(f"[{i}/{len(tasks)}] {tid}", flush=True)
         r = pipe.run(t["objective"])
-        ms = round((time.perf_counter() - st) * 1000)
         ok = r.status == "complete" and r.sandbox and r.sandbox.exit_code == 0
+        ms = sum(s.duration_ms for s in r.stages)
         rows.append(
             {
                 "id": tid,
                 "ether_ok": ok,
-                "ether_ms": ms,
-                "conf": r.confidence,
-                "ver": r.verification_score,
-                "strategy": r.strategy,
-                "burst": r.used_burst,
-                "aider": "",
-                "continue": "",
-                "cursor": "",
+                "ether_ms": round(ms, 1),
+                "ether_conf": r.confidence,
+                "ether_burst": r.used_burst,
+                "aider_ok": None,
+                "continue_ok": None,
+                "cursor_ok": None,
                 "notes": "",
             }
         )
-        print(f"  ok={ok} ms={ms}", flush=True)
+        print(f"  ether_ok={ok} ms={ms:.0f}", flush=True)
 
-    day = datetime.now(timezone.utc).strftime("%Y%m%d")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
     out_dir = ROOT / "memory" / "bench"
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"compare_{day}.json"
+    path = out_dir / f"compare_{stamp}.json"
+    md = out_dir / f"compare_{stamp}.md"
     payload = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "duration_s": round(time.perf_counter() - t0, 2),
         "n": len(rows),
-        "ether_pass": sum(1 for x in rows if x["ether_ok"]),
+        "duration_s": round(time.perf_counter() - t0, 2),
         "rows": rows,
-        "instructions": (
-            "Fill aider/continue/cursor columns manually after running the same task ids "
-            "in those tools; do not claim winners without a complete table."
-        ),
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    # markdown table stub
-    md = ["# Comparison " + day, "", "| id | ETHER | ms | Aider | Continue | Cursor | notes |", "|----|-------|----|-------|----------|--------|-------|"]
-    for x in rows:
-        md.append(
-            f"| {x['id']} | {'OK' if x['ether_ok'] else 'FAIL'} | {x['ether_ms']} |  |  |  |  |"
+    lines = [
+        f"# Compare {stamp}",
+        "",
+        "| id | ETHER | ms | conf | burst | Aider | Continue | Cursor | notes |",
+        "|----|-------|---:|-----:|-------|-------|----------|--------|-------|",
+    ]
+    for r in rows:
+        lines.append(
+            f"| {r['id']} | {r['ether_ok']} | {r['ether_ms']} | {r['ether_conf']} | {r['ether_burst']} |  |  |  |  |"
         )
-    md_path = out_dir / f"compare_{day}.md"
-    md_path.write_text("\n".join(md) + "\n", encoding="utf-8")
-    print(json.dumps({"path": str(path), "md": str(md_path), "ether_pass": payload["ether_pass"]}, indent=2))
+    lines.append("")
+    lines.append("_Fill other tools manually. Do not claim winners without complete columns._")
+    md.write_text("\n".join(lines), encoding="utf-8")
+    print(json.dumps({"path": str(path), "md": str(md), "n": len(rows)}, indent=2))
     return 0
 
 

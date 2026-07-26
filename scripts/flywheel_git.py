@@ -16,6 +16,7 @@ def safe_pull(git_fn: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
     Env:
       ETHER_GIT_RESET_OK=1  → allow merge --abort + reset --hard origin/main
       ETHER_GIT_BRANCH      → default main
+      ETHER_PULL_SOFT=1    → soft-continue on network/pull issues (default)
     """
     t0 = time.perf_counter()
     branch = os.getenv("ETHER_GIT_BRANCH", "main")
@@ -27,7 +28,6 @@ def safe_pull(git_fn: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
         result["duration_s"] = round(time.perf_counter() - t0, 3)
         if healed is not None:
             result["healed"] = healed
-        # keep a short error surface for the dashboard
         err = (result.get("stderr") or result.get("stdout") or "").strip()
         result["error_brief"] = err.splitlines()[-1][:180] if err else ""
         return result
@@ -44,16 +44,16 @@ def safe_pull(git_fn: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
                 "ok": False,
                 "returncode": 1,
                 "stdout": "",
-                "stderr": "MERGE_HEAD exists. Run: git merge --abort
-"
-                "Or set ETHER_GIT_RESET_OK=1 then re-run flywheel.",
+                "stderr": (
+                    "MERGE_HEAD exists. Run: git merge --abort. "
+                    "Or set ETHER_GIT_RESET_OK=1 then re-run flywheel."
+                ),
             }
         )
 
-    # 1) fetch (does not change local branch)
+    # 1) fetch
     fetch = git_fn("fetch", "origin")
     if not fetch.get("ok"):
-        # offline / auth — not always fatal for local agentic cycle
         brief = (fetch.get("stderr") or fetch.get("stdout") or "fetch failed")[:300]
         if os.getenv("ETHER_PULL_SOFT", "1") == "1":
             return _finish(
@@ -70,19 +70,14 @@ def safe_pull(git_fn: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
 
     # 2) ff-only pull
     pull = git_fn("pull", "--ff-only", "origin", branch)
-    if pull.get("ok"):
-        return _finish(pull)
-
-    err = ((pull.get("stderr") or "") + "\n" + (pull.get("stdout") or "")).lower()
-
-    # already up to date sometimes returns 0; treat "up to date" as ok if present
     combined = (pull.get("stdout") or "") + (pull.get("stderr") or "")
-    if "already up to date" in combined.lower():
+    if pull.get("ok") or "already up to date" in combined.lower():
         pull["ok"] = True
         pull["returncode"] = 0
         return _finish(pull)
 
-    # 3) divergent / merge required → optional hard reset
+    err = combined.lower()
+
     needs_reset = any(
         x in err
         for x in (
@@ -109,15 +104,12 @@ def safe_pull(git_fn: Callable[..., Dict[str, Any]]) -> Dict[str, Any]:
                 "stdout": pull.get("stdout", ""),
                 "stderr": (
                     (pull.get("stderr") or "")
-                    + "\nLocal branch diverged from origin. "
-                    "Set ETHER_GIT_RESET_OK=1 to reset --hard origin/"
-                    + branch
-                    + ", or merge manually."
+                    + " Local branch diverged from origin. "
+                    + f"Set ETHER_GIT_RESET_OK=1 to reset --hard origin/{branch}."
                 ),
             }
         )
 
-    # 4) soft continue for transient network if enabled
     if os.getenv("ETHER_PULL_SOFT", "1") == "1":
         return _finish(
             {

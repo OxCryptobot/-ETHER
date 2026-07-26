@@ -1,23 +1,16 @@
-# @ETHER Live Status
+# @ETHER Status
 
-**Board updated:** 2026-07-26 · See `TASKS.md`
+**P0–P2 critical upgrades shipped** (2026-07-26).
 
-## Snapshot
-| Area | State |
-|------|--------|
-| Flywheel | PASS streak (conf 1.000 cycles) |
-| Gems | 8 registered |
-| Persistent tools | Catalog live under Grandidierite |
-| Fabricate loop | implement → safety → sandbox → audit → promote gate |
-| Learning | Bandit + rewards + `ether learn-stats` |
-| Pipeline | tool_assist, tool_scan, memory_save, fail-streak hooks |
-
-## Next up (Batch 3)
-Start: **#18 AST fabricate validation** → **#14 run-tool pipeline** → **#13 promote API** → **#11 bench**
-
-## Pull
+## Recover local
 ```powershell
-git pull origin main
-ether learn-stats
-ether tool-list
+cd C:\Users\Otcde\ETHER
+$env:ETHER_GIT_RESET_OK = "1"
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
+python -m cli.main doctor
+python -m cli.main dashboard
+python scripts\bench.py
 ```
+
+## P3 reminder
+Deferred until **2026-08-01**: LoRA, cloud burst depth, Firecracker, multi-agent, Obsidian.

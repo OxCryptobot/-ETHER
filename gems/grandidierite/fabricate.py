@@ -1,26 +1,15 @@
-"""Automated tool fabrication pipeline for Grandidierite.
-
-Flow:
-  1. Scaffold quarantine stub (template)
-  2. Rose Quartz implements body from spec
-  3. Static safety (secret/subprocess patterns + import allowlist heuristics)
-  4. Clear Quartz sandbox self-test
-  5. Black Tourmaline audit
-  6. Status pending_promote — or promote if ETHER_AUTO_PROMOTE=1 and gates pass
-
-Never writes straight to persistent without gates.
-"""
+"""Automated tool fabrication — AST gate + safety + sandbox + audit + promote."""
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,14 +19,12 @@ FABRICATE_LOG = ROOT / "memory" / "tools" / "fabricate.jsonl"
 
 RISKY = re.compile(r"\b(eval|exec)\s*\(|os\.system\s*\(|shell\s*=\s*True|pickle\.loads?\s*\(")
 SECRETISH = re.compile(
-    r"AKIA[0-9A-Z]{16}|-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY-----",
-    re.I,
+    r"AKIA[0-9A-Z]{16}|-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY-----", re.I
 )
 
 STUB_TEMPLATE = '''#!/usr/bin/env python3
 """{docstring}"""
 from __future__ import annotations
-
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -45,7 +32,6 @@ from _lib import emit, read_input
 
 def main() -> None:
     inp = read_input()
-    # TODO: implement {name}
     emit(False, error="not implemented", tool="{name}", input_keys=list(inp.keys()))
 
 if __name__ == "__main__":
@@ -77,25 +63,36 @@ def _log(entry: Dict[str, Any]) -> None:
         f.write(json.dumps(entry) + "\n")
 
 
+def ast_validate(code: str) -> Dict[str, Any]:
+    """Require parseable Python + a top-level main function."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return {"ok": False, "error": f"syntax: {e}"}
+    has_main = any(
+        isinstance(n, ast.FunctionDef) and n.name == "main" for n in tree.body
+    )
+    if not has_main:
+        return {"ok": False, "error": "missing def main()"}
+    return {"ok": True, "has_main": True}
+
+
 def static_safety(code: str) -> Dict[str, Any]:
     findings: List[str] = []
     if RISKY.search(code):
         findings.append("risky_exec_pattern")
     if SECRETISH.search(code):
         findings.append("secret_like_pattern")
-    if "requests." in code or "urllib." in code or "httpx." in code:
-        # network discouraged by default in tools
+    if any(x in code for x in ("requests.", "urllib.", "httpx.")):
         findings.append("network_client_import")
     return {"ok": len(findings) == 0, "findings": findings}
 
 
 def sandbox_selftest(code: str, timeout: int = 30) -> Dict[str, Any]:
-    """Run tool with empty JSON input inside Clear Quartz if available; else local subprocess."""
     try:
         from core.schemas import Envelope, ClearQuartzRequest
         from core.registry import build_default_registry
 
-        # Wrap: execute the tool module pattern is hard in CQ; instead syntax-compile + minimal exec harness
         harness = (
             "code = '''" + code.replace("\\", "\\\\").replace("'''", "\\'\'\'") + "'''\n"
             "compile(code, '<tool>', 'exec')\n"
@@ -120,7 +117,6 @@ def sandbox_selftest(code: str, timeout: int = 30) -> Dict[str, Any]:
             "stderr": getattr(payload, "stderr", "")[:500],
         }
     except Exception as e:
-        # fallback: compile only
         try:
             compile(code, "<tool>", "exec")
             return {"ok": True, "exit_code": 0, "stdout": "compile_ok_local", "stderr": ""}
@@ -154,28 +150,19 @@ def audit_code(code: str) -> Dict[str, Any]:
 
 
 def llm_implement(name: str, docstring: str, spec: Dict[str, Any]) -> Dict[str, Any]:
-    """Ask Rose Quartz to implement a complete tool file."""
     try:
         from core.schemas import Envelope, RoseQuartzRequest, ChatMessage, RoseQuartzResponse
         from core.registry import build_default_registry
 
         prompt = f"""Implement a complete @ETHER persistent tool as a single Python file.
-
 Rules:
 - Must define main() and if __name__ == "__main__": main()
-- JSON in via argv or stdin; JSON out with key ok
-- Use this preamble for helpers:
-  import sys
-  from pathlib import Path
-  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-  from _lib import emit, read_input
-- No network calls
-- No eval/exec/os.system/shell=True
+- JSON in; JSON out with key ok via _lib emit/read_input
+- No network, eval, exec, os.system, shell=True
 - Tool name: {name}
 - Purpose: {docstring}
-- Extra spec: {json.dumps(spec)[:1500]}
-
-Return ONLY the full Python source, no markdown fences.
+- Spec: {json.dumps(spec)[:1500]}
+Return ONLY full Python source, no markdown.
 """
         reg = build_default_registry()
         res = reg.execute(
@@ -183,8 +170,7 @@ Return ONLY the full Python source, no markdown fences.
                 task_id=uuid4(),
                 target_gem="rose-quartz",
                 payload=RoseQuartzRequest(
-                    messages=[ChatMessage(role="user", content=prompt)],
-                    prefer_local=True,
+                    messages=[ChatMessage(role="user", content=prompt)], prefer_local=True
                 ),
             )
         )
@@ -200,7 +186,6 @@ Return ONLY the full Python source, no markdown fences.
 
 def promote(path: Path) -> Dict[str, Any]:
     PERSISTENT.mkdir(parents=True, exist_ok=True)
-    # normalize name without timestamp when possible
     base = path.name
     m = re.match(r"^(.+?)_\d{{8}}_\d{{6}}\.py$", base)
     dest_name = f"{m.group(1)}.py" if m else base
@@ -210,7 +195,6 @@ def promote(path: Path) -> Dict[str, Any]:
 
 
 def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
-    """Full automated fabrication. Returns status dict."""
     name = _sanitize(str(tool_request.get("name") or "new_tool"))
     docstring = str(tool_request.get("docstring") or tool_request.get("purpose") or f"Tool {name}")
     spec = {k: v for k, v in tool_request.items() if k not in {"action", "name"}}
@@ -230,7 +214,6 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         "promote_path": None,
     }
 
-    # Stage 1: implement or stub
     if skip_llm:
         code = STUB_TEMPLATE.format(name=name, docstring=docstring)
         result["stages"].append({"stage": "implement", "ok": True, "mode": "stub"})
@@ -239,16 +222,20 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         result["stages"].append(
             {"stage": "implement", "ok": impl.get("ok"), "mode": "llm", "error": impl.get("error")}
         )
+        code = impl["code"] if impl.get("ok") else STUB_TEMPLATE.format(name=name, docstring=docstring)
         if not impl.get("ok"):
-            # fall back to stub so something is still written
-            code = STUB_TEMPLATE.format(name=name, docstring=docstring)
             result["stages"].append({"stage": "implement_fallback", "ok": True, "mode": "stub"})
-        else:
-            code = impl["code"]
 
     out_path.write_text(code, encoding="utf-8")
 
-    # Stage 2: static safety
+    av = ast_validate(code)
+    result["stages"].append({"stage": "ast_validate", **av})
+    if not av["ok"]:
+        result["validation_status"] = "failed"
+        result["error"] = av.get("error")
+        _log(result)
+        return result
+
     safety = static_safety(code)
     result["stages"].append({"stage": "static_safety", **safety})
     if not safety["ok"]:
@@ -257,7 +244,6 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         _log(result)
         return result
 
-    # Stage 3: sandbox / compile self-test
     st = sandbox_selftest(code)
     result["stages"].append({"stage": "sandbox_selftest", **st})
     if not st.get("ok"):
@@ -266,7 +252,6 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         _log(result)
         return result
 
-    # Stage 4: audit
     aud = audit_code(code)
     result["stages"].append({"stage": "audit", **aud})
     if not aud.get("approved", False):
@@ -275,7 +260,6 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         _log(result)
         return result
 
-    # Stage 5: promote gate
     result["validation_status"] = "pending_promote"
     if auto_promote:
         promo = promote(out_path)
@@ -285,7 +269,7 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         result["validation_status"] = "promoted" if promo.get("ok") else "pending_promote"
     else:
         result["stages"].append(
-            {"stage": "promote", "ok": False, "note": "ETHER_AUTO_PROMOTE=0 — awaiting promote_safe"}
+            {"stage": "promote", "ok": False, "note": "ETHER_AUTO_PROMOTE=0"}
         )
 
     _log(result)

@@ -115,10 +115,12 @@ def sync_from_vault() -> Dict[str, Any]:
 
 def load_tiers() -> List[Dict[str, Any]]:
     path = CUR_DIR / "tiers.json"
-    tiers: List[Dict[str, Any]] = []
-    if path.exists():
+    if not path.exists():
+        tiers: List[Dict[str, Any]] = []
+    else:
         data = json.loads(path.read_text(encoding="utf-8"))
         tiers = list(data.get("tiers") or [])
+
     if MINED_PATH.exists():
         try:
             mined = json.loads(MINED_PATH.read_text(encoding="utf-8")).get("tasks") or []
@@ -131,18 +133,20 @@ def load_tiers() -> List[Dict[str, Any]]:
                 tiers[-1].setdefault("tasks", []).extend(extra)
         except Exception:
             pass
-    # append scratch multifile tier at the end
+
+    # blend scratch multifile-style tasks into highest tier
     if SCRATCH_PATH.exists():
         try:
-            scratch = json.loads(SCRATCH_PATH.read_text(encoding="utf-8"))
-            tiers.append(
-                {
-                    "name": scratch.get("name") or "scratch_multifile",
-                    "tasks": list(scratch.get("tasks") or []),
-                }
-            )
+            sc = json.loads(SCRATCH_PATH.read_text(encoding="utf-8"))
+            tasks = list(sc.get("tasks") or [])
+            if tasks:
+                if not tiers:
+                    tiers = [{"name": sc.get("name") or "scratch", "tasks": tasks}]
+                else:
+                    tiers[-1].setdefault("tasks", []).extend(tasks)
         except Exception:
             pass
+
     return tiers
 
 

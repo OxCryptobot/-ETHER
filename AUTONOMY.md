@@ -1,72 +1,36 @@
 # @ETHER Autonomy Contract
 
-**Goal:** leave the machine running; the system improves without chat babysitting.
+## Truth
 
-## One human action
+**Code loop is closed.** Once the daemon process is alive, it self-heals, requeues failures, recovers metrics, drains batch, and restarts dead worker threads without a human in the chat loop.
 
-```powershell
-cd C:\Users\Otcde\ETHER
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1
-```
+**Not magic:** a host OS process must exist. Scheduled Task / start_daemon registers that once. After that, autonomy owns the loop.
 
-Optional background:
+## Closed loops (implemented)
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1 -Background
-```
+1. Curriculum samples failure-driven + tier tasks (assert-nudged)
+2. Pipeline records verification_score → experience → promote only on verified wins
+3. Failures auto-enqueue to batch
+4. Empty queue auto-seeds smoke
+5. Unhealthy → recovery_cycle (holdout expand → bench → quiz → scoreboard → guardian baseline)
+6. Guardian can unfreeze when metrics recover
+7. Daemon boot runs `scripts/self_test_autonomy.py`
+8. Watchdog restarts dead flywheel/batch/dashboard threads
+9. Batch queue exclusive lock for concurrent safety
 
-That is the product entrypoint. Dashboard: http://127.0.0.1:8787
+## Proof artifacts (written by the system)
 
-## What runs without you
+- `memory/daemon/heartbeat.txt`
+- `memory/daemon/healthy.json`
+- `memory/daemon/autonomy.jsonl`
+- `memory/flywheel/latest.json` + history
+- `memory/batch_queue.json`
+- `SCOREBOARD.md`
 
-| Loop | Interval (default) | Behavior |
-|------|--------------------|----------|
-| Flywheel / smart cycle | 900s | Curriculum objective → verify → promote/demote → push report |
-| Batch drain | 600s | Process up to `ETHER_BATCH_LIMIT` (2) pending jobs |
-| Recovery | on unhealthy + cooldown 1800s | bench --fast → quiz → scoreboard → baseline/guardian re-eval |
-| Bench discipline | every 4 cycles | fast bench + guardian re-eval |
-| Quiz discipline | every 6 cycles | holdout sample + SCOREBOARD.md |
-| Tool reconcile | every 3 cycles | promote safe quarantine tools |
-
-## Closed loops
-
-1. **Curriculum** samples failure-driven + tier tasks (assert-nudged).
-2. **Pipeline** records `verification_score` + `total_tests` into experience.
-3. **after_agentic** updates curriculum (verified wins only) and **auto-enqueues failures** into batch.
-4. **Guardian** freezes fabricate on regression; **recovery** can advance baseline when metrics recover (`ETHER_GUARDIAN_AUTO_BASELINE=1`).
-5. **Daemon** refuses to stay silent on `NOT HEALTHY` — it runs `core.autonomy.recovery_cycle`.
-
-## Env knobs (defaults are autonomy-on)
+## Offline self-test
 
 ```
-ETHER_CURRICULUM=1
-ETHER_AUTO_ENQUEUE=1
-ETHER_GUARDIAN_AUTO_BASELINE=1
-ETHER_DAEMON_FLYWHEEL=1
-ETHER_DAEMON_BATCH=1
-ETHER_DAEMON_DASHBOARD=1
-ETHER_BATCH_LIMIT=2
-ETHER_DAEMON_INTERVAL=900
-ETHER_BATCH_INTERVAL=600
-ETHER_RECOVERY_COOLDOWN_S=1800
+python scripts/self_test_autonomy.py
 ```
 
-## Proof overnight
-
-Morning checks (no rebuild required):
-
-```powershell
-Get-Content memory\daemon\heartbeat.txt
-Get-Content memory\daemon\healthy.json
-Get-Content memory\flywheel\latest.json | Select-Object -First 40
-.\.venv\Scripts\python.exe -m cli.main batch status
-.\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
-```
-
-Expect: fresh heartbeat, flywheel history growth, batch done entries, scoreboard timestamps moving.
-
-## Non-goals
-
-- Cloud multi-agent swarms
-- Replacing Ollama with a hosted API by default
-- Human-in-the-loop for every cycle
+No Ollama required. Exit 0 = autonomy substrate intact.

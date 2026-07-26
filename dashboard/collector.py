@@ -59,23 +59,18 @@ def _tail_jsonl(path: Path, limit: int = 40) -> List[Dict[str, Any]]:
 
 
 def _parse_tasks(md: str) -> Dict[str, Any]:
-    """Parse TASKS.md tables into structured batch progress."""
     batches: List[Dict[str, Any]] = []
     current: Optional[Dict[str, Any]] = None
-    # Match markdown table rows: | 11 | P0 | Task | ... |
     row_re = re.compile(
         r"^\|\s*(\d+)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|(?:\s*([^|]*?)\s*\|)?\s*$"
     )
-    section_re = re.compile(r"^##\s+(.+)$", re.M)
-
     lines = md.splitlines()
     section = "unknown"
     for line in lines:
         sm = re.match(r"^##\s+(.+)$", line.strip())
         if sm:
             section = sm.group(1).strip()
-            # start new batch bucket on Batch headings
-            if "batch" in section.lower() or "done" in section.lower() or "active" in section.lower():
+            if "batch" in section.lower() or "done" in section.lower() or "active" in section.lower() or "p0" in section.lower():
                 current = {"name": section, "tasks": []}
                 batches.append(current)
             continue
@@ -83,40 +78,24 @@ def _parse_tasks(md: str) -> Dict[str, Any]:
         if not m or current is None:
             continue
         num, col2, col3, col4 = m.group(1), m.group(2).strip(), m.group(3).strip(), (m.group(4) or "").strip()
-        # Skip header-ish
-        if num.lower() == "#" or not num.isdigit():
+        if not num.isdigit():
             continue
-        # Heuristic: done sections vs active
-        status = "done"
+        status = "queued"
         priority = ""
         title = col2
         notes = col3
-        if "active" in section.lower() or "next" in section.lower() or "batch 3" in section.lower():
+        if "done" in section.lower() or "**done**" in col3.lower() or col3.lower() == "done":
+            status = "done"
+            title = col2
+            notes = col3
+        elif "active" in section.lower() or "next" in section.lower() or "batch 3" in section.lower():
             status = "queued"
             priority = col2
             title = col3
             notes = col4
-        elif "done" in col2.lower() or "done" in col3.lower():
-            status = "done"
-            title = col2 if "done" not in col2.lower() else col3
-            notes = col3 if title == col2 else col4
-        # Batch 1/2 format: | # | Task | Notes |
-        if "batch 1" in section.lower() or "batch 2" in section.lower() or section.lower().startswith("done"):
-            status = "done"
-            title = col2
-            notes = col3
-            priority = ""
         current["tasks"].append(
-            {
-                "id": int(num),
-                "title": title[:120],
-                "status": status,
-                "priority": priority[:8],
-                "notes": notes[:100],
-            }
+            {"id": int(num), "title": title[:120], "status": status, "priority": priority[:8], "notes": notes[:100]}
         )
-
-    # totals
     all_tasks = [t for b in batches for t in b["tasks"]]
     done = sum(1 for t in all_tasks if t["status"] == "done")
     queued = sum(1 for t in all_tasks if t["status"] != "done")
@@ -128,10 +107,13 @@ def _parse_tasks(md: str) -> Dict[str, Any]:
 
 
 def _current_work(runs: List[Dict[str, Any]], heartbeat: Optional[str], latest: Dict[str, Any]) -> Dict[str, Any]:
-    """Derive live coding activity from latest run + flywheel."""
-    now = datetime.now(timezone.utc)
+    from core.progress import read_progress
+
+    live = read_progress()
     latest_run = runs[0] if runs else None
     activity = []
+    if live:
+        activity.append({"stage": live.get("stage"), "ok": True, "detail": live.get("detail"), "ms": None})
     if latest_run:
         for s in latest_run.get("stages") or []:
             activity.append(
@@ -145,41 +127,36 @@ def _current_work(runs: List[Dict[str, Any]], heartbeat: Optional[str], latest: 
     gates = (latest or {}).get("gates") or {}
     steps = (latest or {}).get("steps") or {}
     phase = "idle"
-    if heartbeat:
+    if live:
+        phase = f"live:{live.get('stage')}"
+    elif heartbeat:
         phase = "autonomy_cycle"
-    if latest_run:
+    if latest_run and not live:
         st = latest_run.get("status")
-        if st == "complete":
-            phase = "last_run_complete"
-        elif st == "error":
-            phase = "last_run_error"
-        # if started very recently treat as hot
-        try:
-            started = latest_run.get("started_at") or ""
-            if started:
-                # crude: if stages include code/sandbox recently
-                if any(s.get("stage") in {"code", "sandbox", "tool_assist"} for s in activity):
-                    phase = "coding_pipeline"
-        except Exception:
-            pass
+        phase = "last_run_complete" if st == "complete" else ("last_run_error" if st == "error" else phase)
 
     return {
         "phase": phase,
         "heartbeat": heartbeat,
-        "objective": (latest_run or {}).get("objective"),
+        "objective": (live or {}).get("objective") or (latest_run or {}).get("objective"),
         "status": (latest_run or {}).get("status"),
         "confidence": (latest_run or {}).get("confidence"),
         "strategy": (latest_run or {}).get("strategy"),
         "reward": (latest_run or {}).get("reward"),
-        "started_at": (latest_run or {}).get("started_at"),
-        "stages": activity,
+        "started_at": (live or {}).get("updated_at") or (latest_run or {}).get("started_at"),
+        "stages": activity[:20],
         "flywheel_ok": (latest or {}).get("ok"),
         "flywheel_conf": gates.get("confidence"),
         "matrix": [
-            {"name": k, "ok": v.get("ok"), "ms": int((v.get("duration_s") or 0) * 1000)}
+            {
+                "name": k,
+                "ok": v.get("ok"),
+                "ms": int((v.get("duration_s") or 0) * 1000),
+                "error": (v.get("error_brief") or v.get("healed") or "")[:120],
+            }
             for k, v in steps.items()
         ],
-        "generated_at": now.isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -201,7 +178,11 @@ def collect_snapshot() -> Dict[str, Any]:
 
     runs: List[Dict[str, Any]] = []
     if runs_dir.exists():
-        files = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:25]
+        files = sorted(
+            [p for p in runs_dir.glob("*.json") if p.name != "in_progress.json"],
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )[:25]
         for f in files:
             data = _read_json(f)
             if not isinstance(data, dict):
@@ -253,27 +234,6 @@ def collect_snapshot() -> Dict[str, Any]:
     )
 
     current_work = _current_work(runs, heartbeat or None, latest)
-
-    skills = [
-        {"name": "plan → code → sandbox → audit", "status": "active"},
-        {"name": "tool_assist + scans", "status": "on" if os.getenv("ETHER_TOOL_ASSIST", "1") == "1" else "off"},
-        {"name": "learning bandit", "status": "on" if os.getenv("ETHER_LEARNING", "1") == "1" else "off"},
-        {"name": "auto fabricate on fail", "status": "on" if os.getenv("ETHER_AUTO_FABRICATE_ON_FAIL", "0") == "1" else "off"},
-        {"name": "flywheel autonomy", "status": "active" if heartbeat else "idle"},
-        {"name": "fail streak", "status": str(fail_streak.get("streak", 0))},
-    ]
-
-    workflow = [
-        {"id": 1, "name": "Pull", "desc": "git pull --ff-only"},
-        {"id": 2, "name": "Static", "desc": "smoke + pytest"},
-        {"id": 3, "name": "Plan", "desc": "Selenite (+ tool intent)"},
-        {"id": 4, "name": "Tool assist", "desc": "few_shot + scans"},
-        {"id": 5, "name": "Code", "desc": "Rose Quartz"},
-        {"id": 6, "name": "Sandbox", "desc": "Clear Quartz"},
-        {"id": 7, "name": "Audit", "desc": "Black Tourmaline"},
-        {"id": 8, "name": "Learn / report", "desc": "Amethyst + git"},
-    ]
-
     gates = (latest or {}).get("gates") or {}
     steps = (latest or {}).get("steps") or {}
 
@@ -299,10 +259,26 @@ def collect_snapshot() -> Dict[str, Any]:
             "tasks_done": tasks.get("totals", {}).get("done"),
             "tasks_queued": tasks.get("totals", {}).get("queued"),
             "tasks_progress_pct": tasks.get("progress_pct"),
+            "pull_error": (steps.get("pull") or {}).get("error_brief")
+            or (steps.get("pull") or {}).get("healed"),
         },
-        "workflow": workflow,
+        "workflow": [
+            {"id": 1, "name": "Pull", "desc": "git fetch + ff-only (self-heal)"},
+            {"id": 2, "name": "Static", "desc": "smoke + pytest"},
+            {"id": 3, "name": "Plan", "desc": "Selenite"},
+            {"id": 4, "name": "Tool assist", "desc": "few_shot + repo_map"},
+            {"id": 5, "name": "Code", "desc": "Rose Quartz"},
+            {"id": 6, "name": "Sandbox", "desc": "Clear Quartz"},
+            {"id": 7, "name": "Audit", "desc": "Black Tourmaline"},
+            {"id": 8, "name": "Learn / report", "desc": "Amethyst + git"},
+        ],
         "matrix_steps": [
-            {"name": k, "ok": v.get("ok"), "ms": int((v.get("duration_s") or 0) * 1000)}
+            {
+                "name": k,
+                "ok": v.get("ok"),
+                "ms": int((v.get("duration_s") or 0) * 1000),
+                "error": (v.get("error_brief") or ("healed:" + str(v["healed"]) if v.get("healed") else ""))[:160],
+            }
             for k, v in steps.items()
         ],
         "history": [
@@ -337,7 +313,14 @@ def collect_snapshot() -> Dict[str, Any]:
             "ranked": bandit_ranked[:8],
             "fail_streak": fail_streak,
         },
-        "skills": skills,
+        "skills": [
+            {"name": "plan → code → sandbox → audit", "status": "active"},
+            {"name": "tool_assist + scans", "status": "on" if os.getenv("ETHER_TOOL_ASSIST", "1") == "1" else "off"},
+            {"name": "warm sandbox", "status": "on" if os.getenv("ETHER_WARM_SANDBOX", "0") == "1" else "off"},
+            {"name": "git reset ok", "status": "on" if os.getenv("ETHER_GIT_RESET_OK", "0") == "1" else "off"},
+            {"name": "flywheel autonomy", "status": "active" if heartbeat else "idle"},
+            {"name": "fail streak", "status": str(fail_streak.get("streak", 0))},
+        ],
         "benchmarks": {
             "flywheel_cycles": len(history),
             "flywheel_pass_rate": round(fw_pass / fw_total, 3) if history else None,
@@ -359,9 +342,8 @@ def collect_snapshot() -> Dict[str, Any]:
             "interval_s": int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")),
             "push": os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1",
             "sandbox_retry": os.getenv("ETHER_SANDBOX_RETRY", "1") == "1",
-            "use_context": os.getenv("ETHER_USE_CONTEXT", "1") == "1",
-            "tool_assist": os.getenv("ETHER_TOOL_ASSIST", "1") == "1",
-            "auto_fabricate_on_fail": os.getenv("ETHER_AUTO_FABRICATE_ON_FAIL", "0") == "1",
+            "pull_soft": os.getenv("ETHER_PULL_SOFT", "1") == "1",
+            "git_reset_ok": os.getenv("ETHER_GIT_RESET_OK", "0") == "1",
         },
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:1800],

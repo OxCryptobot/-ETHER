@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-window desktop runtime (hardened)."""
+"""@ETHER single-window desktop runtime (OneDrive-safe)."""
 
 from __future__ import annotations
 
@@ -13,11 +13,18 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# Prefer ETHER_ROOT from launcher; else this file's repo parent
+_env_root = os.environ.get("ETHER_ROOT", "").strip().strip('"')
+if _env_root and (Path(_env_root) / "scripts" / "desktop_runtime.py").exists():
+    ROOT = Path(_env_root).resolve()
+else:
+    ROOT = Path(__file__).resolve().parents[1]
+
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 os.chdir(ROOT)
+os.environ["ETHER_ROOT"] = str(ROOT)
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
 os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
@@ -27,8 +34,10 @@ os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH",
 try:
     from core.dotenv import load_dotenv
 except Exception:
+
     def load_dotenv(*_a, **_k):  # type: ignore
         return None
+
 
 load_dotenv(ROOT / ".env")
 
@@ -64,37 +73,24 @@ def pick_port(preferred: int) -> int:
 
 def git_update() -> None:
     if SKIP_GIT:
-        log("git: skipped (ETHER_DESKTOP_SKIP_GIT=1)")
+        log("git: skipped")
         return
     log("git: fetch origin…")
     r = subprocess.run(["git", "fetch", "origin"], cwd=str(ROOT), capture_output=True, text=True)
     if r.returncode != 0:
         log(f"git fetch warning: {(r.stderr or r.stdout or '')[:200]}")
     if (ROOT / ".git" / "MERGE_HEAD").exists():
-        log("git: merge --abort")
         subprocess.run(["git", "merge", "--abort"], cwd=str(ROOT), capture_output=True)
     if os.getenv("ETHER_GIT_RESET_OK", "0") == "1":
         log("git: reset --hard origin/main")
-        r = subprocess.run(
-            ["git", "reset", "--hard", "origin/main"],
-            cwd=str(ROOT),
-            capture_output=True,
-            text=True,
-        )
-        if r.returncode != 0:
-            log(f"git reset warning: {(r.stderr or '')[:200]}")
-    else:
-        subprocess.run(["git", "pull", "--ff-only", "origin", "main"], cwd=str(ROOT), capture_output=True)
-
+        subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(ROOT), capture_output=True)
     log("pip: editable install…")
-    r = subprocess.run(
+    subprocess.run(
         [PY, "-m", "pip", "install", "-e", ".[dev]", "-q"],
         cwd=str(ROOT),
         capture_output=True,
         text=True,
     )
-    if r.returncode != 0:
-        log(f"pip warning: {(r.stderr or r.stdout or '')[-300:]}")
 
 
 def run_dashboard(port: int) -> None:
@@ -109,16 +105,13 @@ def run_dashboard(port: int) -> None:
             reload=False,
             log_level="warning",
         )
-    except OSError as e:
-        log(f"dashboard bind error: {e}")
     except Exception as e:
         log(f"dashboard error: {e}")
 
 
 def run_flywheel_loop() -> None:
-    """Run flywheel as subprocess so imports stay clean vs uvicorn thread."""
     time.sleep(3)
-    log(f"flywheel: interval={INTERVAL}s push=on")
+    log(f"flywheel: interval={INTERVAL}s")
     while not _stop.is_set():
         try:
             cmd = [
@@ -145,13 +138,14 @@ def run_flywheel_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DESKTOP RUNTIME  (single window)", flush=True)
+    print("  @ETHER DESKTOP RUNTIME", flush=True)
     print(f"  root: {ROOT}", flush=True)
+    print(f"  python: {PY}", flush=True)
     print("  Ctrl+C to stop", flush=True)
     print("=" * 60, flush=True)
 
     if not (ROOT / "scripts" / "desktop_runtime.py").exists():
-        log("FATAL: not inside @ETHER repo")
+        log(f"FATAL: desktop_runtime.py missing under {ROOT}")
         return 2
 
     try:
@@ -172,17 +166,17 @@ def main() -> int:
     if OPEN_BROWSER:
         time.sleep(2.0)
         url = f"http://127.0.0.1:{port}"
-        log(f"opening browser {url}")
+        log(f"opening {url}")
         try:
             webbrowser.open(url)
         except Exception as e:
-            log(f"browser open failed: {e}")
+            log(f"browser: {e}")
 
-    log("all systems running — leave this window open")
+    log("running — leave this window open")
     try:
         while t_dash.is_alive():
             time.sleep(1)
-        log("dashboard thread exited")
+        log("dashboard exited")
         return 1
     except KeyboardInterrupt:
         log("stopping…")

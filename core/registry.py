@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, List
 
 from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
 
@@ -16,6 +16,10 @@ class GemRegistry:
 
     def get(self, name: str):
         return self._gems.get(name)
+
+    def list_gems(self) -> List[str]:
+        """Return registered gem names (used by health probes and diagnostics)."""
+        return sorted(self._gems.keys())
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         gem = self._gems.get(request.target_gem)

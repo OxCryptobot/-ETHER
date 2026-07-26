@@ -1,26 +1,24 @@
-"""FastAPI app for @ETHER interactive dashboard."""
+"""FastAPI app for @ETHER Control Matrix."""
 
 from __future__ import annotations
 
 import asyncio
 import re
 import shutil
+import traceback
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
-from dashboard.collector import collect_snapshot
-from dashboard.live_feed import build_console
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Dashboard", version="0.3.0")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.0")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -35,26 +33,66 @@ class ReconcileBody(BaseModel):
     threshold: float = 0.82
 
 
+def _safe_snapshot() -> dict:
+    try:
+        from dashboard.collector import collect_snapshot
+        from dashboard.live_feed import build_console
+
+        data = collect_snapshot()
+        data["console"] = build_console()
+        data["api_version"] = "0.4.0"
+        return data
+    except Exception as e:
+        return {
+            "generated_at": None,
+            "project": "@ETHER",
+            "error": str(e),
+            "traceback": traceback.format_exc()[-1500:],
+            "summary": {},
+            "intelligence": {},
+            "matrix_steps": [],
+            "runs": [],
+            "gems": [],
+            "console": {"lines": [{"ts": "", "level": "err", "text": f"snapshot error: {e}"}], "active": False},
+            "connections": {},
+            "policy": {},
+            "tools": {"quarantine": [], "persistent": []},
+            "history": [],
+            "workflow": [],
+            "skills": [],
+            "benchmarks": {},
+            "current_work": {},
+            "learning": {},
+            "latest": {},
+        }
+
+
 @app.get("/", response_class=HTMLResponse)
 def index() -> FileResponse:
-    return FileResponse(STATIC / "index.html")
+    path = STATIC / "index.html"
+    if not path.exists():
+        raise HTTPException(500, "dashboard/static/index.html missing — pull latest main")
+    return FileResponse(path)
 
 
 @app.get("/api/snapshot")
 def snapshot() -> dict:
-    data = collect_snapshot()
-    data["console"] = build_console()
-    return data
+    return _safe_snapshot()
 
 
 @app.get("/api/console")
 def console() -> dict:
-    return build_console()
+    try:
+        from dashboard.live_feed import build_console
+
+        return build_console()
+    except Exception as e:
+        return {"lines": [{"level": "err", "text": str(e)}], "active": False}
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.3.0"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.0"}
 
 
 @app.post("/api/promote")
@@ -75,9 +113,12 @@ def promote(body: PromoteBody) -> dict:
 
 @app.post("/api/reconcile-tools")
 def reconcile_tools(body: ReconcileBody) -> dict:
-    from core.tool_reconcile import reconcile
+    try:
+        from core.tool_reconcile import reconcile
 
-    return reconcile(promote_threshold=body.threshold, dry_run=body.dry_run)
+        return reconcile(promote_threshold=body.threshold, dry_run=body.dry_run)
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
 
 
 @app.websocket("/ws")
@@ -85,10 +126,8 @@ async def ws_feed(ws: WebSocket) -> None:
     await ws.accept()
     try:
         while True:
-            data = collect_snapshot()
-            data["console"] = build_console()
-            await ws.send_json(data)
-            await asyncio.sleep(0.9)
+            await ws.send_json(_safe_snapshot())
+            await asyncio.sleep(1.0)
     except WebSocketDisconnect:
         return
     except Exception:

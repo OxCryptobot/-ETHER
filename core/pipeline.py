@@ -1,4 +1,4 @@
-"""End-to-end pipeline — P0–P2 complete wiring."""
+"""End-to-end pipeline with experience vault + retrieval intelligence."""
 
 from __future__ import annotations
 
@@ -38,6 +38,8 @@ from core.fail_streak import record_outcome, maybe_propose_fabricate
 from core.progress import write_progress, clear_progress
 from core.repair import repair_prompt, classify_stderr
 from core.patterns import index_pass_pattern
+from core.experience import retrieve as experience_retrieve, record as experience_record
+from core.bench_guardian import is_frozen
 
 MAX_CODE_CHARS = 50_000
 
@@ -69,6 +71,7 @@ class PipelineResult(BaseModel):
     reward: float = 0.0
     few_shot_chars: int = 0
     tool_output_chars: int = 0
+    experience_chars: int = 0
     started_at: str = ""
     finished_at: str = ""
 
@@ -107,6 +110,8 @@ class Pipeline:
         write_progress(tid, objective, "start", strategy=strategy)
 
         tool_block = ""
+        last_err = ""
+        fail_kind = ""
 
         try:
             t0 = time.perf_counter()
@@ -172,23 +177,35 @@ class Pipeline:
                             )
                         )
                 else:
-                    g_req = Envelope(
-                        task_id=task_id,
-                        target_gem="grandidierite",
-                        payload=GrandidieriteRequest(tool_request=treq),
-                    )
-                    g_res = self.registry.execute(g_req)
-                    result.stages.append(
-                        StageResult(
-                            stage="extend",
-                            success=not bool(g_res.error),
-                            detail=action,
-                            duration_ms=(time.perf_counter() - t1) * 1000,
+                    # freeze fabricate when bench guardian says so
+                    if action in ("generate", "fabricate") and is_frozen():
+                        result.stages.append(
+                            StageResult(
+                                stage="extend",
+                                success=False,
+                                detail="blocked_by_bench_guardian",
+                                duration_ms=(time.perf_counter() - t1) * 1000,
+                            )
                         )
-                    )
+                    else:
+                        g_req = Envelope(
+                            task_id=task_id,
+                            target_gem="grandidierite",
+                            payload=GrandidieriteRequest(tool_request=treq),
+                        )
+                        g_res = self.registry.execute(g_req)
+                        result.stages.append(
+                            StageResult(
+                                stage="extend",
+                                success=not bool(g_res.error),
+                                detail=action,
+                                duration_ms=(time.perf_counter() - t1) * 1000,
+                            )
+                        )
 
             few_shot = ""
             repo_map_txt = ""
+            exp_block = ""
             if tool_assist:
                 t_ta = time.perf_counter()
                 write_progress(tid, objective, "tool_assist")
@@ -203,13 +220,22 @@ class Pipeline:
                         rm = run_tool("repo_map", {"max_files": 40})
                         if rm.get("ok"):
                             files = (rm.get("files") or [])[:15]
-                            lines = [f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files]
+                            lines = [
+                                f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files
+                            ]
                             repo_map_txt = "\n".join(lines)[:2500]
+                    # experience vault retrieval
+                    exp = experience_retrieve(objective, k=3)
+                    exp_block = exp.get("block") or ""
+                    result.experience_chars = len(exp_block)
                     result.stages.append(
                         StageResult(
                             stage="tool_assist",
                             success=True,
-                            detail=f"few_shot={result.few_shot_chars}c map={len(repo_map_txt)}c",
+                            detail=(
+                                f"few_shot={result.few_shot_chars}c map={len(repo_map_txt)}c "
+                                f"exp={result.experience_chars}c"
+                            ),
                             duration_ms=(time.perf_counter() - t_ta) * 1000,
                         )
                     )
@@ -252,7 +278,6 @@ class Pipeline:
             generated = ""
             attempt = 0
             max_attempts = 2 if allow_retry else 1
-            last_err = ""
             strategy_hint = strategy_prompt_addon(strategy)
 
             while attempt < max_attempts:
@@ -267,6 +292,8 @@ class Pipeline:
                     )
                     if tool_block:
                         prompt += f"Tool output:\n{tool_block}\n\n"
+                    if exp_block:
+                        prompt += f"Experience from prior runs:\n{exp_block}\n\n"
                     if few_shot:
                         prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
                     if repo_map_txt:
@@ -340,7 +367,7 @@ class Pipeline:
                 if ok:
                     break
                 last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
-                _ = classify_stderr(last_err)
+                fail_kind = classify_stderr(last_err).get("kind", "runtime")
 
             if tool_assist and generated:
                 t_sc = time.perf_counter()
@@ -426,9 +453,24 @@ class Pipeline:
             success = exit_code == 0
             record_outcome(success, error=None if success else (last_err or result.error))
 
+            # experience vault
+            try:
+                experience_record(
+                    objective=objective,
+                    code=generated or "",
+                    success=success,
+                    confidence=result.confidence,
+                    strategy=strategy,
+                    stderr=last_err if not success else "",
+                    fail_kind=fail_kind if not success else "",
+                    task_id=tid,
+                )
+            except Exception:
+                pass
+
             if not success:
                 proposal = maybe_propose_fabricate()
-                if proposal:
+                if proposal and not is_frozen():
                     t_fab = time.perf_counter()
                     fab_req = Envelope(
                         task_id=task_id,
@@ -442,6 +484,14 @@ class Pipeline:
                             success=not bool(fab_res.error),
                             detail=proposal.get("name", ""),
                             duration_ms=(time.perf_counter() - t_fab) * 1000,
+                        )
+                    )
+                elif proposal and is_frozen():
+                    result.stages.append(
+                        StageResult(
+                            stage="auto_fabricate",
+                            success=False,
+                            detail="blocked_by_bench_guardian",
                         )
                     )
 
@@ -503,9 +553,22 @@ class Pipeline:
             except Exception:
                 pass
         try:
+            experience_record(
+                objective=result.objective,
+                code=result.generated_code or "",
+                success=False,
+                confidence=0.0,
+                strategy=result.strategy,
+                stderr=msg,
+                fail_kind=stage,
+                task_id=str(result.task_id),
+            )
+        except Exception:
+            pass
+        try:
             record_outcome(False, error=msg)
             proposal = maybe_propose_fabricate()
-            if proposal:
+            if proposal and not is_frozen():
                 self.registry.execute(
                     Envelope(
                         task_id=result.task_id,
@@ -559,6 +622,7 @@ class Pipeline:
                             "retries": result.retries,
                             "strategy": result.strategy,
                             "reward": result.reward,
+                            "experience_chars": result.experience_chars,
                             "exit_code": result.sandbox.exit_code if result.sandbox else None,
                             "audit_approved": bool(result.audit and result.audit.approved),
                             "error": result.error,

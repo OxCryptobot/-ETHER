@@ -11,6 +11,8 @@ $ZipUrl = "https://github.com/actions/runner/releases/download/v$RunnerVersion/$
 $ExpectedSha = "D59123A43003E357B0805B5D0F611D0BD2F65AB67D51BD070DD4E7A0F685C162"
 $TaskRun = "ETHER-Runner"
 $TaskWatch = "ETHER-RunnerWatch"
+# Task Scheduler rejects [TimeSpan]::MaxValue (P99999999D...). Use ~10 years.
+$RepeatFor = New-TimeSpan -Days 3650
 
 function Write-Step([string]$m) { Write-Host "[runner] $m" }
 
@@ -20,7 +22,6 @@ if (-not (Test-Path -LiteralPath $RunnerDir)) {
 Set-Location -LiteralPath $RunnerDir
 Write-Step "dir=$RunnerDir"
 
-# Stop interactive listener so task can own the process
 Get-Process -Name "Runner.Listener" -ErrorAction SilentlyContinue | ForEach-Object {
   Write-Step "stopping Listener pid=$($_.Id)"
   try { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue } catch {}
@@ -85,18 +86,15 @@ Token: https://github.com/OxCryptobot/-ETHER/settings/actions/runners/new
 "@
 }
 
-# Prefer official svc.cmd when present (older packages)
 if (Test-Path -LiteralPath (Join-Path $RunnerDir "svc.cmd")) {
   Write-Step "svc.cmd found - using official service helper"
   try { & .\svc.cmd install } catch { Write-Step "svc install: $_" }
   try { & .\svc.cmd start } catch { Write-Step "svc start: $_" }
 }
 
-# Always register Scheduled Task keep-alive (works without svc.cmd)
 $psExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $cmdExe = "$env:SystemRoot\System32\cmd.exe"
 
-# Main: start run.cmd at logon (hidden)
 $runArg = "/c cd /d `"$RunnerDir`" && run.cmd"
 try { Unregister-ScheduledTask -TaskName $TaskRun -Confirm:$false -ErrorAction SilentlyContinue } catch {}
 $actionRun = New-ScheduledTaskAction -Execute $cmdExe -Argument $runArg -WorkingDirectory $RunnerDir
@@ -109,7 +107,6 @@ $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interac
 Register-ScheduledTask -TaskName $TaskRun -Action $actionRun -Trigger $triggerLogon -Settings $settingsRun -Principal $principal -Description "ETHER GitHub Actions runner (run.cmd)" -Force | Out-Null
 Write-Step "registered task $TaskRun (AtLogOn + restart)"
 
-# Watchdog every 5 min: if no Runner.Listener, start the run task
 $watchScript = @"
 `$ErrorActionPreference = 'SilentlyContinue'
 if (-not (Get-Process -Name 'Runner.Listener' -ErrorAction SilentlyContinue)) {
@@ -121,7 +118,7 @@ Set-Content -LiteralPath $watchPath -Value $watchScript -Encoding UTF8
 
 try { Unregister-ScheduledTask -TaskName $TaskWatch -Confirm:$false -ErrorAction SilentlyContinue } catch {}
 $actionWatch = New-ScheduledTaskAction -Execute $psExe -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$watchPath`""
-$triggerWatch = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration ([TimeSpan]::MaxValue)
+$triggerWatch = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration $RepeatFor
 $settingsWatch = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
 Register-ScheduledTask -TaskName $TaskWatch -Action $actionWatch -Trigger $triggerWatch -Settings $settingsWatch -Principal $principal -Description "ETHER runner watchdog - restart if Listener dead" -Force | Out-Null
 Write-Step "registered task $TaskWatch (every 5 min)"

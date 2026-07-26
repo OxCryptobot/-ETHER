@@ -1,30 +1,28 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 (71–75, 77–78 in flight/done)
+**Updated:** 2026-07-26 — through batch 81
 
-## Done
+## Done (66–81)
 | # | Item |
 |---|------|
 | 66–70 | Process rewards, burst-on-fail, daemon quiz |
-| 71 | Side-by-side protocol in METHODOLOGY.md |
-| 72 | test_synth + harness in Clear Quartz |
-| 73 | ONBOARDING.md |
-| 74 | patch_loop (memory/scratch only) |
-| 75 | Contextual bandit select(context) |
-| 77 | expand_holdout.py → up to 40 tasks |
-| 78 | pipeline_hooks prepare_code_for_sandbox |
+| 71–74 | Methodology protocol, test_synth, ONBOARDING, patch_loop |
+| 75 | Contextual bandit |
+| 76 | Latency/burst **ledger** + Matrix data |
+| 77 | expand_holdout.py |
+| 78–81 | pipeline_hooks, compare_runners, scratch_multifile tier, collector ledger |
 
-## Next
+## Next stretch
 | # | Task |
 |---|------|
-| 76 | Cost/latency ledger panel in Matrix |
-| 79 | compare_YYYYMMDD runner for side-by-side logs |
-| 80 | Scratch multifile curriculum tier |
-| 81 | Pipeline uses bandit_context + prepare_code_for_sandbox on every run |
+| 82 | Matrix UI cards for ledger (avg_run_ms, burst) on Intelligence tab |
+| 83 | Full 40-task quiz overnight job |
+| 84 | Preference pairs export for future LoRA (post 2026-08-01) |
 
-## Pull
 ```powershell
 git fetch origin; git reset --hard origin/main
 python scripts/expand_holdout.py
+python scripts/wire_check.py
+python -c "from core.ledger import compute_ledger; print(compute_ledger())"
 pytest -q
 ```

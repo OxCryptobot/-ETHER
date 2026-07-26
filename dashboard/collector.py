@@ -1,4 +1,4 @@
-"""Collect live system state for the Control Matrix (intelligence-aware)."""
+"""Collect live system state for the Control Matrix (intelligence + ledger)."""
 
 from __future__ import annotations
 
@@ -108,7 +108,6 @@ def _parse_tasks(md: str) -> Dict[str, Any]:
 
 
 def _intel_block() -> Dict[str, Any]:
-    # always refresh health if possible
     try:
         from core.health_metric import compute_health
 
@@ -121,6 +120,12 @@ def _intel_block() -> Dict[str, Any]:
         guardian = evaluate()
     except Exception:
         guardian = _read_json(ROOT / "memory" / "bench" / "guardian.json") or {}
+    try:
+        from core.ledger import compute_ledger
+
+        ledger = compute_ledger()
+    except Exception:
+        ledger = _read_json(ROOT / "memory" / "ledger" / "latest.json") or {}
 
     curriculum = _read_json(ROOT / "memory" / "curriculum" / "state.json") or {}
     pass_n = _count_jsonl(ROOT / "memory" / "experience" / "pass.jsonl")
@@ -135,6 +140,7 @@ def _intel_block() -> Dict[str, Any]:
         reverse=True,
     )[:6]
     bench_latest = _read_json(ROOT / "memory" / "bench" / "latest.json") or {}
+    quiz = _read_json(ROOT / "memory" / "quiz" / "latest.json") or {}
 
     return {
         "primary_metric": health.get("primary_metric") or "bench_pass_rate",
@@ -142,6 +148,7 @@ def _intel_block() -> Dict[str, Any]:
         "pass_rate_avg7": health.get("pass_rate_avg7"),
         "latency_s_avg7": health.get("latency_s_avg7"),
         "healthy": health.get("healthy"),
+        "stale": health.get("stale"),
         "guardian_frozen": guardian.get("frozen") or health.get("guardian_frozen"),
         "guardian_reason": guardian.get("reason") or health.get("guardian_reason"),
         "curriculum_tier": curriculum.get("tier", 0),
@@ -162,6 +169,17 @@ def _intel_block() -> Dict[str, Any]:
         "bench_n": bench_latest.get("n"),
         "bench_pass": bench_latest.get("pass"),
         "bench_ts": bench_latest.get("timestamp"),
+        "quiz_pass_rate": quiz.get("pass_rate"),
+        "ledger": {
+            "avg_run_ms": ledger.get("avg_run_ms"),
+            "p50_run_ms": ledger.get("p50_run_ms"),
+            "local_runs": ledger.get("local_runs"),
+            "burst_flagged_runs": ledger.get("burst_flagged_runs"),
+            "burst_ledger_calls": ledger.get("burst_ledger_calls"),
+            "burst_tokens_sum": ledger.get("burst_tokens_sum"),
+            "stage_avg_ms": ledger.get("stage_avg_ms") or {},
+            "cost_note": ledger.get("cost_note"),
+        },
     }
 
 
@@ -296,14 +314,16 @@ def collect_snapshot() -> Dict[str, Any]:
     current_work = _current_work(runs, heartbeat or None, latest)
     gates = (latest or {}).get("gates") or {}
     steps = (latest or {}).get("steps") or {}
+    ledger = (intel.get("ledger") or {})
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "project": "@ETHER",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "heartbeat": heartbeat or None,
         "current_work": current_work,
         "intelligence": intel,
+        "ledger": ledger,
         "tasks": tasks,
         "summary": {
             "quality_pass": (latest or {}).get("ok"),
@@ -317,13 +337,13 @@ def collect_snapshot() -> Dict[str, Any]:
             "runs_error": errors,
             "avg_run_confidence": avg_conf,
             "fail_streak": fail_streak.get("streak", 0),
-            "tasks_done": tasks.get("totals", {}).get("done"),
-            "tasks_queued": tasks.get("totals", {}).get("queued"),
-            "tasks_progress_pct": tasks.get("progress_pct"),
             "bench_pass_rate": intel.get("pass_rate"),
+            "quiz_pass_rate": intel.get("quiz_pass_rate"),
             "healthy": intel.get("healthy"),
             "curriculum_tier": intel.get("curriculum_tier"),
             "experience_pass": intel.get("experience_pass"),
+            "avg_run_ms": ledger.get("avg_run_ms"),
+            "burst_calls": ledger.get("burst_ledger_calls"),
             "pull_error": (steps.get("pull") or {}).get("error_brief")
             or (steps.get("pull") or {}).get("healed"),
         },
@@ -333,7 +353,7 @@ def collect_snapshot() -> Dict[str, Any]:
             {"id": 3, "name": "Curriculum", "desc": "graded objective"},
             {"id": 4, "name": "Retrieve", "desc": "experience + BM25"},
             {"id": 5, "name": "Code", "desc": "Rose Quartz + strategy"},
-            {"id": 6, "name": "Harness", "desc": "test-or-cap"},
+            {"id": 6, "name": "Synth/prep", "desc": "test_synth + scratch patch"},
             {"id": 7, "name": "Sandbox", "desc": "Clear Quartz"},
             {"id": 8, "name": "Audit + learn", "desc": "vault + bandit + report"},
         ],
@@ -382,19 +402,21 @@ def collect_snapshot() -> Dict[str, Any]:
             {"name": "curriculum", "status": f"tier {intel.get('curriculum_tier', 0)}"},
             {"name": "experience vault", "status": f"{intel.get('experience_pass', 0)} pass / {intel.get('experience_fail', 0)} fail"},
             {"name": "bench guardian", "status": "FROZEN" if intel.get("guardian_frozen") else "ok"},
-            {"name": "BM25 RAG", "status": "on" if os.getenv("ETHER_RAG_BM25", "1") == "1" else "off"},
-            {"name": "assert harness", "status": "on"},
+            {"name": "ledger", "status": f"avg {ledger.get('avg_run_ms')}ms"},
+            {"name": "burst", "status": f"calls {ledger.get('burst_ledger_calls', 0)}"},
             {"name": "flywheel", "status": "active" if heartbeat else "idle"},
         ],
         "benchmarks": {
             "primary": "bench_pass_rate",
             "pass_rate": intel.get("pass_rate"),
+            "quiz_pass_rate": intel.get("quiz_pass_rate"),
             "pass_rate_avg7": intel.get("pass_rate_avg7"),
             "healthy": intel.get("healthy"),
             "flywheel_cycles": len(history),
             "flywheel_pass_rate": round(fw_pass / fw_total, 3) if history else None,
             "pipeline_success_rate": round(complete / max(1, complete + errors), 3),
             "avg_confidence": avg_conf,
+            "avg_run_ms": ledger.get("avg_run_ms"),
             "last_fail_reason": ((last_fail or {}).get("gates") or {}).get("agentic_reason"),
         },
         "connections": {
@@ -403,6 +425,7 @@ def collect_snapshot() -> Dict[str, Any]:
             "qdrant_url": os.getenv("QDRANT_URL", "http://localhost:6333"),
             "ollama_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
             "primary_model": os.getenv("ETHER_PRIMARY_MODEL", ""),
+            "burst": os.getenv("ETHER_BURST", "0") == "1",
         },
         "policy": {
             "min_confidence": float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")),
@@ -412,11 +435,12 @@ def collect_snapshot() -> Dict[str, Any]:
             "curriculum": os.getenv("ETHER_CURRICULUM", "1") == "1",
             "experience": os.getenv("ETHER_EXPERIENCE", "1") == "1",
             "guardian": os.getenv("ETHER_BENCH_GUARDIAN", "1") == "1",
+            "burst_on_fail": os.getenv("ETHER_BURST_ON_FAIL", "1") == "1",
         },
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:1800],
-            "intelligence": _read_text(ROOT / "INTELLIGENCE.md")[:1800],
-            "flywheel": _read_text(ROOT / "FLYWHEEL.md")[:1000],
+            "onboarding": _read_text(ROOT / "ONBOARDING.md")[:1200],
+            "methodology": _read_text(ROOT / "METHODOLOGY.md")[:1200],
         },
         "latest": latest,
         "last_fail": last_fail,

@@ -1,4 +1,4 @@
-"""Pipeline helpers — bandit context + sandbox prep."""
+"""Pipeline helpers — bandit context + sandbox prep including multifile."""
 
 from __future__ import annotations
 
@@ -12,7 +12,16 @@ def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[s
 
 
 def prepare_code_for_sandbox(code: str, objective: str = "") -> Tuple[str, Dict[str, Any]]:
-    meta: Dict[str, Any] = {"synth": False, "harness": False, "patch": None}
+    meta: Dict[str, Any] = {"synth": False, "harness": False, "patch": None, "multifile": None}
+    try:
+        from core.multifile import is_multifile_objective, run_multifile_cycle
+
+        if is_multifile_objective(objective) or "# file:" in (code or ""):
+            code2, mm = run_multifile_cycle(code)
+            meta["multifile"] = mm
+            code = code2
+    except Exception as e:
+        meta["multifile_error"] = str(e)[:120]
     try:
         from core.test_synth import synthesize_asserts
 

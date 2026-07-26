@@ -1,4 +1,4 @@
-"""Transparent SCOREBOARD.md — bench, quiz, ablation, health."""
+"""Transparent SCOREBOARD — dense dated metrics."""
 
 from __future__ import annotations
 
@@ -27,11 +27,14 @@ def write_scoreboard() -> Dict[str, Any]:
     health = compute_health()
     quiz = _j(ROOT / "memory" / "quiz" / "latest.json") or {}
     hidden = _j(ROOT / "memory" / "quiz" / "hidden_latest.json") or {}
+    dataset = _j(ROOT / "memory" / "quiz" / "dataset_latest.json") or {}
     bench = _j(ROOT / "memory" / "bench" / "latest.json") or {}
     ablation = _j(ROOT / "memory" / "bench" / "ablation_latest.json") or {}
     cur = _j(ROOT / "memory" / "curriculum" / "state.json") or {}
     guard = _j(ROOT / "memory" / "bench" / "guardian.json") or {}
     ledger = _j(ROOT / "memory" / "ledger" / "latest.json") or {}
+    fg = _j(ROOT / "memory" / "experience" / "failure_graph.json") or {}
+    nodes = (fg.get("nodes") or {}) if isinstance(fg, dict) else {}
 
     burst_calls = 0
     bl = ROOT / "memory" / "burst" / "ledger.jsonl"
@@ -41,32 +44,48 @@ def write_scoreboard() -> Dict[str, Any]:
         except Exception:
             pass
 
+    pass_n = fail_n = 0
+    for name, counter in (("pass.jsonl", "pass"), ("fail.jsonl", "fail")):
+        p = ROOT / "memory" / "experience" / name
+        if p.exists():
+            try:
+                n = sum(1 for line in p.read_text(encoding="utf-8").splitlines() if line.strip())
+                if counter == "pass":
+                    pass_n = n
+                else:
+                    fail_n = n
+            except Exception:
+                pass
+
     model = os.getenv("ETHER_PRIMARY_MODEL", "")
     lines = [
         "# @ETHER Scoreboard",
         "",
         f"_Updated: {datetime.now(timezone.utc).isoformat()}_",
         "",
-        "> Local verified coding agent · learn from gated runs · frontier burst only when local fails · public holdout scores.",
+        "> Local verified agent · learns from gated runs · frontier burst only on policy · public holdout scores.",
         "",
         "## Primary metrics",
         "",
         "| Metric | Value |",
         "|--------|------:|",
         f"| Bench pass_rate | {bench.get('pass_rate', health.get('pass_rate'))} |",
+        f"| Bench mode / n | {bench.get('mode', '—')} / {bench.get('n', '—')} |",
         f"| Quiz holdout pass_rate | {quiz.get('pass_rate', '—')} |",
-        f"| Hidden-test pass_rate | {hidden.get('pass_rate', '—')} |",
+        f"| Hidden HE pass_rate | {hidden.get('pass_rate', '—')} |",
+        f"| Dataset (MBPP-lite) pass_rate | {dataset.get('pass_rate', '—')} |",
         f"| Healthy | {health.get('healthy')} |",
-        f"| Stale | {health.get('stale')} |",
-        f"| Unhealthy reasons | {', '.join(health.get('unhealthy_reasons') or []) or '—'} |",
+        f"| Stale reasons | {', '.join(health.get('unhealthy_reasons') or []) or '—'} |",
         f"| Guardian frozen | {guard.get('frozen', False)} |",
         f"| Curriculum tier | {cur.get('tier', 0)} |",
-        f"| Verified wins / losses | {cur.get('wins', 0)}/{cur.get('losses', 0)} |",
+        f"| Verified wins/losses | {cur.get('wins', 0)}/{cur.get('losses', 0)} |",
+        f"| Experience PASS/FAIL | {pass_n}/{fail_n} |",
+        f"| Failure graph nodes | {len(nodes)} |",
         f"| Burst ledger calls | {burst_calls} |",
         f"| Avg run ms | {ledger.get('avg_run_ms', '—')} |",
         f"| Primary model | `{model}` |",
         "",
-        "## Burst ablation (science)",
+        "## Burst ablation",
         "",
     ]
     if ablation:
@@ -79,35 +98,34 @@ def write_scoreboard() -> Dict[str, Any]:
             "",
         ]
     else:
-        lines += [
-            "_No ablation yet. Run: `python scripts/burst_ablation.py --limit 10`_",
-            "",
-        ]
+        lines += ["_Run `python scripts/burst_ablation.py --limit 10` with burst env._", ""]
 
     lines += [
-        "## Honesty rules",
+        "## Feedback loops active",
         "",
-        "1. Holdout + hidden IDs never enter curriculum sampling.",
-        "2. Print-only success is not formal tests (confidence soft-capped).",
-        "3. Tier promote requires verification_score ≥ 0.7 and total_tests > 0.",
-        "4. Burst never skips sandbox or audit.",
-        "5. Healthy requires fresh bench **and** quiz (<24h).",
+        "- Experience vault → few-shot + fail-kind repair bias",
+        "- Offline BM25 RAG on repo (no Qdrant required)",
+        "- Failure graph → repair templates",
+        "- Contextual bandit + process rewards",
+        "- Holdout/hidden IDs excluded from curriculum",
+        "- Multifile markers `# file: name.py` under memory/scratch only",
         "",
         "## Refresh",
         "",
         "```powershell",
-        "python scripts/measurement_day.py",
-        "python scripts/burst_ablation.py --limit 10   # needs ETHER_BURST=1 + key",
-        "python scripts/hidden_quiz.py --limit 10",
+        "python scripts/weekly_scoreboard.py",
+        "python scripts/burst_ablation.py --limit 10",
         "```",
+        "",
+        "See COUSIN.md for two-person ops without chat babysitting.",
         "",
     ]
     SCOREBOARD.write_text("\n".join(lines), encoding="utf-8")
     return {
         "path": str(SCOREBOARD),
-        "quiz": quiz.get("pass_rate"),
-        "bench": bench.get("pass_rate"),
-        "hidden": hidden.get("pass_rate"),
-        "ablation_delta": ablation.get("delta_pass_rate"),
         "healthy": health.get("healthy"),
+        "bench": bench.get("pass_rate"),
+        "quiz": quiz.get("pass_rate"),
+        "dataset": dataset.get("pass_rate"),
+        "ablation_delta": ablation.get("delta_pass_rate"),
     }

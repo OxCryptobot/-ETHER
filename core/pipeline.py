@@ -32,12 +32,8 @@ from core.registry import GemRegistry, build_default_registry
 from core.orchestrator import Orchestrator
 from core.confidence import compute_clear_quartz_confidence
 from core.context import gather_workspace_context, context_enabled
-from core.learning import (
-    BanditPolicy,
-    compute_reward,
-    learning_enabled,
-    strategy_prompt_addon,
-)
+from core.learning import BanditPolicy, compute_reward, learning_enabled, strategy_prompt_addon
+from core.fail_streak import record_outcome, maybe_propose_fabricate
 
 MAX_CODE_CHARS = 50_000
 
@@ -95,35 +91,39 @@ class Pipeline:
 
         try:
             t0 = time.perf_counter()
+            # expose persistent tool names to planner when available
+            available = []
+            try:
+                from gems.grandidierite.registry import list_tools
+
+                available = [n.replace(".py", "") for n in list_tools().get("persistent", [])]
+            except Exception:
+                pass
+
             plan_req = Envelope(
                 task_id=task_id,
                 target_gem="selenite",
-                payload=SeleniteRequest(user_query=objective),
+                payload=SeleniteRequest(user_query=objective, available_tools=available),
             )
             plan_res = self.registry.execute(plan_req)
             self.orchestrator.process_response(plan_req, plan_res)
             if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
                 return self._fail(
-                    result,
-                    "plan",
-                    plan_res.error.message if plan_res.error else "plan failed",
-                    t0,
+                    result, "plan", plan_res.error.message if plan_res.error else "plan failed", t0
                 )
             result.plan = plan_res.payload.plan
             result.stages.append(
                 StageResult(
                     stage="plan",
                     success=True,
-                    detail=f"{len(result.plan.steps)} steps",
+                    detail=f"{len(result.plan.steps)} steps tool={plan_res.payload.needs_tool}",
                     duration_ms=(time.perf_counter() - t0) * 1000,
                 )
             )
 
-            # Extension / fabricate hook from plan
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
                 treq = dict(plan_res.payload.tool_request)
-                # default generate; allow fabricate if specified
                 if "action" not in treq:
                     treq["action"] = "generate"
                 g_req = Envelope(
@@ -141,7 +141,6 @@ class Pipeline:
                     )
                 )
 
-            # --- tool_assist: few-shot from success patterns ---
             few_shot = ""
             if tool_assist:
                 t_ta = time.perf_counter()
@@ -238,19 +237,11 @@ class Pipeline:
                 self.orchestrator.process_response(code_req, code_res)
                 if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
                     return self._fail(
-                        result,
-                        "code",
-                        code_res.error.message if code_res.error else "code failed",
-                        t2,
+                        result, "code", code_res.error.message if code_res.error else "code failed", t2
                     )
                 generated = self._strip(code_res.payload.content)
                 if len(generated) > MAX_CODE_CHARS:
-                    return self._fail(
-                        result,
-                        "code",
-                        f"Generated code exceeds {MAX_CODE_CHARS} chars",
-                        t2,
-                    )
+                    return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars", t2)
                 result.generated_code = generated
                 result.stages.append(
                     StageResult(
@@ -293,7 +284,6 @@ class Pipeline:
                     break
                 last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
 
-            # Pre-audit tool scans
             if tool_assist and generated:
                 t_sc = time.perf_counter()
                 try:
@@ -373,8 +363,30 @@ class Pipeline:
             if learning_enabled():
                 self.policy.update(strategy, result.reward)
 
-            # Persist success patterns for future few-shot
-            if exit_code == 0 and generated and tool_assist:
+            success = exit_code == 0
+            record_outcome(success, error=None if success else (last_err or result.error))
+
+            # Optional fabricate proposal after fail streak
+            if not success:
+                proposal = maybe_propose_fabricate()
+                if proposal:
+                    t_fab = time.perf_counter()
+                    fab_req = Envelope(
+                        task_id=task_id,
+                        target_gem="grandidierite",
+                        payload=GrandidieriteRequest(tool_request=proposal),
+                    )
+                    fab_res = self.registry.execute(fab_req)
+                    result.stages.append(
+                        StageResult(
+                            stage="auto_fabricate",
+                            success=not bool(fab_res.error),
+                            detail=proposal.get("name", ""),
+                            duration_ms=(time.perf_counter() - t_fab) * 1000,
+                        )
+                    )
+
+            if success and generated and tool_assist:
                 try:
                     from gems.grandidierite.registry import run_tool
 
@@ -413,16 +425,29 @@ class Pipeline:
             )
         )
         result.reward = compute_reward(
-            exit_code=1,
-            confidence=0.0,
-            audit_approved=False,
-            retries=result.retries,
+            exit_code=1, confidence=0.0, audit_approved=False, retries=result.retries
         )
         if learning_enabled() and result.strategy:
             try:
                 self.policy.update(result.strategy, result.reward)
             except Exception:
                 pass
+        try:
+            record_outcome(False, error=msg)
+            proposal = maybe_propose_fabricate()
+            if proposal:
+                self.registry.execute(
+                    Envelope(
+                        task_id=result.task_id,
+                        target_gem="grandidierite",
+                        payload=GrandidieriteRequest(tool_request=proposal),
+                    )
+                )
+                result.stages.append(
+                    StageResult(stage="auto_fabricate", success=True, detail=proposal.get("name", ""))
+                )
+        except Exception:
+            pass
         result.finished_at = datetime.now(timezone.utc).isoformat()
         self._persist(result)
         self._log(result, learn=True)

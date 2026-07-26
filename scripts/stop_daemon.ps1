@@ -1,46 +1,48 @@
-# Stop all @ETHER daemon / flywheel / dashboard processes — safe cleanup
-$ErrorActionPreference = "Continue"
-$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$PidFile = Join-Path $Root "memory\daemon\daemon.pid"
+# Stop all @ETHER daemon processes (safe, non-fatal)
+$ErrorActionPreference = "SilentlyContinue"
+$Root = Split-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) -Parent
+if (-not $Root) { $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path }
 
-Write-Host "Stopping @ETHER processes..."
+Write-Host "[stop] cleaning @ETHER processes in $Root"
 
-# Stop scheduled task if present
-$task = Get-ScheduledTask -TaskName "ETHER-Daemon" -ErrorAction SilentlyContinue
-if ($null -ne $task) {
+# Scheduled task
+try {
+  $task = Get-ScheduledTask -TaskName "ETHER-Daemon" -ErrorAction SilentlyContinue
+  if ($task) {
     Stop-ScheduledTask -TaskName "ETHER-Daemon" -ErrorAction SilentlyContinue
-    Write-Host "  stopped Scheduled Task ETHER-Daemon"
-}
-
-# Kill by PID file
-if (Test-Path $PidFile) {
-    $pidText = (Get-Content $PidFile -Raw).Trim()
-    if ($pidText -match '^\d+$') {
-        $procId = [int]$pidText
-        try {
-            Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
-            Write-Host "  killed pid $procId from daemon.pid"
-        } catch {}
-    }
-    Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
-}
-
-# Kill matching python processes for this repo (best-effort)
-Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-  Where-Object {
-    $_.CommandLine -and (
-      $_.CommandLine -like "*ether_daemon.py*" -or
-      $_.CommandLine -like "*desktop_runtime.py*" -or
-      $_.CommandLine -like "*cli.main*flywheel*" -or
-      ($_.CommandLine -like "*uvicorn*" -and $_.CommandLine -like "*dashboard.app*")
-    )
-  } |
-  ForEach-Object {
-    try {
-      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-      Write-Host "  killed pid $($_.ProcessId)"
-    } catch {}
+    Write-Host "[stop] scheduled task stopped"
   }
+} catch {}
 
-Write-Host "Done. You can start ONE process with:"
-Write-Host "  powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1 -Foreground"
+# PID file
+$PidFile = Join-Path $Root "memory\daemon\daemon.pid"
+if (Test-Path -LiteralPath $PidFile) {
+  $raw = (Get-Content -LiteralPath $PidFile -ErrorAction SilentlyContinue | Select-Object -First 1)
+  if ($raw -match '^\s*(\d+)\s*$') {
+    $oldPid = [int]$Matches[1]
+    if ($oldPid -gt 0) {
+      Stop-Process -Id $oldPid -Force -ErrorAction SilentlyContinue
+      Write-Host "[stop] killed pid $oldPid"
+    }
+  }
+  Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue
+}
+
+# Any python whose command line mentions our scripts
+try {
+  Get-CimInstance Win32_Process |
+    Where-Object { $_.Name -match 'python' -and $_.CommandLine -and (
+      $_.CommandLine -match 'ether_daemon\.py' -or
+      $_.CommandLine -match 'desktop_runtime\.py' -or
+      $_.CommandLine -match 'cli\.main.*flywheel' -or
+      ($_.CommandLine -match 'uvicorn' -and $_.CommandLine -match 'dashboard\.app')
+    )} |
+    ForEach-Object {
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+      Write-Host "[stop] killed pid $($_.ProcessId)"
+    }
+} catch {
+  Write-Host "[stop] process scan skipped: $_"
+}
+
+Write-Host "[stop] done"

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-process daemon — dashboard + flywheel + batch in ONE process.
-
-Do NOT open multiple PowerShell windows. One of:
-  A) Scheduled Task ETHER-Daemon  (zero windows)
-  B) python scripts/ether_daemon.py  (one window)
-"""
+"""@ETHER single-process daemon."""
 
 from __future__ import annotations
 
@@ -18,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 
@@ -28,9 +23,12 @@ os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
-from core.dotenv import load_dotenv  # noqa: E402
+try:
+    from core.dotenv import load_dotenv
 
-load_dotenv(ROOT / ".env")
+    load_dotenv(ROOT / ".env")
+except Exception:
+    pass
 
 PY = sys.executable
 INTERVAL = int(os.getenv("ETHER_DAEMON_INTERVAL", os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))
@@ -64,8 +62,7 @@ def _pid_alive(pid: int) -> bool:
         if sys.platform == "win32":
             import ctypes
 
-            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-            h = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
             if h:
                 ctypes.windll.kernel32.CloseHandle(h)
                 return True
@@ -77,20 +74,19 @@ def _pid_alive(pid: int) -> bool:
 
 
 def acquire_lock() -> bool:
-    """Only one daemon process allowed."""
     PID_PATH.parent.mkdir(parents=True, exist_ok=True)
     if PID_PATH.exists():
         try:
             old = int(PID_PATH.read_text(encoding="utf-8").strip())
         except Exception:
             old = -1
-        if old != os.getpid() and _pid_alive(old):
-            log(f"ABORT: another daemon already running (pid={old})")
-            log("Stop it: powershell -File scripts\\stop_daemon.ps1")
+        if old > 0 and old != os.getpid() and _pid_alive(old):
+            log(f"ABORT: daemon already running pid={old}")
+            log("Run: powershell -File scripts\\stop_daemon.ps1")
             return False
     PID_PATH.write_text(str(os.getpid()), encoding="utf-8")
 
-    def _clear():
+    def _clear() -> None:
         try:
             if PID_PATH.exists() and PID_PATH.read_text(encoding="utf-8").strip() == str(os.getpid()):
                 PID_PATH.unlink(missing_ok=True)
@@ -112,18 +108,17 @@ def heartbeat() -> None:
 
 def run_cmd(args: list[str], timeout: int = 3600) -> int:
     try:
-        p = subprocess.run(args, cwd=str(ROOT), env=os.environ.copy(), timeout=timeout)
-        return p.returncode
+        return subprocess.run(args, cwd=str(ROOT), env=os.environ.copy(), timeout=timeout).returncode
     except subprocess.TimeoutExpired:
         log(f"timeout: {args}")
         return -1
     except Exception as e:
-        log(f"cmd error {args}: {e}")
+        log(f"cmd error: {e}")
         return -1
 
 
 def flywheel_loop() -> None:
-    log(f"flywheel loop interval={INTERVAL}s")
+    log(f"flywheel interval={INTERVAL}s")
     while not _stop.is_set():
         heartbeat()
         log("flywheel cycle start")
@@ -141,22 +136,20 @@ def flywheel_loop() -> None:
             ],
             timeout=2400,
         )
-        log(f"flywheel cycle exit={code}")
+        log(f"flywheel exit={code}")
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
                 return
             time.sleep(1)
-            if int(time.time()) % 30 == 0:
-                heartbeat()
 
 
 def batch_loop() -> None:
-    log(f"batch worker interval={BATCH_INTERVAL}s")
+    log(f"batch interval={BATCH_INTERVAL}s")
     while not _stop.is_set():
         heartbeat()
-        log("batch worker tick")
-        code = run_cmd([PY, "scripts/batch_worker.py"], timeout=3600)
-        log(f"batch worker exit={code}")
+        log("batch tick")
+        code = run_cmd([PY, str(ROOT / "scripts" / "batch_worker.py")], timeout=3600)
+        log(f"batch exit={code}")
         for _ in range(max(120, BATCH_INTERVAL)):
             if _stop.is_set():
                 return
@@ -164,34 +157,29 @@ def batch_loop() -> None:
 
 
 def dashboard_loop() -> None:
-    log(f"dashboard :{PORT}")
+    log(f"dashboard http://127.0.0.1:{PORT}")
     try:
         import uvicorn
 
-        uvicorn.run(
-            "dashboard.app:app",
-            host="127.0.0.1",
-            port=PORT,
-            reload=False,
-            log_level="warning",
-        )
+        uvicorn.run("dashboard.app:app", host="127.0.0.1", port=PORT, reload=False, log_level="warning")
     except Exception as e:
-        log(f"dashboard stopped: {e}")
+        log(f"dashboard error: {e}")
 
 
 def main() -> int:
-    print("=" * 60)
-    print("  @ETHER DAEMON  — ONE process (not 4 windows)")
-    print(f"  root={ROOT}")
-    print(f"  flywheel={RUN_FLYWHEEL} batch={RUN_BATCH} dash={RUN_DASH}")
-    print("  Ctrl+C to stop")
-    print("=" * 60)
+    print("=" * 60, flush=True)
+    print("  @ETHER DAEMON — single process", flush=True)
+    print(f"  root={ROOT}", flush=True)
+    print(f"  python={PY}", flush=True)
+    print("=" * 60, flush=True)
 
+    if not (ROOT / "scripts" / "ether_daemon.py").exists():
+        log(f"FATAL: not an ETHER root: {ROOT}")
+        return 2
     if not acquire_lock():
         return 2
 
     heartbeat()
-
     if RUN_DASH:
         threading.Thread(target=dashboard_loop, name="dashboard", daemon=True).start()
         time.sleep(1.5)
@@ -201,7 +189,7 @@ def main() -> int:
         threading.Thread(target=batch_loop, name="batch", daemon=True).start()
 
     def _sig(*_a):
-        log("signal stop")
+        log("stopping")
         _stop.set()
 
     signal.signal(signal.SIGINT, _sig)
@@ -216,7 +204,7 @@ def main() -> int:
             time.sleep(5)
     except KeyboardInterrupt:
         _stop.set()
-    log("daemon exit")
+    log("exit")
     return 0
 
 

@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.0")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.1")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -33,6 +33,10 @@ class ReconcileBody(BaseModel):
     threshold: float = 0.82
 
 
+class HealthBody(BaseModel):
+    skip_sandbox: bool = True
+
+
 def _safe_snapshot() -> dict:
     try:
         from dashboard.collector import collect_snapshot
@@ -40,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.0"
+        data["api_version"] = "0.4.1"
         return data
     except Exception as e:
         return {
@@ -53,7 +57,10 @@ def _safe_snapshot() -> dict:
             "matrix_steps": [],
             "runs": [],
             "gems": [],
-            "console": {"lines": [{"ts": "", "level": "err", "text": f"snapshot error: {e}"}], "active": False},
+            "console": {
+                "lines": [{"ts": "", "level": "err", "text": f"snapshot error: {e}"}],
+                "active": False,
+            },
             "connections": {},
             "policy": {},
             "tools": {"quarantine": [], "persistent": []},
@@ -64,6 +71,7 @@ def _safe_snapshot() -> dict:
             "current_work": {},
             "learning": {},
             "latest": {},
+            "auto_health": {},
         }
 
 
@@ -92,7 +100,28 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.0"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.1"}
+
+
+@app.get("/api/health-check")
+def health_check(skip_sandbox: bool = True) -> dict:
+    """Run automated probes (sandbox smoke optional — default skip for UI speed)."""
+    try:
+        from core.health_check import run_health_checks
+
+        return run_health_checks(include_sandbox_smoke=not skip_sandbox)
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.post("/api/health-check")
+def health_check_post(body: HealthBody) -> dict:
+    try:
+        from core.health_check import run_health_checks
+
+        return run_health_checks(include_sandbox_smoke=not body.skip_sandbox)
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
 
 
 @app.post("/api/promote")

@@ -6,6 +6,8 @@ Chat agents cannot open a shell on your Windows PC. Ollama/Docker being up does 
 ## Solution
 A **GitHub Actions self-hosted runner** on the Windows host is the remote execution bridge.
 
+Supports **Windows x64 and Windows ARM64** (Snapdragon / WoA). Install script auto-selects `win-x64` or `win-arm64` runner asset.
+
 ```
 Grok / CI  --workflow_dispatch-->  GitHub  -->  self-hosted runner (your PC)
                                                     |-
@@ -15,16 +17,10 @@ Grok / CI  --workflow_dispatch-->  GitHub  -->  self-hosted runner (your PC)
                                                     |- starts ETHER daemon if dead
 ```
 
-After the runner is installed **once**, no chat paste is required for ensure/E2E:
-- schedule every 30 min (`autonomy-host.yml`)
-- push to autonomy paths triggers host job
-- manual `workflow_dispatch` with action ensure|selftest|health|cycle
+## One-time host setup (ARM64 or x64)
 
-## One-time host setup
-
-1. Open https://github.com/OxCryptobot/-ETHER/settings/actions/runners/new
-2. Copy the registration token
-3. On the Windows box (repo root):
+1. https://github.com/OxCryptobot/-ETHER/settings/actions/runners/new → copy token
+2. Repo root:
 
 ```powershell
 cd C:\Users\Otcde\ETHER
@@ -32,11 +28,21 @@ git fetch origin; git reset --hard origin/main
 powershell -ExecutionPolicy Bypass -File .\scripts\install_self_hosted_runner.ps1 -Token PASTE_TOKEN_HERE
 ```
 
-4. Confirm runner Idle: https://github.com/OxCryptobot/-ETHER/settings/actions/runners
+3. Confirm Idle: https://github.com/OxCryptobot/-ETHER/settings/actions/runners  
+   Labels should include `self-hosted`, `Windows`, `ETHER`, and `ARM64` or `X64`.
 
-Also keep OS-level ensure (already in `install_windows_daemon.ps1`) so the daemon survives even if Actions is down.
+Also register OS ensure (daemon survives if Actions is down):
 
-## Dispatch from API (after runner online)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_daemon.ps1
+```
+
+## Notes for ARM64 Windows
+- Use ARM64 native Python 3.11+ in PATH (or x64 Python under emulation — native preferred).
+- Ollama ARM64 build if available for your device; Docker Desktop supports Windows on ARM with limitations — ETHER falls back to local subprocess sandbox when Docker is unavailable.
+- Runner asset is `actions-runner-win-arm64-*.zip`, not x64.
+
+## Dispatch after runner online
 
 ```
 POST /repos/OxCryptobot/-ETHER/actions/workflows/autonomy-host.yml/dispatches

@@ -1,11 +1,11 @@
 # @ETHER Flywheel (autonomous)
 
-> Last cycle: **2026-07-26T03:13:00.656409+00:00**  
-> Result: **FAIL — audit report filed**  
-> Confidence: **0.000** (min 0.7) · Audit: **False**  
+> Last cycle: **2026-07-26T03:15:41.938233+00:00**  
+> Result: **PASS**  
+> Confidence: **1.000** (min 0.7) · Audit: **True**  
 > Pull: **OK**  * branch            main       -> FETCH_HEAD  
 > Report pushed: **False** · Model: `qwen2.5-coder:3b`  
-> Reason: `static_gates_failed`
+> Reason: `gates_passed`
 
 ## Policy
 - Git: fetch + ff-only; ETHER_GIT_RESET_OK=1 allows hard reset

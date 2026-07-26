@@ -14,6 +14,8 @@ sys.path.insert(0, str(ROOT))
 
 from core.dotenv import load_dotenv
 from core.pipeline import Pipeline
+from core.health_metric import compute_health
+from core.bench_guardian import evaluate as guardian_evaluate
 
 load_dotenv(ROOT / ".env")
 
@@ -71,7 +73,20 @@ def main() -> int:
     path = out_dir / f"bench_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
     path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (out_dir / "latest.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(json.dumps({"pass_rate": summary["pass_rate"], "pass": ok, "n": len(TASKS)}, indent=2))
+    health = compute_health()
+    guard = guardian_evaluate()
+    print(
+        json.dumps(
+            {
+                "pass_rate": summary["pass_rate"],
+                "pass": ok,
+                "n": len(TASKS),
+                "healthy": health.get("healthy"),
+                "guardian_frozen": guard.get("frozen"),
+            },
+            indent=2,
+        )
+    )
     return 0 if ok == len(TASKS) else 1
 
 

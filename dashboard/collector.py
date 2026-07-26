@@ -1,4 +1,4 @@
-"""Collect live system state for the dashboard."""
+"""Collect live system state for the Control Matrix (intelligence-aware)."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ from typing import Any, Dict, List, Optional
 ROOT = Path(__file__).resolve().parents[1]
 
 GEMS = [
-    {"id": "clear-quartz", "role": "Sandbox execution", "layer": "verify"},
+    {"id": "clear-quartz", "role": "Sandbox + harness", "layer": "verify"},
     {"id": "rose-quartz", "role": "LLM router", "layer": "generate"},
     {"id": "citrine", "role": "Workspace memory", "layer": "memory"},
     {"id": "selenite", "role": "Planner", "layer": "plan"},
     {"id": "amethyst", "role": "Learning log", "layer": "learn"},
     {"id": "black-tourmaline", "role": "Security audit", "layer": "verify"},
-    {"id": "labradorite", "role": "Critique / profile", "layer": "review"},
+    {"id": "labradorite", "role": "Critique", "layer": "review"},
     {"id": "grandidierite", "role": "Tool extension", "layer": "extend"},
 ]
 
@@ -58,19 +58,27 @@ def _tail_jsonl(path: Path, limit: int = 40) -> List[Dict[str, Any]]:
     return list(reversed(rows))
 
 
+def _count_jsonl(path: Path) -> int:
+    if not path.exists():
+        return 0
+    try:
+        return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+    except Exception:
+        return 0
+
+
 def _parse_tasks(md: str) -> Dict[str, Any]:
     batches: List[Dict[str, Any]] = []
     current: Optional[Dict[str, Any]] = None
     row_re = re.compile(
         r"^\|\s*(\d+)\s*\|\s*([^|]*?)\s*\|\s*([^|]+?)\s*\|(?:\s*([^|]*?)\s*\|)?\s*$"
     )
-    lines = md.splitlines()
     section = "unknown"
-    for line in lines:
+    for line in md.splitlines():
         sm = re.match(r"^##\s+(.+)$", line.strip())
         if sm:
             section = sm.group(1).strip()
-            if "batch" in section.lower() or "done" in section.lower() or "active" in section.lower() or "p0" in section.lower():
+            if any(k in section.lower() for k in ("batch", "done", "active", "p0", "next")):
                 current = {"name": section, "tasks": []}
                 batches.append(current)
             continue
@@ -80,29 +88,80 @@ def _parse_tasks(md: str) -> Dict[str, Any]:
         num, col2, col3, col4 = m.group(1), m.group(2).strip(), m.group(3).strip(), (m.group(4) or "").strip()
         if not num.isdigit():
             continue
-        status = "queued"
-        priority = ""
-        title = col2
-        notes = col3
-        if "done" in section.lower() or "**done**" in col3.lower() or col3.lower() == "done":
-            status = "done"
-            title = col2
-            notes = col3
-        elif "active" in section.lower() or "next" in section.lower() or "batch 3" in section.lower():
-            status = "queued"
-            priority = col2
-            title = col3
-            notes = col4
+        status = "done" if "done" in section.lower() else "queued"
         current["tasks"].append(
-            {"id": int(num), "title": title[:120], "status": status, "priority": priority[:8], "notes": notes[:100]}
+            {
+                "id": int(num),
+                "title": col2[:120] if status == "done" else col3[:120],
+                "status": status,
+                "priority": col2[:8] if status != "done" else "",
+                "notes": (col3 if status == "done" else col4)[:100],
+            }
         )
     all_tasks = [t for b in batches for t in b["tasks"]]
     done = sum(1 for t in all_tasks if t["status"] == "done")
-    queued = sum(1 for t in all_tasks if t["status"] != "done")
     return {
         "batches": batches,
-        "totals": {"done": done, "queued": queued, "total": len(all_tasks)},
+        "totals": {"done": done, "queued": len(all_tasks) - done, "total": len(all_tasks)},
         "progress_pct": round(100 * done / len(all_tasks), 1) if all_tasks else 0.0,
+    }
+
+
+def _intel_block() -> Dict[str, Any]:
+    # always refresh health if possible
+    try:
+        from core.health_metric import compute_health
+
+        health = compute_health()
+    except Exception:
+        health = _read_json(ROOT / "memory" / "bench" / "health.json") or {}
+    try:
+        from core.bench_guardian import evaluate
+
+        guardian = evaluate()
+    except Exception:
+        guardian = _read_json(ROOT / "memory" / "bench" / "guardian.json") or {}
+
+    curriculum = _read_json(ROOT / "memory" / "curriculum" / "state.json") or {}
+    pass_n = _count_jsonl(ROOT / "memory" / "experience" / "pass.jsonl")
+    fail_n = _count_jsonl(ROOT / "memory" / "experience" / "fail.jsonl")
+    recent_pass = _tail_jsonl(ROOT / "memory" / "experience" / "pass.jsonl", 8)
+    recent_fail = _tail_jsonl(ROOT / "memory" / "experience" / "fail.jsonl", 5)
+    failure_graph = _read_json(ROOT / "memory" / "experience" / "failure_graph.json") or {}
+    nodes = failure_graph.get("nodes") or {}
+    top_fails = sorted(
+        ({"sig": k, "count": v.get("count", 0), "kind": v.get("kind")} for k, v in nodes.items()),
+        key=lambda x: x["count"],
+        reverse=True,
+    )[:6]
+    bench_latest = _read_json(ROOT / "memory" / "bench" / "latest.json") or {}
+
+    return {
+        "primary_metric": health.get("primary_metric") or "bench_pass_rate",
+        "pass_rate": health.get("pass_rate"),
+        "pass_rate_avg7": health.get("pass_rate_avg7"),
+        "latency_s_avg7": health.get("latency_s_avg7"),
+        "healthy": health.get("healthy"),
+        "guardian_frozen": guardian.get("frozen") or health.get("guardian_frozen"),
+        "guardian_reason": guardian.get("reason") or health.get("guardian_reason"),
+        "curriculum_tier": curriculum.get("tier", 0),
+        "curriculum_wins": curriculum.get("wins", 0),
+        "curriculum_losses": curriculum.get("losses", 0),
+        "curriculum_event": curriculum.get("last_event"),
+        "experience_pass": pass_n,
+        "experience_fail": fail_n,
+        "recent_pass": [
+            {"title": (r.get("objective") or "")[:60], "conf": r.get("confidence"), "strategy": r.get("strategy")}
+            for r in recent_pass
+        ],
+        "recent_fail": [
+            {"title": (r.get("objective") or "")[:60], "kind": r.get("fail_kind")}
+            for r in recent_fail
+        ],
+        "top_failure_signatures": top_fails,
+        "bench_n": bench_latest.get("n"),
+        "bench_pass": bench_latest.get("pass"),
+        "bench_ts": bench_latest.get("timestamp"),
     }
 
 
@@ -175,6 +234,7 @@ def collect_snapshot() -> Dict[str, Any]:
     fail_streak = _read_json(ROOT / "memory" / "learning" / "fail_streak.json") or {}
     tasks_md = _read_text(ROOT / "TASKS.md")
     tasks = _parse_tasks(tasks_md)
+    intel = _intel_block()
 
     runs: List[Dict[str, Any]] = []
     if runs_dir.exists():
@@ -240,9 +300,10 @@ def collect_snapshot() -> Dict[str, Any]:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "project": "@ETHER",
-        "version": "0.1.1",
+        "version": "0.2.0",
         "heartbeat": heartbeat or None,
         "current_work": current_work,
+        "intelligence": intel,
         "tasks": tasks,
         "summary": {
             "quality_pass": (latest or {}).get("ok"),
@@ -259,18 +320,22 @@ def collect_snapshot() -> Dict[str, Any]:
             "tasks_done": tasks.get("totals", {}).get("done"),
             "tasks_queued": tasks.get("totals", {}).get("queued"),
             "tasks_progress_pct": tasks.get("progress_pct"),
+            "bench_pass_rate": intel.get("pass_rate"),
+            "healthy": intel.get("healthy"),
+            "curriculum_tier": intel.get("curriculum_tier"),
+            "experience_pass": intel.get("experience_pass"),
             "pull_error": (steps.get("pull") or {}).get("error_brief")
             or (steps.get("pull") or {}).get("healed"),
         },
         "workflow": [
-            {"id": 1, "name": "Pull", "desc": "git fetch + ff-only (self-heal)"},
+            {"id": 1, "name": "Pull", "desc": "git self-heal"},
             {"id": 2, "name": "Static", "desc": "smoke + pytest"},
-            {"id": 3, "name": "Plan", "desc": "Selenite"},
-            {"id": 4, "name": "Tool assist", "desc": "few_shot + repo_map"},
-            {"id": 5, "name": "Code", "desc": "Rose Quartz"},
-            {"id": 6, "name": "Sandbox", "desc": "Clear Quartz"},
-            {"id": 7, "name": "Audit", "desc": "Black Tourmaline"},
-            {"id": 8, "name": "Learn / report", "desc": "Amethyst + git"},
+            {"id": 3, "name": "Curriculum", "desc": "graded objective"},
+            {"id": 4, "name": "Retrieve", "desc": "experience + BM25"},
+            {"id": 5, "name": "Code", "desc": "Rose Quartz + strategy"},
+            {"id": 6, "name": "Harness", "desc": "test-or-cap"},
+            {"id": 7, "name": "Sandbox", "desc": "Clear Quartz"},
+            {"id": 8, "name": "Audit + learn", "desc": "vault + bandit + report"},
         ],
         "matrix_steps": [
             {
@@ -310,21 +375,24 @@ def collect_snapshot() -> Dict[str, Any]:
         ],
         "learning": {
             "epsilon": bandit.get("epsilon"),
-            "ranked": bandit_ranked[:8],
+            "ranked": bandit_ranked[:10],
             "fail_streak": fail_streak,
         },
         "skills": [
-            {"name": "plan → code → sandbox → audit", "status": "active"},
-            {"name": "tool_assist + scans", "status": "on" if os.getenv("ETHER_TOOL_ASSIST", "1") == "1" else "off"},
-            {"name": "warm sandbox", "status": "on" if os.getenv("ETHER_WARM_SANDBOX", "0") == "1" else "off"},
-            {"name": "git reset ok", "status": "on" if os.getenv("ETHER_GIT_RESET_OK", "0") == "1" else "off"},
-            {"name": "flywheel autonomy", "status": "active" if heartbeat else "idle"},
-            {"name": "fail streak", "status": str(fail_streak.get("streak", 0))},
+            {"name": "curriculum", "status": f"tier {intel.get('curriculum_tier', 0)}"},
+            {"name": "experience vault", "status": f"{intel.get('experience_pass', 0)} pass / {intel.get('experience_fail', 0)} fail"},
+            {"name": "bench guardian", "status": "FROZEN" if intel.get("guardian_frozen") else "ok"},
+            {"name": "BM25 RAG", "status": "on" if os.getenv("ETHER_RAG_BM25", "1") == "1" else "off"},
+            {"name": "assert harness", "status": "on"},
+            {"name": "flywheel", "status": "active" if heartbeat else "idle"},
         ],
         "benchmarks": {
+            "primary": "bench_pass_rate",
+            "pass_rate": intel.get("pass_rate"),
+            "pass_rate_avg7": intel.get("pass_rate_avg7"),
+            "healthy": intel.get("healthy"),
             "flywheel_cycles": len(history),
             "flywheel_pass_rate": round(fw_pass / fw_total, 3) if history else None,
-            "pipeline_runs_sampled": len(runs),
             "pipeline_success_rate": round(complete / max(1, complete + errors), 3),
             "avg_confidence": avg_conf,
             "last_fail_reason": ((last_fail or {}).get("gates") or {}).get("agentic_reason"),
@@ -341,14 +409,14 @@ def collect_snapshot() -> Dict[str, Any]:
             "max_retries": int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
             "interval_s": int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")),
             "push": os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1",
-            "sandbox_retry": os.getenv("ETHER_SANDBOX_RETRY", "1") == "1",
-            "pull_soft": os.getenv("ETHER_PULL_SOFT", "1") == "1",
-            "git_reset_ok": os.getenv("ETHER_GIT_RESET_OK", "0") == "1",
+            "curriculum": os.getenv("ETHER_CURRICULUM", "1") == "1",
+            "experience": os.getenv("ETHER_EXPERIENCE", "1") == "1",
+            "guardian": os.getenv("ETHER_BENCH_GUARDIAN", "1") == "1",
         },
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:1800],
-            "flywheel": _read_text(ROOT / "FLYWHEEL.md")[:1200],
-            "tasks": tasks_md[:2500],
+            "intelligence": _read_text(ROOT / "INTELLIGENCE.md")[:1800],
+            "flywheel": _read_text(ROOT / "FLYWHEEL.md")[:1000],
         },
         "latest": latest,
         "last_fail": last_fail,

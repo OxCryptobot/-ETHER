@@ -1,19 +1,16 @@
 # @ETHER Task Board
 
-**Updated:** 2026-07-26 — feedback loops + gap close
+**Updated:** 2026-07-26
 
-## Done
-- Dense SCOREBOARD (bench/quiz/hidden/dataset/ablation/vault)
-- weekly_scoreboard.py + measurement_day.py
-- BM25 offline RAG in context gather
-- Failure graph → repair prompts
-- Experience retrieve fail-kind bias
-- MBPP-lite local dataset + dataset_quiz.py
-- Multifile `# file:` → memory/scratch cycle
-- COUSIN.md velocity sheet
-- Burst policy + ablation (run locally for numbers)
+## Done recently
+- Linux local sandbox + auto docker→local fallback
+- doctor sandbox-aware (no false Docker fail on cousin box)
+- start_daemon_linux.sh
+- COUSIN.md / ONBOARDING.md dual profile (Qwen 3.6)
+- Scoreboard / weekly / hidden / dataset / ablation tooling
 
-## Still needs *your* machine (numbers)
-1. `python scripts/weekly_scoreboard.py` → dated metrics
-2. `python scripts/burst_ablation.py --limit 10` → Δ pass_rate
-3. Optional peer fill-in on compare_*.md
+## Operator (cousin owns quality)
+1. Set exact Qwen 3.6 tag in `.env`
+2. `ETHER_SANDBOX_BACKEND=local`
+3. `python scripts/weekly_scoreboard.py`
+4. Optional `burst_ablation.py` only for science

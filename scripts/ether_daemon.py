@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-process daemon — smart cycle, reconcile, bench, quiz."""
+"""@ETHER daemon — refuses to declare healthy when scoreboard stale."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ os.environ.setdefault("ETHER_CURRICULUM", "1")
 os.environ.setdefault("ETHER_EXPERIENCE", "1")
 os.environ.setdefault("ETHER_BENCH_GUARDIAN", "1")
 os.environ.setdefault("ETHER_BURST_ON_FAIL", "1")
+os.environ.setdefault("ETHER_CURRICULUM_FAIL_RATE", "0.4")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
@@ -48,6 +49,7 @@ PORT = int(os.getenv("ETHER_DASH_PORT", "8787"))
 PID_PATH = ROOT / "memory" / "daemon" / "daemon.pid"
 HB_PATH = ROOT / "memory" / "daemon" / "heartbeat.txt"
 LOG_PATH = ROOT / "memory" / "daemon" / "daemon.log"
+HEALTH_FLAG = ROOT / "memory" / "daemon" / "healthy.json"
 _stop = threading.Event()
 _cycle_n = 0
 
@@ -113,6 +115,28 @@ def heartbeat() -> None:
         pass
 
 
+def write_healthy_flag() -> dict:
+    try:
+        from core.health_metric import declare_healthy
+
+        h = declare_healthy()
+    except Exception as e:
+        h = {"healthy": False, "reasons": [str(e)]}
+    try:
+        HEALTH_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        HEALTH_FLAG.write_text(
+            __import__("json").dumps({**h, "ts": datetime.now(timezone.utc).isoformat()}, indent=2),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    if not h.get("healthy"):
+        log(f"NOT HEALTHY: {h.get('reasons')}")
+    else:
+        log("HEALTHY scoreboard gate passed")
+    return h
+
+
 def run_cmd(args: list[str], timeout: int = 3600) -> int:
     try:
         return subprocess.run(args, cwd=str(ROOT), env=os.environ.copy(), timeout=timeout).returncode
@@ -123,11 +147,12 @@ def run_cmd(args: list[str], timeout: int = 3600) -> int:
 
 def flywheel_loop() -> None:
     global _cycle_n
-    log(f"smart flywheel interval={INTERVAL}s quiz_every={QUIZ_EVERY}")
+    log(f"smart flywheel interval={INTERVAL}s")
     while not _stop.is_set():
         heartbeat()
         _cycle_n += 1
-        log(f"smart cycle #{_cycle_n} start")
+        h = write_healthy_flag()
+        log(f"smart cycle #{_cycle_n} start healthy={h.get('healthy')}")
         smart = ROOT / "scripts" / "run_smart_cycle.py"
         if smart.exists():
             code = run_cmd([PY, str(smart)], timeout=2400)
@@ -140,13 +165,15 @@ def flywheel_loop() -> None:
             run_cmd([PY, str(ROOT / "scripts" / "reconcile_tools.py")], timeout=120)
 
         if BENCH_EVERY > 0 and _cycle_n % BENCH_EVERY == 0:
-            log("fast bench")
+            log("fast bench (scoreboard discipline)")
             run_cmd([PY, str(ROOT / "scripts" / "bench.py"), "--fast"], timeout=1800)
+            write_healthy_flag()
 
         if QUIZ_EVERY > 0 and _cycle_n % QUIZ_EVERY == 0:
             log("holdout quiz sample")
             run_cmd([PY, str(ROOT / "scripts" / "quiz.py"), "--limit", "5"], timeout=1800)
             run_cmd([PY, "-c", "from core.scoreboard import write_scoreboard; write_scoreboard()"], timeout=30)
+            write_healthy_flag()
 
         for _ in range(max(60, INTERVAL)):
             if _stop.is_set():
@@ -178,12 +205,13 @@ def dashboard_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DAEMON — cycle + bench + quiz + reconcile", flush=True)
+    print("  @ETHER DAEMON — scoreboard-gated healthy flag", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
     if not acquire_lock():
         return 2
     heartbeat()
+    write_healthy_flag()
     if RUN_DASH:
         threading.Thread(target=dashboard_loop, name="dashboard", daemon=True).start()
         time.sleep(1.5)

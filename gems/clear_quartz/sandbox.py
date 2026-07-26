@@ -1,4 +1,4 @@
-"""Clear Quartz sandbox — harness + optional warm container."""
+"""Clear Quartz sandbox — harness + honest test counting (print ≠ tests)."""
 
 from __future__ import annotations
 
@@ -152,6 +152,7 @@ class ClearQuartz:
     def _count_tests(
         self, stdout: str, stderr: str, exit_code: int, code: str
     ) -> Tuple[int, int]:
+        """Honest counts: print-only success is NOT a formal test (total_tests=0)."""
         combined = stdout + "\n" + stderr
         m = re.search(r"(\d+)\s+passed", combined)
         passed = int(m.group(1)) if m else 0
@@ -162,18 +163,13 @@ class ClearQuartz:
         m = re.search(r"Ran\s+(\d+)\s+tests?", combined)
         if m:
             total = int(m.group(1))
-            if "OK" in combined:
+            if "OK" in combined and exit_code == 0:
                 return total, total
             return 0, total
         assert_count = len(re.findall(r"\bassert\b", code))
-        if assert_count and exit_code == 0 and "AssertionError" not in combined:
-            return assert_count, assert_count
-        if assert_count and exit_code != 0:
+        if assert_count:
+            if exit_code == 0 and "AssertionError" not in combined:
+                return assert_count, assert_count
             return 0, assert_count
-        if exit_code == 0 and stdout.strip():
-            return 1, 1
-        if "passed" in combined.lower():
-            return 1, 1
-        if "failed" in combined.lower() or "error" in combined.lower():
-            return 0, 1
+        # No asserts / pytest → verification stays weak (total_tests=0)
         return 0, 0

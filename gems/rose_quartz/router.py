@@ -40,10 +40,9 @@ class RoseQuartz:
             )
 
         payload = request.payload
-        # optional force burst via env for this process
         force_burst = os.getenv("ETHER_FORCE_BURST", "0") == "1"
         if force_burst:
-            burst_res = self._burst(payload)
+            burst_res = self._burst(request.task_id, payload)
             if burst_res is not None:
                 return burst_res
 
@@ -52,7 +51,7 @@ class RoseQuartz:
         try:
             return self._call(request.task_id, payload, model)
         except httpx.ConnectError:
-            burst_res = self._burst(payload)
+            burst_res = self._burst(request.task_id, payload)
             if burst_res is not None:
                 return burst_res
             return ResponseEnvelope(
@@ -76,7 +75,7 @@ class RoseQuartz:
                     return self._call(request.task_id, payload, self.fallback_model)
                 except Exception:
                     pass
-            burst_res = self._burst(payload)
+            burst_res = self._burst(request.task_id, payload)
             if burst_res is not None:
                 return burst_res
             return ResponseEnvelope(
@@ -95,7 +94,7 @@ class RoseQuartz:
                     return self._call(request.task_id, payload, self.fallback_model)
                 except Exception:
                     pass
-            burst_res = self._burst(payload)
+            burst_res = self._burst(request.task_id, payload)
             if burst_res is not None:
                 return burst_res
             return ResponseEnvelope(
@@ -104,7 +103,7 @@ class RoseQuartz:
                 error=GemError(type=GemErrorType.RUNTIME, message=str(e), recoverable=True),
             )
 
-    def _burst(self, payload: RoseQuartzRequest) -> ResponseEnvelope | None:
+    def _burst(self, task_id: UUID, payload: RoseQuartzRequest) -> ResponseEnvelope | None:
         try:
             from gems.rose_quartz.burst import burst_enabled, chat
 
@@ -115,7 +114,7 @@ class RoseQuartz:
             if not out.get("ok"):
                 return None
             return ResponseEnvelope(
-                task_id=payload.messages[0].role and None or None,  # placeholder fixed below
+                task_id=task_id,
                 source_gem="rose-quartz",
                 payload=RoseQuartzResponse(
                     content=out.get("content") or "",

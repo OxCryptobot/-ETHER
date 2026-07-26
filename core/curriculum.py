@@ -1,4 +1,4 @@
-"""Curriculum — graded tasks, vault sync, failure-driven sampling."""
+"""Curriculum — graded tasks, vault sync, failure-driven sampling, scratch tier."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CUR_DIR = ROOT / "memory" / "curriculum"
 STATE_PATH = CUR_DIR / "state.json"
 MINED_PATH = CUR_DIR / "mined_tasks.json"
+SCRATCH_PATH = CUR_DIR / "scratch_tier.json"
 HOLDOUT_PATH = ROOT / "memory" / "quizzes" / "holdout_ids.json"
 PASS_PATH = ROOT / "memory" / "experience" / "pass.jsonl"
 FAIL_PATH = ROOT / "memory" / "experience" / "fail.jsonl"
@@ -64,7 +65,6 @@ def _tail_jsonl(path: Path, n: int = 40) -> List[Dict[str, Any]]:
 
 
 def sync_from_vault() -> Dict[str, Any]:
-    """Rebuild consecutive wins/losses from recent vault so tier tracks reality."""
     state = _load_state()
     events = []
     for r in _tail_jsonl(PASS_PATH, 30):
@@ -75,7 +75,6 @@ def sync_from_vault() -> Dict[str, Any]:
     if not events:
         return state
 
-    # consecutive streak from the end
     wins = losses = 0
     last = events[-1][1]
     for _, ok in reversed(events):
@@ -92,9 +91,7 @@ def sync_from_vault() -> Dict[str, Any]:
     tiers = load_tiers()
     tier = int(state.get("tier") or 0)
 
-    # apply promotions/demotions as if streak happened
     if last and wins >= promote_after and tier < max(0, len(tiers) - 1):
-        # how many promote steps available from streak
         steps = wins // promote_after
         tier = min(len(tiers) - 1, tier + max(1, min(steps, 2)))
         wins = wins % promote_after
@@ -118,10 +115,10 @@ def sync_from_vault() -> Dict[str, Any]:
 
 def load_tiers() -> List[Dict[str, Any]]:
     path = CUR_DIR / "tiers.json"
-    if not path.exists():
-        return []
-    data = json.loads(path.read_text(encoding="utf-8"))
-    tiers = list(data.get("tiers") or [])
+    tiers: List[Dict[str, Any]] = []
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        tiers = list(data.get("tiers") or [])
     if MINED_PATH.exists():
         try:
             mined = json.loads(MINED_PATH.read_text(encoding="utf-8")).get("tasks") or []
@@ -132,6 +129,18 @@ def load_tiers() -> List[Dict[str, Any]]:
                     if t.get("objective")
                 ]
                 tiers[-1].setdefault("tasks", []).extend(extra)
+        except Exception:
+            pass
+    # append scratch multifile tier at the end
+    if SCRATCH_PATH.exists():
+        try:
+            scratch = json.loads(SCRATCH_PATH.read_text(encoding="utf-8"))
+            tiers.append(
+                {
+                    "name": scratch.get("name") or "scratch_multifile",
+                    "tasks": list(scratch.get("tasks") or []),
+                }
+            )
         except Exception:
             pass
     return tiers
@@ -145,7 +154,6 @@ def current_tier_index() -> int:
 
 
 def _failure_driven_objective() -> Optional[Dict[str, Any]]:
-    """~40% of the time: practice from recent FAIL vault."""
     if random.random() > float(os.getenv("ETHER_CURRICULUM_FAIL_RATE", "0.4")):
         return None
     fails = _tail_jsonl(FAIL_PATH, 25)
@@ -170,7 +178,6 @@ def _failure_driven_objective() -> Optional[Dict[str, Any]]:
 
 
 def sample_objective() -> Dict[str, Any]:
-    # keep tier honest vs vault
     try:
         sync_from_vault()
     except Exception:

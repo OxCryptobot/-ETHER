@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Through 81 on main:** ledger, compare runner, scratch tier, Matrix ledger fields.
+**76–81 on main:** latency ledger, compare runner, scratch curriculum tier, strategy context helper.
 
 ```powershell
 cd C:\Users\Otcde\ETHER
@@ -9,6 +9,6 @@ git fetch origin
 git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
 .\.venv\Scripts\python.exe .\scripts\expand_holdout.py
-.\.venv\Scripts\python.exe .\scripts\wire_check.py
+.\.venv\Scripts\python.exe -c "from core.ledger import compute_ledger; import json; print(json.dumps(compute_ledger(), indent=2))"
 .\.venv\Scripts\python.exe -m pytest -q
 ```

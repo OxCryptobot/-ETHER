@@ -37,6 +37,7 @@ from core.learning import BanditPolicy, compute_reward, learning_enabled, strate
 from core.fail_streak import record_outcome, maybe_propose_fabricate
 from core.progress import write_progress, clear_progress
 from core.repair import repair_prompt, classify_stderr
+from core.patterns import index_pass_pattern
 
 MAX_CODE_CHARS = 50_000
 
@@ -139,7 +140,6 @@ class Pipeline:
                 )
             )
 
-            # Mid-pipeline tool: generate / fabricate / run
             if plan_res.payload.needs_tool and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
                 treq = dict(plan_res.payload.tool_request)
@@ -458,8 +458,18 @@ class Pipeline:
                             "tags": [strategy],
                         },
                     )
+                    cit = index_pass_pattern(
+                        objective=objective,
+                        code=generated,
+                        confidence=result.confidence,
+                        strategy=strategy,
+                    )
                     result.stages.append(
-                        StageResult(stage="memory_save", success=True, detail="success_pattern")
+                        StageResult(
+                            stage="memory_save",
+                            success=True,
+                            detail=f"success_pattern citrine={cit.get('ok')}",
+                        )
                     )
                 except Exception:
                     pass

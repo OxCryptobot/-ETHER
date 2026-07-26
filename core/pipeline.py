@@ -32,6 +32,12 @@ from core.registry import GemRegistry, build_default_registry
 from core.orchestrator import Orchestrator
 from core.confidence import compute_clear_quartz_confidence
 from core.context import gather_workspace_context, context_enabled
+from core.learning import (
+    BanditPolicy,
+    compute_reward,
+    learning_enabled,
+    strategy_prompt_addon,
+)
 
 MAX_CODE_CHARS = 50_000
 
@@ -57,6 +63,8 @@ class PipelineResult(BaseModel):
     stages: List[StageResult] = Field(default_factory=list)
     retries: int = 0
     context_chars: int = 0
+    strategy: str = "default"
+    reward: float = 0.0
     started_at: str = ""
     finished_at: str = ""
 
@@ -67,6 +75,7 @@ class Pipeline:
         self.orchestrator = Orchestrator()
         self.runs_dir = Path("memory/runs")
         self.runs_dir.mkdir(parents=True, exist_ok=True)
+        self.policy = BanditPolicy()
 
     def run(self, objective: str, prefer_local: bool = True, critique: bool = False) -> PipelineResult:
         task_id = uuid4()
@@ -79,8 +88,11 @@ class Pipeline:
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
 
+        # Select coding strategy (bandit)
+        strategy = self.policy.select() if learning_enabled() else "default"
+        result.strategy = strategy
+
         try:
-            # --- PLAN ---
             t0 = time.perf_counter()
             plan_req = Envelope(
                 task_id=task_id,
@@ -123,9 +135,9 @@ class Pipeline:
                     )
                 )
 
-            # --- WORKSPACE CONTEXT (multi-file) ---
             context_block = ""
-            if context_enabled():
+            use_ctx = context_enabled() and strategy != "no_context"
+            if use_ctx:
                 tctx = time.perf_counter()
                 try:
                     context_block = gather_workspace_context(Path.cwd(), query=objective)
@@ -148,11 +160,11 @@ class Pipeline:
                         )
                     )
 
-            # --- CODE + SANDBOX (with optional one retry) ---
             generated = ""
             attempt = 0
             max_attempts = 2 if allow_retry else 1
             last_err = ""
+            strategy_hint = strategy_prompt_addon(strategy)
 
             while attempt < max_attempts:
                 attempt += 1
@@ -160,6 +172,7 @@ class Pipeline:
                 if attempt == 1:
                     prompt = (
                         f"Write Python code for:\n{objective}\n\n"
+                        f"Strategy: {strategy_hint}\n\n"
                         f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
                     )
                     if context_block:
@@ -172,6 +185,7 @@ class Pipeline:
                         f"Objective: {objective}\n\n"
                         f"Broken code:\n{generated}\n\n"
                         f"Sandbox stderr:\n{last_err}\n\n"
+                        f"Strategy: {strategy_hint}\n"
                         "Write fixed, complete, executable Python code only. No markdown."
                     )
 
@@ -205,7 +219,7 @@ class Pipeline:
                     StageResult(
                         stage="code" if attempt == 1 else "code_retry",
                         success=True,
-                        detail=f"{len(generated)} chars",
+                        detail=f"{len(generated)} chars strategy={strategy}",
                         duration_ms=(time.perf_counter() - t2) * 1000,
                     )
                 )
@@ -242,7 +256,6 @@ class Pipeline:
                     break
                 last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
 
-            # --- AUDIT ---
             t4 = time.perf_counter()
             audit_req = Envelope(
                 task_id=task_id,
@@ -282,10 +295,22 @@ class Pipeline:
                         )
                     )
 
+            # Reward + learn
+            exit_code = result.sandbox.exit_code if result.sandbox else None
+            audit_ok = bool(result.audit and result.audit.approved)
+            result.reward = compute_reward(
+                exit_code=exit_code,
+                confidence=result.confidence,
+                audit_approved=audit_ok,
+                retries=result.retries,
+            )
+            if learning_enabled():
+                self.policy.update(strategy, result.reward)
+
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()
             self._persist(result)
-            self._log(result)
+            self._log(result, learn=True)
             return result
         except Exception as e:
             return self._fail(result, "exception", str(e), time.perf_counter())
@@ -301,9 +326,20 @@ class Pipeline:
                 duration_ms=max(0.0, (time.perf_counter() - t0) * 1000),
             )
         )
+        result.reward = compute_reward(
+            exit_code=1,
+            confidence=0.0,
+            audit_approved=False,
+            retries=result.retries,
+        )
+        if learning_enabled() and result.strategy:
+            try:
+                self.policy.update(result.strategy, result.reward)
+            except Exception:
+                pass
         result.finished_at = datetime.now(timezone.utc).isoformat()
         self._persist(result)
-        self._log(result)
+        self._log(result, learn=True)
         return result
 
     def _strip(self, text: str) -> str:
@@ -323,7 +359,7 @@ class Pipeline:
         except Exception:
             pass
 
-    def _log(self, result: PipelineResult) -> None:
+    def _log(self, result: PipelineResult, learn: bool = False) -> None:
         try:
             self.registry.execute(
                 Envelope(
@@ -338,7 +374,12 @@ class Pipeline:
                             "confidence": result.confidence,
                             "retries": result.retries,
                             "context_chars": result.context_chars,
+                            "strategy": result.strategy,
+                            "reward": result.reward,
+                            "exit_code": result.sandbox.exit_code if result.sandbox else None,
+                            "audit_approved": bool(result.audit and result.audit.approved),
                             "error": result.error,
+                            "learn": learn,
                         },
                     ),
                 )

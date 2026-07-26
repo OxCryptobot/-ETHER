@@ -1,16 +1,16 @@
 # @ETHER Live Status
 
-> **Still working** — autonomy on local + v0.2 features landing
+## Learning (honest)
+**Not** full RLHF / LoRA on this GPU class.
 
-## Live
-- Autonomous flywheel: PASS/FAIL reports push to git
-- Model: `qwen2.5-coder:3b` on Nitro 5
+**Real ML-lite now in:**
+- Reward from sandbox exit + confidence + audit
+- Experience store: `memory/learning/experience.jsonl`
+- Epsilon-greedy bandit over strategies: `memory/learning/bandit.json`
+- Pipeline selects strategy each run and updates from outcome
 
-## Just shipped
-- Smart Python **chunking** (`core/chunking.py`) for Citrine
-- **Multi-file context** injection in pipeline (`core/context.py`, `ETHER_USE_CONTEXT=1`)
+`ETHER_LEARNING=1` (default). Disable with `0`.
 
-## Next
-- Benchmark harness
-- Streaming tokens
-- Promote approval UX
+## Autonomy
+Flywheel PASS/FAIL reports continue.
+Dashboard: `ether dashboard` → http://127.0.0.1:8787

@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""@ETHER background daemon — runs WITHOUT the chat open.
+"""@ETHER single-process daemon — dashboard + flywheel + batch in ONE process.
 
-Supervises:
-  1) optional git self-heal pull
-  2) dashboard (optional)
-  3) flywheel cycles on interval
-  4) batch queue worker (feature objectives from memory/batch_queue.json)
-
-This is the real answer to "100% autonomous": local process under Windows,
-not the cloud chat session.
+Do NOT open multiple PowerShell windows. One of:
+  A) Scheduled Task ETHER-Daemon  (zero windows)
+  B) python scripts/ether_daemon.py  (one window)
 """
 
 from __future__ import annotations
 
-import json
+import atexit
 import os
 import signal
 import subprocess
@@ -60,6 +55,50 @@ def log(msg: str) -> None:
             f.write(line + "\n")
     except Exception:
         pass
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        if sys.platform == "win32":
+            import ctypes
+
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            h = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            if h:
+                ctypes.windll.kernel32.CloseHandle(h)
+                return True
+            return False
+        os.kill(pid, 0)
+        return True
+    except Exception:
+        return False
+
+
+def acquire_lock() -> bool:
+    """Only one daemon process allowed."""
+    PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if PID_PATH.exists():
+        try:
+            old = int(PID_PATH.read_text(encoding="utf-8").strip())
+        except Exception:
+            old = -1
+        if old != os.getpid() and _pid_alive(old):
+            log(f"ABORT: another daemon already running (pid={old})")
+            log("Stop it: powershell -File scripts\\stop_daemon.ps1")
+            return False
+    PID_PATH.write_text(str(os.getpid()), encoding="utf-8")
+
+    def _clear():
+        try:
+            if PID_PATH.exists() and PID_PATH.read_text(encoding="utf-8").strip() == str(os.getpid()):
+                PID_PATH.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    atexit.register(_clear)
+    return True
 
 
 def heartbeat() -> None:
@@ -142,27 +181,24 @@ def dashboard_loop() -> None:
 
 def main() -> int:
     print("=" * 60)
-    print("  @ETHER DAEMON  (local 24/7 autonomy)")
+    print("  @ETHER DAEMON  — ONE process (not 4 windows)")
     print(f"  root={ROOT}")
     print(f"  flywheel={RUN_FLYWHEEL} batch={RUN_BATCH} dash={RUN_DASH}")
-    print("  Ctrl+C to stop (or stop Windows task)")
+    print("  Ctrl+C to stop")
     print("=" * 60)
+
+    if not acquire_lock():
+        return 2
+
     heartbeat()
 
-    threads: list[threading.Thread] = []
     if RUN_DASH:
-        t = threading.Thread(target=dashboard_loop, name="dashboard", daemon=True)
-        t.start()
-        threads.append(t)
+        threading.Thread(target=dashboard_loop, name="dashboard", daemon=True).start()
         time.sleep(1.5)
     if RUN_FLYWHEEL:
-        t = threading.Thread(target=flywheel_loop, name="flywheel", daemon=True)
-        t.start()
-        threads.append(t)
+        threading.Thread(target=flywheel_loop, name="flywheel", daemon=True).start()
     if RUN_BATCH:
-        t = threading.Thread(target=batch_loop, name="batch", daemon=True)
-        t.start()
-        threads.append(t)
+        threading.Thread(target=batch_loop, name="batch", daemon=True).start()
 
     def _sig(*_a):
         log("signal stop")

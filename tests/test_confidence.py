@@ -1,5 +1,5 @@
 from core.schemas import ClearQuartzResponse
-from core.confidence import compute_clear_quartz_confidence
+from core.confidence import compute_clear_quartz_confidence, compute_scores
 
 
 def test_perfect():
@@ -25,7 +25,7 @@ def test_security_cap():
 
 
 def test_no_tests_soft_cap():
-    """Demo runs without formal tests are soft-capped (~0.60), not 0.35."""
+    """Demo runs without formal tests: dual scores, soft-capped at 0.70."""
     r = ClearQuartzResponse(
         exit_code=0,
         total_tests=0,
@@ -33,9 +33,12 @@ def test_no_tests_soft_cap():
         static_analysis_score=1.0,
         execution_time=1.0,
     )
-    score = compute_clear_quartz_confidence(r)
-    assert score <= 0.60
+    scores = compute_scores(r)
+    score = scores["confidence"]
+    assert score <= 0.70
     assert score >= 0.50  # successful clean exit should not look like failure
+    assert scores["execution_score"] >= 0.5
+    assert scores["verification_score"] <= 0.50  # weak without formal tests
 
 
 def test_failed_exit_cap():

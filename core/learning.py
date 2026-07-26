@@ -5,17 +5,17 @@ from __future__ import annotations
 import json
 import os
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 BANDIT_PATH = ROOT / "memory" / "learning" / "bandit.json"
 EXP_PATH = ROOT / "memory" / "learning" / "experience.jsonl"
 
 STRATEGIES = ["default", "minimal", "with_asserts", "step_by_step", "no_context"]
-MIN_PULLS_BEFORE_GREEDY = 5  # explore until arms have data
+MIN_PULLS_BEFORE_GREEDY = 5
 
 
 def learning_enabled() -> bool:
@@ -32,8 +32,7 @@ def compute_reward(
     if exit_code is None:
         return -1.0
     if exit_code != 0:
-        return -0.9 + 0.05 * min(retries, 2)
-    # success path
+        return round(-0.9 + 0.05 * min(retries, 2), 4)
     r = 0.4
     r += 0.4 * max(0.0, min(1.0, confidence))
     r += 0.2 if audit_approved else -0.2
@@ -50,20 +49,26 @@ class ArmStats:
     def mean_reward(self) -> float:
         return self.total_reward / self.pulls if self.pulls else 0.0
 
+    # alias used by some tests/callers
+    @property
+    def mean(self) -> float:
+        return self.mean_reward
+
 
 class BanditPolicy:
-    def __init__(self, epsilon: Optional[float] = None):
+    def __init__(self, epsilon: Optional[float] = None, path: Optional[Path] = None):
         self.epsilon = float(
             epsilon if epsilon is not None else os.getenv("ETHER_LEARN_EPSILON", "0.15")
         )
+        self.path = Path(path) if path is not None else BANDIT_PATH
         self.arms: Dict[str, ArmStats] = {s: ArmStats() for s in STRATEGIES}
         self._load()
 
     def _load(self) -> None:
-        if not BANDIT_PATH.exists():
+        if not self.path.exists():
             return
         try:
-            data = json.loads(BANDIT_PATH.read_text(encoding="utf-8"))
+            data = json.loads(self.path.read_text(encoding="utf-8"))
             for k, v in (data.get("arms") or {}).items():
                 self.arms[k] = ArmStats(
                     pulls=int(v.get("pulls", 0)),
@@ -75,7 +80,7 @@ class BanditPolicy:
             pass
 
     def _save(self) -> None:
-        BANDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "epsilon": self.epsilon,
             "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -88,10 +93,9 @@ class BanditPolicy:
                 for k, v in self.arms.items()
             },
         }
-        BANDIT_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def select(self) -> str:
-        # Force exploration until enough data
         cold = [s for s, a in self.arms.items() if a.pulls < MIN_PULLS_BEFORE_GREEDY]
         if cold and random.random() < 0.5:
             return random.choice(cold)

@@ -1,25 +1,17 @@
 # @ETHER Status
 
-**Batch 3 shipped** (2026-07-26): desktop launcher fixed, Matrix Flywheel panel, Rose stream option, tool-run payload-file, promote UI.
+**Local 24/7 path:** Windows daemon (not the chat).
 
-## Local recover
 ```powershell
 cd C:\Users\Otcde\ETHER
 $env:ETHER_GIT_RESET_OK = "1"
 git fetch origin
 git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
-powershell -ExecutionPolicy Bypass -File .\scripts\install_desktop_shortcut.ps1
-# or single window:
-$env:ETHER_ROOT = "C:\Users\Otcde\ETHER"
-.\.venv\Scripts\python.exe .\scripts\desktop_runtime.py
+powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_daemon.ps1
+schtasks /Run /TN ETHER-Daemon
 ```
 
-## Next (Batch 4)
-1. Citrine index PASS patterns
-2. Warm sandbox worker
-3. Expand bench
-4. Live stage ticker
+See **DAEMON.md** for control, logs, and batch queue.
 
-## P3 reminder
-Deferred until **2026-08-01**: LoRA, cloud burst, Firecracker, multi-agent, Obsidian.
+P3 deferred until **2026-08-01**.

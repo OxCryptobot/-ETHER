@@ -1,0 +1,29 @@
+{
+  "pending": [
+    {
+      "id": 31,
+      "kind": "pipeline",
+      "title": "smoke is_even",
+      "objective": "Write only Python: def is_even(n):\n    return n % 2 == 0\nprint(is_even(4))\nprint(is_even(5))"
+    },
+    {
+      "id": 32,
+      "kind": "pipeline",
+      "title": "smoke reverse",
+      "objective": "Write only Python: def reverse_string(s):\n    return s[::-1]\nprint(reverse_string('ether'))"
+    },
+    {
+      "id": 33,
+      "kind": "pipeline",
+      "title": "smoke fib",
+      "objective": "Write only Python: def fib(n):\n    a,b=0,1\n    for _ in range(n):\n        a,b=b,a+b\n    return a\nprint(fib(10))"
+    },
+    {
+      "id": 34,
+      "kind": "command",
+      "title": "run bench",
+      "command": ["python", "scripts/bench.py"]
+    }
+  ],
+  "done": []
+}

@@ -1,6 +1,4 @@
-"""Registry unit tests."""
-
-from core.registry import GemRegistry
+from core.registry import GemRegistry, build_default_registry
 
 
 def test_missing_gem_returns_none():
@@ -8,11 +6,19 @@ def test_missing_gem_returns_none():
     assert reg.get("nope") is None
 
 
-def test_register_and_get():
+def test_list_gems_empty():
     reg = GemRegistry()
+    assert reg.list_gems() == []
 
-    class Dummy:
-        pass
 
-    reg.register("dummy", Dummy())
-    assert reg.get("dummy") is not None
+def test_list_gems_after_register():
+    reg = GemRegistry()
+    reg.register("clear-quartz", object())
+    assert "clear-quartz" in reg.list_gems()
+
+
+def test_default_registry_has_core_gems():
+    reg = build_default_registry()
+    names = set(reg.list_gems())
+    for required in ("clear-quartz", "rose-quartz", "selenite", "black-tourmaline", "grandidierite"):
+        assert required in names

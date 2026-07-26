@@ -1,4 +1,4 @@
-"""Primary metric: bench pass_rate + quiz + staleness."""
+"""Primary metric: bench + quiz + dual staleness. Daemon uses declare_healthy()."""
 
 from __future__ import annotations
 
@@ -9,7 +9,9 @@ from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCH_DIR = ROOT / "memory" / "bench"
+QUIZ_DIR = ROOT / "memory" / "quiz"
 HEALTH_PATH = BENCH_DIR / "health.json"
+STALE_HOURS = 24.0
 
 
 def _parse_ts(ts: Optional[str]) -> Optional[datetime]:
@@ -19,6 +21,13 @@ def _parse_ts(ts: Optional[str]) -> Optional[datetime]:
         return datetime.fromisoformat(ts.replace("Z", "+00:00"))
     except Exception:
         return None
+
+
+def _hours_since(ts: Optional[str]) -> Optional[float]:
+    dt = _parse_ts(ts)
+    if not dt:
+        return None
+    return round((datetime.now(timezone.utc) - dt).total_seconds() / 3600.0, 2)
 
 
 def compute_health() -> Dict[str, Any]:
@@ -57,22 +66,35 @@ def compute_health() -> Dict[str, Any]:
             pass
 
     quiz: Dict[str, Any] = {}
-    qpath = ROOT / "memory" / "quiz" / "latest.json"
+    qpath = QUIZ_DIR / "latest.json"
     if qpath.exists():
         try:
             quiz = json.loads(qpath.read_text(encoding="utf-8"))
         except Exception:
             pass
 
-    now = datetime.now(timezone.utc)
-    bench_ts = _parse_ts(latest.get("timestamp"))
-    stale_hours = None
-    stale = True
-    if bench_ts:
-        stale_hours = round((now - bench_ts).total_seconds() / 3600.0, 2)
-        stale = stale_hours > 24.0
+    bench_stale_h = _hours_since(latest.get("timestamp"))
+    quiz_stale_h = _hours_since(quiz.get("timestamp"))
+    bench_stale = bench_stale_h is None or bench_stale_h > STALE_HOURS
+    quiz_stale = quiz_stale_h is None or quiz_stale_h > STALE_HOURS
+    stale = bench_stale or quiz_stale
 
-    healthy = pass_rate >= 0.4 and not bool(guardian.get("frozen")) and not stale
+    reasons: List[str] = []
+    if bench_stale:
+        reasons.append(f"bench_stale:{bench_stale_h}h" if bench_stale_h is not None else "bench_missing")
+    if quiz_stale:
+        reasons.append(f"quiz_stale:{quiz_stale_h}h" if quiz_stale_h is not None else "quiz_missing")
+    if pass_rate < 0.4:
+        reasons.append(f"pass_rate_low:{pass_rate}")
+    if guardian.get("frozen"):
+        reasons.append(f"guardian:{guardian.get('reason')}")
+
+    healthy = (
+        pass_rate >= 0.4
+        and not bool(guardian.get("frozen"))
+        and not bench_stale
+        and not quiz_stale
+    )
 
     out = {
         "primary_metric": "bench_pass_rate",
@@ -83,11 +105,27 @@ def compute_health() -> Dict[str, Any]:
         "quiz_n": quiz.get("n"),
         "healthy": healthy,
         "stale": stale,
-        "stale_hours": stale_hours,
+        "bench_stale": bench_stale,
+        "quiz_stale": quiz_stale,
+        "stale_hours": bench_stale_h,
+        "quiz_stale_hours": quiz_stale_h,
+        "unhealthy_reasons": reasons,
         "guardian_frozen": bool(guardian.get("frozen")),
         "guardian_reason": guardian.get("reason"),
-        "updated_at": now.isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     BENCH_DIR.mkdir(parents=True, exist_ok=True)
     HEALTH_PATH.write_text(json.dumps(out, indent=2), encoding="utf-8")
     return out
+
+
+def declare_healthy() -> Dict[str, Any]:
+    """Daemon gate: only True when bench+quiz fresh and not frozen."""
+    h = compute_health()
+    return {
+        "healthy": bool(h.get("healthy")),
+        "reasons": list(h.get("unhealthy_reasons") or []),
+        "pass_rate": h.get("pass_rate"),
+        "quiz_pass_rate": h.get("quiz_pass_rate"),
+        "stale": h.get("stale"),
+    }

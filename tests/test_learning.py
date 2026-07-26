@@ -2,8 +2,14 @@ from core.learning import BanditPolicy, compute_reward, strategy_prompt_addon
 
 
 def test_reward_success():
-    r = compute_reward(exit_code=0, confidence=1.0, audit_approved=True, retries=0)
-    # calibrated to roughly [-1, 1]; perfect path ~1.0
+    r = compute_reward(
+        exit_code=0,
+        confidence=1.0,
+        audit_approved=True,
+        retries=0,
+        verification_score=1.0,
+        had_self_check=True,
+    )
     assert r >= 0.8
     assert r <= 1.0
 
@@ -16,8 +22,6 @@ def test_reward_failure():
 def test_bandit_updates(tmp_path, monkeypatch):
     path = tmp_path / "bandit.json"
     monkeypatch.setenv("ETHER_LEARNING", "1")
-    b = BanditPolicy(epsilon=0.0)
-    # point storage at tmp for isolation
     import core.learning as L
 
     monkeypatch.setattr(L, "BANDIT_PATH", path)
@@ -25,7 +29,7 @@ def test_bandit_updates(tmp_path, monkeypatch):
     b.update("minimal", 0.9)
     b.update("default", 0.1)
     assert b.arms["minimal"].mean_reward > b.arms["default"].mean_reward
-    picks = {b.select() for _ in range(15)}
+    picks = {b.select() for _ in range(20)}
     assert "minimal" in picks
 
 

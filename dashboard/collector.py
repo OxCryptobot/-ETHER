@@ -92,10 +92,161 @@ def _sandbox_info() -> Dict[str, Any]:
     if raw in ("local", "subprocess", "native"):
         effective = "local"
     elif raw == "docker":
-        effective = "docker" if docker else "local (fallback)"
+        # An explicit docker backend now fails CLOSED — it does not degrade to
+        # host execution when docker is missing. Reporting "local (fallback)"
+        # here would claim a downgrade that no longer happens.
+        effective = "docker" if docker else "unavailable (fails closed)"
     else:
-        effective = "docker" if docker else "local"
-    return {"configured": raw, "effective": effective, "docker_present": docker, "python": py}
+        effective = "docker" if docker else "local (auto-degraded)"
+    isolated = effective.startswith("docker")
+    return {
+        "configured": raw,
+        "effective": effective,
+        "docker_present": docker,
+        "python": py,
+        "isolated": isolated,
+    }
+
+
+def _memory_block() -> Dict[str, Any]:
+    """Live state of the Citrine/Qdrant memory layer.
+
+    The pipeline reported `citrine=False` for a long time while every other
+    surface said healthy, because a dead memory layer had no dashboard
+    representation at all.
+    """
+    url = os.getenv("QDRANT_URL", "http://localhost:6333").rstrip("/")
+    out: Dict[str, Any] = {
+        "qdrant_url": url,
+        "reachable": False,
+        "collections": [],
+        "points": {},
+        "embed_model": os.getenv("ETHER_EMBED_MODEL", "nomic-embed-text"),
+        "error": "",
+    }
+    try:
+        import httpx
+
+        with httpx.Client(timeout=2.0) as client:
+            names = [
+                c["name"]
+                for c in client.get(f"{url}/collections").json()["result"]["collections"]
+            ]
+            out["reachable"] = True
+            out["collections"] = names
+            for name in names[:8]:
+                try:
+                    info = client.get(f"{url}/collections/{name}").json()["result"]
+                    out["points"][name] = info.get("points_count")
+                except Exception:
+                    out["points"][name] = None
+    except Exception as e:
+        out["error"] = str(e)[:120]
+    return out
+
+
+def _verification_block() -> Dict[str, Any]:
+    """How much recent output was actually verified, versus merely executed.
+
+    `confidence` alone hides this: a run with zero real assertions and a run
+    graded by genuine assertions both report a number, and until recently both
+    could report 1.000.
+    """
+    out: Dict[str, Any] = {
+        "gate_min_confidence": float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7") or 0.7),
+        "runs_sampled": 0,
+        "runs_with_real_tests": 0,
+        "runs_untested": 0,
+        "verified_fraction": None,
+        "holdout_dataset": False,
+        "holdout_tasks": 0,
+        "holdout_wired_to_gate": False,
+        "curriculum_tasks": 0,
+        "curriculum_with_holdout": 0,
+    }
+
+    # The flywheel gate grades against a task's holdout when one exists, so
+    # coverage of the curriculum is what determines whether the gate is real.
+    try:
+        tiers = _read_json(ROOT / "memory" / "curriculum" / "tiers.json") or {}
+        for tier in tiers.get("tiers") or []:
+            for task in tier.get("tasks") or []:
+                out["curriculum_tasks"] += 1
+                if (task.get("holdout_test") or "").strip():
+                    out["curriculum_with_holdout"] += 1
+        out["holdout_wired_to_gate"] = (
+            out["curriculum_tasks"] > 0
+            and out["curriculum_with_holdout"] == out["curriculum_tasks"]
+        )
+    except Exception:
+        pass
+    runs_dir = ROOT / "memory" / "runs"
+    try:
+        files = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:50]
+        for path in files:
+            data = _read_json(path) or {}
+            # total_tests lives under the nested sandbox record; `sandbox` is
+            # null on runs that never reached the sandbox stage.
+            sandbox = data.get("sandbox")
+            if not isinstance(sandbox, dict):
+                continue
+            total = sandbox.get("total_tests")
+            if total is None:
+                continue
+            out["runs_sampled"] += 1
+            if int(total) > 0:
+                out["runs_with_real_tests"] += 1
+            else:
+                out["runs_untested"] += 1
+        if out["runs_sampled"]:
+            out["verified_fraction"] = round(
+                out["runs_with_real_tests"] / out["runs_sampled"], 3
+            )
+    except Exception:
+        pass
+
+    holdout = ROOT / "memory" / "quizzes" / "hidden_humaneval.json"
+    try:
+        if holdout.exists():
+            tasks = (_read_json(holdout) or {}).get("tasks") or []
+            out["holdout_dataset"] = True
+            out["holdout_tasks"] = len(tasks)
+    except Exception:
+        pass
+    return out
+
+
+def _posture_block() -> Dict[str, Any]:
+    """Operator-facing safety switches, so their real state is visible.
+
+    Several of these were previously overridden behind the operator's back by
+    daemon launchers calling os.environ.setdefault before loading .env.
+    """
+    def flag(name: str, default: str = "0") -> bool:
+        return os.getenv(name, default) == "1"
+
+    sandbox = _sandbox_info()
+    return {
+        "sandbox_isolated": sandbox.get("isolated"),
+        "sandbox_effective": sandbox.get("effective"),
+        "patch_loop": flag("ETHER_PATCH_LOOP"),          # host git apply
+        "auto_promote": flag("ETHER_AUTO_PROMOTE"),      # quarantine -> trusted
+        "flywheel_push": flag("ETHER_FLYWHEEL_PUSH"),    # pushes to shared main
+        "git_reset_ok": flag("ETHER_GIT_RESET_OK"),      # hard reset to remote
+        "burst": flag("ETHER_BURST"),                    # sends code off-box
+        "risk_notes": [
+            note
+            for note, active in (
+                ("host execution: sandbox not isolated", not sandbox.get("isolated")),
+                ("patch loop can write to the working tree", flag("ETHER_PATCH_LOOP")),
+                ("tools auto-promote to trusted", flag("ETHER_AUTO_PROMOTE")),
+                ("commits auto-push to shared main", flag("ETHER_FLYWHEEL_PUSH")),
+                ("git reset --hard to remote enabled", flag("ETHER_GIT_RESET_OK")),
+                ("cloud burst sends code off-box", flag("ETHER_BURST")),
+            )
+            if active
+        ],
+    }
 
 
 def _intel_block() -> Dict[str, Any]:
@@ -467,6 +618,9 @@ def _collect_snapshot_inner() -> Dict[str, Any]:
             "burst_on_fail": os.getenv("ETHER_BURST_ON_FAIL", "1") == "1",
             "sandbox_backend": sb.get("configured"),
         },
+        "posture": _posture_block(),
+        "verification": _verification_block(),
+        "memory": _memory_block(),
         "docs": {
             "status": _read_text(ROOT / "STATUS.md")[:2000],
             "onboarding": _read_text(ROOT / "ONBOARDING.md")[:1200],

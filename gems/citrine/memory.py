@@ -139,4 +139,5 @@ class Citrine:
                     )
                 )
         if points:
+            self._ensure_collection(collection)
             self.client.upsert(collection_name=collection, points=points)

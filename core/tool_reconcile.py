@@ -18,6 +18,55 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 PERSISTENT = ROOT / "tools" / "persistent"
 QUARANTINE = ROOT / "tools" / "quarantine"
+
+
+def _promotion_gate(path: Path) -> Dict[str, Any]:
+    """Safety gate a quarantined tool must clear before becoming trusted.
+
+    Mirrors the checks `fabricate()` applies, so the reconcile path cannot be
+    used to bypass them. Fails CLOSED: if a gate cannot be evaluated, the tool
+    is not promoted.
+    """
+    import os
+
+    if os.getenv("ETHER_AUTO_PROMOTE", "0") != "1":
+        return {"ok": False, "reason": "ETHER_AUTO_PROMOTE=0"}
+
+    try:
+        code = path.read_text(encoding="utf-8")
+    except Exception as e:
+        return {"ok": False, "reason": f"unreadable: {e}"}
+
+    try:
+        from gems.grandidierite.fabricate import static_safety
+
+        safety = static_safety(code)
+        if not safety.get("ok"):
+            return {"ok": False, "reason": f"static_safety: {safety.get('findings')}"}
+    except Exception as e:
+        return {"ok": False, "reason": f"static_safety unavailable: {e}"}
+
+    try:
+        from uuid import uuid4
+
+        from core.registry import build_default_registry
+        from core.schemas import BlackTourmalineRequest, Envelope
+
+        res = build_default_registry().execute(
+            Envelope(
+                task_id=uuid4(),
+                target_gem="black-tourmaline",
+                payload=BlackTourmalineRequest(artifact=code, artifact_type="code"),
+            )
+        )
+        if res.error or res.payload is None:
+            return {"ok": False, "reason": "audit unavailable"}
+        if not res.payload.approved:
+            return {"ok": False, "reason": f"audit rejected: {res.payload.violations}"}
+    except Exception as e:
+        return {"ok": False, "reason": f"audit error: {e}"}
+
+    return {"ok": True, "reason": ""}
 REPORT_PATH = ROOT / "memory" / "tools" / "reconcile_latest.json"
 LOG_PATH = ROOT / "memory" / "tools" / "reconcile.jsonl"
 
@@ -228,6 +277,19 @@ def reconcile(
             "similarity_best": best[0] if best else 0.0,
             "nearest_persistent": best[1].get("name") if best else None,
         }
+        # Promotion moves self-fabricated code into tools/persistent, where
+        # run_tool executes it with sys.executable and the full inherited
+        # environment. This used to be a pure dedup pass with NO safety gate,
+        # driven by the daemon on a timer — which silently defeated
+        # ETHER_AUTO_PROMOTE=0, the only knob the operator was given.
+        gate = _promotion_gate(qpath)
+        if not gate["ok"]:
+            action["action"] = "blocked"
+            action["blocked_by"] = gate["reason"]
+            kept += 1
+            actions.append(action)
+            continue
+
         if not dry_run:
             try:
                 dest = PERSISTENT / dest_name

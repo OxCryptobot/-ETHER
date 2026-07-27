@@ -44,9 +44,25 @@ def compute_reward(
     plan_ok: bool = True,
     first_compile_ok: bool = False,
     used_burst: bool = False,
+    holdout_ok: Optional[bool] = None,
 ) -> float:
+    """Reward for a completed run.
+
+    `holdout_ok` is the verdict from assertions the generator never saw
+    (core/holdout.py). None means the task supplied no holdout.
+
+    Every other input here is self-graded: confidence, verification_score and
+    had_self_check all derive from assertions the model wrote about its own
+    output. Optimising on those alone makes "write assertions that cannot
+    fail" the highest-scoring strategy, which is exactly what the arm table
+    had started to learn. When a holdout exists it therefore dominates.
+    """
     if exit_code is None:
         return -1.0
+    if holdout_ok is False:
+        # Failed assertions it was not shown. Self-graded confidence is
+        # irrelevant — this is a wrong answer that merely ran.
+        return -0.9
     if exit_code != 0:
         base = -0.95 + 0.05 * min(retries, 2)
         if plan_ok:
@@ -69,6 +85,14 @@ def compute_reward(
         r -= 0.08
     if used_burst:
         r -= 0.05
+    if holdout_ok:
+        # Passing unseen assertions is the only evidence here that the model
+        # could not have manufactured, so it outweighs the self-graded terms.
+        r += 0.25
+    elif holdout_ok is None:
+        # Ungraded. Cap below a holdout-verified run so the bandit can never
+        # prefer a task/strategy that avoids independent grading.
+        r = min(r, 0.75)
     return round(max(-1.0, min(1.0, r)), 4)
 
 

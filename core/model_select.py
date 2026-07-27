@@ -34,7 +34,23 @@ PREFERRED_HOST = [
     "deepseek-coder:1.3b",
 ]
 
-_SIZE_MARKERS_HEAVY = ("32b", "14b", "13b", "16b", "7b", "6.7b", "8b", "9b")
+_SIZE_MARKERS_HEAVY = (
+    "6.7b", "7b", "8b", "9b", "13b", "14b", "16b",
+    # Everything above 16B was missing, so 20b/22b/27b/33b/34b/35b/70b/72b all
+    # reported as within a 3B host cap. ("27b" only matched by accident,
+    # because it contains "7b".)
+    "20b", "22b", "24b", "27b", "30b", "32b", "33b", "34b", "35b", "40b",
+    "65b", "70b", "72b", "104b", "180b", "397b", "405b",
+)
+
+# Not code models. Selecting one of these as the generator produces garbage
+# for every objective; an embedding model was in fact being chosen.
+_NON_CODER_MARKERS = ("embed", "rerank", "bge", "nomic", "minilm", "clip", "whisper")
+
+
+def _is_non_coder(name: str) -> bool:
+    n = (name or "").lower()
+    return any(m in n for m in _NON_CODER_MARKERS)
 
 
 def load_profile() -> Dict[str, Any]:
@@ -109,6 +125,9 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
     prof = load_profile()
     preferred = list(prof["preferred"])
 
+    # Embedding/reranker tags can never be the code generator, on any profile.
+    available = [a for a in available if not _is_non_coder(a)]
+
     # Filter available by profile cap
     if prof["profile"] != "cousin":
         available_safe = [a for a in available if not _is_heavy(a)]
@@ -147,7 +166,15 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
             chosen = "qwen2.5-coder:3b"
             reason = "fallback_host_3b"
 
-    if auto or not (os.getenv("ETHER_PRIMARY_MODEL") or "").strip():
+    # Only fill in a model when the operator has not chosen one. This used to
+    # overwrite an explicit ETHER_PRIMARY_MODEL whenever ETHER_AUTO_MODEL was
+    # set (it defaults to "1"), and the sole caller is the dashboard's
+    # read-only status probe (core/infra_status.py). Because the daemon runs
+    # uvicorn in-process and passes os.environ to every child, merely polling
+    # the dashboard could silently repoint code generation at whatever this
+    # picked — observed selecting `nomic-embed-text`, an embedding model.
+    # A status probe must not reconfigure the system it is reporting on.
+    if not (os.getenv("ETHER_PRIMARY_MODEL") or "").strip():
         os.environ["ETHER_PRIMARY_MODEL"] = chosen
 
     return {

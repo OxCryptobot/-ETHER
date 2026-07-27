@@ -25,11 +25,6 @@ if str(ROOT) not in sys.path:
 
 os.chdir(ROOT)
 os.environ["ETHER_ROOT"] = str(ROOT)
-os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
-os.environ.setdefault("ETHER_PULL_SOFT", "1")
-os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
-os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
 try:
     from core.dotenv import load_dotenv
@@ -37,6 +32,18 @@ except Exception:
 
     def load_dotenv(*_a, **_k):  # type: ignore
         return None
+
+
+# .env must load BEFORE these setdefault() calls — the loader never overrides
+# an already-set variable, so doing it the other way round silently ignored an
+# operator's ETHER_FLYWHEEL_PUSH=0 and force-enabled ETHER_GIT_RESET_OK.
+load_dotenv(ROOT / ".env")
+
+os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
+os.environ.setdefault("ETHER_PULL_SOFT", "1")
+os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 
 
 load_dotenv(ROOT / ".env")

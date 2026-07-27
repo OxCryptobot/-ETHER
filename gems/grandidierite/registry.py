@@ -20,13 +20,18 @@ def list_tools(include_quarantine: bool = True) -> Dict[str, List[str]]:
 
 
 def resolve_tool(name: str) -> Optional[Path]:
+    """Resolve a tool name to an executable path.
+
+    Only PERSISTENT is searched. QUARANTINE previously resolved here too,
+    which meant `run_tool` executed unreviewed, self-fabricated code with
+    sys.executable, cwd=ROOT and the full inherited environment — so the
+    quarantine directory enforced nothing, contradicting SECURITY.md's claim
+    that generated tools stay quarantined until explicitly promoted.
+    """
     if not name.endswith(".py"):
         name = f"{name}.py"
-    for folder in (PERSISTENT, QUARANTINE):
-        path = folder / name
-        if path.exists():
-            return path
-    return None
+    path = PERSISTENT / name
+    return path if path.exists() else None
 
 
 def run_tool(name: str, payload: Optional[Dict[str, Any]] = None, timeout: int = 60) -> Dict[str, Any]:

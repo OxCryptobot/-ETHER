@@ -71,6 +71,32 @@ python -m cli.main doctor
 python -m cli.main run "write a python function is_even(n) with assert is_even(4) and not is_even(5)"
 ```
 
+### Memory layer (Qdrant) — needed for learning
+
+Citrine stores pass-patterns in Qdrant. Without it the pipeline still runs and
+still reports success, but `memory_save` logs `citrine=False` and **nothing is
+ever learned**. Neither profile above starts it, so start it explicitly:
+
+```bash
+docker compose up -d qdrant     # or, if compose is unavailable:
+docker run -d --name ether-qdrant --restart unless-stopped \
+  -p 6333:6333 -p 6334:6334 \
+  -v ether_qdrant_storage:/qdrant/storage qdrant/qdrant:latest
+```
+
+Also pull the embedding model, or embeddings silently fall back to a zero
+vector that poisons retrieval:
+
+```bash
+ollama pull nomic-embed-text
+```
+
+Confirm it took — this should print `citrine=True`:
+
+```bash
+python -m cli.main run "write a python function is_even(n), with asserts" | grep memory_save
+```
+
 ### Autonomy / quality (your box is the muscle)
 
 ```bash

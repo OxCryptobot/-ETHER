@@ -24,6 +24,104 @@ def curriculum_enabled() -> bool:
     return os.getenv("ETHER_CURRICULUM", "1") == "1"
 
 
+def _normalize(text: str) -> str:
+    return " ".join((text or "").split())
+
+
+def check_task_leakage(task: Dict[str, Any]) -> List[str]:
+    """Report ways a curriculum task gives away its own answer.
+
+    Curriculum objectives used to read, literally:
+
+        Write only Python: def is_even(n):
+            return n % 2 == 0
+        assert is_even(4) and not is_even(5)
+
+    The prompt contained the implementation *and* the assertions it would be
+    graded on, so the task was transcription and the "tests" were the ones
+    pasted into the model's own prompt. Any holdout drawn from such a task is
+    meaningless, because the model was shown it.
+
+    Returns a list of problems; empty means the task is safe to grade.
+    """
+    import ast
+
+    problems: List[str] = []
+    objective = str(task.get("objective") or "")
+    holdout = str(task.get("holdout_test") or "")
+    norm_objective = _normalize(objective)
+
+    # 1. The objective must not contain the holdout assertions.
+    if holdout:
+        for line in holdout.splitlines():
+            line = line.strip()
+            if not line.startswith("assert "):
+                continue
+            if _normalize(line) in norm_objective:
+                problems.append(f"holdout assertion leaked into objective: {line[:60]}")
+
+    # 2. The objective must not contain a working implementation.
+    for block in _code_blocks(objective):
+        try:
+            tree = ast.parse(block)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            body = [
+                stmt
+                for stmt in node.body
+                if not (
+                    isinstance(stmt, ast.Pass)
+                    or (
+                        isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Constant)
+                    )
+                )
+            ]
+            if body:
+                problems.append(f"objective contains an implementation of {node.name}()")
+
+    # 3. A task with no holdout cannot be graded on unseen tests.
+    if not holdout.strip():
+        problems.append("no holdout_test — nothing can grade this task independently")
+
+    # The same defect can surface via several candidate blocks.
+    return list(dict.fromkeys(problems))
+
+
+def _code_blocks(text: str) -> List[str]:
+    """Candidate Python snippets inside an objective (fenced or bare)."""
+    blocks: List[str] = []
+    fence = False
+    current: List[str] = []
+    for line in (text or "").splitlines():
+        if line.strip().startswith("```"):
+            if fence:
+                blocks.append("\n".join(current))
+                current = []
+            fence = not fence
+            continue
+        if fence:
+            current.append(line)
+    if current:
+        blocks.append("\n".join(current))
+    blocks.append(text or "")
+
+    # Bare objectives like "Write only Python: def f(n):\n    return ..." do
+    # not parse as-is, so also inspect the text from its first `def` onward.
+    raw = text or ""
+    idx = raw.find("def ")
+    if idx != -1:
+        tail = raw[idx:]
+        blocks.append(tail)
+        # Reconstruct indentation when the prose left the def mid-line.
+        blocks.append("\n".join(line.rstrip() for line in tail.splitlines()))
+
+    return [b for b in blocks if "def " in b]
+
+
 def _load_state() -> Dict[str, Any]:
     if not STATE_PATH.exists():
         return {"tier": 0, "wins": 0, "losses": 0, "history": [], "synced": False}
@@ -178,6 +276,10 @@ def _failure_driven_objective() -> Optional[Dict[str, Any]]:
             f"Fix this previously failed task. Failure class was {kind}.\n"
             f"Write complete executable Python only with asserts.\n{obj}"
         ),
+        # Repair tasks are reconstructed from a past failure and carry no
+        # independent holdout; the gate falls back to self-graded signals for
+        # them, which is why `holdout_ok` is reported as None rather than True.
+        "holdout_test": "",
         "source": "failure_vault",
     }
 
@@ -199,16 +301,36 @@ def sample_objective() -> Dict[str, Any]:
             "id": "fallback_even",
             "tier": 0,
             "title": "fallback",
+            # Describes the behaviour; does not contain the implementation or
+            # the assertions it will be graded on.
             "objective": (
-                "Write only this Python code with no markdown:\n"
-                "def is_even(n):\n    return n % 2 == 0\n"
-                "assert is_even(4) and not is_even(5)\n"
-                "print(is_even(4))\n"
+                "Write only Python, no markdown.\n\n"
+                "Implement:\n\ndef is_even(n: int) -> bool\n\n"
+                "Return True when n is an even integer and False otherwise. "
+                "Zero counts as even."
             ),
+            "holdout_test": (
+                "assert is_even(4) is True\n"
+                "assert is_even(5) is False\n"
+                "assert is_even(0) is True\n"
+                "print('ok')"
+            ),
+            "source": "fallback",
         }
     idx = current_tier_index()
     tier = tiers[idx]
     tasks = [t for t in (tier.get("tasks") or []) if (t.get("id") or "") not in blocked]
+
+    # Enforced at the point of use, not just in tests. load_tiers() splices
+    # scratch_tier.json and mined_tasks.json into the last tier at runtime, so
+    # auditing the shipped tiers.json alone is not sufficient — five scratch
+    # tasks were still handing the model their own implementation long after
+    # tiers.json had been cleaned. A task that gives away its answer teaches
+    # transcription and cannot be graded on unseen tests.
+    clean = [t for t in tasks if not check_task_leakage(t)]
+    if clean:
+        tasks = clean
+
     if not tasks:
         tasks = list(tier.get("tasks") or [])
     if not tasks:
@@ -220,6 +342,9 @@ def sample_objective() -> Dict[str, Any]:
         "tier_name": tier.get("name") or f"tier_{idx}",
         "title": task.get("title") or task.get("id") or "task",
         "objective": task.get("objective") or "print(1)",
+        # Assertions the generator is never shown. This is the only grading
+        # signal a model cannot author for itself; see core/holdout.py.
+        "holdout_test": task.get("holdout_test") or "",
         "source": "tier",
     }
 

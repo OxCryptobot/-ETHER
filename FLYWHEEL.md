@@ -1,12 +1,12 @@
 # @ETHER Flywheel (rinse & repeat)
 
-> Last cycle: **2026-07-27T22:36:38.928356+00:00**  
-> Result: **PASS**  
-> Confidence: **1.000** (min 0.7) · Audit: **True**  
-> Ver: **1.0** · tests: **1**  
+> Last cycle: **2026-07-27T22:34:37.820737+00:00**  
+> Result: **FAIL — audit report filed**  
+> Confidence: **0.000** (min 0.7) · Audit: **False**  
+> Ver: **0.0** · tests: **0**  
 > Pull: **OK**  * branch            main       -> FETCH_HEAD  
 > Report pushed: **False** · Model: `qwen2.5-coder:3b`  
-> Reason: `gates_passed`
+> Reason: `max_retries_exhausted`
 
 ## Cycle
 1. git pull (self-heal)

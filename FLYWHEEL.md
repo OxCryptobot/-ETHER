@@ -1,12 +1,12 @@
 # @ETHER Flywheel (rinse & repeat)
 
-> Last cycle: **2026-07-27T22:51:08.236283+00:00**  
-> Result: **PASS**  
-> Confidence: **1.000** (min 0.7) · Audit: **True**  
-> Ver: **1.0** · tests: **2**  
-> Pull: **OK**  * branch            main       -> FETCH_HEAD  
-> Report pushed: **False** · Model: `qwen3.6:35b-a3b-q8_0`  
-> Reason: `gates_passed`
+> Last cycle: **2026-07-27T23:37:35.801520+00:00**  
+> Result: **FAIL — audit report filed**  
+> Confidence: **0.000** (min 0.7) · Audit: **False**  
+> Ver: **0.0** · tests: **0**  
+> Pull: **OK** HEAD is now at 2c710ea fix: repair every open finding from the core/ audit  
+> Report pushed: **False** · Model: `qwen2.5-coder:3b`  
+> Reason: `static_gates_failed`
 
 ## Cycle
 1. git pull (self-heal)

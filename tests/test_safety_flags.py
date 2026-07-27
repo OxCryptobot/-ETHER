@@ -132,6 +132,37 @@ def test_env_file_wins_over_launcher_defaults():
         )
 
 
+def test_warm_sandbox_is_off_by_default():
+    """It shares /tmp across programs, which let one run alter another's verdict."""
+    import os
+
+    from gems.clear_quartz.warm import warm_enabled
+
+    os.environ.pop("ETHER_WARM_SANDBOX", None)
+    assert warm_enabled() is False
+
+
+def test_warm_sandbox_is_hardened_if_enabled():
+    """If someone does turn it on, the code-execution paths must stay closed.
+
+    A long-lived container shares /tmp, and a program was verified planting
+    sitecustomize.py into the HOME-derived user-site directory where a later,
+    unrelated program executed it. `-I` disables user site-packages and a
+    per-run HOME stops anything being pre-planted.
+    """
+    import inspect
+
+    from gems.clear_quartz import warm
+
+    source = inspect.getsource(warm.run_in_warm)
+    assert '"-I"' in source, "warm exec must use python -I (no user site-packages)"
+    assert "HOME=" in source, "warm exec must set a per-run HOME"
+
+    create = inspect.getsource(warm.ensure_warm)
+    for flag in ("--read-only", "--cap-drop", "--user", "--pids-limit", "no-new-privileges"):
+        assert flag in create, f"warm container missing {flag}"
+
+
 def test_sandbox_docker_backend_does_not_degrade_to_host(monkeypatch):
     """An explicit docker backend is a security choice, not a preference."""
     monkeypatch.setenv("ETHER_SANDBOX_BACKEND", "docker")

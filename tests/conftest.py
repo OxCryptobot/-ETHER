@@ -56,6 +56,15 @@ def isolate_persistent_state(monkeypatch, tmp_path):
     sandbox_root = ROOT / "memory" / "_pytest" / tmp_path.name
     sandbox_root.mkdir(parents=True, exist_ok=True)
 
+    # save_success_pattern / few_shot_pack run as SUBPROCESSES, so patching a
+    # module attribute cannot reach them — they take the path from the
+    # environment. few_shot_pack replays this store into real prompts, and 84
+    # of its 101 rows were "write hello" test artifacts being served to the
+    # model as worked examples.
+    monkeypatch.setenv(
+        "ETHER_SUCCESS_PATTERNS_PATH", str(sandbox_root / "success_patterns.jsonl")
+    )
+
     for module_name, attr, kind in _STATE_TARGETS:
         try:
             module = importlib.import_module(module_name)

@@ -79,7 +79,16 @@ class Amethyst:
                 audit_approved=bool(interaction.get("audit_approved")),
                 retries=int(interaction.get("retries") or 0),
             )
-        self.policy.update(strategy, float(reward))
+        # Deliberately NOT calling self.policy.update() here.
+        #
+        # Pipeline.run already credits the arm via its own BanditPolicy before
+        # logging to this gem, and this instance holds a separate in-memory
+        # copy of the same arm table. Both wrote the whole file, so the second
+        # write silently discarded the first, the cold-arm decay sweep ran
+        # twice from inconsistent snapshots, and memory/learning/experience.jsonl
+        # accumulated three rows per run — inflating every count derived from it.
+        #
+        # Logging the outcome is this gem's job; owning the arm table is not.
         append_experience(
             {
                 "strategy": strategy,

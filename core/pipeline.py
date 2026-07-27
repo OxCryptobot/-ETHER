@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import inspect
 import os
 import re
 import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, List
+from typing import Any, Dict, Optional, List
 from uuid import uuid4, UUID
 
 from pydantic import BaseModel, Field
@@ -33,7 +35,13 @@ from core.registry import GemRegistry, build_default_registry
 from core.orchestrator import Orchestrator
 from core.confidence import compute_scores
 from core.context import gather_workspace_context, context_enabled
-from core.learning import BanditPolicy, compute_reward, learning_enabled, strategy_prompt_addon
+from core.learning import (
+    BanditPolicy,
+    arm_behaviour,
+    compute_reward,
+    learning_enabled,
+    strategy_prompt_addon,
+)
 from core.fail_streak import record_outcome, maybe_propose_fabricate
 from core.progress import write_progress, clear_progress
 from core.repair import repair_prompt, classify_stderr
@@ -41,9 +49,25 @@ from core.patterns import index_pass_pattern
 from core.experience import retrieve as experience_retrieve, record as experience_record
 from core.bench_guardian import is_frozen
 from core.pipeline_burst import decide_burst
-from core.pipeline_select import select_strategy
+from core.pipeline_select import current_tier, select_strategy_with_context
 
 MAX_CODE_CHARS = 50_000
+
+
+@dataclass
+class _Attempt:
+    """One generation attempt = one bandit decision.
+
+    Each attempt is drawn in its own context (attempt 1 in the generation
+    context, a retry in the repair context implied by the observed
+    `fail_kind`) and is therefore credited separately. Handing the whole run's
+    reward to the arm that produced attempt 1 when attempt 2 used a different
+    arm and fixed the code credits the wrong arm.
+    """
+
+    strategy: str
+    context: Dict[str, Any] = field(default_factory=dict)
+    credited: bool = False
 
 
 class StageResult(BaseModel):
@@ -72,7 +96,11 @@ class PipelineResult(BaseModel):
     stages: List[StageResult] = Field(default_factory=list)
     retries: int = 0
     context_chars: int = 0
+    # The arm that produced the code that was finally graded. A retry can pick
+    # a different arm, and this reports the one that actually ran.
     strategy: str = "default"
+    # One entry per attempt, in order, so the retry decision stays auditable.
+    strategies: List[str] = Field(default_factory=list)
     reward: float = 0.0
     few_shot_chars: int = 0
     tool_output_chars: int = 0
@@ -82,6 +110,22 @@ class PipelineResult(BaseModel):
     plan_ok: bool = False
     started_at: str = ""
     finished_at: str = ""
+
+
+def _is_burst_model(model_used: str) -> bool:
+    """Did this response come from the cloud burst model?
+
+    Was `"llama" in model_used or "grok" in ... or "burst" in ...`, which
+    marked every run on a local llama-family model as a burst and charged it
+    the -0.05 burst penalty in compute_reward. The burst path in
+    gems/rose_quartz/router.py labels its responses with ETHER_BURST_MODEL
+    (default grok-3) or the literal "burst", so match those exactly.
+    """
+    m = (model_used or "").strip().lower()
+    if not m:
+        return False
+    configured = (os.getenv("ETHER_BURST_MODEL") or "grok-3").strip().lower()
+    return m in {configured, "burst"}
 
 
 def _looks_multifile(objective: str) -> bool:
@@ -141,12 +185,16 @@ class Pipeline:
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
         tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
 
-        # select_strategy builds the bandit context (multifile / tier / fail_kind)
-        # and passes it to BanditPolicy.select. Calling self.policy.select() bare
-        # left every contextual feature permanently unset, so the contextual
-        # bandit degraded to a plain epsilon-greedy one.
-        strategy = select_strategy(objective, self.policy)
+        # select_strategy_with_context builds the bandit context (multifile /
+        # tier / fail_kind) and passes it to BanditPolicy.select. Calling
+        # self.policy.select() bare left every contextual feature permanently
+        # unset, so the contextual bandit degraded to a plain epsilon-greedy one.
+        # The context comes back so the reward can be credited to the arm *in
+        # the situation it was drawn from*.
+        strategy, strategy_ctx = select_strategy_with_context(objective, self.policy)
+        attempts: List[_Attempt] = [_Attempt(strategy=strategy, context=strategy_ctx)]
         result.strategy = strategy
+        result.strategies = [strategy]
         write_progress(tid, objective, "start", strategy=strategy)
 
         tool_block = ""
@@ -173,7 +221,11 @@ class Pipeline:
             self.orchestrator.process_response(plan_req, plan_res)
             if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
                 return self._fail(
-                    result, "plan", plan_res.error.message if plan_res.error else "plan failed", t0
+                    result,
+                    "plan",
+                    plan_res.error.message if plan_res.error else "plan failed",
+                    t0,
+                    attempts,
                 )
             result.plan = plan_res.payload.plan
             result.plan_ok = True
@@ -243,8 +295,11 @@ class Pipeline:
                             )
                         )
 
+            # Retrieved blocks. few_shot and experience are cheap local lookups
+            # done once up front; the workspace context and the repo map are
+            # fetched on first use, because whether an arm wants them is part of
+            # what the arm *is* — and the arm can change between attempts.
             few_shot = ""
-            repo_map_txt = ""
             exp_block = ""
             if tool_assist:
                 t_ta = time.perf_counter()
@@ -255,26 +310,13 @@ class Pipeline:
                     fs = run_tool("few_shot_pack", {"query": objective, "top_k": 2})
                     if fs.get("ok") and isinstance(fs.get("result"), dict):
                         few_shot = fs["result"].get("block") or ""
-                        result.few_shot_chars = len(few_shot)
-                    if _looks_multifile(objective) or strategy == "repo_map_on":
-                        rm = run_tool("repo_map", {"max_files": 40})
-                        if rm.get("ok"):
-                            files = (rm.get("files") or [])[:15]
-                            lines = [
-                                f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files
-                            ]
-                            repo_map_txt = "\n".join(lines)[:2500]
                     exp = experience_retrieve(objective, k=3)
                     exp_block = exp.get("block") or ""
-                    result.experience_chars = len(exp_block)
                     result.stages.append(
                         StageResult(
                             stage="tool_assist",
                             success=True,
-                            detail=(
-                                f"few_shot={result.few_shot_chars}c map={len(repo_map_txt)}c "
-                                f"exp={result.experience_chars}c"
-                            ),
+                            detail=f"few_shot={len(few_shot)}c exp={len(exp_block)}c",
                             duration_ms=(time.perf_counter() - t_ta) * 1000,
                         )
                     )
@@ -288,31 +330,18 @@ class Pipeline:
                         )
                     )
 
-            context_block = ""
-            use_ctx = context_enabled() and strategy != "no_context"
-            if use_ctx:
-                tctx = time.perf_counter()
-                write_progress(tid, objective, "context")
-                try:
-                    context_block = gather_workspace_context(Path.cwd(), query=objective)
-                    result.context_chars = len(context_block)
-                    result.stages.append(
-                        StageResult(
-                            stage="context",
-                            success=True,
-                            detail=f"{result.context_chars} chars",
-                            duration_ms=(time.perf_counter() - tctx) * 1000,
-                        )
-                    )
-                except Exception as e:
-                    result.stages.append(
-                        StageResult(
-                            stage="context",
-                            success=False,
-                            detail=str(e)[:120],
-                            duration_ms=(time.perf_counter() - tctx) * 1000,
-                        )
-                    )
+            lazy: Dict[str, str] = {}
+
+            def repo_map_block() -> str:
+                if "repo_map" not in lazy:
+                    lazy["repo_map"] = self._fetch_repo_map(result) if tool_assist else ""
+                return lazy["repo_map"]
+
+            def workspace_block() -> str:
+                if "context" not in lazy:
+                    write_progress(tid, objective, "context")
+                    lazy["context"] = self._fetch_context(result, objective)
+                return lazy["context"]
 
             generated = ""
             attempt = 0
@@ -324,12 +353,45 @@ class Pipeline:
                 t2 = time.perf_counter()
                 write_progress(tid, objective, "code" if attempt == 1 else "code_retry")
 
+                if attempt > 1:
+                    # Re-draw the arm now that a failure class exists. This is
+                    # the whole point of the fail_kind feature: at first
+                    # selection nothing has failed yet, so the repair branch of
+                    # the policy could never fire.
+                    strategy, strategy_ctx = select_strategy_with_context(
+                        objective, self.policy, fail_kind=fail_kind
+                    )
+                    attempts.append(_Attempt(strategy=strategy, context=strategy_ctx))
+                    result.strategy = strategy
+                    result.strategies.append(strategy)
+                    strategy_hint = strategy_prompt_addon(strategy)
+                behaviour = arm_behaviour(strategy)
+
+                # Which retrieved blocks this arm gets. `no_context` is now a
+                # real ablation (it used to still receive the experience block,
+                # the few-shot block and the repo map) and `repo_map_on` is now
+                # a real addition rather than a sentence of prompt. Resolved
+                # before ETHER_FORCE_BURST is set, so a fetch can never leak
+                # that variable into the environment.
+                exp_txt = exp_block if behaviour.use_experience else ""
+                few_shot_txt = few_shot if behaviour.use_few_shot else ""
+                repo_map_txt = ""
+                if behaviour.force_repo_map or (
+                    behaviour.use_workspace_context and _looks_multifile(objective)
+                ):
+                    repo_map_txt = repo_map_block()
+                context_block = workspace_block() if behaviour.use_workspace_context else ""
+                # Report what actually reached the model, not what was fetched.
+                result.experience_chars = len(exp_txt)
+                result.few_shot_chars = len(few_shot_txt)
+                result.context_chars = len(context_block)
+
                 # Single policy entry point — no duplicated inline rules
                 force_burst = decide_burst(
                     attempt=attempt,
                     strategy=strategy,
                     objective=objective,
-                    tier=0,
+                    tier=current_tier(),
                 )
 
                 prev_force = os.environ.get("ETHER_FORCE_BURST")
@@ -346,10 +408,10 @@ class Pipeline:
                         )
                         if tool_block:
                             prompt += f"Tool output:\n{tool_block}\n\n"
-                        if exp_block:
-                            prompt += f"Experience from prior runs:\n{exp_block}\n\n"
-                        if few_shot:
-                            prompt += f"Few-shot success patterns:\n{few_shot}\n\n"
+                        if exp_txt:
+                            prompt += f"Experience from prior runs:\n{exp_txt}\n\n"
+                        if few_shot_txt:
+                            prompt += f"Few-shot success patterns:\n{few_shot_txt}\n\n"
                         if repo_map_txt:
                             prompt += f"Repo map (symbols):\n{repo_map_txt}\n\n"
                         if context_block:
@@ -363,6 +425,16 @@ class Pipeline:
                     else:
                         result.retries += 1
                         prompt = repair_prompt(objective, generated, last_err, strategy_hint)
+                        # The repair prompt is built by core/repair.py and ends
+                        # with its output instruction, so the retry arm's blocks
+                        # go in front of it — otherwise the re-drawn arm would
+                        # once again differ only by one sentence.
+                        preamble = ""
+                        if repo_map_txt:
+                            preamble += f"Repo map (symbols):\n{repo_map_txt}\n\n"
+                        if context_block:
+                            preamble += f"Relevant workspace context:\n{context_block}\n\n"
+                        prompt = preamble + prompt
                         if force_burst:
                             prompt = (
                                 "[Elevated model / burst retry]\n"
@@ -389,16 +461,29 @@ class Pipeline:
                 self.orchestrator.process_response(code_req, code_res)
                 if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
                     return self._fail(
-                        result, "code", code_res.error.message if code_res.error else "code failed", t2
+                        result,
+                        "code",
+                        code_res.error.message if code_res.error else "code failed",
+                        t2,
+                        attempts,
                     )
                 model_used = getattr(code_res.payload, "model_used", "") or ""
-                if model_used and model_used != os.getenv("ETHER_PRIMARY_MODEL", ""):
-                    if "llama" in model_used.lower() or "grok" in model_used.lower() or "burst" in model_used.lower():
-                        result.used_burst = True
+                # force_burst above already flags a burst we asked for; this
+                # catches the router's own fallback to burst after a local
+                # failure. Matched exactly against the configured burst model —
+                # substring matching on "llama" flagged every local run.
+                if _is_burst_model(model_used):
+                    result.used_burst = True
 
                 generated = self._strip(code_res.payload.content)
                 if len(generated) > MAX_CODE_CHARS:
-                    return self._fail(result, "code", f"Generated code exceeds {MAX_CODE_CHARS} chars", t2)
+                    return self._fail(
+                        result,
+                        "code",
+                        f"Generated code exceeds {MAX_CODE_CHARS} chars",
+                        t2,
+                        attempts,
+                    )
                 result.generated_code = generated
                 result.stages.append(
                     StageResult(
@@ -429,6 +514,7 @@ class Pipeline:
                         "sandbox",
                         sand_res.error.message if sand_res.error else "sandbox failed",
                         t3,
+                        attempts,
                     )
                 sand_payload = sand_res.payload
                 result.sandbox = sand_payload
@@ -614,8 +700,7 @@ class Pipeline:
                 used_burst=result.used_burst,
                 holdout_ok=holdout_ok,
             )
-            if learning_enabled():
-                self.policy.update(strategy, result.reward)
+            self._credit_attempts(attempts, result)
 
             success = exit_code == 0
             record_outcome(success, error=None if success else (last_err or result.error))
@@ -727,12 +812,147 @@ class Pipeline:
             result.finished_at = datetime.now(timezone.utc).isoformat()
             clear_progress()
             self._persist(result)
-            self._log(result, learn=True)
+            self._log(result)
             return result
         except Exception as e:
-            return self._fail(result, "exception", str(e), run_started)
+            return self._fail(result, "exception", str(e), run_started, attempts)
 
-    def _fail(self, result: PipelineResult, stage: str, msg: str, t0: float) -> PipelineResult:
+    # -- retrieval blocks ---------------------------------------------------
+
+    def _fetch_repo_map(self, result: PipelineResult) -> str:
+        t = time.perf_counter()
+        text = ""
+        detail = ""
+        try:
+            from gems.grandidierite.registry import run_tool
+
+            rm = run_tool("repo_map", {"max_files": 40})
+            if rm.get("ok"):
+                files = (rm.get("files") or [])[:15]
+                lines = [f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files]
+                text = "\n".join(lines)[:2500]
+            else:
+                detail = str(rm.get("error") or "repo_map unavailable")[:120]
+        except Exception as e:
+            detail = str(e)[:120]
+        result.stages.append(
+            StageResult(
+                stage="repo_map",
+                success=bool(text),
+                detail=detail or f"{len(text)} chars",
+                duration_ms=(time.perf_counter() - t) * 1000,
+            )
+        )
+        return text
+
+    def _fetch_context(self, result: PipelineResult, objective: str) -> str:
+        if not context_enabled():
+            return ""
+        t = time.perf_counter()
+        try:
+            block = gather_workspace_context(Path.cwd(), query=objective)
+            result.stages.append(
+                StageResult(
+                    stage="context",
+                    success=True,
+                    detail=f"{len(block)} chars",
+                    duration_ms=(time.perf_counter() - t) * 1000,
+                )
+            )
+            return block
+        except Exception as e:
+            result.stages.append(
+                StageResult(
+                    stage="context",
+                    success=False,
+                    detail=str(e)[:120],
+                    duration_ms=(time.perf_counter() - t) * 1000,
+                )
+            )
+            return ""
+
+    # -- bandit credit ------------------------------------------------------
+
+    def _credit_attempts(self, attempts: List[_Attempt], result: PipelineResult) -> None:
+        """One bandit update per attempt, each in its own context.
+
+        The run reward goes to the arm that produced the code that was graded.
+        Earlier attempts exist only because they failed, so they are credited
+        with a failed-attempt reward in the context *they* were drawn from —
+        which is what stops a successful repair from being booked against the
+        arm that broke the code, and vice versa.
+        """
+        if not learning_enabled():
+            return
+        pending = [a for a in attempts if not a.credited]
+        if not pending:
+            return
+        interim = compute_reward(
+            exit_code=1,
+            confidence=0.0,
+            audit_approved=False,
+            retries=0,
+            plan_ok=result.plan_ok,
+        )
+        for idx, rec in enumerate(pending):
+            is_final = idx == len(pending) - 1
+            rec.credited = True
+            self._policy_update(
+                rec,
+                result.reward if is_final else interim,
+                result,
+                attempt=idx + 1,
+                final=is_final,
+            )
+
+    def _policy_update(
+        self,
+        rec: _Attempt,
+        reward: float,
+        result: PipelineResult,
+        attempt: int,
+        final: bool,
+    ) -> None:
+        exit_code = (result.sandbox.exit_code if result.sandbox else None) if final else 1
+        extra = {
+            "task_id": str(result.task_id),
+            "objective": result.objective[:300],
+            "attempt": attempt,
+            "final": final,
+            # Derived, because result.status is only assigned further down the
+            # run; reading it here would log "complete" for a failed run.
+            "status": "complete" if exit_code == 0 else "error",
+            "confidence": result.confidence if final else 0.0,
+            "exit_code": exit_code,
+            "audit_approved": bool(result.audit and result.audit.approved) if final else None,
+        }
+        try:
+            # Fake policies in tests define update(self, strategy, reward); only
+            # pass the contextual arguments to a policy that accepts them.
+            params = inspect.signature(self.policy.update).parameters
+            contextual = "context" in params or any(
+                p.kind == p.VAR_KEYWORD for p in params.values()
+            )
+        except (TypeError, ValueError):
+            contextual = False
+        try:
+            if contextual:
+                self.policy.update(
+                    rec.strategy, reward, context=rec.context or None, extra=extra
+                )
+            else:
+                self.policy.update(rec.strategy, reward)
+        except Exception:
+            pass
+
+    def _fail(
+        self,
+        result: PipelineResult,
+        stage: str,
+        msg: str,
+        t0: float,
+        attempts: Optional[List[_Attempt]] = None,
+    ) -> PipelineResult:
         result.status = "error"
         result.error = msg
         result.stages.append(
@@ -752,11 +972,9 @@ class Pipeline:
             first_compile_ok=False,
             used_burst=result.used_burst,
         )
-        if learning_enabled() and result.strategy:
-            try:
-                self.policy.update(result.strategy, result.reward)
-            except Exception:
-                pass
+        if attempts is None and result.strategy:
+            attempts = [_Attempt(strategy=result.strategy)]
+        self._credit_attempts(attempts or [], result)
         try:
             experience_record(
                 objective=result.objective,
@@ -798,7 +1016,7 @@ class Pipeline:
         result.finished_at = datetime.now(timezone.utc).isoformat()
         clear_progress()
         self._persist(result)
-        self._log(result, learn=True)
+        self._log(result)
         return result
 
     def _strip(self, text: str) -> str:
@@ -819,6 +1037,16 @@ class Pipeline:
             pass
 
     def _log(self, result: PipelineResult, learn: bool = False) -> None:
+        """Log the run to amethyst. `learn` stays False on the pipeline path.
+
+        Passing learn=True made gems/amethyst/evolution.py update *its own*
+        BanditPolicy instance after this pipeline had already updated
+        `self.policy`. Both wrote the whole bandit file from a stale in-memory
+        copy, so the second write silently discarded the first, and
+        memory/learning/experience.jsonl collected three rows per run (two arm
+        rows plus amethyst's). The arm table has exactly one owner: whoever
+        made the decision. That is this pipeline.
+        """
         try:
             self.registry.execute(
                 Envelope(
@@ -835,6 +1063,7 @@ class Pipeline:
                             "verification_score": result.verification_score,
                             "retries": result.retries,
                             "strategy": result.strategy,
+                            "strategies": list(result.strategies),
                             "reward": result.reward,
                             "used_burst": result.used_burst,
                             "first_compile_ok": result.first_compile_ok,

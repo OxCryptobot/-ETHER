@@ -1,26 +1,126 @@
 {
-  "version": 1,
-  "description": "Held-out quiz tasks — never sampled by flywheel curriculum",
+  "version": 2,
+  "description": "Held-out quiz tasks — never sampled by the flywheel curriculum. `objective` states a signature and describes behaviour; the assertions live in `holdout_test`, which the generator never sees (graded by core.holdout.grade_against_holdout). v1 pasted the finished implementation AND its assertion into every objective, so the quiz measured transcription.",
   "tasks": [
-    {"id": "h01", "objective": "Write only Python: def fib(n):\n    a,b=0,1\n    for _ in range(n):\n        a,b=b,a+b\n    return a\nassert fib(10)==55\nprint(fib(10))"},
-    {"id": "h02", "objective": "Write only Python: def is_prime(n):\n    if n<2: return False\n    for i in range(2,int(n**0.5)+1):\n        if n%i==0: return False\n    return True\nassert is_prime(17) and not is_prime(15)\nprint(is_prime(17))"},
-    {"id": "h03", "objective": "Write only Python: def rotate_left(xs,k):\n    if not xs: return xs\n    k=k%len(xs)\n    return xs[k:]+xs[:k]\nassert rotate_left([1,2,3,4],1)==[2,3,4,1]\nprint(rotate_left([1,2,3,4],1))"},
-    {"id": "h04", "objective": "Write only Python: def anagram(a,b):\n    return sorted(a.replace(' ','').lower())==sorted(b.replace(' ','').lower())\nassert anagram('listen','silent')\nprint(anagram('listen','silent'))"},
-    {"id": "h05", "objective": "Write only Python: def running_sum(xs):\n    s=0; out=[]\n    for x in xs:\n        s+=x; out.append(s)\n    return out\nassert running_sum([1,2,3])==[1,3,6]\nprint(running_sum([1,2,3]))"},
-    {"id": "h06", "objective": "Write only Python: def deep_get(d, keys, default=None):\n    cur=d\n    for k in keys:\n        if not isinstance(cur, dict) or k not in cur: return default\n        cur=cur[k]\n    return cur\nassert deep_get({'a':{'b':2}},['a','b'])==2\nprint(deep_get({'a':{'b':2}},['a','b']))"},
-    {"id": "h07", "objective": "Write only Python: def compress(s):\n    if not s: return ''\n    out=[]; prev=s[0]; c=1\n    for ch in s[1:]:\n        if ch==prev: c+=1\n        else: out.append(prev+str(c)); prev=ch; c=1\n    out.append(prev+str(c))\n    return ''.join(out)\nassert compress('aabbb')=='a2b3'\nprint(compress('aabbb'))"},
-    {"id": "h08", "objective": "Write only Python: def matrix_sum(m):\n    return sum(sum(row) for row in m)\nassert matrix_sum([[1,2],[3,4]])==10\nprint(matrix_sum([[1,2],[3,4]]))"},
-    {"id": "h09", "objective": "Write only Python: def longest_word(s):\n    words=s.split()\n    return max(words, key=len) if words else ''\nassert longest_word('a bb ccc')=='ccc'\nprint(longest_word('a bb ccc'))"},
-    {"id": "h10", "objective": "Write only Python: def set_bits(n):\n    return bin(n).count('1')\nassert set_bits(7)==3\nprint(set_bits(7))"},
-    {"id": "h11", "objective": "Write only Python: def interleave(a,b):\n    out=[]; n=max(len(a),len(b))\n    for i in range(n):\n        if i<len(a): out.append(a[i])\n        if i<len(b): out.append(b[i])\n    return out\nassert interleave([1,2],[9])==[1,9,2]\nprint(interleave([1,2],[9]))"},
-    {"id": "h12", "objective": "Write only Python: def normalize_path(parts):\n    stack=[]\n    for p in parts:\n        if p in ('', '.'): continue\n        if p=='..':\n            if stack: stack.pop()\n        else: stack.append(p)\n    return '/'+'/'.join(stack)\nassert normalize_path(['a','b','..','c'])=='/a/c'\nprint(normalize_path(['a','b','..','c']))"},
-    {"id": "h13", "objective": "Write only Python: def median(xs):\n    ys=sorted(xs); n=len(ys)\n    if n==0: return None\n    if n%2: return ys[n//2]\n    return (ys[n//2-1]+ys[n//2])/2\nassert median([1,3,2])==2\nprint(median([1,3,2]))"},
-    {"id": "h14", "objective": "Write only Python: def group_by_len(words):\n    d={}\n    for w in words:\n        d.setdefault(len(w), []).append(w)\n    return d\nassert group_by_len(['a','bb','c'])[1]==['a','c']\nprint(group_by_len(['a','bb','c']))"},
-    {"id": "h15", "objective": "Write only Python: def stable_unique(xs):\n    seen=set(); out=[]\n    for x in xs:\n        if x not in seen:\n            seen.add(x); out.append(x)\n    return out\nassert stable_unique([2,1,2,3,1])==[2,1,3]\nprint(stable_unique([2,1,2,3,1]))"},
-    {"id": "h16", "objective": "Write only Python: def caesar(s,k):\n    out=[]\n    for ch in s:\n        if ch.isalpha():\n            base=ord('A') if ch.isupper() else ord('a')\n            out.append(chr((ord(ch)-base+k)%26+base))\n        else: out.append(ch)\n    return ''.join(out)\nassert caesar('ab',1)=='bc'\nprint(caesar('ab',1))"},
-    {"id": "h17", "objective": "Write only Python: def transpose(m):\n    return [list(row) for row in zip(*m)] if m else []\nassert transpose([[1,2],[3,4]])==[[1,3],[2,4]]\nprint(transpose([[1,2],[3,4]]))"},
-    {"id": "h18", "objective": "Write only Python: def balanced_parens(s):\n    c=0\n    for ch in s:\n        if ch=='(': c+=1\n        elif ch==')':\n            c-=1\n            if c<0: return False\n    return c==0\nassert balanced_parens('(())') and not balanced_parens('(()')\nprint(balanced_parens('(())'))"},
-    {"id": "h19", "objective": "Write only Python: def merge_dicts(a,b):\n    d=dict(a); d.update(b); return d\nassert merge_dicts({'a':1},{'b':2})=={'a':1,'b':2}\nprint(merge_dicts({'a':1},{'b':2}))"},
-    {"id": "h20", "objective": "Write only Python: def second_largest(xs):\n    u=sorted(set(xs), reverse=True)\n    return u[1] if len(u)>1 else None\nassert second_largest([1,5,5,3])==3\nprint(second_largest([1,5,5,3]))"}
+    {
+      "id": "h01",
+      "title": "fib",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef fib(n: int) -> int\n\nReturn the nth Fibonacci number, counting from fib(0) == 0 and fib(1) == 1, so each later term is the sum of the two before it.",
+      "holdout_test": "assert fib(0) == 0\nassert fib(1) == 1\nassert fib(2) == 1\nassert fib(10) == 55\nassert fib(15) == 610\nprint('ok')"
+    },
+    {
+      "id": "h02",
+      "title": "is_prime",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef is_prime(n: int) -> bool\n\nReturn the bool True when n is a prime number. Anything below 2 is not prime.",
+      "holdout_test": "assert is_prime(17) is True\nassert is_prime(15) is False\nassert is_prime(2) is True\nassert is_prime(1) is False\nassert is_prime(0) is False\nassert is_prime(-7) is False\nprint('ok')"
+    },
+    {
+      "id": "h03",
+      "title": "rotate_left",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef rotate_left(xs: list, k: int) -> list\n\nReturn a new list with the elements of xs rotated k places to the left, so the element at index k comes first and the ones before it move to the end. k may be larger than the list. An empty list returns an empty list.",
+      "holdout_test": "assert rotate_left([1, 2, 3, 4], 1) == [2, 3, 4, 1]\nassert rotate_left([1, 2, 3, 4], 0) == [1, 2, 3, 4]\nassert rotate_left([1, 2, 3, 4], 4) == [1, 2, 3, 4]\nassert rotate_left([1, 2, 3], 5) == [3, 1, 2]\nassert rotate_left([], 3) == []\nprint('ok')"
+    },
+    {
+      "id": "h04",
+      "title": "anagram",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef anagram(a: str, b: str) -> bool\n\nReturn the bool True when a and b use exactly the same letters with the same multiplicities. Ignore letter case and ignore spaces; every other character counts.",
+      "holdout_test": "assert anagram('listen', 'silent') is True\nassert anagram('Dormitory', 'dirty room') is True\nassert anagram('abc', 'abd') is False\nassert anagram('aab', 'abb') is False\nassert anagram('', '') is True\nprint('ok')"
+    },
+    {
+      "id": "h05",
+      "title": "running_sum",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef running_sum(xs: list) -> list\n\nReturn a list of the same length whose ith element is the sum of xs[0..i] inclusive. An empty list returns an empty list.",
+      "holdout_test": "assert running_sum([1, 2, 3]) == [1, 3, 6]\nassert running_sum([]) == []\nassert running_sum([5]) == [5]\nassert running_sum([1, -1, 2]) == [1, 0, 2]\nprint('ok')"
+    },
+    {
+      "id": "h06",
+      "title": "deep_get",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef deep_get(d: dict, keys: list, default=None)\n\nWalk the nested dict d following each key in keys in order and return the value found. Return default as soon as the walk hits something that is not a dict or a key that is missing. An empty key list returns d itself.",
+      "holdout_test": "assert deep_get({'a': {'b': 2}}, ['a', 'b']) == 2\nassert deep_get({'a': {'b': 2}}, ['a', 'z']) is None\nassert deep_get({'a': {'b': 2}}, ['a', 'b', 'c'], 'x') == 'x'\nassert deep_get({'a': 1}, ['missing'], 0) == 0\nassert deep_get({'a': 1}, []) == {'a': 1}\nprint('ok')"
+    },
+    {
+      "id": "h07",
+      "title": "compress",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef compress(s: str) -> str\n\nRun-length encode s: replace each run of one repeated character with that character followed by the length of the run, written as a decimal number. Every run gets a count, including runs of length 1. An empty string returns an empty string.",
+      "holdout_test": "assert compress('aabbb') == 'a2b3'\nassert compress('') == ''\nassert compress('a') == 'a1'\nassert compress('abc') == 'a1b1c1'\nassert compress('aaaaaaaaaaa') == 'a11'\nprint('ok')"
+    },
+    {
+      "id": "h08",
+      "title": "matrix_sum",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef matrix_sum(m: list) -> int\n\nm is a list of rows, each row a list of numbers. Return the sum of every element. An empty matrix sums to 0.",
+      "holdout_test": "assert matrix_sum([[1, 2], [3, 4]]) == 10\nassert matrix_sum([]) == 0\nassert matrix_sum([[]]) == 0\nassert matrix_sum([[5]]) == 5\nassert matrix_sum([[1, 1, 1], [-3]]) == 0\nprint('ok')"
+    },
+    {
+      "id": "h09",
+      "title": "longest_word",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef longest_word(s: str) -> str\n\nSplit s on whitespace and return the longest word. On a tie return the one that appears first. A string with no words returns an empty string.",
+      "holdout_test": "assert longest_word('a bb ccc') == 'ccc'\nassert longest_word('') == ''\nassert longest_word('   ') == ''\nassert longest_word('aa bb') == 'aa'\nassert longest_word('one') == 'one'\nprint('ok')"
+    },
+    {
+      "id": "h10",
+      "title": "set_bits",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef set_bits(n: int) -> int\n\nReturn how many bits are set to 1 in the binary representation of the non-negative integer n. set_bits(0) is 0.",
+      "holdout_test": "assert set_bits(7) == 3\nassert set_bits(0) == 0\nassert set_bits(1) == 1\nassert set_bits(8) == 1\nassert set_bits(255) == 8\nprint('ok')"
+    },
+    {
+      "id": "h11",
+      "title": "interleave",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef interleave(a: list, b: list) -> list\n\nReturn one list that alternates a[0], b[0], a[1], b[1], ... When one list runs out, append the rest of the longer one in order.",
+      "holdout_test": "assert interleave([1, 2], [9]) == [1, 9, 2]\nassert interleave([], []) == []\nassert interleave([1], [2]) == [1, 2]\nassert interleave([], [1, 2]) == [1, 2]\nassert interleave([1, 2, 3], [4]) == [1, 4, 2, 3]\nprint('ok')"
+    },
+    {
+      "id": "h12",
+      "title": "normalize_path",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef normalize_path(parts: list) -> str\n\nparts is a list of path segments. Build an absolute POSIX path from them: skip empty segments and '.', let '..' remove the previous segment (and do nothing at the root), and join what remains with '/' after a leading '/'. No segments left means '/'.",
+      "holdout_test": "assert normalize_path(['a', 'b', '..', 'c']) == '/a/c'\nassert normalize_path([]) == '/'\nassert normalize_path(['..']) == '/'\nassert normalize_path(['a', '.', 'b']) == '/a/b'\nassert normalize_path(['a', '', 'b']) == '/a/b'\nprint('ok')"
+    },
+    {
+      "id": "h13",
+      "title": "median",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef median(xs: list)\n\nReturn the median of the numbers in xs: the middle value once sorted when the count is odd, and the mean of the two middle values when it is even. An empty list returns None. Do not modify the caller's list.",
+      "holdout_test": "assert median([1, 3, 2]) == 2\nassert median([]) is None\nassert median([1, 2, 3, 4]) == 2.5\nassert median([7]) == 7\nxs = [3, 1, 2]\nassert median(xs) == 2\nassert xs == [3, 1, 2]\nprint('ok')"
+    },
+    {
+      "id": "h14",
+      "title": "group_by_len",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef group_by_len(words: list) -> dict\n\nReturn a dict mapping each word length to the list of words of that length, keeping the order they appear in the input. An empty input returns an empty dict.",
+      "holdout_test": "assert group_by_len(['a', 'bb', 'c']) == {1: ['a', 'c'], 2: ['bb']}\nassert group_by_len([]) == {}\nassert group_by_len(['xy']) == {2: ['xy']}\nassert group_by_len(['a', 'b']) == {1: ['a', 'b']}\nprint('ok')"
+    },
+    {
+      "id": "h15",
+      "title": "stable_unique",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef stable_unique(xs: list) -> list\n\nReturn the elements of xs with duplicates removed, keeping the first occurrence of each value and the original order.",
+      "holdout_test": "assert stable_unique([2, 1, 2, 3, 1]) == [2, 1, 3]\nassert stable_unique([]) == []\nassert stable_unique([1, 1, 1]) == [1]\nassert stable_unique(['b', 'a', 'b']) == ['b', 'a']\nprint('ok')"
+    },
+    {
+      "id": "h16",
+      "title": "caesar",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef caesar(s: str, k: int) -> str\n\nShift every ASCII letter of s forward by k positions through the alphabet, wrapping from z back to a, and preserve each letter's case. Leave every non-letter character untouched. k may be negative.",
+      "holdout_test": "assert caesar('ab', 1) == 'bc'\nassert caesar('z', 1) == 'a'\nassert caesar('Zebra!', 1) == 'Afcsb!'\nassert caesar('abc', 0) == 'abc'\nassert caesar('bc', -1) == 'ab'\nprint('ok')"
+    },
+    {
+      "id": "h17",
+      "title": "transpose",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef transpose(m: list) -> list\n\nm is a rectangular matrix as a list of row lists. Return its transpose as a list of lists, so element [i][j] of the result is element [j][i] of m. An empty matrix returns an empty list.",
+      "holdout_test": "assert transpose([[1, 2], [3, 4]]) == [[1, 3], [2, 4]]\nassert transpose([]) == []\nassert transpose([[1, 2, 3]]) == [[1], [2], [3]]\nassert transpose([[1], [2]]) == [[1, 2]]\nprint('ok')"
+    },
+    {
+      "id": "h18",
+      "title": "balanced_parens",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef balanced_parens(s: str) -> bool\n\nReturn the bool True when every '(' in s is closed by a later ')' and no ')' appears before its opener. Characters other than parentheses are ignored. An empty string is balanced.",
+      "holdout_test": "assert balanced_parens('(())') is True\nassert balanced_parens('(()') is False\nassert balanced_parens(')(') is False\nassert balanced_parens('') is True\nassert balanced_parens('a(b)c') is True\nprint('ok')"
+    },
+    {
+      "id": "h19",
+      "title": "merge_dicts",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef merge_dicts(a: dict, b: dict) -> dict\n\nReturn a new dict holding the entries of both. Where a key is in both, b's value wins. Neither input may be modified.",
+      "holdout_test": "assert merge_dicts({'a': 1}, {'b': 2}) == {'a': 1, 'b': 2}\nassert merge_dicts({'a': 1}, {'a': 2}) == {'a': 2}\nassert merge_dicts({}, {}) == {}\nleft = {'a': 1}\nright = {'b': 2}\nmerge_dicts(left, right)\nassert left == {'a': 1}\nassert right == {'b': 2}\nprint('ok')"
+    },
+    {
+      "id": "h20",
+      "title": "second_largest",
+      "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef second_largest(xs: list)\n\nReturn the second largest DISTINCT value in xs, so repeats of the maximum do not count. Return None when there are fewer than two distinct values.",
+      "holdout_test": "assert second_largest([1, 5, 5, 3]) == 3\nassert second_largest([1, 2]) == 1\nassert second_largest([4, 4, 4]) is None\nassert second_largest([]) is None\nassert second_largest([9]) is None\nprint('ok')"
+    }
   ]
 }

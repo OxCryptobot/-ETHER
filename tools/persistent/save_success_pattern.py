@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import pathlib
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +19,14 @@ def main() -> None:
     code = inp.get("code") or ""
     if not code:
         emit(False, error="code required")
-    path = repo_root() / "memory" / "learning" / "success_patterns.jsonl"
+    path = pathlib.Path(
+        os.environ.get("ETHER_SUCCESS_PATTERNS_PATH")
+        # Overridable so the test suite does not write mock runs into the
+        # store that few_shot_pack replays into real prompts: 84 of 101
+        # rows were "write hello" test artifacts served to the model as
+        # worked examples.
+        or repo_root() / "memory" / "learning" / "success_patterns.jsonl"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),

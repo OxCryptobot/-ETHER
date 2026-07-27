@@ -116,12 +116,15 @@ def print_step(name: str, data: Dict[str, Any]) -> None:
             print(f"    {line}", flush=True)
 
 
-def run_pipeline_once(objective: str) -> Dict[str, Any]:
+def run_pipeline_once(objective: str, holdout_test: str = "") -> Dict[str, Any]:
     started = time.perf_counter()
     try:
         from core.pipeline import Pipeline
 
-        result = Pipeline().run(objective, critique=False)
+        # Passed into the pipeline (not graded afterwards) so the holdout
+        # verdict reaches compute_reward — otherwise the bandit trains purely
+        # on assertions the model wrote about its own output.
+        result = Pipeline().run(objective, critique=False, holdout_test=holdout_test)
         metrics = pipeline_metrics(result)
         metrics["duration_s"] = round(time.perf_counter() - started, 3)
         return metrics
@@ -162,7 +165,7 @@ def agentic_verify(
     best: Optional[Dict[str, Any]] = None
     for i in range(1, max_retries + 1):
         print(f"  [agentic] attempt {i}/{max_retries} ...", flush=True)
-        r = run_pipeline_once(objective)
+        r = run_pipeline_once(objective, holdout_test=holdout_test)
         r["attempt"] = i
         gate = (
             r.get("status") == "complete"

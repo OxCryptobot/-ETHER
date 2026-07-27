@@ -24,6 +24,10 @@ _STATE_TARGETS = [
     ("core.bench_guardian", "GUARD_PATH", "file"),
     ("gems.grandidierite.fabricate", "QUARANTINE", "dir"),
     ("gems.grandidierite.fabricate", "FABRICATE_LOG", "file"),
+    # Mock pipeline runs were landing in the real history: 54 of 88 records
+    # were test artifacts ("plan boom" / "ollama down"), which then fed the
+    # dashboard's success rate and verified-fraction metrics.
+    ("core.pipeline", "RUNS_DIR", "dir"),
 ]
 
 

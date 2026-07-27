@@ -14,10 +14,40 @@ The primitive lived inline in `scripts/hidden_quiz.py` and was wired to nothing.
 
 from __future__ import annotations
 
+import ast
 from typing import Any, Dict
 from uuid import uuid4
 
 from core.assert_audit import count_real_asserts
+
+
+def strip_module_level_asserts(code: str) -> str:
+    """Remove top-level `assert` statements from generated code.
+
+    The holdout is appended after the model's own code, so a self-authored
+    assertion executes FIRST. If it fails, the program exits before the
+    held-out assertions ever run and a correct implementation is reported as
+    "holdout assertions failed" — a false negative attributed to the wrong
+    cause. `core/autonomy.py::ensure_assert_objective` explicitly instructs
+    the model to write such assertions, so this is the common case, not an
+    edge case.
+
+    Only module-level assertions are removed. Assertions inside a function
+    body are left alone: those are the implementation's own preconditions, and
+    if the holdout trips one that is a genuine failure of the code under test.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return code
+    kept = [node for node in tree.body if not isinstance(node, ast.Assert)]
+    if len(kept) == len(tree.body):
+        return code
+    tree.body = kept
+    try:
+        return ast.unparse(tree)
+    except Exception:
+        return code
 
 
 def grade_against_holdout(
@@ -40,6 +70,7 @@ def grade_against_holdout(
         "exit_code": None,
         "asserts": 0,
         "leaked": False,
+        "reached_end": False,
         "reason": "",
         "stderr": "",
     }
@@ -65,7 +96,27 @@ def grade_against_holdout(
         result["reason"] = "holdout text present in generated code (leaked)"
         return result
 
-    combined = code.rstrip() + "\n\n# holdout tests (unseen by the generator)\n" + hidden_test + "\n"
+    # Strip the model's own top-level assertions so they cannot abort the
+    # program before the held-out ones run. Without this a correct
+    # implementation carrying one bad self-assert grades as a holdout failure.
+    graded_code = strip_module_level_asserts(code)
+
+    # Exit code alone is NOT proof the assertions ran. `sys.exit(0)`,
+    # `os._exit(0)`, `raise SystemExit(0)`, an atexit hook or a replaced
+    # sys.excepthook all produce a clean exit while the held-out assertions
+    # either never execute or fail silently — every one of those made a
+    # deliberately wrong implementation grade as a pass.
+    #
+    # The sentinel is emitted as the LAST statement after the assertions, and
+    # its value is unpredictable to the generator, so it can only appear in
+    # stdout if control actually reached the end of the holdout block.
+    sentinel = f"__ETHER_HOLDOUT_OK_{uuid4().hex}__"
+    combined = (
+        graded_code.rstrip()
+        + "\n\n# holdout tests (unseen by the generator)\n"
+        + hidden_test
+        + f"\nprint({sentinel!r})\n"
+    )
 
     try:
         from core.registry import build_default_registry
@@ -92,7 +143,16 @@ def grade_against_holdout(
     payload = response.payload
     result["exit_code"] = payload.exit_code
     result["stderr"] = (payload.stderr or "")[-500:]
-    result["ok"] = payload.exit_code == 0
+
+    reached_end = sentinel in (payload.stdout or "")
+    result["reached_end"] = reached_end
+    result["ok"] = payload.exit_code == 0 and reached_end
+
     if not result["ok"]:
-        result["reason"] = "holdout assertions failed"
+        if payload.exit_code != 0:
+            result["reason"] = "holdout assertions failed"
+        else:
+            # Clean exit without the sentinel: the program terminated before
+            # the assertions completed.
+            result["reason"] = "exited before the holdout assertions completed"
     return result

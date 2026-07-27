@@ -28,8 +28,17 @@ TIERS = ROOT / "memory" / "curriculum" / "tiers.json"
 
 
 def _all_tasks():
-    data = json.loads(TIERS.read_text(encoding="utf-8"))
-    for tier in data.get("tiers") or []:
+    """Every task the system can actually sample.
+
+    Deliberately goes through load_tiers() rather than reading tiers.json.
+    load_tiers() splices memory/curriculum/scratch_tier.json and
+    mined_tasks.json into the last tier at runtime, and an earlier version of
+    this test read tiers.json directly — so it stayed green while five scratch
+    tasks were still shipping their own implementations.
+    """
+    from core.curriculum import load_tiers
+
+    for tier in load_tiers():
         for task in tier.get("tasks") or []:
             yield tier.get("name"), task
 
@@ -100,3 +109,36 @@ def test_sample_objective_carries_holdout_without_leaking_it():
                 assert line.strip() not in (item.get("objective") or ""), (
                     "holdout assertion leaked into the sampled objective"
                 )
+
+
+def test_sampling_never_serves_a_leaking_task(monkeypatch):
+    """sample_objective must filter leaking tasks, not just rely on clean data.
+
+    An earlier version guarded only the shipped tiers.json, so tasks spliced in
+    at runtime from scratch_tier.json / mined_tasks.json bypassed every check.
+    """
+    import core.curriculum as cur
+
+    poisoned = {
+        "name": "poisoned",
+        "tasks": [
+            {
+                "id": "leak1",
+                "title": "leak",
+                "objective": "Write only Python: def add(a, b):\n    return a + b\n",
+            },
+            {
+                "id": "clean1",
+                "title": "clean",
+                "objective": "Implement:\n\ndef add(a, b)\n\nReturn the sum.",
+                "holdout_test": "assert add(2, 3) == 5\nassert add(-1, 1) == 0\n",
+            },
+        ],
+    }
+    monkeypatch.setattr(cur, "load_tiers", lambda: [poisoned])
+    monkeypatch.setattr(cur, "_failure_driven_objective", lambda: None)
+    monkeypatch.setattr(cur, "sync_from_vault", lambda: None)
+    monkeypatch.setattr(cur, "current_tier_index", lambda: 0)
+
+    for _ in range(25):
+        assert cur.sample_objective()["id"] != "leak1", "served a leaking task"

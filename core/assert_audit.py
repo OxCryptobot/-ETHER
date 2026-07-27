@@ -63,13 +63,28 @@ def _is_none_tautology(node: ast.BoolOp) -> bool:
     return any((target, True) in seen and (target, False) in seen for target, _ in seen)
 
 
-def _is_constant_expr(node: ast.expr) -> bool:
-    """True if `node` involves no names, calls, or attribute/subscript access.
+# Bounds for constant folding. `assert 9**9**9 == 1` inside a never-called
+# function is valid Python that costs nothing to run, but folding it on the
+# HOST — outside the sandbox, since counting happens in-process — hung for
+# minutes and allocated gigabytes. Model-authored code reaches this path, so
+# it must be bounded rather than merely correct.
+_MAX_CONST_NODES = 60
+_MAX_INT_LITERAL = 10**12
+_MAX_STR_LITERAL = 4096
 
-    Such an expression depends on nothing in the program under test, so its
-    value is fixed at parse time and asserting it proves nothing.
+
+def _is_constant_expr(node: ast.expr) -> bool:
+    """True if `node` is safely constant-foldable.
+
+    Requires no names, calls, or attribute/subscript access — so nothing from
+    the program under test can execute — and additionally bounds size and
+    forbids exponentiation, which is the cheap way to make folding expensive.
     """
+    nodes = 0
     for child in ast.walk(node):
+        nodes += 1
+        if nodes > _MAX_CONST_NODES:
+            return False
         if isinstance(
             child,
             (ast.Name, ast.Call, ast.Attribute, ast.Subscript, ast.Starred, ast.Await),
@@ -77,6 +92,17 @@ def _is_constant_expr(node: ast.expr) -> bool:
             return False
         if isinstance(child, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
             return False
+        # `**` turns tiny source into astronomically large values; `*` can do
+        # the same for sequences (`'a' * 10**9`).
+        if isinstance(child, ast.BinOp) and isinstance(child.op, (ast.Pow, ast.Mult)):
+            return False
+        if isinstance(child, ast.Constant):
+            value = child.value
+            if isinstance(value, int) and not isinstance(value, bool):
+                if abs(value) > _MAX_INT_LITERAL:
+                    return False
+            elif isinstance(value, (str, bytes)) and len(value) > _MAX_STR_LITERAL:
+                return False
     return True
 
 
@@ -130,6 +156,19 @@ def _is_tautology(test: ast.expr) -> bool:
     return False
 
 
+def _exc_name(node: ast.expr) -> str:
+    """Last component of an exception reference.
+
+    `except builtins.AssertionError:` is an ast.Attribute, not an ast.Name, so
+    matching only on Name let a dotted spelling swallow assertions unnoticed.
+    """
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    return ""
+
+
 def _handler_swallows(handler: ast.ExceptHandler) -> bool:
     """True if this handler catches assertion failures without re-raising."""
     caught = handler.type
@@ -137,11 +176,46 @@ def _handler_swallows(handler: ast.ExceptHandler) -> bool:
         names: tuple[str, ...] = _SWALLOWING
     else:
         nodes = caught.elts if isinstance(caught, ast.Tuple) else [caught]
-        names = tuple(n.id for n in nodes if isinstance(n, ast.Name))
+        names = tuple(_exc_name(n) for n in nodes)
     if not any(name in _SWALLOWING for name in names):
         return False
-    # Re-raising still surfaces the failure to the sandbox exit code.
-    return not any(isinstance(n, ast.Raise) for n in ast.walk(handler))
+    # Re-raising surfaces the failure — but only if it is actually reachable.
+    # `ast.walk` counted a `raise` sitting in dead code inside the handler.
+    return not any(isinstance(stmt, ast.Raise) for stmt in _reachable_stmts(handler.body))
+
+
+def _reachable_stmts(body: list) -> list:
+    """Flatten statements, skipping statically-dead branches."""
+    out = []
+    for stmt in body:
+        if isinstance(stmt, ast.If):
+            cond = _const_truthy(stmt.test)
+            if cond is not False:
+                out.extend(_reachable_stmts(stmt.body))
+            if cond is not True:
+                out.extend(_reachable_stmts(stmt.orelse))
+            continue
+        if isinstance(stmt, ast.While) and _const_truthy(stmt.test) is False:
+            continue
+        out.append(stmt)
+        for attr in ("body", "orelse", "finalbody"):
+            nested = getattr(stmt, attr, None)
+            if isinstance(nested, list) and not isinstance(stmt, ast.If):
+                out.extend(_reachable_stmts(nested))
+    return out
+
+
+def _suppresses_assertions(node: ast.With) -> bool:
+    """True for `with contextlib.suppress(AssertionError):` and friends."""
+    for item in node.items:
+        call = item.context_expr
+        if not isinstance(call, ast.Call):
+            continue
+        if _exc_name(call.func) != "suppress":
+            continue
+        if any(_exc_name(a) in _SWALLOWING for a in call.args):
+            return True
+    return False
 
 
 def _count(node: ast.AST, swallowed: bool) -> int:
@@ -169,7 +243,31 @@ def _count(node: ast.AST, swallowed: bool) -> int:
                 total += _count(stmt, swallowed)
         return total
 
-    if isinstance(node, ast.Try):
+    # `for _ in []:` / `for _ in ():` never executes its body.
+    if isinstance(node, ast.For):
+        iterable = _literal(node.iter)
+        if iterable is not _SENTINEL:
+            try:
+                if len(iterable) == 0:  # type: ignore[arg-type]
+                    return 0
+            except TypeError:
+                pass
+        for group in (node.body, node.orelse):
+            for stmt in group:
+                total += _count(stmt, swallowed)
+        return total
+
+    # `with contextlib.suppress(AssertionError):` swallows just like except.
+    if isinstance(node, ast.With):
+        inner = swallowed or _suppresses_assertions(node)
+        for stmt in node.body:
+            total += _count(stmt, inner)
+        return total
+
+    # ast.Try covers `except*` too on 3.11+ via ast.TryStar, which previously
+    # fell through to the generic branch and was never treated as swallowing.
+    try_types: tuple = (ast.Try, getattr(ast, "TryStar", ast.Try))
+    if isinstance(node, try_types):
         swallows = any(_handler_swallows(h) for h in node.handlers)
         for stmt in node.body:
             total += _count(stmt, swallowed or swallows)

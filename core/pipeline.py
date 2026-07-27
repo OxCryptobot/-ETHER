@@ -60,6 +60,9 @@ class PipelineResult(BaseModel):
     sandbox: Optional[ClearQuartzResponse] = None
     audit: Optional[BlackTourmalineResponse] = None
     critique: Optional[LabradoriteResponse] = None
+    # None when the task supplied no holdout; True/False once graded against
+    # assertions the generator never saw.
+    holdout_ok: Optional[bool] = None
     confidence: float = 0.0
     execution_score: float = 0.0
     verification_score: float = 0.0
@@ -88,15 +91,39 @@ def _looks_multifile(objective: str) -> bool:
     )
 
 
+# Anchored on the repo root, not the CWD. `Path("memory/runs")` meant that
+# running `ether run` from any other directory silently wrote the run record
+# somewhere else, so it never reached the dashboard, ledger or history — while
+# core/progress.py and dashboard/collector.py both anchor on the repo root.
+# Module-level so tests can redirect it instead of writing mock runs into the
+# real history (61% of it was test artifacts).
+ROOT = Path(__file__).resolve().parents[1]
+RUNS_DIR = ROOT / "memory" / "runs"
+
+
 class Pipeline:
     def __init__(self, registry: Optional[GemRegistry] = None):
         self.registry = registry or build_default_registry()
         self.orchestrator = Orchestrator()
-        self.runs_dir = Path("memory/runs")
+        self.runs_dir = RUNS_DIR
         self.runs_dir.mkdir(parents=True, exist_ok=True)
         self.policy = BanditPolicy()
 
-    def run(self, objective: str, prefer_local: bool = True, critique: bool = False) -> PipelineResult:
+    def run(
+        self,
+        objective: str,
+        prefer_local: bool = True,
+        critique: bool = False,
+        holdout_test: str = "",
+    ) -> PipelineResult:
+        """Run the full pipeline.
+
+        `holdout_test` carries assertions the generator never sees. It is
+        graded after the sandbox stage and folded into the learning reward, so
+        the bandit optimises against independent evidence rather than against
+        assertions the model wrote about its own output. It is never added to
+        the prompt.
+        """
         task_id = uuid4()
         tid = str(task_id)
         self.orchestrator.start(task_id)
@@ -486,6 +513,38 @@ class Pipeline:
             audit_ok = bool(result.audit and result.audit.approved)
             had_self = bool(result.sandbox and result.sandbox.total_tests > 0)
             total_tests = int(result.sandbox.total_tests) if result.sandbox else 0
+
+            # Grade against assertions the generator never saw, before the
+            # reward is computed, so the learning signal is not purely
+            # self-graded. Fails closed: a grading error is not a pass.
+            holdout_ok: Optional[bool] = None
+            if holdout_test.strip():
+                try:
+                    from core.holdout import grade_against_holdout
+
+                    verdict = grade_against_holdout(result.generated_code or "", holdout_test)
+                    holdout_ok = bool(verdict.get("ok"))
+                    result.stages.append(
+                        StageResult(
+                            stage="holdout",
+                            success=holdout_ok,
+                            detail=(
+                                f"{verdict.get('asserts') or 0} unseen asserts"
+                                + ("" if holdout_ok else f" — {verdict.get('reason') or ''}")
+                            ),
+                        )
+                    )
+                except Exception as e:
+                    holdout_ok = False
+                    result.stages.append(
+                        StageResult(
+                            stage="holdout",
+                            success=False,
+                            detail=f"holdout grading failed: {str(e)[:160]}",
+                        )
+                    )
+            result.holdout_ok = holdout_ok
+
             result.reward = compute_reward(
                 exit_code=exit_code,
                 confidence=result.confidence,
@@ -496,6 +555,7 @@ class Pipeline:
                 plan_ok=result.plan_ok,
                 first_compile_ok=result.first_compile_ok,
                 used_burst=result.used_burst,
+                holdout_ok=holdout_ok,
             )
             if learning_enabled():
                 self.policy.update(strategy, result.reward)

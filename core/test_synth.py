@@ -41,7 +41,10 @@ def synthesize_asserts(code: str, objective: str = "") -> Tuple[str, bool]:
         name = fn.name
         # boolean-ish names
         if re.search(r"\b(is_|has_|can_|check_)", name) or name in {"is_even", "is_prime", "is_palindrome"}:
-            lines.append(f"assert callable({name})")
+            # `assert callable(f)` is true for every function ever defined, so
+            # it was counted as a real test and handed any output containing an
+            # is_/has_/can_/check_ function a free verification score of 1.000.
+            pass
             # try common calls
             if name == "is_even":
                 lines.append(f"assert {name}(2) is True")

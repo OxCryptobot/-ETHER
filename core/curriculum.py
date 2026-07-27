@@ -320,6 +320,17 @@ def sample_objective() -> Dict[str, Any]:
     idx = current_tier_index()
     tier = tiers[idx]
     tasks = [t for t in (tier.get("tasks") or []) if (t.get("id") or "") not in blocked]
+
+    # Enforced at the point of use, not just in tests. load_tiers() splices
+    # scratch_tier.json and mined_tasks.json into the last tier at runtime, so
+    # auditing the shipped tiers.json alone is not sufficient — five scratch
+    # tasks were still handing the model their own implementation long after
+    # tiers.json had been cleaned. A task that gives away its answer teaches
+    # transcription and cannot be graded on unseen tests.
+    clean = [t for t in tasks if not check_task_leakage(t)]
+    if clean:
+        tasks = clean
+
     if not tasks:
         tasks = list(tier.get("tasks") or [])
     if not tasks:

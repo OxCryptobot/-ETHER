@@ -42,7 +42,9 @@ def _fake_attempt(code: str) -> dict:
 @pytest.fixture
 def stub_pipeline(monkeypatch):
     def _install(code):
-        monkeypatch.setattr(fw, "run_pipeline_once", lambda _obj: _fake_attempt(code))
+        monkeypatch.setattr(
+            fw, "run_pipeline_once", lambda _obj, holdout_test="": _fake_attempt(code)
+        )
 
     return _install
 

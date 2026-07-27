@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,26 @@ import pytest
 # --------------------------------------------------------------------------
 
 
+def _symlinks_available(tmp: Path) -> bool:
+    """Windows needs Developer Mode or admin to create a symlink.
+
+    Without this guard the test raises OSError on the Windows partner box,
+    failing pytest and therefore the flywheel's static gates — turning a
+    Linux-only test into a cross-machine outage.
+    """
+    probe = tmp / "_symlink_probe"
+    try:
+        probe.symlink_to(tmp)
+        probe.unlink()
+        return True
+    except (OSError, NotImplementedError):
+        return False
+
+
+@pytest.mark.skipif(
+    not _symlinks_available(Path(tempfile.mkdtemp())),
+    reason="symlink creation unavailable (Windows without Developer Mode)",
+)
 def test_write_pair_rejects_symlink_escape_from_scratch(tmp_path, monkeypatch):
     """A prefix test let a symlink inside scratch land files outside it.
 

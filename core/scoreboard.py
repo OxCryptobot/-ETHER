@@ -22,7 +22,14 @@ def _j(path: Path) -> Optional[Dict[str, Any]]:
 
 
 def write_scoreboard() -> Dict[str, Any]:
+    from core.dotenv import load_dotenv
     from core.health_metric import compute_health
+
+    # The scoreboard records which model produced these numbers. Callers that
+    # invoke this directly (weekly_scoreboard.py runs it via `python -c`) never
+    # load .env, so ETHER_PRIMARY_MODEL came back empty and every scoreboard
+    # was written with an unattributed model.
+    load_dotenv(ROOT / ".env")
 
     health = compute_health()
     quiz = _j(ROOT / "memory" / "quiz" / "latest.json") or {}

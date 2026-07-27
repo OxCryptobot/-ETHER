@@ -1,0 +1,34 @@
+# Optional local services for @ETHER.
+#
+# Only Qdrant lives here — Ollama is expected to be installed natively (both
+# ONBOARDING profiles assume `ollama list` works on the host), and the Clear
+# Quartz sandbox drives Docker directly rather than through compose.
+#
+#   docker compose up -d qdrant
+#
+# Citrine (the memory gem) needs this. Without it the pipeline still runs and
+# still reports success, but the `memory_save` stage logs `citrine=False` and
+# no pass-patterns are ever learned.
+#
+# `version` is retained because this box has legacy docker-compose 1.29.2,
+# which requires it. Compose v2 ignores it with a deprecation warning.
+version: "3.8"
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ether-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # REST — QDRANT_URL
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  qdrant_storage:

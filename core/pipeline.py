@@ -565,15 +565,28 @@ class Pipeline:
                         confidence=result.confidence,
                         strategy=strategy,
                     )
+                    # success must be DERIVED, not asserted. This was hardcoded
+                    # True while the real citrine error was demoted to a
+                    # substring of the detail line — which is how a memory
+                    # layer that had never once stored a pattern kept
+                    # reporting a green stage.
+                    cit_ok = bool(cit.get("ok"))
+                    detail = f"success_pattern citrine={cit_ok}"
+                    if not cit_ok and cit.get("error"):
+                        detail += f" error={str(cit['error'])[:200]}"
+                    result.stages.append(
+                        StageResult(stage="memory_save", success=cit_ok, detail=detail)
+                    )
+                except Exception as e:
+                    # A bare `pass` here removed the row entirely, so a crash
+                    # in this block looked identical to the stage never running.
                     result.stages.append(
                         StageResult(
                             stage="memory_save",
-                            success=True,
-                            detail=f"success_pattern citrine={cit.get('ok')}",
+                            success=False,
+                            detail=f"memory_save failed: {str(e)[:200]}",
                         )
                     )
-                except Exception:
-                    pass
 
             result.status = "complete"
             result.finished_at = datetime.now(timezone.utc).isoformat()

@@ -38,8 +38,11 @@ def compute_scores(resp: ClearQuartzResponse) -> Dict[str, float]:
         confidence = 0.40 * execution_score + 0.60 * verification_score
     else:
         confidence = 0.65 * execution_score + 0.35 * verification_score
-        # Soft ceiling without tests (honest)
-        confidence = min(confidence, 0.70 if resp.exit_code == 0 else 0.25)
+        # Soft ceiling without tests (honest). Deliberately BELOW the default
+        # ETHER_FLYWHEEL_MIN_CONFIDENCE of 0.70: previously this capped at
+        # exactly 0.70 and the gate tested `>= 0.7`, so untested code sat on
+        # the threshold and passed. Untested is not verified.
+        confidence = min(confidence, 0.65 if resp.exit_code == 0 else 0.25)
 
     return {
         "execution_score": round(max(0.0, min(1.0, execution_score)), 3),

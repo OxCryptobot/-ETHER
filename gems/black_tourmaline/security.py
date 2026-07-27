@@ -43,7 +43,12 @@ class BlackTourmaline:
 
             violations = self._scan(artifact)
             risk = min(1.0, len(violations) * 0.35)
-            approved = risk < 0.5
+            # Previously `risk < 0.5`, which meant a SINGLE violation (0.35)
+            # was auto-approved: os.system(...), subprocess.run(...) and
+            # subprocess.Popen(...) all passed the only audit gate in the
+            # system. `eval` was caught solely because it happened to match
+            # three patterns. One violation is a violation.
+            approved = not violations
 
             return ResponseEnvelope(
                 task_id=request.task_id,

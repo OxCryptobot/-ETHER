@@ -18,6 +18,18 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 
+# .env MUST load first. These are setdefault() calls and core/dotenv.py never
+# overrides an already-set variable, so loading .env afterwards left the
+# operator's explicit choices silently ignored — a .env with
+# ETHER_FLYWHEEL_PUSH=0 still auto-pushed to the shared remote, and
+# ETHER_GIT_RESET_OK=1 was force-enabled behind their back.
+try:
+    from core.dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+except Exception:
+    pass
+
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
 os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
@@ -30,13 +42,6 @@ os.environ.setdefault("ETHER_AUTO_ENQUEUE", "1")
 os.environ.setdefault("ETHER_GUARDIAN_AUTO_BASELINE", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
-
-try:
-    from core.dotenv import load_dotenv
-
-    load_dotenv(ROOT / ".env")
-except Exception:
-    pass
 
 PY = sys.executable
 INTERVAL = int(os.getenv("ETHER_DAEMON_INTERVAL", os.getenv("ETHER_FLYWHEEL_INTERVAL", "900")))

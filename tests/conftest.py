@@ -5,6 +5,65 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+
+# Module-level state paths that tests would otherwise write to for real.
+# (module path, attribute name, "file" | "dir")
+_STATE_TARGETS = [
+    ("core.learning", "BANDIT_PATH", "file"),
+    ("core.learning", "EXP_PATH", "file"),
+    ("core.experience", "VAULT_DIR", "dir"),
+    ("core.experience", "PASS_PATH", "file"),
+    ("core.experience", "FAIL_PATH", "file"),
+    ("core.fail_streak", "STATE_PATH", "file"),
+    ("core.bench_guardian", "GUARD_PATH", "file"),
+    ("gems.grandidierite.fabricate", "QUARANTINE", "dir"),
+    ("gems.grandidierite.fabricate", "FABRICATE_LOG", "file"),
+]
+
+
+@pytest.fixture(autouse=True)
+def isolate_persistent_state(monkeypatch, tmp_path):
+    """Redirect the learning/experience/tool stores into a temp dir.
+
+    Without this, `pytest -q` mutates production state: it wrote fake rewards
+    into `memory/learning/bandit.json` (the live contextual bandit that picks
+    generation strategies) and appended mock pipeline output to
+    `memory/experience/pass.jsonl`, which is re-injected into real prompts as
+    few-shot "success examples". The test suite was training the system.
+
+    Verified before this fixture existed: a single `pytest -q` changed
+    bandit.json and grew pass.jsonl by 305 bytes.
+    """
+    import importlib
+    import shutil
+
+    # Rooted under memory/ (gitignored) rather than /tmp, because some code
+    # legitimately computes paths relative to ROOT and rejects anything
+    # outside the repo.
+    sandbox_root = ROOT / "memory" / "_pytest" / tmp_path.name
+    sandbox_root.mkdir(parents=True, exist_ok=True)
+
+    for module_name, attr, kind in _STATE_TARGETS:
+        try:
+            module = importlib.import_module(module_name)
+        except Exception:
+            continue
+        if not hasattr(module, attr):
+            continue
+        target = sandbox_root / module_name.replace(".", "_") / attr.lower()
+        if kind == "dir":
+            target.mkdir(parents=True, exist_ok=True)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+        monkeypatch.setattr(module, attr, target, raising=False)
+
+    try:
+        yield
+    finally:
+        shutil.rmtree(sandbox_root, ignore_errors=True)

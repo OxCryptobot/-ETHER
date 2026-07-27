@@ -187,7 +187,11 @@ Return ONLY full Python source, no markdown.
 def promote(path: Path) -> Dict[str, Any]:
     PERSISTENT.mkdir(parents=True, exist_ok=True)
     base = path.name
-    m = re.match(r"^(.+?)_\d{{8}}_\d{{6}}\.py$", base)
+    # NOT an f-string: `{{8}}` was a literal brace-8-brace, never the {8}
+    # quantifier, so this never matched a timestamped filename. Promoted tools
+    # kept their `_YYYYMMDD_HHMMSS` suffix and resolve_tool(name) could never
+    # find them — fabricate → promote → reuse was a silent no-op, reported ok.
+    m = re.match(r"^(.+?)_\d{8}_\d{6}\.py$", base)
     dest_name = f"{m.group(1)}.py" if m else base
     dest = PERSISTENT / dest_name
     dest.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")

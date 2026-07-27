@@ -21,7 +21,13 @@ def test_local_runs_python(monkeypatch):
         Envelope(
             task_id=uuid4(),
             target_gem="clear-quartz",
-            payload=ClearQuartzRequest(code="print(2+2)\nassert 2+2==4\n"),
+            # The assertion must depend on the code under test. This used to
+            # read `assert 2+2==4`, a constant that cannot fail and proves
+            # nothing — exactly the pattern that let no-op artifacts score a
+            # perfect verification. See tests/test_assert_audit.py.
+            payload=ClearQuartzRequest(
+                code="def add(a, b):\n    return a + b\nprint(add(2, 2))\nassert add(2, 2) == 4\n"
+            ),
             timeout_seconds=30,
         )
     )
@@ -30,3 +36,19 @@ def test_local_runs_python(monkeypatch):
     assert res.payload.exit_code == 0
     assert "4" in (res.payload.stdout or "")
     assert res.payload.total_tests >= 1
+
+
+def test_local_does_not_count_constant_asserts(monkeypatch):
+    """A constant assertion is not evidence about the generated code."""
+    monkeypatch.setenv("ETHER_SANDBOX_BACKEND", "local")
+    res = ClearQuartz().execute(
+        Envelope(
+            task_id=uuid4(),
+            target_gem="clear-quartz",
+            payload=ClearQuartzRequest(code="print(2+2)\nassert 2+2==4\n"),
+            timeout_seconds=30,
+        )
+    )
+    assert res.payload is not None
+    assert res.payload.exit_code == 0
+    assert res.payload.total_tests == 0

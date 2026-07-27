@@ -115,6 +115,7 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
 <nav class="tabs">
   <button data-tab="overview" class="active">Overview</button>
   <button data-tab="intel">Intelligence</button>
+  <button data-tab="integrity">Integrity</button>
   <button data-tab="flywheel">Flywheel</button>
   <button data-tab="system">System map</button>
   <button data-tab="runs">Runs</button>
@@ -176,6 +177,31 @@ footer{max-width:1600px;margin:0 auto;padding:0 24px 28px;color:var(--faint);fon
     <div class="grid m2">
       <div class="card"><p class="card-title">Recent PASS</p><div id="iPass"></div><p class="card-title" style="margin-top:14px">Recent FAIL</p><div id="iFail"></div></div>
       <div class="card"><p class="card-title">Bandit</p><div id="iBandit"></div><p class="card-title" style="margin-top:14px">Failure signatures</p><div id="iFailSig"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-integrity">
+    <div class="grid m4">
+      <div class="card"><p class="card-title">Verified fraction</p><div class="metric violet" id="vFrac">—</div><div class="hint" id="vFracHint">runs with at least one real assertion</div></div>
+      <div class="card"><p class="card-title">Sandbox isolation</p><div class="metric sm" id="vIso">—</div><div class="hint" id="vIsoHint">—</div></div>
+      <div class="card"><p class="card-title">Memory layer</p><div class="metric sm" id="vMem">—</div><div class="hint" id="vMemHint">—</div></div>
+      <div class="card"><p class="card-title">Held-out grading</p><div class="metric sm" id="vHold">—</div><div class="hint" id="vHoldHint">—</div></div>
+    </div>
+    <div class="grid m2">
+      <div class="card">
+        <p class="card-title">Verification breakdown</p>
+        <table class="data"><tbody id="vBody"></tbody></table>
+        <div class="hint" style="margin-top:10px">
+          Confidence alone cannot distinguish "ran without crashing" from "passed real tests".
+          Self-authored assertions only prove the code does what the model intended;
+          held-out grading is the only signal a generator cannot write for itself.
+        </div>
+      </div>
+      <div class="card">
+        <p class="card-title">Safety posture</p>
+        <table class="data"><tbody id="pBody"></tbody></table>
+        <div class="hint" id="pRisks" style="margin-top:10px">—</div>
+      </div>
     </div>
   </section>
 
@@ -275,10 +301,61 @@ function stepsHtml(steps){
   if(!steps||!steps.length) return '<tr><td colspan="4" style="color:var(--faint)">No cycle data yet</td></tr>';
   return steps.map(st=>`<tr><td>${esc(st.name)}</td><td><span class="badge ${st.ok?'ok':'bad'}">${st.ok?'OK':'FAIL'}</span></td><td>${st.ms!=null?st.ms+' ms':'—'}</td><td>${esc(st.error||'')}</td></tr>`).join('');
 }
+function kvRow(label,value,cls){
+  return `<tr><td style="color:var(--muted)">${esc(label)}</td><td style="text-align:right"><span class="badge ${cls||''}">${esc(value)}</span></td></tr>`;
+}
+function renderIntegrity(d){
+  const v=d.verification||{}, p=d.posture||{}, m=d.memory||{};
+
+  // Verification: what fraction of runs carried a real, failable assertion.
+  const frac=v.verified_fraction;
+  const fe=$('vFrac');
+  if(fe){fe.textContent=frac!=null?pct(frac):'—';fe.className='metric '+(frac==null?'':(frac>=0.8?'ok':(frac>=0.4?'violet':'bad')));}
+  setText('vFracHint', v.runs_sampled?`${v.runs_with_real_tests} of ${v.runs_sampled} recent runs had a real assertion`:'no runs sampled yet');
+
+  const iso=p.sandbox_isolated;
+  const ie=$('vIso');
+  if(ie){ie.textContent=iso===true?'CONTAINER':(iso===false?'HOST':'—');ie.className='metric sm '+(iso===true?'ok':(iso===false?'bad':''));}
+  setText('vIsoHint', p.sandbox_effective||'—');
+
+  const me=$('vMem');
+  if(me){me.textContent=m.reachable?'UP':'DOWN';me.className='metric sm '+(m.reachable?'ok':'bad');}
+  const pts=Object.entries(m.points||{}).map(([k,n])=>`${k}:${n==null?'?':n}`).join('  ');
+  setText('vMemHint', m.reachable?(pts||'no collections'):(m.error||'qdrant unreachable — nothing is learned'));
+
+  // Held-out grading is the only signal a generator cannot author for itself.
+  const he=$('vHold');
+  const wired=v.holdout_wired_to_gate===true;
+  if(he){he.textContent=wired?'WIRED':(v.holdout_dataset?'AVAILABLE':'NONE');he.className='metric sm '+(wired?'ok':(v.holdout_dataset?'violet':'bad'));}
+  setText('vHoldHint', wired?'gate grades on unseen tests':`${v.holdout_tasks||0} tasks on disk, not wired to the gate`);
+
+  const vb=$('vBody');
+  if(vb){vb.innerHTML=[
+    kvRow('Runs sampled', v.runs_sampled!=null?v.runs_sampled:'—'),
+    kvRow('With real assertions', v.runs_with_real_tests!=null?v.runs_with_real_tests:'—', (v.runs_with_real_tests||0)>0?'ok':'bad'),
+    kvRow('Untested (execution only)', v.runs_untested!=null?v.runs_untested:'—', (v.runs_untested||0)>0?'bad':'ok'),
+    kvRow('Gate min confidence', v.gate_min_confidence!=null?v.gate_min_confidence:'—'),
+    kvRow('Holdout tasks on disk', v.holdout_tasks!=null?v.holdout_tasks:'—'),
+    kvRow('Holdout wired to gate', wired?'yes':'no', wired?'ok':'bad'),
+  ].join('');}
+
+  const pb=$('pBody');
+  if(pb){pb.innerHTML=[
+    kvRow('Sandbox', p.sandbox_effective||'—', iso===true?'ok':'bad'),
+    kvRow('Patch loop (host writes)', p.patch_loop?'ON':'off', p.patch_loop?'bad':'ok'),
+    kvRow('Tool auto-promote', p.auto_promote?'ON':'off', p.auto_promote?'bad':'ok'),
+    kvRow('Flywheel push to main', p.flywheel_push?'ON':'off', p.flywheel_push?'bad':'ok'),
+    kvRow('git reset --hard', p.git_reset_ok?'ON':'off', p.git_reset_ok?'bad':'ok'),
+    kvRow('Cloud burst', p.burst?'ON':'off', p.burst?'bad':'ok'),
+  ].join('');}
+  const risks=(p.risk_notes||[]);
+  setText('pRisks', risks.length?('Active risks: '+risks.join(' · ')):'No elevated-risk switches enabled.');
+}
 let lastTermKey='';
 function render(d){
   try{
     if(!d) return;
+    try{ renderIntegrity(d); }catch(e){ /* integrity panel must never break the rest */ }
     const banner=$('errBanner');
     if(d.error){banner.style.display='block';banner.textContent='Snapshot error: '+d.error;}
     else banner.style.display='none';

@@ -35,7 +35,11 @@ def main() -> int:
     objective, meta = resolve_objective()
     print(json.dumps({"curriculum": meta, "objective_preview": objective[:200]}, indent=2), flush=True)
     report = cycle(
-        do_push=True,
+        # Was hardcoded True. flywheel.cycle() computes
+        # `want_push = do_push or ETHER_FLYWHEEL_PUSH == "1"`, so a hardcoded
+        # True made the env var unable to suppress a push — an operator who
+        # set ETHER_FLYWHEEL_PUSH=0 still pushed to the shared remote.
+        do_push=os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1",
         min_confidence=float(os.getenv("ETHER_FLYWHEEL_MIN_CONFIDENCE", "0.7")),
         max_retries=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
         objective=objective,

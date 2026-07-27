@@ -21,6 +21,9 @@ _STATE_TARGETS = [
     ("core.experience", "PASS_PATH", "file"),
     ("core.experience", "FAIL_PATH", "file"),
     ("core.fail_streak", "STATE_PATH", "file"),
+    # Any test reaching core.repair.repair_prompt writes here, so the live
+    # failure graph was accumulating nodes from mock stderr.
+    ("core.failure_graph", "GRAPH_PATH", "file"),
     ("core.bench_guardian", "GUARD_PATH", "file"),
     ("gems.grandidierite.fabricate", "QUARANTINE", "dir"),
     ("gems.grandidierite.fabricate", "FABRICATE_LOG", "file"),

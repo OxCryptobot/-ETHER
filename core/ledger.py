@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from statistics import median
 from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,8 +39,10 @@ def compute_ledger() -> Dict[str, Any]:
     runs = _tail_runs(50)
     durations = [_ms(r.get("stages") or []) for r in runs]
     durations = [d for d in durations if d > 0]
-    durations_sorted = sorted(durations)
-    p50 = durations_sorted[len(durations_sorted) // 2] if durations_sorted else None
+    # statistics.median, not sorted[n // 2]: the latter is the UPPER median on
+    # an even sample, which reported a p50 above the true midpoint and read
+    # inconsistently next to the mean printed beside it.
+    p50 = median(durations) if durations else None
     avg = sum(durations) / len(durations) if durations else None
 
     stage_sums: Dict[str, List[float]] = {}

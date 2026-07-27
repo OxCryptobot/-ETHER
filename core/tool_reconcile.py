@@ -67,18 +67,65 @@ def _promotion_gate(path: Path) -> Dict[str, Any]:
         return {"ok": False, "reason": f"audit error: {e}"}
 
     return {"ok": True, "reason": ""}
+
+
+def _discard_gate() -> Dict[str, Any]:
+    """Gate for the DELETE half of reconcile.
+
+    Only promotion was gated, so a daemon-scheduled reconcile with
+    ETHER_AUTO_PROMOTE=0 was a pure deleter: it could remove quarantined tools
+    but never keep any, quietly draining work the operator had not reviewed.
+    Discarding now needs the same consent as promoting (or an explicit
+    discard-only opt-in).
+    """
+    import os
+
+    if (os.getenv("ETHER_AUTO_DISCARD", "") or "").strip() == "1":
+        return {"ok": True, "reason": ""}
+    if (os.getenv("ETHER_AUTO_PROMOTE", "0") or "").strip() == "1":
+        return {"ok": True, "reason": ""}
+    return {
+        "ok": False,
+        "reason": "ETHER_AUTO_PROMOTE=0 (set ETHER_AUTO_DISCARD=1 for discard-only)",
+    }
+
+
 REPORT_PATH = ROOT / "memory" / "tools" / "reconcile_latest.json"
 LOG_PATH = ROOT / "memory" / "tools" / "reconcile.jsonl"
+ARCHIVE = ROOT / "tools" / "archive"
 
 # names that should never be auto-deleted from persistent
 PROTECTED = {"_lib.py", "__init__.py"}
 
 
-def _read(path: Path) -> str:
+def _archive(path: Path) -> Path:
+    """Move a discarded tool aside instead of unlink()ing it.
+
+    Discard used to be an unrecoverable `unlink()` driven by a similarity
+    heuristic; one bad fingerprint destroyed the only copy of a tool.
+    """
+    ARCHIVE.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    dest = ARCHIVE / f"{stamp}_{path.name}"
+    i = 2
+    while dest.exists():
+        dest = ARCHIVE / f"{stamp}_{i}_{path.name}"
+        i += 1
+    shutil.move(str(path), str(dest))
+    return dest
+
+
+def _read(path: Path) -> Optional[str]:
+    """Source text, or None when the file cannot be read.
+
+    Returning "" for unreadable files made every unreadable file fingerprint
+    identically (same empty-body hash), so similarity() scored them 1.0
+    against each other and reconcile discarded them as duplicates.
+    """
     try:
         return path.read_text(encoding="utf-8", errors="ignore")
     except Exception:
-        return ""
+        return None
 
 
 def _norm_name(name: str) -> str:
@@ -95,7 +142,24 @@ def _tokens(text: str) -> Set[str]:
 
 
 def _fingerprint(path: Path) -> Dict[str, Any]:
-    src = _read(path)
+    raw = _read(path)
+    unreadable = raw is None or not (raw or "").strip()
+    if unreadable:
+        # unique, path-derived hash: two files with no usable content must
+        # never look like duplicates of each other
+        return {
+            "path": str(path),
+            "name": path.name,
+            "norm": _norm_name(path.name),
+            "funcs": [],
+            "imports": [],
+            "doc": "",
+            "hash": "u_" + hashlib.sha256(str(path).encode("utf-8", "ignore")).hexdigest()[:13],
+            "tokens": [],
+            "size": 0,
+            "unreadable": True,
+        }
+    src = raw or ""
     funcs: List[str] = []
     imports: List[str] = []
     doc = ""
@@ -115,7 +179,11 @@ def _fingerprint(path: Path) -> Dict[str, Any]:
     # body without comments/blank for hash
     body = re.sub(r"#.*", "", src)
     body = re.sub(r"\s+", " ", body).strip()
-    h = hashlib.sha256(body.encode("utf-8", errors="ignore")).hexdigest()[:16]
+    if body:
+        h = hashlib.sha256(body.encode("utf-8", errors="ignore")).hexdigest()[:16]
+    else:
+        # comment-only file: no code to compare, so keep its hash unique
+        h = "e_" + hashlib.sha256(str(path).encode("utf-8", "ignore")).hexdigest()[:13]
     return {
         "path": str(path),
         "name": path.name,
@@ -126,6 +194,7 @@ def _fingerprint(path: Path) -> Dict[str, Any]:
         "hash": h,
         "tokens": list(_tokens(src))[:80],
         "size": len(src),
+        "unreadable": False,
     }
 
 
@@ -136,6 +205,9 @@ def _jaccard(a: Set[str], b: Set[str]) -> float:
 
 
 def similarity(fa: Dict[str, Any], fb: Dict[str, Any]) -> float:
+    if fa.get("unreadable") or fb.get("unreadable"):
+        # nothing was compared — never claim a match we cannot justify
+        return 0.0
     if fa.get("hash") and fa["hash"] == fb.get("hash"):
         return 1.0
     score = 0.0
@@ -201,9 +273,37 @@ def reconcile(
     promoted = 0
     discarded = 0
     kept = 0
+    discard_gate = _discard_gate()
+
+    def _discard(path: Path, action: Dict[str, Any]) -> str:
+        """Archive one quarantined tool. Returns 'discarded' or 'kept'."""
+        if not discard_gate["ok"]:
+            action["action"] = "blocked_discard"
+            action["blocked_by"] = discard_gate["reason"]
+            return "kept"
+        if dry_run:
+            action["would_archive_to"] = str(ARCHIVE / path.name)
+            return "discarded"
+        try:
+            action["archived_to"] = str(_archive(path))
+            return "discarded"
+        except Exception as e:
+            action["action"] = "error"
+            action["error"] = str(e)
+            return "kept"
 
     for qpath in quar_files:
         qfp = _fingerprint(qpath)
+        if qfp.get("unreadable"):
+            actions.append(
+                {
+                    "file": qpath.name,
+                    "action": "kept_unreadable",
+                    "reason": "empty or unreadable — cannot be fingerprinted or compared",
+                }
+            )
+            kept += 1
+            continue
         best: Optional[Tuple[float, Dict[str, Any]]] = None
         for pfp in pers_fps:
             sim = similarity(qfp, pfp)
@@ -219,16 +319,10 @@ def reconcile(
                 "match": best[1].get("name"),
                 "reason": f"near-duplicate of persistent {best[1].get('name')}",
             }
-            if not dry_run:
-                try:
-                    qpath.unlink()
-                    discarded += 1
-                except Exception as e:
-                    action["action"] = "error"
-                    action["error"] = str(e)
-                    kept += 1
-            else:
+            if _discard(qpath, action) == "discarded":
                 discarded += 1
+            else:
+                kept += 1
             actions.append(action)
             continue
 
@@ -257,15 +351,10 @@ def reconcile(
                 "match": collision.get("name"),
                 "reason": f"functional name collides with {collision.get('name')}",
             }
-            if not dry_run:
-                try:
-                    qpath.unlink()
-                    discarded += 1
-                except Exception as e:
-                    action["error"] = str(e)
-                    kept += 1
-            else:
+            if _discard(qpath, action) == "discarded":
                 discarded += 1
+            else:
+                kept += 1
             actions.append(action)
             continue
 
@@ -302,6 +391,19 @@ def reconcile(
                 action["error"] = str(e)
                 kept += 1
         else:
+            # A dry run must model the same state the real run would reach.
+            # pers_fps was only extended in the non-dry branch, so later
+            # quarantine files were compared against a persistent set missing
+            # everything promoted earlier in the pass — under-reporting the
+            # discards a real run would perform.
+            pers_fps.append(
+                dict(
+                    qfp,
+                    path=str(PERSISTENT / dest_name),
+                    name=dest_name,
+                    norm=_norm_name(dest_name),
+                )
+            )
             promoted += 1
         actions.append(action)
 

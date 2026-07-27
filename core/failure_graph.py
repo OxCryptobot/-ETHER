@@ -13,15 +13,43 @@ from core.repair import classify_stderr
 ROOT = Path(__file__).resolve().parents[1]
 GRAPH_PATH = ROOT / "memory" / "experience" / "failure_graph.json"
 
+# Keys MUST match the `kind` values produced by core.repair.classify_stderr.
+# They used to be short forms ("syntax", "name", ...) while classify_stderr
+# returns exception class names ("SyntaxError", "NameError", ...), so every
+# lookup missed and every failure got the generic runtime template — the whole
+# table was unreachable.
 TEMPLATES = {
-    "syntax": "Fix SyntaxError/IndentationError. Output valid Python only, no markdown.",
-    "name": "NameError: define missing names or fix typos before use.",
-    "import": "ImportError: remove third-party imports; stdlib only in sandbox.",
-    "assert": "AssertionError: align logic with asserts or fix expected values.",
-    "type": "TypeError: check None, argument counts, and operand types.",
-    "timeout": "Timeout: remove infinite loops; bound iterations.",
+    "SyntaxError": "Fix SyntaxError/IndentationError. Output valid Python only, no markdown.",
+    "NameError": "NameError: define missing names or fix typos before use.",
+    "ImportError": "ImportError: remove third-party imports; stdlib only in sandbox.",
+    "AssertionError": "AssertionError: align logic with asserts or fix expected values.",
+    "TypeError": "TypeError: check None, argument counts, and operand types.",
+    "ValueError": "ValueError: handle edge cases (empty, zero, None) and bad literals.",
+    "Timeout": "Timeout: remove infinite loops; bound iterations.",
     "runtime": "Runtime error: read stderr and make the smallest correct fix.",
 }
+
+# Short forms written by older graph files / callers.
+_ALIASES = {
+    "syntax": "SyntaxError",
+    "indentation": "SyntaxError",
+    "name": "NameError",
+    "import": "ImportError",
+    "module": "ImportError",
+    "assert": "AssertionError",
+    "assertion": "AssertionError",
+    "type": "TypeError",
+    "value": "ValueError",
+    "timeout": "Timeout",
+}
+
+
+def template_for(kind: str) -> str:
+    """Template for a classify_stderr kind (or a legacy short form)."""
+    k = (kind or "").strip()
+    if k in TEMPLATES:
+        return TEMPLATES[k]
+    return TEMPLATES.get(_ALIASES.get(k.lower(), ""), TEMPLATES["runtime"])
 
 
 def _sig(stderr: str) -> str:
@@ -59,8 +87,11 @@ def observe(stderr: str, repaired_ok: bool = False) -> Dict[str, Any]:
         "kind": kind,
         "count": 0,
         "repaired_ok": 0,
-        "template": TEMPLATES.get(kind, TEMPLATES["runtime"]),
     }
+    node["kind"] = node.get("kind") or kind
+    # refresh: nodes persisted before the key alignment carry the generic
+    # runtime template baked in, which would otherwise stick forever
+    node["template"] = template_for(node["kind"])
     node["count"] = int(node.get("count") or 0) + 1
     if repaired_ok:
         node["repaired_ok"] = int(node.get("repaired_ok") or 0) + 1
@@ -74,14 +105,22 @@ def observe(stderr: str, repaired_ok: bool = False) -> Dict[str, Any]:
     return {"signature": sig, **node}
 
 
-def repair_hint(stderr: str) -> str:
-    sig = _sig(stderr)
+def repair_hint(stderr_or_kind: str) -> str:
+    """Repair template for a stderr blob OR a bare failure kind.
+
+    `core.experience.retrieve` calls this with a kind string ("SyntaxError"),
+    not stderr, so both are accepted explicitly instead of relying on the
+    substring match in classify_stderr.
+    """
+    text = (stderr_or_kind or "").strip()
+    if text in TEMPLATES or text.lower() in _ALIASES:
+        return template_for(text)
+    sig = _sig(text)
     data = _load()
     node = (data.get("nodes") or {}).get(sig)
-    if node and node.get("template"):
-        return str(node["template"])
-    kind = classify_stderr(stderr)["kind"]
-    return TEMPLATES.get(kind, TEMPLATES["runtime"])
+    if node:
+        return template_for(node.get("kind") or classify_stderr(text)["kind"])
+    return template_for(classify_stderr(text)["kind"])
 
 
 def top_failures(n: int = 10) -> List[Dict[str, Any]]:

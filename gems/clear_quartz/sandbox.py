@@ -23,6 +23,87 @@ from core.schemas import (
 )
 
 
+class RawCodeRequest(ClearQuartzRequest):
+    """A sandbox request whose code must be executed verbatim.
+
+    Held-out grading composes the exact program it wants to run. Sending it as
+    a plain ClearQuartzRequest routed it through prepare_code_for_sandbox,
+    which rewrote the artifact under test.
+    """
+
+    prepare_code: bool = False
+
+
+class DockerUnavailable(RuntimeError):
+    """Docker itself failed — the program under test never ran.
+
+    Distinct from a non-zero exit of the program: a daemon outage made
+    `docker run` return 125/1, which flowed into compute_scores as the
+    program's own result, drove bench pass_rate to 0 and wrote fabricated
+    FAILs into the experience vault.
+    """
+
+
+# Docker's own diagnostics for an unreachable daemon, whatever the exit code
+# (an outage shows up as 125 or as plain 1). Each phrase names docker's own
+# control plane, so sandboxed code cannot forge one by printing "failed to
+# connect" on stderr.
+_DOCKER_DAEMON_MARKERS = (
+    "cannot connect to the docker daemon",
+    "is the docker daemon running",
+    "docker daemon is not running",
+    "failed to connect to the docker api",
+    "cannot connect to the docker api",
+    "error during connect",
+    "docker.sock: connect:",
+    "dial unix /var/run/docker.sock",
+)
+
+_DOCKER_RUN_MARKERS = (
+    "unable to find image",
+    "error response from daemon",
+    "oci runtime create failed",
+    "no such image",
+    "pull access denied",
+    "manifest unknown",
+    "invalid reference format",
+    "exec format error",
+    "toomanyrequests",
+    "no space left on device",
+)
+
+# 125 = docker itself failed, 126 = contained command not executable,
+# 127 = contained command not found. All three mean "not the program's result".
+_DOCKER_EXIT_CODES = (125, 126, 127)
+
+
+def docker_failure_reason(result: subprocess.CompletedProcess) -> Optional[str]:
+    """Return a reason string if `result` is a docker-level failure, else None."""
+    err = (result.stderr or "").strip()
+    out = (result.stdout or "").strip()
+    low = err.lower()
+
+    for marker in _DOCKER_DAEMON_MARKERS:
+        if marker in low:
+            return _first_line(err)
+    if result.returncode in _DOCKER_EXIT_CODES:
+        if low.startswith("docker:") or any(m in low for m in _DOCKER_RUN_MARKERS):
+            return _first_line(err)
+        # `docker run` uses 125 for its own failures; a Python program that
+        # exits 125 silently, with nothing on either stream, is not a case
+        # worth preferring over a visible infrastructure outage.
+        if result.returncode == 125 and not err and not out:
+            return "docker run failed with exit 125 and no output"
+    return None
+
+
+def _first_line(text: str) -> str:
+    for line in (text or "").splitlines():
+        if line.strip():
+            return line.strip()[:300]
+    return (text or "").strip()[:300] or "docker failure"
+
+
 def sandbox_backend() -> str:
     """docker | local | auto (prefer docker if present, else local)."""
     raw = (os.getenv("ETHER_SANDBOX_BACKEND") or "auto").strip().lower()
@@ -56,23 +137,29 @@ class ClearQuartz:
         payload = request.payload
         start = time.perf_counter()
         code = payload.code
-        try:
-            from core.pipeline_hooks import prepare_code_for_sandbox
-
-            code, _meta = prepare_code_for_sandbox(code, objective="")
-        except Exception:
+        # The objective is what makes test_synth able to derive a falsifiable
+        # assertion (`name(args) == value`). This used to be hardcoded to "",
+        # so that branch could never fire in production and every synthesized
+        # assertion was a tautology.
+        objective = str(getattr(payload, "objective", "") or "")
+        if self._prep_enabled(payload):
             try:
-                from core.test_synth import synthesize_asserts
+                from core.pipeline_hooks import prepare_code_for_sandbox
 
-                code, _ = synthesize_asserts(code, objective="")
+                code, _meta = prepare_code_for_sandbox(code, objective=objective)
             except Exception:
-                pass
-            try:
-                from core.assert_harness import ensure_harness
+                try:
+                    from core.test_synth import synthesize_asserts
 
-                code, _ = ensure_harness(code)
-            except Exception:
-                pass
+                    code, _ = synthesize_asserts(code, objective=objective)
+                except Exception:
+                    pass
+                try:
+                    from core.assert_harness import ensure_harness
+
+                    code, _ = ensure_harness(code)
+                except Exception:
+                    pass
 
         try:
             security_flags = self._static_analysis(code)
@@ -97,6 +184,22 @@ class ClearQuartz:
                 ),
             )
 
+        except DockerUnavailable as e:
+            # Infrastructure, not the artifact. Reporting this as a program
+            # result is what poisoned pass_rate and the experience vault.
+            return ResponseEnvelope(
+                task_id=request.task_id,
+                source_gem="clear-quartz",
+                error=GemError(
+                    type=GemErrorType.DEPENDENCY,
+                    message=f"Docker sandbox unavailable: {e}",
+                    recoverable=True,
+                    suggested_action=(
+                        "Start the Docker daemon (e.g. `systemctl start docker`) "
+                        "or set ETHER_SANDBOX_BACKEND=local"
+                    ),
+                ),
+            )
         except subprocess.TimeoutExpired:
             return ResponseEnvelope(
                 task_id=request.task_id,
@@ -165,6 +268,18 @@ class ClearQuartz:
                 error=GemError(type=GemErrorType.RUNTIME, message=str(e), recoverable=True),
             )
 
+    @staticmethod
+    def _prep_enabled(payload: ClearQuartzRequest) -> bool:
+        """False when the caller needs the code run exactly as given."""
+        if not getattr(payload, "prepare_code", True):
+            return False
+        try:
+            from core.pipeline_hooks import code_prep_disabled
+
+            return not code_prep_disabled()
+        except Exception:
+            return True
+
     def _static_analysis(self, code: str) -> List[str]:
         flags: List[str] = []
         dangerous = {"eval", "exec", "compile", "__import__"}
@@ -189,7 +304,12 @@ class ClearQuartz:
             if warm_enabled():
                 warm = run_in_warm(code, timeout)
                 if warm is not None:
+                    reason = docker_failure_reason(warm)
+                    if reason:
+                        raise DockerUnavailable(reason)
                     return warm
+        except DockerUnavailable:
+            raise
         except Exception:
             pass
         # Deliberately NOT catching FileNotFoundError here. Doing so silently
@@ -259,13 +379,21 @@ class ClearQuartz:
             "python",
             "-",
         ]
-        return subprocess.run(
+        result = subprocess.run(
             cmd,
             input=code,
             capture_output=True,
             text=True,
             timeout=timeout,
         )
+        # A daemon outage is not a failing program. `docker run` returns 125
+        # (or 1 with "Cannot connect to the Docker daemon") without ever
+        # starting the code, and that used to be scored as the artifact's own
+        # non-zero exit.
+        reason = docker_failure_reason(result)
+        if reason:
+            raise DockerUnavailable(reason)
+        return result
 
     def _count_tests(
         self, stdout: str, stderr: str, exit_code: int, code: str

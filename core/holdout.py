@@ -118,18 +118,30 @@ def grade_against_holdout(
         + f"\nprint({sentinel!r})\n"
     )
 
+    # Grading must run exactly `combined` and nothing else. Routed through the
+    # normal path, prepare_code_for_sandbox rewrote it: a leading `# file:`
+    # marker wrote the graded code to the HOST at memory/scratch/ and replaced
+    # the program with a runpy runner, and with two markers the holdout landed
+    # in a non-entry file that never executed — grading code that was never
+    # run as a PASS. Assert synthesis and the harness would likewise be
+    # grading a different artifact than the one produced.
     try:
+        from core.pipeline_hooks import no_code_prep
         from core.registry import build_default_registry
-        from core.schemas import ClearQuartzRequest, Envelope
+        from core.schemas import Envelope
+        from gems.clear_quartz.sandbox import RawCodeRequest
 
-        response = build_default_registry().execute(
-            Envelope(
-                task_id=uuid4(),
-                target_gem="clear-quartz",
-                payload=ClearQuartzRequest(code=combined),
-                timeout_seconds=timeout,
-            )
+        envelope = Envelope(
+            task_id=uuid4(),
+            target_gem="clear-quartz",
+            # prepare_code=False travels with the request, so it holds even if
+            # the gem is executed on another thread; no_code_prep() is the
+            # belt-and-braces guard for anything else on this call path.
+            payload=RawCodeRequest(code=combined, prepare_code=False),
+            timeout_seconds=timeout,
         )
+        with no_code_prep():
+            response = build_default_registry().execute(envelope)
     except Exception as e:  # sandbox unavailable -> not a pass
         result["reason"] = f"sandbox error: {e}"
         return result

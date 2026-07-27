@@ -2,7 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Any, Dict, Iterator, Tuple
+
+# Set while the sandbox must run exactly the code it was handed. Grading
+# against held-out assertions is the case that matters: running the multifile
+# splitter, assert synthesis, the harness or the patch loop over graded code
+# changes the artifact under test (and, for `# file:` markers, writes to the
+# host and replaces the program with a runner that never executes the code).
+_NO_PREP: ContextVar[bool] = ContextVar("ether_no_code_prep", default=False)
+
+
+def code_prep_disabled() -> bool:
+    return bool(_NO_PREP.get())
+
+
+@contextmanager
+def no_code_prep() -> Iterator[None]:
+    """Run the sandbox on verbatim code — no synthesis, harness, or multifile."""
+    token = _NO_PREP.set(True)
+    try:
+        yield
+    finally:
+        _NO_PREP.reset(token)
 
 
 def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[str, Any]:
@@ -13,6 +36,9 @@ def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[s
 
 def prepare_code_for_sandbox(code: str, objective: str = "") -> Tuple[str, Dict[str, Any]]:
     meta: Dict[str, Any] = {"synth": False, "harness": False, "patch": None, "multifile": None}
+    if code_prep_disabled():
+        meta["bypassed"] = True
+        return code, meta
     try:
         from core.multifile import is_multifile_objective, run_multifile_cycle
 

@@ -168,30 +168,81 @@ def _tail_jsonl(path: Path, n: int = 40) -> List[Dict[str, Any]]:
     return rows
 
 
+def _float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def is_verified_pass(row: Dict[str, Any]) -> bool:
+    """Is this vault row evidence, or just an exit code?
+
+    `record_outcome()` promotes only on `total_tests > 0 and
+    verification_score >= 0.7`. sync_from_vault() used to promote on three
+    consecutive pass.jsonl rows with `confidence >= 0.85` and nothing else — it
+    never read total_tests, verification_score or holdout_ok — so a run that
+    printed something and exited 0 could walk the curriculum up a tier past the
+    guarded path.
+    """
+    min_conf = _float(os.getenv("ETHER_CURRICULUM_MIN_CONF", "0.85"), 0.85)
+    min_score = _float(os.getenv("ETHER_CURRICULUM_MIN_VERIFICATION", "0.7"), 0.7)
+
+    if row.get("success") is False:
+        return False
+    if _float(row.get("confidence")) < min_conf:
+        return False
+    if _int(row.get("total_tests")) <= 0:
+        return False
+    if _float(row.get("verification_score")) < min_score:
+        return False
+    # Only a False verdict disqualifies; absent/None means the task carried no
+    # independent holdout (see _failure_driven_objective).
+    if "holdout_ok" in row and row.get("holdout_ok") is False:
+        return False
+    return True
+
+
 def sync_from_vault() -> Dict[str, Any]:
+    """Mirror the experience vault into curriculum tier state.
+
+    Two rules this function broke and now keeps:
+
+    1. Tier promotion needs VERIFIED evidence (see is_verified_pass), the same
+       bar `record_outcome()` applies.
+    2. It must not touch `state["wins"]` / `state["losses"]`. Those belong to
+       `record_outcome()`, and overwriting them on every sample_objective()
+       call meant the verified 3-win streak could never accumulate: the
+       guarded promotion path was effectively dead code. Sync keeps its own
+       `synced_wins` / `synced_losses` counters, and only resets the shared
+       ones when it actually moves the tier (the streak restarts either way).
+    """
     state = _load_state()
-    events = []
+    events: List[tuple] = []
     for r in _tail_jsonl(PASS_PATH, 40):
-        # only count verified-ish passes if confidence high and conf not soft-capped toys
-        conf = float(r.get("confidence") or 0)
-        events.append((r.get("timestamp") or "", True, conf))
+        events.append((r.get("timestamp") or "", True, is_verified_pass(r)))
     for r in _tail_jsonl(FAIL_PATH, 40):
-        events.append((r.get("timestamp") or "", False, 0.0))
+        events.append((r.get("timestamp") or "", False, False))
     events.sort(key=lambda x: x[0])
     if not events:
         return state
 
     wins = losses = 0
     last_ok = events[-1][1]
-    for _, ok, conf in reversed(events):
+    for _, ok, verified in reversed(events):
         if ok != last_ok:
             break
         if ok:
-            # ban promote-on-exit-zero soft conf: need conf >= 0.85 for win streak
-            if conf >= 0.85:
-                wins += 1
-            else:
+            if not verified:
                 break
+            wins += 1
         else:
             losses += 1
 
@@ -199,21 +250,29 @@ def sync_from_vault() -> Dict[str, Any]:
     demote_after = int(os.getenv("ETHER_CURRICULUM_DEMOTE_AFTER", "3"))
     tiers = load_tiers()
     tier = int(state.get("tier") or 0)
+    moved = False
 
     if last_ok and wins >= promote_after and tier < max(0, len(tiers) - 1):
         tier = min(len(tiers) - 1, tier + 1)
         wins = 0
-        losses = 0
+        moved = True
         state["last_event"] = f"synced_promoted_to_{tier}"
     elif (not last_ok) and losses >= demote_after and tier > 0:
         tier = max(0, tier - 1)
         losses = 0
-        wins = 0
+        moved = True
         state["last_event"] = f"synced_demoted_to_{tier}"
 
     state["tier"] = tier
-    state["wins"] = wins if last_ok else 0
-    state["losses"] = losses if not last_ok else 0
+    state["synced_wins"] = wins if last_ok else 0
+    state["synced_losses"] = losses if not last_ok else 0
+    if moved:
+        # Tier changed, so record_outcome's streak is spent too.
+        state["wins"] = 0
+        state["losses"] = 0
+    else:
+        state.setdefault("wins", 0)
+        state.setdefault("losses", 0)
     state["synced"] = True
     _save_state(state)
     return state

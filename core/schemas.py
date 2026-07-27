@@ -37,6 +37,11 @@ class ClearQuartzRequest(BaseModel):
     language: Literal["python", "javascript", "rust", "go"] = "python"
     test_cases: List[str] = Field(default_factory=list)
     sandbox_profile: Literal["fast", "strict"] = "fast"
+    # The originating objective. test_synth derives its only genuinely
+    # falsifiable assertions by matching `name(args) == value` against this;
+    # the sandbox previously hardcoded objective="" so that branch could never
+    # fire and every synthesized assert was a tautology.
+    objective: str = ""
 
 
 class ClearQuartzResponse(BaseModel):

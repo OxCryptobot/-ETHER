@@ -41,6 +41,7 @@ from core.patterns import index_pass_pattern
 from core.experience import retrieve as experience_retrieve, record as experience_record
 from core.bench_guardian import is_frozen
 from core.pipeline_burst import decide_burst
+from core.pipeline_select import select_strategy
 
 MAX_CODE_CHARS = 50_000
 
@@ -126,6 +127,10 @@ class Pipeline:
         """
         task_id = uuid4()
         tid = str(task_id)
+        # Captured before any work so the `exception` stage in _fail() records
+        # the real elapsed time. Passing time.perf_counter() at the call site
+        # measured the interval from "now" to "now" and always logged ~0ms.
+        run_started = time.perf_counter()
         self.orchestrator.start(task_id)
         result = PipelineResult(
             task_id=task_id,
@@ -136,7 +141,11 @@ class Pipeline:
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
         tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
 
-        strategy = self.policy.select() if learning_enabled() else "default"
+        # select_strategy builds the bandit context (multifile / tier / fail_kind)
+        # and passes it to BanditPolicy.select. Calling self.policy.select() bare
+        # left every contextual feature permanently unset, so the contextual
+        # bandit degraded to a plain epsilon-greedy one.
+        strategy = select_strategy(objective, self.policy)
         result.strategy = strategy
         write_progress(tid, objective, "start", strategy=strategy)
 
@@ -405,7 +414,11 @@ class Pipeline:
                 sand_req = Envelope(
                     task_id=task_id,
                     target_gem="clear-quartz",
-                    payload=ClearQuartzRequest(code=generated),
+                    # The objective is what lets test_synth derive a genuinely
+                    # falsifiable assertion (`name(args) == value`). It was
+                    # hardcoded empty inside the sandbox, so that branch could
+                    # never fire and every synthesized assert was a tautology.
+                    payload=ClearQuartzRequest(code=generated, objective=objective),
                     timeout_seconds=timeout,
                 )
                 sand_res = self.registry.execute(sand_req)
@@ -489,6 +502,26 @@ class Pipeline:
                         duration_ms=(time.perf_counter() - t4) * 1000,
                     )
                 )
+            else:
+                # A gem outage used to produce no StageResult at all: the audit
+                # row simply vanished, so an unaudited run was indistinguishable
+                # from an approved one. Record the failure explicitly and clamp
+                # confidence exactly as an un-approved audit would — code nobody
+                # audited must not score as if it had been.
+                audit_err = (
+                    audit_res.error.message
+                    if audit_res.error
+                    else f"audit returned {type(audit_res.payload).__name__}, expected BlackTourmalineResponse"
+                )
+                result.confidence = min(result.confidence, 0.3)
+                result.stages.append(
+                    StageResult(
+                        stage="audit",
+                        success=False,
+                        detail=f"audit unavailable: {str(audit_err)[:160]}",
+                        duration_ms=(time.perf_counter() - t4) * 1000,
+                    )
+                )
 
             if critique:
                 t5 = time.perf_counter()
@@ -508,9 +541,33 @@ class Pipeline:
                             duration_ms=(time.perf_counter() - t5) * 1000,
                         )
                     )
+                else:
+                    # Same silent-vanish bug as audit: --critique was requested,
+                    # so the absence of a critique row has to be reported rather
+                    # than read as "critique was skipped".
+                    crit_err = (
+                        crit_res.error.message
+                        if crit_res.error
+                        else f"critique returned {type(crit_res.payload).__name__}, expected LabradoriteResponse"
+                    )
+                    result.stages.append(
+                        StageResult(
+                            stage="critique",
+                            success=False,
+                            detail=f"critique unavailable: {str(crit_err)[:160]}",
+                            duration_ms=(time.perf_counter() - t5) * 1000,
+                        )
+                    )
 
             exit_code = result.sandbox.exit_code if result.sandbox else None
-            audit_ok = bool(result.audit and result.audit.approved)
+            # An audit-gem outage is not a rejection. compute_reward turns
+            # audit_approved=False into a flat -0.2, so folding "the auditor was
+            # down" into the same flag trained the bandit to punish strategies
+            # whose code the auditor never even looked at. When no verdict
+            # exists we stay neutral here; the already-clamped confidence (0.3)
+            # keeps the reward from being inflated, and _log still records
+            # audit_approved=False so the flywheel gate keeps failing closed.
+            audit_ok = bool(result.audit.approved) if result.audit is not None else True
             had_self = bool(result.sandbox and result.sandbox.total_tests > 0)
             total_tests = int(result.sandbox.total_tests) if result.sandbox else 0
 
@@ -575,6 +632,7 @@ class Pipeline:
                     task_id=tid,
                     verification_score=result.verification_score,
                     total_tests=total_tests,
+                    holdout_ok=result.holdout_ok,
                 )
             except Exception:
                 pass
@@ -648,14 +706,31 @@ class Pipeline:
                         )
                     )
 
-            result.status = "complete"
+            # Status is DERIVED from the sandbox, not asserted. This was an
+            # unconditional "complete", so a run whose generated code never once
+            # executed successfully still reported complete — and cli/main.py
+            # (`Exit(0 if result.status == "complete" else 1)`) therefore exited
+            # 0 on a total failure, while dashboard/collector.py counted it in
+            # `runs_complete` and pinned pipeline_success_rate at 1.0.
+            # "error" (not a third value) is deliberate: it is the vocabulary
+            # _fail() and orchestrator.Status already use, so the existing
+            # complete/error buckets stay exhaustive.
+            if result.sandbox is not None and result.sandbox.exit_code == 0:
+                result.status = "complete"
+            else:
+                result.status = "error"
+                if not result.error:
+                    detail = (last_err or "").strip()
+                    result.error = f"sandbox exit {exit_code}" + (
+                        f": {detail[:500]}" if detail else ""
+                    )
             result.finished_at = datetime.now(timezone.utc).isoformat()
             clear_progress()
             self._persist(result)
             self._log(result, learn=True)
             return result
         except Exception as e:
-            return self._fail(result, "exception", str(e), time.perf_counter())
+            return self._fail(result, "exception", str(e), run_started)
 
     def _fail(self, result: PipelineResult, stage: str, msg: str, t0: float) -> PipelineResult:
         result.status = "error"
@@ -701,15 +776,22 @@ class Pipeline:
             record_outcome(False, error=msg)
             proposal = maybe_propose_fabricate()
             if proposal and not is_frozen():
-                self.registry.execute(
+                # The response envelope used to be discarded and success
+                # hardcoded True, so a fabrication that errored out logged a
+                # green auto_fabricate row. Mirrors the success path above.
+                fab_res = self.registry.execute(
                     Envelope(
                         task_id=result.task_id,
                         target_gem="grandidierite",
                         payload=GrandidieriteRequest(tool_request=proposal),
                     )
                 )
+                fab_ok = not bool(fab_res.error)
+                detail = proposal.get("name", "")
+                if not fab_ok and fab_res.error:
+                    detail += f" — {str(fab_res.error.message)[:160]}"
                 result.stages.append(
-                    StageResult(stage="auto_fabricate", success=True, detail=proposal.get("name", ""))
+                    StageResult(stage="auto_fabricate", success=fab_ok, detail=detail)
                 )
         except Exception:
             pass

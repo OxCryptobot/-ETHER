@@ -195,9 +195,12 @@ def run(
     if json_out:
         console.print_json(result.model_dump_json())
         raise typer.Exit(0 if result.status == "complete" else 1)
+    # Show the error, then fall through and print the full report anyway.
+    # Returning early here hid the generated code, sandbox output and stage
+    # list on exactly the runs where they matter most — a failing run is when
+    # you most need to see what was produced and where it broke.
     if result.status == "error":
         console.print(Panel(f"[red]{_safe(result.error or '')}[/]", title="Error"))
-        raise typer.Exit(1)
     if result.plan:
         for s in result.plan.steps:
             console.print(f"  {s.id}. [{s.action}] {_safe(s.description)}")
@@ -216,6 +219,10 @@ def run(
     console.print(
         f"Confidence: {result.confidence:.3f}  strategy={getattr(result, 'strategy', '')} reward={getattr(result, 'reward', 0):.3f}"
     )
+    # The non-JSON path previously had no exit at all, so `ether run` returned 0
+    # even when the generated code never executed. Scripting `ether run … && …`
+    # was unsafe.
+    raise typer.Exit(0 if result.status == "complete" else 1)
 
 
 @app.command()

@@ -30,6 +30,64 @@ def _overlap(a: str, b: str) -> float:
     return len(ta & tb) / max(1, len(ta | tb))
 
 
+# Stderr signatures that mean the environment broke, not the generated code.
+_INFRA_SIGNATURES = (
+    "cannot connect to the docker daemon",
+    "failed to connect to the docker api",
+    "error while fetching server api version",
+    "connection refused",
+    "cannot connect to ollama",
+    "ollama down",
+    "max retries exceeded",
+    "name or service not known",
+    "no such host",
+    "read timed out",
+)
+
+# fail_kind values that name a pipeline STAGE rather than a defect class.
+# `_fail()` passes the stage name, so "code"/"plan"/"exception" were being
+# stored as if they were failure taxonomies.
+_INFRA_FAIL_KINDS = ("dependency", "plan", "exception")
+
+_MAX_VAULT_ROWS = 2000
+
+
+def _is_infra_failure(stderr: str, fail_kind: str) -> bool:
+    if (fail_kind or "").strip().lower() in _INFRA_FAIL_KINDS:
+        return True
+    low = (stderr or "").lower()
+    return any(sig in low for sig in _INFRA_SIGNATURES)
+
+
+def _row_fingerprint(objective: str, code: str) -> str:
+    import hashlib
+
+    payload = f"{(objective or '').strip()}\x00{(code or '').strip()}"
+    return hashlib.sha256(payload.encode("utf-8", "replace")).hexdigest()[:16]
+
+
+def _fingerprint_seen(path: Path, fingerprint: str) -> bool:
+    if not path.exists():
+        return False
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if fingerprint and fingerprint in line:
+                return True
+    except Exception:
+        return False
+    return False
+
+
+def _rotate(path: Path, max_rows: int = _MAX_VAULT_ROWS) -> None:
+    """Keep the vault bounded; it was appended to forever and fully re-read."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if len(lines) > max_rows:
+            path.write_text("\n".join(lines[-max_rows:]) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
 def record(
     *,
     objective: str,
@@ -42,6 +100,10 @@ def record(
     task_id: str = "",
     verification_score: float = 0.0,
     total_tests: int = 0,
+    # Verdict from assertions the generator never saw. Recorded so the
+    # curriculum's promotion gate can require independent evidence rather than
+    # inferring competence from self-graded confidence alone.
+    holdout_ok: Optional[bool] = None,
     skip_curriculum: bool = False,
 ) -> None:
     if not experience_enabled():
@@ -55,14 +117,33 @@ def record(
         "confidence": confidence,
         "verification_score": verification_score,
         "total_tests": total_tests,
+        "holdout_ok": holdout_ok,
         "strategy": strategy,
         "stderr": (stderr or "")[:800],
         "fail_kind": fail_kind,
         "task_id": task_id,
     }
+    # Infrastructure outages are not code failures. Recording "ollama down" or
+    # a dead Docker daemon as a FAIL taught the model to avoid a pattern that
+    # never existed, and seeded the failure graph with permanent infra nodes:
+    # every one of the 26 rows in fail.jsonl was an outage, not a defect.
+    if not success and _is_infra_failure(stderr, fail_kind):
+        return
+
     path = PASS_PATH if success else FAIL_PATH
+
+    # Deduplicate on (objective, code). The vault is replayed into prompts as
+    # few-shot examples, so an objective run repeatedly filled the block with
+    # three copies of one trivial function — 13 of 22 pass rows were the same
+    # `write hello` stub, crowding out anything informative.
+    fingerprint = _row_fingerprint(objective, code)
+    if _fingerprint_seen(path, fingerprint):
+        return
+    row["fingerprint"] = fingerprint
+
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
+    _rotate(path)
 
     if not success and stderr:
         try:

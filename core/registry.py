@@ -60,11 +60,11 @@ def build_default_registry() -> GemRegistry:
     except Exception:
         pass
 
-    try:
-        from core.pipeline_boot import apply
-
-        apply()
-    except Exception:
-        pass
-
+    # A `try: from core.pipeline_boot import apply; apply()` block used to sit
+    # here. core.pipeline_boot never defined `apply`, so this raised ImportError
+    # on every single call and the bare `except Exception: pass` swallowed it —
+    # building the registry silently did nothing extra, and pipeline_boot /
+    # pipeline_patch / intel_runtime stayed dead code with zero live callers.
+    # The behaviour it was reaching for (contextual bandit selection) is now
+    # wired directly where it belongs, in Pipeline.run via core.pipeline_select.
     return reg

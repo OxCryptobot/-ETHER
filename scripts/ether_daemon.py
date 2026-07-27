@@ -206,6 +206,17 @@ def flywheel_loop() -> None:
                 maybe_recover(h)
                 h = write_healthy_flag()
 
+            # declare_healthy() previously gated nothing: the verdict was
+            # logged and the cycle ran regardless, so an unhealthy system kept
+            # generating, learning and (with push enabled) committing. Skip the
+            # cycle instead. _stop.wait() rather than a bare `continue`, since
+            # continuing from inside the try skips the loop's trailing sleep
+            # and would busy-spin.
+            if not h.get("healthy"):
+                log(f"GATE: skipping smart cycle — unhealthy: {h.get('reasons')}")
+                _stop.wait(max(60, INTERVAL))
+                continue
+
             log(f"smart cycle #{_cycle_n} start healthy={h.get('healthy')}")
             smart = ROOT / "scripts" / "run_smart_cycle.py"
             if smart.exists():

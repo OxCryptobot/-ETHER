@@ -8,7 +8,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE_PATH = ROOT / "memory" / "batch_queue.json"
@@ -74,10 +74,40 @@ def save_queue(data: Dict[str, Any]) -> None:
     tmp.replace(QUEUE_PATH)
 
 
+def coerce_int(value: Any, default: int) -> int:
+    """Best-effort int, never raises.
+
+    The queue is JSON on disk and is written by several producers, so a
+    malformed `priority` (null, "high", "10.5") is reachable. The sort key used
+    a bare `int(...)`, which raised TypeError/ValueError out of enqueue(); the
+    only caller that matters (`autonomy.enqueue_failure`) swallows exceptions,
+    so one bad row silently stopped every failure requeue forever.
+    """
+    if isinstance(value, bool) or value is None:
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        pass
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def sort_key(item: Any) -> Tuple[int, int]:
+    """(priority, id) ordering that tolerates malformed rows."""
+    if not isinstance(item, dict):
+        return (100, 0)
+    return (coerce_int(item.get("priority"), 100), coerce_int(item.get("id"), 0))
+
+
 def next_id(data: Dict[str, Any]) -> int:
     ids: List[int] = []
     for bucket in ("pending", "done"):
         for item in data.get(bucket) or []:
+            if not isinstance(item, dict):
+                continue
             try:
                 ids.append(int(item.get("id", 0)))
             except Exception:
@@ -100,7 +130,7 @@ def enqueue(
             "id": next_id(data),
             "kind": kind,
             "title": title,
-            "priority": priority,
+            "priority": coerce_int(priority, 100),
             "enqueued_at": datetime.now(timezone.utc).isoformat(),
         }
         if kind == "pipeline":
@@ -110,10 +140,7 @@ def enqueue(
         else:
             raise ValueError(f"unsupported kind: {kind}")
         data.setdefault("pending", []).append(item)
-        data["pending"] = sorted(
-            data["pending"],
-            key=lambda x: (int(x.get("priority", 100)), int(x.get("id", 0))),
-        )
+        data["pending"] = sorted(data["pending"], key=sort_key)
         save_queue(data)
         return item
 
@@ -216,16 +243,13 @@ def seed_smoke(force: bool = False) -> Dict[str, Any]:
                 "id": next_id(data),
                 "kind": s["kind"],
                 "title": s["title"],
-                "priority": int(s.get("priority", 100)),
+                "priority": coerce_int(s.get("priority"), 100),
                 "objective": s.get("objective", ""),
                 "enqueued_at": datetime.now(timezone.utc).isoformat(),
             }
             data.setdefault("pending", []).append(item)
             seeded += 1
-        data["pending"] = sorted(
-            data["pending"],
-            key=lambda x: (int(x.get("priority", 100)), int(x.get("id", 0))),
-        )
+        data["pending"] = sorted(data["pending"], key=sort_key)
         return data, {"ok": True, "seeded": seeded}
 
     return mutate(_inner)

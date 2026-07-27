@@ -3,22 +3,52 @@
     {
       "name": "easy",
       "tasks": [
-        {"id": "e1", "title": "is_even", "objective": "Write only Python: def is_even(n):\n    return n % 2 == 0\nassert is_even(4) and not is_even(5)\nprint(is_even(4))"},
-        {"id": "e2", "title": "add", "objective": "Write only Python: def add(a,b):\n    return a+b\nassert add(2,3)==5\nprint(add(2,3))"},
-        {"id": "e3", "title": "reverse", "objective": "Write only Python: def reverse_string(s):\n    return s[::-1]\nassert reverse_string('ab')=='ba'\nprint(reverse_string('ab'))"}
+        {
+          "id": "e1",
+          "title": "is_even",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef is_even(n: int) -> bool\n\nReturn True when n is an even integer and False otherwise. Zero counts as even. Negative even numbers are even.",
+          "holdout_test": "assert is_even(4) is True\nassert is_even(5) is False\nassert is_even(0) is True\nassert is_even(-2) is True\nassert is_even(-3) is False\nprint('ok')"
+        },
+        {
+          "id": "e2",
+          "title": "add",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef add(a, b)\n\nReturn the sum of the two numbers.",
+          "holdout_test": "assert add(2, 3) == 5\nassert add(-1, 1) == 0\nassert add(0, 0) == 0\nassert add(2.5, 0.5) == 3.0\nprint('ok')"
+        },
+        {
+          "id": "e3",
+          "title": "reverse",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef reverse_string(s: str) -> str\n\nReturn the characters of s in reverse order. An empty string returns an empty string.",
+          "holdout_test": "assert reverse_string('ab') == 'ba'\nassert reverse_string('') == ''\nassert reverse_string('abc') == 'cba'\nassert reverse_string('a') == 'a'\nprint('ok')"
+        }
       ]
     },
     {
       "name": "medium",
       "tasks": [
-        {"id": "m1", "title": "merge_sorted", "objective": "Write only Python: def merge_sorted(a,b):\n    i=j=0; out=[]\n    while i<len(a) and j<len(b):\n        if a[i]<=b[j]: out.append(a[i]); i+=1\n        else: out.append(b[j]); j+=1\n    out.extend(a[i:]); out.extend(b[j:]); return out\nassert merge_sorted([1,3],[2])==[1,2,3]\nprint(merge_sorted([1,3],[2,4]))"},
-        {"id": "m2", "title": "group_by_len", "objective": "Write only Python: def group_by_len(words):\n    d={}\n    for w in words:\n        d.setdefault(len(w), []).append(w)\n    return d\nassert 1 in group_by_len(['a','bb'])\nprint(group_by_len(['a','bb','c']))"}
+        {
+          "id": "m1",
+          "title": "merge_sorted",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef merge_sorted(a: list, b: list) -> list\n\nBoth inputs are already sorted ascending. Return one sorted list containing every element from both, keeping duplicates. Either input may be empty.",
+          "holdout_test": "assert merge_sorted([1, 3], [2]) == [1, 2, 3]\nassert merge_sorted([], [1]) == [1]\nassert merge_sorted([1, 2], []) == [1, 2]\nassert merge_sorted([], []) == []\nassert merge_sorted([1, 1], [1]) == [1, 1, 1]\nassert merge_sorted([1, 5], [2, 6]) == [1, 2, 5, 6]\nprint('ok')"
+        },
+        {
+          "id": "m2",
+          "title": "group_by_len",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef group_by_len(words: list) -> dict\n\nReturn a dict mapping each word length to the list of words having that length, preserving the order they appear in the input. An empty input returns an empty dict.",
+          "holdout_test": "assert group_by_len(['a', 'bb', 'c']) == {1: ['a', 'c'], 2: ['bb']}\nassert group_by_len([]) == {}\nassert group_by_len(['xy']) == {2: ['xy']}\nassert group_by_len(['a', 'b']) == {1: ['a', 'b']}\nprint('ok')"
+        }
       ]
     },
     {
       "name": "hard",
       "tasks": [
-        {"id": "h1", "title": "levenshtein", "objective": "Write only Python: def levenshtein(a,b):\n    dp=list(range(len(b)+1))\n    for i,ca in enumerate(a,1):\n        prev=dp[:]; dp[0]=i\n        for j,cb in enumerate(b,1):\n            dp[j]=min(prev[j]+1, dp[j-1]+1, prev[j-1]+(ca!=cb))\n    return dp[-1]\nassert levenshtein('kitten','sitting')==3\nprint(levenshtein('kitten','sitting'))"}
+        {
+          "id": "h1",
+          "title": "levenshtein",
+          "objective": "Write only Python, no markdown.\n\nImplement:\n\ndef levenshtein(a: str, b: str) -> int\n\nReturn the Levenshtein edit distance between the two strings: the minimum number of single-character insertions, deletions or substitutions needed to turn a into b.",
+          "holdout_test": "assert levenshtein('kitten', 'sitting') == 3\nassert levenshtein('', 'abc') == 3\nassert levenshtein('abc', '') == 3\nassert levenshtein('abc', 'abc') == 0\nassert levenshtein('flaw', 'lawn') == 2\nprint('ok')"
+        }
       ]
     },
     {
@@ -27,12 +57,14 @@
         {
           "id": "s1",
           "title": "scratch_two_funcs",
-          "objective": "Multi-file style in one module: implement helpers util_add and util_mul, then main that asserts util_add(2,3)==5 and util_mul(3,4)==12 and prints both results. Pure Python only."
+          "objective": "Write only Python, no markdown. Single module, pure Python.\n\nImplement two helpers:\n\ndef util_add(a, b)   -> the sum of a and b\ndef util_mul(a, b)   -> the product of a and b",
+          "holdout_test": "assert util_add(2, 3) == 5\nassert util_mul(3, 4) == 12\nassert util_add(-1, 1) == 0\nassert util_mul(0, 9) == 0\nprint('ok')"
         },
         {
           "id": "s2",
           "title": "scratch_parser",
-          "objective": "Write a small module with parse_pair(s) that parses 'a=1' into ('a', 1) and format_pair(k,v) that reverses it. Assert round-trip for a=1. Multi-function single file."
+          "objective": "Write only Python, no markdown. Single module, multiple functions.\n\nImplement:\n\ndef parse_pair(s: str) -> tuple\n    'a=1' becomes the pair ('a', 1), with the value converted to int.\n\ndef format_pair(k, v) -> str\n    The inverse: ('a', 1) becomes 'a=1'.\n\nThe two functions must round-trip.",
+          "holdout_test": "assert parse_pair('a=1') == ('a', 1)\nassert format_pair('a', 1) == 'a=1'\nassert parse_pair(format_pair('k', 42)) == ('k', 42)\nassert parse_pair('zz=0') == ('zz', 0)\nprint('ok')"
         }
       ]
     }

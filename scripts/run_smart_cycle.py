@@ -40,6 +40,9 @@ def main() -> int:
         max_retries=int(os.getenv("ETHER_FLYWHEEL_MAX_RETRIES", "3")),
         objective=objective,
         run_doctor=True,
+        # Graded on assertions the generator never saw. Carried separately
+        # from the objective so it cannot leak into the prompt.
+        holdout_test=str(meta.get("holdout_test") or ""),
     )
     gates = report.get("gates") or {}
     agentic = report.get("agentic") or {}

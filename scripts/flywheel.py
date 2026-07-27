@@ -144,7 +144,20 @@ def run_pipeline_once(objective: str) -> Dict[str, Any]:
         }
 
 
-def agentic_verify(objective: str, min_confidence: float, max_retries: int) -> Dict[str, Any]:
+def agentic_verify(
+    objective: str,
+    min_confidence: float,
+    max_retries: int,
+    holdout_test: str = "",
+) -> Dict[str, Any]:
+    """Verify a generated artifact.
+
+    When `holdout_test` is supplied, the artifact must additionally pass
+    assertions the generator never saw. Self-authored assertions only show the
+    code does what the model intended; a wrong implementation shipping its own
+    passing asserts still scores confidence 1.000. The holdout is the only
+    grade a generator cannot write for itself.
+    """
     attempts: List[Dict[str, Any]] = []
     best: Optional[Dict[str, Any]] = None
     for i in range(1, max_retries + 1):
@@ -157,6 +170,29 @@ def agentic_verify(objective: str, min_confidence: float, max_retries: int) -> D
             and r.get("audit_approved") is True
             and float(r.get("confidence") or 0.0) >= min_confidence
         )
+
+        # Held-out grading, when the task supplies it. Fails closed: if the
+        # holdout cannot be graded, the artifact does not pass.
+        if holdout_test.strip():
+            try:
+                from core.holdout import grade_against_holdout
+
+                verdict = grade_against_holdout(r.get("generated_code") or "", holdout_test)
+            except Exception as e:  # noqa: BLE001 - never let this pass silently
+                verdict = {"ok": False, "reason": f"holdout error: {e}"}
+            r["holdout_ok"] = verdict.get("ok")
+            r["holdout_reason"] = verdict.get("reason") or ""
+            r["holdout_asserts"] = verdict.get("asserts")
+            gate = gate and bool(verdict.get("ok"))
+            print(
+                f"    holdout: {'PASS' if verdict.get('ok') else 'FAIL'} "
+                f"({verdict.get('asserts') or 0} unseen asserts) {verdict.get('reason') or ''}",
+                flush=True,
+            )
+        else:
+            r["holdout_ok"] = None
+            r["holdout_reason"] = "no holdout for this task"
+
         r["gate_pass"] = gate
         attempts.append(r)
         if best is None or r["confidence"] > best["confidence"]:
@@ -251,6 +287,7 @@ def cycle(
     max_retries: int,
     objective: str,
     run_doctor: bool,
+    holdout_test: str = "",
 ) -> Dict[str, Any]:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).isoformat()
@@ -307,7 +344,12 @@ def cycle(
         }
         print("  [agentic] skipped — static gates failed", flush=True)
     else:
-        agentic = agentic_verify(objective, min_confidence=min_confidence, max_retries=max_retries)
+        agentic = agentic_verify(
+            objective,
+            min_confidence=min_confidence,
+            max_retries=max_retries,
+            holdout_test=holdout_test,
+        )
 
     gates_pass = static_ok and agentic["ok"]
     final = agentic.get("final") or {}
@@ -473,11 +515,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     def once() -> int:
         # Prefer curriculum when autonomous / env says so
         objective = args.objective
+        holdout_test = ""
         if continuous or os.getenv("ETHER_CURRICULUM", "1") == "1":
             try:
                 from scripts.flywheel_intelligence import resolve_objective
 
                 objective, _meta = resolve_objective(args.objective)
+                holdout_test = str(_meta.get("holdout_test") or "")
             except Exception:
                 pass
         report = cycle(
@@ -486,6 +530,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             max_retries=max(1, args.max_retries),
             objective=objective,
             run_doctor=not args.no_doctor,
+            holdout_test=holdout_test,
         )
         print(
             json.dumps(

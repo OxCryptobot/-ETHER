@@ -21,6 +21,9 @@ def resolve_objective(cli_objective: Optional[str] = None) -> Tuple[str, Dict[st
                 "curriculum_tier_name": item.get("tier_name"),
                 "curriculum_title": item.get("title"),
                 "curriculum_source": item.get("source"),
+                # Carried alongside the objective, never appended to it — the
+                # generator must not see what it will be graded on.
+                "holdout_test": item.get("holdout_test") or "",
             }
             obj = ensure_assert_objective(str(item.get("objective") or "print(1)"))
             return obj, meta

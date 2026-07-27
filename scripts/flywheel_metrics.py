@@ -38,4 +38,7 @@ def pipeline_metrics(result: Any) -> Dict[str, Any]:
         "error": getattr(result, "error", None),
         "task_id": str(getattr(result, "task_id", "") or ""),
         "fail_kind": "runtime" if not sandbox_ok else "",
+        # Needed so the gate can re-run the artifact against held-out
+        # assertions the generator never saw (core/holdout.py).
+        "generated_code": getattr(result, "generated_code", "") or "",
     }

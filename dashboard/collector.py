@@ -160,8 +160,26 @@ def _verification_block() -> Dict[str, Any]:
         "verified_fraction": None,
         "holdout_dataset": False,
         "holdout_tasks": 0,
-        "holdout_wired_to_gate": False,  # honest: nothing grades on held-out tests yet
+        "holdout_wired_to_gate": False,
+        "curriculum_tasks": 0,
+        "curriculum_with_holdout": 0,
     }
+
+    # The flywheel gate grades against a task's holdout when one exists, so
+    # coverage of the curriculum is what determines whether the gate is real.
+    try:
+        tiers = _read_json(ROOT / "memory" / "curriculum" / "tiers.json") or {}
+        for tier in tiers.get("tiers") or []:
+            for task in tier.get("tasks") or []:
+                out["curriculum_tasks"] += 1
+                if (task.get("holdout_test") or "").strip():
+                    out["curriculum_with_holdout"] += 1
+        out["holdout_wired_to_gate"] = (
+            out["curriculum_tasks"] > 0
+            and out["curriculum_with_holdout"] == out["curriculum_tasks"]
+        )
+    except Exception:
+        pass
     runs_dir = ROOT / "memory" / "runs"
     try:
         files = sorted(runs_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:50]

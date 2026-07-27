@@ -84,9 +84,12 @@ def test_verification_block_has_required_keys():
     assert v["runs_sampled"] == v["runs_with_real_tests"] + v["runs_untested"]
 
 
-def test_verification_does_not_overclaim_holdout_wiring():
-    """Nothing grades on held-out tests yet; the panel must not imply it does."""
-    assert _verification_block()["holdout_wired_to_gate"] is False
+def test_holdout_wiring_reflects_curriculum_coverage():
+    """The flag must track real coverage, not be hardcoded either way."""
+    v = _verification_block()
+    assert v["curriculum_tasks"] > 0
+    expected = v["curriculum_with_holdout"] == v["curriculum_tasks"]
+    assert v["holdout_wired_to_gate"] is expected
 
 
 def test_memory_block_reports_unreachable_without_raising(monkeypatch):

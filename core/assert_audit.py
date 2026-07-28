@@ -284,13 +284,49 @@ def _count(node: ast.AST, swallowed: bool) -> int:
     return total
 
 
+def _called_names(tree: ast.AST) -> set:
+    """Function names invoked anywhere in the module."""
+    called = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Name):
+                called.add(func.id)
+            elif isinstance(func, ast.Attribute):
+                called.add(func.attr)
+    return called
+
+
 def count_real_asserts(code: str) -> int:
-    """Count assertions in `code` that could actually fail and be observed."""
+    """Count assertions in `code` that could actually fail and be observed.
+
+    Assertions inside a function nobody calls never execute, so they are not
+    evidence. That was the last hole in this counter: a wrong implementation
+    carrying `def test_add(): assert add(1,1) == 2` scored total_tests=3 and
+    confidence 1.000 while `add` returned `a - b`, because pytest-style test
+    functions are defined and never invoked when the file is run as a script.
+    """
     try:
         tree = ast.parse(code)
     except SyntaxError:
         return 0
-    return _count(tree, False)
+
+    called = _called_names(tree)
+    total = 0
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            # Count a function's assertions only if something calls it.
+            if node.name in called:
+                total += _count(node, False)
+            continue
+        if isinstance(node, ast.ClassDef):
+            # Methods need an instance; treat as reachable only if the class is
+            # instantiated somewhere.
+            if node.name in called:
+                total += _count(node, False)
+            continue
+        total += _count(node, False)
+    return total
 
 
 def uses_test_runner(code: str) -> bool:

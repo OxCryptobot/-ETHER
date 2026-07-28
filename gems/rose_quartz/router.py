@@ -18,6 +18,58 @@ from core.schemas import (
 )
 
 
+def _envf(name: str, default: float) -> float:
+    try:
+        return float(os.getenv(name, "").strip() or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _envi(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, "").strip() or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def decode_options(max_tokens: int) -> dict:
+    """Sampling parameters for the local model.
+
+    This used to send only `num_predict`, so Ollama applied the Modelfile
+    defaults. For qwen3.6:35b-a3b those are temperature=1.0, top_p=0.95,
+    top_k=20 and — the damaging one — **presence_penalty=1.5**.
+
+    A presence penalty penalises re-emitting tokens already in context. Correct
+    code MUST repeat identifiers, keywords and punctuation, so that setting
+    pushes the model away from valid syntax in proportion to how much it has
+    already written. It is close to a worst-case sampling configuration for
+    code generation, and it was in force for every run this project has ever
+    made.
+
+    A seed is set so runs are reproducible: without one, a regression cannot be
+    distinguished from sampling noise, which makes the guardian ratchet and any
+    ablation meaningless.
+
+    Every value is overridable, because best-of-N sampling wants a HIGHER
+    temperature (diversity to select from) while single-shot wants a low one.
+    """
+    return {
+        "num_predict": max_tokens,
+        "temperature": _envf("ETHER_TEMPERATURE", 0.2),
+        "top_p": _envf("ETHER_TOP_P", 0.9),
+        "top_k": _envi("ETHER_TOP_K", 40),
+        # Explicitly neutralise the two penalties. Repetition is correct in code.
+        "presence_penalty": _envf("ETHER_PRESENCE_PENALTY", 0.0),
+        "frequency_penalty": _envf("ETHER_FREQUENCY_PENALTY", 0.0),
+        "repeat_penalty": _envf("ETHER_REPEAT_PENALTY", 1.0),
+        # The composite prompt has been measured at ~6.9k chars; the Ollama
+        # default context is far smaller, so prompts were being silently
+        # truncated — from the front, which is where the objective lives.
+        "num_ctx": _envi("ETHER_NUM_CTX", 32768),
+        "seed": _envi("ETHER_SEED", 1),
+    }
+
+
 class RoseQuartz:
     def __init__(
         self,
@@ -132,7 +184,7 @@ class RoseQuartz:
             "model": model,
             "messages": messages,
             "stream": self.stream,
-            "options": {"num_predict": payload.max_tokens},
+            "options": decode_options(payload.max_tokens),
         }
         if self.stream:
             return self._call_stream(task_id, body, model)

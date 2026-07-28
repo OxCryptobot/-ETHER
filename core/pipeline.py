@@ -200,6 +200,8 @@ class Pipeline:
         tool_block = ""
         last_err = ""
         fail_kind = ""
+        # Every prompt actually sent to the model this run, for the leak guard.
+        sent_prompts: List[str] = []
 
         try:
             t0 = time.perf_counter()
@@ -442,6 +444,10 @@ class Pipeline:
                                 + "\nInclude asserts that prove correctness.\n"
                             )
 
+                    # Kept so the prompt guard can inspect exactly what the
+                    # model was shown, rather than trusting that every leak
+                    # channel was closed at its source.
+                    sent_prompts.append(prompt)
                     code_req = Envelope(
                         task_id=task_id,
                         target_gem="rose-quartz",
@@ -661,6 +667,37 @@ class Pipeline:
             # reward is computed, so the learning signal is not purely
             # self-graded. Fails closed: a grading error is not a pass.
             holdout_ok: Optional[bool] = None
+            if holdout_test.strip():
+                # If the holdout reached the prompt, the verdict is worthless —
+                # the model was shown the answer. Report it and refuse to grade
+                # rather than banking an unearned pass. BM25 retrieval leaked
+                # assertions into 12 of 15 bench prompts this way, which is how
+                # a pass_rate of 0.933 came to be reported as honest.
+                try:
+                    from core.prompt_guard import check as _guard_check
+
+                    guard = _guard_check("\n\n".join(sent_prompts), holdout_test)
+                except Exception as e:  # never let the guard break a run
+                    guard = {"clean": True, "leak_count": 0, "detail": f"guard error: {e}"}
+
+                if not guard.get("clean"):
+                    result.stages.append(
+                        StageResult(
+                            stage="prompt_guard",
+                            success=False,
+                            detail=f"LEAK: {guard.get('detail', '')}"[:300],
+                        )
+                    )
+                    result.holdout_ok = None
+                    result.stages.append(
+                        StageResult(
+                            stage="holdout",
+                            success=False,
+                            detail="not graded — holdout leaked into the prompt",
+                        )
+                    )
+                    holdout_test = ""  # skip grading; the result would be meaningless
+
             if holdout_test.strip():
                 try:
                     from core.holdout import grade_against_holdout

@@ -10,7 +10,29 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP = {".venv", "node_modules", ".git", "__pycache__", "memory", ".mypy_cache", ".ruff_cache"}
+# `scripts` and `tests` hold the grading assertions. Indexing them meant the
+# BM25 "workspace context" retrieved scripts/bench.py — which carries each
+# task's holdout_test inline — and pasted the answers into the model's own
+# prompt. Measured: 12 of 15 bench tasks leaked at least one verbatim holdout
+# assertion, five leaked all five, and the context was saturated at 3500/3500
+# chars on every task. That is how a reported pass_rate of 0.933 was produced.
+#
+# This is the same leak that was closed in the curriculum and the bench prompts;
+# retrieval was a third door into the same room. `core/prompt_guard.py` is the
+# defence-in-depth that catches the fourth.
+SKIP = {
+    ".venv",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    "memory",
+    ".mypy_cache",
+    ".ruff_cache",
+    "scripts",
+    "tests",
+    "patches",
+    "docs",
+}
 
 
 def rag_enabled() -> bool:

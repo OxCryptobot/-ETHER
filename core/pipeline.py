@@ -797,6 +797,10 @@ class Pipeline:
                             "code": generated,
                             "confidence": result.confidence,
                             "tags": [strategy],
+                            # So the writer can refuse an artifact that carries
+                            # the holdout. Without this the store re-injects
+                            # leaked-era code into every later prompt.
+                            "holdout_test": holdout_test,
                         },
                     )
                     cit = index_pass_pattern(

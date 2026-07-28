@@ -19,6 +19,39 @@ def main() -> None:
     code = inp.get("code") or ""
     if not code:
         emit(False, error="code required")
+
+    # Refuse to store an artifact carrying a holdout assertion.
+    #
+    # few_shot_pack replays this store into later prompts, so a leaked-era
+    # artifact becomes a permanent contamination source: the model was shown
+    # the holdout, wrote those assertions into its code, the run "passed", the
+    # code was saved as a worked example, and it has been re-injected into
+    # every prompt since. Measured: 17 of 120 ether samples in a clean ablation
+    # were still excluded for leakage traceable to this file, and only the
+    # ether arm was affected because only it uses few-shot retrieval.
+    #
+    # Checking on the WRITE path is what stops the loop closing. Fixing the
+    # readers only removes today's copy.
+    holdout = inp.get("holdout_test") or ""
+    if holdout:
+        try:
+            import sys
+
+            sys.path.insert(0, str(repo_root()))
+            from core.prompt_guard import find_leaks
+
+            leaks = find_leaks(f"{objective}\n{code}", holdout)
+            if leaks:
+                emit(
+                    False,
+                    error=f"refused: artifact carries {len(leaks)} holdout assertion(s)",
+                    leaked=True,
+                )
+                return
+        except Exception:
+            # A guard that cannot run must not silently permit the write.
+            emit(False, error="refused: leak guard unavailable", leaked=True)
+            return
     path = pathlib.Path(
         os.environ.get("ETHER_SUCCESS_PATTERNS_PATH")
         # Overridable so the test suite does not write mock runs into the

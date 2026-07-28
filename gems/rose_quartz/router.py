@@ -70,6 +70,25 @@ def decode_options(max_tokens: int) -> dict:
     }
 
 
+def thinking_enabled() -> bool:
+    """Whether to let a reasoning model emit thinking tokens.
+
+    qwen3.6 advertises a `thinking` capability, and reasoning tokens count
+    against `num_predict`. With the previous 4096-token budget the model spent
+    its entire allowance reasoning and returned EMPTY CONTENT on hard tasks.
+    Measured over a 360-sample ablation: 214 samples (59%) failed — 147 timed
+    out and 64 returned nothing — and because errors count as fails, the
+    experiment measured infrastructure failure rather than code quality.
+
+    Disabled by default for code generation: the same prompt that produced an
+    empty completion after thousands of reasoning tokens returns correct code
+    in ~18 tokens with `think=false`. Whether reasoning improves code quality
+    when given an adequate budget is a real question — but it is an experiment
+    to run deliberately, not a default to stumble into.
+    """
+    return os.getenv("ETHER_THINKING", "0") == "1"
+
+
 class RoseQuartz:
     def __init__(
         self,
@@ -81,7 +100,7 @@ class RoseQuartz:
         self.primary_model = primary_model or os.getenv("ETHER_PRIMARY_MODEL", "qwen2.5-coder:3b")
         self.fallback_model = os.getenv("ETHER_FALLBACK_MODEL", fallback_model)
         self.stream = os.getenv("ETHER_ROSE_STREAM", "0") == "1"
-        self.client = httpx.Client(timeout=180.0)
+        self.client = httpx.Client(timeout=_envf("ETHER_HTTP_TIMEOUT", 600.0))
 
     def execute(self, request: Envelope) -> ResponseEnvelope:
         if not isinstance(request.payload, RoseQuartzRequest):
@@ -185,6 +204,9 @@ class RoseQuartz:
             "messages": messages,
             "stream": self.stream,
             "options": decode_options(payload.max_tokens),
+            # Reasoning tokens count against num_predict; leaving this on with a
+            # small budget produced empty completions on 64 of 360 samples.
+            "think": thinking_enabled(),
         }
         if self.stream:
             return self._call_stream(task_id, body, model)

@@ -935,9 +935,45 @@ class Ablation:
                 f"-> {verdict} ({elapsed:.1f}s)"
                 + (f" — {row['reason'][:70]}" if row["reason"] and not row["passed"] else "")
             )
+            self._abort_if_broken(len(done) + i, total)
         if todo:
             self.log(f"generation done in {_hms(time.perf_counter() - started)}")
         return self.summarize()
+
+    # A run is only worth its wall clock if the samples are real. An earlier
+    # 360-sample run completed after four hours with 214 samples (59%) errored
+    # — 147 timeouts and 64 empty completions from a reasoning model whose
+    # thinking tokens exhausted num_predict. Errors count as fails, so the
+    # experiment measured infrastructure failure, and it measured it unevenly:
+    # bare 83, bare+sys 72, ether 59. The apparent ETHER advantage tracked its
+    # lower error count almost exactly.
+    ABORT_MIN_SAMPLES = 15
+    ABORT_ERROR_RATE = 0.25
+
+    def _abort_if_broken(self, done_count: int, total: int) -> None:
+        """Stop early rather than spend hours producing an uninterpretable result."""
+        if done_count < self.ABORT_MIN_SAMPLES:
+            return
+        errored = [r for r in self.rows if r.get("error")]
+        rate = len(errored) / max(1, len(self.rows))
+        if rate < self.ABORT_ERROR_RATE:
+            return
+        top: Dict[str, int] = {}
+        for r in errored:
+            key = str(r.get("error") or "")[:60]
+            top[key] = top.get(key, 0) + 1
+        worst = sorted(top.items(), key=lambda kv: -kv[1])[:3]
+        detail = "; ".join(f"{n}x {msg}" for msg, n in worst)
+        raise SystemExit(
+            f"\nABORTING after {len(self.rows)} samples: {len(errored)} errored "
+            f"({rate:.0%}, threshold {self.ABORT_ERROR_RATE:.0%}).\n"
+            f"Most common: {detail}\n"
+            f"Errors count as failures, so continuing would produce a number that "
+            f"measures infrastructure, not code quality.\n"
+            f"Fix the cause, then rerun with --resume (completed samples are kept).\n"
+            f"If the model is a reasoner returning empty content, thinking tokens are "
+            f"consuming num_predict: set ETHER_THINKING=0 or raise --max-tokens.\n"
+        )
 
     def run_sample(self, task: Dict[str, Any], arm: Arm, seed: int) -> Dict[str, Any]:
         """One (task, arm, seed). Always returns a row; never raises."""

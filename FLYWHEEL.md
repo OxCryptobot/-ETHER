@@ -1,10 +1,10 @@
 # @ETHER Flywheel (rinse & repeat)
 
-> Last cycle: **2026-07-28T22:05:13.248902+00:00**  
+> Last cycle: **2026-07-28T22:08:26.813605+00:00**  
 > Result: **FAIL — audit report filed**  
 > Confidence: **0.000** (min 0.7) · Audit: **False**  
 > Ver: **0.0** · tests: **0**  
-> Pull: **OK** HEAD is now at b8c1ccc fix: refuse to store an artifact carrying its holdout  
+> Pull: **OK**  * branch            main       -> FETCH_HEAD  
 > Report pushed: **False** · Model: `qwen2.5-coder:3b`  
 > Reason: `static_gates_failed`
 

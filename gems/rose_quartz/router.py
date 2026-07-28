@@ -141,6 +141,24 @@ class RoseQuartz:
         data = response.json()
         content = data.get("message", {}).get("content", "")
         tokens = data.get("eval_count", 0) + data.get("prompt_eval_count", 0)
+        # An HTTP 200 carrying empty content is a failed generation, not a
+        # successful one. It used to return a success envelope, the harness
+        # then appended `print('ok')` to the empty string, the sandbox exited
+        # 0, and the run was recorded `status=complete` with a positive reward
+        # — the model produced nothing and the bandit learned from it.
+        # Observed live: bench task b15 scored conf=0.650 this way, caught
+        # only because held-out grading reported "no generated code".
+        if not content.strip():
+            return ResponseEnvelope(
+                task_id=task_id,
+                source_gem="rose-quartz",
+                error=GemError(
+                    type=GemErrorType.RUNTIME,
+                    message=f"Model {model} returned empty content",
+                    recoverable=True,
+                    suggested_action="Retry, or check the model is loaded and the prompt is not over its context limit",
+                ),
+            )
         return ResponseEnvelope(
             task_id=task_id,
             source_gem="rose-quartz",

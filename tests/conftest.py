@@ -21,6 +21,11 @@ _STATE_TARGETS = [
     ("core.experience", "PASS_PATH", "file"),
     ("core.experience", "FAIL_PATH", "file"),
     ("core.fail_streak", "STATE_PATH", "file"),
+    # sample_objective() -> sync_from_vault() writes here, so a test run was
+    # promoting the REAL curriculum tier (observed 0 -> 3) off mock outcomes.
+    ("core.curriculum", "STATE_PATH", "file"),
+    ("core.curriculum", "PASS_PATH", "file"),
+    ("core.curriculum", "FAIL_PATH", "file"),
     # Any test reaching core.repair.repair_prompt writes here, so the live
     # failure graph was accumulating nodes from mock stderr.
     ("core.failure_graph", "GRAPH_PATH", "file"),
@@ -32,6 +37,26 @@ _STATE_TARGETS = [
     # dashboard's success rate and verified-fraction metrics.
     ("core.pipeline", "RUNS_DIR", "dir"),
 ]
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_rng():
+    """Seed the RNG so probabilistic tests cannot fail intermittently.
+
+    The bandit samples when it selects, so tests asserting "this context picks
+    that arm" were failing roughly 1 run in 4. That is worse than a plain bug:
+    the flywheel runs `pytest` as a static gate every cycle, so a flaky test
+    randomly takes a machine out of the loop with a failure that does not
+    reproduce — exactly the kind of noise that trains people to ignore red.
+    """
+    import random
+
+    state = random.getstate()
+    random.seed(20260727)
+    try:
+        yield
+    finally:
+        random.setstate(state)
 
 
 @pytest.fixture(autouse=True)

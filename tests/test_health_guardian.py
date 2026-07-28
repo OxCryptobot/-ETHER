@@ -87,9 +87,14 @@ def guard(tmp_path, monkeypatch):
             return payload
 
         @staticmethod
-        def baseline() -> dict:
+        def baseline(mode: str = "full") -> dict:
+            # Baselines are keyed per bench mode now, because `--fast` runs only
+            # the five easiest tasks and must not pin the full bench's bar.
             path = bench_dir / "baseline.json"
-            return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            if not path.exists():
+                return {}
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            return (doc.get("modes") or {}).get(mode, {})
 
     return _Dirs
 
@@ -546,3 +551,82 @@ def test_p50_is_the_median_not_the_upper_middle_sample(tmp_path, monkeypatch):
     out = ledger.compute_ledger()
     assert out["avg_run_ms"] == pytest.approx(250.0)
     assert out["p50_run_ms"] == pytest.approx(250.0)
+
+
+# --------------------------------------------------------------------------
+# Per-mode baselines
+# --------------------------------------------------------------------------
+
+
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _guard(monkeypatch, tmp_path):
+    """Point the guardian at a temp bench dir."""
+    import core.bench_guardian as g
+
+    monkeypatch.setattr(g, "BASELINE_PATH", tmp_path / "baseline.json")
+    monkeypatch.setattr(g, "BENCH_LATEST", tmp_path / "latest.json")
+    monkeypatch.setattr(g, "GUARD_PATH", tmp_path / "guardian.json")
+    return g
+
+
+def test_fast_bench_cannot_repin_the_full_baseline(monkeypatch, tmp_path):
+    """`--fast` is only the five easiest tasks.
+
+    It used to write the shared baseline, pinning an optimistic rate the full
+    bench structurally cannot meet — observed as baseline 1.0 (n=5) versus a
+    full result of 0.933 (n=15), leaving 0.033 before a spurious freeze.
+    """
+    g = _guard(monkeypatch, tmp_path)
+    g.ensure_baseline({"pass_rate": 0.933, "n": 15, "mode": "full"})
+    g.ensure_baseline({"pass_rate": 1.0, "n": 5, "mode": "fast"})
+
+    assert g.load_baseline("full")["pass_rate"] == 0.933
+    assert g.load_baseline("fast")["pass_rate"] == 1.0
+
+
+def test_full_bench_is_compared_against_its_own_baseline(monkeypatch, tmp_path):
+    """A full result at its own baseline must not read as a regression."""
+    import json
+
+    g = _guard(monkeypatch, tmp_path)
+    g.ensure_baseline({"pass_rate": 1.0, "n": 5, "mode": "fast"})
+    g.ensure_baseline({"pass_rate": 0.933, "n": 15, "mode": "full"})
+
+    g.BENCH_LATEST.write_text(
+        json.dumps(
+            {"pass_rate": 0.933, "n": 15, "mode": "full", "timestamp": _now_iso()}
+        ),
+        encoding="utf-8",
+    )
+    verdict = g.evaluate()
+    assert verdict["baseline"] == 0.933, verdict
+    assert verdict["frozen"] is False, verdict
+
+
+def test_a_genuine_two_task_regression_still_freezes(monkeypatch, tmp_path):
+    """The brake must still work: 15 tasks, 2 failures beyond baseline."""
+    import json
+
+    g = _guard(monkeypatch, tmp_path)
+    g.ensure_baseline({"pass_rate": 0.933, "n": 15, "mode": "full"})
+    g.BENCH_LATEST.write_text(
+        json.dumps(
+            {"pass_rate": 0.800, "n": 15, "mode": "full", "timestamp": _now_iso()}
+        ),
+        encoding="utf-8",
+    )
+    verdict = g.evaluate()
+    assert verdict["frozen"] is True, verdict
+
+
+def test_legacy_flat_baseline_is_migrated(monkeypatch, tmp_path):
+    import json
+
+    g = _guard(monkeypatch, tmp_path)
+    g.BASELINE_PATH.write_text(json.dumps({"pass_rate": 0.5, "n": 9}), encoding="utf-8")
+    assert g.load_baseline("full")["pass_rate"] == 0.5

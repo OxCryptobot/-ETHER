@@ -78,19 +78,55 @@ def load_latest() -> Optional[Dict[str, Any]]:
     return data if isinstance(data, dict) else None
 
 
-def load_baseline() -> Optional[Dict[str, Any]]:
+DEFAULT_MODE = "full"
+
+
+def mode_of(payload: Optional[Dict[str, Any]]) -> str:
+    """Which task set a bench result came from.
+
+    Baselines are per-mode because `--fast` runs only the five easiest tasks.
+    Comparing a 15-task result against a 5-task baseline is not a regression
+    signal, and it is what the guardian was doing: baseline pass_rate 1.0 (n=5)
+    versus latest 0.933 (n=15). Worse, each `--fast` run re-pinned an
+    optimistic baseline that the full bench structurally cannot meet, so
+    alternating the two modes manufactured regressions that never happened.
+    """
+    return str((payload or {}).get("mode") or DEFAULT_MODE).strip().lower()
+
+
+def _read_baseline_file() -> Dict[str, Any]:
     if not BASELINE_PATH.exists():
-        return None
+        return {}
     try:
         data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
     except Exception:
-        return None
-    return data if isinstance(data, dict) else None
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    if "modes" in data and isinstance(data["modes"], dict):
+        return data
+    # Migrate a legacy flat baseline. Attribute it to the mode it recorded, or
+    # to `full` — never to `fast`, so a legacy optimistic value cannot gate the
+    # full bench.
+    if "pass_rate" in data:
+        return {"modes": {mode_of(data): data}}
+    return {}
 
 
-def _write_baseline(base: Dict[str, Any]) -> Dict[str, Any]:
+def load_baseline(mode: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    modes = _read_baseline_file().get("modes") or {}
+    entry = modes.get((mode or DEFAULT_MODE).strip().lower())
+    return entry if isinstance(entry, dict) else None
+
+
+def _write_baseline(base: Dict[str, Any], mode: Optional[str] = None) -> Dict[str, Any]:
+    key = (mode or base.get("mode") or DEFAULT_MODE).strip().lower()
+    base = {**base, "mode": key}
+    doc = _read_baseline_file()
+    modes = dict(doc.get("modes") or {})
+    modes[key] = base
     BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    BASELINE_PATH.write_text(json.dumps(base, indent=2), encoding="utf-8")
+    BASELINE_PATH.write_text(json.dumps({"modes": modes}, indent=2), encoding="utf-8")
     return base
 
 
@@ -116,7 +152,8 @@ def ensure_baseline(latest: Dict[str, Any]) -> Dict[str, Any]:
     and still read as "healthy" against a 0.42 baseline.
     """
     latest_rate = _rate_of(latest)
-    base = load_baseline()
+    mode = mode_of(latest)
+    base = load_baseline(mode)
     now = datetime.now(timezone.utc).isoformat()
 
     if base is None:
@@ -126,7 +163,8 @@ def ensure_baseline(latest: Dict[str, Any]) -> Dict[str, Any]:
                 "n": (latest or {}).get("n"),
                 "set_at": now,
                 "source": "first_bench",
-            }
+            },
+            mode,
         )
 
     current = _rate_of(base) or 0.0
@@ -140,7 +178,8 @@ def ensure_baseline(latest: Dict[str, Any]) -> Dict[str, Any]:
                 "raised_at": now,
                 "set_at": base.get("set_at") or now,
                 "source": "ratchet_up",
-            }
+            },
+            mode,
         )
     # Never lower it here: see set_baseline() for the operator path.
     base.setdefault("pass_rate", current)
@@ -153,6 +192,7 @@ def set_baseline(
     n: Any = None,
     reason: str = "manual",
     allow_lower: bool = False,
+    mode: str = DEFAULT_MODE,
 ) -> Dict[str, Any]:
     """Explicit operator action. Lowering requires allow_lower=True.
 
@@ -166,7 +206,8 @@ def set_baseline(
     if rate < 0.0 or rate > 1.0:
         return {"ok": False, "reason": f"pass_rate {rate} out of range"}
 
-    base = load_baseline() or {}
+    mode = (mode or DEFAULT_MODE).strip().lower()
+    base = load_baseline(mode) or {}
     current = _rate_of(base) or 0.0
     if rate < current and not allow_lower:
         return {
@@ -182,7 +223,8 @@ def set_baseline(
             "set_at": datetime.now(timezone.utc).isoformat(),
             "source": f"operator:{reason}"[:120],
             "lowered": rate < current,
-        }
+        },
+        mode,
     )
     return {"ok": True, "baseline": new}
 

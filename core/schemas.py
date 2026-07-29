@@ -68,6 +68,13 @@ class RoseQuartzRequest(BaseModel):
     messages: List[ChatMessage]
     prefer_local: bool = True
     max_tokens: int = 4096
+    # Per-request sampling overrides. These were environment-only, which made
+    # best-of-N impossible: the agent loop needs a LOW temperature on the first
+    # attempt and higher ones after, and mutating os.environ per call is
+    # process-global and races with the batch queue. None = fall back to the
+    # ETHER_TEMPERATURE / ETHER_SEED defaults.
+    temperature: Optional[float] = None
+    seed: Optional[int] = None
 
 
 class RoseQuartzResponse(BaseModel):

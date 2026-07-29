@@ -32,7 +32,11 @@ def _envi(name: str, default: int) -> int:
         return default
 
 
-def decode_options(max_tokens: int) -> dict:
+def decode_options(
+    max_tokens: int,
+    temperature: float | None = None,
+    seed: int | None = None,
+) -> dict:
     """Sampling parameters for the local model.
 
     This used to send only `num_predict`, so Ollama applied the Modelfile
@@ -55,7 +59,8 @@ def decode_options(max_tokens: int) -> dict:
     """
     return {
         "num_predict": max_tokens,
-        "temperature": _envf("ETHER_TEMPERATURE", 0.2),
+        # Per-request override wins; the env value is the default.
+        "temperature": _envf("ETHER_TEMPERATURE", 0.2) if temperature is None else float(temperature),
         "top_p": _envf("ETHER_TOP_P", 0.9),
         "top_k": _envi("ETHER_TOP_K", 40),
         # Explicitly neutralise the two penalties. Repetition is correct in code.
@@ -66,7 +71,7 @@ def decode_options(max_tokens: int) -> dict:
         # default context is far smaller, so prompts were being silently
         # truncated — from the front, which is where the objective lives.
         "num_ctx": _envi("ETHER_NUM_CTX", 32768),
-        "seed": _envi("ETHER_SEED", 1),
+        "seed": _envi("ETHER_SEED", 1) if seed is None else int(seed),
     }
 
 
@@ -203,7 +208,11 @@ class RoseQuartz:
             "model": model,
             "messages": messages,
             "stream": self.stream,
-            "options": decode_options(payload.max_tokens),
+            "options": decode_options(
+                payload.max_tokens,
+                getattr(payload, "temperature", None),
+                getattr(payload, "seed", None),
+            ),
             # Reasoning tokens count against num_predict; leaving this on with a
             # small budget produced empty completions on 64 of 360 samples.
             "think": thinking_enabled(),

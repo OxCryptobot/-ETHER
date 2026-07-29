@@ -295,6 +295,21 @@ ARMS: Dict[str, Arm] = {
         env={"ETHER_SANDBOX_RETRY": "0"},
         cost_factor=1.6,
     ),
+    # The agent loop (core/agent_loop.py). Measured against the SAME clean
+    # baseline the current pipeline failed to beat: bare 0.317, bare+sys 0.333,
+    # ether 0.292 on qwen2.5:3b, 360 samples, zero leaks. Any claim for the loop
+    # has to clear 0.333, not clear the old contaminated 0.875.
+    "ether-loop": Arm(
+        name="ether-loop",
+        kind="ether",
+        description="agent loop: generate -> verify -> repair -> select best",
+        env={"ETHER_AGENT_LOOP": "1"},
+        # N candidates instead of one generation, so it costs roughly N times a
+        # bare call. Judge any gain against that: a 4x cost for a 2pp lift is a
+        # bad trade, and the harness should make that visible rather than
+        # reporting pass rate alone.
+        cost_factor=4.0,
+    ),
 }
 
 DEFAULT_ARMS = ["bare", "bare+sys", "ether"]

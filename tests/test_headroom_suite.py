@@ -44,16 +44,31 @@ from scripts import build_headroom as bh
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "memory" / "quizzes" / "headroom_v1.json"
 
+# memory/ is gitignored, so this dataset is a LOCAL artifact absent on a fresh
+# clone. Every test here must skip, not fail: pytest is a static gate in the
+# flywheel, so one unguarded test drops an entire machine out of the loop.
+# That is precisely how the Windows box was lost twice — an unguarded symlink
+# test, then this. Module-level so a new test cannot forget the guard.
+pytestmark = pytest.mark.skipif(
+    not DATASET.exists(),
+    reason="memory/quizzes/headroom_v1.json absent — run scripts/build_headroom.py to build it",
+)
+
 PUBLIC_FIELDS = {"id", "title", "objective", "holdout_test", "difficulty"}
 
 
 @pytest.fixture(scope="module")
 def document():
-    assert DATASET.exists(), (
-        "memory/quizzes/headroom_v1.json is missing — run "
-        "`python scripts/build_headroom.py` (it refuses to write unless every "
-        "gate passes)"
-    )
+    # SKIP, do not fail. memory/ is gitignored, so this dataset is a local
+    # artifact that does not exist on a fresh clone. Failing here takes out
+    # `pytest`, which is a static gate in the flywheel — so a machine that has
+    # simply never run the builder drops out of the loop entirely. That is
+    # exactly how the Windows box was lost to an unguarded symlink test.
+    if not DATASET.exists():
+        pytest.skip(
+            "memory/quizzes/headroom_v1.json absent (gitignored local artifact) — "
+            "run `python scripts/build_headroom.py` to build it"
+        )
     return json.loads(DATASET.read_text(encoding="utf-8"))
 
 
@@ -120,6 +135,8 @@ def test_no_reference_implementation_appears_anywhere_in_the_dataset():
     regresses is someone serialising the spec dict with an extra key or
     embedding a "worked example" lifted from the reference.
     """
+    if not DATASET.exists():
+        pytest.skip("dataset absent (gitignored local artifact)")
     blob = DATASET.read_text(encoding="utf-8")
     for spec in bh.SPECS:
         for line in spec["reference"].splitlines():

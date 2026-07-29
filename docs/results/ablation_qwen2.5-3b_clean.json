@@ -1,0 +1,52 @@
+{
+  "run_id": "20260729_050335",
+  "model": "qwen2.5:3b",
+  "dataset": "headroom_v1",
+  "samples": 360,
+  "tasks": 40,
+  "leak_guards": "assertions + solution-identity",
+  "arms": {
+    "bare": {
+      "pass": 38,
+      "n": 120,
+      "rate": 0.3167
+    },
+    "bare+sys": {
+      "pass": 40,
+      "n": 120,
+      "rate": 0.3333
+    },
+    "ether": {
+      "pass": 35,
+      "n": 120,
+      "rate": 0.2917
+    }
+  },
+  "comparisons": {
+    "ether-bare+sys": {
+      "delta": -0.0417,
+      "discordant": [
+        1,
+        5
+      ],
+      "mcnemar_p": 0.21875
+    },
+    "ether-bare": {
+      "delta": -0.025,
+      "discordant": [
+        0,
+        4
+      ],
+      "mcnemar_p": 0.125
+    },
+    "bare+sys-bare": {
+      "delta": 0.0167,
+      "discordant": [
+        3,
+        3
+      ],
+      "mcnemar_p": 1.0
+    }
+  },
+  "supersedes": "20260729_020631 (contaminated: retrieval served solutions)"
+}

@@ -297,7 +297,11 @@ def test_no_context_is_a_real_ablation_and_repo_map_on_is_a_real_addition(monkey
         rec = Recorder([0])
         pipe = Pipeline(registry=rec.registry())
         pipe.policy = StubPolicy([arm])  # type: ignore[assignment]
-        pipe.run("add two numbers")
+        # Must reference the repo: workspace context is now injected only when
+        # the objective plausibly depends on this codebase. A self-contained
+        # "add two numbers" gets no context in ANY arm, so it could no longer
+        # distinguish `no_context` from `default`.
+        pipe.run("update the existing retry logic")
         prompts[arm] = rec.prompts[0]
 
     for marker in ("WORKSPACE-MARKER", "EXPERIENCE-MARKER", "FEWSHOT-MARKER"):

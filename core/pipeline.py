@@ -886,9 +886,49 @@ class Pipeline:
         )
         return text
 
+    # Signals that an objective refers to THIS codebase rather than asking for
+    # a self-contained function. Deliberately narrow: the failure mode being
+    # fixed is injecting 3,500 chars of unrelated source into every prompt, so
+    # the default must be "no context" and the exception must be earned.
+    _REPO_SIGNALS = re.compile(
+        r"\b(this repo|this codebase|this project|existing|refactor|the file|"
+        r"our |src/|core/|gems/|scripts/|tests/|\.py\b|module\b|package\b|"
+        r"import from|update the|modify the|fix the bug in)\b",
+        re.IGNORECASE,
+    )
+
+    def _needs_repo_context(self, objective: str) -> bool:
+        """True only when the objective plausibly depends on this repository."""
+        if os.getenv("ETHER_FORCE_CONTEXT", "0") == "1":
+            return True
+        return bool(self._REPO_SIGNALS.search(objective or ""))
+
     def _fetch_context(self, result: PipelineResult, objective: str) -> str:
         if not context_enabled():
             return ""
+
+        # Retrieval is only useful when the task actually depends on this repo.
+        #
+        # Measured on a `merge_sorted` objective: the objective was 168 chars
+        # and the prompt was ~4,485 — the objective was 3.7% of it. The other
+        # 78% was BM25 over ETHER's OWN SOURCE (core/failure_graph.py internals,
+        # for a task about merging two sorted lists), and the 3,500-char budget
+        # is saturated on EVERY task because the assembler fills to the cap
+        # rather than stopping when relevance runs out.
+        #
+        # For a 3B-active MoE that is a haystack with the instruction buried in
+        # it, and it shows: the ether arm scored 0.874 against a bare-model
+        # 0.933 on the same tasks. The scaffold was subtracting.
+        if not self._needs_repo_context(objective):
+            result.stages.append(
+                StageResult(
+                    stage="context",
+                    success=True,
+                    detail="skipped — self-contained objective",
+                )
+            )
+            return ""
+
         t = time.perf_counter()
         try:
             block = gather_workspace_context(Path.cwd(), query=objective)

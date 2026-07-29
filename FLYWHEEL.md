@@ -1,9 +1,9 @@
 # @ETHER Flywheel (rinse & repeat)
 
-> Last cycle: **2026-07-29T04:17:43.280833+00:00**  
+> Last cycle: **2026-07-29T04:27:22.503183+00:00**  
 > Result: **FAIL — audit report filed**  
 > Confidence: **0.260** (min 0.7) · Audit: **True**  
-> Ver: **0.3** · tests: **2**  
+> Ver: **0.3** · tests: **4**  
 > Pull: **OK**  * branch            main       -> FETCH_HEAD  
 > Report pushed: **False** · Model: `qwen2.5-coder:3b`  
 > Reason: `max_retries_exhausted`

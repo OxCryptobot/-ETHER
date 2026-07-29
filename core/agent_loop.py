@@ -332,12 +332,24 @@ def build_initial_prompt(objective: str, extra_context: str = "") -> str:
     parts = [f"Write Python code for the following task.\n\nTask:\n{objective.strip()}\n"]
     if extra_context.strip():
         parts.append(extra_context.strip() + "\n")
+    # Only constraints that cannot conflict with a task spec.
+    #
+    # This block used to also say "Handle empty and single-element input
+    # without raising" and "Do not mutate the caller's arguments". Measured
+    # against the headroom suite: 21 of 40 tasks are GRADED ON RAISING an
+    # exception, and 20 mention in-place modification. The loop was instructing
+    # the model to violate the spec on half the suite, which is why the
+    # ether-loop arm scored 0.150 against a plain call's 0.381 — worse than no
+    # scaffold at all.
+    #
+    # Generic "good practice" advice is not free. The objective already states
+    # the required behaviour; anything added here can only contradict it.
     parts.append(
         "Requirements:\n"
         "- Define the function(s) the task asks for, at module level.\n"
         "- Use only the Python standard library.\n"
-        "- Handle empty and single-element input without raising.\n"
-        "- Do not mutate the caller's arguments.\n"
+        "- Follow the task description exactly, including any error handling\n"
+        "  and edge-case behaviour it specifies.\n"
     )
     parts.append(_OUTPUT_RULE)
     return "\n".join(parts)

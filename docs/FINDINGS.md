@@ -232,3 +232,70 @@ guard found five.
 When you next see a result that looks great, the fastest way to find out if it
 is real is to run the arm you expect to show *nothing*. That is what caught the
 biggest one.
+
+---
+
+## 11. The agent loop — built, measured, does not help
+
+`core/agent_loop.py` + `core/verifier.py`, behind `ETHER_AGENT_LOOP=1`. It works
+mechanically: draws N candidates at climbing temperature, scores each without a
+holdout, repairs against what actually ran, selects the best and never regresses.
+Verified live selecting the best of three over two worse ones.
+
+**It does not improve the pass rate. It makes it worse.**
+
+| arm | rate |
+|---|---|
+| `bare+sys` | 0.333 |
+| `ether-loop` | 0.083 |
+
+Three defects were found and fixed along the way, each real:
+
+1. **Best-of-N was best-of-one.** The loop early-stopped whenever the verifier
+   scored above 0.95, so it drew a single candidate. An oracle-free verifier
+   SATURATES — confidently wrong code parses, runs, is ruff-clean, mutates
+   nothing, survives empty input, and scores 1.000. Early stopping is now
+   opt-in.
+2. **The loop instructed the model to violate the spec.** Its prompt said
+   "handle empty input without raising" and "do not mutate the caller's
+   arguments". **21 of 40 headroom tasks are GRADED ON RAISING**, and 20 mention
+   in-place modification. Generic good-practice advice is not free.
+3. The verifier scored a deliberate `ValueError` on empty input as correct but
+   treated `KeyError`/`IndexError` as a crash. Broadening it was WRONG —
+   `return items[0]` raising IndexError is accidental, not deliberate.
+   Distinguishing them needs the spec, not the exception type. Left as-is.
+
+None of it closed the gap.
+
+### The measurement that explains why
+
+Oracle pass@3 is the ceiling ANY selector could reach — the fraction of tasks
+where at least one of three samples passed:
+
+| arm | pass@1 | oracle pass@3 | headroom |
+|---|---|---|---|
+| `bare` | 0.275 | 0.400 | +0.125 |
+| `bare+sys` | 0.342 | 0.400 | **+0.058** |
+
+**A perfect, infallible selector could gain 5.8 points.** Best-of-N requires
+pass@N >> pass@1; here the gap is 5.8pp and a saturating verifier captures a
+fraction of it at ~7x the cost.
+
+Observed directly on hr03: four candidates, **all scored 1.000, all failed the
+holdout**, consistency 0.583 — they agreed because they were identically wrong.
+Temperature varies the phrasing, not the model's understanding.
+
+### What this means for whoever picks this up
+
+The bottleneck is the model's understanding, not the sampling, the prompt, or
+the selection. That is now four independent measurements agreeing.
+
+Do not spend time optimising the selector. Its ceiling is measured and it is
+5.8 points.
+
+The asymmetry worth building on: this system is far better at saying **"this is
+wrong"** than at producing something right. The verifier could not rank the four
+candidates, but the holdout rejected all four correctly. Point that at repo
+tasks — where the bare model scores near zero and the repository's own test
+suite is a real oracle that cannot be leaked into a prompt because it is run,
+not shown.

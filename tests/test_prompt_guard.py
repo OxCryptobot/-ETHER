@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from core.prompt_guard import check, find_leaks, scrub
 
 HOLDOUT = "assert is_even(4) is True\nassert is_even(5) is False\nprint('ok')"

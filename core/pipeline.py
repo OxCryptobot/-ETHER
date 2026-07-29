@@ -54,6 +54,10 @@ from core.pipeline_select import current_tier, select_strategy_with_context
 MAX_CODE_CHARS = 50_000
 
 
+class _LoopAlreadyGenerated(Exception):
+    """Control flow: the agent loop produced the artifact; skip legacy generation."""
+
+
 @dataclass
 class _Attempt:
     """One generation attempt = one bandit decision.
@@ -350,12 +354,66 @@ class Pipeline:
             max_attempts = 2 if allow_retry else 1
             strategy_hint = strategy_prompt_addon(strategy)
 
+            # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at
+            # varied temperature, scores each WITHOUT a holdout, repairs against
+            # what actually ran, and returns the best — never overwriting a
+            # better earlier attempt, which is what the fixed two-shot retry did.
+            loop_result = None
+            if self._agent_loop_enabled():
+                try:
+                    from core.agent_loop import LoopBudget, run_loop
+
+                    lt = time.perf_counter()
+                    loop_result = run_loop(
+                        objective,
+                        self._make_generate_fn(task_id, prefer_local),
+                        budget=LoopBudget(
+                            max_attempts=int(os.getenv("ETHER_LOOP_ATTEMPTS", "4")),
+                            wall_clock_s=float(os.getenv("ETHER_LOOP_SECONDS", "300")),
+                        ),
+                        # Scores the selection only. run_loop asserts this never
+                        # reaches a prompt.
+                        holdout_test=holdout_test,
+                    )
+                    generated = loop_result.code or ""
+                    result.generated_code = generated
+                    result.strategy = "agent_loop"
+                    result.stages.append(
+                        StageResult(
+                            stage="agent_loop",
+                            success=bool(generated),
+                            detail=(
+                                f"{len(loop_result.attempts)} candidates, "
+                                f"best score {loop_result.score:.3f}, "
+                                f"{loop_result.selection_reason}"
+                            )[:300],
+                            duration_ms=(time.perf_counter() - lt) * 1000,
+                        )
+                    )
+                    # One pass through the existing loop so the artifact still
+                    # goes through sandbox + audit; the generation half is
+                    # skipped below because loop_result is set.
+                    max_attempts = 1 if generated else 2
+                except Exception as e:
+                    result.stages.append(
+                        StageResult(
+                            stage="agent_loop",
+                            success=False,
+                            detail=f"loop failed, falling back: {str(e)[:180]}",
+                        )
+                    )
+                    loop_result = None
+
             while attempt < max_attempts:
                 attempt += 1
                 t2 = time.perf_counter()
                 write_progress(tid, objective, "code" if attempt == 1 else "code_retry")
 
-                if attempt > 1:
+                if loop_result is not None and generated:
+                    # The agent loop already generated, verified and selected.
+                    # Fall through to sandbox + audit without re-drawing.
+                    pass
+                elif attempt > 1:
                     # Re-draw the arm now that a failure class exists. This is
                     # the whole point of the fail_kind feature: at first
                     # selection nothing has failed yet, so the repair branch of
@@ -444,6 +502,17 @@ class Pipeline:
                                 + "\nInclude asserts that prove correctness.\n"
                             )
 
+                    if loop_result is not None and generated:
+                        # The agent loop drew, verified and selected already.
+                        # Record its prompts for the leak guard and skip the
+                        # legacy single-shot generation entirely.
+                        for _a in loop_result.attempts:
+                            _p = getattr(_a, "prompt", "")
+                            if _p:
+                                sent_prompts.append(_p)
+                        code_res = None
+                        raise _LoopAlreadyGenerated
+
                     # Kept so the prompt guard can inspect exactly what the
                     # model was shown, rather than trusting that every leak
                     # channel was closed at its source.
@@ -457,6 +526,11 @@ class Pipeline:
                         ),
                     )
                     code_res = self.registry.execute(code_req)
+                except _LoopAlreadyGenerated:
+                    # Not an error: the agent loop already produced and selected
+                    # the artifact. Swallow the control-flow signal here so the
+                    # run continues into sandbox + audit.
+                    code_res = None
                 finally:
                     if force_burst:
                         if prev_force is None:
@@ -464,8 +538,12 @@ class Pipeline:
                         else:
                             os.environ["ETHER_FORCE_BURST"] = prev_force
 
-                self.orchestrator.process_response(code_req, code_res)
-                if code_res.error or not isinstance(code_res.payload, RoseQuartzResponse):
+                if code_res is None:
+                    # Loop path: artifact already in `generated`; go to sandbox.
+                    pass
+                else:
+                    self.orchestrator.process_response(code_req, code_res)
+                if code_res is not None and (code_res.error or not isinstance(code_res.payload, RoseQuartzResponse)):
                     return self._fail(
                         result,
                         "code",
@@ -473,7 +551,13 @@ class Pipeline:
                         t2,
                         attempts,
                     )
-                model_used = getattr(code_res.payload, "model_used", "") or ""
+                if code_res is None:
+                    # Agent-loop path: `generated` is already the selected
+                    # candidate and the loop did its own extraction, which
+                    # handles fences and prose that _strip() does not.
+                    model_used = os.getenv("ETHER_PRIMARY_MODEL", "") or "local"
+                else:
+                    model_used = getattr(code_res.payload, "model_used", "") or ""
                 # force_burst above already flags a burst we asked for; this
                 # catches the router's own fallback to burst after a local
                 # failure. Matched exactly against the configured burst model —
@@ -481,7 +565,8 @@ class Pipeline:
                 if _is_burst_model(model_used):
                     result.used_burst = True
 
-                generated = self._strip(code_res.payload.content)
+                if code_res is not None:
+                    generated = self._strip(code_res.payload.content)
                 if len(generated) > MAX_CODE_CHARS:
                     return self._fail(
                         result,
@@ -903,6 +988,37 @@ class Pipeline:
         if os.getenv("ETHER_FORCE_CONTEXT", "0") == "1":
             return True
         return bool(self._REPO_SIGNALS.search(objective or ""))
+
+
+    def _agent_loop_enabled(self) -> bool:
+        return os.getenv("ETHER_AGENT_LOOP", "0") == "1"
+
+    def _make_generate_fn(self, task_id: UUID, prefer_local: bool):
+        """Adapter so the agent loop can draw candidates at varied sampling.
+
+        Returns raw completion text; the loop does its own extraction, because
+        the pipeline's `_strip()` only handles a fence at position 0 and 10 of
+        120 samples in a measured run died on unstripped markdown reaching the
+        sandbox as Python.
+        """
+
+        def generate(prompt: str, temperature: float = 0.2, seed: int = 1) -> str:
+            req = Envelope(
+                task_id=task_id,
+                target_gem="rose-quartz",
+                payload=RoseQuartzRequest(
+                    messages=[ChatMessage(role="user", content=prompt)],
+                    prefer_local=prefer_local,
+                    temperature=temperature,
+                    seed=seed,
+                ),
+            )
+            res = self.registry.execute(req)
+            if res.error or not isinstance(res.payload, RoseQuartzResponse):
+                raise RuntimeError(res.error.message if res.error else "no completion")
+            return res.payload.content or ""
+
+        return generate
 
     def _fetch_context(self, result: PipelineResult, objective: str) -> str:
         if not context_enabled():

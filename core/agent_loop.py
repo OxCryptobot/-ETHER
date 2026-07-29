@@ -37,6 +37,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import ast
+import os
 
 DEFAULT_TEMPERATURES: Sequence[float] = (0.2, 0.7, 0.9, 1.0)
 
@@ -453,7 +454,10 @@ def run_loop(
     temperatures: Optional[Sequence[float]] = None,
     confidence_threshold: float = 0.95,
     min_coverage: float = 0.75,
-    consistency_weight: float = 0.25,
+    # Raised from 0.25. The oracle-free verifier saturates on plausible-but-
+    # wrong code, so agreement across independently drawn candidates is the
+    # signal doing the real discriminating work.
+    consistency_weight: float = 0.5,
     seed: int = 1234,
     token_counter: Optional[Callable[[str], int]] = None,
     verify_timeout: int = 25,
@@ -592,8 +596,24 @@ def run_loop(
                 pass
         index += 1
 
+        # Early stopping on the verifier alone is DISABLED by default, and the
+        # reason is measured: an oracle-free verifier SATURATES. A confidently
+        # wrong implementation parses, runs, is ruff-clean, mutates nothing and
+        # survives empty input — so it scores 1.000 and stops the loop after a
+        # single draw. Observed live on hr03: "attempt #0 scored 1.000; only
+        # candidate", and that candidate failed its holdout.
+        #
+        # That is the same failure class as the original conf=1.000, rebuilt in
+        # a new place. It also destroys the entire point of the loop: best-of-N
+        # became best-of-one at ~7x the cost, and the arm scored 0.150 against a
+        # plain call's 0.381.
+        #
+        # Cross-candidate consistency is the one signal that does not saturate —
+        # but it needs a candidate SET to exist, so the budget must be spent
+        # before selection. ETHER_LOOP_EARLY_STOP=1 restores the old behaviour.
         if (
-            attempt.code.strip()
+            os.getenv("ETHER_LOOP_EARLY_STOP", "0") == "1"
+            and attempt.code.strip()
             and attempt.normalized >= confidence_threshold
             and attempt.coverage >= min_coverage
         ):

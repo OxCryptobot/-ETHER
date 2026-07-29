@@ -1,12 +1,12 @@
 # @ETHER Flywheel (rinse & repeat)
 
-> Last cycle: **2026-07-29T13:57:44.908899+00:00**  
-> Result: **FAIL — audit report filed**  
-> Confidence: **0.000** (min 0.7) · Audit: **False**  
-> Ver: **0.0** · tests: **0**  
-> Pull: **OK**  * branch            main       -> FETCH_HEAD  
+> Last cycle: **2026-07-29T14:40:14.353248+00:00**  
+> Result: **PASS**  
+> Confidence: **1.000** (min 0.7) · Audit: **True**  
+> Ver: **1.0** · tests: **2**  
+> Pull: **OK** HEAD is now at ad9fca0 docs: bring STATUS, TASKS, AUDITS, COUSIN and ONBOARDING in line with what was measured  
 > Report pushed: **False** · Model: `qwen2.5-coder:3b`  
-> Reason: `static_gates_failed`
+> Reason: `gates_passed`
 
 ## Cycle
 1. git pull (self-heal)

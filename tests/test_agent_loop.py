@@ -336,7 +336,14 @@ def test_a_clean_exit_with_a_low_score_still_triggers_another_attempt():
     assert result.attempts_used == 3
 
 
-def test_the_loop_stops_early_when_the_verifier_is_confident():
+def test_the_loop_stops_early_when_the_verifier_is_confident(monkeypatch):
+    """Early stopping is now OPT-IN and this test enables it explicitly.
+
+    It defaults off because an oracle-free verifier saturates: confidently
+    wrong code scores 1.000, so the loop drew one candidate and stopped, making
+    best-of-N into best-of-one at ~7x the cost.
+    """
+    monkeypatch.setenv("ETHER_LOOP_EARLY_STOP", "1")
     gen = fixed_generator([GOOD, BROKEN])
     result = run_loop(
         "dedupe",
@@ -732,7 +739,9 @@ def test_real_verifier_keeps_the_good_first_attempt_over_a_broken_repair():
 
 
 @needs_sandbox
-def test_real_verifier_takes_the_improved_repair():
+def test_real_verifier_takes_the_improved_repair(monkeypatch):
+    """Enables early stopping explicitly — it is opt-in now (see above)."""
+    monkeypatch.setenv("ETHER_LOOP_EARLY_STOP", "1")
     gen = fixed_generator([f"```python\n{MUTATES}\n```", f"```python\n{GOOD}\n```"])
     result = run_loop(
         "write dedupe(items) that removes duplicates preserving order",

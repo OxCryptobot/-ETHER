@@ -104,6 +104,8 @@ def record(
     # curriculum's promotion gate can require independent evidence rather than
     # inferring competence from self-graded confidence alone.
     holdout_ok: Optional[bool] = None,
+    # Passed so the writer can refuse an artifact carrying its own holdout.
+    holdout_test: str = "",
     skip_curriculum: bool = False,
 ) -> None:
     if not experience_enabled():
@@ -123,6 +125,27 @@ def record(
         "fail_kind": fail_kind,
         "task_id": task_id,
     }
+    # Never store an artifact carrying its own holdout assertions.
+    #
+    # `retrieve()` replays this vault into later prompts, so one leaked-era row
+    # re-contaminates every future run that retrieves it. save_success_pattern
+    # was guarded on its write path; this store was not, and it is the SIXTH
+    # distinct channel by which a holdout has reached a prompt — after the
+    # curriculum, bench prompts, hidden_quiz's private grader, BM25 retrieval
+    # over scripts/, and the few-shot pattern store.
+    #
+    # Observed live: 7 rows in pass.jsonl and 1 in fail.jsonl carried holdout
+    # assertions, which leaked into 3 ether samples mid-ablation.
+    if holdout_test:
+        try:
+            from core.prompt_guard import find_leaks
+
+            if find_leaks(f"{objective}\n{code}", holdout_test):
+                return
+        except Exception:
+            # A guard that cannot run must not silently permit the write.
+            return
+
     # Infrastructure outages are not code failures. Recording "ollama down" or
     # a dead Docker daemon as a FAIL taught the model to avoid a pattern that
     # never existed, and seeded the failure graph with permanent infra nodes:

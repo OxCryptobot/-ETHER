@@ -1,0 +1,252 @@
+{
+  "run_id": "20260729_020631",
+  "model": "qwen2.5:3b",
+  "dataset": "headroom_v1",
+  "samples": 360,
+  "tasks": 40,
+  "arms": {
+    "bare": {
+      "pass": 33,
+      "n": 120,
+      "rate": 0.275
+    },
+    "bare+sys": {
+      "pass": 41,
+      "n": 120,
+      "rate": 0.3417
+    },
+    "ether": {
+      "pass": 105,
+      "n": 120,
+      "rate": 0.875
+    }
+  },
+  "per_task": {
+    "hr01": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr02": {
+      "bare": 0.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr03": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr04": {
+      "bare": 0.6666666666666666,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr05": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr06": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr07": {
+      "bare": 0.0,
+      "bare+sys": 0.6666666666666666,
+      "ether": 1.0
+    },
+    "hr08": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr09": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr10": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr11": {
+      "bare": 1.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr12": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 0.6666666666666666,
+      "ether": 1.0
+    },
+    "hr13": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 0.6666666666666666,
+      "ether": 1.0
+    },
+    "hr14": {
+      "bare": 0.6666666666666666,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr15": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr16": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 0.0
+    },
+    "hr17": {
+      "bare": 1.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr18": {
+      "bare": 1.0,
+      "bare+sys": 0.3333333333333333,
+      "ether": 1.0
+    },
+    "hr19": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr20": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr21": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr22": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr23": {
+      "bare": 1.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr24": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr25": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 0.0
+    },
+    "hr26": {
+      "bare": 0.6666666666666666,
+      "bare+sys": 0.6666666666666666,
+      "ether": 1.0
+    },
+    "hr27": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr28": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 0.0
+    },
+    "hr29": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr30": {
+      "bare": 0.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr31": {
+      "bare": 1.0,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr32": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 1.0,
+      "ether": 1.0
+    },
+    "hr33": {
+      "bare": 1.0,
+      "bare+sys": 1.0,
+      "ether": 0.0
+    },
+    "hr34": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr35": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr36": {
+      "bare": 0.3333333333333333,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr37": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr38": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 1.0
+    },
+    "hr39": {
+      "bare": 0.0,
+      "bare+sys": 0.0,
+      "ether": 0.0
+    },
+    "hr40": {
+      "bare": 1.0,
+      "bare+sys": 0.6666666666666666,
+      "ether": 1.0
+    }
+  },
+  "comparisons": {
+    "ether-bare+sys": {
+      "delta": 0.5333,
+      "discordant": [
+        20,
+        1
+      ],
+      "mcnemar_p": 2.1e-05
+    },
+    "ether-bare": {
+      "delta": 0.6,
+      "discordant": [
+        20,
+        1
+      ],
+      "mcnemar_p": 2.1e-05
+    },
+    "bare+sys-bare": {
+      "delta": 0.0667,
+      "discordant": [
+        3,
+        3
+      ],
+      "mcnemar_p": 1.0
+    }
+  }
+}

@@ -755,6 +755,7 @@ class Pipeline:
                     verification_score=result.verification_score,
                     total_tests=total_tests,
                     holdout_ok=result.holdout_ok,
+                    holdout_test=holdout_test,
                 )
             except Exception:
                 pass

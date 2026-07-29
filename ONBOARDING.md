@@ -1,5 +1,22 @@
 # @ETHER — Onboarding (Linux cousin + Windows partner)
 
+> **Before you start: read `docs/FINDINGS.md`.**
+>
+> As of 2026-07-29 the pipeline does **not** beat a bare model (0.292 vs 0.317
+> on qwen2.5:3b, p=0.22). Seven leak channels were closed, verification was
+> rebuilt, and every `conf=1.000` in the git history predates honest grading.
+> `docs/COWORK.md` lists what changed; `AUDITS.md` records how it was found.
+>
+> **Two things this guide used to get wrong:**
+> - Prefer `ETHER_SANDBOX_BACKEND=docker`. `local` has no isolation.
+> - `memory/` is gitignored, so benchmark datasets are LOCAL artifacts. After
+>   cloning run `python scripts/build_headroom.py` and
+>   `python scripts/build_calibrated.py`, or the benchmark tests skip.
+>
+> Set `ETHER_FLYWHEEL_PUSH=0` while collaborating — the flywheel pushes to
+> `main` on a timer and is a third writer nobody coordinates with.
+
+
 Local-first **verified** coding agent: plan → code (Ollama) → sandbox → audit → gate → learn.
 
 Not a claim that it beats Cursor/Claude Code. Trust **SCOREBOARD.md** only.

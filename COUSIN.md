@@ -1,5 +1,18 @@
 # @ETHER — Cousin velocity sheet
 
+> **Read `docs/FINDINGS.md` first.** Three days of measurement (2026-07-29)
+> found that ETHER does **not** beat a bare model — 0.292 vs 0.317 on a 3B,
+> 0.874 vs 0.933 on a 35B — and that seven separate channels had been leaking
+> the answers into the prompt. Every score predating that is void.
+>
+> **Sandbox:** prefer `docker` wherever Docker exists. `local` runs
+> model-authored code on the host with no isolation; the old advice here
+> assumed no Docker was available.
+>
+> **After cloning:** `memory/` is gitignored, so benchmark datasets do not
+> transfer. Run `python scripts/build_headroom.py` and
+> `python scripts/build_calibrated.py`.
+
 Two profiles: **you (Linux / strong / Qwen 3.6)** vs Windows partner.
 
 ---
@@ -10,7 +23,7 @@ Two profiles: **you (Linux / strong / Qwen 3.6)** vs Windows partner.
 |------|----------|
 | OS | Linux |
 | LLM | **Qwen 3.6** via **Ollama** (llama.cpp backend OK) |
-| Sandbox | `ETHER_SANDBOX_BACKEND=local` |
+| Sandbox | `ETHER_SANDBOX_BACKEND=docker` (see note) |
 | Role | Quality model, weekly scoreboard, hard tasks |
 
 ### Day-0

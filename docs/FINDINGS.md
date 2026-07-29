@@ -1,0 +1,234 @@
+# What we found — a handoff for Carlos
+
+Two days of auditing and measurement, 2026-07-27 to 2026-07-29. Written so you
+do not have to re-derive any of it, and so the mistakes are cheap for you
+instead of expensive.
+
+The short version: **the infrastructure you built is sound, the measurements it
+was producing were not, and once they were fixed the pipeline turned out not to
+beat a bare model.** That is a real result, it is now reproducible, and it says
+where to build next.
+
+---
+
+## 1. The headline number
+
+Four benchmarks, ~1,500 generations, two models. Both point the same way.
+
+| model | bare | bare+sys | ether |
+|---|---|---|---|
+| `qwen3.6:35b-a3b` | 0.933 | — | 0.874 |
+| `qwen2.5:3b` | 0.317 | 0.333 | **0.292** |
+
+`ether − bare+sys = −0.042`, McNemar p = 0.22, 360 samples, zero leaks.
+
+**There is no evidence the current pipeline improves generated code.** It is
+neutral-to-slightly-negative at both ends of the model size range.
+
+Full data: `docs/results/ablation_qwen2.5-3b_clean.json`.
+
+### The number we retracted
+
+An earlier run reported `ether 0.875` vs `bare 0.275` — **+53pp, p = 0.00002**.
+It was committed and then retracted the same night. It was contamination
+(§2, channel 7). Removing the leak did not shrink the effect; it erased it and
+flipped the sign. If you see that number anywhere, it is void.
+
+---
+
+## 2. Seven leak channels
+
+Every one of these put the answer, or the test, into the model's prompt. Six of
+the seven were found **after** declaring the previous one fixed.
+
+| # | channel | how it leaked |
+|---|---|---|
+| 1 | curriculum objectives | contained the implementation AND its assertions |
+| 2 | bench prompts | assertions inline in the objective |
+| 3 | `hidden_quiz.py` | private grader copy with no leak check at all |
+| 4 | BM25 retrieval | indexed `scripts/`, which holds `bench.py` and its holdouts |
+| 5 | `success_patterns.jsonl` | leaked-era artifacts replayed as few-shot examples |
+| 6 | `experience/pass.jsonl` | same, via a second store |
+| 7 | **solution identity** | retrieval served a prior *correct solution* to the task under test |
+
+Channel 7 is the important one, because it is not about tests at all. The
+holdout never appeared in the prompt — the **solution** did — so the assertion
+guard read `leaked = 0`, truthfully and uselessly.
+
+> **Few-shot retrieval over a store that accumulates solved benchmark tasks is
+> STRUCTURALLY a leak.** Not a bug to patch once: any similarity search will
+> find the answer if the answer is in the corpus.
+
+This matters directly for the self-improving flywheel. A loop that saves its
+successes and retrieves them later will always contaminate its own evaluation
+unless the store excludes the task under test. That is now enforced in both
+retrieval paths (`core/experience.py`, `tools/persistent/few_shot_pack.py`),
+failing closed — if the check cannot run, it serves nothing.
+
+**Defence:** `core/prompt_guard.py` inspects the finished prompt rather than
+maintaining a list of known channels. That is the only reason 5, 6 and 7 were
+caught.
+
+---
+
+## 3. Verification was theatre
+
+Before this work, `confidence` measured *"the process exited 0"*. Verified by
+execution — all of these scored **1.000**:
+
+- `def solve(n): pass` — no assertions at all
+- an assertion inside a **comment**
+- a **false** assertion swallowed by `except AssertionError`
+- `print("42 passed in 0.01s")` — forged test output
+- assertions under `if False:`
+- assertions in a function nothing calls
+
+Meanwhile honest code that reported a real failure scored **0.26**. The metric
+actively rewarded concealment, and it fed the bandit reward, the curriculum
+tier and the flywheel commit gate.
+
+Now: `core/assert_audit.py` counts only assertions that could actually fail
+(AST-parsed, no tautologies, no dead branches, no swallowed failures, no
+unreachable functions), and `core/holdout.py` grades against assertions the
+generator never saw, with an unpredictable sentinel so `sys.exit(0)` cannot
+fake a pass.
+
+**Every `conf=1.000` in the git history predating this work is meaningless.**
+
+---
+
+## 4. Things that were silently broken
+
+Each of these looked fine and did nothing:
+
+- **`ETHER_SANDBOX_BACKEND=docker` ran code on the host** when docker was
+  missing, with empty `security_flags`. Now fails closed.
+- **The model ran at `presence_penalty=1.5`, `temperature=1.0`** — the
+  Modelfile defaults, because the router only ever sent `num_predict`. A
+  presence penalty punishes repeating tokens; correct code *must* repeat
+  identifiers. Close to worst-case sampling for code, for the project's
+  entire life.
+- **`num_predict=4096` on a reasoning model.** Thinking tokens ate the budget:
+  one 360-sample run had **214 failures** (147 timeouts, 64 empty completions).
+  `think` is now explicit and off by default for code.
+- **Three safety flags did not gate what they named.** `ETHER_FLYWHEEL_PUSH=0`
+  still pushed (hardcoded `do_push=True` into a `do_push or env` expression);
+  `ETHER_AUTO_PROMOTE=0` still promoted (`reconcile()` had no gate);
+  `ETHER_AUTO_MODEL` overwrote an explicit model choice from a *read-only
+  dashboard probe*, at one point selecting an embedding model as the coder.
+  All nine flags are now pinned by `tests/test_safety_flags.py`.
+- **`promote()`'s regex had `{{8}}` in a non-f-string**, so promoted tools kept
+  their timestamp suffix and `resolve_tool()` could never find them.
+  Fabricate → promote → reuse never worked.
+- **The bench guardian ratcheted its own baseline down** — 0.95 → 0.41 without
+  ever freezing, each step "within tolerance".
+- **`pytest` mutated production state**: fake rewards into the live bandit,
+  mock runs into the few-shot store (84 of 101 rows were `write hello`
+  artifacts served to the model as worked examples), and it promoted the real
+  curriculum tier 0 → 3.
+
+---
+
+## 5. Why the repair loop contributes nothing
+
+Measured: `ether` vs `ether-no-repair` came back **bit-identical** — 105/120
+each, zero discordant pairs, p = 1.0.
+
+The cause: **repair only fires when the sandbox exits non-zero.** A wrong
+answer usually runs fine, so repair never engages. Every bare-arm failure in
+the clean run was `holdout assertions failed`, not a crash.
+
+That null result is what exposed leak channel 7 — repair cannot matter when the
+answer is already in the prompt. **The arm that showed nothing found the
+contamination the arm that showed +53 concealed.**
+
+---
+
+## 6. Difficulty is bimodal, and cannot be aimed at
+
+78 candidate tasks, gated and measured against the bare 35B:
+
+```
+0/3  17 tasks   floor
+1/3   6 tasks   informative
+2/3   9 tasks   informative
+3/3  46 tasks   ceiling
+```
+
+Only **15 of 78 (19%)** land where a scaffold could show anything. Round 1,
+written blind, yielded 22% mid-band. Round 2, written *deliberately* at the
+middle, yielded **7%** — aiming made it worse. Harder objectives jump from
+ceiling straight to floor.
+
+Consequence: a strong model has almost no headroom on single-file stdlib tasks,
+which is why three benchmarks returned null before we understood why. Test
+small models, or test harder *kinds* of task (multi-file, editing existing
+code) rather than harder instances of the same kind.
+
+---
+
+## 7. What is worth keeping
+
+The apparatus, which is genuinely good:
+
+- **`core/holdout.py`** — grades against unseen assertions, strips the model's
+  own asserts so they cannot preempt, requires a sentinel so a clean exit
+  cannot fake a pass. Mutation score 0.966 over 1,689 mutants.
+- **`core/prompt_guard.py`** — catches leaks by inspecting the prompt, not by
+  remembering channels.
+- **`core/assert_audit.py`** — honest assertion counting.
+- **`scripts/ablation.py`** — three arms, seeded, resumable, aborts at >25%
+  errors, records model digest and decode settings, clustered bootstrap CI plus
+  paired McNemar, prints the minimum detectable effect *before* running.
+- **`scripts/build_headroom.py` / `build_calibrated.py`** — suites that refuse
+  to ship a task unless a reference implementation passes it and mutants fail
+  it.
+- 658 tests, up from 48.
+
+---
+
+## 8. What has never been tried
+
+The pipeline has never had:
+
+- **best-of-N with verifier selection** (`pass@5 ≫ pass@1` on a small model)
+- **static analysis in the loop** — ruff/mypy work on tasks with *no* holdout,
+  which is every real task
+- **a repair prompt showing the code that actually ran** (it currently shows
+  the original beside a traceback from the harnessed version — line numbers
+  that refer to a file the model never saw)
+- **an agent loop that iterates more than once**, chooses its own actions, or
+  edits existing files
+
+So the negative result says *this implementation* does not help. It does not
+say the idea is wrong. Those four mechanisms are the ones with published
+evidence behind them, and none of them are in here yet.
+
+---
+
+## 9. Operational notes
+
+- `memory/` is gitignored, so benchmark datasets are **local artifacts**. Tests
+  that read them must `skip`, never fail — `pytest` is a static gate in the
+  flywheel, so one unguarded test drops a whole machine out of the loop. That
+  happened to your Windows box twice.
+- `ETHER_WARM_SANDBOX` stays **off**. It shares `/tmp` across programs; one
+  program was verified planting `sitecustomize.py` that a later, unrelated
+  program executed. It buys 0.67% of a run.
+- Run `scripts/build_headroom.py` and `build_calibrated.py` after cloning, or
+  the benchmark tests skip.
+- Baselines are per bench mode now — `--fast` (5 easy tasks) cannot re-pin the
+  full bench's bar.
+
+---
+
+## 10. The one habit worth adopting
+
+Every impressive number in this project so far has been contamination, and
+every one was found by a **mechanical check at the point of use** rather than
+by reasoning about which channels exist. Reasoning found none of them; the
+guard found five.
+
+When you next see a result that looks great, the fastest way to find out if it
+is real is to run the arm you expect to show *nothing*. That is what caught the
+biggest one.

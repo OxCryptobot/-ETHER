@@ -25,6 +25,45 @@ def _normalize(text: str) -> str:
     return " ".join((text or "").split())
 
 
+def target_symbols(objective: str) -> List[str]:
+    """Function and class names the objective asks the model to implement.
+
+    Matches `def name(`, `class Name`, and bare `def name` in prose, since
+    objectives state signatures rather than code.
+    """
+    if not objective:
+        return []
+    names = re.findall(r"\bdef\s+([A-Za-z_]\w*)", objective)
+    names += re.findall(r"\bclass\s+([A-Za-z_]\w*)", objective)
+    seen, out = set(), []
+    for n in names:
+        if n not in seen:
+            seen.add(n)
+            out.append(n)
+    return out
+
+
+def defines_target(example: str, objective: str) -> List[str]:
+    """Target symbols that `example` already implements.
+
+    Few-shot retrieval on a benchmark is STRUCTURALLY a leak: the store fills
+    with solutions to the very tasks being measured, and similarity search then
+    surfaces the closest one — which is the answer. Observed directly: the
+    retrieved block for `edit_distance` contained `def edit_distance`, and 14
+    of 40 tasks had a prior solution sitting in memory/experience/pass.jsonl.
+
+    The assertion check cannot catch this. The holdout never appears; the
+    SOLUTION does, so `leaked` reads 0 while the model is handed the answer.
+    """
+    if not example or not objective:
+        return []
+    hit = []
+    for name in target_symbols(objective):
+        if re.search(rf"\b(?:def|class)\s+{re.escape(name)}\b", example):
+            hit.append(name)
+    return hit
+
+
 def assertion_lines(holdout_test: str) -> List[str]:
     """The assertion statements a holdout would grade with."""
     return [

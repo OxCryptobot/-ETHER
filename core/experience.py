@@ -219,6 +219,36 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
 
     passes = _read_jsonl(PASS_PATH)
     fails = _read_jsonl(FAIL_PATH)
+
+    # Drop any example that already implements what the objective asks for.
+    #
+    # Few-shot retrieval on a benchmark is structurally a leak: this store
+    # fills with solutions to the very tasks being measured, and similarity
+    # search then surfaces the closest one — which is the answer. Measured: the
+    # retrieved block for `edit_distance` contained `def edit_distance`, and 14
+    # of 40 headroom tasks had a prior solution here. It produced an apparent
+    # +53pp for the pipeline that was entirely contamination.
+    #
+    # The assertion guard cannot catch this. The holdout never appears in the
+    # prompt — the SOLUTION does — so `leaked` reads 0 while the model is being
+    # handed the answer.
+    try:
+        from core.prompt_guard import defines_target
+
+        def _same_task(row):
+            # Check BOTH fields. An example whose OBJECTIVE targets the same
+            # symbol is a prior attempt at this very task, and the block
+            # includes that objective verbatim — so filtering only on `code`
+            # left the signature (and, for a passing row, the solution) in the
+            # prompt.
+            blob = f"{row.get('objective', '')}\n{row.get('code', '')}"
+            return bool(defines_target(blob, objective))
+
+        passes = [r for r in passes if not _same_task(r)]
+        fails = [r for r in fails if not _same_task(r)]
+    except Exception:
+        # Cannot verify -> serve nothing rather than risk serving the answer.
+        passes, fails = [], []
     scored_p = sorted(
         ((_overlap(objective, r.get("objective", "")), r) for r in passes),
         key=lambda x: x[0],

@@ -43,6 +43,21 @@ def main() -> None:
         score = len(q & tokens(row.get("objective", "")))
         rows.append((score, row))
     rows.sort(key=lambda x: x[0], reverse=True)
+
+    # Never serve an example that already implements the requested symbol.
+    # Few-shot retrieval on a benchmark is structurally a leak: this store
+    # accumulates solutions to the tasks being measured, and similarity search
+    # surfaces the closest one — the answer. The assertion guard cannot see it,
+    # because the holdout never appears; only the solution does.
+    try:
+        import sys
+        sys.path.insert(0, str(repo_root()))
+        from core.prompt_guard import defines_target
+
+        rows = [(sc, r) for sc, r in rows if not defines_target(r.get("code", ""), query or inp.get("objective", ""))]
+    except Exception:
+        rows = []  # cannot verify -> serve nothing
+
     parts = []
     for score, row in rows[:k]:
         parts.append(f"# example objective: {row.get('objective','')}\n{row.get('code','')}\n")

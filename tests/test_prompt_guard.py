@@ -86,3 +86,60 @@ def test_bench_prompts_do_not_leak_through_retrieval():
     # Retrieval itself should be clean for the overwhelming majority; the guard
     # is the backstop for assertions embedded in core/ source.
     assert len(leaking) <= 3, f"retrieval leak regression: {leaking}"
+
+
+# --------------------------------------------------------------------------
+# Solution leakage — the seventh channel
+# --------------------------------------------------------------------------
+
+
+def test_an_example_implementing_the_target_is_detected():
+    """Few-shot retrieval on a benchmark is structurally a leak.
+
+    The store accumulates solutions to the tasks being measured, and
+    similarity search surfaces the closest one — the answer. The assertion
+    guard cannot see it: the holdout never appears in the prompt, only the
+    solution, so `leaked` reads 0 while the model is handed the answer. This
+    produced an apparent +53pp for the pipeline that was entirely contamination.
+    """
+    from core.prompt_guard import defines_target, target_symbols
+
+    objective = "Implement:\n\ndef edit_distance(a: str, b: str) -> int\n\nLevenshtein distance."
+    assert target_symbols(objective) == ["edit_distance"]
+
+    example = "# example objective: ...\ndef edit_distance(a, b):\n    return 0\n"
+    assert defines_target(example, objective) == ["edit_distance"]
+
+
+def test_an_unrelated_example_is_not_flagged():
+    from core.prompt_guard import defines_target
+
+    objective = "Implement:\n\ndef edit_distance(a: str, b: str) -> int"
+    assert defines_target("def is_even(n):\n    return n % 2 == 0\n", objective) == []
+
+
+def test_class_targets_are_detected():
+    from core.prompt_guard import defines_target
+
+    objective = "Implement:\n\nclass LRUCache\n\nA fixed-capacity cache."
+    assert defines_target("class LRUCache:\n    pass\n", objective) == ["LRUCache"]
+
+
+def test_retrieval_never_serves_a_solution_to_the_task_under_test():
+    """End-to-end against the real vault and the real benchmark."""
+    import json
+    from pathlib import Path
+
+    from core.experience import retrieve
+    from core.prompt_guard import defines_target
+
+    dataset = Path("memory/quizzes/headroom_v1.json")
+    if not dataset.exists():
+        pytest.skip("headroom_v1.json absent (gitignored local artifact)")
+
+    leaked = []
+    for task in json.loads(dataset.read_text(encoding="utf-8"))["tasks"]:
+        block = (retrieve(task["objective"], k=3) or {}).get("block", "")
+        if defines_target(block, task["objective"]):
+            leaked.append(task["id"])
+    assert not leaked, f"retrieval served solutions for: {leaked}"

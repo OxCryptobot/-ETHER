@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -70,14 +71,21 @@ def process_one(item: dict) -> dict:
                 }
             )
         elif kind == "command":
-            cmd = normalize_command(item.get("command") or [])
-            if not cmd:
-                result["error"] = "empty command"
+            if os.getenv("ETHER_BATCH_COMMANDS", "0") != "1":
+                # Defense in depth: a command item that predates the enqueue
+                # guard (or was pushed directly) dies here, recorded, not run.
+                result["error"] = (
+                    "command channel disabled (S-03); set ETHER_BATCH_COMMANDS=1 to opt in"
+                )
             else:
-                p = subprocess.run(cmd, cwd=str(ROOT))
-                result["ok"] = p.returncode == 0
-                result["returncode"] = p.returncode
-                result["command"] = cmd
+                cmd = normalize_command(item.get("command") or [])
+                if not cmd:
+                    result["error"] = "empty command"
+                else:
+                    p = subprocess.run(cmd, cwd=str(ROOT))
+                    result["ok"] = p.returncode == 0
+                    result["returncode"] = p.returncode
+                    result["command"] = cmd
         else:
             result["error"] = "unsupported or empty item"
     except Exception as e:

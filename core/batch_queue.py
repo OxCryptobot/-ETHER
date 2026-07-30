@@ -1,14 +1,18 @@
-"""Batch queue helpers — shared by worker, CLI, and dashboard."""
+"""Batch queue helpers — shared by worker, CLI, and dashboard.
+
+Locking and atomic writes are the Spine single-writer primitives
+(core/spine/state_io.py); this module keeps only queue semantics and its
+public API/messages exactly as before (D3 migration, stage 1).
+"""
 
 from __future__ import annotations
 
-import json
-import os
-import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
+
+from core.spine.state_io import append_jsonl, read_json, state_lock, write_json
 
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE_PATH = ROOT / "memory" / "batch_queue.json"
@@ -19,59 +23,33 @@ LOCK_PATH = ROOT / "memory" / "batch_queue" / ".queue.lock"
 @contextmanager
 def queue_lock(timeout: float = 30.0) -> Iterator[None]:
     """Exclusive lock for queue RMW. Cross-platform via O_EXCL lock file."""
-    LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
-    start = time.time()
-    fd: Optional[int] = None
-    while True:
-        try:
-            fd = os.open(str(LOCK_PATH), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            os.write(fd, str(os.getpid()).encode())
-            break
-        except FileExistsError:
-            if time.time() - start > timeout:
-                # stale lock recovery
-                try:
-                    age = time.time() - LOCK_PATH.stat().st_mtime
-                    if age > timeout:
-                        LOCK_PATH.unlink(missing_ok=True)
-                        continue
-                except Exception:
-                    pass
-                raise TimeoutError(f"batch queue lock timeout after {timeout}s")
-            time.sleep(0.05)
+    cm = state_lock(LOCK_PATH, timeout)
+    try:
+        cm.__enter__()
+    except TimeoutError:
+        # state_io's TimeoutError names the lock path; the public contract of
+        # batch_queue is this exact message (callers and tests match on it).
+        raise TimeoutError(f"batch queue lock timeout after {timeout}s") from None
     try:
         yield
     finally:
-        try:
-            if fd is not None:
-                os.close(fd)
-        except Exception:
-            pass
-        try:
-            LOCK_PATH.unlink(missing_ok=True)
-        except Exception:
-            pass
+        # state_lock suppresses nothing, so a plain exit releases correctly.
+        cm.__exit__(None, None, None)
 
 
 def load_queue() -> Dict[str, Any]:
-    if not QUEUE_PATH.exists():
+    data = read_json(QUEUE_PATH, None)
+    if not isinstance(data, dict):
         return {"pending": [], "done": []}
-    try:
-        data = json.loads(QUEUE_PATH.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            return {"pending": [], "done": []}
-        data.setdefault("pending", [])
-        data.setdefault("done", [])
-        return data
-    except Exception:
-        return {"pending": [], "done": []}
+    data.setdefault("pending", [])
+    data.setdefault("done", [])
+    return data
 
 
 def save_queue(data: Dict[str, Any]) -> None:
-    QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = QUEUE_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    tmp.replace(QUEUE_PATH)
+    # Callers doing read-modify-write already hold queue_lock; save itself is
+    # a lock-free atomic whole-file replace, exactly as before.
+    write_json(QUEUE_PATH, data)
 
 
 def coerce_int(value: Any, default: int) -> int:
@@ -161,9 +139,7 @@ def status() -> Dict[str, Any]:
 
 
 def append_history(row: Dict[str, Any]) -> None:
-    HIST_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with HIST_PATH.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(row) + "\n")
+    append_jsonl(HIST_PATH, row)
 
 
 def mutate(fn) -> Any:

@@ -10,6 +10,7 @@ from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
 class GemRegistry:
     def __init__(self) -> None:
         self._gems: Dict[str, object] = {}
+        self.degraded: List[str] = []   # capabilities that failed to register (A-3)
 
     def register(self, name: str, gem: object) -> None:
         self._gems[name] = gem
@@ -57,8 +58,11 @@ def build_default_registry() -> GemRegistry:
         from gems.citrine.memory import Citrine
 
         reg.register("citrine", Citrine())
-    except Exception:
-        pass
+    except Exception as e:
+        # A-3: was a silent pass — a registry without memory looked identical
+        # to a healthy one. Surface it; Pipeline seeds every run's degraded
+        # list from this.
+        reg.degraded.append(f"citrine_unavailable:{type(e).__name__}")
 
     # A `try: from core.pipeline_boot import apply; apply()` block used to sit
     # here. core.pipeline_boot never defined `apply`, so this raised ImportError

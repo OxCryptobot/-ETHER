@@ -50,6 +50,10 @@ from core.experience import retrieve as experience_retrieve, record as experienc
 from core.bench_guardian import is_frozen
 from core.pipeline_burst import decide_burst
 from core.pipeline_select import current_tier, select_strategy_with_context
+from core.loop import loop_runner_enabled
+from core.loop.handlers.finalize import FinalizeContext
+from core.loop.runner import LoopRunner
+from core.spine.state_io import write_json
 
 MAX_CODE_CHARS = 50_000
 
@@ -98,6 +102,12 @@ class PipelineResult(BaseModel):
     status: str = "complete"
     error: Optional[str] = None
     stages: List[StageResult] = Field(default_factory=list)
+    # A-3: capability losses that used to vanish into except:pass. Seeded from
+    # the registry (citrine) and appended at each degraded seam.
+    # NOTE: Field(default=[]) not default_factory=list — the stage-1
+    # acceptance probe reads model_fields["degraded"].default and requires [].
+    # pydantic v2 deep-copies mutable defaults per instance, so this is safe.
+    degraded: List[str] = Field(default=[])
     retries: int = 0
     context_chars: int = 0
     # The arm that produced the code that was finally graded. A retry can pick
@@ -153,6 +163,9 @@ RUNS_DIR = ROOT / "memory" / "runs"
 class Pipeline:
     def __init__(self, registry: Optional[GemRegistry] = None):
         self.registry = registry or build_default_registry()
+        # Capabilities that failed to register (A-3); every run's degraded
+        # list is seeded from this so the loss is visible on the result.
+        self._registry_degraded = list(getattr(self.registry, "degraded", []))
         self.orchestrator = Orchestrator()
         self.runs_dir = RUNS_DIR
         self.runs_dir.mkdir(parents=True, exist_ok=True)
@@ -185,6 +198,7 @@ class Pipeline:
             objective=objective,
             started_at=datetime.now(timezone.utc).isoformat(),
         )
+        result.degraded = list(self._registry_degraded)
         timeout = int(os.getenv("ETHER_SANDBOX_TIMEOUT", "120"))
         allow_retry = os.getenv("ETHER_SANDBOX_RETRY", "1") == "1"
         tool_assist = os.getenv("ETHER_TOOL_ASSIST", "1") == "1"
@@ -214,8 +228,10 @@ class Pipeline:
                 from gems.grandidierite.registry import list_tools
 
                 available = [n.replace(".py", "") for n in list_tools().get("persistent", [])]
-            except Exception:
-                pass
+            except Exception as e:
+                # A-3: was a silent pass — the plan gem then saw an empty tool
+                # list indistinguishable from "no tools exist".
+                result.degraded.append(f"grandidierite_list_tools_unavailable:{type(e).__name__}")
 
             write_progress(tid, objective, "plan")
             plan_req = Envelope(
@@ -402,6 +418,7 @@ class Pipeline:
                             detail=f"loop failed, falling back: {str(e)[:180]}",
                         )
                     )
+                    result.degraded.append(f"agent_loop_fallback:{type(e).__name__}")
                     loop_result = None
 
             while attempt < max_attempts:
@@ -824,118 +841,32 @@ class Pipeline:
             )
             self._credit_attempts(attempts, result)
 
-            success = exit_code == 0
-            record_outcome(success, error=None if success else (last_err or result.error))
-
-            try:
-                experience_record(
-                    objective=objective,
-                    code=generated or "",
-                    success=success,
-                    confidence=result.confidence,
-                    strategy=strategy,
-                    stderr=last_err if not success else "",
-                    fail_kind=fail_kind if not success else "",
-                    task_id=tid,
+            if loop_runner_enabled():
+                outcome = LoopRunner(
+                    registry=self.registry,
+                ).run_finalize(FinalizeContext(
+                    task_id=tid, objective=objective, generated=generated or "",
+                    success=(exit_code == 0), last_err=last_err, fail_kind=fail_kind,
+                    strategy=strategy, confidence=result.confidence,
                     verification_score=result.verification_score,
-                    total_tests=total_tests,
-                    holdout_ok=result.holdout_ok,
-                    holdout_test=holdout_test,
-                )
-            except Exception:
-                pass
-
-            if not success:
-                proposal = maybe_propose_fabricate()
-                if proposal and not is_frozen():
-                    t_fab = time.perf_counter()
-                    fab_req = Envelope(
-                        task_id=task_id,
-                        target_gem="grandidierite",
-                        payload=GrandidieriteRequest(tool_request=proposal),
-                    )
-                    fab_res = self.registry.execute(fab_req)
-                    result.stages.append(
-                        StageResult(
-                            stage="auto_fabricate",
-                            success=not bool(fab_res.error),
-                            detail=proposal.get("name", ""),
-                            duration_ms=(time.perf_counter() - t_fab) * 1000,
-                        )
-                    )
-                elif proposal and is_frozen():
-                    result.stages.append(
-                        StageResult(
-                            stage="auto_fabricate",
-                            success=False,
-                            detail="blocked_by_bench_guardian",
-                        )
-                    )
-
-            if success and generated and tool_assist:
-                try:
-                    from gems.grandidierite.registry import run_tool
-
-                    run_tool(
-                        "save_success_pattern",
-                        {
-                            "objective": objective,
-                            "code": generated,
-                            "confidence": result.confidence,
-                            "tags": [strategy],
-                            # So the writer can refuse an artifact that carries
-                            # the holdout. Without this the store re-injects
-                            # leaked-era code into every later prompt.
-                            "holdout_test": holdout_test,
-                        },
-                    )
-                    cit = index_pass_pattern(
-                        objective=objective,
-                        code=generated,
-                        confidence=result.confidence,
-                        strategy=strategy,
-                    )
-                    # success must be DERIVED, not asserted. This was hardcoded
-                    # True while the real citrine error was demoted to a
-                    # substring of the detail line — which is how a memory
-                    # layer that had never once stored a pattern kept
-                    # reporting a green stage.
-                    cit_ok = bool(cit.get("ok"))
-                    detail = f"success_pattern citrine={cit_ok}"
-                    if not cit_ok and cit.get("error"):
-                        detail += f" error={str(cit['error'])[:200]}"
-                    result.stages.append(
-                        StageResult(stage="memory_save", success=cit_ok, detail=detail)
-                    )
-                except Exception as e:
-                    # A bare `pass` here removed the row entirely, so a crash
-                    # in this block looked identical to the stage never running.
-                    result.stages.append(
-                        StageResult(
-                            stage="memory_save",
-                            success=False,
-                            detail=f"memory_save failed: {str(e)[:200]}",
-                        )
-                    )
-
-            # Status is DERIVED from the sandbox, not asserted. This was an
-            # unconditional "complete", so a run whose generated code never once
-            # executed successfully still reported complete — and cli/main.py
-            # (`Exit(0 if result.status == "complete" else 1)`) therefore exited
-            # 0 on a total failure, while dashboard/collector.py counted it in
-            # `runs_complete` and pinned pipeline_success_rate at 1.0.
-            # "error" (not a third value) is deliberate: it is the vocabulary
-            # _fail() and orchestrator.Status already use, so the existing
-            # complete/error buckets stay exhaustive.
-            if result.sandbox is not None and result.sandbox.exit_code == 0:
-                result.status = "complete"
+                    total_tests=total_tests, holdout_ok=result.holdout_ok,
+                    holdout_test=holdout_test, tool_assist=tool_assist,
+                    has_sandbox=result.sandbox is not None, exit_code=exit_code,
+                    result_error=result.error,
+                ))
+                for _s in outcome.stages:
+                    result.stages.append(StageResult(**_s))
+                result.degraded.extend(outcome.degraded)
+                result.status = outcome.status
+                if outcome.error is not None:
+                    result.error = outcome.error
             else:
-                result.status = "error"
-                if not result.error:
-                    detail = (last_err or "").strip()
-                    result.error = f"sandbox exit {exit_code}" + (
-                        f": {detail[:500]}" if detail else ""
-                    )
+                self._finalize_legacy(
+                    result, objective=objective, generated=generated or "",
+                    last_err=last_err, fail_kind=fail_kind, strategy=strategy,
+                    total_tests=total_tests, holdout_test=holdout_test,
+                    tool_assist=tool_assist, exit_code=exit_code,
+                )
             result.finished_at = datetime.now(timezone.utc).isoformat()
             clear_progress()
             self._persist(result)
@@ -943,6 +874,131 @@ class Pipeline:
             return result
         except Exception as e:
             return self._fail(result, "exception", str(e), run_started, attempts)
+
+    def _finalize_legacy(self, result: PipelineResult, *, objective: str,
+                         generated: str, last_err: str, fail_kind: str,
+                         strategy: str, total_tests: int, holdout_test: str,
+                         tool_assist: bool, exit_code: Optional[int]) -> None:
+        """Pre-extraction finalize tail (default path). Byte-identical behavior
+        to the pre-refactor inline block; removed when ETHER_LOOP_RUNNER
+        defaults on (roadmap stage 6)."""
+        task_id = result.task_id
+        tid = str(task_id)
+        success = exit_code == 0
+        record_outcome(success, error=None if success else (last_err or result.error))
+
+        try:
+            experience_record(
+                objective=objective,
+                code=generated or "",
+                success=success,
+                confidence=result.confidence,
+                strategy=strategy,
+                stderr=last_err if not success else "",
+                fail_kind=fail_kind if not success else "",
+                task_id=tid,
+                verification_score=result.verification_score,
+                total_tests=total_tests,
+                holdout_ok=result.holdout_ok,
+                holdout_test=holdout_test,
+            )
+        except Exception as e:
+            # A-3: was a silent pass — a run that lost its experience record
+            # looked identical to one that kept it. The loop-runner handler
+            # emits the identical string for this seam.
+            result.degraded.append(f"experience_record_failed:{type(e).__name__}")
+
+        if not success:
+            proposal = maybe_propose_fabricate()
+            if proposal and not is_frozen():
+                t_fab = time.perf_counter()
+                fab_req = Envelope(
+                    task_id=task_id,
+                    target_gem="grandidierite",
+                    payload=GrandidieriteRequest(tool_request=proposal),
+                )
+                fab_res = self.registry.execute(fab_req)
+                result.stages.append(
+                    StageResult(
+                        stage="auto_fabricate",
+                        success=not bool(fab_res.error),
+                        detail=proposal.get("name", ""),
+                        duration_ms=(time.perf_counter() - t_fab) * 1000,
+                    )
+                )
+            elif proposal and is_frozen():
+                result.stages.append(
+                    StageResult(
+                        stage="auto_fabricate",
+                        success=False,
+                        detail="blocked_by_bench_guardian",
+                    )
+                )
+
+        if success and generated and tool_assist:
+            try:
+                from gems.grandidierite.registry import run_tool
+
+                run_tool(
+                    "save_success_pattern",
+                    {
+                        "objective": objective,
+                        "code": generated,
+                        "confidence": result.confidence,
+                        "tags": [strategy],
+                        # So the writer can refuse an artifact that carries
+                        # the holdout. Without this the store re-injects
+                        # leaked-era code into every later prompt.
+                        "holdout_test": holdout_test,
+                    },
+                )
+                cit = index_pass_pattern(
+                    objective=objective,
+                    code=generated,
+                    confidence=result.confidence,
+                    strategy=strategy,
+                )
+                # success must be DERIVED, not asserted. This was hardcoded
+                # True while the real citrine error was demoted to a
+                # substring of the detail line — which is how a memory
+                # layer that had never once stored a pattern kept
+                # reporting a green stage.
+                cit_ok = bool(cit.get("ok"))
+                detail = f"success_pattern citrine={cit_ok}"
+                if not cit_ok and cit.get("error"):
+                    detail += f" error={str(cit['error'])[:200]}"
+                result.stages.append(
+                    StageResult(stage="memory_save", success=cit_ok, detail=detail)
+                )
+            except Exception as e:
+                # A bare `pass` here removed the row entirely, so a crash
+                # in this block looked identical to the stage never running.
+                result.stages.append(
+                    StageResult(
+                        stage="memory_save",
+                        success=False,
+                        detail=f"memory_save failed: {str(e)[:200]}",
+                    )
+                )
+
+        # Status is DERIVED from the sandbox, not asserted. This was an
+        # unconditional "complete", so a run whose generated code never once
+        # executed successfully still reported complete — and cli/main.py
+        # (`Exit(0 if result.status == "complete" else 1)`) therefore exited
+        # 0 on a total failure, while dashboard/collector.py counted it in
+        # `runs_complete` and pinned pipeline_success_rate at 1.0.
+        # "error" (not a third value) is deliberate: it is the vocabulary
+        # _fail() and orchestrator.Status already use, so the existing
+        # complete/error buckets stay exhaustive.
+        if result.sandbox is not None and result.sandbox.exit_code == 0:
+            result.status = "complete"
+        else:
+            result.status = "error"
+            if not result.error:
+                detail = (last_err or "").strip()
+                result.error = f"sandbox exit {exit_code}" + (
+                    f": {detail[:500]}" if detail else ""
+                )
 
     # -- retrieval blocks ---------------------------------------------------
 
@@ -1186,8 +1242,9 @@ class Pipeline:
                 verification_score=result.verification_score,
                 total_tests=int(result.sandbox.total_tests) if result.sandbox else 0,
             )
-        except Exception:
-            pass
+        except Exception as e:
+            # A-3: was a silent pass — same seam as the finalize tail.
+            result.degraded.append(f"experience_record_failed:{type(e).__name__}")
         try:
             record_outcome(False, error=msg)
             proposal = maybe_propose_fabricate()
@@ -1209,8 +1266,10 @@ class Pipeline:
                 result.stages.append(
                     StageResult(stage="auto_fabricate", success=fab_ok, detail=detail)
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            # A-3: was a silent except:pass — a failed fabrication attempt left
+            # no trace on the run at all.
+            result.degraded.append(f"auto_fabricate_failed:{type(e).__name__}")
         result.finished_at = datetime.now(timezone.utc).isoformat()
         clear_progress()
         self._persist(result)
@@ -1228,11 +1287,12 @@ class Pipeline:
 
     def _persist(self, result: PipelineResult) -> None:
         try:
-            (self.runs_dir / f"{result.task_id}.json").write_text(
-                result.model_dump_json(indent=2), encoding="utf-8"
-            )
-        except Exception:
-            pass
+            write_json(self.runs_dir / f"{result.task_id}.json",
+                       result.model_dump(mode="json"))
+        except Exception as e:
+            # A-3: was a silent pass — a run that never reached disk was
+            # indistinguishable from one that persisted.
+            result.degraded.append(f"persist_failed:{type(e).__name__}")
 
     def _log(self, result: PipelineResult, learn: bool = False) -> None:
         """Log the run to amethyst. `learn` stays False on the pipeline path.

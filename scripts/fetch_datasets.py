@@ -1,4 +1,29 @@
-{
+#!/usr/bin/env python3
+"""Regenerate memory/datasets/mbpp_lite.json deterministically (stdlib only).
+
+Day-3 dataset policy (ADR 0004, finding A-8): eval data no longer rides in
+git — memory/ is gitignored runtime state, so fresh clones do not carry this
+file. The canonical content is embedded verbatim below (provenance: a lite
+subset derived from MBPP; hand-authored inspired tasks for local eval only,
+not a redistributed benchmark dump) so a fresh clone can reproduce it
+offline, byte-for-byte:
+
+    python scripts/fetch_datasets.py            # write (mkdir -p, atomic)
+    python scripts/fetch_datasets.py --check    # exit 1 on drift/missing
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+TARGET = ROOT / "memory" / "datasets" / "mbpp_lite.json"
+
+# Canonical bytes of memory/datasets/mbpp_lite.json (2320 bytes,
+# sha256 eb7aa52fd2f3c54a9d4811f91dfadc6b48088fc572a79b2524901ea84b4d4dde).
+CANONICAL = r"""{
   "name": "mbpp_lite_local",
   "license_note": "Hand-authored inspired tasks for local eval only — not a redistributed benchmark dump.",
   "tasks": [
@@ -44,3 +69,43 @@
     }
   ]
 }
+"""
+
+
+def write_dataset(path: Path = TARGET) -> Path:
+    """Write the canonical bytes (atomic tmp + replace; small file)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(CANONICAL, encoding="utf-8")
+    tmp.replace(path)
+    return path
+
+
+def check_dataset(path: Path = TARGET) -> bool:
+    """True iff the file exists and matches the canonical bytes exactly."""
+    try:
+        return path.read_text(encoding="utf-8") == CANONICAL
+    except OSError:
+        return False
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--check", action="store_true",
+                    help="verify the existing file matches canonical; "
+                         "exit 1 on drift or absence")
+    args = ap.parse_args()
+    if args.check:
+        if check_dataset():
+            print(f"ok: {TARGET} matches canonical content")
+            return 0
+        print(f"drift or missing: {TARGET} — run scripts/fetch_datasets.py",
+              file=sys.stderr)
+        return 1
+    path = write_dataset()
+    print(f"wrote {path} ({len(CANONICAL.encode('utf-8'))} bytes, canonical)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -78,7 +78,11 @@ def main() -> int:
     args = ap.parse_args()
     tasks = load_tasks(limit=args.limit)
     if not tasks:
-        print("no dataset tasks found", file=sys.stderr)
+        print(
+            "no dataset tasks found — run scripts/fetch_datasets.py "
+            "(Day-3: eval data is untracked) or restore local copies",
+            file=sys.stderr,
+        )
         return 2
 
     leaks = audit_tasks(tasks)

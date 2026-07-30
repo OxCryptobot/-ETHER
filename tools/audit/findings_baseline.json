@@ -238,7 +238,8 @@
     "pack self-scan grandfathered at activation (Day-3): no global/per-rule exclusion mechanism exists for tools/audit/ (exclude_files is honored only by QUAL-002), so the pack's own findings are baselined instead \u2014 QUAL-003 tools/audit/audit_runner.py:204 (FP: `run(` there is the runner's own function, not subprocess.run; SUBPROCESS_CALLS over-matches bare 'run'), QUAL-005 tests/test_audit_contracts.py env read, QUAL-005 repo count 200 > 191 (the +9 over the 191 audited-repo reality are the pack's own getenv sites: alerts.py x7, perf_contracts.py x1, test_audit_contracts.py x1), QUAL-006 tools/audit/rules/error_handling.py (the _is_fence_stripper detection pattern itself matches the rule).",
     "ARCH-003 grandfathered at activation: Pipeline.run spans 718 lines at 819bc92 by the rule's measurement (def line to end_lineno) \u2014 SPEC's '702 post-stage-1' premise did not match; budget ratcheted 790 -> 710 as the may-only-lower target, so the 718 site is baselined (open). Any further growth changes the fingerprint and blocks; a refactor below 710 resolves it.",
     "budget ratchets (config/audit-rules.yaml kept in sync): pipeline_run_lines 790 -> 710, env_getenv_sites 188 -> 191 (audited-repo reality post-Day-2; +3 = two ETHER_BATCH_COMMANDS gates + stage-1 loop flag, ADRs 0001/0002).",
-    "violations resolved by Days 1-2 (SEC-001/002/003/004/005/008, MEAS-005 et al.) promoted fixed_pending_review -> fixed with fixed_commit 819bc92 by this human PR, so reappearance classifies as TRUE_REGRESSION (P3 gate)."
+    "violations resolved by Days 1-2 (SEC-001/002/003/004/005/008, MEAS-005 et al.) promoted fixed_pending_review -> fixed with fixed_commit 819bc92 by this human PR, so reappearance classifies as TRUE_REGRESSION (P3 gate).",
+    "tracked_whitelist pruned at Day-3: the four memory/quizzes/* eval files and memory/datasets/mbpp_lite.json were untracked (dataset policy, A-8); SEC-007's whitelist is shrink-only, so their entries were removed rather than left stale. memory/batch_queue.json remains tracked deliberately (seeded smoke queue, no eval data \u2014 ADR 0004 exception)."
   ],
   "philosophy": "Grandfathering: fingerprints recorded here as known/current do NOT block; NEW fingerprints block at blocker severity. Ratchet rules additionally compare counts/budgets and block increases. Baseline changes require human PR \u2014 the flywheel bot may never merge baseline updates (D-01).",
   "repo_head": "819bc92",
@@ -271,32 +272,7 @@
       "remove_by": "2026-10-01"
     },
     {
-      "path": "memory/datasets/mbpp_lite.json",
-      "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
-      "remove_by": "2026-10-01"
-    },
-    {
       "path": "memory/interactions/.gitkeep",
-      "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
-      "remove_by": "2026-10-01"
-    },
-    {
-      "path": "memory/quizzes/hidden_humaneval.json",
-      "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
-      "remove_by": "2026-10-01"
-    },
-    {
-      "path": "memory/quizzes/hidden_ids.json",
-      "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
-      "remove_by": "2026-10-01"
-    },
-    {
-      "path": "memory/quizzes/holdout_ids.json",
-      "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
-      "remove_by": "2026-10-01"
-    },
-    {
-      "path": "memory/quizzes/holdout_v1.json",
       "reason": "tracked under gitignored path at audit HEAD (F5/S-06/D-03); shrink only",
       "remove_by": "2026-10-01"
     },

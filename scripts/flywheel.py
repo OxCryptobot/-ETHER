@@ -57,6 +57,16 @@ def _env() -> Dict[str, str]:
     return env
 
 
+def _compute_do_push(push_flag: bool) -> bool:
+    """Report pushes are explicit opt-in only (MEAS-005).
+
+    --autonomous previously implied push, flooding main with ~25 report
+    commits/day. Autonomy ≠ consent to publish; only --push or
+    ETHER_FLYWHEEL_PUSH=1 publishes.
+    """
+    return push_flag or os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1"
+
+
 def run(cmd: List[str], timeout: int = 600) -> Dict[str, Any]:
     started = time.perf_counter()
     try:
@@ -318,7 +328,9 @@ def cycle(
 
     steps["smoke"] = run([py, "scripts/smoke_test.py"], timeout=120)
     print_step("smoke", steps["smoke"])
-    steps["pytest"] = run([py, "-m", "pytest", "-q", "--tb=line"], timeout=300)
+    steps["pytest"] = run(
+        [py, "-m", "pytest", "-q", "--tb=line"], timeout=900
+    )  # suite mean ~380s on the autonomy host; 300s timed out every cycle (MEAS-002)
     print_step("pytest", steps["pytest"])
     if run_doctor:
         steps["doctor"] = run([py, "-c", "from cli.main import app; app(['doctor'])"], timeout=60)
@@ -513,7 +525,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     continuous = args.autonomous or args.loop > 0
     interval = args.interval if args.autonomous else (args.loop or args.interval)
-    do_push = args.push or args.autonomous or os.getenv("ETHER_FLYWHEEL_PUSH", "0") == "1"
+    do_push = _compute_do_push(args.push)
 
     def once() -> int:
         # Prefer curriculum when autonomous / env says so

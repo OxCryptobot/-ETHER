@@ -32,7 +32,8 @@ except Exception:
 
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
-os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
+# MEAS-005: report pushes are operator opt-in (ETHER_FLYWHEEL_PUSH=1 in .env); default off
+os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "0")
 os.environ.setdefault("ETHER_CURRICULUM", "1")
 os.environ.setdefault("ETHER_EXPERIENCE", "1")
 os.environ.setdefault("ETHER_BENCH_GUARDIAN", "1")
@@ -222,6 +223,9 @@ def flywheel_loop() -> None:
             if smart.exists():
                 code = run_cmd([PY, str(smart)], timeout=2400)
             else:
+                # Fallback only reachable on a broken install (run_smart_cycle.py
+                # missing). The explicit --push is the operator-opt-in exception
+                # to MEAS-005's default-off posture; see ADR 0003.
                 code = run_cmd([PY, "-m", "cli.main", "flywheel", "--push"], timeout=2400)
             log(f"smart cycle exit={code}")
 

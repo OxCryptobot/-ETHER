@@ -7,6 +7,7 @@ public API/messages exactly as before (D3 migration, stage 1).
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -114,6 +115,13 @@ def enqueue(
         if kind == "pipeline":
             item["objective"] = objective
         elif kind == "command":
+            if os.getenv("ETHER_BATCH_COMMANDS", "0") != "1":
+                raise ValueError(
+                    "command queue items are disabled (S-03): a pushed "
+                    "batch_queue.json would otherwise execute arbitrary "
+                    "commands on the daemon host. Set ETHER_BATCH_COMMANDS=1 "
+                    "to opt in on a trusted machine."
+                )
             item["command"] = list(command or [])
         else:
             raise ValueError(f"unsupported kind: {kind}")

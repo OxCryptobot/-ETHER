@@ -61,8 +61,14 @@ D1_ALLOWLIST: Set[Tuple[str, int, str]] = frozenset(
         ("gems/amethyst/evolution.py", 10, "core.learning"),
         ("gems/black_tourmaline/security.py", 18, "core.config"),
         ("gems/citrine/memory.py", 13, "core.chunking"),
-        ("gems/clear_quartz/sandbox.py", 401, "core.assert_audit"),
-        ("gems/clear_quartz/sandbox.py", 277, "core.pipeline_hooks"),
+        # re-pinned (+10) at Day 1: the execute() success path gained the
+        # backend resolution + fallback marker (B1/S-01), shifting the two
+        # lazy imports below it; same file, same modules, not a new site.
+        # re-pinned again (+6) at Day-1 review: _run gained a docstring
+        # noting the marker lives in execute() (SEC-003), shifting only the
+        # import below it; same file, same module, still not a new site.
+        ("gems/clear_quartz/sandbox.py", 417, "core.assert_audit"),
+        ("gems/clear_quartz/sandbox.py", 287, "core.pipeline_hooks"),
         ("gems/clear_quartz/sandbox.py", 147, "core.pipeline_hooks"),
         ("gems/clear_quartz/sandbox.py", 152, "core.test_synth"),
         ("gems/clear_quartz/sandbox.py", 158, "core.assert_harness"),

@@ -7,7 +7,8 @@ Type=simple
 WorkingDirectory=%h/ETHER
 Environment=ETHER_ROOT=%h/ETHER
 Environment=ETHER_GIT_RESET_OK=1
-Environment=ETHER_SANDBOX_BACKEND=local
+# B1: fail closed. An autonomy daemon must not run model-authored code host-side. local requires deliberate operator opt-in.
+Environment=ETHER_SANDBOX_BACKEND=docker
 Environment=PYTHONUNBUFFERED=1
 # Load .env via start script
 ExecStart=/bin/bash %h/ETHER/scripts/start_daemon_linux.sh

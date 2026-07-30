@@ -15,12 +15,11 @@ if [[ ! -f .env ]]; then
   echo "Created .env — set ETHER_PRIMARY_MODEL from: ollama list"
 fi
 
-# Prefer local sandbox when no docker
-if ! command -v docker >/dev/null 2>&1; then
-  if ! grep -q '^ETHER_SANDBOX_BACKEND=' .env 2>/dev/null; then
-    echo 'ETHER_SANDBOX_BACKEND=local' >> .env
-  fi
-fi
+# B1: deliberately NOT writing ETHER_SANDBOX_BACKEND into .env. The daemon
+# fails closed to docker (deploy/ether.service pins =docker, and an explicit
+# docker backend refuses host re-run). Host-side execution on a dockerless
+# host requires deliberate operator opt-in: edit .env yourself and accept
+# the visible sandbox_fallback:local marker on every run.
 
 chmod +x scripts/start_daemon_linux.sh scripts/linux_bootstrap.sh || true
 

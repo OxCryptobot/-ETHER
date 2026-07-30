@@ -15,16 +15,25 @@ export ETHER_PULL_SOFT="${ETHER_PULL_SOFT:-1}"
 export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONIOENCODING="utf-8"
 
-# Prefer local sandbox if Docker not present
-if ! command -v docker >/dev/null 2>&1; then
-  export ETHER_SANDBOX_BACKEND="${ETHER_SANDBOX_BACKEND:-local}"
-fi
+# B1: preserve an operator-set ETHER_SANDBOX_BACKEND (e.g. the systemd
+# unit's explicit =docker pin in deploy/ether.service) across the .env
+# sourcing below — local override config must not silently clobber a
+# deliberate security decision.
+_sandbox_backend_pin="${ETHER_SANDBOX_BACKEND-}"
 
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
   source .env
   set +a
+fi
+
+if [[ -n "$_sandbox_backend_pin" ]]; then
+  export ETHER_SANDBOX_BACKEND="$_sandbox_backend_pin"
+elif ! command -v docker >/dev/null 2>&1; then
+  # Prefer local sandbox if Docker not present (visible via the
+  # sandbox_fallback:local marker; non-penalizing per ADR 0002).
+  export ETHER_SANDBOX_BACKEND="${ETHER_SANDBOX_BACKEND:-local}"
 fi
 
 PY="${ROOT}/.venv/bin/python"

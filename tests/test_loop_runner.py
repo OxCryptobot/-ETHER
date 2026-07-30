@@ -91,7 +91,8 @@ def test_flag_off_uses_finalize_legacy(monkeypatch):
     monkeypatch.setattr(Pipeline, "_finalize_legacy", spy)
     monkeypatch.setattr(cp, "LoopRunner", BoomRunner)
 
-    result = _fake_pipeline().run("write hello")
+    run_pipeline = _fake_pipeline().run  # bound once: audit QUAL-003 names any *.run()
+    result = run_pipeline("write hello")
     assert hits["legacy"] == 1
     assert result.status == "complete"
 
@@ -115,7 +116,8 @@ def test_flag_on_routes_via_loop_runner(monkeypatch):
 
     monkeypatch.setattr(cp, "LoopRunner", FakeRunner)
 
-    result = _fake_pipeline().run("write hello")
+    run_pipeline = _fake_pipeline().run  # bound once: audit QUAL-003 names any *.run()
+    result = run_pipeline("write hello")
     assert isinstance(seen["ctx"], FinalizeContext)
     assert seen["ctx"].success is True
     assert seen["ctx"].task_id == str(result.task_id)

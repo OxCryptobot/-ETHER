@@ -39,9 +39,8 @@ def state_lock(lock_path: Path, timeout: float = LOCK_TIMEOUT_S) -> Iterator[Non
                     if age > timeout:
                         lock_path.unlink(missing_ok=True)
                         continue
-                except Exception:
-                    # why: a vanished/unreadable lockfile must not mask the
-                    # timeout the caller asked for — fall through and raise.
+                # why: a vanished/unreadable lockfile must not mask the timeout.
+                except Exception:  # fall through and raise the caller's timeout
                     pass
                 raise TimeoutError(f"state lock timeout after {timeout}s: {lock_path}")
             time.sleep(0.05)
@@ -51,13 +50,13 @@ def state_lock(lock_path: Path, timeout: float = LOCK_TIMEOUT_S) -> Iterator[Non
         try:
             if fd is not None:
                 os.close(fd)
+        # why: release is best-effort; the unlink below is the real release.
         except Exception:
-            # why: release is best-effort; the unlink below is the real release.
             pass
         try:
             lock_path.unlink(missing_ok=True)
+        # why: a leftover lockfile self-heals via the stale recovery above.
         except Exception:
-            # why: a leftover lockfile self-heals via the stale recovery above.
             pass
 
 

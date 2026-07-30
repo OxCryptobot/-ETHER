@@ -263,7 +263,7 @@ def check_sec007(ctx: RuleContext, meta: dict) -> RuleResult:
 
 def check_sec008(ctx: RuleContext, meta: dict) -> RuleResult:
     """SEC-008: tracked memory/batch_queue.json may never contain a
-    {\"kind\": \"command\"} item (S-03 kill-switch)."""
+    {"kind": "command"} item (S-03 kill-switch)."""
     res = RuleResult(rule_id="SEC-008")
     rel = "memory/batch_queue.json"
     text = ctx.read(rel)

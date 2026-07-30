@@ -1,0 +1,142 @@
+# GitHub-hosted PR/push audit gates (P2 §3 DAG, P3 §7 gate policy).
+# Install as .github/workflows/audit-gates.yml in the ETHER repo.
+# DAG: lint -> (audit-rules || contracts) -> pytest -> gate.
+# Blocks merge on: NEW blocker-severity violations, contract-test failure,
+# suite failure. Warns: baselined violations, warn-severity, mypy.
+# Actions are SHA-pinned (S-08).
+
+name: audit-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    # Flywheel bot report commits touch only FLYWHEEL.md — don't burn CI on them.
+    paths-ignore: ['FLYWHEEL.md']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+      # ruff steps are WARN-MODE (continue-on-error): the repo carries 6
+      # pre-existing F401 in core/ plus pre-existing E402/format drift at
+      # 819bc92. The audit engine (audit-rules job) is the blocking gate
+      # until the ruff baseline burns down — same philosophy as the mypy
+      # step below. Burn-down + config/ruff-ether.toml merge: ADR 0004
+      # residual.
+      - name: ruff check (warn mode — pre-existing F401/format drift)
+        continue-on-error: true
+        run: pipx run ruff==0.5.0 check .
+      - name: ruff format --check (warn mode — pre-existing drift)
+        continue-on-error: true
+        run: pipx run ruff==0.5.0 format --check .
+      - name: mypy (warn mode until baseline burns down)
+        continue-on-error: true
+        run: |
+          if grep -q '\[tool.mypy\]' pyproject.toml 2>/dev/null; then
+            pipx run mypy==1.10.0 core gems cli || true
+          else
+            echo "mypy not configured — skipping (see config/ruff-ether.toml snippet)"
+          fi
+
+  audit-rules:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+      - name: run audit engine (full register)
+        run: |
+          python tools/audit/audit_runner.py --repo . \
+            --json-out audit_violations.jsonl \
+            --health-out audit_health.json
+        # exit 1 only on NEW blocker fingerprints (baseline grandfathered)
+      - name: regression classification
+        if: always()
+        # Gate policy (P3 §7): exits 1 on true regression of a fixed
+        # blocker/high finding — this failure propagates to the gate job.
+        run: |
+          python tools/audit/regression_tracker.py \
+            --violations audit_violations.jsonl \
+            --commit "${{ github.sha }}"
+      - name: upload audit health
+        if: always() # diagnostics must survive an audit-rules failure
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: audit_health
+          path: |
+            audit_health.json
+            audit_violations.jsonl
+          retention-days: 30
+
+  contracts:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: "3.11"
+      - name: install
+        run: pip install -e ".[dev]" || pip install pytest httpx pydantic fastapi
+      - name: contract tests (SEC/PERF/STATE/MEAS TST rules)
+        run: pytest tests/test_audit_contracts.py -q
+
+  pytest:
+    needs: [audit-rules, contracts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        python: ["3.11", "3.12"]
+        loop_runner: ["0", "1"]
+    env:
+      ETHER_LOOP_RUNNER: ${{ matrix.loop_runner }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: fresh-clone install (MEAS-005)
+        run: pip install -e ".[dev]"
+      - name: shadow runner selftest
+        run: python scripts/shadow_runner.py --selftest
+      # No --timeout (pytest-timeout is not a dependency) and no -x: the
+      # floor is the FULL suite, both loop-runner modes.
+      - name: full suite
+        run: pytest -q --tb=short
+
+  gate:
+    needs: [audit-rules, contracts, pytest]
+    # always(): without it a failed/cancelled dependency SKIPS this job and a
+    # skipped gate can satisfy a required status check — fail-closed instead.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: aggregate gate
+        run: |
+          echo "Gate policy (P3 §7): fail only on new blocker violations,"
+          echo "true regressions of fixed blocker/high findings, or test"
+          echo "failure. needs.*.result carries that signal; anything other"
+          echo "than 'success' (failure, cancelled, skipped) fails the gate."
+          echo "audit-rules=${{ needs.audit-rules.result }} contracts=${{ needs.contracts.result }} pytest=${{ needs.pytest.result }}"
+      - name: fail on red
+        if: |
+          needs.audit-rules.result != 'success' ||
+          needs.contracts.result != 'success' ||
+          needs.pytest.result != 'success'
+        run: exit 1

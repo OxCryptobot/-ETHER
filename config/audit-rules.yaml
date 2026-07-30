@@ -2,8 +2,8 @@
   "version": 1,
   "note": "Machine-readable register of the 36 ETHER audit rules (P2 §1). This file is JSON-shaped YAML: JSON is a YAML 1.2 subset, so the stdlib-only runner parses it with json.loads and PyYAML users can too. Rule semantics changes bump `version` and invalidate old fingerprints (re-baseline via PR).",
   "budgets": {
-    "pipeline_run_lines": 790,
-    "env_getenv_sites": 188,
+    "pipeline_run_lines": 710,
+    "env_getenv_sites": 191,
     "http_timeout_ceiling": 120.0,
     "loop_wall_clock_s": 300.0,
     "loop_max_attempts": 4,
@@ -12,7 +12,7 @@
   "rules": [
     {"id": "ARCH-001", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-4", "R1"], "description": "core/ must not import gems.* (layering inversion)"},
     {"id": "ARCH-002", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-4", "A-1"], "description": "gems/ must not import core.pipeline (leaf contracts excepted)"},
-    {"id": "ARCH-003", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-1", "F2", "R1"], "description": "Pipeline.run line-count budget ratchet (budget 790, may only be lowered)"},
+    {"id": "ARCH-003", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-1", "F2", "R1"], "description": "Pipeline.run line-count budget ratchet (budget 710, may only be lowered)"},
     {"id": "ARCH-004", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-7", "P-05"], "collector_api_modules": ["dashboard/collector.py"], "description": "dashboard/*.py must not read memory/ paths outside the collector API module list"},
     {"id": "ARCH-005", "category": "ARCH", "severity": "warn", "detection": "GIT", "enabled": true, "fast": false, "finding_ids": ["A-6", "A-8"], "admitted_shims": ["pipeline_select", "pipeline_burst", "pipeline_hooks"], "description": "new core/*.py module must be imported or listed in core/modules.yaml (shim proliferation guard vs baseline module list)"},
     {"id": "ARCH-006", "category": "ARCH", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-1", "V-E"], "description": "orchestrator.process_response(...) Status must not be discarded (bare expression statement)"},
@@ -21,7 +21,7 @@
     {"id": "QUAL-002", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F8", "A-3"], "exclude_files": ["core/assert_audit.py"], "description": "except:pass / return None requires a `# why:` justification (assert_audit.py excepts are detection subjects, pre-excluded)"},
     {"id": "QUAL-003", "category": "QUAL", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F8"], "description": "subprocess.* calls require timeout="},
     {"id": "QUAL-004", "category": "QUAL", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F6"], "allow_sys_path": ["tests/conftest.py", "tools/_lib/bootstrap.py"], "description": "no sys.path.insert/append outside designated bootstrap shims"},
-    {"id": "QUAL-005", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-5", "F6", "R4"], "allow_env_modules": ["core/config.py", "core/dotenv.py"], "description": "os.getenv(\"ETHER_*\") only in allowlisted config modules; per-var ledger + count ratchet (budget 188)"},
+    {"id": "QUAL-005", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-5", "F6", "R4"], "allow_env_modules": ["core/config.py", "core/dotenv.py"], "description": "os.getenv(\"ETHER_*\") only in allowlisted config modules; per-var ledger + count ratchet (budget 191)"},
     {"id": "QUAL-006", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F9", "F10"], "canonical": "core/agent_loop.py", "description": "duplicated naive ``` fence-stripper sentinel — dies when count == 1"},
     {"id": "QUAL-007", "category": "QUAL", "severity": "warn", "detection": "external", "enabled": false, "fast": false, "finding_ids": ["F2", "A-1"], "description": "naming (ruff N802/N803/N806) + complexity (xenon --max-average B) — enforced by external tools, per-file CC baseline in findings_baseline.json"},
 

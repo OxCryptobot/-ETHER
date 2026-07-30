@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "note": "Machine-readable register of the 36 ETHER audit rules (P2 §1). This file is JSON-shaped YAML: JSON is a YAML 1.2 subset, so the stdlib-only runner parses it with json.loads and PyYAML users can too. Rule semantics changes bump `version` and invalidate old fingerprints (re-baseline via PR).",
+  "budgets": {
+    "pipeline_run_lines": 790,
+    "env_getenv_sites": 188,
+    "http_timeout_ceiling": 120.0,
+    "loop_wall_clock_s": 300.0,
+    "loop_max_attempts": 4,
+    "pytest_timeout_min": 600
+  },
+  "rules": [
+    {"id": "ARCH-001", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-4", "R1"], "description": "core/ must not import gems.* (layering inversion)"},
+    {"id": "ARCH-002", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-4", "A-1"], "description": "gems/ must not import core.pipeline (leaf contracts excepted)"},
+    {"id": "ARCH-003", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-1", "F2", "R1"], "description": "Pipeline.run line-count budget ratchet (budget 790, may only be lowered)"},
+    {"id": "ARCH-004", "category": "ARCH", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-7", "P-05"], "collector_api_modules": ["dashboard/collector.py"], "description": "dashboard/*.py must not read memory/ paths outside the collector API module list"},
+    {"id": "ARCH-005", "category": "ARCH", "severity": "warn", "detection": "GIT", "enabled": true, "fast": false, "finding_ids": ["A-6", "A-8"], "admitted_shims": ["pipeline_select", "pipeline_burst", "pipeline_hooks"], "description": "new core/*.py module must be imported or listed in core/modules.yaml (shim proliferation guard vs baseline module list)"},
+    {"id": "ARCH-006", "category": "ARCH", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-1", "V-E"], "description": "orchestrator.process_response(...) Status must not be discarded (bare expression statement)"},
+
+    {"id": "QUAL-001", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F8", "A-3"], "description": "no bare `except:`"},
+    {"id": "QUAL-002", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F8", "A-3"], "exclude_files": ["core/assert_audit.py"], "description": "except:pass / return None requires a `# why:` justification (assert_audit.py excepts are detection subjects, pre-excluded)"},
+    {"id": "QUAL-003", "category": "QUAL", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F8"], "description": "subprocess.* calls require timeout="},
+    {"id": "QUAL-004", "category": "QUAL", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F6"], "allow_sys_path": ["tests/conftest.py", "tools/_lib/bootstrap.py"], "description": "no sys.path.insert/append outside designated bootstrap shims"},
+    {"id": "QUAL-005", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["A-5", "F6", "R4"], "allow_env_modules": ["core/config.py", "core/dotenv.py"], "description": "os.getenv(\"ETHER_*\") only in allowlisted config modules; per-var ledger + count ratchet (budget 188)"},
+    {"id": "QUAL-006", "category": "QUAL", "severity": "warn", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["F9", "F10"], "canonical": "core/agent_loop.py", "description": "duplicated naive ``` fence-stripper sentinel — dies when count == 1"},
+    {"id": "QUAL-007", "category": "QUAL", "severity": "warn", "detection": "external", "enabled": false, "fast": false, "finding_ids": ["F2", "A-1"], "description": "naming (ruff N802/N803/N806) + complexity (xenon --max-average B) — enforced by external tools, per-file CC baseline in findings_baseline.json"},
+
+    {"id": "SEC-001", "category": "SEC", "severity": "blocker", "detection": "AST+TST", "enabled": true, "fast": true, "finding_ids": ["S-02", "B4"], "description": "every @app.post promote route touching PERSISTENT must call _promotion_gate"},
+    {"id": "SEC-002", "category": "SEC", "severity": "blocker", "detection": "AST+TST", "enabled": true, "fast": true, "finding_ids": ["S-07", "B4"], "description": "resolve_tool/run_tool must re.fullmatch-sanitize the name before the PERSISTENT join"},
+    {"id": "SEC-003", "category": "SEC", "severity": "blocker", "detection": "AST+TST", "enabled": true, "fast": true, "finding_ids": ["S-01", "B1"], "description": "_run_local unreachable from execute() without sandbox_fallback:local flag on the same path"},
+    {"id": "SEC-004", "category": "SEC", "severity": "blocker", "detection": "CFG", "enabled": true, "fast": true, "finding_ids": ["S-01", "B1"], "description": "deploy/** must not pin ETHER_SANDBOX_BACKEND=local|subprocess|native"},
+    {"id": "SEC-005", "category": "SEC", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["S-05"], "description": "black_tourmaline pattern list must cover check_output | popen | socket"},
+    {"id": "SEC-006", "category": "SEC", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["S-09"], "description": "apply_patch.py requires Path.resolve().is_relative_to containment (BLOCK-substring check alone fails)"},
+    {"id": "SEC-007", "category": "SEC", "severity": "blocker", "detection": "GIT", "enabled": true, "fast": false, "finding_ids": ["F5", "S-03", "S-06", "D-03"], "description": "tracked files under ignored paths (memory/, tools/persistent/) must be in the baseline tracked whitelist (goal: shrink, never grow)"},
+    {"id": "SEC-008", "category": "SEC", "severity": "blocker", "detection": "CFG", "enabled": true, "fast": true, "finding_ids": ["S-03"], "description": "tracked memory/batch_queue.json may never contain a {\"kind\": \"command\"} item"},
+    {"id": "SEC-009", "category": "SEC", "severity": "warn", "detection": "CFG", "enabled": true, "fast": false, "finding_ids": ["S-08"], "description": "dependency drift: unbounded >= deps without lockfile; mutable docker image tags"},
+
+    {"id": "STATE-001", "category": "STATE", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["P-07", "R3"], "writer_allowlist": ["core/batch_queue.py", "core/state_spine.py"], "description": "memory/-rooted state writes only in allowlisted writer modules (queue_lock + tmp.replace pattern)"},
+    {"id": "STATE-002", "category": "STATE", "severity": "blocker", "detection": "AST", "enabled": true, "fast": false, "finding_ids": ["P-07", "P-10"], "writer_allowlist": ["core/batch_queue.py", "core/state_spine.py"], "description": "read-modify-write of memory/ state requires a lock or atomic tmp.replace (# audit:rotation for legal rewrites)"},
+    {"id": "STATE-003", "category": "STATE", "severity": "blocker", "detection": "AST", "enabled": true, "fast": false, "finding_ids": ["P-05"], "description": "no ledger/state writes on dashboard read paths (read-only collector contract)"},
+
+    {"id": "PERF-001", "category": "PERF", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["P-02"], "description": "ETHER_HTTP_TIMEOUT default ≤ 120s ceiling; httpx.Client requires explicit timeout"},
+    {"id": "PERF-002", "category": "PERF", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["P-02"], "description": "LoopBudget ceilings: wall_clock_s ≤ 300, max_attempts ≤ 4"},
+    {"id": "PERF-003", "category": "PERF", "severity": "blocker", "detection": "AST+TST", "enabled": true, "fast": false, "finding_ids": ["P-01", "R6"], "description": "rag_bm25.search() must not call an uncached build_index (module-level cache or lru_cache required)"},
+    {"id": "PERF-004", "category": "PERF", "severity": "blocker", "detection": "AST+TST", "enabled": true, "fast": false, "finding_ids": ["P-05"], "description": "dashboard websocket loop must not call _safe_snapshot() uncached (TTL cache / single-flight marker required)"},
+    {"id": "PERF-005", "category": "PERF", "severity": "warn", "detection": "AST", "enabled": true, "fast": false, "finding_ids": ["P-06", "R3"], "description": "some module must own pruning of memory/runs/*.json (prune/rotate/unlink reachable from pipeline or scripts)"},
+    {"id": "PERF-006", "category": "PERF", "severity": "warn", "detection": "RUN", "enabled": true, "fast": false, "finding_ids": ["P-02", "P-03"], "description": "LLM latency budget replay — skipped-with-flag offline; set ETHER_AUDIT_GPU=1 for live mode"},
+
+    {"id": "MEAS-001", "category": "MEAS", "severity": "warn", "detection": "CFG", "enabled": true, "fast": false, "finding_ids": ["T3", "R7"], "description": "quiz holdout assertion style: `== True/False` flagged, `is`/type()-style recommended"},
+    {"id": "MEAS-002", "category": "MEAS", "severity": "warn", "detection": "CFG", "enabled": true, "fast": false, "finding_ids": ["T2", "R2"], "description": "docs/results/ablation_*.json must contain per_task/per_sample rows (aggregates alone fail)"},
+    {"id": "MEAS-003", "category": "MEAS", "severity": "blocker", "detection": "AST", "enabled": true, "fast": true, "finding_ids": ["T1", "D-09", "B5"], "description": "ban collection-time I/O in pytest.mark.parametrize args (module-scope Call) — literals or pytest_generate_tests only"},
+    {"id": "MEAS-004", "category": "MEAS", "severity": "warn", "detection": "AST", "enabled": true, "fast": false, "finding_ids": ["T6", "R7"], "description": "curriculum empty-tier fallback must not reinstate unfiltered tier (`if not tasks: tasks = list(tier.get(...))`)"},
+    {"id": "MEAS-005", "category": "MEAS", "severity": "warn", "detection": "CFG", "enabled": true, "fast": false, "finding_ids": ["T1", "B5", "T5"], "description": "flywheel pytest gate timeout must be ≥ 600s"}
+  ],
+  "retired": []
+}

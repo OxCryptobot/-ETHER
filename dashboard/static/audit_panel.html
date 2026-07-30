@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!--
+  ETHER audit health panel — dependency-free static page (P2 §4).
+
+  DESIGN (static/TTL, deliberately NOT a live endpoint — P-05/V-D is the
+  cautionary precedent):
+  - The CI gate writes audit_health.json next to this page as a build
+    artifact; this page fetch()es it like any static asset.
+  - Zero recompute, zero writes on read, zero subprocesses. The dashboard
+    collector, if it proxies this, must serve the file through a >=30s TTL
+    cache with single-flight — never recompute, never write.
+  - Trend sparkline reads the inline `trend_7d` array from the aggregate
+    (appended by the gate to memory/audit/health_history.jsonl, append-only,
+    <=1 write per gate run).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ETHER audit health</title>
+<style>
+  :root { --ok:#2da44e; --warn:#bf8700; --fail:#cf222e; --muted:#57606a; }
+  body { font: 14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+         margin: 2rem auto; max-width: 960px; color:#1f2328; }
+  h1 { font-size: 1.4rem; }
+  .badge { display:inline-block; padding:.15em .6em; border-radius:1em;
+           color:#fff; font-weight:600; text-transform:uppercase; }
+  .bar-row { display:flex; align-items:center; gap:.6em; margin:.35em 0; }
+  .bar-row .name { width:5em; font-weight:600; }
+  .bar { flex:1; background:#eaeef2; border-radius:4px; height:1.1em;
+         position:relative; }
+  .bar > span { position:absolute; inset:0 auto 0 0; border-radius:4px; }
+  table { border-collapse:collapse; width:100%; margin-top:1rem; }
+  th, td { border-bottom:1px solid #d0d7de; padding:.35em .5em;
+           text-align:left; vertical-align:top; }
+  th { color:var(--muted); font-size:.85em; text-transform:uppercase; }
+  code { background:#eff1f3; padding:.05em .3em; border-radius:3px; }
+  .meta { color:var(--muted); font-size:.85em; }
+  .sev-blocker { color:var(--fail); font-weight:600; }
+  .sev-warn { color:var(--warn); }
+</style>
+</head>
+<body>
+<h1>ETHER audit health <span id="overall" class="badge">…</span></h1>
+<p class="meta" id="meta">loading audit_health.json…</p>
+
+<h2>Categories</h2>
+<div id="cats"></div>
+
+<h2>Trend (violations, 7d)</h2>
+<svg id="spark" width="300" height="48" role="img" aria-label="trend"></svg>
+<p class="meta" id="ratchets"></p>
+
+<h2>Top violations <span class="meta">(baselined items never block; NEW blockers fail the gate)</span></h2>
+<table>
+  <thead><tr><th>Rule</th><th>Severity</th><th>Location</th><th>Baseline</th><th>Message</th></tr></thead>
+  <tbody id="viol"></tbody>
+</table>
+
+<script>
+// TTL note: this page fetches the artifact once per load. If embedded in
+// the FastAPI SPA, wrap the fetch in the same >=30s TTL + single-flight
+// cache PERF-004 mandates for /api/audit-health.
+fetch('audit_health.json', {cache: 'no-store'})
+  .then(r => { if (!r.ok) throw new Error('audit_health.json missing — run the gate'); return r.json(); })
+  .then(render)
+  .catch(e => { document.getElementById('meta').textContent = String(e); });
+
+const COLORS = {pass: 'var(--ok)', warn: 'var(--warn)', fail: 'var(--fail)'};
+
+function render(h) {
+  const badge = document.getElementById('overall');
+  badge.textContent = h.overall;
+  badge.style.background = COLORS[h.overall] || 'var(--muted)';
+  document.getElementById('meta').textContent =
+    `commit ${h.commit} · generated ${h.generated} · ` +
+    `${h.violations_total} violations (${h.violations_new} new) · ` +
+    `${h.rules_run} rules in ${h.elapsed_s}s`;
+
+  const cats = document.getElementById('cats');
+  for (const [name, c] of Object.entries(h.categories || {})) {
+    const pct = Math.round((c.pass_rate || 0) * 100);
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<span class="name">${name}</span>
+      <div class="bar"><span style="width:${pct}%;background:${
+        pct === 100 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--fail)'
+      }"></span></div>
+      <span>${c.pass}/${c.rules} pass · ${c.fail_baseline} baselined · ${c.fail_new} new</span>`;
+    cats.appendChild(row);
+  }
+
+  sparkline(document.getElementById('spark'), h.trend_7d || []);
+
+  const r = h.ratchets || {};
+  const prl = r.pipeline_run_lines || {};
+  document.getElementById('ratchets').textContent =
+    `ratchets: Pipeline.run ${prl.actual}/${prl.budget} lines ` +
+    `(headroom ${prl.headroom}) · ETHER_* getenv sites ` +
+    `${(r.env_getenv_sites || {}).actual}/${(r.env_getenv_sites || {}).budget}`;
+
+  const tbody = document.getElementById('viol');
+  for (const v of (h.top_violations || [])) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${v.rule_id}</code></td>
+      <td class="sev-${v.severity}">${v.severity}</td>
+      <td><code>${v.file}:${v.line}</code></td>
+      <td>${v.baseline ? 'yes' : '<b>NEW</b>'}</td>
+      <td>${v.message}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function sparkline(svg, data) {
+  if (!data.length) { svg.innerHTML = '<text x="4" y="24" fill="#57606a">no trend data</text>'; return; }
+  const w = 300, hgt = 48, max = Math.max(...data), min = Math.min(...data);
+  const pts = data.map((v, i) => {
+    const x = (i / Math.max(1, data.length - 1)) * (w - 8) + 4;
+    const y = hgt - 6 - ((v - min) / Math.max(1, max - min)) * (hgt - 12);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="var(--ok)" stroke-width="2"/>
+    <text x="4" y="12" fill="#57606a" font-size="10">${max}</text>
+    <text x="4" y="${hgt - 2}" fill="#57606a" font-size="10">${min}</text>`;
+}
+</script>
+</body>
+</html>

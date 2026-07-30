@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -27,10 +28,21 @@ def resolve_tool(name: str) -> Optional[Path]:
     sys.executable, cwd=ROOT and the full inherited environment — so the
     quarantine directory enforced nothing, contradicting SECURITY.md's claim
     that generated tools stay quarantined until explicitly promoted.
+
+    Names are restricted to `[A-Za-z0-9_-]+` and the resolved path must stay
+    inside PERSISTENT — `..` and subdirectory names return None.
     """
     if not name.endswith(".py"):
         name = f"{name}.py"
+    stem = name[:-3]
+    if not re.fullmatch(r"[A-Za-z0-9_\-]+", stem):
+        return None
     path = PERSISTENT / name
+    try:
+        if path.resolve().parent != PERSISTENT.resolve():
+            return None
+    except Exception:
+        return None
     return path if path.exists() else None
 
 

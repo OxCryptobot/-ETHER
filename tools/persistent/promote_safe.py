@@ -9,7 +9,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _lib import emit, read_input, repo_root
 
-RISKY = re.compile(r"\b(eval|exec|os\.system)\s*\(|shell\s*=\s*True")
+RISKY = re.compile(
+    r"\b(eval|exec|os\.system|os\.popen)\s*\(|shell\s*=\s*True"
+    r"|subprocess\.(?:check_output|check_call)\s*\(|socket\.socket\s*\("
+)
 
 
 def main() -> None:
@@ -21,8 +24,8 @@ def main() -> None:
     if not src.exists():
         emit(False, error=f"not found: {name}")
     code = src.read_text(encoding="utf-8")
-    if RISKY.search(code) and not inp.get("force"):
-        emit(False, error="risky patterns found; pass force=true to override")
+    if RISKY.search(code):
+        emit(False, error="risky patterns found; promotion refused (no override)")
     dst_dir = repo_root() / "tools" / "persistent"
     dst_dir.mkdir(parents=True, exist_ok=True)
     dst = dst_dir / src.name

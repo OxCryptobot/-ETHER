@@ -30,7 +30,12 @@ class BlackTourmaline:
             r"exec\s*\(",
             r"__import__\s*\(",
             r"os\.system\s*\(",
-            r"subprocess\.(?:call|run|Popen)",
+            # SEC-005: check_output/check_call/os.popen/socket were unaudited
+            # execution/egress channels — the old list let them straight
+            # through the only audit gate.
+            r"subprocess\.(?:call|run|Popen|check_output|check_call)",
+            r"os\.popen\s*\(",
+            r"socket\.socket\s*\(",
         ])
 
     def execute(self, request: Envelope) -> ResponseEnvelope:

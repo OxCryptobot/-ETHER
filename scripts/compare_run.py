@@ -26,6 +26,14 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=10)
     args = ap.parse_args()
 
+    if not HOLDOUT.exists():
+        # Day-3 dataset policy: memory/quizzes/ is untracked; degrade, don't crash.
+        print(
+            f"missing {HOLDOUT} — untracked eval data (Day-3); restore a "
+            "local copy (see scripts/expand_holdout.py)",
+            file=sys.stderr,
+        )
+        return 2
     data = json.loads(HOLDOUT.read_text(encoding="utf-8"))
     tasks = list(data.get("tasks") or [])[: args.limit]
     pipe = Pipeline()

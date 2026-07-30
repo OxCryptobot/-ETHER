@@ -133,7 +133,10 @@ D2_ALLOWLIST: Set[Tuple[str, int, str]] = frozenset(
         ("core/registry.py", 46, "gems.amethyst.evolution"),
         ("core/registry.py", 47, "gems.grandidierite.extension"),
         ("core/registry.py", 58, "gems.citrine.memory"),
-        ("core/tool_reconcile.py", 41, "gems.grandidierite.fabricate"),
+        # re-pinned (+5) at Day 2: _promotion_gate gained the two-mode consent
+        # docstring + operator_initiated param (SEC-001), shifting only the
+        # lazy import below it; same file, same module, not a new site.
+        ("core/tool_reconcile.py", 46, "gems.grandidierite.fabricate"),
         ("core/verifier.py", 649, "gems.clear_quartz.sandbox"),
     ]
 )
@@ -334,7 +337,10 @@ def test_d4_dashboard_reads_via_collector_only():
 # its worker path; the quarantine move is a later roadmap stage)
 D5_ALLOWLIST: Set[Tuple[str, int]] = frozenset(
     [
-        ("scripts/flywheel.py", 122),
+        # re-pinned (+10) at Day 2: the module-level _compute_do_push helper
+        # (MEAS-005 push decoupling) shifted the lazy import below it; same
+        # file, same module, not a new site.
+        ("scripts/flywheel.py", 132),
     ]
 )
 

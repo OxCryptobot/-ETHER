@@ -1,4 +1,6 @@
-# Optional local quality gates
+# ETHER pre-commit config — fast gates only (P2 §3: ≤10s on the tree).
+# The repo's existing ruff hooks (rev v0.5.0) are kept verbatim; hygiene
+# hooks and the audit fast set are added as local hooks.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.0
@@ -6,3 +8,25 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+
+  - repo: local
+    hooks:
+      - id: audit-fast
+        name: ether audit rules (fast set)
+        entry: python tools/audit/audit_runner.py --repo . --fast --health-out .audit_health_precommit.json
+        language: system
+        pass_filenames: false
+        always_run: true
+        # Runs ARCH-001/002/003/004/006, QUAL-001..006, SEC-001..006/008,
+        # PERF-001/002, STATE-001, MEAS-003 — measured ~5.5s on the full
+        # tree at 208993a (≪10s target). Exit 1 only on NEW blocker
+        # fingerprints; baselined violations never block a commit.

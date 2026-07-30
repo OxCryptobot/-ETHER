@@ -1,0 +1,21 @@
+# core/modules.yaml — core module registry (A-6/A-8 shim-proliferation guard)
+#
+# Every non-__init__ module under core/ that is not yet imported by another
+# core module must be listed here with its purpose and the stage that
+# introduced it. The topology suite (tests/test_topology.py, rule D3/D5) and
+# the continuous-audit pack (ARCH-005) fail on an unregistered new module.
+# Entries use the stem form "<subpath>/<module>" relative to core/.
+
+modules:
+  vectors:                              # stage 1 — typed-edge envelope schema (committed now, emitted from stage 2)
+    introduced: "migration(stage1): loop-runner foundation"
+    purpose: "Vector/Provenance pydantic models — the octagon's typed, auditable edges (A-3/A-4)"
+  spine/state_io:                       # stage 1 — L1 single-writer kernel (D3)
+    introduced: "migration(stage1): loop-runner foundation"
+    purpose: "O_EXCL lockfile + atomic-replace store; sole owner of state RMW"
+  loop/runner:                          # stage 1 — thin stage dispatcher
+    introduced: "migration(stage1): loop-runner foundation"
+    purpose: "LoopRunner — dispatches extracted Pipeline.run stages behind ETHER_LOOP_RUNNER"
+  loop/handlers/finalize:               # stage 1 — first extracted stage (tail of Pipeline.run)
+    introduced: "migration(stage1): loop-runner foundation"
+    purpose: "FinalizeHandler — learning-record/fabricate/memory-save/status tail, extracted verbatim"

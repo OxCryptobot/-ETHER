@@ -9,8 +9,9 @@ Accepted — stage 1 of 6 of the octagon migration (roadmap §7/§8).
 - **A-1 (god method):** `Pipeline.run` was a 788-line method
   (`core/pipeline.py:161-948`) mixing planning, generation, sandbox, audit,
   critique, holdout, reward, and finalize in one untestable control flow.
-  The audit pack's ARCH-003 budget (790 lines) had 3 lines of headroom — any
-  feature addition forced either a violation or an unmaintainable squeeze.
+  The audit pack's ARCH-003 budget (790 lines, AST end−start span) measured
+  784 at HEAD — 6 lines of headroom, so any feature addition forced either a
+  violation or an unmaintainable squeeze.
 - **A-3 (silent seams):** six capability losses vanished into
   `except: pass` — citrine registration (`core/registry.py`), grandidierite
   tool discovery, the agent-loop fallback, experience recording (twice),
@@ -59,9 +60,9 @@ Accepted — stage 1 of 6 of the octagon migration (roadmap §7/§8).
 
 ## Consequences
 
-- `Pipeline.run` shrinks from 787 to 702 lines (AST span; the 112-line tail
-  replaced by a 26-line dispatcher branch) — ARCH-003 headroom grows from 3
-  to 88 lines.
+- `Pipeline.run` shrinks from 784 to 702 (AST end−start span; the 112-line
+  tail replaced by a 26-line dispatcher branch) — ARCH-003 headroom grows
+  from 6 to 88 lines.
 - Degraded runs are observable on every `PipelineResult` and in every
   persisted run record; gates can finally see capability loss.
 - Topology drift (new layering inversions, new state writers, new dashboard

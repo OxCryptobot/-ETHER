@@ -844,16 +844,26 @@ class Pipeline:
             if loop_runner_enabled():
                 outcome = LoopRunner(
                     registry=self.registry,
-                ).run_finalize(FinalizeContext(
-                    task_id=tid, objective=objective, generated=generated or "",
-                    success=(exit_code == 0), last_err=last_err, fail_kind=fail_kind,
-                    strategy=strategy, confidence=result.confidence,
-                    verification_score=result.verification_score,
-                    total_tests=total_tests, holdout_ok=result.holdout_ok,
-                    holdout_test=holdout_test, tool_assist=tool_assist,
-                    has_sandbox=result.sandbox is not None, exit_code=exit_code,
-                    result_error=result.error,
-                ))
+                ).run_finalize(
+                    FinalizeContext(
+                        task_id=tid,
+                        objective=objective,
+                        generated=generated or "",
+                        success=(exit_code == 0),
+                        last_err=last_err,
+                        fail_kind=fail_kind,
+                        strategy=strategy,
+                        confidence=result.confidence,
+                        verification_score=result.verification_score,
+                        total_tests=total_tests,
+                        holdout_ok=result.holdout_ok,
+                        holdout_test=holdout_test,
+                        tool_assist=tool_assist,
+                        has_sandbox=result.sandbox is not None,
+                        exit_code=exit_code,
+                        result_error=result.error,
+                    )
+                )
                 for _s in outcome.stages:
                     result.stages.append(StageResult(**_s))
                 result.degraded.extend(outcome.degraded)
@@ -862,10 +872,16 @@ class Pipeline:
                     result.error = outcome.error
             else:
                 self._finalize_legacy(
-                    result, objective=objective, generated=generated or "",
-                    last_err=last_err, fail_kind=fail_kind, strategy=strategy,
-                    total_tests=total_tests, holdout_test=holdout_test,
-                    tool_assist=tool_assist, exit_code=exit_code,
+                    result,
+                    objective=objective,
+                    generated=generated or "",
+                    last_err=last_err,
+                    fail_kind=fail_kind,
+                    strategy=strategy,
+                    total_tests=total_tests,
+                    holdout_test=holdout_test,
+                    tool_assist=tool_assist,
+                    exit_code=exit_code,
                 )
             result.finished_at = datetime.now(timezone.utc).isoformat()
             clear_progress()
@@ -875,10 +891,20 @@ class Pipeline:
         except Exception as e:
             return self._fail(result, "exception", str(e), run_started, attempts)
 
-    def _finalize_legacy(self, result: PipelineResult, *, objective: str,
-                         generated: str, last_err: str, fail_kind: str,
-                         strategy: str, total_tests: int, holdout_test: str,
-                         tool_assist: bool, exit_code: Optional[int]) -> None:
+    def _finalize_legacy(
+        self,
+        result: PipelineResult,
+        *,
+        objective: str,
+        generated: str,
+        last_err: str,
+        fail_kind: str,
+        strategy: str,
+        total_tests: int,
+        holdout_test: str,
+        tool_assist: bool,
+        exit_code: Optional[int],
+    ) -> None:
         """Pre-extraction finalize tail (default path). Byte-identical behavior
         to the pre-refactor inline block; removed when ETHER_LOOP_RUNNER
         defaults on (roadmap stage 6)."""
@@ -996,9 +1022,7 @@ class Pipeline:
             result.status = "error"
             if not result.error:
                 detail = (last_err or "").strip()
-                result.error = f"sandbox exit {exit_code}" + (
-                    f": {detail[:500]}" if detail else ""
-                )
+                result.error = f"sandbox exit {exit_code}" + (f": {detail[:500]}" if detail else "")
 
     # -- retrieval blocks ---------------------------------------------------
 
@@ -1287,8 +1311,7 @@ class Pipeline:
 
     def _persist(self, result: PipelineResult) -> None:
         try:
-            write_json(self.runs_dir / f"{result.task_id}.json",
-                       result.model_dump(mode="json"))
+            write_json(self.runs_dir / f"{result.task_id}.json", result.model_dump(mode="json"))
         except Exception as e:
             # A-3: was a silent pass — a run that never reached disk was
             # indistinguishable from one that persisted.

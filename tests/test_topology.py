@@ -351,7 +351,7 @@ def test_d5_entry_points_do_not_import_pipeline():
 # ---------------------------------------------------------------------------
 
 
-def test_new_modules_importable():
+def test_new_modules_importable(monkeypatch):
     import core.vectors as vectors
     import core.spine.state_io as state_io
     import core.loop.runner as runner
@@ -365,4 +365,7 @@ def test_new_modules_importable():
     assert hasattr(runner, "LoopRunner")
     for name in ("FinalizeContext", "FinalizeOutcome", "FinalizeHandler"):
         assert hasattr(finalize, name), f"core.loop.handlers.finalize missing {name}"
+    monkeypatch.delenv("ETHER_LOOP_RUNNER", raising=False)
     assert loop_runner_enabled() is False
+    monkeypatch.setenv("ETHER_LOOP_RUNNER", "1")
+    assert loop_runner_enabled() is True

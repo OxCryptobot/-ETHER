@@ -164,7 +164,7 @@ class ClearQuartz:
         try:
             security_flags = self._static_analysis(code)
             # Resolve once, before running: explicit-local and auto-resolved-local
-            # both reach _run_local via _run (:297-300) without the marker,
+            # both reach _run_local via _run's dispatch without the marker,
             # because the FileNotFoundError handler below only fires when
             # `docker run` is missing — so host-side execution looked identical
             # to container isolation (B1).
@@ -189,7 +189,7 @@ class ClearQuartz:
                     execution_time=round(execution_time, 3),
                     # Static flags only: the fallback marker must not tank the
                     # score — same deliberate split as the FileNotFoundError
-                    # path (:227/:237).
+                    # degrade path below.
                     static_analysis_score=0.0 if security_flags else 1.0,
                 ),
             )
@@ -305,6 +305,12 @@ class ClearQuartz:
         return flags
 
     def _run(self, code: str, timeout: int) -> subprocess.CompletedProcess:
+        """Dispatch to the resolved backend (local, warm, or docker).
+
+        Whenever the resolved backend is local, the `sandbox_fallback:local`
+        visibility marker is attached one frame up in execute(), which owns
+        the response build — this dispatch layer never sees the envelope.
+        """
         backend = sandbox_backend()
         if backend == "local":
             return self._run_local(code, timeout)

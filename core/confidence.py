@@ -9,7 +9,14 @@ from core.schemas import ClearQuartzResponse
 
 def compute_scores(resp: ClearQuartzResponse) -> Dict[str, float]:
     """Return execution_score, verification_score, and combined confidence."""
-    security_clean = 0.0 if resp.security_flags else 1.0
+    # Visibility markers, not security findings: a "sandbox_fallback:" flag
+    # records WHICH backend ran (B1/S-01 visibility), not a defect in the
+    # artifact. Penalizing it tanked every dockerless local-backend run to
+    # 0.25 and the flywheel gate then rejected the loop on exactly the hosts
+    # the fallback exists for. Strip markers before the penalty logic; every
+    # other flag (static-analysis findings) keeps the exact current behavior.
+    security_flags = [f for f in resp.security_flags if not f.startswith("sandbox_fallback:")]
+    security_clean = 0.0 if security_flags else 1.0
     speed_ok = 1.0 if resp.execution_time < 30.0 else 0.0
     static_score = max(0.0, min(1.0, resp.static_analysis_score))
     exit_ok = 1.0 if resp.exit_code == 0 else 0.0
@@ -19,7 +26,7 @@ def compute_scores(resp: ClearQuartzResponse) -> Dict[str, float]:
     )
     if resp.exit_code != 0:
         execution_score = min(execution_score, 0.20)
-    if resp.security_flags:
+    if security_flags:
         execution_score = min(execution_score, 0.25)
 
     if resp.total_tests > 0:
@@ -30,7 +37,7 @@ def compute_scores(resp: ClearQuartzResponse) -> Dict[str, float]:
         verification_score = 0.35 * exit_ok + 0.40 * security_clean + 0.25 * static_score
         verification_score = min(verification_score, 0.50 if resp.exit_code == 0 else 0.20)
 
-    if resp.security_flags:
+    if security_flags:
         verification_score = min(verification_score, 0.25)
 
     # Combined: prefer verification when tests exist; else lean execution

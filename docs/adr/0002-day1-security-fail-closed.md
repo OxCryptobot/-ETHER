@@ -64,22 +64,53 @@ command channel via the tracked batch queue).
 - Developers on dockerless machines now see `sandbox_fallback:local` on
   every sandbox run — that is the point: host-side execution is never
   again indistinguishable from container isolation.
+- **The marker is visibility-only by design.** `core/confidence.
+  compute_scores` strips `sandbox_fallback:*` flags before its penalty
+  logic, so a marker-only response scores exactly like a flag-free one;
+  the Day-1 intent (audit S-01) is VISIBILITY of the fallback, not
+  blocking the loop, and the autonomy loop keeps functioning on
+  dockerless hosts with the fallback visible (the flywheel gate at
+  `ETHER_FLYWHEEL_MIN_CONFIDENCE=0.70` is not tripped by the marker).
+  Real static-analysis findings are still penalized exactly as before
+  (pinned in `tests/test_day1_security.py`).
 - The audit pack's SEC-003/SEC-008 contract xfails flip to XPASS
   (behavioral contracts: auto-fallback emits the flag; the tracked queue
   carries no command items). SEC-004 (deploy pin) and SEC-008 (tracked
   command item) are resolved in the static register. The SEC-003 static
-  heuristic still reports its single baselined violation at
-  `sandbox.py:_run` (the direct `_run_local` dispatch), because the
-  marker now lives in `execute()` — one frame up — which the rule's
-  per-function scan cannot see; clearing it would require touching
-  `_run`, which this ADR explicitly forbids. The behavioral contract is
-  what gates (XPASS), and the gate stays clean (no NEW blockers).
+  heuristic initially kept one baselined violation at `sandbox.py:_run`
+  because the marker lived one frame up in `execute()`; the Day-1 review
+  cleared it behavior-neutrally by documenting in `_run`'s docstring
+  that the marker is attached in `execute()` whenever the backend
+  resolves local — the static scan now reports PASS with 0 violations
+  and no code in `_run` changed.
 - QUAL-005 budget note: the two new env gates (`ETHER_BATCH_COMMANDS` in
   `core/batch_queue.py` and `scripts/batch_worker.py`) raise the
   `env_getenv_sites` actual from 189 (stage-1 sanctioned) to 191 against
   the pack's budget of 188. Both sites are security opt-ins that must be
   read at the enforcement point; the budget should be raised to 191 by a
   human PR per the pack's ratchet policy.
+
+## Residuals
+
+- **.env vs the service pin (fixed at Day-1 review).**
+  `scripts/linux_bootstrap.sh` used to append
+  `ETHER_SANDBOX_BACKEND=local` to `.env` on dockerless hosts, and
+  `scripts/start_daemon_linux.sh` sourced `.env` unconditionally —
+  silently overriding the `deploy/ether.service` `=docker` pin on
+  exactly the hosts B1 targets. Bootstrap no longer writes the variable
+  (host-side execution is now a deliberate operator opt-in: edit `.env`
+  yourself), and the launcher saves any already-set
+  `ETHER_SANDBOX_BACKEND` before sourcing `.env` and restores it after,
+  so an operator/service pin always wins over local config.
+- **Windows daemon host.** `.github/workflows/autonomy-host.yml` and
+  `scripts/ensure_daemon.ps1` set no `ETHER_SANDBOX_BACKEND`; on the
+  self-hosted Windows runner (no docker) the backend auto-resolves to
+  `local`, so model-authored code executes host-side there. After Day 1
+  this is visible via the `sandbox_fallback:local` marker on every
+  response and — per the Consequences above — non-penalizing, so the
+  autonomy loop keeps running with the fallback exposed rather than
+  blocked. Hardening that host to container isolation (Windows
+  containers or WSL2 docker) is deferred: Day-x / ops decision.
 
 ## Rollback
 

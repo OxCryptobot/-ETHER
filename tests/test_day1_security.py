@@ -16,7 +16,8 @@ from uuid import uuid4
 import pytest
 
 import core.batch_queue as bq
-from core.schemas import ClearQuartzRequest, Envelope, GemErrorType
+from core.confidence import compute_scores
+from core.schemas import ClearQuartzRequest, ClearQuartzResponse, Envelope, GemErrorType
 from gems.clear_quartz.sandbox import ClearQuartz
 from scripts.batch_worker import process_one
 
@@ -86,6 +87,46 @@ def test_explicit_docker_fails_closed_without_docker(monkeypatch):
     assert "Docker" in res.error.message
     # Nothing executed on the host: no fallback marker anywhere.
     assert "sandbox_fallback" not in str(res)
+
+
+def test_fallback_marker_does_not_tank_confidence():
+    """FIX-1: the marker is visibility-only — scoring treats it as a non-event.
+
+    A local-backend run carries ONLY the visibility marker; it must score
+    exactly like a flag-free run so the flywheel gate keeps functioning on
+    dockerless hosts. Real static findings must still be penalized exactly
+    as before.
+    """
+    base = dict(
+        exit_code=0,
+        total_tests=5,
+        tests_passed=5,
+        static_analysis_score=1.0,
+        execution_time=1.0,
+    )
+    flag_free = compute_scores(ClearQuartzResponse(**base))
+    marker_only = compute_scores(
+        ClearQuartzResponse(**base, security_flags=["sandbox_fallback:local"])
+    )
+    assert marker_only == flag_free
+
+    penalized = compute_scores(
+        ClearQuartzResponse(**base, security_flags=["dangerous_attr:system"])
+    )
+    assert penalized["execution_score"] == 0.25
+    assert penalized["verification_score"] == 0.25
+    assert penalized["confidence"] == 0.25
+    assert penalized != flag_free
+
+    # A real finding alongside the marker is still penalized: only the
+    # marker is stripped, the finding is not.
+    mixed = compute_scores(
+        ClearQuartzResponse(
+            **base,
+            security_flags=["sandbox_fallback:local", "dangerous_attr:system"],
+        )
+    )
+    assert mixed == penalized
 
 
 # --------------------------------------------------------------------------

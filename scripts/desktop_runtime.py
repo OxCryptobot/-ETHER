@@ -41,7 +41,8 @@ load_dotenv(ROOT / ".env")
 
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
-os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "1")
+# MEAS-005: report pushes are operator opt-in (ETHER_FLYWHEEL_PUSH=1 in .env); default off
+os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "0")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
 

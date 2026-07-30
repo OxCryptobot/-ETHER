@@ -43,6 +43,13 @@ mean) and MEAS-005 (flywheel report-commit flood on main).
   before `shutil.copy2`, the handler calls
   `tool_reconcile._promotion_gate(src, operator_initiated=True)` and raises
   403 on refusal. Destination-name logic, mkdir and copy are byte-identical.
+- **`ether promote` (CLI) routes through the same gate (review fix m1).**
+  It was a raw copy with no gate and no filename normalization (absolute /
+  `..` filenames read outside quarantine). Now the filename is normalized
+  with `Path(filename).name`, rejected unless it matches
+  `^[A-Za-z0-9_\-]+\.py$` (error + non-zero exit), and the copy only runs
+  after `_promotion_gate(src, operator_initiated=True)` — a CLI invocation
+  is an explicit operator action, the same consent class as the click.
 - **Traversal close.** `resolve_tool` restricts stems to `[A-Za-z0-9_-]+`
   and verifies `path.resolve().parent == PERSISTENT.resolve()`; `..`,
   subdirectory and percent-encoded names return None. `run_tool` unchanged.
@@ -61,17 +68,52 @@ mean) and MEAS-005 (flywheel report-commit flood on main).
   `push_flag or ETHER_FLYWHEEL_PUSH == "1"`; `main()` no longer lets
   `--autonomous` imply push. `run_smart_cycle.py` defaults
   `ETHER_FLYWHEEL_PUSH` to `"0"` instead of `"1"`.
+- **Every launcher defaults pushes off (review fix B1).** Day 2 changed only
+  `run_smart_cycle.py`'s setdefault — but the daemon was never launched
+  bare: `ensure_daemon.ps1` (via `autonomy-host.yml`), `start_daemon.ps1`,
+  `stabilize.ps1` and `desktop_launch.ps1` each HARD-set
+  `$env:ETHER_FLYWHEEL_PUSH = "1"` before spawn, and `ether_daemon.py` /
+  `desktop_runtime.py` `setdefault(..., "1")`, so the child inherited a
+  forced `"1"` and Day 2's `setdefault(..., "0")` was a no-op on the real
+  daemon chain. All launchers now default the flag to `"0"` only when unset
+  (the PowerShell launchers additionally peek at `.env` first — an
+  already-set `"0"` would shadow a `.env` opt-in, since `core/dotenv.py`
+  never overrides set variables), `ether_daemon.py`/`desktop_runtime.py`
+  setdefault `"0"`, and `.env.example` documents the opt-in commented out.
 
 ## Consequences
 
 - The dashboard promote button now runs static_safety + the Black
   Tourmaline audit on every click — slower (a registry build per promote)
   but fail-closed; a broken audit dependency now refuses promotion instead
-  of waving it through.
-- Operators who want report publishing back must set
-  `ETHER_FLYWHEEL_PUSH=1` (or pass `--push`). `scripts/ether_daemon.py`
-  still launches the flywheel with an explicit `--push`, which is a
-  deliberate opt-in by the daemon operator and is unchanged.
+  of waving it through. The `ether promote` CLI takes the same route: a CLI
+  invocation IS an explicit operator action (same consent class as the
+  dashboard click), the filename is normalized to a basename and rejected
+  unless it matches `^[A-Za-z0-9_\-]+\.py$`, and gate refusal exits
+  non-zero.
+- Report pushes now default OFF end-to-end. The pre-fix mechanism was NOT
+  the previously-assumed "deliberate opt-in by the daemon operator": the
+  PowerShell/python launchers force-set `ETHER_FLYWHEEL_PUSH=1` into the
+  daemon's inherited environment, so `run_smart_cycle.py`'s
+  `setdefault(..., "0")` never fired in the child. After fix B1 every
+  launcher defaults the flag off, and the daemon loop produces local-only
+  reports unless the operator opts in — the opt-in lives solely in
+  `.env`/the environment (`ETHER_FLYWHEEL_PUSH=1`).
+- One explicit opt-in fallback remains, deliberately:
+  `scripts/ether_daemon.py` falls back to `cli.main flywheel --push` only
+  when `scripts/run_smart_cycle.py` is missing — i.e. a broken install —
+  and the explicit flag still forces a push there. It is left intact as
+  the documented escape hatch; the normal daemon path never reaches it.
+- **Cycle duration vs daemon cadence (MEAS-002 tradeoff).** Raising the
+  pytest step 300→900 means a worst-case cycle (reinstall 300 + smoke 120 +
+  pytest ≤900 + doctor 60 + batch tick 600 + agentic retries) can exceed
+  both daemon intervals (`ensure_daemon.ps1` sets 300s, the daemon default
+  is 900s) and the 15-min `autonomy-host.yml` cron spacing. Both loops are
+  sequential (sleep-after-cycle), so there is no self-overlap; the effects
+  are a slower effective cadence and possibly queued workflow runs on the
+  single self-hosted runner. The full suite is kept over a smoke subset
+  because the pytest result IS the flywheel's quality signal — a subset
+  would fake green.
 - Branch protection on main (required reviewers/status checks so report
   bots cannot push directly) is a GitHub settings action for the user — it
   is documented here because it cannot be expressed in code.
@@ -83,9 +125,17 @@ mean) and MEAS-005 (flywheel report-commit flood on main).
 - Quarantine files are still plain text in the repo; a quarantined tool's
   content is visible to anyone with read access. Encryption/ACLs are a
   later-stage decision.
-- The dashboard has no auth; binding to localhost (127.0.0.1:8787) is the
-  existing posture and remains the mitigation — the promote gate assumes
-  "whoever can click is the operator".
+- The dashboard has no auth: uvicorn binds 127.0.0.1:8787 and
+  `POST /api/promote` is unauthenticated, so `operator_initiated=True`
+  consent is spoofable by ANY local process — the consent distinction is
+  not the barrier. The real barrier is the static_safety + Black
+  Tourmaline audit that runs on every promote regardless of consent mode.
+  Exposure is further bounded by the fact that quarantined model-authored
+  code cannot reach the endpoint directly: it only ever executes via
+  sandbox/compile paths, never as a host process, so the spoofing surface
+  is limited to code already running on the host. Token auth for mutating
+  dashboard endpoints is a deliberate deferral under the solo-dev
+  localhost posture, not an oversight.
 - `socket.socket(` false positives (above) are accepted, not tuned away.
 
 ## Rollback

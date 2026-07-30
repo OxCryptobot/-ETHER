@@ -203,6 +203,63 @@ def test_resolve_tool_resolves_real_persistent_tool():
     assert path.name == "promote_safe.py"
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        # Absolute unix paths contain "/" (and usually "."), so the stem
+        # regex rejects them outright — the PERSISTENT join never happens.
+        "/etc/passwd",
+        # A unicode stem falls outside [A-Za-z0-9_-] → None.
+        "héllo",
+        # "x.py.py" → stem "x.py" still contains a dot → None.
+        "x.py.py",
+        # ".py" → empty stem, regex requires 1+ chars → None.
+        ".py",
+    ],
+)
+def test_resolve_tool_rejects_absolute_unicode_and_dotted_names(name):
+    from gems.grandidierite.registry import resolve_tool
+
+    assert resolve_tool(name) is None
+
+
+def test_resolve_tool_rejects_absolute_path_of_real_tool():
+    """Even the absolute path of an EXISTING persistent tool must not
+    resolve: it contains separators, so the stem regex rejects it — only
+    bare tool names are accepted."""
+    from gems.grandidierite.registry import PERSISTENT, resolve_tool
+
+    assert (PERSISTENT / "promote_safe.py").exists()
+    assert resolve_tool(str(PERSISTENT / "promote_safe.py")) is None
+
+
+@pytest.fixture()
+def _persistent_symlink(tmp_path):
+    """A symlink inside PERSISTENT whose target lives outside it. Skips on
+    platforms/privileges where symlink creation is unavailable."""
+    from gems.grandidierite.registry import PERSISTENT
+
+    target = _write(tmp_path / "outside.py", "def main():\n    return 1\n")
+    link = PERSISTENT / "zz_traversal_probe.py"
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"symlinks unsupported here: {e}")
+    try:
+        yield link
+    finally:
+        link.unlink(missing_ok=True)
+
+
+def test_resolve_tool_rejects_symlink_escaping_persistent(_persistent_symlink):
+    """The stem is a legal name, but path.resolve() follows the link to a
+    parent outside PERSISTENT — the containment check must refuse it."""
+    from gems.grandidierite.registry import resolve_tool
+
+    assert resolve_tool("zz_traversal_probe") is None
+    assert resolve_tool("zz_traversal_probe.py") is None
+
+
 # --------------------------------------------------------------------------
 # SEC-005 — Black Tourmaline covers the bypass quartet
 # --------------------------------------------------------------------------

@@ -91,16 +91,17 @@ def check_dataset(path: Path = TARGET) -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--check", action="store_true",
-                    help="verify the existing file matches canonical; "
-                         "exit 1 on drift or absence")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="verify the existing file matches canonical; " "exit 1 on drift or absence",
+    )
     args = ap.parse_args()
     if args.check:
         if check_dataset():
             print(f"ok: {TARGET} matches canonical content")
             return 0
-        print(f"drift or missing: {TARGET} — run scripts/fetch_datasets.py",
-              file=sys.stderr)
+        print(f"drift or missing: {TARGET} — run scripts/fetch_datasets.py", file=sys.stderr)
         return 1
     path = write_dataset()
     print(f"wrote {path} ({len(CANONICAL.encode('utf-8'))} bytes, canonical)")

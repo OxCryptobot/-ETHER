@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 
-from .. import (RuleContext, RuleResult, Violation, call_name, iter_py_files,
+from .. import (RuleContext, RuleResult, call_name, iter_py_files,
                 module_stem, qualname, violation)
 
 
@@ -105,7 +105,6 @@ def check_arch003(ctx: RuleContext, meta: dict) -> RuleResult:
     res.note = (f"Pipeline.run spans {actual} lines "
                 f"(budget {budget}, headroom {budget - actual})")
     if actual > budget:
-        src = ctx.read("core/pipeline.py") or ""
         res.violations.append(violation(
             ctx, meta, "core/pipeline.py", span[0],
             f"Pipeline.run grew to {actual} lines, over budget {budget} — "

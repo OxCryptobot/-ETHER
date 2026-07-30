@@ -16,7 +16,7 @@ import ast
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Optional
 
 # Reappearance classes (P3 §2)
 TRUE_REGRESSION = "true_regression"

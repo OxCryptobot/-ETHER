@@ -41,9 +41,9 @@ def test_audit_gates_workflow_shape():
     assert isinstance(doc, dict), "workflow must parse as a mapping"
 
     jobs = doc.get("jobs") or {}
-    assert {"lint", "audit-rules", "contracts", "pytest", "gate"} <= set(jobs), (
-        f"DAG jobs missing: have {sorted(jobs)}"
-    )
+    assert {"lint", "audit-rules", "contracts", "pytest", "gate"} <= set(
+        jobs
+    ), f"DAG jobs missing: have {sorted(jobs)}"
 
     # S-08: every action reference is pinned to a full 40-char commit SHA.
     uses = re.findall(r"uses:\s*(\S+)", text)
@@ -64,9 +64,7 @@ def test_audit_gates_workflow_shape():
     # ruff steps are warn-mode (pre-existing F401/format drift at 819bc92; the
     # audit engine is the blocking gate until burn-down — ADR 0004 residual).
     lint_steps = jobs["lint"].get("steps") or []
-    ruff_steps = [
-        s for s in lint_steps if str(s.get("run", "")).startswith("pipx run ruff")
-    ]
+    ruff_steps = [s for s in lint_steps if str(s.get("run", "")).startswith("pipx run ruff")]
     assert len(ruff_steps) == 2, f"expected ruff check + format steps, got {len(ruff_steps)}"
     for step in ruff_steps:
         assert step.get("continue-on-error") is True, step

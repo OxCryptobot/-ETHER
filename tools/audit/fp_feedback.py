@@ -32,7 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from tools.audit import DEFAULT_BASELINE, FP_RE
+from tools.audit import DEFAULT_BASELINE
 
 FP_REVIEW_THRESHOLD = 0.20
 EXCLUSION_THRESHOLD = 2

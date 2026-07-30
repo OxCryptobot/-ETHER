@@ -10,7 +10,7 @@ from core.schemas import Envelope, ResponseEnvelope, GemError, GemErrorType
 class GemRegistry:
     def __init__(self) -> None:
         self._gems: Dict[str, object] = {}
-        self.degraded: List[str] = []   # capabilities that failed to register (A-3)
+        self.degraded: List[str] = []  # capabilities that failed to register (A-3)
 
     def register(self, name: str, gem: object) -> None:
         self._gems[name] = gem

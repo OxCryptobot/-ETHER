@@ -163,6 +163,12 @@ class ClearQuartz:
 
         try:
             security_flags = self._static_analysis(code)
+            # Resolve once, before running: explicit-local and auto-resolved-local
+            # both reach _run_local via _run (:297-300) without the marker,
+            # because the FileNotFoundError handler below only fires when
+            # `docker run` is missing — so host-side execution looked identical
+            # to container isolation (B1).
+            backend = sandbox_backend()
             result = self._run(code, request.timeout_seconds)
             execution_time = time.perf_counter() - start
             tests_passed, total_tests = self._count_tests(
@@ -178,8 +184,12 @@ class ClearQuartz:
                     exit_code=result.returncode,
                     total_tests=total_tests,
                     tests_passed=tests_passed,
-                    security_flags=security_flags,
+                    security_flags=security_flags
+                    + (["sandbox_fallback:local"] if backend == "local" else []),
                     execution_time=round(execution_time, 3),
+                    # Static flags only: the fallback marker must not tank the
+                    # score — same deliberate split as the FileNotFoundError
+                    # path (:227/:237).
                     static_analysis_score=0.0 if security_flags else 1.0,
                 ),
             )

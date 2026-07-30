@@ -56,14 +56,26 @@ boundary).
    across ~100 sites; the 64 still-present sites were reverted to open.
 5. **Budget ratchets, kept in sync in both registers**
    (`config/audit-rules.yaml` + `tools/audit/findings_baseline.json`):
-   - `pipeline_run_lines` 790 → **710** (ARCH-003 is a may-only-lower
-     ratchet). Note: the rule measures `Pipeline.run` at 718 lines at
-     `819bc92` (def line to `end_lineno`) — the SPEC premise of "702
-     post-stage-1" did not match the rule's measurement — so the 718 site is
-     baselined open under the new 710 budget; any growth changes the
-     fingerprint and blocks, a refactor below 710 resolves it.
+   - `pipeline_run_lines` 790 → **718** (ARCH-003 is a may-only-lower
+     ratchet). The rule measures `Pipeline.run` at 718 lines at `819bc92`
+     (def line to `end_lineno`) — the SPEC premise of "702 post-stage-1" did
+     not match the rule's measurement, and the initially chosen 710 left the
+     real 718 site permanently baselined-open (review fix: budget corrected
+     710 → 718, still a legal may-only-lower move from 790, and the baseline
+     entry promoted open → fixed with `fixed_commit=819bc92`). Protection
+     mechanism, stated precisely: the violation text is `Pipeline.run:<N>`
+     and `fingerprint.normalize_text` strips numeric literals, so growth
+     keeps the SAME fingerprint — the teeth come from the entry being
+     **fixed**: reappearance at the same site classifies TRUE_REGRESSION and
+     fails the P3 gate (verified empirically: planted +3-line growth in an
+     archive copy → tracker TRUE_REGRESSION, exit 1). Growth that stays
+     below budget never fires — that is the intended ratchet semantics (a
+     may-only-lower budget, not a per-line tripwire).
    - `env_getenv_sites` 188 → **191** (post-Day-2 reality; the +3 are the two
      `ETHER_BATCH_COMMANDS` gates + the stage-1 loop flag — ADRs 0001/0002).
+     The actual count is **200 including the pack self-scan** (+9 pack getenv
+     sites) vs the 191 audited-repo budget — QUAL-005 is warn-severity and
+     never blocks; documented only.
 6. **Pack self-scan grandfathered.** `tools/audit/` is the auditor, not the
    audited, but no global/per-rule exclusion mechanism exists
    (`exclude_files` is honored only by QUAL-002), so the pack's own findings
@@ -82,12 +94,15 @@ boundary).
    one-line "run scripts/fetch_datasets.py" and exit 2;
    `tests/test_bench_integrity.py` skips rather than auditing vacuously).
    SEC-007's shrink-only tracked whitelist was pruned to match.
-8. **`memory/batch_queue.json` stays tracked** — deliberate exception: it is
-   the seeded smoke queue (3 pipeline items, no eval data) and part of the
-   fresh-clone out-of-box experience. (`memory/__init__.py`,
-   `memory/curriculum/*` and the `.gitkeep` files were already tracked
-   runtime scaffolding, not eval data; untracking them was out of scope for
-   A-8.)
+8. **`memory/batch_queue.json` stays tracked, permanently** — deliberate
+   ops-queue exception: it is the seeded smoke queue (3 pipeline items, no
+   eval data) and part of the fresh-clone out-of-box experience. SEC-007's
+   shrink-only tracked whitelist (with `remove_by` deadlines) governs the
+   eval-data/runtime-state files; `batch_queue.json` is recorded in that
+   whitelist as the permanent exception (`remove_by: never`), so the two
+   texts agree. (`memory/__init__.py`, `memory/curriculum/*` and the
+   `.gitkeep` files were already tracked runtime scaffolding, not eval data;
+   untracking them was out of scope for A-8.)
 9. **Raw-rows policy (MEAS-004).** `docs/results/README.md` records the
    provenance: `ablation_qwen2.5-3b.json` = raw rows of the contaminated run
    (kept, retracted numbers stay on the record), `ablation_qwen2.5-3b_clean.json`
@@ -121,3 +136,14 @@ boundary).
   drop out of scope instead.
 - **import-linter**: `config/importlinter.ini` is installed but not yet wired
   into CI — follow-up.
+- **Leak-audit floor is vacuous on CI by design**:
+  `tests/test_bench_integrity.py` now SKIPS on fresh clones/CI runners
+  (untracked datasets, SPEC §3c) — the leak-audit floor only exercises on
+  working copies that carry the datasets.
+- **Dashboard audit panel ships orphaned**:
+  `dashboard/static/audit_panel.html` is served via `/static` but is unlinked
+  and has no `/api/audit-health` route behind it — wiring it up is a
+  follow-up.
+- **Per-rule `error` status does not fail the gate**: the audit_runner maps
+  rule errors to a non-blocking status (inherited pack design; no rule
+  errors at HEAD) — candidate hardening follow-up.

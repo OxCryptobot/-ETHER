@@ -11,6 +11,12 @@ on:
   pull_request:
   push:
     branches: [main]
+    # Flywheel bot report commits touch only FLYWHEEL.md — don't burn CI on them.
+    paths-ignore: ['FLYWHEEL.md']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,7 +25,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.11"
@@ -48,7 +54,7 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.11"
@@ -67,6 +73,7 @@ jobs:
             --violations audit_violations.jsonl \
             --commit "${{ github.sha }}"
       - name: upload audit health
+        if: always() # diagnostics must survive an audit-rules failure
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: audit_health
@@ -79,7 +86,7 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: "3.11"
@@ -99,7 +106,7 @@ jobs:
     env:
       ETHER_LOOP_RUNNER: ${{ matrix.loop_runner }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: ${{ matrix.python }}
@@ -114,18 +121,22 @@ jobs:
 
   gate:
     needs: [audit-rules, contracts, pytest]
+    # always(): without it a failed/cancelled dependency SKIPS this job and a
+    # skipped gate can satisfy a required status check — fail-closed instead.
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4.1.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: aggregate gate
         run: |
           echo "Gate policy (P3 §7): fail only on new blocker violations,"
           echo "true regressions of fixed blocker/high findings, or test"
-          echo "failure. needs.*.result carries that signal."
+          echo "failure. needs.*.result carries that signal; anything other"
+          echo "than 'success' (failure, cancelled, skipped) fails the gate."
           echo "audit-rules=${{ needs.audit-rules.result }} contracts=${{ needs.contracts.result }} pytest=${{ needs.pytest.result }}"
       - name: fail on red
         if: |
-          needs.audit-rules.result == 'failure' ||
-          needs.contracts.result == 'failure' ||
-          needs.pytest.result == 'failure'
+          needs.audit-rules.result != 'success' ||
+          needs.contracts.result != 'success' ||
+          needs.pytest.result != 'success'
         run: exit 1

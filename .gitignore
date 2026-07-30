@@ -51,3 +51,6 @@ models/
 # OS
 .DS_Store
 Thumbs.db
+
+# Pre-commit audit-fast hook diagnostics (P2 fast gate writes this at repo root)
+.audit_health_precommit.json

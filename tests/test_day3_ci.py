@@ -124,10 +124,11 @@ def test_budgets_are_in_sync():
     baseline = json.loads((ROOT / "tools" / "audit" / "findings_baseline.json").read_text("utf-8"))
     cfg_budgets = config.get("budgets") or {}
     base_budgets = baseline.get("budgets") or {}
-    # Day-3 ratchets: pipeline_run_lines 790 -> 710 (may-only-lower),
+    # Day-3 ratchets: pipeline_run_lines 790 -> 718 (may-only-lower; 718 is
+    # the rule's measured Pipeline.run span at 819bc92 — def to end_lineno),
     # env_getenv_sites 188 -> 191 (post-Day-2 reality, ADRs 0001/0002).
-    assert cfg_budgets["pipeline_run_lines"] == 710
-    assert base_budgets["pipeline_run_lines"] == 710
+    assert cfg_budgets["pipeline_run_lines"] == 718
+    assert base_budgets["pipeline_run_lines"] == 718
     assert cfg_budgets["env_getenv_sites"] == 191
     assert base_budgets["env_getenv_sites"] == 191
     for key in ("pipeline_run_lines", "env_getenv_sites"):

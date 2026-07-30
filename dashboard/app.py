@@ -163,6 +163,14 @@ def promote(body: PromoteBody) -> dict:
     src = QUARANTINE / name
     if not src.exists():
         raise HTTPException(404, f"not in quarantine: {name}")
+    # SEC-001: route the click through the same safety gate as reconcile.
+    # A human's explicit action is the consent (operator_initiated=True), but
+    # static_safety + Black Tourmaline audit still run and still fail closed.
+    from core import tool_reconcile
+
+    gate = tool_reconcile._promotion_gate(src, operator_initiated=True)
+    if not gate["ok"]:
+        raise HTTPException(403, f"promotion gate refused: {gate['reason']}")
     PERSISTENT.mkdir(parents=True, exist_ok=True)
     m = re.match(r"^(.+?)_\d{8}_\d{6}\.py$", name)
     dest_name = f"{m.group(1)}.py" if m else name

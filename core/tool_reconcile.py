@@ -20,16 +20,21 @@ PERSISTENT = ROOT / "tools" / "persistent"
 QUARANTINE = ROOT / "tools" / "quarantine"
 
 
-def _promotion_gate(path: Path) -> Dict[str, Any]:
+def _promotion_gate(path: Path, *, operator_initiated: bool = False) -> Dict[str, Any]:
     """Safety gate a quarantined tool must clear before becoming trusted.
 
     Mirrors the checks `fabricate()` applies, so the reconcile path cannot be
     used to bypass them. Fails CLOSED: if a gate cannot be evaluated, the tool
     is not promoted.
+
+    Two consent modes: the daemon-scheduled path consents via the
+    ETHER_AUTO_PROMOTE=1 environment opt-in, while an explicit human action
+    (operator_initiated=True, e.g. the dashboard promote button) IS the
+    consent and skips only that env check — every other check still runs.
     """
     import os
 
-    if os.getenv("ETHER_AUTO_PROMOTE", "0") != "1":
+    if not operator_initiated and os.getenv("ETHER_AUTO_PROMOTE", "0") != "1":
         return {"ok": False, "reason": "ETHER_AUTO_PROMOTE=0"}
 
     try:

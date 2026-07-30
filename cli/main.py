@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -470,11 +471,28 @@ def clean_runs(force: bool = typer.Option(False, "--force")) -> None:
 
 @app.command()
 def promote(filename: str) -> None:
-    src = Path("tools/quarantine") / filename
+    # Normalize to a basename and refuse anything that is not a plain tool
+    # filename — an absolute path or `..` segment would otherwise read
+    # outside the quarantine.
+    name = Path(filename).name
+    if not re.match(r"^[A-Za-z0-9_\-]+\.py$", name):
+        print_error(f"Invalid tool filename: {_safe(filename)}")
+        raise typer.Exit(1)
+    src = Path("tools/quarantine") / name
     dst_dir = Path("tools/persistent")
     dst_dir.mkdir(parents=True, exist_ok=True)
     if not src.exists():
         print_error(f"Not found: {src}")
+        raise typer.Exit(1)
+    # SEC-001: a CLI invocation IS an explicit operator action — the same
+    # consent class as the dashboard promote click — so route through the
+    # gate with operator_initiated=True; static_safety + the Black
+    # Tourmaline audit still run and still fail closed.
+    from core import tool_reconcile
+
+    gate = tool_reconcile._promotion_gate(src, operator_initiated=True)
+    if not gate["ok"]:
+        print_error(f"Promotion gate refused: {gate['reason']}")
         raise typer.Exit(1)
     dst = dst_dir / src.name
     dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")

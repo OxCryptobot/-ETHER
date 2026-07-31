@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Map .py files and top-level symbols; rank by optional query."""
+"""Map .py files and top-level symbols; rank by objective when available."""
 from __future__ import annotations
 
 import ast
+import json
 import re
 import sys
 from pathlib import Path
@@ -23,10 +24,12 @@ def symbols(path: Path) -> list[str]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             prefix = "async def" if isinstance(node, ast.AsyncFunctionDef) else "def"
             doc = ast.get_docstring(node) or ""
-            out.append(f"{prefix} {node.name}" + (f" — {doc.split(chr(10))[0][:80]}" if doc else ""))
+            first = doc.split("\n")[0][:80] if doc else ""
+            out.append(f"{prefix} {node.name}" + (f" — {first}" if first else ""))
         elif isinstance(node, ast.ClassDef):
             doc = ast.get_docstring(node) or ""
-            out.append(f"class {node.name}" + (f" — {doc.split(chr(10))[0][:80]}" if doc else ""))
+            first = doc.split("\n")[0][:80] if doc else ""
+            out.append(f"class {node.name}" + (f" — {first}" if first else ""))
     return out
 
 
@@ -34,11 +37,22 @@ def _tokens(text: str) -> set[str]:
     return {t for t in re.findall(r"[a-zA-Z0-9_./\\-]{3,}", (text or "").lower()) if len(t) > 2}
 
 
+def _progress_objective() -> str:
+    """Pipeline writes objective here before repo_map is invoked."""
+    p = repo_root() / "memory" / "runs" / "in_progress.json"
+    if not p.exists():
+        return ""
+    try:
+        return str(json.loads(p.read_text(encoding="utf-8")).get("objective") or "")
+    except Exception:
+        return ""
+
+
 def main() -> None:
     inp = read_input()
     root = safe_path(inp.get("path", "."), repo_root())
     max_files = int(inp.get("max_files", 200))
-    query = str(inp.get("query") or inp.get("objective") or "")
+    query = str(inp.get("query") or inp.get("objective") or "") or _progress_objective()
     qtok = _tokens(query)
 
     scored: list[tuple[float, dict]] = []
@@ -51,7 +65,6 @@ def main() -> None:
         if qtok:
             blob = _tokens(rel + " " + " ".join(syms))
             score = len(qtok & blob) / max(1, len(qtok))
-            # hard boost exact path mentions (core/patterns.py)
             if any(t in rel.lower() for t in qtok if "/" in t or t.endswith(".py")):
                 score += 1.0
             if any(t in rel.lower() for t in qtok):

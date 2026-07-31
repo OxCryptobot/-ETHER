@@ -28,7 +28,15 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.11"
+          # 3.12, not 3.11: node-based audit fingerprints hash ast.dump()
+          # output, which changed across 3.11->3.12 (PEP 701 f-string nodes)
+          # — under 3.11 the baseline misses and 10 grandfathered findings
+          # classify NEW (blocker) -> audit-rules exit 1 (verified on PR #4
+          # run 30600928324 and reproduced locally on 3.11). lint/audit-rules/
+          # contracts are pinned to the baseline's interpreter; the pytest
+          # matrix keeps its 3.11 leg for runtime compat. Root fix (source-
+          # segment pattern hash + baseline reseed): follow-up, human PR.
+          python-version: "3.12"
       # ruff steps are WARN-MODE (continue-on-error): the repo carries 6
       # pre-existing F401 in core/ plus pre-existing E402/format drift at
       # 819bc92. The audit engine (audit-rules job) is the blocking gate
@@ -57,7 +65,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: run audit engine (full register)
         run: |
           python tools/audit/audit_runner.py --repo . \
@@ -89,7 +97,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: install
         run: pip install -e ".[dev]" || pip install pytest httpx pydantic fastapi
       - name: contract tests (SEC/PERF/STATE/MEAS TST rules)

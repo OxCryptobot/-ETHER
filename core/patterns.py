@@ -70,6 +70,52 @@ def index_pass_pattern(
         return {"ok": False, "error": msg}
 
 
+def index_fail_pattern(
+    objective: str,
+    code: str,
+    stderr: str = "",
+    fail_kind: str = "",
+    strategy: str = "",
+) -> Dict[str, Any]:
+    """Store a FAIL artifact in Citrine collection 'failures'. Never raises."""
+    try:
+        from core.registry import build_default_registry
+        from core.schemas import CitrineRequest, Envelope
+
+        text = (
+            f"OBJECTIVE:\n{objective[:500]}\n\nFAIL_KIND: {fail_kind}\n"
+            f"STDERR:\n{(stderr or '')[:800]}\n\nCODE:\n{(code or '')[:2000]}"
+        )
+        docs = [
+            {
+                "text": text,
+                "metadata": {
+                    "kind": "fail_pattern",
+                    "fail_kind": fail_kind or "",
+                    "strategy": strategy or "",
+                },
+            }
+        ]
+        res = build_default_registry().execute(
+            Envelope(
+                task_id=uuid4(),
+                target_gem="citrine",
+                payload=CitrineRequest(action="add", collection="failures", documents=docs),
+            )
+        )
+        if res.error:
+            msg = res.error.message
+            if is_optional_vector_offline(msg):
+                return {"ok": True, "skipped": True, "reason": "qdrant_offline", "error": msg[:200]}
+            return {"ok": False, "error": msg}
+        return {"ok": True, "collection": "failures"}
+    except Exception as e:
+        msg = str(e)[:200]
+        if is_optional_vector_offline(msg):
+            return {"ok": True, "skipped": True, "reason": "qdrant_offline", "error": msg}
+        return {"ok": False, "error": msg}
+
+
 def retrieve_pass_patterns(objective: str, k: int = 3) -> Dict[str, Any]:
     """Leak-safe retrieve from Citrine `patterns`.
 
@@ -113,7 +159,6 @@ def retrieve_pass_patterns(objective: str, k: int = 3) -> Dict[str, Any]:
                 safe.append(r)
             results = safe
         except Exception:
-            # Cannot verify leak safety → serve nothing
             return {"block": "", "n": 0, "skipped": True, "reason": "guard_unavailable"}
 
         parts: List[str] = []

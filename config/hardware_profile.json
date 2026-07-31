@@ -1,13 +1,16 @@
 {
   "profile": "host",
   "label": "Owner workstation — GTX 1650 4GB VRAM, 12GB RAM",
-  "max_param_b": 3,
+  "max_param_b": 4,
   "preferred_models": [
+    "qwen3.5:4b",
+    "qwen3.5:4b-instruct",
+    "qwen3:4b",
     "qwen2.5-coder:3b",
     "phi3:mini",
     "qwen2.5-coder:1.5b",
     "llama3.2:3b"
   ],
-  "forbid_pull": ["7b", "14b", "32b", "13b", "16b", "6.7b"],
-  "notes": "Cousin/high-end machines set profile to cousin via ETHER_HW_PROFILE=cousin"
+  "forbid_pull": ["7b", "8b", "9b", "13b", "14b", "16b", "32b", "6.7b"],
+  "notes": "Host max 4B (Qwen 3.5 4B). Cousin/high-end: ETHER_HW_PROFILE=cousin"
 }

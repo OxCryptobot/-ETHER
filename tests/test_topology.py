@@ -67,7 +67,9 @@ D1_ALLOWLIST: Set[Tuple[str, int, str]] = frozenset(
         # re-pinned again (+6) at Day-1 review: _run gained a docstring
         # noting the marker lives in execute() (SEC-003), shifting only the
         # import below it; same file, same module, still not a new site.
-        ("gems/clear_quartz/sandbox.py", 417, "core.assert_audit"),
+        # re-pinned (+7) at SEC-003 fail-closed which() guard: same module,
+        # same lazy import site in _count_tests, line shift only.
+        ("gems/clear_quartz/sandbox.py", 424, "core.assert_audit"),
         ("gems/clear_quartz/sandbox.py", 287, "core.pipeline_hooks"),
         ("gems/clear_quartz/sandbox.py", 147, "core.pipeline_hooks"),
         ("gems/clear_quartz/sandbox.py", 152, "core.test_synth"),

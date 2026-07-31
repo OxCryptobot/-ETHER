@@ -314,6 +314,11 @@ class ClearQuartz:
         backend = sandbox_backend()
         if backend == "local":
             return self._run_local(code, timeout)
+        # Explicit docker is a security decision. Check the binary via the same
+        # shutil.which path tests mock — do not rely on subprocess discovering
+        # docker on PATH while which was reported absent (SEC-003 / S-01).
+        if backend == "docker" and not shutil.which("docker"):
+            raise FileNotFoundError("docker")
         try:
             from gems.clear_quartz.warm import warm_enabled, run_in_warm
 
@@ -365,6 +370,8 @@ class ClearQuartz:
         # root filesystem; SECURITY.md already claimed --read-only was in use.
         # --pids-limit matters because a fork bomb in the container otherwise
         # exhausts host PIDs.
+        if not shutil.which("docker"):
+            raise FileNotFoundError("docker")
         cmd = [
             "docker",
             "run",

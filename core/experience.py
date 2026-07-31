@@ -1,4 +1,4 @@
-"""Experience vault — PASS few-shot + FAIL-kind repair bias."""
+"""Experience vault — PASS few-shot + FAIL-kind repair bias + Citrine patterns."""
 
 from __future__ import annotations
 
@@ -30,7 +30,6 @@ def _overlap(a: str, b: str) -> float:
     return len(ta & tb) / max(1, len(ta | tb))
 
 
-# Stderr signatures that mean the environment broke, not the generated code.
 _INFRA_SIGNATURES = (
     "cannot connect to the docker daemon",
     "failed to connect to the docker api",
@@ -44,9 +43,6 @@ _INFRA_SIGNATURES = (
     "read timed out",
 )
 
-# fail_kind values that name a pipeline STAGE rather than a defect class.
-# `_fail()` passes the stage name, so "code"/"plan"/"exception" were being
-# stored as if they were failure taxonomies.
 _INFRA_FAIL_KINDS = ("dependency", "plan", "exception")
 
 _MAX_VAULT_ROWS = 2000
@@ -79,7 +75,6 @@ def _fingerprint_seen(path: Path, fingerprint: str) -> bool:
 
 
 def _rotate(path: Path, max_rows: int = _MAX_VAULT_ROWS) -> None:
-    """Keep the vault bounded; it was appended to forever and fully re-read."""
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
         if len(lines) > max_rows:
@@ -100,11 +95,7 @@ def record(
     task_id: str = "",
     verification_score: float = 0.0,
     total_tests: int = 0,
-    # Verdict from assertions the generator never saw. Recorded so the
-    # curriculum's promotion gate can require independent evidence rather than
-    # inferring competence from self-graded confidence alone.
     holdout_ok: Optional[bool] = None,
-    # Passed so the writer can refuse an artifact carrying its own holdout.
     holdout_test: str = "",
     skip_curriculum: bool = False,
 ) -> None:
@@ -125,17 +116,6 @@ def record(
         "fail_kind": fail_kind,
         "task_id": task_id,
     }
-    # Never store an artifact carrying its own holdout assertions.
-    #
-    # `retrieve()` replays this vault into later prompts, so one leaked-era row
-    # re-contaminates every future run that retrieves it. save_success_pattern
-    # was guarded on its write path; this store was not, and it is the SIXTH
-    # distinct channel by which a holdout has reached a prompt — after the
-    # curriculum, bench prompts, hidden_quiz's private grader, BM25 retrieval
-    # over scripts/, and the few-shot pattern store.
-    #
-    # Observed live: 7 rows in pass.jsonl and 1 in fail.jsonl carried holdout
-    # assertions, which leaked into 3 ether samples mid-ablation.
     if holdout_test:
         try:
             from core.prompt_guard import find_leaks
@@ -143,22 +123,13 @@ def record(
             if find_leaks(f"{objective}\n{code}", holdout_test):
                 return
         except Exception:
-            # A guard that cannot run must not silently permit the write.
             return
 
-    # Infrastructure outages are not code failures. Recording "ollama down" or
-    # a dead Docker daemon as a FAIL taught the model to avoid a pattern that
-    # never existed, and seeded the failure graph with permanent infra nodes:
-    # every one of the 26 rows in fail.jsonl was an outage, not a defect.
     if not success and _is_infra_failure(stderr, fail_kind):
         return
 
     path = PASS_PATH if success else FAIL_PATH
 
-    # Deduplicate on (objective, code). The vault is replayed into prompts as
-    # few-shot examples, so an objective run repeatedly filled the block with
-    # three copies of one trivial function — 13 of 22 pass rows were the same
-    # `write hello` stub, crowding out anything informative.
     fingerprint = _row_fingerprint(objective, code)
     if _fingerprint_seen(path, fingerprint):
         return
@@ -176,8 +147,6 @@ def record(
         except Exception:
             pass
 
-    # Prefer flywheel/smart_cycle to call curriculum with full scores.
-    # Only auto-update curriculum here when explicitly allowed.
     if (
         not skip_curriculum
         and os.getenv("ETHER_CURRICULUM", "1") == "1"
@@ -215,39 +184,21 @@ def _read_jsonl(path: Path, limit: int = 500) -> List[Dict[str, Any]]:
 
 def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dict[str, Any]:
     if not experience_enabled():
-        return {"block": "", "n_pass": 0, "n_fail": 0}
+        return {"block": "", "n_pass": 0, "n_fail": 0, "n_citrine": 0}
 
     passes = _read_jsonl(PASS_PATH)
     fails = _read_jsonl(FAIL_PATH)
 
-    # Drop any example that already implements what the objective asks for.
-    #
-    # Few-shot retrieval on a benchmark is structurally a leak: this store
-    # fills with solutions to the very tasks being measured, and similarity
-    # search then surfaces the closest one — which is the answer. Measured: the
-    # retrieved block for `edit_distance` contained `def edit_distance`, and 14
-    # of 40 headroom tasks had a prior solution here. It produced an apparent
-    # +53pp for the pipeline that was entirely contamination.
-    #
-    # The assertion guard cannot catch this. The holdout never appears in the
-    # prompt — the SOLUTION does — so `leaked` reads 0 while the model is being
-    # handed the answer.
     try:
         from core.prompt_guard import defines_target
 
         def _same_task(row):
-            # Check BOTH fields. An example whose OBJECTIVE targets the same
-            # symbol is a prior attempt at this very task, and the block
-            # includes that objective verbatim — so filtering only on `code`
-            # left the signature (and, for a passing row, the solution) in the
-            # prompt.
             blob = f"{row.get('objective', '')}\n{row.get('code', '')}"
             return bool(defines_target(blob, objective))
 
         passes = [r for r in passes if not _same_task(r)]
         fails = [r for r in fails if not _same_task(r)]
     except Exception:
-        # Cannot verify -> serve nothing rather than risk serving the answer.
         passes, fails = [], []
     scored_p = sorted(
         ((_overlap(objective, r.get("objective", "")), r) for r in passes),
@@ -286,4 +237,22 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
         except Exception:
             pass
 
-    return {"block": "\n".join(parts)[:3800], "n_pass": len(top_p), "n_fail": len(top_f)}
+    # Stage 2b: Citrine vector patterns (leak-filtered inside retrieve_pass_patterns)
+    n_citrine = 0
+    try:
+        from core.patterns import retrieve_pass_patterns
+
+        cit = retrieve_pass_patterns(objective, k=2)
+        cit_block = (cit.get("block") or "").strip()
+        n_citrine = int(cit.get("n") or 0)
+        if cit_block:
+            parts.append("### Vector memory (Citrine patterns)\n" + cit_block)
+    except Exception:
+        pass
+
+    return {
+        "block": "\n".join(parts)[:4200],
+        "n_pass": len(top_p),
+        "n_fail": len(top_f),
+        "n_citrine": n_citrine,
+    }

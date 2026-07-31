@@ -79,6 +79,7 @@ def env() -> None:
         "ETHER_FLYWHEEL_PUSH",
         "ETHER_BURST",
         "ETHER_ROOT",
+        "ETHER_SKIP_CRITIQUE",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
@@ -187,19 +188,20 @@ def plan(prompt: str) -> None:
 def run(
     objective: str,
     json_out: bool = typer.Option(False, "--json"),
-    critique: bool = typer.Option(False, "--critique"),
+    critique: bool = typer.Option(
+        True,
+        "--critique/--no-critique",
+        help="Labradorite review (default ON — infinity self-improvement loop)",
+    ),
 ) -> None:
     if not objective.strip():
         print_error("Objective cannot be empty.")
         raise typer.Exit(1)
+    # Infinity topology: Amethyst ← Labradorite critique is essential product path.
     result = Pipeline().run(objective, critique=critique)
     if json_out:
         console.print_json(result.model_dump_json())
         raise typer.Exit(0 if result.status == "complete" else 1)
-    # Show the error, then fall through and print the full report anyway.
-    # Returning early here hid the generated code, sandbox output and stage
-    # list on exactly the runs where they matter most — a failing run is when
-    # you most need to see what was produced and where it broke.
     if result.status == "error":
         console.print(Panel(f"[red]{_safe(result.error or '')}[/]", title="Error"))
     if result.plan:
@@ -215,14 +217,15 @@ def run(
             console.print(f"  stderr: {_safe(result.sandbox.stderr.strip())[:500]}")
     if result.audit:
         console.print(f"Audit approved={result.audit.approved} risk={result.audit.risk_score}")
+    if result.critique:
+        console.print(f"Critique: {_safe(result.critique.critique)[:200]}")
+        for s in (result.critique.suggested_improvements or [])[:5]:
+            console.print(f"  · {_safe(s)}")
     for st in result.stages:
         console.print(f"  stage:{st.stage:10} ok={st.success} {st.duration_ms:.0f}ms {_safe(st.detail)}")
     console.print(
         f"Confidence: {result.confidence:.3f}  strategy={getattr(result, 'strategy', '')} reward={getattr(result, 'reward', 0):.3f}"
     )
-    # The non-JSON path previously had no exit at all, so `ether run` returned 0
-    # even when the generated code never executed. Scripting `ether run … && …`
-    # was unsafe.
     raise typer.Exit(0 if result.status == "complete" else 1)
 
 
@@ -399,7 +402,7 @@ def audit(path: Path = typer.Argument(..., exists=True)) -> None:
 
 
 @app.command()
-def index(path: Path = typer.Argument(..., exists=True), collection: str = "code") -> None:
+def index(path: Path = typer.Argument(..., exists=True), collection: str = "ether_code") -> None:
     docs = []
     files = [path] if path.is_file() else list(path.rglob("*.py"))
     for f in files:
@@ -421,7 +424,7 @@ def index(path: Path = typer.Argument(..., exists=True), collection: str = "code
 
 
 @app.command()
-def search(query: str, collection: str = "code", top_k: int = 5) -> None:
+def search(query: str, collection: str = "ether_code", top_k: int = 5) -> None:
     res = build_default_registry().execute(
         Envelope(
             task_id=uuid4(),
@@ -471,9 +474,6 @@ def clean_runs(force: bool = typer.Option(False, "--force")) -> None:
 
 @app.command()
 def promote(filename: str) -> None:
-    # Normalize to a basename and refuse anything that is not a plain tool
-    # filename — an absolute path or `..` segment would otherwise read
-    # outside the quarantine.
     name = Path(filename).name
     if not re.match(r"^[A-Za-z0-9_\-]+\.py$", name):
         print_error(f"Invalid tool filename: {_safe(filename)}")
@@ -484,10 +484,6 @@ def promote(filename: str) -> None:
     if not src.exists():
         print_error(f"Not found: {src}")
         raise typer.Exit(1)
-    # SEC-001: a CLI invocation IS an explicit operator action — the same
-    # consent class as the dashboard promote click — so route through the
-    # gate with operator_initiated=True; static_safety + the Black
-    # Tourmaline audit still run and still fail closed.
     from core import tool_reconcile
 
     gate = tool_reconcile._promotion_gate(src, operator_initiated=True)

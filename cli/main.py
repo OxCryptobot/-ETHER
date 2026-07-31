@@ -80,6 +80,8 @@ def env() -> None:
         "ETHER_BURST",
         "ETHER_ROOT",
         "ETHER_SKIP_CRITIQUE",
+        "ETHER_AUTO_FABRICATE_ON_FAIL",
+        "ETHER_AUTO_PROMOTE",
     ]:
         console.print(f"{k}={os.getenv(k, '')}")
 
@@ -129,6 +131,10 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         "embed_ok": False,
         "patterns_points": 0,
         "failures_points": 0,
+        "fail_streak": 0,
+        "quarantine_tools": 0,
+        "persistent_tools": 0,
+        "last_fabricate_status": None,
     }
     try:
         load_config()
@@ -153,6 +159,20 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     except Exception as e:
         checks["citrine_error"] = f"{type(e).__name__}: {e}"[:160]
 
+    # Stage 4 — controlled evolution surface
+    try:
+        from core.evolution_status import evolution_status
+
+        evo = evolution_status()
+        checks["fail_streak"] = int(evo.get("fail_streak") or 0)
+        checks["fail_proposed"] = bool(evo.get("fail_proposed"))
+        checks["quarantine_tools"] = int(evo.get("quarantine_tools") or 0)
+        checks["persistent_tools"] = int(evo.get("persistent_tools") or 0)
+        checks["last_fabricate_status"] = evo.get("last_fabricate_status")
+        checks["last_fabricate_name"] = evo.get("last_fabricate_name")
+    except Exception as e:
+        checks["evolution_error"] = f"{type(e).__name__}: {e}"[:160]
+
     critical = ["sandbox_ok", "ollama", "manifest", "registry"]
     ok_all = all(bool(checks[k]) for k in critical)
 
@@ -172,14 +192,29 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         "embed_ok",
         "patterns_points",
         "failures_points",
+        "fail_streak",
+        "quarantine_tools",
+        "persistent_tools",
+        "last_fabricate_status",
     ]:
-        val = checks[name]
-        if name in ("sandbox_backend", "primary_model", "patterns_points", "failures_points"):
+        val = checks.get(name)
+        if name in (
+            "sandbox_backend",
+            "primary_model",
+            "patterns_points",
+            "failures_points",
+            "fail_streak",
+            "quarantine_tools",
+            "persistent_tools",
+            "last_fabricate_status",
+        ):
             console.print(f"  [cyan]·[/] {name}={val}")
         else:
             console.print(f"  {'[green]✓[/]' if val else '[red]✗[/]'} {name}")
     if checks.get("citrine_error"):
         console.print(f"  [dim]citrine: {checks['citrine_error']}[/]")
+    if checks.get("evolution_error"):
+        console.print(f"  [dim]evolution: {checks['evolution_error']}[/]")
     if backend in ("local", "auto") and not docker_ok:
         console.print("[dim]tip: Linux no-Docker → ETHER_SANDBOX_BACKEND=local (auto already falls back)[/]")
 
@@ -396,7 +431,6 @@ def tool_run(
             print_error(f"payload file not found: {payload_file}")
             raise typer.Exit(1)
         try:
-            # utf-8-sig strips PowerShell Set-Content BOM
             body = json.loads(payload_file.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError as e:
             print_error(f"invalid JSON in file: {e}")

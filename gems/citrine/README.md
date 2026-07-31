@@ -1,17 +1,33 @@
 # Citrine
 
-**Role**: Hybrid Memory & Retrieval System
+**Role:** Modular memory & retrieval gem (Qdrant + Ollama embeddings).
 
-## Current Status
+Citrine is a **first-class** gem in Stage 2 Modular Intelligence — not an optional side effect of the pipeline.
 
-- Qdrant client integration: implemented
-- Collection management: implemented
-- Search / Add interface: implemented (embedding still placeholder)
-- Graph layer (NetworkX): not yet
-- Obsidian export: not yet
+## Collections
 
-## Next Improvements
+| Collection | Purpose |
+|------------|---------|
+| `ether_code` | Chunked source / repo knowledge |
+| `patterns` | **Verified-only** pass artifacts (sandbox exit 0) |
+| `failures` | Structured failure lessons (no full cheatsheets) |
+| `runs` | Run continuity summaries |
 
-1. Real embedding generation (nomic-embed-text via Ollama)
-2. Proper typed CitrineRequest / CitrineResponse in core/schemas.py
-3. Graph relationships
+## Rules
+
+1. **Zero-vector ban** — failed embeds raise; never store `[0.0]*768`
+2. **Verified writes** — callers must only insert sandbox-passed code into `patterns`
+3. **Leak-safe retrieve** — pipeline filters hits that would show the solution under test (prompt_guard)
+4. **Honest health** — `Citrine.health()` / doctor report reachability + embed_ok
+
+## Host setup
+
+```powershell
+docker compose -f deploy/docker-compose.qdrant.yml up -d
+ollama pull nomic-embed-text
+# QDRANT_URL=http://localhost:6333 in .env
+```
+
+## API
+
+Envelope actions: `search`, `add`, `health` via `CitrineRequest`.

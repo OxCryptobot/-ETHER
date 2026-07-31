@@ -1,21 +1,12 @@
-"""Verify handler — the extracted verification spine of Pipeline.run (legacy lines 649-841).
+"""Verify handler — verification spine with mandatory Labradorite critique.
 
-Strangler-fig stage 2: when ETHER_LOOP_RUNNER=1, Pipeline.run routes the
-verification spine (tool_scan → audit → critique → gate inputs → prompt_guard
-→ holdout → reward) through VerificationHandler instead of the inline legacy
-block (`Pipeline._verify_legacy`). Behavior is byte-identical by construction;
-scripts/shadow_runner.py proves it scenario by scenario.
-
-Boundary rules (topology D2): stdlib, pydantic, core.schemas, core.learning,
-core.progress only, plus the same lazy core.prompt_guard / core.holdout
-lookups the legacy block used (kept inline so both paths resolve the same
-patch point). No gems.* imports — the grandidierite bridge is injected as
-`run_tool`. Never imports core.pipeline: stages leave here as
-StageResult-shaped dicts and the caller constructs them.
+Infinity topology: critique is essential (not gated on --critique). Reviews
+flow to the shared memory bus so the next Selenite plan can self-tune.
 """
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Callable, Dict, List, Optional
 from uuid import UUID
@@ -36,17 +27,17 @@ from core.schemas import (
 class VerificationContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    task_id: str  # str(result.task_id)
+    task_id: str
     objective: str
-    generated: str  # generated or ""
+    generated: str
     tool_assist: bool
-    critique: bool
+    critique: bool  # retained for API compat; ignored — critique is always on
     holdout_test: str
-    sent_prompts: List[str]  # every prompt actually sent, for the leak guard
-    has_sandbox: bool  # result.sandbox is not None
-    sandbox_exit: Optional[int]  # result.sandbox.exit_code if result.sandbox else None
-    sandbox_total_tests: int  # int(result.sandbox.total_tests) if result.sandbox else 0
-    confidence: float  # current result.confidence (post-sandbox scores)
+    sent_prompts: List[str]
+    has_sandbox: bool
+    sandbox_exit: Optional[int]
+    sandbox_total_tests: int
+    confidence: float
     verification_score: float
     retries: int
     plan_ok: bool
@@ -57,20 +48,18 @@ class VerificationContext(BaseModel):
 class VerificationOutcome(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    stages: List[Dict[str, Any]]  # StageResult-shaped dicts, legacy order/content
-    confidence: float  # post-clamps
-    audit: Optional[Dict[str, Any]]  # BlackTourmalineResponse.model_dump() or None
-    critique: Optional[Dict[str, Any]]  # LabradoriteResponse.model_dump() or None
+    stages: List[Dict[str, Any]]
+    confidence: float
+    audit: Optional[Dict[str, Any]]
+    critique: Optional[Dict[str, Any]]
     holdout_ok: Optional[bool]
-    holdout_test: str  # effective ("" after a leak)
+    holdout_test: str
     reward: float
     exit_code: Optional[int]
     total_tests: int
 
 
 class VerificationHandler:
-    """Runs the verification spine against injected boundaries."""
-
     def __init__(self, registry: Any, run_tool: Callable[..., Dict[str, Any]]):
         self._registry = registry
         self._run_tool = run_tool
@@ -134,11 +123,6 @@ class VerificationHandler:
                 }
             )
         else:
-            # A gem outage used to produce no StageResult at all: the audit
-            # row simply vanished, so an unaudited run was indistinguishable
-            # from an approved one. Record the failure explicitly and clamp
-            # confidence exactly as an un-approved audit would — code nobody
-            # audited must not score as if it had been.
             audit_err = (
                 audit_res.error.message
                 if audit_res.error
@@ -154,8 +138,11 @@ class VerificationHandler:
                 }
             )
 
-        if ctx.critique:
+        # Infinity loop: Labradorite is always-on (ETHER_SKIP_CRITIQUE=1 to disable in tests)
+        skip_crit = os.getenv("ETHER_SKIP_CRITIQUE", "0") == "1"
+        if not skip_crit and generated:
             t5 = time.perf_counter()
+            write_progress(tid, ctx.objective, "critique")
             crit_req = Envelope(
                 task_id=task_id,
                 target_gem="labradorite",
@@ -172,14 +159,32 @@ class VerificationHandler:
                         "duration_ms": (time.perf_counter() - t5) * 1000,
                     }
                 )
+                try:
+                    from core.memory_bus import record_critique
+
+                    record_critique(
+                        objective=ctx.objective,
+                        code=generated,
+                        critique=crit_res.payload.critique,
+                        suggestions=list(crit_res.payload.suggested_improvements or []),
+                        complexity_score=float(crit_res.payload.complexity_score or 0),
+                        success=(ctx.sandbox_exit == 0),
+                        confidence=confidence,
+                        task_id=tid,
+                    )
+                except Exception as e:
+                    stages.append(
+                        {
+                            "stage": "memory_bus",
+                            "success": False,
+                            "detail": f"critique bus: {type(e).__name__}",
+                        }
+                    )
             else:
-                # Same silent-vanish bug as audit: --critique was requested,
-                # so the absence of a critique row has to be reported rather
-                # than read as "critique was skipped".
                 crit_err = (
                     crit_res.error.message
                     if crit_res.error
-                    else f"critique returned {type(crit_res.payload).__name__}, expected LabradoriteResponse"
+                    else f"critique returned {type(crit_res.payload).__name__}"
                 )
                 stages.append(
                     {
@@ -191,32 +196,17 @@ class VerificationHandler:
                 )
 
         exit_code = ctx.sandbox_exit
-        # An audit-gem outage is not a rejection. compute_reward turns
-        # audit_approved=False into a flat -0.2, so folding "the auditor was
-        # down" into the same flag trained the bandit to punish strategies
-        # whose code the auditor never even looked at. When no verdict
-        # exists we stay neutral here; the already-clamped confidence (0.3)
-        # keeps the reward from being inflated, and _log still records
-        # audit_approved=False so the flywheel gate keeps failing closed.
         audit_ok = bool(audit_payload.approved) if audit_payload is not None else True
         had_self = bool(ctx.has_sandbox and ctx.sandbox_total_tests > 0)
         total_tests = ctx.sandbox_total_tests
 
-        # Grade against assertions the generator never saw, before the
-        # reward is computed, so the learning signal is not purely
-        # self-graded. Fails closed: a grading error is not a pass.
         holdout_ok: Optional[bool] = None
         if holdout_test.strip():
-            # If the holdout reached the prompt, the verdict is worthless —
-            # the model was shown the answer. Report it and refuse to grade
-            # rather than banking an unearned pass. BM25 retrieval leaked
-            # assertions into 12 of 15 bench prompts this way, which is how
-            # a pass_rate of 0.933 came to be reported as honest.
             try:
                 from core.prompt_guard import check as _guard_check
 
                 guard = _guard_check("\n\n".join(ctx.sent_prompts), holdout_test)
-            except Exception as e:  # never let the guard break a run
+            except Exception as e:
                 guard = {"clean": True, "leak_count": 0, "detail": f"guard error: {e}"}
 
             if not guard.get("clean"):
@@ -235,7 +225,7 @@ class VerificationHandler:
                         "detail": "not graded — holdout leaked into the prompt",
                     }
                 )
-                holdout_test = ""  # skip grading; the result would be meaningless
+                holdout_test = ""
 
         if holdout_test.strip():
             try:

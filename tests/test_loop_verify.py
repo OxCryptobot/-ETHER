@@ -247,6 +247,59 @@ def test_handler_tool_scan_risky_exec_clamps(quiet_progress):
     assert out.confidence == 0.25
 
 
+def test_handler_scan_dirty_and_audit_rejected_clamps(quiet_progress):
+    reg = _StubRegistry(
+        audit=BlackTourmalineResponse(
+            approved=False,
+            violations=[PolicyViolation(rule="no-eval", severity="high", message="eval")],
+            risk_score=0.7,
+        )
+    )
+    handler = _handler(  # bound once: audit QUAL-003 names any *.run()
+        registry=reg, run_tool=_run_tool(scan={"ok": True, "result": {"clean": False}})
+    )
+    out = handler.run(_ctx())
+    # min(min(0.9, 0.25), 0.3): the tool_scan clamp fires first and dominates.
+    assert out.confidence == 0.25
+    assert [s["stage"] for s in out.stages] == ["tool_scan", "audit"]
+    scan_stage, audit_stage = out.stages
+    assert scan_stage["success"] is False
+    assert scan_stage["detail"] == "secrets_clean=False risky_exec=False"
+    assert audit_stage["success"] is False
+    assert audit_stage["detail"] == "risk=0.7"
+
+
+def test_handler_audit_wrong_payload_type(quiet_progress):
+    # tool call succeeds (error=None) but returns a wrong-typed payload, so the
+    # "audit returned X, expected BlackTourmalineResponse" else-branch fires.
+    reg = _StubRegistry(audit={"approved": True, "risk_score": 0.1})
+    handler = _handler(registry=reg)  # bound once: audit QUAL-003 names any *.run()
+    out = handler.run(_ctx())
+    audit_stage = [s for s in out.stages if s["stage"] == "audit"][0]
+    assert audit_stage["success"] is False
+    assert audit_stage["detail"] == (
+        "audit unavailable: audit returned dict, expected BlackTourmalineResponse"
+    )
+    assert out.audit is None
+    assert out.confidence == 0.3
+
+
+def test_handler_critique_wrong_payload_type(quiet_progress):
+    # critique-equivalent of the audit payload-type-mismatch else-branch.
+    reg = _StubRegistry(
+        audit=BlackTourmalineResponse(approved=True, risk_score=0.0),
+        crit={"critique": "solid, minor naming issues"},
+    )
+    handler = _handler(registry=reg)  # bound once: audit QUAL-003 names any *.run()
+    out = handler.run(_ctx(critique=True))
+    crit_stage = [s for s in out.stages if s["stage"] == "critique"][0]
+    assert crit_stage["success"] is False
+    assert crit_stage["detail"] == (
+        "critique unavailable: critique returned dict, expected LabradoriteResponse"
+    )
+    assert out.critique is None
+
+
 def test_handler_tool_scan_skipped_without_assist_or_code(quiet_progress):
     handler = _handler()  # bound once: audit QUAL-003 names any *.run()
     assert all(s["stage"] != "tool_scan" for s in handler.run(_ctx(tool_assist=False)).stages)

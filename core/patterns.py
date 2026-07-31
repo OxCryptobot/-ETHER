@@ -2,8 +2,30 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from uuid import uuid4
+
+
+def is_optional_vector_offline(error: str) -> bool:
+    """True when Citrine/Qdrant is simply not running — product path must not fail.
+
+    Local success-pattern files still work; vector index is optional infrastructure.
+    """
+    e = (error or "").lower()
+    markers = (
+        "10061",  # WinError connection refused
+        "connection refused",
+        "actively refused",
+        "failed to establish",
+        "connect call failed",
+        "connection reset",
+        "name or service not known",
+        "nodename nor servname",
+        "max retries exceeded",
+        "qdrant",
+        "httpconnectionpool",
+    )
+    return any(m in e for m in markers)
 
 
 def index_pass_pattern(
@@ -36,7 +58,13 @@ def index_pass_pattern(
             )
         )
         if res.error:
-            return {"ok": False, "error": res.error.message}
+            msg = res.error.message
+            if is_optional_vector_offline(msg):
+                return {"ok": True, "skipped": True, "reason": "qdrant_offline", "error": msg[:200]}
+            return {"ok": False, "error": msg}
         return {"ok": True, "collection": "patterns"}
     except Exception as e:
-        return {"ok": False, "error": str(e)[:200]}
+        msg = str(e)[:200]
+        if is_optional_vector_offline(msg):
+            return {"ok": True, "skipped": True, "reason": "qdrant_offline", "error": msg}
+        return {"ok": False, "error": msg}

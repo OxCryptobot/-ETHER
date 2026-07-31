@@ -302,6 +302,83 @@ def run(
     raise typer.Exit(0 if result.status == "complete" else 1)
 
 
+@app.command("repo-score")
+def repo_score(
+    fixture: Path = typer.Option(
+        Path("fixtures/repo_oracle_toy"),
+        "--fixture",
+        help="Fixture package root (copied to temp staging; live tree never written)",
+    ),
+    markers_file: Path = typer.Option(
+        None,
+        "--markers-file",
+        help="File with # file: markers (agent multi-file output)",
+    ),
+    code_file: Path = typer.Option(
+        None,
+        "--code-file",
+        help="Single relative path content to write as greeter.py (toy) or path=name",
+    ),
+    as_path: str = typer.Option(
+        "greeter.py",
+        "--as-path",
+        help="Relative path inside fixture when using --code-file",
+    ),
+    test_args: str = typer.Option("tests", "--test-args", help="Pytest args (space-separated)"),
+    timeout: int = typer.Option(60, "--timeout"),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Phase B oracle: apply edits in staging, score with project pytest."""
+    from core.repo_oracle import score_from_marked_code, score_repo_edit
+
+    if not fixture.exists():
+        print_error(f"fixture not found: {fixture}")
+        raise typer.Exit(1)
+
+    args = [a for a in test_args.split() if a]
+    if markers_file is not None:
+        if not markers_file.exists():
+            print_error(f"markers file not found: {markers_file}")
+            raise typer.Exit(1)
+        code = markers_file.read_text(encoding="utf-8-sig")
+        result = score_from_marked_code(
+            code, fixture_root=fixture, test_args=args, timeout=timeout
+        )
+    elif code_file is not None:
+        if not code_file.exists():
+            print_error(f"code file not found: {code_file}")
+            raise typer.Exit(1)
+        body = code_file.read_text(encoding="utf-8-sig")
+        result = score_repo_edit(
+            {as_path: body}, fixture_root=fixture, test_args=args, timeout=timeout
+        )
+    else:
+        # baseline: score fixture as-is (expect fail on toy)
+        greeter = fixture / "greeter.py"
+        if not greeter.exists():
+            print_error("no --markers-file/--code-file and fixture has no greeter.py")
+            raise typer.Exit(1)
+        result = score_repo_edit(
+            {"greeter.py": greeter.read_text(encoding="utf-8")},
+            fixture_root=fixture,
+            test_args=args,
+            timeout=timeout,
+        )
+
+    if json_out:
+        console.print_json(json.dumps(result))
+    else:
+        console.print(
+            f"oracle={result.get('oracle')} ok={result.get('ok')} "
+            f"score={result.get('score')} returncode={result.get('returncode')}"
+        )
+        if result.get("stdout"):
+            console.print(f"  stdout: {_safe(str(result['stdout']).strip())[:500]}")
+        if result.get("error"):
+            console.print(f"  error: {_safe(str(result['error']))}")
+    raise typer.Exit(0 if result.get("ok") else 1)
+
+
 @app.command()
 def flywheel(
     push: bool = typer.Option(False, "--push"),

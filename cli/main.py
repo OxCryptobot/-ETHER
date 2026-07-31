@@ -139,7 +139,6 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     except Exception:
         checks["registry"] = False
 
-    # Citrine / Qdrant — modular intelligence health (optional but reported)
     try:
         from gems.citrine.memory import Citrine
 
@@ -397,7 +396,8 @@ def tool_run(
             print_error(f"payload file not found: {payload_file}")
             raise typer.Exit(1)
         try:
-            body = json.loads(payload_file.read_text(encoding="utf-8"))
+            # utf-8-sig strips PowerShell Set-Content BOM
+            body = json.loads(payload_file.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError as e:
             print_error(f"invalid JSON in file: {e}")
             raise typer.Exit(1)

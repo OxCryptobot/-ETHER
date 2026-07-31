@@ -45,6 +45,11 @@ from core.schemas import (
 from cli.helpers import print_error, print_ok
 from cli.commands_batch import batch_app
 
+try:
+    from core.__version__ import __version__ as _ETHER_VERSION
+except Exception:
+    _ETHER_VERSION = "0.2.0"
+
 app = typer.Typer(name="ether", help="@ETHER", add_completion=False)
 app.add_typer(batch_app, name="batch")
 console = Console(force_terminal=True, soft_wrap=True)
@@ -58,7 +63,7 @@ def _safe(text: str) -> str:
 
 @app.command()
 def version(verbose: bool = typer.Option(False, "--verbose", "-v")) -> None:
-    console.print("[bold cyan]@ETHER[/] v0.1.4")
+    console.print(f"[bold cyan]@ETHER[/] v{_ETHER_VERSION}")
 
 
 @app.command()
@@ -135,6 +140,7 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         "quarantine_tools": 0,
         "persistent_tools": 0,
         "last_fabricate_status": None,
+        "version": _ETHER_VERSION,
     }
     try:
         load_config()
@@ -159,7 +165,6 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     except Exception as e:
         checks["citrine_error"] = f"{type(e).__name__}: {e}"[:160]
 
-    # Stage 4 — controlled evolution surface
     try:
         from core.evolution_status import evolution_status
 
@@ -179,6 +184,7 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     if json_out:
         console.print_json(json.dumps(checks))
         raise typer.Exit(0 if ok_all else 1)
+    console.print(f"  [cyan]·[/] version={_ETHER_VERSION}")
     for name in [
         "sandbox_backend",
         "sandbox_ok",
@@ -584,5 +590,10 @@ def tools() -> None:
         console.print(f"  {f.name}")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Console script entry point (`ether` → cli.main:main)."""
     app()
+
+
+if __name__ == "__main__":
+    main()

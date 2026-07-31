@@ -19,3 +19,6 @@ modules:
   loop/handlers/finalize:               # stage 1 — first extracted stage (tail of Pipeline.run)
     introduced: "migration(stage1): loop-runner foundation"
     purpose: "FinalizeHandler — learning-record/fabricate/memory-save/status tail, extracted verbatim"
+  loop/handlers/verify:                 # stage 2 — verification-spine extraction from Pipeline.run
+    introduced: "migration(stage2): verification-spine extraction"
+    purpose: "VerificationHandler — tool_scan/audit/critique/prompt_guard/holdout/reward spine, extracted verbatim"

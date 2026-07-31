@@ -9,6 +9,7 @@ import pytest
 
 import core.pipeline as cp
 from core.loop.handlers.finalize import FinalizeContext, FinalizeHandler, FinalizeOutcome
+from core.loop.handlers.verify import VerificationOutcome
 from core.pipeline import Pipeline
 from core.registry import GemRegistry, build_default_registry
 from core.schemas import (
@@ -104,6 +105,22 @@ def test_flag_on_routes_via_loop_runner(monkeypatch):
     class FakeRunner:
         def __init__(self, registry):
             seen["registry"] = registry
+
+        def run_verify(self, ctx):
+            # stage-2: the spine dispatch runs first; pass the gate values
+            # through unchanged so the finalize assertions below stay valid.
+            seen["verify_ctx"] = ctx
+            return VerificationOutcome(
+                stages=[],
+                confidence=ctx.confidence,
+                audit=None,
+                critique=None,
+                holdout_ok=None,
+                holdout_test=ctx.holdout_test,
+                reward=0.0,
+                exit_code=ctx.sandbox_exit,
+                total_tests=ctx.sandbox_total_tests,
+            )
 
         def run_finalize(self, ctx):
             seen["ctx"] = ctx

@@ -1,4 +1,4 @@
-"""Automated tool fabrication — AST gate + safety + sandbox + audit + promote."""
+"""Automated tool fabrication — AST gate + safety + sandbox + audit + critique + promote."""
 
 from __future__ import annotations
 
@@ -64,7 +64,6 @@ def _log(entry: Dict[str, Any]) -> None:
 
 
 def ast_validate(code: str) -> Dict[str, Any]:
-    """Require parseable Python + a top-level main function."""
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
@@ -149,6 +148,38 @@ def audit_code(code: str) -> Dict[str, Any]:
         return {"ok": False, "approved": False, "error": str(e)}
 
 
+def critique_code(code: str) -> Dict[str, Any]:
+    """Infinity topology: Labradorite reviews fabricated tools (soft gate)."""
+    try:
+        from core.schemas import Envelope, LabradoriteRequest, LabradoriteResponse
+        from core.registry import build_default_registry
+
+        reg = build_default_registry()
+        res = reg.execute(
+            Envelope(
+                task_id=uuid4(),
+                target_gem="labradorite",
+                payload=LabradoriteRequest(code=code),
+            )
+        )
+        if res.error or not isinstance(res.payload, LabradoriteResponse):
+            return {
+                "ok": True,
+                "soft": True,
+                "error": res.error.message if res.error else "critique unavailable",
+            }
+        p = res.payload
+        return {
+            "ok": True,
+            "soft": True,
+            "complexity": float(getattr(p, "complexity_score", 0.0)),
+            "critique": (getattr(p, "critique", "") or "")[:200],
+            "suggestions": list(getattr(p, "suggested_improvements", None) or [])[:5],
+        }
+    except Exception as e:
+        return {"ok": True, "soft": True, "error": str(e)[:160]}
+
+
 def llm_implement(name: str, docstring: str, spec: Dict[str, Any]) -> Dict[str, Any]:
     try:
         from core.schemas import Envelope, RoseQuartzRequest, ChatMessage, RoseQuartzResponse
@@ -185,17 +216,39 @@ Return ONLY full Python source, no markdown.
 
 
 def promote(path: Path) -> Dict[str, Any]:
+    """Promote quarantined tool after promotion gate. Strips timestamp suffix."""
+    try:
+        from core.tool_reconcile import _promotion_gate
+
+        # Auto path must clear the same gate as reconcile (consent via env).
+        gate = _promotion_gate(path, operator_initiated=False)
+        if not gate.get("ok"):
+            return {"ok": False, "error": f"promotion_gate: {gate.get('reason')}"}
+    except Exception as e:
+        return {"ok": False, "error": f"promotion_gate unavailable: {e}"}
+
     PERSISTENT.mkdir(parents=True, exist_ok=True)
     base = path.name
-    # NOT an f-string: `{{8}}` was a literal brace-8-brace, never the {8}
-    # quantifier, so this never matched a timestamped filename. Promoted tools
-    # kept their `_YYYYMMDD_HHMMSS` suffix and resolve_tool(name) could never
-    # find them — fabricate → promote → reuse was a silent no-op, reported ok.
     m = re.match(r"^(.+?)_\d{8}_\d{6}\.py$", base)
     dest_name = f"{m.group(1)}.py" if m else base
     dest = PERSISTENT / dest_name
     dest.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
     return {"ok": True, "path": str(dest.relative_to(ROOT)).replace("\\", "/")}
+
+
+def _citrine_index_tool(name: str, code: str, promote_path: str) -> Dict[str, Any]:
+    """Index a successfully promoted tool into Citrine patterns. Never raises."""
+    try:
+        from core.patterns import index_pass_pattern
+
+        return index_pass_pattern(
+            objective=f"fabricated tool {name} at {promote_path}",
+            code=code[:3000],
+            confidence=0.9,
+            strategy="fabricate",
+        )
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:160]}
 
 
 def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
@@ -264,6 +317,10 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         _log(result)
         return result
 
+    # Infinity topology: Amethyst/evolution path always runs Labradorite.
+    crit = critique_code(code)
+    result["stages"].append({"stage": "critique", **crit})
+
     result["validation_status"] = "pending_promote"
     if auto_promote:
         promo = promote(out_path)
@@ -271,6 +328,9 @@ def fabricate(tool_request: Dict[str, Any]) -> Dict[str, Any]:
         result["promoted"] = bool(promo.get("ok"))
         result["promote_path"] = promo.get("path")
         result["validation_status"] = "promoted" if promo.get("ok") else "pending_promote"
+        if promo.get("ok"):
+            cit = _citrine_index_tool(name, code, str(promo.get("path") or ""))
+            result["stages"].append({"stage": "citrine_index", **cit})
     else:
         result["stages"].append(
             {"stage": "promote", "ok": False, "note": "ETHER_AUTO_PROMOTE=0"}

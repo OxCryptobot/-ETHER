@@ -377,11 +377,20 @@ def _verify_scenarios() -> List[VerifyScenario]:
             name="audit_gem_outage",
             audit_error="black-tourmaline unreachable",
         ),
+        VerifyScenario(
+            name="audit_payload_type_mismatch",
+            audit_payload={"approved": True, "risk_score": 0.1},
+        ),
         VerifyScenario(name="critique_on_success", critique=True),
         VerifyScenario(
             name="critique_on_outage",
             critique=True,
             crit_error="labradorite down",
+        ),
+        VerifyScenario(
+            name="critique_payload_type_mismatch",
+            critique=True,
+            crit_payload={"critique": "solid, minor naming issues"},
         ),
         VerifyScenario(
             name="tool_scan_risky_exec",
@@ -392,6 +401,15 @@ def _verify_scenarios() -> List[VerifyScenario]:
             scan={"ok": True, "result": {"clean": False}},
         ),
         VerifyScenario(name="tool_scan_runner_raises", run_tool_raises=True),
+        VerifyScenario(
+            name="scan_dirty_audit_rejected",
+            scan={"ok": True, "result": {"clean": False}},
+            audit_payload=BlackTourmalineResponse(
+                approved=False,
+                violations=[PolicyViolation(rule="no-eval", severity="high", message="eval used")],
+                risk_score=0.7,
+            ),
+        ),
         VerifyScenario(
             name="holdout_pass",
             holdout_test="assert f() == 1",

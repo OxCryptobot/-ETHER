@@ -116,7 +116,7 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     else:
         sandbox_ok = docker_ok or local_ok
 
-    checks = {
+    checks: dict = {
         "sandbox_backend": backend,
         "sandbox_ok": sandbox_ok,
         "docker": docker_ok,
@@ -125,6 +125,10 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
         "manifest": True,
         "registry": True,
         "primary_model": os.getenv("ETHER_PRIMARY_MODEL", ""),
+        "qdrant": False,
+        "embed_ok": False,
+        "patterns_points": 0,
+        "failures_points": 0,
     }
     try:
         load_config()
@@ -135,18 +139,48 @@ def doctor(json_out: bool = typer.Option(False, "--json")) -> None:
     except Exception:
         checks["registry"] = False
 
+    # Citrine / Qdrant — modular intelligence health (optional but reported)
+    try:
+        from gems.citrine.memory import Citrine
+
+        h = Citrine().health()
+        checks["qdrant"] = bool(h.get("reachable"))
+        checks["embed_ok"] = bool(h.get("embed_ok"))
+        cols = h.get("collections") or {}
+        checks["patterns_points"] = int((cols.get("patterns") or {}).get("points") or 0)
+        checks["failures_points"] = int((cols.get("failures") or {}).get("points") or 0)
+        if h.get("error"):
+            checks["citrine_error"] = str(h["error"])[:160]
+    except Exception as e:
+        checks["citrine_error"] = f"{type(e).__name__}: {e}"[:160]
+
     critical = ["sandbox_ok", "ollama", "manifest", "registry"]
     ok_all = all(bool(checks[k]) for k in critical)
 
     if json_out:
         console.print_json(json.dumps(checks))
         raise typer.Exit(0 if ok_all else 1)
-    for name in ["sandbox_backend", "sandbox_ok", "docker", "local_python", "ollama", "manifest", "registry", "primary_model"]:
+    for name in [
+        "sandbox_backend",
+        "sandbox_ok",
+        "docker",
+        "local_python",
+        "ollama",
+        "manifest",
+        "registry",
+        "primary_model",
+        "qdrant",
+        "embed_ok",
+        "patterns_points",
+        "failures_points",
+    ]:
         val = checks[name]
-        if name in ("sandbox_backend", "primary_model"):
+        if name in ("sandbox_backend", "primary_model", "patterns_points", "failures_points"):
             console.print(f"  [cyan]·[/] {name}={val}")
         else:
             console.print(f"  {'[green]✓[/]' if val else '[red]✗[/]'} {name}")
+    if checks.get("citrine_error"):
+        console.print(f"  [dim]citrine: {checks['citrine_error']}[/]")
     if backend in ("local", "auto") and not docker_ok:
         console.print("[dim]tip: Linux no-Docker → ETHER_SANDBOX_BACKEND=local (auto already falls back)[/]")
 
@@ -197,7 +231,6 @@ def run(
     if not objective.strip():
         print_error("Objective cannot be empty.")
         raise typer.Exit(1)
-    # Infinity topology: Amethyst ← Labradorite critique is essential product path.
     result = Pipeline().run(objective, critique=critique)
     if json_out:
         console.print_json(result.model_dump_json())

@@ -19,14 +19,18 @@ PREFERRED_COUSIN = [
     "deepseek-coder-v2:16b",
     "deepseek-coder:6.7b",
     "codellama:13b",
+    "qwen3.5:4b",
     "qwen2.5-coder:3b",
     "phi3:mini",
     "deepseek-coder:1.3b",
     "llama3.2:3b",
 ]
 
-# Owner host (GTX 1650 4GB / 12GB RAM) — never prefer >3B class
+# Owner host (GTX 1650 4GB / 12GB RAM) — prefer Qwen 3.5 4B, never >4B class
 PREFERRED_HOST = [
+    "qwen3.5:4b",
+    "qwen3.5:4b-instruct",
+    "qwen3:4b",
     "qwen2.5-coder:3b",
     "phi3:mini",
     "qwen2.5-coder:1.5b",
@@ -76,7 +80,7 @@ def load_profile() -> Dict[str, Any]:
     return {
         "profile": profile if profile != "auto" else "host",
         "preferred": preferred,
-        "max_param_b": int(data.get("max_param_b") or (3 if profile != "cousin" else 32)),
+        "max_param_b": int(data.get("max_param_b") or (4 if profile != "cousin" else 32)),
         "label": data.get("label") or profile,
     }
 
@@ -163,8 +167,8 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
                     reason = "any_non_heavy"
                     break
         if not chosen:
-            chosen = "qwen2.5-coder:3b"
-            reason = "fallback_host_3b"
+            chosen = "qwen3.5:4b"
+            reason = "fallback_host_4b"
 
     # Only fill in a model when the operator has not chosen one. This used to
     # overwrite an explicit ETHER_PRIMARY_MODEL whenever ETHER_AUTO_MODEL was
@@ -190,4 +194,4 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
 
 
 def ensure_model_env() -> str:
-    return str(select_primary_model().get("model") or "qwen2.5-coder:3b")
+    return str(select_primary_model().get("model") or "qwen3.5:4b")

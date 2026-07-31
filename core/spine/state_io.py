@@ -7,6 +7,7 @@ append_jsonl(); one-shot whole-file writes use write_json() (atomic, lock-free
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import time
@@ -16,6 +17,27 @@ from typing import Any, Callable, Dict, Iterator, Optional
 
 LOCK_TIMEOUT_S = 30.0
 LOCK_STALE_S = 30.0
+
+
+def _lock_held_error(exc: BaseException) -> bool:
+    """True when the OS reports the lock path is already owned.
+
+    Unix: FileExistsError from O_EXCL.
+    Windows: often PermissionError (WinError 5 / errno 13) while another
+    process still holds the lock file open — treating only FileExistsError
+    drops updates under concurrent rmw (test_rmw_concurrent_no_lost_updates).
+    """
+    if isinstance(exc, FileExistsError):
+        return True
+    if isinstance(exc, PermissionError):
+        return True
+    if isinstance(exc, OSError) and getattr(exc, "errno", None) in (
+        errno.EEXIST,
+        errno.EACCES,
+        errno.EPERM,
+    ):
+        return True
+    return False
 
 
 @contextmanager
@@ -30,17 +52,23 @@ def state_lock(lock_path: Path, timeout: float = LOCK_TIMEOUT_S) -> Iterator[Non
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.write(fd, str(os.getpid()).encode())
             break
-        except FileExistsError:
+        except Exception as exc:
+            if not _lock_held_error(exc):
+                raise
             if time.time() - start > timeout:
                 # Stale lock: holder died without releasing. Older than the
                 # timeout means no live writer could still legitimately hold it.
                 try:
                     age = time.time() - lock_path.stat().st_mtime
                     if age > timeout:
-                        lock_path.unlink(missing_ok=True)
+                        try:
+                            lock_path.unlink(missing_ok=True)
+                        except PermissionError:
+                            # Windows: previous holder may still be closing.
+                            time.sleep(0.05)
                         continue
                 # why: a vanished/unreadable lockfile must not mask the timeout.
-                except Exception:  # fall through and raise the caller's timeout
+                except Exception:
                     pass
                 raise TimeoutError(f"state lock timeout after {timeout}s: {lock_path}")
             time.sleep(0.05)
@@ -53,11 +81,15 @@ def state_lock(lock_path: Path, timeout: float = LOCK_TIMEOUT_S) -> Iterator[Non
         # why: release is best-effort; the unlink below is the real release.
         except Exception:
             pass
-        try:
-            lock_path.unlink(missing_ok=True)
-        # why: a leftover lockfile self-heals via the stale recovery above.
-        except Exception:
-            pass
+        # Windows: brief retry if AV or delayed handle release blocks unlink.
+        for _ in range(10):
+            try:
+                lock_path.unlink(missing_ok=True)
+                break
+            except PermissionError:
+                time.sleep(0.02)
+            except Exception:
+                break
 
 
 def read_json(path: Path, default: Any) -> Any:

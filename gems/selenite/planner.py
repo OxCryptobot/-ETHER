@@ -131,7 +131,11 @@ class Selenite:
             from uuid import uuid4
 
             rq = RoseQuartz()
-            lesson_bit = f"\nPrior critique lessons:\n{lessons[:800]\n" if lessons else ""
+            # f-string expressions cannot contain backslashes — slice first
+            snippet = (lessons or "")[:800]
+            lesson_bit = (
+                "\nPrior critique lessons:\n" + snippet + "\n" if snippet else ""
+            )
             prompt = (
                 "Return a short numbered implementation plan (max "
                 f"{max_depth} steps) for this coding task. One line per step."
@@ -182,7 +186,6 @@ class Selenite:
             reasoning = f"Rule plan intent={intent}: {query[:100]}"
             if lessons:
                 reasoning += " | self-improvement lessons applied"
-                # Inject a review step when prior critiques exist
                 if len(steps) < max_depth:
                     steps.append(
                         PlanStep(

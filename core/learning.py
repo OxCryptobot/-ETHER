@@ -17,13 +17,7 @@ EXP_PATH = ROOT / "memory" / "learning" / "experience.jsonl"
 
 @dataclass(frozen=True)
 class ArmBehaviour:
-    """What an arm actually *does* differently.
-
-    Every field except `prompt_addon` changes which blocks reach the model.
-    An arm whose only difference is `prompt_addon` still changes the artifact
-    (terse vs defensive vs assert-carrying code); an arm that changes nothing
-    at all is not an arm, and those were removed — see RETIRED_STRATEGIES.
-    """
+    """What an arm actually *does* differently."""
 
     prompt_addon: str
     use_workspace_context: bool = True
@@ -32,14 +26,6 @@ class ArmBehaviour:
     force_repo_map: bool = False
 
 
-# The arm set is deliberately small. Ten arms where eight differed only by an
-# appended sentence meant the bandit was estimating ten nearly-identical
-# distributions from a handful of pulls each, and three of them
-# (`rag_on`, `few_shot_on`, `burst_on_fail`) were literal no-ops: BM25 runs for
-# every strategy inside gather_workspace_context, few_shot_pack runs
-# unconditionally, and burst is gated on ETHER_BURST which defaults to 0. Each
-# arm below either changes the prompt directive in a way that changes the
-# emitted code, or changes which retrieved blocks are in the prompt.
 STRATEGY_BEHAVIOUR: Dict[str, ArmBehaviour] = {
     "default": ArmBehaviour(
         prompt_addon="Write clear, complete executable code.",
@@ -53,32 +39,29 @@ STRATEGY_BEHAVIOUR: Dict[str, ArmBehaviour] = {
     "repair_heavy": ArmBehaviour(
         prompt_addon="Be defensive; validate inputs; avoid edge-case crashes.",
     ),
-    # Genuine ablation: no workspace/BM25 context, no experience block, no
-    # few-shot block, no repo map. Tool output stays — that is the result of an
-    # action the plan asked for, i.e. task input, not retrieval.
     "no_context": ArmBehaviour(
         prompt_addon="Solve from the objective alone; no repository context is provided.",
         use_workspace_context=False,
         use_experience=False,
         use_few_shot=False,
     ),
-    # Genuine addition: pulls the repo map in even when the objective does not
-    # look multifile (the pipeline only fetches it for multifile-looking work).
     "repo_map_on": ArmBehaviour(
         prompt_addon="Prefer names/symbols consistent with the repository map.",
+        force_repo_map=True,
+    ),
+    # Stage 3: real multi-file generation using # file: markers.
+    "multifile": ArmBehaviour(
+        prompt_addon=(
+            "When multiple modules are needed, emit them as:\n"
+            "# file: util.py\n<code>\n# file: main.py\n<code>\n"
+            "Entry module runs asserts. Prefer pure functions. No markdown."
+        ),
         force_repo_map=True,
     ),
 }
 
 STRATEGIES: List[str] = list(STRATEGY_BEHAVIOUR)
 
-# Kept only so old bandit.json files can be read without KeyErrors and so the
-# retired stats stay visible for forensics. Never selected.
-#   step_by_step  — prompt-only, indistinguishable in effect from default
-#   few_shot_on   — no-op: few_shot_pack runs for every strategy
-#   rag_on        — no-op: BM25 runs for every strategy
-#   burst_on_fail — no-op: burst needs ETHER_BURST=1, which defaults to 0, and
-#                   when it is on, any retry bursts regardless of the arm
 RETIRED_STRATEGIES: Tuple[str, ...] = (
     "step_by_step",
     "few_shot_on",
@@ -86,16 +69,9 @@ RETIRED_STRATEGIES: Tuple[str, ...] = (
     "burst_on_fail",
 )
 
-# --- contextual keying -----------------------------------------------------
-# An arm is only comparable against arms that faced the same situation. The
-# global table had no context dimension while `select` steered repair-ish arms
-# at broken code and retrieval-ish arms at hard tiers, so those arms collected
-# the hardest problems, earned the worst means, and were then avoided by the
-# greedy branch. Buckets are coarse on purpose: this system produces tens of
-# runs, not millions, so a fine-grained key would never leave the cold-start.
-PHASE_GEN = "gen"  # first attempt, nothing has failed yet
-PHASE_REPAIR_SYNTAX = "repair_syntax"  # the code did not even run
-PHASE_REPAIR_LOGIC = "repair_logic"  # it ran and was wrong / crashed
+PHASE_GEN = "gen"
+PHASE_REPAIR_SYNTAX = "repair_syntax"
+PHASE_REPAIR_LOGIC = "repair_logic"
 
 _SYNTAX_KINDS = {
     "SyntaxError",
@@ -106,21 +82,17 @@ _SYNTAX_KINDS = {
     "ModuleNotFoundError",
 }
 
-# Domain knowledge that used to live in `select`'s dead fail_kind branch. It is
-# now a *prior* (worth PRIOR_WEIGHT pulls) instead of a forced choice, so it
-# biases the first few decisions in a bucket and is then overruled by evidence.
 CONTEXT_HINTS: Dict[str, Tuple[str, ...]] = {
     PHASE_REPAIR_SYNTAX: ("repair_heavy", "minimal"),
     PHASE_REPAIR_LOGIC: ("with_asserts", "repair_heavy"),
 }
 SCOPE_HINTS: Dict[str, Tuple[str, ...]] = {
-    "complex": ("repo_map_on",),
+    "complex": ("multifile", "repo_map_on"),
 }
 
-PRIOR_WEIGHT = 2.0  # pseudo-pulls of prior; a hint washes out after ~6 real pulls
+PRIOR_WEIGHT = 2.0
 HINT_BONUS = 0.15
 EPSILON_FLOOR = 0.02
-# Pulls in a bucket at which exploration has halved.
 EPSILON_ANNEAL_PULLS = 25.0
 
 
@@ -140,22 +112,9 @@ def compute_reward(
     used_burst: bool = False,
     holdout_ok: Optional[bool] = None,
 ) -> float:
-    """Reward for a completed run.
-
-    `holdout_ok` is the verdict from assertions the generator never saw
-    (core/holdout.py). None means the task supplied no holdout.
-
-    Every other input here is self-graded: confidence, verification_score and
-    had_self_check all derive from assertions the model wrote about its own
-    output. Optimising on those alone makes "write assertions that cannot
-    fail" the highest-scoring strategy, which is exactly what the arm table
-    had started to learn. When a holdout exists it therefore dominates.
-    """
     if exit_code is None:
         return -1.0
     if holdout_ok is False:
-        # Failed assertions it was not shown. Self-graded confidence is
-        # irrelevant — this is a wrong answer that merely ran.
         return -0.9
     if exit_code != 0:
         base = -0.95 + 0.05 * min(retries, 2)
@@ -180,18 +139,13 @@ def compute_reward(
     if used_burst:
         r -= 0.05
     if holdout_ok:
-        # Passing unseen assertions is the only evidence here that the model
-        # could not have manufactured, so it outweighs the self-graded terms.
         r += 0.25
     elif holdout_ok is None:
-        # Ungraded. Cap below a holdout-verified run so the bandit can never
-        # prefer a task/strategy that avoids independent grading.
         r = min(r, 0.75)
     return round(max(-1.0, min(1.0, r)), 4)
 
 
 def phase_for(fail_kind: str) -> str:
-    """Which repair phase an observed failure class puts us in."""
     fk = (fail_kind or "").strip()
     if not fk:
         return PHASE_GEN
@@ -201,7 +155,6 @@ def phase_for(fail_kind: str) -> str:
 
 
 def context_key(context: Optional[Dict[str, Any]]) -> str:
-    """Coarse bucket for a bandit context: ``phase|scope``."""
     ctx = context or {}
     phase = phase_for(str(ctx.get("fail_kind") or ""))
     try:
@@ -260,22 +213,6 @@ class ContextStats:
 
 
 class BanditPolicy:
-    """Epsilon-greedy over per-context arm statistics.
-
-    Three properties the previous version did not have:
-
-    * credit is per *situation* (see ``context_key``), so an arm steered at
-      broken code is compared with the other arms that also saw broken code;
-    * exploration is a single accounted decision that anneals with experience,
-      instead of three stacked random branches (0.35 cold + 0.40 preferred +
-      epsilon) that produced a ~45% exploration rate under a configured
-      epsilon of 0.15;
-    * cold arms are handled by shrinking toward the bucket mean rather than by
-      multiplying their accumulated reward by COLD_DECAY — which, for negative
-      totals, walked a once-failing arm *up* past a consistently-failing but
-      well-sampled one.
-    """
-
     def __init__(self, epsilon: Optional[float] = None, path: Optional[Path] = None):
         self.epsilon = float(
             epsilon if epsilon is not None else os.getenv("ETHER_LEARN_EPSILON", "0.15")
@@ -286,8 +223,6 @@ class BanditPolicy:
         self.retired: Dict[str, ArmStats] = {}
         self.last_decision: Dict[str, Any] = {}
         self._load()
-
-    # -- persistence --------------------------------------------------------
 
     def _load(self) -> None:
         if not self.path.exists():
@@ -344,30 +279,19 @@ class BanditPolicy:
         }
         self.path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    # -- scoring ------------------------------------------------------------
-
     def context_stats(self, bucket: str) -> ContextStats:
         return self.contexts.setdefault(bucket, ContextStats())
 
     def score(self, bucket: str, arm: str) -> float:
-        """Shrunk value of `arm` *in this bucket*.
-
-        Empirical-Bayes: an arm with no local evidence sits at the bucket's own
-        average (plus a hint bonus if domain knowledge favours it here), not at
-        0.0 and not at its globally-contaminated mean.
-        """
         cs = self.context_stats(bucket)
         stats = cs.arms.get(arm, ArmStats())
         prior = cs.mean_reward + (HINT_BONUS if arm in hinted_arms(bucket) else 0.0)
         return (stats.total_reward + PRIOR_WEIGHT * prior) / (stats.pulls + PRIOR_WEIGHT)
 
     def effective_epsilon(self, bucket: str) -> float:
-        """Exploration rate for this bucket, annealed by local experience."""
         pulls = self.context_stats(bucket).pulls
         eps = self.epsilon / (1.0 + pulls / EPSILON_ANNEAL_PULLS)
         return max(EPSILON_FLOOR, min(self.epsilon, eps))
-
-    # -- policy -------------------------------------------------------------
 
     def select(self, context: Optional[Dict] = None) -> str:
         ctx = dict(context or {})
@@ -413,13 +337,6 @@ class BanditPolicy:
         context: Optional[Dict] = None,
         extra: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Credit `strategy` with `reward` for the situation it was chosen in.
-
-        `context` is the bandit context that produced the choice — for a retry
-        that is the *repair* context, not the context of the first attempt.
-        Omitting it updates only the global reporting table, because attributing
-        an unknown situation to a bucket is worse than not attributing it.
-        """
         reward = float(reward)
         if strategy not in self.arms:
             self.arms[strategy] = ArmStats()
@@ -462,7 +379,6 @@ _FALLBACK_BEHAVIOUR = ArmBehaviour(prompt_addon="Write clear executable code.")
 
 
 def arm_behaviour(strategy: str) -> ArmBehaviour:
-    """Mechanics of an arm. Unknown/retired names fall back to the baseline."""
     return STRATEGY_BEHAVIOUR.get(strategy, _FALLBACK_BEHAVIOUR)
 
 

@@ -9,37 +9,42 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH = ROOT / "memory" / "scratch"
 
+# Injected into the generation prompt for multi-file objectives.
+# Must stay aligned with extract_file_blocks / run_multifile_cycle.
+_GENERATION_ADDON = (
+    "Multi-file format (required when more than one module is needed):\n"
+    "# file: util.py\n"
+    "<pure helpers with asserts>\n"
+    "# file: main.py\n"
+    "<entry that imports util and runs asserts>\n"
+    "Rules: only .py names; no path escape; include asserts in entry; "
+    "no markdown fences; no disk I/O outside these blocks.\n\n"
+)
+
+
+def generation_prompt_addon() -> str:
+    """Directive the pipeline appends for multi-file objectives."""
+    return _GENERATION_ADDON
+
 
 def is_multifile_objective(objective: str) -> bool:
     o = (objective or "").lower()
     return bool(
-        re.search(r"\b(multi[- ]?file|two files|module a|module b|refactor|package)\b", o)
+        re.search(
+            r"\b(multi[- ]?file|two files|three files|module a|module b|"
+            r"refactor|package|across (modules|files)|split into)\b",
+            o,
+        )
         or "memory/scratch" in o
+        or "# file:" in o
     )
 
 
 def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
-    """Write name->content under scratch. Reject path escape. All-or-nothing.
-
-    Containment used to be `str(path.resolve()).startswith(str(SCRATCH))`, a
-    string prefix test: a sibling directory that merely shares the prefix
-    (memory/scratch_evil) satisfies it, and a symlink placed inside scratch was
-    enough to land a generated file outside the sandbox. Same bug class as the
-    one fixed in `core/patch_loop._safe_paths`; use `Path.is_relative_to` for
-    the same reason.
-
-    `extract_file_blocks` deliberately accepts subdirectories ("pkg/mod.py"),
-    so missing parent directories are expected input and are created rather
-    than allowed to raise FileNotFoundError out of the function.
-
-    On any rejection every file written earlier in the same call is rolled
-    back (restored or removed), so a bad entry cannot leave half a package on
-    disk for the runner to import.
-    """
+    """Write name->content under scratch. Reject path escape. All-or-nothing."""
     SCRATCH.mkdir(parents=True, exist_ok=True)
     scratch = SCRATCH.resolve()
     written: List[str] = []
-    # (path, prior bytes or None if the file did not exist)
     backups: List[Tuple[Path, Optional[bytes]]] = []
     made_dirs: List[Path] = []
 
@@ -75,7 +80,6 @@ def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
         if not _contained(path):
             return _rollback("outside scratch")
 
-        # create missing parents one level at a time so rollback can undo them
         cur = SCRATCH
         for part in Path(name).parts[:-1]:
             cur = cur / part
@@ -89,7 +93,6 @@ def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
                 return _rollback(f"mkdir failed: {e}")
             made_dirs.append(cur)
 
-        # re-check after mkdir: the parent chain is only fully resolvable now
         if not _contained(path):
             return _rollback("outside scratch")
 
@@ -112,7 +115,6 @@ def extract_file_blocks(code: str) -> Dict[str, str]:
     if not code:
         return files
     parts = re.split(r"(?m)^#\s*file:\s*([\w./-]+)\s*$", code)
-    # parts[0] preamble, then name, body, name, body...
     if len(parts) < 3:
         return files
     it = iter(parts[1:])
@@ -132,15 +134,12 @@ def run_multifile_cycle(generated: str) -> Tuple[str, Dict[str, Any]]:
     meta["write"] = w
     if not w.get("ok"):
         return generated, meta
-    # Entry paths are relative to SCRATCH, so a block written into a
-    # subdirectory ("# file: pkg/main.py") still runs the file that exists.
     scratch_rel = SCRATCH.relative_to(ROOT).as_posix() + "/"
     written_rel = [
         str(p).replace("\\", "/").split(scratch_rel, 1)[-1] for p in (w.get("written") or [])
     ]
     if not written_rel:
         return generated, meta
-    # Prefer test_*.py or main.py as entry
     entry = None
     for cand in ("test_main.py", "test_app.py", "main.py", "app.py"):
         match = next((r for r in written_rel if Path(r).name == cand), None)
@@ -149,16 +148,6 @@ def run_multifile_cycle(generated: str) -> Tuple[str, Dict[str, Any]]:
             break
     if entry is None:
         entry = written_rel[0]
-    # The runner must be self-contained. It used to `runpy.run_path()` an
-    # absolute HOST path under memory/scratch, but the Docker sandbox mounts
-    # nothing and runs --read-only, so every multifile program died with
-    # FileNotFoundError and was scored as a code failure. Since
-    # `is_multifile_objective` fires on words as ordinary as "refactor" and
-    # "package", that was a guaranteed failure on real objectives.
-    #
-    # Instead, embed the sources and materialise them into a temp directory
-    # inside the sandbox at run time. Works identically under the docker and
-    # local backends, and needs no host filesystem.
     payload = {
         str(Path(name).as_posix()): content
         for name, content in files.items()

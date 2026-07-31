@@ -118,13 +118,20 @@ D2_ALLOWLIST: Set[Tuple[str, int, str]] = frozenset(
     [
         ("core/health_check.py", 349, "gems.clear_quartz.sandbox"),
         ("core/holdout.py", 132, "gems.clear_quartz.sandbox"),
-        ("core/pipeline.py", 228, "gems.grandidierite.registry"),
-        ("core/pipeline.py", 270, "gems.grandidierite.registry"),
-        ("core/pipeline.py", 330, "gems.grandidierite.registry"),
-        ("core/pipeline.py", 653, "gems.grandidierite.registry"),
-        # :940/:1010 at 208993a; shifted +26 by the stage-1 dispatcher branch.
-        ("core/pipeline.py", 966, "gems.grandidierite.registry"),
+        # re-pinned (+1) at stage 2: the VerificationContext import line above
+        # shifted these three sites; same file, same module, not new sites.
+        ("core/pipeline.py", 229, "gems.grandidierite.registry"),
+        ("core/pipeline.py", 271, "gems.grandidierite.registry"),
+        ("core/pipeline.py", 331, "gems.grandidierite.registry"),
+        # :653 pre-stage-2; the tool_scan run_tool import travelled VERBATIM
+        # with the spine block into Pipeline._verify_legacy (same file, same
+        # module, not a new site). core/loop stays gems-free (hard zero).
+        ("core/pipeline.py", 771, "gems.grandidierite.registry"),
+        # :966/:1034 at stage-1; re-pinned at stage 2 after the spine block
+        # moved out of run() and _verify_legacy was inserted above them
+        # (dispatcher −193 lines + new method). Same sites, same module.
         ("core/pipeline.py", 1034, "gems.grandidierite.registry"),
+        ("core/pipeline.py", 1102, "gems.grandidierite.registry"),
         ("core/registry.py", 41, "gems.clear_quartz.sandbox"),
         ("core/registry.py", 42, "gems.rose_quartz.router"),
         ("core/registry.py", 43, "gems.selenite.planner"),

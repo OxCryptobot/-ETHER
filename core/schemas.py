@@ -86,9 +86,9 @@ class RoseQuartzResponse(BaseModel):
 
 # ---------- Citrine ----------
 class CitrineRequest(BaseModel):
-    action: Literal["search", "add", "delete"] = "search"
+    action: Literal["search", "add", "delete", "health"] = "search"
     query: Optional[str] = None
-    collection: str = "code"
+    collection: str = "ether_code"
     top_k: int = 5
     documents: Optional[List[Dict[str, Any]]] = None
     filters: Dict[str, Any] = Field(default_factory=dict)
@@ -103,7 +103,7 @@ class RetrievalResult(BaseModel):
 
 class CitrineResponse(BaseModel):
     results: List[RetrievalResult] = Field(default_factory=list)
-    collection: str = "code"
+    collection: str = "ether_code"
     action: str = "search"
 
 

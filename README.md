@@ -1,55 +1,55 @@
 # @ETHER
 
-Local-first, self-extending, verified agentic coding system.
+**Local-first super-agentic coding system** — modular intelligence, verified execution, controlled evolution.
 
-<!-- badges: add CI badges when public workflows exist -->
+Every code artifact is sandboxed and scored **before** you see it. Tools the system invents stay quarantined until a promotion gate clears them. Memory compounds via Citrine/Qdrant when available.
 
-## Setup
+| Pillar | What it means |
+|--------|----------------|
+| **Modular Intelligence** | 8 typed gems (plan, code, sandbox, audit, critique, memory, evolve, tools) |
+| **Verified Execution** | Clear Quartz sandbox + asserts + audit before delivery |
+| **Controlled Evolution** | Grandidierite fabricate → quarantine → gated promote |
+
+**Version:** 0.2.0 · **Python:** ≥3.11 · **License:** MIT
+
+## Requirements
+
+- Ollama + a ≤4B coder model (default `qwen3.5:4b` for GTX 1650 / 12GB hosts)
+- Docker recommended (sandbox + Qdrant); local backend works with weaker isolation
+
+## Install (60 seconds)
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+git clone https://github.com/OxCryptobot/-ETHER.git && cd -ETHER
+python -m venv .venv && source .venv/bin/activate   # Windows: .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
-cp .env.example .env
+cp .env.example .env                                  # Windows: copy .env.example .env
+ether doctor
 ```
 
-Requires **Docker** + **Ollama** for the full pipeline. See [docs/models.md](docs/models.md) and [docs/setup-windows.md](docs/setup-windows.md).
-
-Optional LLM-assisted plans:
-```bash
-export ETHER_LLM_PLAN=1
-ether plan "implement caching layer"
-```
+Full third-party path (Windows, Qdrant, multi-file): **[docs/QUICKSTART.md](docs/QUICKSTART.md)**
 
 ## Usage
 
 ```bash
 ether doctor
-ether ping
-ether plan "add auth"
-ether run "write a function that reverses a string"
-ether run "..." --json --critique
-ether audit path/to/file.py
-ether index ./src
-ether search "authentication"
-ether runs
-ether env
-ether which
-pytest
-python scripts/smoke_test.py
+ether run "write is_even(n) with asserts"
+ether run "in this repo, summarize public functions in core/patterns.py as a dict; include asserts"
+ether fabricate --name probe --purpose "demo" --stub-only
+ether learn-stats
 ```
 
-Full command list: [docs/cli.md](docs/cli.md)
+## Safe by default
+
+- `ETHER_AUTO_PROMOTE=0` — no silent tool promotion
+- `ETHER_AUTO_FABRICATE_ON_FAIL=0` — no silent self-extension
+- Host profile caps models at 4B unless you opt into `cousin`
 
 ## Docs
 
-- [STATUS.md](STATUS.md)
-- [Architecture](docs/architecture.md)
-- [Threat model](docs/threat-model.md)
-- [Security policy](SECURITY.md)
-- [FAQ](docs/faq.md)
-- [v0.2 roadmap](docs/v0.2-roadmap.md)
-- [Contributing](CONTRIBUTING.md)
-- [Release checklist 0.1.1](docs/release-checklist-0.1.1.md)
+- [Quickstart](docs/QUICKSTART.md) · [Windows setup](docs/setup-windows.md) · [CLI](docs/cli.md)
+- [Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) · [SECURITY](SECURITY.md)
+- [STATUS](STATUS.md) · [CHANGELOG](CHANGELOG.md)
 
 ## License
 

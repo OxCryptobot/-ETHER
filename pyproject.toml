@@ -1,11 +1,21 @@
 [project]
 name = "ether"
-version = "0.1.1"
-description = "@ETHER — Local-first, self-extending, verified agentic coding system"
+version = "0.2.0"
+description = "@ETHER — Local-first super-agentic coding system with verified execution"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "OxCryptobot" }]
+keywords = ["llm", "coding-agent", "local-ai", "sandbox", "ollama"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+]
 
 dependencies = [
     "pydantic>=2.7",
@@ -24,11 +34,15 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
     "mypy>=1.10",
-    "langgraph>=0.2",
 ]
 
 [project.scripts]
-ether = "cli.main:app"
+ether = "cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/OxCryptobot/-ETHER"
+Repository = "https://github.com/OxCryptobot/-ETHER"
+Issues = "https://github.com/OxCryptobot/-ETHER/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -43,6 +57,7 @@ include = [
     "STATUS.md",
     "README.md",
     "dashboard/static/index.html",
+    "docs/QUICKSTART.md",
 ]
 
 [tool.ruff]

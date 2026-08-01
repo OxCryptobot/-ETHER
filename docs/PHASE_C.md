@@ -13,11 +13,9 @@ not understanding. Headroom on pass@3 is ~5.8pp — not worth the cost.
 Phase B gave an honest oracle (project pytest). Phase C uses it as the stop
 condition for a tool loop.
 
-## Slice 1 (landed)
+## Slice 1 — runtime (CLOSED)
 
 `core/tool_runtime.py` — thin runtime, default **off** (`ETHER_TOOL_RUNTIME=1`).
-
-Tools:
 
 | tool | purpose |
 |------|---------|
@@ -27,27 +25,41 @@ Tools:
 | `run_tests` | project pytest via repo_oracle |
 | `done` | terminate |
 
-Contract:
-
-- One JSON tool call per step: `{"tool": "...", "args": {...}}`
-- Staging copy of fixture — never live tree
+- One JSON tool call per step
+- Staging copy — never live tree
 - Path blocks: `.git`, `.venv`, `memory`, parent `..`
 - Injectible `decide_fn` for tests without a model
-- Success = `run_tests` returns `ok=True`
 
-## Not in slice 1
+## Slice 2 — LLM decide_fn bridge (CLOSED)
+
+`make_llm_decide_fn(call_fn=None)`:
+
+- Injectible `call_fn(messages) -> str` for tests / offline
+- Default routes through Rose Quartz (Ollama primary, low temperature)
+- Always `parse_action` — fail closed on unparseable output
+
+```python
+from core.tool_runtime import ToolRuntime, make_llm_decide_fn
+
+decide = make_llm_decide_fn()  # live model
+# or
+decide = make_llm_decide_fn(call_fn=my_mock)
+
+rt = ToolRuntime(fixture_root=Path("fixtures/repo_oracle_toy"), decide_fn=decide)
+result = rt.run("fix greeter so project tests pass")
+```
+
+## Not yet
 
 - Pipeline wiring (`ether run` path)
-- LLM-backed decide_fn (Rose Quartz bridge)
 - Shell / arbitrary subprocess
 - Curriculum / bandit / flywheel re-enable
 
 ## Tests
 
-`tests/test_tool_runtime.py` — scripted decide_fn fixes greeter + wallet.
+`tests/test_tool_runtime.py` — scripted + mock-LLM decide_fn fixes greeter/wallet.
 
-## Next slices
+## Next
 
-2. LLM decide_fn bridge (structured output from primary model)
-3. Wire into pipeline behind `ETHER_TOOL_RUNTIME=1` for repo-edit objectives
-4. Measure against Phase B fixtures before touching learning stack
+Slice 3: wire into pipeline behind `ETHER_TOOL_RUNTIME=1` for repo-edit objectives.
+Measure against Phase B fixtures before touching learning stack.

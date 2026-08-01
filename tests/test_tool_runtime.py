@@ -1,10 +1,16 @@
-"""Phase C slice 1 — tool-first runtime (no LLM)."""
+"""Phase C — tool-first runtime tests (no live LLM required)."""
 
 from __future__ import annotations
 
+import json as _json
 from pathlib import Path
 
-from core.tool_runtime import ToolRuntime, parse_action, tool_runtime_enabled
+from core.tool_runtime import (
+    ToolRuntime,
+    make_llm_decide_fn,
+    parse_action,
+    tool_runtime_enabled,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 GREETER = ROOT / "fixtures" / "repo_oracle_toy"
@@ -53,7 +59,6 @@ def test_runtime_disabled_by_default(monkeypatch):
 
 
 def test_scripted_fix_greeter():
-    """Scripted decide_fn: list → read → write fixed → run_tests → done."""
     plan = [
         {"tool": "list_files", "args": {}},
         {"tool": "read_file", "args": {"path": "greeter.py"}},
@@ -69,10 +74,7 @@ def test_scripted_fix_greeter():
             return {"tool": "done", "args": {"reason": "exhausted"}}
 
     rt = ToolRuntime(
-        fixture_root=GREETER,
-        decide_fn=decide,
-        max_steps=6,
-        pytest_timeout=30,
+        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30
     )
     result = rt.run("fix greeter so tests pass")
     assert result.ok is True
@@ -97,10 +99,7 @@ def test_scripted_fix_wallet():
             return {"tool": "done", "args": {"reason": "stop"}}
 
     rt = ToolRuntime(
-        fixture_root=WALLET,
-        decide_fn=decide,
-        max_steps=5,
-        pytest_timeout=30,
+        fixture_root=WALLET, decide_fn=decide, max_steps=5, pytest_timeout=30
     )
     result = rt.run("fix wallet")
     assert result.ok is True
@@ -114,8 +113,8 @@ def test_path_escape_refused():
     rt = ToolRuntime(fixture_root=GREETER, decide_fn=decide, max_steps=2)
     result = rt.run("probe")
     assert result.steps[0].ok is False
-    assert "refused" in str(result.steps[0].observation.get("error", "")).lower() or \
-           "parent" in str(result.steps[0].observation.get("error", "")).lower()
+    err = str(result.steps[0].observation.get("error", "")).lower()
+    assert "refused" in err or "parent" in err
 
 
 def test_max_steps_without_fix():
@@ -127,3 +126,58 @@ def test_max_steps_without_fix():
     assert result.ok is False
     assert result.error == "max_steps"
     assert result.n_steps == 3
+
+
+# --- Phase C slice 2: LLM decide_fn bridge ---
+
+
+def test_make_llm_decide_fn_with_mock_call():
+    def fake_call(messages):
+        assert messages
+        return '{"tool": "list_files", "args": {}}'
+
+    decide = make_llm_decide_fn(call_fn=fake_call)
+    action = decide([{"role": "user", "content": "go"}])
+    assert action["tool"] == "list_files"
+
+
+def test_make_llm_decide_fn_parses_messy_output():
+    def fake_call(_m):
+        return (
+            "I will list files first.\n"
+            "```json\n"
+            '{"tool": "read_file", "args": {"path": "greeter.py"}}\n'
+            "```\n"
+        )
+
+    decide = make_llm_decide_fn(call_fn=fake_call)
+    action = decide([{"role": "user", "content": "x"}])
+    assert action["tool"] == "read_file"
+    assert action["args"]["path"] == "greeter.py"
+
+
+def test_llm_decide_fn_scripted_fix_greeter():
+    fixed = 'def greet(name: str) -> str:\n    return f"Hello, {name}!"\n'
+    plan = [
+        '{"tool": "list_files", "args": {}}',
+        '{"tool": "read_file", "args": {"path": "greeter.py"}}',
+        _json.dumps(
+            {"tool": "write_file", "args": {"path": "greeter.py", "content": fixed}}
+        ),
+        '{"tool": "run_tests", "args": {}}',
+    ]
+    it = iter(plan)
+
+    def fake_call(_messages):
+        try:
+            return next(it)
+        except StopIteration:
+            return '{"tool": "done", "args": {"reason": "exhausted"}}'
+
+    decide = make_llm_decide_fn(call_fn=fake_call)
+    rt = ToolRuntime(
+        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30
+    )
+    result = rt.run("fix greeter")
+    assert result.ok is True
+    assert result.score == 1.0

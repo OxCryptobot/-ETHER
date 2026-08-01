@@ -33,7 +33,7 @@ class ChatMessage(BaseModel):
 
 # ---------- Clear Quartz ----------
 class ClearQuartzRequest(BaseModel):
-    code: str
+    code: str = ""
     language: Literal["python", "javascript", "rust", "go"] = "python"
     test_cases: List[str] = Field(default_factory=list)
     sandbox_profile: Literal["fast", "strict"] = "fast"
@@ -42,6 +42,11 @@ class ClearQuartzRequest(BaseModel):
     # the sandbox previously hardcoded objective="" so that branch could never
     # fire and every synthesized assert was a tautology.
     objective: str = ""
+    # Phase D slice 1b — multifile workspace.
+    files: Dict[str, str] = Field(default_factory=dict)
+    test_args: List[str] = Field(default_factory=list)
+    fixture_root: Optional[str] = None
+    prepare_code: bool = True
 
 
 class ClearQuartzResponse(BaseModel):

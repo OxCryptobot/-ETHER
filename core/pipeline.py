@@ -658,25 +658,6 @@ class Pipeline:
                 )
 
                 t3 = time.perf_counter()
-                if tool_runtime_done and generated:
-                    # Trust tool-runtime project pytest; skip Clear Quartz.
-                    result.stages.append(
-                        StageResult(
-                            stage="sandbox",
-                            success=True,
-                            detail="bypassed: tool_runtime already verified via project pytest",
-                            duration_ms=(time.perf_counter() - t3) * 1000,
-                        )
-                    )
-                    result.stages.append(
-                        StageResult(
-                            stage="repo_oracle",
-                            success=True,
-                            detail=f"trusted tool_runtime score={result.verification_score}",
-                        )
-                    )
-                    ok = True
-                    break
                 write_progress(tid, objective, "sandbox")
                 sand_req = Envelope(
                     task_id=task_id,
@@ -685,7 +666,12 @@ class Pipeline:
                     # falsifiable assertion (`name(args) == value`). It was
                     # hardcoded empty inside the sandbox, so that branch could
                     # never fire and every synthesized assert was a tautology.
-                    payload=ClearQuartzRequest(code=generated, objective=objective),
+                    payload=ClearQuartzRequest(
+                        code=generated,
+                        objective=objective,
+                        prepare_code=not bool(tool_runtime_done),
+                        test_args=["tests"],
+                    ),
                     timeout_seconds=timeout,
                 )
                 sand_res = self.registry.execute(sand_req)

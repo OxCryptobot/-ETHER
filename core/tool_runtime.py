@@ -78,30 +78,70 @@ DecideFn = Callable[[List[Dict[str, str]]], Dict[str, Any]]
 CallFn = Callable[[List[Dict[str, str]]], str]
 
 
-def parse_action(text: str) -> Dict[str, Any]:
-    """Extract a single tool call from model text. Fail closed."""
-    raw = (text or "").strip()
-    if not raw:
-        return {"tool": "done", "args": {"reason": "empty model output"}}
-    candidates: List[str] = []
+def _extract_json_objects(raw: str) -> List[str]:
+    """Pull candidate JSON objects, including nested braces (write_file content)."""
+    out: List[str] = []
     fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
     if fence:
-        candidates.append(fence.group(1))
-    if raw.startswith("{") and raw.endswith("}"):
-        candidates.append(raw)
-    for m in re.finditer(r"\{[^{}]+\}", raw, re.DOTALL):
-        if '"tool"' in m.group(0):
-            candidates.append(m.group(0))
-    for c in candidates:
+        out.append(fence.group(1))
+    i = 0
+    while i < len(raw):
+        if raw[i] != "{":
+            i += 1
+            continue
+        depth = 0
+        in_str = False
+        esc = False
+        j = i
+        while j < len(raw):
+            ch = raw[j]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+            else:
+                if ch == '"':
+                    in_str = True
+                elif ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        out.append(raw[i : j + 1])
+                        break
+            j += 1
+        i = j + 1 if depth == 0 else i + 1
+    return out
+
+
+def parse_action(text: str) -> Dict[str, Any]:
+    """Extract a single tool call. Nested {} in write content supported.
+
+    Unparseable returns tool=_retry so the loop continues (not done).
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return {"tool": "_retry", "args": {"reason": "empty model output"}}
+    for c in _extract_json_objects(raw):
+        if '"tool"' not in c and "'tool'" not in c:
+            continue
         try:
             obj = json.loads(c)
         except json.JSONDecodeError:
-            continue
+            try:
+                obj, _ = json.JSONDecoder().raw_decode(c)
+            except json.JSONDecodeError:
+                continue
         if isinstance(obj, dict) and obj.get("tool"):
             tool = str(obj["tool"]).strip()
+            if tool.startswith("_"):
+                continue
             args = obj.get("args") if isinstance(obj.get("args"), dict) else {}
             return {"tool": tool, "args": args}
-    return {"tool": "done", "args": {"reason": "unparseable action"}}
+    return {"tool": "_retry", "args": {"reason": "unparseable action"}}
 
 
 def _blocked(rel: str) -> Optional[str]:
@@ -187,11 +227,18 @@ class ToolRuntime:
         result = run_project_pytest(
             self.workspace, test_args=self.test_args, timeout=self.pytest_timeout
         )
+        stdout = result.get("stdout") or ""
+        fails = []
+        for line in stdout.splitlines():
+            s = line.strip()
+            if s.startswith("FAILED ") or s.startswith("E ") or "ValueError" in s or "AssertionError" in s:
+                fails.append(s[:160])
         return {
             "ok": bool(result.get("ok")),
             "score": float(result.get("score") or 0.0),
             "returncode": result.get("returncode"),
-            "stdout": (result.get("stdout") or "")[-1500:],
+            "failed": fails[:12],
+            "stdout": stdout[-1800:],
             "stderr": (result.get("stderr") or "")[-800:],
         }
 
@@ -206,6 +253,12 @@ class ToolRuntime:
             return self._obs_tests()
         if tool == "done":
             return {"ok": True, "reason": str(args.get("reason") or "done")}
+        if tool == "_retry":
+            return {
+                "ok": False,
+                "error": "unparseable",
+                "hint": "Reply with ONE JSON object only",
+            }
         return {"ok": False, "error": f"unknown tool: {tool}"}
 
     def _system_prompt(self, objective: str) -> str:

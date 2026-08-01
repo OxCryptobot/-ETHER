@@ -1,1 +1,39 @@
-from merge import merge_sorted\n\n\ndef test_basic():\n    assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]\n\n\ndef test_duplicates():\n    assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]\n\n\ndef test_empty_left():\n    b = [1, 2]\n    out = merge_sorted([], b)\n    assert out == [1, 2]\n    assert out is not b  # must be a new list\n\n\ndef test_empty_right():\n    a = [1, 2]\n    out = merge_sorted(a, [])\n    assert out == [1, 2]\n    assert out is not a\n\n\ndef test_both_empty():\n    assert merge_sorted([], []) == []\n\n\ndef test_longer_left():\n    assert merge_sorted([1, 2, 3, 4, 5], [0]) == [0, 1, 2, 3, 4, 5]\n\n\ndef test_longer_right():\n    assert merge_sorted([0], [1, 2, 3, 4, 5]) == [0, 1, 2, 3, 4, 5]\n\n\ndef test_negative():\n    assert merge_sorted([-5, -1, 0], [-3, 2]) == [-5, -3, -1, 0, 2]\n
+from merge import merge_sorted
+
+
+def test_basic():
+    assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]
+
+
+def test_duplicates():
+    assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]
+
+
+def test_empty_left():
+    b = [1, 2]
+    out = merge_sorted([], b)
+    assert out == [1, 2]
+    assert out is not b
+
+
+def test_empty_right():
+    a = [1, 2]
+    out = merge_sorted(a, [])
+    assert out == [1, 2]
+    assert out is not a
+
+
+def test_both_empty():
+    assert merge_sorted([], []) == []
+
+
+def test_longer_left():
+    assert merge_sorted([1, 2, 3, 4, 5], [0]) == [0, 1, 2, 3, 4, 5]
+
+
+def test_longer_right():
+    assert merge_sorted([0], [1, 2, 3, 4, 5]) == [0, 1, 2, 3, 4, 5]
+
+
+def test_negative():
+    assert merge_sorted([-5, -1, 0], [-3, 2]) == [-5, -3, -1, 0, 2]

@@ -1,8 +1,6 @@
 """Phase D slice 1 — measure pipeline path with ETHER_TOOL_RUNTIME=1.
 
-  python -m scripts.measure_pipeline_tool --fixture ledger --path direct --live
   python -m scripts.measure_pipeline_tool --fixture ledger --path pipeline --live
-  python -m scripts.measure_pipeline_tool --tier hard --path both --live
 """
 from __future__ import annotations
 
@@ -61,15 +59,34 @@ def _measure_pipeline(name: str, live: bool, max_steps: int, timeout_s: float) -
         strategy = str(getattr(result, "strategy", "") or "")
         status = str(getattr(result, "status", "") or "")
         repo_ok = getattr(result, "repo_oracle_ok", None)
-        if repo_ok is not None:
-            ok = bool(repo_ok)
-            score = 1.0 if ok else float(getattr(result, "verification_score", 0) or 0)
+        score = float(
+            getattr(result, "verification_score", 0)
+            or getattr(result, "execution_score", 0)
+            or 0.0
+        )
+        # Honest pass: full score or explicit repo oracle ok.
+        # status=="complete" alone is NOT success (Phase D false PASS at 0.25).
+        if repo_ok is True:
+            ok = True
+            score = max(score, 1.0)
+        elif repo_ok is False:
+            ok = False
         else:
-            ok = status.lower() in ("ok", "success", "passed", "complete", "completed")
-            score = float(
-                getattr(result, "verification_score", 0)
-                or getattr(result, "execution_score", 0)
-                or (1.0 if ok else 0.0)
+            ok = score >= 0.999 and status.lower() in (
+                "ok",
+                "success",
+                "passed",
+                "complete",
+                "completed",
+            )
+        stages = []
+        for s in list(getattr(result, "stages", None) or [])[:12]:
+            stages.append(
+                {
+                    "stage": getattr(s, "stage", ""),
+                    "success": getattr(s, "success", None),
+                    "detail": str(getattr(s, "detail", ""))[:160],
+                }
             )
         return {
             "fixture": name,
@@ -81,7 +98,10 @@ def _measure_pipeline(name: str, live: bool, max_steps: int, timeout_s: float) -
             "repo_oracle_ok": repo_ok,
             "elapsed_s": round(elapsed, 3),
             "live": live,
-            "degraded": list(getattr(result, "degraded", []) or [])[:5],
+            "degraded": list(getattr(result, "degraded", []) or [])[:8],
+            "stages": stages,
+            "env_tool": os.environ.get("ETHER_TOOL_RUNTIME", ""),
+            "env_fixture": os.environ.get("ETHER_TOOL_RUNTIME_FIXTURE", "")[-80:],
         }
     except Exception as e:
         return {
@@ -136,9 +156,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(
                 f"[{st}] {name:10} path=pipeline score={r.get('score')} "
                 f"strategy={r.get('strategy')} elapsed={r.get('elapsed_s')}s "
-                f"{r.get('error', '')}",
+                f"repo_ok={r.get('repo_oracle_ok')} {r.get('error', '')}",
                 flush=True,
             )
+            for s in r.get("stages") or []:
+                print(
+                    f"  stage={s.get('stage')} ok={s.get('success')} {s.get('detail')}",
+                    flush=True,
+                )
+            if r.get("degraded"):
+                print(f"  degraded={r.get('degraded')}", flush=True)
 
     n_ok = sum(1 for r in rows if r.get("ok"))
     print(f"summary: {n_ok}/{len(rows)} passed", flush=True)

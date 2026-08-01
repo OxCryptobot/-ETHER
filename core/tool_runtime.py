@@ -292,7 +292,7 @@ class ToolRuntime:
         self.workspace = self._seed()
         messages: List[Dict[str, str]] = [
             {"role": "system", "content": self._system_prompt(objective)},
-            {"role": "user", "content": "Begin. Call a tool."},
+            {"role": "user", "content": "Begin. First list_files, then read_file the tests and the broken source, then fix and run_tests."},
         ]
         best_score = 0.0
         last_ok = False
@@ -350,6 +350,12 @@ class ToolRuntime:
                             n_steps=len(self.steps),
                             elapsed_s=time.perf_counter() - t0,
                         )
+                    fails = obs.get("failed") or []
+                    if fails:
+                        obs = dict(obs)
+                        obs["still_failing"] = fails[:8]
+                        obs["hint"] = "Fix ALL remaining failures. Re-read source if needed."
+
                 if tool == "done":
                     return RuntimeResult(
                         ok=last_ok,

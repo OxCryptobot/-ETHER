@@ -6,7 +6,7 @@ Arms:
   bare     — Pipeline with tool runtime OFF (generate-only control)
 
   python -m scripts.batch_phase_d --arm direct --mode scripted --tier hard
-  python -m scripts.batch_phase_d --arm all --mode live --tier hard --timeout 400
+  python -m scripts.batch_phase_d --arm pipeline --mode live --fixture ledger --max-steps 16 --timeout 500
 """
 from __future__ import annotations
 
@@ -22,6 +22,14 @@ from typing import Any, Dict, List, Optional
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+# Critical: CLI loads .env; batch must too or Rose Quartz falls back to 3b.
+try:
+    from core.dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    pass
 
 HARD = ("lru", "merge", "ledger", "topo", "intervals")
 EASY = ("greeter", "wallet")
@@ -57,9 +65,8 @@ def _run_pipeline(
     else:
         os.environ["ETHER_TOOL_RUNTIME"] = "1"
         os.environ["ETHER_TOOL_RUNTIME_FIXTURE"] = str(fixture.resolve())
-        os.environ["ETHER_TOOL_RUNTIME_STEPS"] = str(
-            max(max_steps, 12) if live else max_steps
-        )
+        # Honor --max-steps exactly (do not clamp over a higher user budget).
+        os.environ["ETHER_TOOL_RUNTIME_STEPS"] = str(int(max_steps))
         os.environ["ETHER_TOOL_RUNTIME_SECONDS"] = str(int(timeout))
         arm = "pipeline"
 
@@ -115,6 +122,7 @@ def _run_pipeline(
             "mode": "live" if live else "scripted",
             "stages": stages,
             "degraded": list(getattr(result, "degraded", []) or [])[:6],
+            "model": os.environ.get("ETHER_PRIMARY_MODEL", ""),
         }
     except Exception as e:
         return {
@@ -125,6 +133,7 @@ def _run_pipeline(
             "error": f"{type(e).__name__}: {e}"[:300],
             "elapsed_s": round(time.perf_counter() - t0, 3),
             "mode": "live" if live else "scripted",
+            "model": os.environ.get("ETHER_PRIMARY_MODEL", ""),
         }
 
 
@@ -137,7 +146,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--tier", choices=["easy", "hard", "all"], default="hard")
     ap.add_argument("--fixture", default=None)
     ap.add_argument("--timeout", type=float, default=400.0)
-    ap.add_argument("--max-steps", type=int, default=12)
+    ap.add_argument(
+        "--max-steps",
+        type=int,
+        default=12,
+        help="Tool-runtime step budget (pipeline sets ETHER_TOOL_RUNTIME_STEPS)",
+    )
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument(
         "--scoreboard", type=str, default="artifacts/scoreboard_phase_d.json"
@@ -160,6 +174,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             arms.append("bare")
     else:
         arms = [args.arm]
+
+    model = (os.environ.get("ETHER_PRIMARY_MODEL") or "").strip() or "(unset → rose default 3b)"
+    print(
+        f"config: model={model} max_steps={args.max_steps} timeout={args.timeout}",
+        flush=True,
+    )
 
     rows: List[Dict[str, Any]] = []
 
@@ -240,6 +260,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "total": len(rows),
             "mode": args.mode,
             "arms": arms,
+            "model": model,
+            "max_steps": args.max_steps,
         },
         "matrix": {
             n: {a: bool(by.get(n, {}).get(a, {}).get("ok")) for a in arms}

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "name": "phase_d_hard_pack",
+  "description": "Repo-oracle fixtures as grounded tasks: project tests are the oracle.",
+  "tasks": [
+    {
+      "id": "lru",
+      "tier": "hard",
+      "fixture": "fixtures/repo_oracle_lru",
+      "module": "lru.py",
+      "objective": "Fix LRU cache so all project tests pass."
+    },
+    {
+      "id": "merge",
+      "tier": "hard",
+      "fixture": "fixtures/repo_oracle_merge",
+      "module": "merge.py",
+      "objective": "Fix interval merge so all project tests pass."
+    },
+    {
+      "id": "ledger",
+      "tier": "hard",
+      "fixture": "fixtures/repo_oracle_ledger",
+      "module": "ledger.py",
+      "objective": "Fix ledger.py only (account.py correct). Debit then credit; total once."
+    },
+    {
+      "id": "topo",
+      "tier": "hard",
+      "fixture": "fixtures/repo_oracle_topo",
+      "module": "topo.py",
+      "objective": "Fix topo_sort; cycles must raise ValueError."
+    },
+    {
+      "id": "intervals",
+      "tier": "hard",
+      "fixture": "fixtures/repo_oracle_intervals",
+      "module": "intervals.py",
+      "objective": "Fix interval overlap handling so all tests pass."
+    }
+  ]
+}

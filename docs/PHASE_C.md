@@ -11,38 +11,29 @@ project tests (Phase B oracle).
 |-------|---------|--------|
 | 1 | `ToolRuntime` + tools + staging | **CLOSED** |
 | 2 | `make_llm_decide_fn` Rose Quartz bridge | **CLOSED** |
-| 3 | Pipeline wire behind `ETHER_TOOL_RUNTIME=1` | **ACTIVE** |
+| 3 | Pipeline wire behind `ETHER_TOOL_RUNTIME=1` | **CLOSED** (`84f6b4e`) |
 
 ## Enable
 
 ```bash
 ETHER_TOOL_RUNTIME=1
 ETHER_TOOL_RUNTIME_FIXTURE=fixtures/repo_oracle_toy   # or wallet
-# optional:
 ETHER_TOOL_RUNTIME_STEPS=8
 ETHER_TOOL_RUNTIME_SECONDS=180
 ```
 
-When enabled, `Pipeline.run` calls `run_if_enabled(objective)` before
-agent_loop / single-shot generate. On success (`ok` + artifact), generation is
-skipped and the artifact continues through sandbox + audit.
+## Measurement
 
-## API
+```bash
+# Offline harness (no LLM) — proves fixtures + tools
+python -m scripts.measure_tool_runtime
 
-```python
-from core.tool_runtime import ToolRuntime, make_llm_decide_fn, run_if_enabled
-
-# Offline / tests
-decide = make_llm_decide_fn(call_fn=my_mock)
-# Live model
-decide = make_llm_decide_fn()
-
-rt = ToolRuntime(fixture_root=Path("fixtures/repo_oracle_toy"), decide_fn=decide)
-result = rt.run("fix greeter")
-
-# Pipeline entry (returns None when gated off)
-result = run_if_enabled("fix greeter", decide_fn=decide)
+# Live primary model (host ≤4B)
+python -m scripts.measure_tool_runtime --live --fixture all
 ```
+
+Scripted baseline must be 2/2 PASS. Live results are the first honest signal
+for whether tool-first beats generate-only on these fixtures.
 
 ## Safety
 
@@ -55,9 +46,3 @@ result = run_if_enabled("fix greeter", decide_fn=decide)
 
 - Shell / arbitrary subprocess
 - Curriculum / bandit / flywheel re-enable
-- Live-model measurement on host fixtures
-
-## Next
-
-Measure tool-runtime path on greeter/wallet with live primary model
-(host ≤4B). Only then consider Phase E learning rehaul.

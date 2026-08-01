@@ -467,7 +467,6 @@ class Pipeline:
                         )
                     else:
                         detail = "workspace_verify: no_kept_dir fallback_files=%d" % len(tool_files or {})
-                        from core.schemas import ClearQuartzRequest, ClearQuartzResponse
                         files = dict(tool_files or {})
                         if not files and generated and "# file:" in generated:
                             from core.multifile import extract_file_blocks

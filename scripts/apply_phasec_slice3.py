@@ -1,11 +1,89 @@
-"""Apply Phase C slice 3 pipeline wire. Run: python scripts/apply_phasec_slice3.py"""
-from pathlib import Path
-import ast
+"""Apply Phase C slice 3: tool_runtime entry + pipeline wire.
 
+Run from repo root:
+  .\.venv\Scripts\python.exe scripts\apply_phasec_slice3.py
+"""
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+
+# --- 1. tool_runtime.py ---
+tr = Path("core/tool_runtime.py")
+tt = tr.read_text(encoding="utf-8")
+if "def run_if_enabled" not in tt:
+    addon = """
+
+def run_if_enabled(
+    objective: str,
+    *,
+    decide_fn=None,
+    fixture_root=None,
+    max_steps=None,
+    timeout_s=None,
+):
+    \"\"\"Phase C slice 3 entry — run tool runtime when gated on, else None.\"\"\"
+    import os
+    from pathlib import Path as _P
+
+    if not tool_runtime_enabled():
+        return None
+    root = fixture_root
+    if root is None:
+        raw = (
+            (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
+            or (os.getenv("ETHER_REPO_ORACLE_FIXTURE") or "").strip()
+        )
+        if not raw:
+            return None
+        root = _P(raw)
+    root = _P(root)
+    if not root.is_dir():
+        return RuntimeResult(ok=False, score=0.0, error=f"fixture not found: {root}")
+    steps = max_steps
+    if steps is None:
+        try:
+            steps = int(os.getenv("ETHER_TOOL_RUNTIME_STEPS") or "8")
+        except ValueError:
+            steps = 8
+    wall = timeout_s
+    if wall is None:
+        try:
+            wall = float(os.getenv("ETHER_TOOL_RUNTIME_SECONDS") or "180")
+        except ValueError:
+            wall = 180.0
+    decide = decide_fn if decide_fn is not None else make_llm_decide_fn()
+    rt = ToolRuntime(
+        fixture_root=root,
+        decide_fn=decide,
+        max_steps=steps,
+        timeout_s=wall,
+    )
+    return rt.run(objective)
+
+
+def code_from_result(result):
+    \"\"\"Flatten final_code into a single artifact (markers if multi-file).\"\"\"
+    files = result.final_code or {}
+    if not files:
+        return ""
+    if len(files) == 1:
+        return next(iter(files.values()))
+    parts = []
+    for rel, body in sorted(files.items()):
+        parts.append("# file: " + rel + chr(10) + body)
+    return (chr(10) + chr(10)).join(parts)
+"""
+    tr.write_text(tt.rstrip() + "\n" + addon + "\n", encoding="utf-8")
+    print("tool_runtime: appended run_if_enabled")
+else:
+    print("tool_runtime: already has run_if_enabled")
+
+# --- 2. pipeline.py ---
 p = Path("core/pipeline.py")
 t = p.read_text(encoding="utf-8")
 if "tool_runtime_done" in t and "run_if_enabled" in t:
-    print("already wired")
+    print("pipeline: already wired")
     raise SystemExit(0)
 
 needle = """            # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at
@@ -16,8 +94,6 @@ needle = """            # Agent loop path (ETHER_AGENT_LOOP=1). Draws several ca
             if self._agent_loop_enabled():"""
 
 block = """            # Phase C tool-runtime path (ETHER_TOOL_RUNTIME=1 + fixture).
-            # Observe→Act→Observe against project tests; skips single-shot generate
-            # when it produces an artifact. Default OFF.
             tool_runtime_done = False
             try:
                 from core.tool_runtime import (
@@ -72,7 +148,6 @@ old2 = """                if loop_result is not None and generated:
                     # Fall through to sandbox + audit without re-drawing.
                     pass"""
 new2 = """                if tool_runtime_done and generated:
-                    # Tool runtime already produced a project-test-passing artifact.
                     pass
                 elif loop_result is not None and generated:
                     # The agent loop already generated, verified and selected.
@@ -111,4 +186,4 @@ t = t.replace(old3, new3, 1)
 
 ast.parse(t)
 p.write_text(t, encoding="utf-8")
-print("wired OK", len(t))
+print("pipeline: wired OK", len(t))

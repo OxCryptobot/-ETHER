@@ -376,6 +376,8 @@ class Pipeline:
             # Phase C tool-runtime path (ETHER_TOOL_RUNTIME=1 + fixture).
             tool_runtime_done = False
             tool_files = {}
+            workspace_kept = None
+            tool_files = {}
             try:
                 from core.tool_runtime import (
                     code_from_result,
@@ -399,6 +401,7 @@ class Pipeline:
                         result.generated_code = generated
                         result.strategy = "tool_runtime"
                         tool_files = dict(tr.final_code or {})
+                        workspace_kept = getattr(tr, "workspace_kept", None)
                         try:
                             object.__setattr__(result, "_workspace_kept", getattr(tr, "workspace_kept", None))
                         except Exception:
@@ -441,11 +444,12 @@ class Pipeline:
             if tool_runtime_done and generated:
                 from core.repo_oracle import run_project_pytest
                 from pathlib import Path as _Path
+                import shutil as _sh
                 t3 = time.perf_counter()
                 write_progress(tid, objective, "sandbox")
-                kept = getattr(result, "_workspace_kept", None)
                 cq_ok = False
-                detail = ""
+                detail = "workspace_verify: not_run"
+                kept = workspace_kept
                 try:
                     if kept and _Path(str(kept)).is_dir():
                         pr = run_project_pytest(
@@ -454,15 +458,15 @@ class Pipeline:
                             timeout=max(30, int(timeout)),
                         )
                         cq_ok = bool(pr.get("ok"))
-                        score = float(pr.get("score") or 0.0)
-                        result.verification_score = 1.0 if cq_ok else score
-                        result.execution_score = result.verification_score
+                        sc = float(pr.get("score") or 0.0)
+                        result.verification_score = 1.0 if cq_ok else sc
+                        result.execution_score = float(result.verification_score)
                         detail = (
-                            f"workspace_verify exit={pr.get('returncode')} "
-                            f"score={score} ok={cq_ok} "
-                            f"tail={(pr.get('stdout') or '')[-300]!r}"
+                            "workspace_verify exit=%s score=%s ok=%s"
+                            % (pr.get("returncode"), sc, cq_ok)
                         )
                     else:
+                        detail = "workspace_verify: no_kept_dir fallback_files=%d" % len(tool_files or {})
                         from core.schemas import ClearQuartzRequest, ClearQuartzResponse
                         files = dict(tool_files or {})
                         if not files and generated and "# file:" in generated:
@@ -475,7 +479,7 @@ class Pipeline:
                             task_id=task_id,
                             target_gem="clear-quartz",
                             payload=ClearQuartzRequest(
-                                code=generated,
+                                code=generated or "",
                                 objective=objective,
                                 prepare_code=False,
                                 test_args=["tests"],
@@ -485,34 +489,33 @@ class Pipeline:
                             timeout_seconds=timeout,
                         )
                         sand_res = self.registry.execute(sand_req)
-                        if sand_res.error or not isinstance(
-                            sand_res.payload, ClearQuartzResponse
-                        ):
-                            detail = f"cq error: {sand_res.error}"
+                        if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
                             cq_ok = False
+                            detail = "cq error: %s" % (sand_res.error,)
                         else:
                             sp = sand_res.payload
                             result.sandbox = sp
-                            scores = compute_scores(sp)
+                            from core.confidence import compute_scores as _cs
+                            scores = _cs(sp)
                             result.confidence = scores["confidence"]
                             result.execution_score = scores["execution_score"]
                             result.verification_score = scores["verification_score"]
                             cq_ok = sp.exit_code == 0
-                            detail = (
-                                f"multifile_verify exit={sp.exit_code} "
-                                f"tests={sp.tests_passed}/{sp.total_tests} "
-                                f"files={len(files)}"
+                            detail = "multifile_verify exit=%s tests=%s/%s files=%d" % (
+                                sp.exit_code, sp.tests_passed, sp.total_tests, len(files),
                             )
+                except Exception as _ve:
+                    cq_ok = False
+                    detail = "verify_exception: %s: %s" % (type(_ve).__name__, _ve)
+                    result.degraded.append("verify_exception:%s" % type(_ve).__name__)
                 finally:
-                    kept2 = getattr(result, "_workspace_kept", None) or kept
-                    if kept2:
-                        import shutil as _sh
-                        _sh.rmtree(str(kept2), ignore_errors=True)
+                    if kept:
+                        _sh.rmtree(str(kept), ignore_errors=True)
                 result.stages.append(
                     StageResult(
                         stage="sandbox",
                         success=cq_ok,
-                        detail=detail[:500],
+                        detail=str(detail)[:500],
                         duration_ms=(time.perf_counter() - t3) * 1000,
                     )
                 )
@@ -841,7 +844,12 @@ class Pipeline:
                     last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
                     fail_kind = classify_stderr(last_err).get("kind", "runtime")
 
-            if loop_runner_enabled():
+            if _tool_path_complete:
+                exit_code = 0 if result.repo_oracle_ok else 1
+                total_tests = (
+                    int(getattr(result.sandbox, "total_tests", 0) or 0) if result.sandbox else 0
+                )
+            elif loop_runner_enabled():
                 _out = LoopRunner(registry=self.registry).run_verify(
                     VerificationContext(
                         task_id=tid,

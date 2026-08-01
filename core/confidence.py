@@ -15,7 +15,11 @@ def compute_scores(resp: ClearQuartzResponse) -> Dict[str, float]:
     # 0.25 and the flywheel gate then rejected the loop on exactly the hosts
     # the fallback exists for. Strip markers before the penalty logic; every
     # other flag (static-analysis findings) keeps the exact current behavior.
-    security_flags = [f for f in resp.security_flags if not f.startswith("sandbox_fallback:")]
+    security_flags = [
+        f for f in resp.security_flags
+        if not f.startswith("sandbox_fallback:")
+        and not f.startswith("multifile:")
+    ]
     security_clean = 0.0 if security_flags else 1.0
     speed_ok = 1.0 if resp.execution_time < 30.0 else 0.0
     static_score = max(0.0, min(1.0, resp.static_analysis_score))

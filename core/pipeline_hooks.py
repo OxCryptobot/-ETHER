@@ -77,3 +77,60 @@ def prepare_code_for_sandbox(code: str, objective: str = "") -> Tuple[str, Dict[
     except Exception as e:
         meta["patch_error"] = str(e)[:120]
     return code, meta
+
+
+def apply_repo_oracle_gate(
+    generated: str,
+    objective: str,
+    *,
+    execution_score: float,
+    verification_score: float,
+    confidence: float,
+) -> dict:
+    """Phase B: after sandbox exit=0, optionally fail on project pytest.
+
+    Returns dict with keys: active, ok, score, verification_score, confidence,
+    last_err, fail_kind, detail. When active is False, caller ignores the rest.
+    """
+    try:
+        from core.repo_oracle_hook import evaluate_after_sandbox
+
+        o = evaluate_after_sandbox(generated, objective)
+    except Exception as e:
+        o = {
+            "ok": False,
+            "score": 0.0,
+            "error": f"hook crash: {e}"[:200],
+            "enabled": True,
+        }
+    if o is None or not o.get("enabled"):
+        return {"active": False}
+    o_ok = bool(o.get("ok"))
+    o_score = float(o.get("score") or 0.0)
+    ver = min(float(verification_score or 1.0), o_score)
+    conf = min(
+        float(confidence or 1.0),
+        0.4 * float(execution_score or 0.0) + 0.6 * o_score,
+    )
+    detail = (
+        f"score={o_score} fixture={o.get('fixture', '')}"
+        + (f" err={o.get('error')}" if o.get("error") else "")
+    )[:240]
+    last_err = ""
+    fail_kind = ""
+    if not o_ok:
+        last_err = (
+            o.get("stderr") or o.get("stdout") or o.get("error") or "repo_oracle failed"
+        )[:1500]
+        fail_kind = "repo_oracle"
+    return {
+        "active": True,
+        "ok": o_ok,
+        "score": o_score,
+        "verification_score": ver,
+        "confidence": conf,
+        "last_err": last_err,
+        "fail_kind": fail_kind,
+        "detail": detail,
+        "repo_oracle_ok": o_ok,
+    }

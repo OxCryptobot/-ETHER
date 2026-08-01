@@ -1,15 +1,12 @@
 """Measure Phase C tool-runtime on repo-oracle fixtures.
 
-Offline (default): scripted decide_fn — proves harness + fixtures, no LLM.
-Live: --live uses make_llm_decide_fn() → Rose Quartz / Ollama primary.
+Tiers:
+  easy  — greeter, wallet
+  hard  — lru, merge, ledger (eviction / remainder / multi-file)
+  all   — easy + hard
 
-Examples:
-  python -m scripts.measure_tool_runtime
-  python -m scripts.measure_tool_runtime --live --fixture greeter
-  python -m scripts.measure_tool_runtime --live --fixture all --json
-
-Does NOT enable ETHER_TOOL_RUNTIME for the whole process unless --wire-env.
-Does NOT touch curriculum / bandit / flywheel.
+  python -m scripts.measure_tool_runtime --tier hard
+  python -m scripts.measure_tool_runtime --live --tier hard
 """
 from __future__ import annotations
 
@@ -28,44 +25,62 @@ if str(ROOT) not in sys.path:
 FIXTURES = {
     "greeter": ROOT / "fixtures" / "repo_oracle_toy",
     "wallet": ROOT / "fixtures" / "repo_oracle_wallet",
+    "lru": ROOT / "fixtures" / "repo_oracle_lru",
+    "merge": ROOT / "fixtures" / "repo_oracle_merge",
+    "ledger": ROOT / "fixtures" / "repo_oracle_ledger",
 }
 
-FIXED = {
-    "greeter": 'def greet(name: str) -> str:\n    return f"Hello, {name}!"\n',
-    "wallet": (
-        "class Wallet:\n"
-        "    def __init__(self, balance: float = 0.0) -> None:\n"
-        "        self.balance = float(balance)\n"
-        "    def deposit(self, amount: float) -> float:\n"
-        "        if amount < 0:\n"
-        "            raise ValueError('amount must be non-negative')\n"
-        "        self.balance = self.balance + amount\n"
-        "        return self.balance\n"
-        "    def withdraw(self, amount: float) -> float:\n"
-        "        if amount < 0:\n"
-        "            raise ValueError('amount must be non-negative')\n"
-        "        if amount > self.balance:\n"
-        "            raise ValueError('insufficient funds')\n"
-        "        self.balance = self.balance - amount\n"
-        "        return self.balance\n"
-    ),
+EASY = ("greeter", "wallet")
+HARD = ("lru", "merge", "ledger")
+
+SOLUTIONS = ROOT / "fixtures" / "_fixed_solutions"
+
+_EASY_FIXED = {
+    "greeter": {
+        "greeter.py": 'def greet(name: str) -> str:\n    return f"Hello, {name}!"\n',
+    },
+    "wallet": {
+        "wallet.py": (
+            "class Wallet:\n"
+            "    def __init__(self, balance: float = 0.0) -> None:\n"
+            "        self.balance = float(balance)\n"
+            "    def deposit(self, amount: float) -> float:\n"
+            "        if amount < 0:\n"
+            "            raise ValueError('amount must be non-negative')\n"
+            "        self.balance = self.balance + amount\n"
+            "        return self.balance\n"
+            "    def withdraw(self, amount: float) -> float:\n"
+            "        if amount < 0:\n"
+            "            raise ValueError('amount must be non-negative')\n"
+            "        if amount > self.balance:\n"
+            "            raise ValueError('insufficient funds')\n"
+            "        self.balance = self.balance - amount\n"
+            "        return self.balance\n"
+        ),
+    },
 }
 
-PRIMARY = {
-    "greeter": "greeter.py",
-    "wallet": "wallet.py",
-}
+
+def _fixed_files(name: str) -> Dict[str, str]:
+    if name in _EASY_FIXED:
+        return dict(_EASY_FIXED[name])
+    sol_dir = SOLUTIONS / name
+    if not sol_dir.is_dir():
+        raise FileNotFoundError(f"no fixed solutions for {name} at {sol_dir}")
+    out: Dict[str, str] = {}
+    for p in sorted(sol_dir.glob("*.py")):
+        out[p.name] = p.read_text(encoding="utf-8")
+    return out
 
 
 def _scripted_decide(name: str):
-    path = PRIMARY[name]
-    body = FIXED[name]
-    plan = [
-        {"tool": "list_files", "args": {}},
-        {"tool": "read_file", "args": {"path": path}},
-        {"tool": "write_file", "args": {"path": path, "content": body}},
-        {"tool": "run_tests", "args": {}},
-    ]
+    files = _fixed_files(name)
+    plan: List[Dict[str, Any]] = [{"tool": "list_files", "args": {}}]
+    for path in files:
+        plan.append({"tool": "read_file", "args": {"path": path}})
+    for path, body in files.items():
+        plan.append({"tool": "write_file", "args": {"path": path, "content": body}})
+    plan.append({"tool": "run_tests", "args": {}})
     it = iter(plan)
 
     def decide(_messages):
@@ -91,32 +106,37 @@ def measure_one(
         return {"fixture": name, "ok": False, "error": f"missing fixture {fixture}"}
 
     if live:
-        decide = make_llm_decide_fn(temperature=0.1, max_tokens=512)
+        decide = make_llm_decide_fn(temperature=0.1, max_tokens=1024)
         mode = "live"
+        steps = max(max_steps, 12)
     else:
         decide = _scripted_decide(name)
         mode = "scripted"
+        steps = max_steps
 
     t0 = time.perf_counter()
     rt = ToolRuntime(
         fixture_root=fixture,
         decide_fn=decide,
-        max_steps=max_steps,
+        max_steps=steps,
         timeout_s=timeout_s,
-        pytest_timeout=30,
+        pytest_timeout=45,
     )
-    result = rt.run(f"Fix {name} so project tests pass. Use tools.")
+    result = rt.run(
+        f"Fix the {name} package so all project tests pass. "
+        f"Read the tests and source, edit the broken file(s), then run_tests."
+    )
     elapsed = time.perf_counter() - t0
-    tools = [s.tool for s in result.steps]
     return {
         "fixture": name,
+        "tier": "hard" if name in HARD else "easy",
         "mode": mode,
         "ok": bool(result.ok),
         "score": float(result.score),
         "n_steps": int(result.n_steps),
         "elapsed_s": round(elapsed, 3),
         "reason": result.reason or result.error or "",
-        "tools": tools,
+        "tools": [s.tool for s in result.steps],
         "model": os.getenv("ETHER_PRIMARY_MODEL", "") if live else "",
     }
 
@@ -124,21 +144,31 @@ def measure_one(
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Measure Phase C tool-runtime")
     ap.add_argument(
-        "--fixture",
-        choices=["greeter", "wallet", "all"],
-        default="all",
+        "--tier",
+        choices=["easy", "hard", "all"],
+        default="easy",
+        help="easy=greeter+wallet, hard=lru+merge+ledger",
     )
     ap.add_argument(
-        "--live",
-        action="store_true",
-        help="Use Rose Quartz / Ollama primary (real model)",
+        "--fixture",
+        choices=list(FIXTURES) + ["all"],
+        default=None,
     )
-    ap.add_argument("--max-steps", type=int, default=8)
-    ap.add_argument("--timeout", type=float, default=180.0)
+    ap.add_argument("--live", action="store_true")
+    ap.add_argument("--max-steps", type=int, default=10)
+    ap.add_argument("--timeout", type=float, default=300.0)
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
 
-    names = list(FIXTURES) if args.fixture == "all" else [args.fixture]
+    if args.fixture and args.fixture != "all":
+        names = [args.fixture]
+    elif args.fixture == "all" or args.tier == "all":
+        names = list(EASY) + list(HARD)
+    elif args.tier == "hard":
+        names = list(HARD)
+    else:
+        names = list(EASY)
+
     rows: List[Dict[str, Any]] = []
     for name in names:
         rows.append(
@@ -156,7 +186,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         for r in rows:
             status = "PASS" if r.get("ok") else "FAIL"
             print(
-                f"[{status}] {r['fixture']:8} mode={r.get('mode')} "
+                f"[{status}] {r['fixture']:8} tier={r.get('tier')} mode={r.get('mode')} "
                 f"score={r.get('score')} steps={r.get('n_steps')} "
                 f"elapsed={r.get('elapsed_s')}s tools={r.get('tools')} "
                 f"{r.get('reason', '')}"

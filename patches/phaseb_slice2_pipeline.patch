@@ -1,0 +1,66 @@
+--- a/core/pipeline.py
++++ b/core/pipeline.py
+@@ -97,6 +97,8 @@
+     # None when the task supplied no holdout; True/False once graded against
+     # assertions the generator never saw.
+     holdout_ok: Optional[bool] = None
++    # Phase B: set when ETHER_REPO_ORACLE is active; False forces repair/retry.
++    repo_oracle_ok: Optional[bool] = None
+     confidence: float = 0.0
+     execution_score: float = 0.0
+     verification_score: float = 0.0
+@@ -642,10 +644,37 @@
+                         duration_ms=(time.perf_counter() - t3) * 1000,
+                     )
+                 )
++                # Phase B: project-pytest oracle — fail even when sandbox exit=0.
++                if ok:
++                    from core.pipeline_hooks import apply_repo_oracle_gate
++
++                    gate = apply_repo_oracle_gate(
++                        generated,
++                        objective,
++                        execution_score=result.execution_score,
++                        verification_score=result.verification_score,
++                        confidence=result.confidence,
++                    )
++                    if gate.get("active"):
++                        result.repo_oracle_ok = gate.get("repo_oracle_ok")
++                        result.verification_score = float(gate["verification_score"])
++                        result.confidence = float(gate["confidence"])
++                        result.stages.append(
++                            StageResult(
++                                stage="repo_oracle",
++                                success=bool(gate.get("ok")),
++                                detail=str(gate.get("detail") or "")[:240],
++                            )
++                        )
++                        if not gate.get("ok"):
++                            ok = False
++                            last_err = str(gate.get("last_err") or "repo_oracle failed")[:1500]
++                            fail_kind = str(gate.get("fail_kind") or "repo_oracle")
+                 if ok:
+                     break
+-                last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
+-                fail_kind = classify_stderr(last_err).get("kind", "runtime")
++                if fail_kind != "repo_oracle":
++                    last_err = (sand_payload.stderr or sand_payload.stdout or "non-zero exit")[:1500]
++                    fail_kind = classify_stderr(last_err).get("kind", "runtime")
+ 
+             if loop_runner_enabled():
+                 _out = LoopRunner(registry=self.registry).run_verify(
+@@ -1084,7 +1113,13 @@
+         # "error" (not a third value) is deliberate: it is the vocabulary
+         # _fail() and orchestrator.Status already use, so the existing
+         # complete/error buckets stay exhaustive.
+-        if result.sandbox is not None and result.sandbox.exit_code == 0:
++        # Phase B: repo_oracle_ok=False forces error even on sandbox exit=0.
++        if result.repo_oracle_ok is False:
++            result.status = "error"
++            if not result.error:
++                detail = (last_err or "").strip()
++                result.error = "repo_oracle failed" + (f": {detail[:500]}" if detail else "")
++        elif result.sandbox is not None and result.sandbox.exit_code == 0:
+             result.status = "complete"
+         else:
+             result.status = "error"

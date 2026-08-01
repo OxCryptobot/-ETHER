@@ -375,6 +375,7 @@ class Pipeline:
 
             # Phase C tool-runtime path (ETHER_TOOL_RUNTIME=1 + fixture).
             tool_runtime_done = False
+            tool_files = {}
             try:
                 from core.tool_runtime import (
                     code_from_result,
@@ -397,10 +398,14 @@ class Pipeline:
                         generated = code_from_result(tr) or ""
                         result.generated_code = generated
                         result.strategy = "tool_runtime"
+                        tool_files = dict(tr.final_code or {})
                         try:
-                            setattr(result, "_tool_files", dict(tr.final_code or {}))
+                            object.__setattr__(result, "_tool_files", tool_files)
                         except Exception:
-                            pass
+                            try:
+                                result.__dict__["_tool_files"] = tool_files
+                            except Exception:
+                                pass
                         result.stages.append(
                             StageResult(
                                 stage="tool_runtime",
@@ -433,8 +438,20 @@ class Pipeline:
                 from core.schemas import ClearQuartzRequest, ClearQuartzResponse
                 t3 = time.perf_counter()
                 write_progress(tid, objective, "sandbox")
-                files = dict(getattr(result, "_tool_files", None) or {})
+                files = dict(tool_files or getattr(result, "_tool_files", None) or {})
                 fixture_env = (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
+                if fixture_env:
+                    try:
+                        from pathlib import Path as _P
+                        fixture_env = str(_P(fixture_env).resolve())
+                    except Exception:
+                        pass
+                if not files and generated and "# file:" in generated:
+                    try:
+                        from core.multifile import extract_file_blocks
+                        files = extract_file_blocks(generated)
+                    except Exception:
+                        pass
                 sand_req = Envelope(
                     task_id=task_id,
                     target_gem="clear-quartz",
@@ -468,6 +485,7 @@ class Pipeline:
                     result.execution_score = scores["execution_score"]
                     result.verification_score = scores["verification_score"]
                     cq_ok = sand_payload.exit_code == 0
+                    _tail = ((sand_payload.stdout or "") + "\n" + (sand_payload.stderr or ""))[-400:]
                     result.stages.append(
                         StageResult(
                             stage="sandbox",
@@ -475,8 +493,10 @@ class Pipeline:
                             detail=(
                                 f"multifile_verify exit={sand_payload.exit_code} "
                                 f"tests={sand_payload.tests_passed}/{sand_payload.total_tests} "
-                                f"flags={sand_payload.security_flags[:3]}"
-                            )[:300],
+                                f"files={len(files)} "
+                                f"flags={sand_payload.security_flags[:3]} "
+                                f"tail={_tail!r}"
+                            )[:500],
                             duration_ms=(time.perf_counter() - t3) * 1000,
                         )
                     )

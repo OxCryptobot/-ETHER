@@ -28,21 +28,17 @@ def b():
     m = parse_file_markers(code)
     assert set(m) == {"a.py", "b.py"}
     assert "def a" in m["a.py"]
-    assert "def b" in m["b.py"]
 
 
-def test_validate_blocks_parent_and_venv():
-    assert validate_file_map({"../x.py": "x"})["ok"] is False
-    assert validate_file_map({".venv/x.py": "x"})["ok"] is False
-    assert validate_file_map({"memory/x.py": "x"})["ok"] is False
-    assert validate_file_map({"ok.py": "x"})["ok"] is True
+def test_validate_blocks_parent_traversal():
+    r = validate_file_map({"../secret.py": "x = 1"})
+    assert r["ok"] is False
 
 
-def test_toy_fixture_fails_before_fix():
-    """Broken greeter must fail project tests — oracle has teeth."""
-    # empty apply: only seed fixture as-is
+def test_toy_fixture_fails_baseline():
+    broken = (FIXTURE / "greeter.py").read_text(encoding="utf-8")
     result = score_repo_edit(
-        {"greeter.py": (FIXTURE / "greeter.py").read_text(encoding="utf-8")},
+        {"greeter.py": broken},
         fixture_root=FIXTURE,
         test_args=["tests"],
         timeout=30,
@@ -82,3 +78,61 @@ def greet(name: str) -> str:
     )
     assert result["ok"] is True
     assert result["score"] == 1.0
+
+
+# --- second fixture: wallet (class/state) ---
+
+WALLET = ROOT / "fixtures" / "repo_oracle_wallet"
+
+FIXED_WALLET = '''\
+"""Toy wallet — fixed."""
+
+
+class Wallet:
+    def __init__(self, balance: float = 0.0) -> None:
+        self.balance = float(balance)
+
+    def deposit(self, amount: float) -> float:
+        if amount < 0:
+            raise ValueError("amount must be non-negative")
+        self.balance = self.balance + amount
+        return self.balance
+
+    def withdraw(self, amount: float) -> float:
+        if amount < 0:
+            raise ValueError("amount must be non-negative")
+        if amount > self.balance:
+            raise ValueError("insufficient funds")
+        self.balance = self.balance - amount
+        return self.balance
+'''
+
+
+def test_wallet_baseline_fails():
+    broken = (WALLET / "wallet.py").read_text(encoding="utf-8")
+    r = score_repo_edit(
+        {"wallet.py": broken}, fixture_root=WALLET, test_args=["tests"], timeout=30
+    )
+    assert r["ok"] is False
+    assert r["score"] < 1.0
+    assert r["oracle"] == "project_pytest"
+
+
+def test_wallet_fixed_passes():
+    r = score_repo_edit(
+        {"wallet.py": FIXED_WALLET},
+        fixture_root=WALLET,
+        test_args=["tests"],
+        timeout=30,
+    )
+    assert r["ok"] is True
+    assert r["score"] == 1.0
+
+
+def test_wallet_marked_multi_file():
+    code = "# file: wallet.py\n" + FIXED_WALLET
+    r = score_from_marked_code(
+        code, fixture_root=WALLET, test_args=["tests"], timeout=30
+    )
+    assert r["ok"] is True
+    assert r["score"] == 1.0

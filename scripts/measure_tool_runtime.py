@@ -1,10 +1,5 @@
 """Measure Phase C tool-runtime on repo-oracle fixtures.
 
-Tiers:
-  easy  — greeter, wallet
-  hard  — lru, merge, ledger, topo, intervals
-  all   — easy + hard
-
   python -m scripts.measure_tool_runtime --live --fixture ledger
 """
 from __future__ import annotations
@@ -70,11 +65,12 @@ OBJECTIVES = {
         "Then run_tests."
     ),
     "ledger": (
-        "Fix ledger.py so ALL 6 tests pass. account.py is already correct — do NOT rewrite it. "
-        "Two bugs in ledger.py only: "
-        "(1) transfer() credits dest but never debits source — call a.debit(amount) then b.credit(amount). "
-        "(2) total() does s+s double-count — return s once. "
-        "Read tests/test_ledger.py, write_file only ledger.py, run_tests."
+        "Fix ledger.py so ALL tests pass. account.py is CORRECT — never rewrite it. "
+        "REQUIRED tool order first: list_files, read_file tests/test_ledger.py, read_file ledger.py. "
+        "Then write_file ledger.py with BOTH fixes at once, then run_tests. "
+        "Bug1: transfer must a.debit(amount) then b.credit(amount). "
+        "Bug2: total must return sum(...) once — never s+s. "
+        "If tests still fail, re-read ledger.py and fix remaining bugs until score=1.0."
     ),
 }
 

@@ -6,8 +6,7 @@ Tiers:
   all   — easy + hard
 
   python -m scripts.measure_tool_runtime --tier hard --jobs 4
-  python -m scripts.measure_tool_runtime --live --tier hard
-  python -m scripts.batch_measure --live
+  python -m scripts.measure_tool_runtime --live --fixture topo
 """
 from __future__ import annotations
 
@@ -64,6 +63,20 @@ _EASY_FIXED = {
     },
 }
 
+OBJECTIVES = {
+    "topo": (
+        "Fix topo_sort so ALL tests pass. "
+        "Read tests/test_topo.py carefully: cycle cases MUST raise ValueError. "
+        "Implement Kahn indegree algorithm; if len(out) != len(nodes): raise ValueError('cycle detected'). "
+        "Then run_tests."
+    ),
+    "ledger": (
+        "Fix the ledger package so ALL tests pass. Multi-file: account.py and ledger.py. "
+        "transfer must debit source AND credit dest; total() must sum balances once (not twice). "
+        "Read tests, edit files, run_tests."
+    ),
+}
+
 
 def _fixed_files(name: str) -> Dict[str, str]:
     if name in _EASY_FIXED:
@@ -110,7 +123,7 @@ def measure_one(
         return {"fixture": name, "ok": False, "error": f"missing fixture {fixture}"}
 
     if live:
-        decide = make_llm_decide_fn(temperature=0.1, max_tokens=1024)
+        decide = make_llm_decide_fn(temperature=0.1, max_tokens=1536)
         mode = "live"
         steps = max(max_steps, 12)
     else:
@@ -126,10 +139,12 @@ def measure_one(
         timeout_s=timeout_s,
         pytest_timeout=45,
     )
-    result = rt.run(
+    obj = OBJECTIVES.get(
+        name,
         f"Fix the {name} package so all project tests pass. "
-        f"Read the tests and source, edit the broken file(s), then run_tests."
+        f"Read the tests and source, edit the broken file(s), then run_tests.",
     )
+    result = rt.run(obj)
     elapsed = time.perf_counter() - t0
     return {
         "fixture": name,
@@ -147,23 +162,14 @@ def measure_one(
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Measure Phase C tool-runtime")
-    ap.add_argument(
-        "--tier",
-        choices=["easy", "hard", "all"],
-        default="easy",
-        help="easy=greeter+wallet, hard=lru+merge+ledger+topo+intervals",
-    )
-    ap.add_argument(
-        "--fixture",
-        choices=list(FIXTURES) + ["all"],
-        default=None,
-    )
+    ap.add_argument("--tier", choices=["easy", "hard", "all"], default="easy")
+    ap.add_argument("--fixture", choices=list(FIXTURES) + ["all"], default=None)
     ap.add_argument("--live", action="store_true")
     ap.add_argument("--max-steps", type=int, default=10)
     ap.add_argument("--timeout", type=float, default=300.0)
     ap.add_argument("--json", action="store_true")
-    ap.add_argument("--jobs", type=int, default=4, help="parallel workers for scripted only")
-    ap.add_argument("--scoreboard", type=str, default="", help="write JSON results path")
+    ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--scoreboard", type=str, default="")
     args = ap.parse_args(argv)
 
     if args.fixture and args.fixture != "all":
@@ -177,10 +183,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     def _run(name: str) -> Dict[str, Any]:
         return measure_one(
-            name,
-            live=args.live,
-            max_steps=args.max_steps,
-            timeout_s=args.timeout,
+            name, live=args.live, max_steps=args.max_steps, timeout_s=args.timeout
         )
 
     rows: List[Dict[str, Any]] = []

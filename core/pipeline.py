@@ -384,10 +384,23 @@ class Pipeline:
                 if tool_runtime_enabled():
                     tr_t0 = time.perf_counter()
                     tr = run_if_enabled(objective)
-                    if tr is not None:
+                    if tr is None:
+                        result.degraded.append("tool_runtime_skipped:no_result")
+                        result.stages.append(
+                            StageResult(
+                                stage="tool_runtime",
+                                success=False,
+                                detail="run_if_enabled returned None (check ETHER_TOOL_RUNTIME_FIXTURE)",
+                            )
+                        )
+                    else:
                         generated = code_from_result(tr) or ""
                         result.generated_code = generated
                         result.strategy = "tool_runtime"
+                        try:
+                            setattr(result, "_tool_files", dict(tr.final_code or {}))
+                        except Exception:
+                            pass
                         result.stages.append(
                             StageResult(
                                 stage="tool_runtime",
@@ -402,14 +415,7 @@ class Pipeline:
                         if tr.ok and generated:
                             tool_runtime_done = True
                             max_attempts = 1
-                            # Project pytest already passed in tool staging.
-                            # Do not re-score via single-file Clear Quartz —
-                            # multifile (# file:) artifacts get mangled there
-                            # (Phase D slice1: pipeline score 0.2 vs direct 1.0).
-                            result.repo_oracle_ok = True
-                            result.verification_score = float(tr.score)
-                            result.execution_score = float(tr.score)
-                            result.confidence = max(float(result.confidence or 0), float(tr.score))
+
             except Exception as e:
                 result.degraded.append(f"tool_runtime_fallback:{type(e).__name__}")
                 result.stages.append(
@@ -491,9 +497,10 @@ class Pipeline:
                         objective, self.policy, fail_kind=fail_kind
                     )
                     attempts.append(_Attempt(strategy=strategy, context=strategy_ctx))
-                    result.strategy = strategy
-                    result.strategies.append(strategy)
-                    strategy_hint = strategy_prompt_addon(strategy)
+                    if not tool_runtime_done:
+                        result.strategy = strategy
+                        result.strategies.append(strategy)
+                        strategy_hint = strategy_prompt_addon(strategy)
                 behaviour = arm_behaviour(strategy)
 
                 # Which retrieved blocks this arm gets. `no_context` is now a
@@ -671,6 +678,7 @@ class Pipeline:
                         objective=objective,
                         prepare_code=not bool(tool_runtime_done),
                         test_args=["tests"],
+                        files=dict(getattr(result, "_tool_files", None) or {}),
                     ),
                     timeout_seconds=timeout,
                 )

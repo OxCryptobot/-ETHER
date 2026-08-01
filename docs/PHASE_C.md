@@ -2,64 +2,62 @@
 
 ## Goal
 
-Replace generate-only best-of-N (`core/agent_loop.py`, measured net negative)
-with **Observe → tool act → Observe** against a real fixture / project tests.
+Replace generate-only best-of-N with **Observe → tool act → Observe** against
+project tests (Phase B oracle).
 
-## Why
+## Status
 
-FINDINGS §11: agent loop 0.083 vs bare+sys 0.333. Temperature varies phrasing,
-not understanding. Headroom on pass@3 is ~5.8pp — not worth the cost.
+| Slice | Content | Status |
+|-------|---------|--------|
+| 1 | `ToolRuntime` + tools + staging | **CLOSED** |
+| 2 | `make_llm_decide_fn` Rose Quartz bridge | **CLOSED** |
+| 3 | Pipeline wire behind `ETHER_TOOL_RUNTIME=1` | **ACTIVE** |
 
-Phase B gave an honest oracle (project pytest). Phase C uses it as the stop
-condition for a tool loop.
+## Enable
 
-## Slice 1 — runtime (CLOSED)
+```bash
+ETHER_TOOL_RUNTIME=1
+ETHER_TOOL_RUNTIME_FIXTURE=fixtures/repo_oracle_toy   # or wallet
+# optional:
+ETHER_TOOL_RUNTIME_STEPS=8
+ETHER_TOOL_RUNTIME_SECONDS=180
+```
 
-`core/tool_runtime.py` — thin runtime, default **off** (`ETHER_TOOL_RUNTIME=1`).
+When enabled, `Pipeline.run` calls `run_if_enabled(objective)` before
+agent_loop / single-shot generate. On success (`ok` + artifact), generation is
+skipped and the artifact continues through sandbox + audit.
 
-| tool | purpose |
-|------|---------|
-| `list_files` | observe workspace |
-| `read_file` | read source |
-| `write_file` | edit source (staging only) |
-| `run_tests` | project pytest via repo_oracle |
-| `done` | terminate |
-
-- One JSON tool call per step
-- Staging copy — never live tree
-- Path blocks: `.git`, `.venv`, `memory`, parent `..`
-- Injectible `decide_fn` for tests without a model
-
-## Slice 2 — LLM decide_fn bridge (CLOSED)
-
-`make_llm_decide_fn(call_fn=None)`:
-
-- Injectible `call_fn(messages) -> str` for tests / offline
-- Default routes through Rose Quartz (Ollama primary, low temperature)
-- Always `parse_action` — fail closed on unparseable output
+## API
 
 ```python
-from core.tool_runtime import ToolRuntime, make_llm_decide_fn
+from core.tool_runtime import ToolRuntime, make_llm_decide_fn, run_if_enabled
 
-decide = make_llm_decide_fn()  # live model
-# or
+# Offline / tests
 decide = make_llm_decide_fn(call_fn=my_mock)
+# Live model
+decide = make_llm_decide_fn()
 
 rt = ToolRuntime(fixture_root=Path("fixtures/repo_oracle_toy"), decide_fn=decide)
-result = rt.run("fix greeter so project tests pass")
+result = rt.run("fix greeter")
+
+# Pipeline entry (returns None when gated off)
+result = run_if_enabled("fix greeter", decide_fn=decide)
 ```
+
+## Safety
+
+- Default **OFF**
+- Staging only — never live tree
+- Path blocks, timeout, max steps
+- Fail closed on unparseable model output
 
 ## Not yet
 
-- Pipeline wiring (`ether run` path)
 - Shell / arbitrary subprocess
 - Curriculum / bandit / flywheel re-enable
-
-## Tests
-
-`tests/test_tool_runtime.py` — scripted + mock-LLM decide_fn fixes greeter/wallet.
+- Live-model measurement on host fixtures
 
 ## Next
 
-Slice 3: wire into pipeline behind `ETHER_TOOL_RUNTIME=1` for repo-edit objectives.
-Measure against Phase B fixtures before touching learning stack.
+Measure tool-runtime path on greeter/wallet with live primary model
+(host ≤4B). Only then consider Phase E learning rehaul.

@@ -83,8 +83,7 @@ def parse_action(text: str) -> Dict[str, Any]:
     if not raw:
         return {"tool": "done", "args": {"reason": "empty model output"}}
     candidates: List[str] = []
-    fence = re.search(r"```(?:json)?\s*(\{.*?\
-```", raw, re.DOTALL)
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
     if fence:
         candidates.append(fence.group(1))
     if raw.startswith("{") and raw.endswith("}"):

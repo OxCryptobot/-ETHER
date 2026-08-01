@@ -400,6 +400,10 @@ class Pipeline:
                         result.strategy = "tool_runtime"
                         tool_files = dict(tr.final_code or {})
                         try:
+                            object.__setattr__(result, "_workspace_kept", getattr(tr, "workspace_kept", None))
+                        except Exception:
+                            result.__dict__["_workspace_kept"] = getattr(tr, "workspace_kept", None)
+                        try:
                             object.__setattr__(result, "_tool_files", tool_files)
                         except Exception:
                             try:
@@ -435,79 +439,91 @@ class Pipeline:
             # Phase D: tool_runtime already passed project pytest — re-verify
             # only via Clear Quartz multifile, skip Rose Quartz generate.
             if tool_runtime_done and generated:
-                from core.schemas import ClearQuartzRequest, ClearQuartzResponse
+                from core.repo_oracle import run_project_pytest
+                from pathlib import Path as _Path
                 t3 = time.perf_counter()
                 write_progress(tid, objective, "sandbox")
-                files = dict(tool_files or getattr(result, "_tool_files", None) or {})
-                fixture_env = (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
-                if fixture_env:
-                    try:
-                        from pathlib import Path as _P
-                        fixture_env = str(_P(fixture_env).resolve())
-                    except Exception:
-                        pass
-                if not files and generated and "# file:" in generated:
-                    try:
-                        from core.multifile import extract_file_blocks
-                        files = extract_file_blocks(generated)
-                    except Exception:
-                        pass
-                sand_req = Envelope(
-                    task_id=task_id,
-                    target_gem="clear-quartz",
-                    payload=ClearQuartzRequest(
-                        code=generated,
-                        objective=objective,
-                        prepare_code=False,
-                        test_args=["tests"],
-                        files=files,
-                        fixture_root=fixture_env or None,
-                    ),
-                    timeout_seconds=timeout,
-                )
-                sand_res = self.registry.execute(sand_req)
-                self.orchestrator.process_response(sand_req, sand_res)
-                if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
-                    result.degraded.append("tool_runtime_cq_verify_failed")
-                    result.stages.append(
-                        StageResult(
-                            stage="sandbox",
-                            success=False,
-                            detail=f"cq verify error: {(sand_res.error.message if sand_res.error else 'bad payload')[:160]}",
-                            duration_ms=(time.perf_counter() - t3) * 1000,
+                kept = getattr(result, "_workspace_kept", None)
+                cq_ok = False
+                detail = ""
+                try:
+                    if kept and _Path(str(kept)).is_dir():
+                        pr = run_project_pytest(
+                            _Path(str(kept)),
+                            test_args=["tests"],
+                            timeout=max(30, int(timeout)),
                         )
-                    )
-                else:
-                    sand_payload = sand_res.payload
-                    result.sandbox = sand_payload
-                    scores = compute_scores(sand_payload)
-                    result.confidence = scores["confidence"]
-                    result.execution_score = scores["execution_score"]
-                    result.verification_score = scores["verification_score"]
-                    cq_ok = sand_payload.exit_code == 0
-                    _tail = ((sand_payload.stdout or "") + "\n" + (sand_payload.stderr or ""))[-400:]
-                    result.stages.append(
-                        StageResult(
-                            stage="sandbox",
-                            success=cq_ok,
-                            detail=(
-                                f"multifile_verify exit={sand_payload.exit_code} "
-                                f"tests={sand_payload.tests_passed}/{sand_payload.total_tests} "
-                                f"files={len(files)} "
-                                f"flags={sand_payload.security_flags[:3]} "
-                                f"tail={_tail!r}"
-                            )[:500],
-                            duration_ms=(time.perf_counter() - t3) * 1000,
+                        cq_ok = bool(pr.get("ok"))
+                        score = float(pr.get("score") or 0.0)
+                        result.verification_score = 1.0 if cq_ok else score
+                        result.execution_score = result.verification_score
+                        detail = (
+                            f"workspace_verify exit={pr.get('returncode')} "
+                            f"score={score} ok={cq_ok} "
+                            f"tail={(pr.get('stdout') or '')[-300]!r}"
                         )
-                    )
-                    if cq_ok:
-                        result.repo_oracle_ok = True
-                        result.verification_score = max(float(result.verification_score or 0), 1.0)
-                        result.execution_score = max(float(result.execution_score or 0), 1.0)
-                        result.first_compile_ok = True
                     else:
-                        result.repo_oracle_ok = False
-                        result.degraded.append("cq_multifile_verify_failed_after_tool_runtime")
+                        from core.schemas import ClearQuartzRequest, ClearQuartzResponse
+                        files = dict(tool_files or {})
+                        if not files and generated and "# file:" in generated:
+                            from core.multifile import extract_file_blocks
+                            files = extract_file_blocks(generated)
+                        fixture_env = (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
+                        if fixture_env:
+                            fixture_env = str(_Path(fixture_env).resolve())
+                        sand_req = Envelope(
+                            task_id=task_id,
+                            target_gem="clear-quartz",
+                            payload=ClearQuartzRequest(
+                                code=generated,
+                                objective=objective,
+                                prepare_code=False,
+                                test_args=["tests"],
+                                files=files,
+                                fixture_root=fixture_env or None,
+                            ),
+                            timeout_seconds=timeout,
+                        )
+                        sand_res = self.registry.execute(sand_req)
+                        if sand_res.error or not isinstance(
+                            sand_res.payload, ClearQuartzResponse
+                        ):
+                            detail = f"cq error: {sand_res.error}"
+                            cq_ok = False
+                        else:
+                            sp = sand_res.payload
+                            result.sandbox = sp
+                            scores = compute_scores(sp)
+                            result.confidence = scores["confidence"]
+                            result.execution_score = scores["execution_score"]
+                            result.verification_score = scores["verification_score"]
+                            cq_ok = sp.exit_code == 0
+                            detail = (
+                                f"multifile_verify exit={sp.exit_code} "
+                                f"tests={sp.tests_passed}/{sp.total_tests} "
+                                f"files={len(files)}"
+                            )
+                finally:
+                    kept2 = getattr(result, "_workspace_kept", None) or kept
+                    if kept2:
+                        import shutil as _sh
+                        _sh.rmtree(str(kept2), ignore_errors=True)
+                result.stages.append(
+                    StageResult(
+                        stage="sandbox",
+                        success=cq_ok,
+                        detail=detail[:500],
+                        duration_ms=(time.perf_counter() - t3) * 1000,
+                    )
+                )
+                if cq_ok:
+                    result.repo_oracle_ok = True
+                    result.verification_score = 1.0
+                    result.execution_score = 1.0
+                    result.first_compile_ok = True
+                else:
+                    result.repo_oracle_ok = False
+                    result.degraded.append("cq_verify_failed_after_tool_runtime")
                 _tool_path_complete = True
 
                         # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at

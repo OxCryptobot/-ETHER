@@ -72,6 +72,7 @@ class RuntimeResult:
     reason: str = ""
     n_steps: int = 0
     elapsed_s: float = 0.0
+    workspace_kept: Optional[str] = None
 
 
 DecideFn = Callable[[List[Dict[str, str]]], Dict[str, Any]]
@@ -341,14 +342,18 @@ class ToolRuntime:
                     best_score = max(best_score, sc)
                     if obs.get("ok"):
                         last_ok = True
+                        snap = self._snapshot_code()
+                        kept = str(self.workspace) if self.workspace is not None else None
+                        self.workspace = None  # caller owns cleanup
                         return RuntimeResult(
                             ok=True,
                             score=sc,
                             steps=list(self.steps),
-                            final_code=self._snapshot_code(),
+                            final_code=snap,
                             reason="tests passed",
                             n_steps=len(self.steps),
                             elapsed_s=time.perf_counter() - t0,
+                            workspace_kept=kept,
                         )
                     fails = obs.get("failed") or []
                     if fails:

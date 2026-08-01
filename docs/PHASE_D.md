@@ -1,49 +1,40 @@
 # Phase D — Repo-grounded eval + e2e tool path
 
-## Status
+## Status — CLOSED 2026-08-01
 
 | Slice | Content | Status |
 |-------|---------|--------|
-| 1 | Pipeline e2e under `ETHER_TOOL_RUNTIME=1` | **CLOSED** (ledger PASS: tool→workspace_verify→repo_ok) |
-| 2 | Task pack (`fixtures/phase_d_tasks.json`) | **ACTIVE** |
-| 3 | Bare vs direct vs pipeline batch | **ACTIVE** |
-| 4 | FINDINGS / STATUS numbers | pending batch results |
+| 1 | Pipeline e2e under `ETHER_TOOL_RUNTIME=1` | **CLOSED** |
+| 2 | Task pack (`fixtures/phase_d_tasks.json`) | **CLOSED** |
+| 3 | Bare vs direct vs pipeline batch | **CLOSED** |
+| 4 | FINDINGS / STATUS numbers | **CLOSED** |
 
-## Batch (preferred)
+## Headline (host `qwen3.5:4b`)
+
+| arm | hard pack (5) |
+|-----|----------------|
+| direct | **5/5** |
+| pipeline (`--max-steps 16`) | **5/5** |
+| bare | **0/5** |
+
+Ledger/topo need `max_steps≥16` on 4B; 12 steps under 3b default was a false negative.
+
+## Reproduce
 
 ```powershell
 git fetch origin; git reset --hard origin/main
+# .env: ETHER_PRIMARY_MODEL=qwen3.5:4b  (must match `ollama list`)
 
-# Fast offline: scripted direct hard (no GPU)
 python -m scripts.batch_phase_d --arm direct --mode scripted --tier hard
-
-# Live comparison (sequential GPU) — direct + pipeline + bare
-python -m scripts.batch_phase_d --arm all --mode live --tier hard --timeout 400
-
-# Pipeline only
-python -m scripts.batch_phase_d --arm pipeline --mode live --tier hard --timeout 400
+python -m scripts.batch_phase_d --arm pipeline --mode live --tier hard --max-steps 16 --timeout 500
+python -m scripts.batch_phase_d --arm bare --mode live --tier hard --timeout 400
 ```
 
 Scoreboard: `artifacts/scoreboard_phase_d.json`
 
-## Arms
+## Non-goals (still)
 
-| Arm | Meaning |
-|-----|---------|
-| **direct** | `ToolRuntime` only (Phase C) |
-| **pipeline** | `Pipeline.run` + tool runtime ON + workspace re-verify |
-| **bare** | `Pipeline.run` tool runtime OFF (generate-only control) |
-
-## Slice 1 closed criteria (ledger)
-
-```
-tool_runtime ok score=1.0
-sandbox workspace_verify exit=0 score=1.0
-repo_ok=True
-```
-
-## Non-goals
-
-- Curriculum / bandit / flywheel re-enable
+- Curriculum / bandit / flywheel re-enable without new evidence
 - Shell tools
 - Best-of-N revival
+- Claiming holdout-generate win (ablation still says no)

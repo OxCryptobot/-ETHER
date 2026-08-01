@@ -2,11 +2,12 @@
 
 Tiers:
   easy  — greeter, wallet
-  hard  — lru, merge, ledger (eviction / remainder / multi-file)
+  hard  — lru, merge, ledger, topo, intervals
   all   — easy + hard
 
-  python -m scripts.measure_tool_runtime --tier hard
+  python -m scripts.measure_tool_runtime --tier hard --jobs 4
   python -m scripts.measure_tool_runtime --live --tier hard
+  python -m scripts.batch_measure --live
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import json
 import os
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -28,10 +30,12 @@ FIXTURES = {
     "lru": ROOT / "fixtures" / "repo_oracle_lru",
     "merge": ROOT / "fixtures" / "repo_oracle_merge",
     "ledger": ROOT / "fixtures" / "repo_oracle_ledger",
+    "topo": ROOT / "fixtures" / "repo_oracle_topo",
+    "intervals": ROOT / "fixtures" / "repo_oracle_intervals",
 }
 
 EASY = ("greeter", "wallet")
-HARD = ("lru", "merge", "ledger")
+HARD = ("lru", "merge", "ledger", "topo", "intervals")
 
 SOLUTIONS = ROOT / "fixtures" / "_fixed_solutions"
 
@@ -147,7 +151,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--tier",
         choices=["easy", "hard", "all"],
         default="easy",
-        help="easy=greeter+wallet, hard=lru+merge+ledger",
+        help="easy=greeter+wallet, hard=lru+merge+ledger+topo+intervals",
     )
     ap.add_argument(
         "--fixture",
@@ -158,6 +162,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--max-steps", type=int, default=10)
     ap.add_argument("--timeout", type=float, default=300.0)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--jobs", type=int, default=4, help="parallel workers for scripted only")
+    ap.add_argument("--scoreboard", type=str, default="", help="write JSON results path")
     args = ap.parse_args(argv)
 
     if args.fixture and args.fixture != "all":
@@ -169,30 +175,58 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         names = list(EASY)
 
-    rows: List[Dict[str, Any]] = []
-    for name in names:
-        rows.append(
-            measure_one(
-                name,
-                live=args.live,
-                max_steps=args.max_steps,
-                timeout_s=args.timeout,
-            )
+    def _run(name: str) -> Dict[str, Any]:
+        return measure_one(
+            name,
+            live=args.live,
+            max_steps=args.max_steps,
+            timeout_s=args.timeout,
         )
+
+    rows: List[Dict[str, Any]] = []
+    if (not args.live) and args.jobs > 1 and len(names) > 1:
+        with ThreadPoolExecutor(max_workers=args.jobs) as ex:
+            futs = {ex.submit(_run, n): n for n in names}
+            done = {}
+            for fut in as_completed(futs):
+                r = fut.result()
+                done[r["fixture"]] = r
+                status = "PASS" if r.get("ok") else "FAIL"
+                print(
+                    f"[{status}] {r['fixture']:10} tier={r.get('tier')} mode={r.get('mode')} "
+                    f"score={r.get('score')} steps={r.get('n_steps')} "
+                    f"elapsed={r.get('elapsed_s')}s",
+                    flush=True,
+                )
+            rows = [done[n] for n in names if n in done]
+    else:
+        for name in names:
+            r = _run(name)
+            rows.append(r)
+            status = "PASS" if r.get("ok") else "FAIL"
+            print(
+                f"[{status}] {r['fixture']:10} tier={r.get('tier')} mode={r.get('mode')} "
+                f"score={r.get('score')} steps={r.get('n_steps')} "
+                f"elapsed={r.get('elapsed_s')}s tools={r.get('tools')} "
+                f"{r.get('reason', '')}",
+                flush=True,
+            )
+
+    n_ok = sum(1 for r in rows if r.get("ok"))
+    print(f"summary: {n_ok}/{len(rows)} passed", flush=True)
+
+    if args.scoreboard:
+        sb = Path(args.scoreboard)
+        payload = {
+            "results": rows,
+            "summary": {"passed": n_ok, "total": len(rows), "live": bool(args.live)},
+        }
+        sb.parent.mkdir(parents=True, exist_ok=True)
+        sb.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f"scoreboard: {sb}", flush=True)
 
     if args.json:
         print(json.dumps({"results": rows}, indent=2))
-    else:
-        for r in rows:
-            status = "PASS" if r.get("ok") else "FAIL"
-            print(
-                f"[{status}] {r['fixture']:8} tier={r.get('tier')} mode={r.get('mode')} "
-                f"score={r.get('score')} steps={r.get('n_steps')} "
-                f"elapsed={r.get('elapsed_s')}s tools={r.get('tools')} "
-                f"{r.get('reason', '')}"
-            )
-        n_ok = sum(1 for r in rows if r.get("ok"))
-        print(f"summary: {n_ok}/{len(rows)} passed")
 
     return 0 if all(r.get("ok") for r in rows) else 1
 

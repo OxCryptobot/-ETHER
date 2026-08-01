@@ -396,3 +396,65 @@ def make_llm_decide_fn(
         return parse_action(raw)
 
     return decide
+
+
+def run_if_enabled(
+    objective: str,
+    *,
+    decide_fn=None,
+    fixture_root=None,
+    max_steps=None,
+    timeout_s=None,
+):
+    """Phase C slice 3 entry — run tool runtime when gated on, else None."""
+    import os
+    from pathlib import Path as _P
+
+    if not tool_runtime_enabled():
+        return None
+    root = fixture_root
+    if root is None:
+        raw = (
+            (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
+            or (os.getenv("ETHER_REPO_ORACLE_FIXTURE") or "").strip()
+        )
+        if not raw:
+            return None
+        root = _P(raw)
+    root = _P(root)
+    if not root.is_dir():
+        return RuntimeResult(ok=False, score=0.0, error=f"fixture not found: {root}")
+    steps = max_steps
+    if steps is None:
+        try:
+            steps = int(os.getenv("ETHER_TOOL_RUNTIME_STEPS") or "8")
+        except ValueError:
+            steps = 8
+    wall = timeout_s
+    if wall is None:
+        try:
+            wall = float(os.getenv("ETHER_TOOL_RUNTIME_SECONDS") or "180")
+        except ValueError:
+            wall = 180.0
+    decide = decide_fn if decide_fn is not None else make_llm_decide_fn()
+    rt = ToolRuntime(
+        fixture_root=root,
+        decide_fn=decide,
+        max_steps=steps,
+        timeout_s=wall,
+    )
+    return rt.run(objective)
+
+
+def code_from_result(result):
+    """Flatten final_code into a single artifact (markers if multi-file)."""
+    files = result.final_code or {}
+    if not files:
+        return ""
+    if len(files) == 1:
+        return next(iter(files.values()))
+    parts = []
+    for rel, body in sorted(files.items()):
+        parts.append("# file: " + rel + chr(10) + body)
+    return (chr(10) + chr(10)).join(parts)
+

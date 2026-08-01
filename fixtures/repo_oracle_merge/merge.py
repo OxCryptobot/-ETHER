@@ -1,1 +1,40 @@
-"""Merge two sorted lists — intentional bugs.\n\nBUGS:\n- drops the last element of the longer list when one side exhausts early\n- does not handle empty inputs correctly (returns None-ish path)\n"""\nfrom __future__ import annotations\n\nfrom typing import List, TypeVar\n\nT = TypeVar(\"T\")\n\n\ndef merge_sorted(a: List[T], b: List[T]) -> List[T]:\n    \"\"\"Return a new sorted list containing all elements of a and b.\n\n    Preconditions: a and b are each sorted ascending.\n    \"\"\"\n    if a is None or b is None:\n        raise TypeError(\"inputs must be lists\")\n    # BUG: empty handling is wrong — should return a copy of the other\n    if not a and not b:\n        return []\n    if not a:\n        return b  # BUG: should return list(b) — mutation leak, and tests check identity\n    if not b:\n        return a  # same bug\n\n    out: List[T] = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    # BUG: only extends from a, forgets remainder of b when a exhausted first\n    if i < len(a):\n        out.extend(a[i:])\n    # missing: if j < len(b): out.extend(b[j:])\n    return out\n
+"""Merge two sorted lists — intentional bugs.
+
+BUGS:
+- drops remainder of longer list when one side exhausts early
+- empty inputs return the other list by identity (must copy)
+"""
+from __future__ import annotations
+
+from typing import List, TypeVar
+
+T = TypeVar("T")
+
+
+def merge_sorted(a: List[T], b: List[T]) -> List[T]:
+    """Return a new sorted list containing all elements of a and b.
+
+    Preconditions: a and b are each sorted ascending.
+    """
+    if a is None or b is None:
+        raise TypeError("inputs must be lists")
+    if not a and not b:
+        return []
+    if not a:
+        return b  # BUG: should return list(b)
+    if not b:
+        return a  # BUG: should return list(a)
+
+    out: List[T] = []
+    i = j = 0
+    while i < len(a) and j < len(b):
+        if a[i] <= b[j]:
+            out.append(a[i])
+            i += 1
+        else:
+            out.append(b[j])
+            j += 1
+    # BUG: only extends from a; forgets remainder of b
+    if i < len(a):
+        out.extend(a[i:])
+    return out

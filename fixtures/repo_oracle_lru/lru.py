@@ -1,1 +1,32 @@
-"""LRU cache — intentional bugs for hard Phase C tasks.\n\nBUGS:\n- put does not evict when over capacity (grows forever)\n- get does not mark key as most-recently-used\n"""\nfrom __future__ import annotations\n\nfrom collections import OrderedDict\nfrom typing import Any, Optional\n\n\nclass LRUCache:\n    def __init__(self, capacity: int) -> None:\n        if capacity < 1:\n            raise ValueError(\"capacity must be >= 1\")\n        self.capacity = capacity\n        self._data: OrderedDict[Any, Any] = OrderedDict()\n\n    def get(self, key: Any) -> Optional[Any]:\n        if key not in self._data:\n            return None\n        # BUG: should move_to_end(key) so it becomes most-recent\n        return self._data[key]\n\n    def put(self, key: Any, value: Any) -> None:\n        if key in self._data:\n            self._data[key] = value\n            self._data.move_to_end(key)\n            return\n        self._data[key] = value\n        # BUG: never evicts — capacity ignored on insert\n
+"""LRU cache — intentional bugs for hard Phase C tasks.
+
+BUGS:
+- put does not evict when over capacity (grows forever)
+- get does not mark key as most-recently-used
+"""
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Any, Optional
+
+
+class LRUCache:
+    def __init__(self, capacity: int) -> None:
+        if capacity < 1:
+            raise ValueError("capacity must be >= 1")
+        self.capacity = capacity
+        self._data: OrderedDict[Any, Any] = OrderedDict()
+
+    def get(self, key: Any) -> Optional[Any]:
+        if key not in self._data:
+            return None
+        # BUG: should move_to_end(key) so it becomes most-recent
+        return self._data[key]
+
+    def put(self, key: Any, value: Any) -> None:
+        if key in self._data:
+            self._data[key] = value
+            self._data.move_to_end(key)
+            return
+        self._data[key] = value
+        # BUG: never evicts — capacity ignored on insert

@@ -1,4 +1,4 @@
-"""Phase C slice 1 — tool-first agent runtime (Observe → Act → Observe).
+"""Phase C — tool-first agent runtime (Observe → Act → Observe).
 
 NOT the best-of-N generate loop in core/agent_loop.py. That was measured net
 negative (FINDINGS §11). This runtime:
@@ -9,7 +9,7 @@ negative (FINDINGS §11). This runtime:
 - stops when project tests pass or budget is exhausted
 
 Gated by ETHER_TOOL_RUNTIME=1 (default off). Fully testable without a model
-via injectible decide_fn.
+via injectible decide_fn / call_fn.
 """
 
 from __future__ import annotations
@@ -75,6 +75,7 @@ class RuntimeResult:
 
 
 DecideFn = Callable[[List[Dict[str, str]]], Dict[str, Any]]
+CallFn = Callable[[List[Dict[str, str]]], str]
 
 
 def parse_action(text: str) -> Dict[str, Any]:
@@ -333,3 +334,65 @@ class ToolRuntime:
             if self.workspace is not None:
                 shutil.rmtree(self.workspace, ignore_errors=True)
                 self.workspace = None
+
+
+def _default_rose_call(
+    messages: List[Dict[str, str]],
+    *,
+    temperature: float = 0.1,
+    max_tokens: int = 512,
+) -> str:
+    """Call Rose Quartz via the gem registry. Soft import — core stays thin."""
+    from uuid import uuid4
+
+    from core.registry import build_default_registry
+    from core.schemas import ChatMessage, Envelope, RoseQuartzRequest, RoseQuartzResponse
+
+    reg = build_default_registry()
+    chat = [
+        ChatMessage(role=m.get("role", "user"), content=m.get("content") or "")  # type: ignore[arg-type]
+        for m in messages
+    ]
+    env = Envelope(
+        task_id=uuid4(),
+        target_gem="rose-quartz",
+        payload=RoseQuartzRequest(
+            messages=chat,
+            prefer_local=True,
+            max_tokens=int(max_tokens),
+            temperature=float(temperature),
+        ),
+    )
+    res = reg.execute(env)
+    if res.error:
+        raise RuntimeError(f"rose-quartz: {res.error.message}")
+    if not isinstance(res.payload, RoseQuartzResponse):
+        raise RuntimeError("rose-quartz: unexpected payload")
+    return str(res.payload.content or "")
+
+
+def make_llm_decide_fn(
+    call_fn: Optional[CallFn] = None,
+    *,
+    temperature: float = 0.1,
+    max_tokens: int = 512,
+) -> DecideFn:
+    """Build a decide_fn that asks a model for one JSON tool call.
+
+    - `call_fn(messages) -> str` is injectible (tests / offline).
+    - Default call_fn routes through Rose Quartz (Ollama local primary).
+    - Output is always parsed via `parse_action` (fail closed).
+    """
+
+    def _call(messages: List[Dict[str, str]]) -> str:
+        if call_fn is not None:
+            return call_fn(messages)
+        return _default_rose_call(
+            messages, temperature=temperature, max_tokens=max_tokens
+        )
+
+    def decide(messages: List[Dict[str, str]]) -> Dict[str, Any]:
+        raw = _call(messages)
+        return parse_action(raw)
+
+    return decide

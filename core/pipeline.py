@@ -402,6 +402,14 @@ class Pipeline:
                         if tr.ok and generated:
                             tool_runtime_done = True
                             max_attempts = 1
+                            # Project pytest already passed in tool staging.
+                            # Do not re-score via single-file Clear Quartz —
+                            # multifile (# file:) artifacts get mangled there
+                            # (Phase D slice1: pipeline score 0.2 vs direct 1.0).
+                            result.repo_oracle_ok = True
+                            result.verification_score = float(tr.score)
+                            result.execution_score = float(tr.score)
+                            result.confidence = max(float(result.confidence or 0), float(tr.score))
             except Exception as e:
                 result.degraded.append(f"tool_runtime_fallback:{type(e).__name__}")
                 result.stages.append(
@@ -650,6 +658,25 @@ class Pipeline:
                 )
 
                 t3 = time.perf_counter()
+                if tool_runtime_done and generated:
+                    # Trust tool-runtime project pytest; skip Clear Quartz.
+                    result.stages.append(
+                        StageResult(
+                            stage="sandbox",
+                            success=True,
+                            detail="bypassed: tool_runtime already verified via project pytest",
+                            duration_ms=(time.perf_counter() - t3) * 1000,
+                        )
+                    )
+                    result.stages.append(
+                        StageResult(
+                            stage="repo_oracle",
+                            success=True,
+                            detail=f"trusted tool_runtime score={result.verification_score}",
+                        )
+                    )
+                    ok = True
+                    break
                 write_progress(tid, objective, "sandbox")
                 sand_req = Envelope(
                     task_id=task_id,

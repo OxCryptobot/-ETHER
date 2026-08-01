@@ -216,12 +216,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         f"{'fixture':10} " + " ".join(f"{a:10}" for a in ("direct", "pipeline", "bare")),
         flush=True,
     )
+    blank = "--"
     for name in names:
         cells = []
         for a in ("direct", "pipeline", "bare"):
             r = by.get(name, {}).get(a)
             if not r:
-                cells.append(f"{'\u2014':10}")
+                cells.append(f"{blank:10}")
             else:
                 mark = "PASS" if r.get("ok") else "FAIL"
                 cells.append(f"{mark:10}")

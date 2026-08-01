@@ -9,15 +9,15 @@ This is the honest scoreboard for the self-improving hypothesis.
 
 | Slice | Content | Status |
 |-------|---------|--------|
-| 1 | `core/repo_oracle.py`, toy fixture, unit tests, `ether repo-score` | **CLOSED** (host-verified 2026-07-31) |
-| 2 | Wire oracle into pipeline repair path (fail/retry on project-test fail even when sandbox exit=0) | **ACTIVE** |
+| 1 | `core/repo_oracle.py`, greeter fixture, unit tests, `ether repo-score` | **CLOSED** (host-verified 2026-07-31) |
+| 2 | Wire oracle into pipeline repair path | **CLOSED** (host-verified 2026-07-31, `dba09ff`) |
+| 3 | Expand task set + gate e2e (no LLM) | **CLOSED** (2026-07-31) |
 
 ## API
 
 ```python
 from core.repo_oracle import score_repo_edit, score_from_marked_code, parse_file_markers
 
-# Multi-file model output
 result = score_from_marked_code(
     code,                          # contains `# file: path` markers
     fixture_root=Path("fixtures/repo_oracle_toy"),
@@ -39,10 +39,10 @@ When `ETHER_REPO_ORACLE=1` (or `ETHER_REPO_ORACLE_FIXTURE` is set):
 Env vars (see `.env.example`):
 
 - `ETHER_REPO_ORACLE=1` — master enable
-- `ETHER_REPO_ORACLE_FIXTURE=fixtures/repo_oracle_toy`
+- `ETHER_REPO_ORACLE_FIXTURE=fixtures/repo_oracle_toy` (or `fixtures/repo_oracle_wallet`)
 - `ETHER_REPO_ORACLE_TEST_ARGS=tests`
 - `ETHER_REPO_ORACLE_TIMEOUT=60`
-- `ETHER_REPO_ORACLE_AS_PATH=greeter.py` (single-file default path)
+- `ETHER_REPO_ORACLE_AS_PATH=greeter.py` (or `wallet.py`)
 
 ## Safety
 
@@ -51,21 +51,30 @@ Env vars (see `.env.example`):
 - Pytest is timeout-bounded.
 - Hook never raises into the pipeline (returns safe error dict).
 
-## Toy fixture
+## Task set (fixtures)
 
-`fixtures/repo_oracle_toy/` ships a deliberate bug (`greeter.py` missing comma).
-Project tests under `tests/` fail until the agent (or a human) writes the fix.
+| Fixture | Path | Bug class | Baseline score |
+|---------|------|-----------|----------------|
+| greeter | `fixtures/repo_oracle_toy/` | pure function format string | 0.0 |
+| wallet | `fixtures/repo_oracle_wallet/` | class state (deposit overwrite + missing insufficient check) | ~0.6 |
+
+Both: fixed code → `ok=True score=1.0`.
 
 ## CLI
 
 ```bash
 ether repo-score --fixture fixtures/repo_oracle_toy --code-file fixed.py
-# or pipe marked multi-file source:
-ether repo-score --fixture fixtures/repo_oracle_toy --markers-file out.txt
+ether repo-score --fixture fixtures/repo_oracle_wallet --as-path wallet.py --code-file fixed_wallet.py
 ```
 
-## Next (after slice 2 closes)
+## Gate e2e (no LLM)
 
-- Expand repo-edit task set beyond the single greeter toy
-- Then Phase C: tool-first agent runtime (Observe → tool act → Observe)
-- Phase E only after honest repo-suite metrics exist
+`tests/test_repo_oracle_gate.py` exercises `apply_repo_oracle_gate` on both fixtures:
+- disabled → inactive
+- broken → `fail_kind=repo_oracle`, `repo_oracle_ok=False`
+- fixed → `ok=True score=1.0`
+
+## Next
+
+Phase C: tool-first agent runtime (Observe → tool act → Observe).
+Phase E only after honest repo-suite metrics exist.

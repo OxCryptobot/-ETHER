@@ -5,8 +5,7 @@ Tiers:
   hard  — lru, merge, ledger, topo, intervals
   all   — easy + hard
 
-  python -m scripts.measure_tool_runtime --tier hard --jobs 4
-  python -m scripts.measure_tool_runtime --live --fixture topo
+  python -m scripts.measure_tool_runtime --live --fixture ledger
 """
 from __future__ import annotations
 
@@ -71,9 +70,11 @@ OBJECTIVES = {
         "Then run_tests."
     ),
     "ledger": (
-        "Fix the ledger package so ALL tests pass. Multi-file: account.py and ledger.py. "
-        "transfer must debit source AND credit dest; total() must sum balances once (not twice). "
-        "Read tests, edit files, run_tests."
+        "Fix ledger.py so ALL 6 tests pass. account.py is already correct — do NOT rewrite it. "
+        "Two bugs in ledger.py only: "
+        "(1) transfer() credits dest but never debits source — call a.debit(amount) then b.credit(amount). "
+        "(2) total() does s+s double-count — return s once. "
+        "Read tests/test_ledger.py, write_file only ledger.py, run_tests."
     ),
 }
 

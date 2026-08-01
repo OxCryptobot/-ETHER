@@ -426,7 +426,71 @@ class Pipeline:
                     )
                 )
 
-            # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at
+            _tool_path_complete = False
+            # Phase D: tool_runtime already passed project pytest — re-verify
+            # only via Clear Quartz multifile, skip Rose Quartz generate.
+            if tool_runtime_done and generated:
+                from core.schemas import ClearQuartzRequest, ClearQuartzResponse
+                t3 = time.perf_counter()
+                write_progress(tid, objective, "sandbox")
+                files = dict(getattr(result, "_tool_files", None) or {})
+                fixture_env = (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
+                sand_req = Envelope(
+                    task_id=task_id,
+                    target_gem="clear-quartz",
+                    payload=ClearQuartzRequest(
+                        code=generated,
+                        objective=objective,
+                        prepare_code=False,
+                        test_args=["tests"],
+                        files=files,
+                        fixture_root=fixture_env or None,
+                    ),
+                    timeout_seconds=timeout,
+                )
+                sand_res = self.registry.execute(sand_req)
+                self.orchestrator.process_response(sand_req, sand_res)
+                if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
+                    result.degraded.append("tool_runtime_cq_verify_failed")
+                    result.stages.append(
+                        StageResult(
+                            stage="sandbox",
+                            success=False,
+                            detail=f"cq verify error: {(sand_res.error.message if sand_res.error else 'bad payload')[:160]}",
+                            duration_ms=(time.perf_counter() - t3) * 1000,
+                        )
+                    )
+                else:
+                    sand_payload = sand_res.payload
+                    result.sandbox = sand_payload
+                    scores = compute_scores(sand_payload)
+                    result.confidence = scores["confidence"]
+                    result.execution_score = scores["execution_score"]
+                    result.verification_score = scores["verification_score"]
+                    cq_ok = sand_payload.exit_code == 0
+                    result.stages.append(
+                        StageResult(
+                            stage="sandbox",
+                            success=cq_ok,
+                            detail=(
+                                f"multifile_verify exit={sand_payload.exit_code} "
+                                f"tests={sand_payload.tests_passed}/{sand_payload.total_tests} "
+                                f"flags={sand_payload.security_flags[:3]}"
+                            )[:300],
+                            duration_ms=(time.perf_counter() - t3) * 1000,
+                        )
+                    )
+                    if cq_ok:
+                        result.repo_oracle_ok = True
+                        result.verification_score = max(float(result.verification_score or 0), 1.0)
+                        result.execution_score = max(float(result.execution_score or 0), 1.0)
+                        result.first_compile_ok = True
+                    else:
+                        result.repo_oracle_ok = False
+                        result.degraded.append("cq_multifile_verify_failed_after_tool_runtime")
+                _tool_path_complete = True
+
+                        # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at
             # varied temperature, scores each WITHOUT a holdout, repairs against
             # what actually ran, and returns the best — never overwriting a
             # better earlier attempt, which is what the fixed two-shot retry did.
@@ -477,7 +541,7 @@ class Pipeline:
                     result.degraded.append(f"agent_loop_fallback:{type(e).__name__}")
                     loop_result = None
 
-            while attempt < max_attempts:
+            while attempt < max_attempts and not _tool_path_complete:
                 attempt += 1
                 t2 = time.perf_counter()
                 write_progress(tid, objective, "code" if attempt == 1 else "code_retry")

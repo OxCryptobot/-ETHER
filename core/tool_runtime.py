@@ -506,12 +506,10 @@ def run_if_enabled(
 
 
 def code_from_result(result):
-    """Flatten final_code into a single artifact (markers if multi-file)."""
+    """Flatten final_code into a single artifact (always # file: markers)."""
     files = result.final_code or {}
     if not files:
         return ""
-    if len(files) == 1:
-        return next(iter(files.values()))
     parts = []
     for rel, body in sorted(files.items()):
         parts.append("# file: " + rel + chr(10) + body)

@@ -332,3 +332,25 @@ Pipeline under wrong config looked worse: with Rose default `qwen2.5-coder:3b` a
 1. Default product path for fix-tasks: tool runtime ON, Clear Quartz re-verify on the tool workspace (not generate-first).
 2. Always print/resolve `ETHER_PRIMARY_MODEL` in measure scripts; silent 3b fallback wasted a day of matrix noise.
 3. Keep curriculum / bandit / flywheel off until a measurement on this task class says otherwise.
+
+---
+
+## 13. Phase E — mutation restore (2026-08-01)
+
+Host `qwen3.5:4b`. Six named mutations applied to `_fixed_solutions`, oracle = project pytest.
+
+| arm | pass/6 |
+|-----|--------|
+| direct scripted | 6/6 |
+| direct live | **3/6** |
+| bare live | **1/6** |
+
+Direct live PASS: `lru_no_evict`, `merge_drop_b_tail`, `intervals_no_sort`.  
+Direct live FAIL (max_steps): both ledger mutations, `topo_drop_cycle_raise` (score 0.571).  
+Bare live PASS only: `topo_drop_cycle_raise`.
+
+### Implications
+
+1. Phase D 5/5 does **not** automatically transfer to regression-style mutations — ledger/topo need more budget or stronger tool prompts.
+2. Tools still outperform bare on this pack (3/6 vs 1/6); bare is not competitive on lru/merge/intervals.
+3. Next evidence-ranked step remains **real external repos** (TASKS #1), not selector polish.

@@ -1,31 +1,53 @@
 # Phase E — Mutation restore (repo-grounded regressions)
 
-## Status
+## Status — measured 2026-08-01 (host `qwen3.5:4b`)
 
 | Slice | Content | Status |
 |-------|---------|--------|
-| 1 | Mutation catalog + temp fixtures from fixed solutions | **ACTIVE** |
-| 2 | `batch_phase_e` direct vs bare | **ACTIVE** |
-| 3 | FINDINGS update | pending data |
+| 1 | Mutation catalog + temp fixtures from fixed solutions | **CLOSED** |
+| 2 | `batch_phase_e` direct vs bare | **CLOSED** |
+| 3 | FINDINGS §13 | **CLOSED** |
 
-## Idea
+## Headline
 
-Phase D used one broken snapshot per package. Phase E starts from
-`fixtures/_fixed_solutions`, applies a **named mutation**, then asks tools
-to restore green project tests — closer to "this regression landed, fix it".
+| arm | pass/6 mutations |
+|-----|------------------|
+| direct scripted | **6/6** |
+| **direct live** | **3/6** |
+| **bare live** | **1/6** |
 
-## Host batch
+### Direct live
+
+| mutation | result |
+|----------|--------|
+| ledger_no_debit | FAIL max_steps (0.0) |
+| ledger_double_total | FAIL max_steps (0.0) |
+| topo_drop_cycle_raise | FAIL max_steps (0.571) |
+| lru_no_evict | **PASS** |
+| merge_drop_b_tail | **PASS** |
+| intervals_no_sort | **PASS** |
+
+### Bare live
+
+| mutation | result |
+|----------|--------|
+| ledger_no_debit | FAIL (0.86) |
+| ledger_double_total | FAIL (0.0) |
+| topo_drop_cycle_raise | **PASS** |
+| lru_no_evict | FAIL (0.3) |
+| merge_drop_b_tail | FAIL (0.5) |
+| intervals_no_sort | FAIL (0.2) |
+
+## Reading
+
+- Mutation-restore is **harder** than Phase D fixtures (tools 5/5 → 3/6).
+- Tools still beat bare (**3/6 vs 1/6**).
+- Ledger burns 16-step budget; topo mixed (bare one lucky pass).
+- Six synthetic regressions — not a multi-repo benchmark.
+
+## Reproduce
 
 ```powershell
-git fetch origin; git reset --hard origin/main
-# .env: ETHER_PRIMARY_MODEL=qwen3.5:4b
-
-python -m scripts.batch_phase_e --arm direct --mode scripted
 python -m scripts.batch_phase_e --arm direct --mode live --max-steps 16 --timeout 500
 python -m scripts.batch_phase_e --arm bare --mode live --timeout 400
 ```
-
-## Non-goals
-
-- BoN / curriculum / flywheel
-- Holdout-generate redo

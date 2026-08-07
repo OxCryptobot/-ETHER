@@ -2,6 +2,7 @@
 """ETHER host agent — pull jobs from origin, run, push reports.
 
 Pending jobs run back-to-back. Sleep only when queue empty (default 1s).
+On diverged history: hard-reset to origin/main at idle so jobs can flow again.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -31,6 +32,8 @@ DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
 LOG = ROOT / "memory" / "host_agent" / "agent.log"
 STATUS = ROOT / "memory" / "host_agent" / "status.json"
+
+_last_ff_log = 0.0
 
 
 def log(msg: str) -> None:
@@ -61,12 +64,14 @@ def write_status(**extra: Any) -> None:
 def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     if cmd and isinstance(cmd[0], str):
         c0 = cmd[0].replace("\\", "/")
-        if c0.endswith("python.exe") or c0.endswith("python"):
-            cand = ROOT / cmd[0]
+        name = Path(c0).name.lower()
+        if name in ("python.exe", "python"):
+            cand = (ROOT / cmd[0]).resolve() if not Path(cmd[0]).is_absolute() else Path(cmd[0])
+            venv_py = ROOT / ".venv" / "Scripts" / "python.exe"
             if cand.is_file():
                 cmd = [str(cand)] + list(cmd[1:])
-            elif (ROOT / ".venv" / "Scripts" / "python.exe").is_file() and "python" in Path(c0).name:
-                cmd = [str(ROOT / ".venv" / "Scripts" / "python.exe")] + list(cmd[1:])
+            elif venv_py.is_file():
+                cmd = [str(venv_py)] + list(cmd[1:])
     return subprocess.run(
         cmd,
         cwd=str(ROOT),
@@ -79,11 +84,24 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     )
 
 
-def git_pull_soft() -> None:
+def git_sync(*, allow_hard_reset: bool = True) -> None:
+    """Fetch + ff-only. If diverged and idle-safe, reset --hard origin/main."""
+    global _last_ff_log
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
-    if r.returncode != 0:
-        log(f"ff-only failed; leaving local tree (rc={r.returncode})")
+    if r.returncode == 0:
+        return
+    now = time.time()
+    if now - _last_ff_log > 60:
+        log("git diverged from origin/main (ff-only failed)")
+        _last_ff_log = now
+    if not allow_hard_reset:
+        return
+    # Idle recover: reports already attempted push; matching origin unblocks new jobs
+    log("recover: git reset --hard origin/main")
+    rr = run(["git", "reset", "--hard", "origin/main"], timeout=60)
+    if rr.returncode != 0:
+        log(f"reset failed rc={rr.returncode} {(rr.stderr or '')[:300]}")
 
 
 def git_push_report(job_id: str, ok: bool) -> None:
@@ -95,9 +113,7 @@ def git_push_report(job_id: str, ok: bool) -> None:
     ]
     art = ROOT / "artifacts"
     if art.exists():
-        for p in art.glob("host_report_*.md"):
-            paths.append(str(p.relative_to(ROOT)))
-        for p in art.glob("host_report_*.json"):
+        for p in list(art.glob("host_report_*.md")) + list(art.glob("host_report_*.json")):
             paths.append(str(p.relative_to(ROOT)))
     for rel in ("artifacts/jobs/done", "artifacts/jobs/failed", "artifacts/jobs/pending"):
         d = ROOT / rel
@@ -109,11 +125,26 @@ def git_push_report(job_id: str, ok: bool) -> None:
     status = "PASS" if ok else "FAIL"
     msg = f"host agent report: job={job_id} {status}"
     c = run(["git", "commit", "-m", msg], timeout=60)
-    if c.returncode != 0 and "nothing to commit" in (c.stdout + c.stderr):
+    combined = (c.stdout or "") + (c.stderr or "")
+    if c.returncode != 0 and "nothing to commit" in combined.lower():
         log("nothing to commit")
         return
+    if c.returncode != 0:
+        log(f"commit rc={c.returncode} {combined[-400:]}")
+
     p = run(["git", "push", "origin", "main"], timeout=120)
-    log(f"push rc={p.returncode}")
+    if p.returncode == 0:
+        log("push rc=0")
+        return
+    log(f"push rc={p.returncode}; retry fetch+rebase+push")
+    run(["git", "fetch", "origin"], timeout=120)
+    rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
+    if rb.returncode != 0:
+        log(f"rebase failed; reset to origin and drop local report commit")
+        run(["git", "reset", "--hard", "origin/main"], timeout=60)
+        return
+    p2 = run(["git", "push", "origin", "main"], timeout=120)
+    log(f"push retry rc={p2.returncode}")
 
 
 def list_pending() -> List[Path]:
@@ -241,7 +272,7 @@ def main() -> int:
     while True:
         try:
             write_status(current_job=None, phase="polling")
-            git_pull_soft()
+            git_sync(allow_hard_reset=True)
             jobs = list_pending()
             if not jobs:
                 log("idle")
@@ -249,7 +280,7 @@ def main() -> int:
                 continue
             for job_path in jobs:
                 process_job(job_path)
-                git_pull_soft()
+                git_sync(allow_hard_reset=True)
         except KeyboardInterrupt:
             log("stop")
             write_status(phase="stopped")

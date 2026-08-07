@@ -1,5 +1,0 @@
-{
-  "id": "z_gate_hard_scripted",
-  "note": "Continuous: hard scripted 5/5",
-  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard"], "timeout": 300}]
-}

@@ -1,20 +1,19 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  ETHER host runner — execute a sprint batch, capture structured report for Grok review.
+  ETHER host runner - execute a sprint batch, capture structured report for Grok review.
 
 .DESCRIPTION
   Runs scripts/sprints/<name>.ps1 (or -CommandsFile), logs every command with
   exit code / stdout / stderr / duration, writes:
     artifacts/host_report_<stamp>.json
     artifacts/host_report_<stamp>.md
-    artifacts/host_report_latest.md   (symlink-style copy)
+    artifacts/host_report_latest.md
   Optional: git add + commit + push the report so the next chat turn can fetch it.
 
 .EXAMPLE
   .\scripts\host_runner.ps1 -Sprint phaseg_wire
   .\scripts\host_runner.ps1 -Sprint phaseg_wire -PushReport
-  .\scripts\host_runner.ps1 -CommandsFile .\scripts\sprints\custom.ps1 -PushReport
 #>
 param(
     [string]$Sprint = "phaseg_wire",
@@ -53,8 +52,6 @@ Write-Host ""
 # Format:
 #   # STEP: name
 #   command line
-#   command line
-#   # STEP: next
 $raw = Get-Content -Path $CommandsFile -Raw -Encoding UTF8
 $steps = @()
 $current = $null
@@ -65,10 +62,8 @@ foreach ($line in ($raw -split "`r?`n")) {
         continue
     }
     if ($null -eq $current) {
-        # preamble without STEP — collect as "setup"
         $current = @{ name = "setup"; lines = @() }
     }
-    # skip pure comments and blanks for execution, but keep non-comment code
     if ($line -match '^\s*#' -or $line -match '^\s*$') { continue }
     $current.lines += $line
 }
@@ -91,7 +86,6 @@ foreach ($step in $steps) {
     $stderr = ""
     $code = 0
     try {
-        # Run as a scriptblock in this process so env vars persist across steps
         $out = & {
             param($codeText)
             Invoke-Expression $codeText 2>&1
@@ -99,7 +93,7 @@ foreach ($step in $steps) {
         if ($out) {
             $stdout = ($out | ForEach-Object { "$_" }) -join "`n"
         }
-        if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {
+        if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
             $code = [int]$LASTEXITCODE
         }
     }
@@ -116,18 +110,19 @@ foreach ($step in $steps) {
 
     $status = if ($code -eq 0) { "PASS" } else { "FAIL" }
     if ($code -ne 0) { $failed++ }
-    Write-Host "[$status] exit=$code elapsed=${elapsed}s" -ForegroundColor $(if ($code -eq 0) { "Green" } else { "Red" })
+    $color = if ($code -eq 0) { "Green" } else { "Red" }
+    Write-Host "[$status] exit=$code elapsed=${elapsed}s" -ForegroundColor $color
     Write-Host ""
 
     $results += [ordered]@{
-        step     = $i
-        name     = $name
-        command  = $body
-        exit     = $code
+        step      = $i
+        name      = $name
+        command   = $body
+        exit      = $code
         elapsed_s = $elapsed
-        stdout   = $stdout
-        stderr   = $stderr
-        ok       = ($code -eq 0)
+        stdout    = $stdout
+        stderr    = $stderr
+        ok        = ($code -eq 0)
     }
 
     if ($StopOnFail -and $code -ne 0) {
@@ -137,15 +132,15 @@ foreach ($step in $steps) {
 }
 
 $report = [ordered]@{
-    stamp     = $stamp
-    sprint    = $Sprint
-    root      = $Root
-    host      = $env:COMPUTERNAME
-    user      = $env:USERNAME
-    passed    = @($results | Where-Object { $_.ok }).Count
-    failed    = $failed
-    total     = $results.Count
-    results   = $results
+    stamp   = $stamp
+    sprint  = $Sprint
+    root    = $Root
+    host    = $env:COMPUTERNAME
+    user    = $env:USERNAME
+    passed  = @($results | Where-Object { $_.ok }).Count
+    failed  = $failed
+    total   = $results.Count
+    results = $results
 }
 
 $jsonPath = Join-Path $artDir "host_report_$stamp.json"
@@ -155,45 +150,46 @@ $latestJ  = Join-Path $artDir "host_report_latest.json"
 
 ($report | ConvertTo-Json -Depth 8) | Set-Content -Path $jsonPath -Encoding UTF8
 
-$md = @()
-$md += "# Host report — $stamp"
-$md += ""
-$md += "| field | value |"
-$md += "|---|---|"
-$md += "| sprint | $Sprint |"
-$md += "| host | $($report.host) |"
-$md += "| passed | $($report.passed)/$($report.total) |"
-$md += "| failed | $failed |"
-$md += ""
+$md = New-Object System.Collections.Generic.List[string]
+[void]$md.Add("# Host report - $stamp")
+[void]$md.Add("")
+[void]$md.Add("| field | value |")
+[void]$md.Add("|---|---|")
+[void]$md.Add("| sprint | $Sprint |")
+[void]$md.Add("| host | $($report.host) |")
+[void]$md.Add("| passed | $($report.passed)/$($report.total) |")
+[void]$md.Add("| failed | $failed |")
+[void]$md.Add("")
+
 foreach ($r in $results) {
     $st = if ($r.ok) { "PASS" } else { "FAIL" }
-    $md += "## STEP $($r.step): $($r.name) — $st (exit=$($r.exit), $($r.elapsed_s)s)"
-    $md += ""
-    $md += '```powershell'
-    $md += $r.command
-    $md += '```'
-    $md += ""
+    [void]$md.Add("## STEP $($r.step): $($r.name) - $st (exit=$($r.exit), $($r.elapsed_s)s)")
+    [void]$md.Add("")
+    [void]$md.Add('```powershell')
+    [void]$md.Add($r.command)
+    [void]$md.Add('```')
+    [void]$md.Add("")
     if ($r.stdout) {
-        $md += '```'
-        # trim huge pytest noise to last 80 lines
+        [void]$md.Add('```')
         $lines = $r.stdout -split "`n"
         if ($lines.Count -gt 80) {
-            $md += "... ($($lines.Count - 80) lines truncated) ..."
-            $md += ($lines[-80..-1] -join "`n")
+            [void]$md.Add("... ($($lines.Count - 80) lines truncated) ...")
+            [void]$md.Add(($lines[-80..-1] -join "`n"))
         } else {
-            $md += $r.stdout
+            [void]$md.Add($r.stdout)
         }
-        $md += '```'
-        $md += ""
+        [void]$md.Add('```')
+        [void]$md.Add("")
     }
     if ($r.stderr) {
-        $md += "**stderr**"
-        $md += '```'
-        $md += $r.stderr
-        $md += '```'
-        $md += ""
+        [void]$md.Add("**stderr**")
+        [void]$md.Add('```')
+        [void]$md.Add($r.stderr)
+        [void]$md.Add('```')
+        [void]$md.Add("")
     }
 }
+
 $mdText = $md -join "`n"
 Set-Content -Path $mdPath -Value $mdText -Encoding UTF8
 Copy-Item $mdPath $latest -Force
@@ -205,10 +201,7 @@ Write-Host "latest: $latest"
 
 if ($PushReport) {
     Write-Host "Pushing report to origin..." -ForegroundColor Cyan
-    git add -- "artifacts/host_report_$stamp.md" "artifacts/host_report_$stamp.json" "artifacts/host_report_latest.md" "artifacts/host_report_latest.json" 2>$null
-    # ensure artifacts not fully gitignored for reports
-    git add -f -- "artifacts/host_report_latest.md" "artifacts/host_report_latest.json" 2>$null
-    git add -f -- "artifacts/host_report_$stamp.md" "artifacts/host_report_$stamp.json" 2>$null
+    git add -f -- "artifacts/host_report_$stamp.md" "artifacts/host_report_$stamp.json" "artifacts/host_report_latest.md" "artifacts/host_report_latest.json" 2>$null
     $msg = "host report: $Sprint $($report.passed)/$($report.total) [$stamp]"
     git commit -m $msg 2>&1 | Out-Host
     git push origin main 2>&1 | Out-Host

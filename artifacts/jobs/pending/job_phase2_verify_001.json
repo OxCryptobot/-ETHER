@@ -1,8 +1,0 @@
-{
-  "id": "phase2_verify_001",
-  "created": "2026-08-07T18:07:01Z",
-  "note": "Phase 2: verification spine offline — clear_quartz multifile + repo_oracle tests",
-  "steps": [
-    {"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_clear_quartz_multifile.py", "tests/test_repo_oracle.py", "tests/test_repo_oracle_hook.py", "tests/test_repo_oracle_gate.py", "-q", "--tb=line"], "timeout": 300}
-  ]
-}

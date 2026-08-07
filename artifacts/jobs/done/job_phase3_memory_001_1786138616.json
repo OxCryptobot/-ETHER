@@ -1,0 +1,8 @@
+{
+  "id": "phase3_memory_001",
+  "created": "2026-08-07T18:07:02Z",
+  "note": "Phase 3: prompt_guard + holdout offline tests (no-leak context)",
+  "steps": [
+    {"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_prompt_guard.py", "tests/test_holdout.py", "-q", "--tb=line"], "timeout": 300}
+  ]
+}

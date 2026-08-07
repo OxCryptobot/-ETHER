@@ -1,0 +1,5 @@
+{
+  "id": "p1_02_hard_scripted",
+  "note": "P1: hard scripted 5/5",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard"], "timeout": 300}]
+}

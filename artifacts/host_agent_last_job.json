@@ -1,8 +1,8 @@
 {
-  "job_id": "land_runtime_001",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-07T22:34:16.148495+00:00",
+  "job_id": "phase1_close_001",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-07T22:34:25.665299+00:00",
   "sprint": null,
-  "note": "Commit host-wired tool_runtime so origin is no longer placeholder"
+  "note": "Phase 1 close: ruff_gate tests + tool_runtime pytest + hard scripted"
 }

@@ -1,0 +1,30 @@
+{
+  "id": "recover_runtime_223416",
+  "note": "playbook:004_no_placeholder_runtime for land_runtime_001",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/restore_tool_runtime.py"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/wire_phaseg.py"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; b=Path('core/tool_runtime.py').read_bytes(); assert b'placeholder' not in b[:50]; print(len(b))"
+      ],
+      "timeout": 30
+    }
+  ],
+  "created": "2026-08-07T22:34:16.520189+00:00",
+  "source": "foreman"
+}

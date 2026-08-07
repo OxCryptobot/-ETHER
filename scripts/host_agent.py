@@ -1,26 +1,11 @@
 #!/usr/bin/env python3
 """ETHER host agent — pull jobs from origin, run, push reports.
 
-Architecture
-------------
-Grok (or any operator) writes a job file to the repo:
-
-    artifacts/jobs/pending/<id>.json
-
-This agent (running on the Windows host) every POLL seconds:
-
-1. git fetch + merge origin/main (soft)
-2. picks the oldest pending job
-3. runs its steps (or a named sprint via host_runner)
-4. writes artifacts/host_report_latest.md + .json
-5. moves job to artifacts/jobs/done/
-6. git add/commit/push the report + done marker
-
-Start once:
+Start once and leave running:
 
     .\.venv\Scripts\python.exe scripts\host_agent.py
 
-Leave it running. After that Grok only pushes jobs — no manual paste.
+Dashboard: http://127.0.0.1:8787/agent  (start via scripts/start_agent_stack.ps1)
 """
 from __future__ import annotations
 
@@ -31,7 +16,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -50,6 +35,7 @@ PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
 LOG = ROOT / "memory" / "host_agent" / "agent.log"
+STATUS = ROOT / "memory" / "host_agent" / "status.json"
 
 
 def log(msg: str) -> None:
@@ -59,6 +45,20 @@ def log(msg: str) -> None:
         LOG.parent.mkdir(parents=True, exist_ok=True)
         with LOG.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
+    except Exception:
+        pass
+
+
+def write_status(**extra: Any) -> None:
+    STATUS.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "heartbeat": datetime.now(timezone.utc).isoformat(),
+        "poll_s": POLL,
+        "root": str(ROOT),
+        **extra,
+    }
+    try:
+        STATUS.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     except Exception:
         pass
 
@@ -78,7 +78,6 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
 
 def git_pull_soft() -> None:
     run(["git", "fetch", "origin"], timeout=120)
-    # Prefer merge to keep local wired files if any; fall back to reset only if clean jobs dir policy
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
     if r.returncode != 0:
         log(f"ff-only failed; leaving local tree (rc={r.returncode})")
@@ -88,8 +87,9 @@ def git_push_report(job_id: str, ok: bool) -> None:
     paths = [
         "artifacts/host_report_latest.md",
         "artifacts/host_report_latest.json",
+        "artifacts/host_agent_last_job.json",
+        "memory/host_agent/status.json",
     ]
-    # include stamped reports if present
     art = ROOT / "artifacts"
     if art.exists():
         for p in art.glob("host_report_*.md"):
@@ -99,7 +99,7 @@ def git_push_report(job_id: str, ok: bool) -> None:
     for rel in ("artifacts/jobs/done", "artifacts/jobs/failed"):
         d = ROOT / rel
         if d.exists():
-            for p in d.glob("*"):
+            for p in d.glob("*.json"):
                 paths.append(str(p.relative_to(ROOT)))
 
     run(["git", "add", "-f", "--"] + paths, timeout=60)
@@ -115,8 +115,7 @@ def git_push_report(job_id: str, ok: bool) -> None:
 
 def list_pending() -> List[Path]:
     PENDING.mkdir(parents=True, exist_ok=True)
-    jobs = sorted(PENDING.glob("*.json"), key=lambda p: p.stat().st_mtime)
-    return jobs
+    return sorted(PENDING.glob("*.json"), key=lambda p: p.stat().st_mtime)
 
 
 def run_sprint(name: str) -> int:
@@ -124,7 +123,6 @@ def run_sprint(name: str) -> int:
     if not runner.exists():
         log("host_runner.ps1 missing")
         return 2
-    # PowerShell Bypass so execution policy never blocks agent
     ps = [
         "powershell",
         "-NoProfile",
@@ -134,7 +132,6 @@ def run_sprint(name: str) -> int:
         str(runner),
         "-Sprint",
         name,
-        # agent itself commits; do not double-push from runner
     ]
     log(f"sprint {name}")
     r = run(ps, timeout=7200)
@@ -146,7 +143,6 @@ def run_sprint(name: str) -> int:
 
 
 def run_steps(steps: List[Dict[str, Any]]) -> int:
-    """Each step: {"cmd": "..."} or {"argv": ["python", "-m", ...]}."""
     for i, step in enumerate(steps, 1):
         argv = step.get("argv")
         cmd = step.get("cmd")
@@ -154,7 +150,10 @@ def run_steps(steps: List[Dict[str, Any]]) -> int:
         if argv:
             r = run([str(x) for x in argv], timeout=int(step.get("timeout", 3600)))
         elif cmd:
-            r = run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], timeout=int(step.get("timeout", 3600)))
+            r = run(
+                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
+                timeout=int(step.get("timeout", 3600)),
+            )
         else:
             log("empty step")
             return 2
@@ -179,6 +178,7 @@ def process_job(path: Path) -> bool:
 
     job_id = job.get("id") or path.stem
     log(f"JOB START {job_id}")
+    write_status(current_job=job_id, phase="running")
     ok = False
     rc = 1
     try:
@@ -194,7 +194,6 @@ def process_job(path: Path) -> bool:
         log(f"job exception: {e}")
         ok = False
 
-    # write a minimal agent envelope alongside host_runner reports
     art = ROOT / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
     envelope = {
@@ -213,6 +212,7 @@ def process_job(path: Path) -> bool:
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
     log(f"JOB END {job_id} ok={ok}")
+    write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok)
     try:
         git_push_report(job_id, ok)
     except Exception as e:
@@ -225,6 +225,7 @@ def main() -> int:
     print("  ETHER host_agent — job queue consumer", flush=True)
     print(f"  root={ROOT}", flush=True)
     print(f"  poll={POLL}s  pending={PENDING}", flush=True)
+    print("  dashboard: http://127.0.0.1:8787/agent", flush=True)
     print("=" * 60, flush=True)
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
@@ -232,6 +233,7 @@ def main() -> int:
 
     while True:
         try:
+            write_status(current_job=None, phase="polling")
             git_pull_soft()
             jobs = list_pending()
             if not jobs:
@@ -240,6 +242,7 @@ def main() -> int:
                 process_job(job_path)
         except KeyboardInterrupt:
             log("stop")
+            write_status(phase="stopped")
             return 0
         except Exception as e:
             log(f"loop error: {e}")

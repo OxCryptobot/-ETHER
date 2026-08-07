@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.5")
+app = FastAPI(title="@ETHER Control Matrix", version="0.4.6")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.5"
+        data["api_version"] = "0.4.6"
         try:
             from dashboard.collector_health import load_auto_health
 
@@ -64,6 +64,12 @@ def _safe_snapshot() -> dict:
             data["infra"] = collect_infra()
         except Exception as e:
             data["infra"] = {"overall": "unknown", "alerts": [{"level": "bad", "text": str(e)[:120]}]}
+        try:
+            from dashboard.collector_host_agent import collect_host_agent
+
+            data["host_agent"] = collect_host_agent()
+        except Exception as e:
+            data["host_agent"] = {"error": str(e)[:120]}
         return data
     except Exception as e:
         return {
@@ -94,6 +100,7 @@ def _safe_snapshot() -> dict:
             "batch": {},
             "autonomy": {},
             "infra": {"overall": "down", "alerts": [{"level": "bad", "text": "snapshot failed"}]},
+            "host_agent": {},
         }
 
 
@@ -103,6 +110,24 @@ def index() -> FileResponse:
     if not path.exists():
         raise HTTPException(500, "dashboard/static/index.html missing — pull latest main")
     return FileResponse(path)
+
+
+@app.get("/agent", response_class=HTMLResponse)
+def agent_page() -> FileResponse:
+    path = STATIC / "agent.html"
+    if not path.exists():
+        raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
+    return FileResponse(path)
+
+
+@app.get("/api/host-agent")
+def host_agent_api() -> dict:
+    try:
+        from dashboard.collector_host_agent import collect_host_agent
+
+        return collect_host_agent()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
 
 
 @app.get("/api/snapshot")
@@ -132,7 +157,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.5"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.4.6"}
 
 
 @app.get("/api/health-check")
@@ -163,9 +188,6 @@ def promote(body: PromoteBody) -> dict:
     src = QUARANTINE / name
     if not src.exists():
         raise HTTPException(404, f"not in quarantine: {name}")
-    # SEC-001: route the click through the same safety gate as reconcile.
-    # A human's explicit action is the consent (operator_initiated=True), but
-    # static_safety + Black Tourmaline audit still run and still fail closed.
     from core import tool_reconcile
 
     gate = tool_reconcile._promotion_gate(src, operator_initiated=True)

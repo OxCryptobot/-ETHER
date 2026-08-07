@@ -1,0 +1,62 @@
+﻿{
+    "stamp":  "20260807_121912",
+    "sprint":  "phaseg_wire",
+    "root":  "C:\\Users\\Otcde\\ETHER",
+    "host":  "DESKTOP-HUKTQDQ",
+    "user":  "Otcde",
+    "passed":  0,
+    "failed":  5,
+    "total":  5,
+    "results":  [
+                    {
+                        "step":  2,
+                        "name":  "restore_tool_runtime",
+                        "command":  ".\\venv\\Scripts\\python.exe scripts\\restore_tool_runtime.py",
+                        "exit":  1,
+                        "elapsed_s":  0.043,
+                        "stdout":  "",
+                        "stderr":  "The term \u0027.\\venv\\Scripts\\python.exe\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                        "ok":  false
+                    },
+                    {
+                        "step":  3,
+                        "name":  "wire_phaseg",
+                        "command":  ".\\venv\\Scripts\\python.exe scripts\\wire_phaseg.py",
+                        "exit":  1,
+                        "elapsed_s":  0.017,
+                        "stdout":  "",
+                        "stderr":  "The term \u0027.\\venv\\Scripts\\python.exe\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                        "ok":  false
+                    },
+                    {
+                        "step":  4,
+                        "name":  "import_check",
+                        "command":  ".\\venv\\Scripts\\python.exe -c \"from core.tool_runtime import TOOL_SPECS, ToolRuntime; names=sorted({t[\u0027name\u0027] for t in TOOL_SPECS}); print(\u0027tools\u0027, names); assert \u0027apply_patch\u0027 in names and \u0027grep\u0027 in names; print(\u0027import OK\u0027)\"",
+                        "exit":  1,
+                        "elapsed_s":  0.017,
+                        "stdout":  "",
+                        "stderr":  "The term \u0027.\\venv\\Scripts\\python.exe\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                        "ok":  false
+                    },
+                    {
+                        "step":  5,
+                        "name":  "pytest_tool_runtime",
+                        "command":  ".\\venv\\Scripts\\python.exe -m pytest tests\\test_tool_runtime.py -q --tb=line",
+                        "exit":  1,
+                        "elapsed_s":  0.017,
+                        "stdout":  "",
+                        "stderr":  "The term \u0027.\\venv\\Scripts\\python.exe\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                        "ok":  false
+                    },
+                    {
+                        "step":  6,
+                        "name":  "scripted_hard_batch",
+                        "command":  ".\\venv\\Scripts\\python.exe -m scripts.batch_phase_d --arm direct --mode scripted --tier hard",
+                        "exit":  1,
+                        "elapsed_s":  0.016,
+                        "stdout":  "",
+                        "stderr":  "The term \u0027.\\venv\\Scripts\\python.exe\u0027 is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+                        "ok":  false
+                    }
+                ]
+}

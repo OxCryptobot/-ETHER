@@ -13,5 +13,5 @@ Write-Host "Sync origin/main..." -ForegroundColor Cyan
 git fetch origin 2>&1 | Out-Null
 git reset --hard origin/main 2>&1 | Out-Host
 
-Write-Host "ETHER HOST — one window | dashboard http://127.0.0.1:8787/agent" -ForegroundColor Green
+Write-Host "ETHER HOST one window | dashboard http://127.0.0.1:8787/agent" -ForegroundColor Green
 & $Py scripts\ether_host.py

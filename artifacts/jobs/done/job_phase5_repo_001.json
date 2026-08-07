@@ -1,0 +1,8 @@
+{
+  "id": "phase5_repo_001",
+  "created": "2026-08-07T18:07:04Z",
+  "note": "Phase 5: apply_patch + multifile tool tests",
+  "steps": [
+    {"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "tests/test_clear_quartz_multifile.py", "-q", "--tb=line"], "timeout": 300}
+  ]
+}

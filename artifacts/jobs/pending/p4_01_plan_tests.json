@@ -1,5 +1,0 @@
-{
-  "id": "p4_01_plan_tests",
-  "note": "P4: planning-related tests or soft pass if none",
-  "steps": [{"argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; import pytest; ts=sorted(Path('tests').glob('*selenite*'))+sorted(Path('tests').glob('*plan*')); print('found', [str(x) for x in ts]); raise SystemExit(0 if not ts else pytest.main(['-q','--tb=line']+[str(x) for x in ts]))"], "timeout": 300}]
-}

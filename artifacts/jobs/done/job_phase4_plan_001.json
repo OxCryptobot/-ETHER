@@ -1,0 +1,8 @@
+{
+  "id": "phase4_plan_001",
+  "created": "2026-08-07T18:07:03Z",
+  "note": "Phase 4: planning / selenite offline tests if present",
+  "steps": [
+    {"argv": [".venv/Scripts/python.exe", "-c", "import pathlib; tests=list(pathlib.Path('tests').glob('*selenite*'))+list(pathlib.Path('tests').glob('*plan*')); print('plan_tests', [str(t) for t in tests]); import pytest; raise SystemExit(pytest.main(['-q','--tb=line']+[str(t) for t in tests] or ['-q','tests/test_ruff_gate.py']))"], "timeout": 300}
+  ]
+}

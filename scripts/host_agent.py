@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """ETHER host agent — pull jobs from origin, run, push reports.
 
-Jobs in pending/ run back-to-back (no idle sleep between them).
-Sleep only when queue is empty (default 3s).
+Pending jobs run back-to-back. Sleep only when queue empty (default 1s).
 """
 from __future__ import annotations
 
@@ -26,8 +25,7 @@ try:
 except Exception:
     pass
 
-POLL = int(os.getenv("ETHER_HOST_AGENT_POLL", "3"))
-PY = sys.executable
+POLL = int(os.getenv("ETHER_HOST_AGENT_POLL", "1"))
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
@@ -61,14 +59,13 @@ def write_status(**extra: Any) -> None:
 
 
 def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
-    # Resolve relative .venv python to absolute
     if cmd and isinstance(cmd[0], str):
         c0 = cmd[0].replace("\\", "/")
         if c0.endswith("python.exe") or c0.endswith("python"):
             cand = ROOT / cmd[0]
             if cand.is_file():
                 cmd = [str(cand)] + list(cmd[1:])
-            elif (ROOT / ".venv" / "Scripts" / "python.exe").is_file() and "python" in c0:
+            elif (ROOT / ".venv" / "Scripts" / "python.exe").is_file() and "python" in Path(c0).name:
                 cmd = [str(ROOT / ".venv" / "Scripts" / "python.exe")] + list(cmd[1:])
     return subprocess.run(
         cmd,
@@ -123,7 +120,7 @@ def list_pending() -> List[Path]:
     PENDING.mkdir(parents=True, exist_ok=True)
     return sorted(
         [p for p in PENDING.glob("*.json") if p.name != ".gitkeep"],
-        key=lambda p: p.name,  # FIFO by name: job_phase1_... before phase2_
+        key=lambda p: p.name,
     )
 
 
@@ -211,6 +208,7 @@ def process_job(path: Path) -> bool:
         "rc": rc,
         "finished": datetime.now(timezone.utc).isoformat(),
         "sprint": job.get("sprint"),
+        "note": job.get("note"),
     }
     (art / "host_agent_last_job.json").write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
@@ -233,7 +231,7 @@ def main() -> int:
     print("=" * 60, flush=True)
     print("  ETHER host_agent — job queue consumer", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print(f"  poll={POLL}s (idle only)  pending={PENDING}", flush=True)
+    print(f"  poll={POLL}s (idle only)", flush=True)
     print("  dashboard: http://127.0.0.1:8787/agent", flush=True)
     print("=" * 60, flush=True)
     PENDING.mkdir(parents=True, exist_ok=True)
@@ -249,10 +247,8 @@ def main() -> int:
                 log("idle")
                 time.sleep(max(1, POLL))
                 continue
-            # Drain entire queue back-to-back — no sleep between jobs
             for job_path in jobs:
                 process_job(job_path)
-                # refresh queue after each job (new pushes may land)
                 git_pull_soft()
         except KeyboardInterrupt:
             log("stop")

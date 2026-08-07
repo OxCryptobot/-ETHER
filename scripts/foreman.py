@@ -263,7 +263,11 @@ def record_last_job(state: Dict[str, Any]) -> None:
 
 
 def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
-    """If pending empty, place next curriculum job not yet completed."""
+    """If pending empty, place next curriculum job not yet completed.
+
+    Continuous z_gate loop is DISABLED (was causing infinity enqueue once
+    curriculum finished). Re-enable later with cooldown or mode flag if needed.
+    """
     if pending_ids():
         return None
     done = set(state.get("completed") or [])
@@ -284,12 +288,8 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
         state["cursor"] = i
         state["last_enqueued"] = jid
         return jid
-    # loop continuous gates at end
-    for item in CURRICULUM:
-        if item["id"].startswith("z_gate_"):
-            write_job({**item, "id": item["id"] + "_" + datetime.now(timezone.utc).strftime("%H%M%S")})
-            state["last_enqueued"] = item["id"]
-            return item["id"]
+    # Curriculum complete — stay idle (no continuous z_gate spam)
+    state["cursor"] = len(CURRICULUM)
     return None
 
 

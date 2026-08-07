@@ -1,8 +1,0 @@
-{
-  "id": "phase7_evolve_001",
-  "created": "2026-08-07T18:07:06Z",
-  "note": "Phase 7: evolution stays offline — confirm flywheel push default off",
-  "steps": [
-    {"argv": [".venv/Scripts/python.exe", "-c", "import os; from pathlib import Path; t=Path('.env').read_text(encoding='utf-8') if Path('.env').exists() else ''; print('FLYWHEEL_PUSH', os.getenv('ETHER_FLYWHEEL_PUSH','0')); print('phase7_offline_ok')"], "timeout": 30}
-  ]
-}

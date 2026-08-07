@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ETHER Host Agent</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #121821;
+    --border: #1e2a38;
+    --text: #d7e0ea;
+    --muted: #7d8b9a;
+    --green: #3ddc97;
+    --red: #ff5c5c;
+    --amber: #f0b429;
+    --cyan: #4cc9f0;
+    --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    background: #0e141c; position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 16px; letter-spacing: 0.04em; }
+  header h1 span { color: var(--cyan); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px; border-radius: 999px; font-size: 12px;
+    border: 1px solid var(--border); background: var(--panel);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.off { background: var(--red); }
+  main {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 12px; padding: 12px; height: calc(100vh - 56px);
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .panel h2 {
+    margin: 0; padding: 10px 12px; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
+    border-bottom: 1px solid var(--border); background: #0e141c;
+  }
+  .body { padding: 10px 12px; overflow: auto; flex: 1; }
+  .counts { display: flex; gap: 8px; padding: 10px 12px; }
+  .count {
+    flex: 1; text-align: center; padding: 10px 6px;
+    border-radius: 8px; background: #0b1017; border: 1px solid var(--border);
+  }
+  .count b { display: block; font-size: 22px; }
+  .count span { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .count.pending b { color: var(--amber); }
+  .count.done b { color: var(--green); }
+  .count.failed b { color: var(--red); }
+  .job {
+    padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
+    background: #0b1017; border: 1px solid var(--border); font-size: 12px;
+  }
+  .job .id { color: var(--cyan); font-family: var(--mono); }
+  .job .meta { color: var(--muted); margin-top: 2px; }
+  .log {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.45;
+    white-space: pre-wrap; word-break: break-word; color: #b8c4d0;
+  }
+  .log .err { color: var(--red); }
+  .log .ok { color: var(--green); }
+  .log .jobline { color: var(--cyan); }
+  .report {
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.45;
+    white-space: pre-wrap; color: #c5d0db;
+  }
+  .span2 { grid-column: span 2; }
+  .status-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .status-row strong { color: var(--text); }
+  @media (max-width: 1100px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+    .span2 { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>@ETHER</span> Host Agent Live</h1>
+  <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
+</header>
+<main>
+  <section class="panel" style="grid-row: span 2;">
+    <h2>Job queue</h2>
+    <div class="counts">
+      <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
+      <div class="count done"><b id="c-done">0</b><span>done</span></div>
+      <div class="count failed"><b id="c-failed">0</b><span>failed</span></div>
+    </div>
+    <div class="body" id="queue"></div>
+  </section>
+
+  <section class="panel span2">
+    <h2>Status</h2>
+    <div class="body status-row" id="status">loading...</div>
+  </section>
+
+  <section class="panel">
+    <h2>Agent log (live tail)</h2>
+    <div class="body log" id="log"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Latest host report</h2>
+    <div class="body report" id="report"></div>
+  </section>
+</main>
+<script>
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
+function colorize(line) {
+  const e = esc(line);
+  if (/FAIL|error|EXCEPTION|ABORT/i.test(line)) return '<span class="err">' + e + '</span>';
+  if (/PASS|OK|JOB END.*ok=True/i.test(line)) return '<span class="ok">' + e + '</span>';
+  if (/JOB |sprint |step /i.test(line)) return '<span class="jobline">' + e + '</span>';
+  return e;
+}
+function renderJobs(list, title) {
+  if (!list || !list.length) return '';
+  return '<div style="color:var(--muted);font-size:11px;margin:8px 0 4px">' + title + '</div>' +
+    list.map(j => `
+      <div class="job">
+        <div class="id">${esc(j.id)}</div>
+        <div class="meta">${esc(j.sprint || '')} ${esc(j.note || '')}</div>
+        <div class="meta">${esc(j.mtime || j.created || '')}</div>
+      </div>`).join('');
+}
+async function tick() {
+  try {
+    const r = await fetch('/api/host-agent');
+    const d = await r.json();
+    const alive = !!d.agent_alive;
+    document.getElementById('dot').className = 'dot ' + (alive ? 'on' : 'off');
+    document.getElementById('alive').textContent = alive ? 'agent online' : 'agent offline';
+
+    const c = (d.queue && d.queue.counts) || {};
+    document.getElementById('c-pending').textContent = c.pending ?? 0;
+    document.getElementById('c-done').textContent = c.done ?? 0;
+    document.getElementById('c-failed').textContent = c.failed ?? 0;
+
+    const q = d.queue || {};
+    document.getElementById('queue').innerHTML =
+      renderJobs(q.pending, 'PENDING') +
+      renderJobs(q.done, 'DONE') +
+      renderJobs(q.failed, 'FAILED');
+
+    const st = d.status || {};
+    const last = d.last_job || {};
+    document.getElementById('status').innerHTML = `
+      <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong></div>
+      <div>current <strong>${esc(st.current_job || last.job_id || '—')}</strong></div>
+      <div>last result <strong>${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '—'}</strong></div>
+      <div>poll <strong>${esc(st.poll_s || '—')}s</strong></div>
+      <div>updated <strong>${esc(d.generated_at || '')}</strong></div>`;
+
+    const lines = d.log_lines || [];
+    const logEl = document.getElementById('log');
+    logEl.innerHTML = lines.map(colorize).join('\n');
+    logEl.scrollTop = logEl.scrollHeight;
+
+    document.getElementById('report').textContent = d.report_md || JSON.stringify(d.report || {}, null, 2) || '(no report yet)';
+  } catch (e) {
+    document.getElementById('alive').textContent = 'dashboard fetch error';
+    document.getElementById('dot').className = 'dot off';
+  }
+}
+tick();
+setInterval(tick, 1500);
+</script>
+</body>
+</html>

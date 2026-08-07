@@ -1,0 +1,21 @@
+{
+  "id": "z_gate_pytest_core_215347",
+  "note": "Gate core pytest",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_ruff_gate.py",
+        "tests/test_repo_oracle.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ],
+  "created": "2026-08-07T21:53:47.088345+00:00",
+  "source": "foreman"
+}

@@ -1,0 +1,5 @@
+{
+  "id": "p5_01_patch_multifile",
+  "note": "P5: apply_patch + multifile CQ",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "tests/test_clear_quartz_multifile.py", "-q", "--tb=line"], "timeout": 300}]
+}

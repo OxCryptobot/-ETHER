@@ -81,7 +81,7 @@ def test_scripted_fix_greeter():
             return {"tool": "done", "args": {"reason": "exhausted"}}
 
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30
     )
     result = rt.run("fix greeter so tests pass")
     assert result.ok is True
@@ -104,7 +104,7 @@ def test_scripted_fix_wallet():
             return {"tool": "done", "args": {"reason": "stop"}}
 
     rt = ToolRuntime(
-        fixture_root=WALLET, decide_fn=decide, max_steps=5, pytest_timeout=30, run_ruff=False
+        fixture_root=WALLET, decide_fn=decide, max_steps=5, pytest_timeout=30
     )
     result = rt.run("fix wallet")
     assert result.ok is True
@@ -123,7 +123,7 @@ def test_apply_patch_fail_closed_no_match():
         }
 
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30
     )
     result = rt.run("bad patch")
     assert result.steps[0].ok is False
@@ -148,7 +148,7 @@ def test_rollback_restores_prior_content():
         return {"tool": "done", "args": {"reason": "check"}}
 
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=4, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=4, pytest_timeout=30
     )
     result = rt.run("rollback probe")
     assert any(s.tool == "rollback" and s.ok for s in result.steps)
@@ -162,7 +162,7 @@ def test_grep_finds_symbol():
         return {"tool": "grep", "args": {"pattern": "def ", "path": "."}}
 
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30
     )
     result = rt.run("grep")
     assert result.steps[0].ok is True
@@ -175,7 +175,7 @@ def test_glob_py_files():
         return {"tool": "glob", "args": {"pattern": "**/*.py"}}
 
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=1, pytest_timeout=30
     )
     result = rt.run("glob")
     assert result.steps[0].ok is True
@@ -187,7 +187,7 @@ def test_path_escape_refused():
     def decide(_m):
         return {"tool": "read_file", "args": {"path": "../secrets.env"}}
 
-    rt = ToolRuntime(fixture_root=GREETER, decide_fn=decide, max_steps=2, run_ruff=False)
+    rt = ToolRuntime(fixture_root=GREETER, decide_fn=decide, max_steps=2)
     result = rt.run("probe")
     assert result.steps[0].ok is False
     err = str(result.steps[0].observation.get("error", "")).lower()
@@ -198,7 +198,7 @@ def test_max_steps_without_fix():
     def decide(_m):
         return {"tool": "list_files", "args": {}}
 
-    rt = ToolRuntime(fixture_root=GREETER, decide_fn=decide, max_steps=3, run_ruff=False)
+    rt = ToolRuntime(fixture_root=GREETER, decide_fn=decide, max_steps=3)
     result = rt.run("spin")
     assert result.ok is False
     assert result.error == "max_steps"
@@ -250,7 +250,7 @@ def test_llm_decide_fn_scripted_fix_greeter():
 
     decide = make_llm_decide_fn(call_fn=fake_call)
     rt = ToolRuntime(
-        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30, run_ruff=False
+        fixture_root=GREETER, decide_fn=decide, max_steps=6, pytest_timeout=30
     )
     result = rt.run("fix greeter")
     assert result.ok is True

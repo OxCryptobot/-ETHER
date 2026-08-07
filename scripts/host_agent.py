@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""ETHER host agent — pull jobs from origin, run, push reports.
+"""ETHER host agent — job queue consumer.
 
-Pending jobs run back-to-back. Sleep only when queue empty (default 1s).
-On diverged history: hard-reset to origin/main at idle so jobs can flow again.
+Git policy (never stuck):
+  - On startup: fetch + reset --hard origin/main
+  - Each poll: fetch + ff-only; if diverged, reset --hard origin/main
+  - Push report: commit artifacts only; on push fail try rebase once then abandon
+
+This agent is a *consumer*, not a long-lived feature branch. Matching origin
+is always correct so new pending jobs can land.
 """
 from __future__ import annotations
 
@@ -13,7 +18,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -33,7 +38,7 @@ FAILED = ROOT / "artifacts" / "jobs" / "failed"
 LOG = ROOT / "memory" / "host_agent" / "agent.log"
 STATUS = ROOT / "memory" / "host_agent" / "status.json"
 
-_last_ff_log = 0.0
+_last_recover_log = 0.0
 
 
 def log(msg: str) -> None:
@@ -84,27 +89,32 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     )
 
 
-def git_sync(*, allow_hard_reset: bool = True) -> None:
-    """Fetch + ff-only. If diverged and idle-safe, reset --hard origin/main."""
-    global _last_ff_log
+def git_reset_to_origin(reason: str) -> bool:
+    global _last_recover_log
+    now = time.time()
+    if now - _last_recover_log > 30:
+        log(f"git recover ({reason}): reset --hard origin/main")
+        _last_recover_log = now
+    run(["git", "fetch", "origin"], timeout=120)
+    r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
+    if r.returncode != 0:
+        log(f"reset failed rc={r.returncode} {(r.stderr or '')[:300]}")
+        return False
+    # drop untracked job clutter? keep pending from origin only
+    return True
+
+
+def git_sync() -> None:
+    """Always end aligned with origin/main."""
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
     if r.returncode == 0:
         return
-    now = time.time()
-    if now - _last_ff_log > 60:
-        log("git diverged from origin/main (ff-only failed)")
-        _last_ff_log = now
-    if not allow_hard_reset:
-        return
-    # Idle recover: reports already attempted push; matching origin unblocks new jobs
-    log("recover: git reset --hard origin/main")
-    rr = run(["git", "reset", "--hard", "origin/main"], timeout=60)
-    if rr.returncode != 0:
-        log(f"reset failed rc={rr.returncode} {(rr.stderr or '')[:300]}")
+    git_reset_to_origin("ff-only failed / diverged")
 
 
 def git_push_report(job_id: str, ok: bool) -> None:
+    """Best-effort report push. Never leave repo diverged afterward."""
     paths = [
         "artifacts/host_report_latest.md",
         "artifacts/host_report_latest.json",
@@ -125,26 +135,31 @@ def git_push_report(job_id: str, ok: bool) -> None:
     status = "PASS" if ok else "FAIL"
     msg = f"host agent report: job={job_id} {status}"
     c = run(["git", "commit", "-m", msg], timeout=60)
-    combined = (c.stdout or "") + (c.stderr or "")
-    if c.returncode != 0 and "nothing to commit" in combined.lower():
+    combined = ((c.stdout or "") + (c.stderr or "")).lower()
+    if c.returncode != 0 and "nothing to commit" in combined:
         log("nothing to commit")
+        git_sync()
         return
     if c.returncode != 0:
-        log(f"commit rc={c.returncode} {combined[-400:]}")
+        log(f"commit rc={c.returncode}")
+        git_sync()
+        return
 
     p = run(["git", "push", "origin", "main"], timeout=120)
     if p.returncode == 0:
         log("push rc=0")
         return
-    log(f"push rc={p.returncode}; retry fetch+rebase+push")
+
+    log(f"push rc={p.returncode}; rebase retry")
     run(["git", "fetch", "origin"], timeout=120)
     rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
-    if rb.returncode != 0:
-        log(f"rebase failed; reset to origin and drop local report commit")
-        run(["git", "reset", "--hard", "origin/main"], timeout=60)
-        return
-    p2 = run(["git", "push", "origin", "main"], timeout=120)
-    log(f"push retry rc={p2.returncode}")
+    if rb.returncode == 0:
+        p2 = run(["git", "push", "origin", "main"], timeout=120)
+        log(f"push retry rc={p2.returncode}")
+        if p2.returncode == 0:
+            return
+    # Never stay diverged — origin wins; job result already in local done/failed folders
+    git_reset_to_origin("push could not land")
 
 
 def list_pending() -> List[Path]:
@@ -160,18 +175,19 @@ def run_sprint(name: str) -> int:
     if not runner.exists():
         log("host_runner.ps1 missing")
         return 2
-    ps = [
-        "powershell",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        str(runner),
-        "-Sprint",
-        name,
-    ]
-    log(f"sprint {name}")
-    r = run(ps, timeout=7200)
+    r = run(
+        [
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(runner),
+            "-Sprint",
+            name,
+        ],
+        timeout=7200,
+    )
     if r.stdout:
         print(r.stdout[-4000:], flush=True)
     if r.stderr:
@@ -255,6 +271,7 @@ def process_job(path: Path) -> bool:
         git_push_report(job_id, ok)
     except Exception as e:
         log(f"push error: {e}")
+        git_sync()
     return ok
 
 
@@ -265,6 +282,10 @@ def main() -> int:
     print(f"  poll={POLL}s (idle only)", flush=True)
     print("  dashboard: http://127.0.0.1:8787/agent", flush=True)
     print("=" * 60, flush=True)
+
+    # BOOT: always match origin so we never start on a stuck diverged tree
+    git_reset_to_origin("startup")
+
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
@@ -272,7 +293,7 @@ def main() -> int:
     while True:
         try:
             write_status(current_job=None, phase="polling")
-            git_sync(allow_hard_reset=True)
+            git_sync()
             jobs = list_pending()
             if not jobs:
                 log("idle")
@@ -280,13 +301,17 @@ def main() -> int:
                 continue
             for job_path in jobs:
                 process_job(job_path)
-                git_sync(allow_hard_reset=True)
+                git_sync()
         except KeyboardInterrupt:
             log("stop")
             write_status(phase="stopped")
             return 0
         except Exception as e:
             log(f"loop error: {e}")
+            try:
+                git_sync()
+            except Exception:
+                pass
             time.sleep(max(1, POLL))
 
 

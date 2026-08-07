@@ -1,8 +1,0 @@
-{
-  "id": "phase6_swarm_001",
-  "created": "2026-08-07T18:07:05Z",
-  "note": "Phase 6: swarm scaffold status (offline) — import check only until module lands",
-  "steps": [
-    {"argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; p=Path('core/swarm.py'); print('swarm_module', p.exists()); print('phase6_scaffold_ok')"], "timeout": 30}
-  ]
-}

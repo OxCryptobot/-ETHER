@@ -1,5 +1,0 @@
-{
-  "id": "p2_02_pipeline_import",
-  "note": "P2: Pipeline + tool_runtime import smoke",
-  "steps": [{"argv": [".venv/Scripts/python.exe", "-c", "from core.pipeline import Pipeline, PipelineResult; from core.tool_runtime import TOOL_SPECS, ToolRuntime; assert 'apply_patch' in {t['name'] for t in TOOL_SPECS}; print('pipeline_ok', len(TOOL_SPECS))"], "timeout": 60}]
-}

@@ -1,26 +1,15 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  ETHER host runner - execute a sprint batch, capture structured report for Grok review.
-
-.DESCRIPTION
-  Runs scripts/sprints/<name>.ps1 (or -CommandsFile), logs every command with
-  exit code / stdout / stderr / duration, writes:
-    artifacts/host_report_<stamp>.json
-    artifacts/host_report_<stamp>.md
-    artifacts/host_report_latest.md
-  Optional: git add + commit + push the report so the next chat turn can fetch it.
-
+  ETHER host runner - execute sprint batch, capture report for Grok.
 .EXAMPLE
-  .\scripts\host_runner.ps1 -Sprint phaseg_wire
   .\scripts\host_runner.ps1 -Sprint phaseg_wire -PushReport
 #>
 param(
     [string]$Sprint = "phaseg_wire",
     [string]$CommandsFile = "",
     [switch]$PushReport,
-    [switch]$StopOnFail,
-    [int]$TimeoutSec = 0
+    [switch]$StopOnFail
 )
 
 $ErrorActionPreference = "Continue"
@@ -29,6 +18,29 @@ if (-not (Test-Path (Join-Path $Root "core"))) {
     $Root = (Get-Location).Path
 }
 Set-Location $Root
+
+# --- QC: resolve Python once, prefer .venv (this host's real path) ---
+$Py = $null
+$candidates = @(
+    (Join-Path $Root ".venv\Scripts\python.exe"),
+    (Join-Path $Root "venv\Scripts\python.exe"),
+    (Join-Path $Root ".venv\Scripts\python"),
+    "python"
+)
+foreach ($c in $candidates) {
+    if ($c -eq "python") {
+        $cmd = Get-Command python -ErrorAction SilentlyContinue
+        if ($cmd) { $Py = $cmd.Source; break }
+    } elseif (Test-Path $c) {
+        $Py = (Resolve-Path $c).Path
+        break
+    }
+}
+if (-not $Py) {
+    Write-Error "QC FAIL: no Python found. Expected .venv\Scripts\python.exe under $Root"
+    exit 3
+}
+Write-Host "python:  $Py" -ForegroundColor Green
 
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $artDir = Join-Path $Root "artifacts"
@@ -48,10 +60,7 @@ Write-Host "sprint:  $CommandsFile"
 Write-Host "stamp:   $stamp"
 Write-Host ""
 
-# Parse sprint file into labeled steps.
-# Format:
-#   # STEP: name
-#   command line
+# Parse # STEP: blocks
 $raw = Get-Content -Path $CommandsFile -Raw -Encoding UTF8
 $steps = @()
 $current = $null
@@ -69,6 +78,14 @@ foreach ($line in ($raw -split "`r?`n")) {
 }
 if ($null -ne $current) { $steps += $current }
 
+function Rewrite-PythonPath([string]$body) {
+    # Normalize both common venv spellings to the resolved absolute python
+    $body = $body -replace '\.\.?\venv\Scripts\python\.exe', $Py
+    $body = $body -replace '\.\.?\venv\Scripts\python\b', $Py
+    $body = $body -replace '"\.\.\\venv\\Scripts\\python\.exe"', "`"$Py`""
+    return $body
+}
+
 $results = @()
 $failed = 0
 $i = 0
@@ -77,6 +94,7 @@ foreach ($step in $steps) {
     $name = $step.name
     $body = ($step.lines -join "`n").Trim()
     if (-not $body) { continue }
+    $body = Rewrite-PythonPath $body
 
     Write-Host "----- STEP $i/$($steps.Count): $name -----" -ForegroundColor Yellow
     Write-Host $body -ForegroundColor DarkGray
@@ -135,6 +153,7 @@ $report = [ordered]@{
     stamp   = $stamp
     sprint  = $Sprint
     root    = $Root
+    python  = $Py
     host    = $env:COMPUTERNAME
     user    = $env:USERNAME
     passed  = @($results | Where-Object { $_.ok }).Count
@@ -156,6 +175,7 @@ $md = New-Object System.Collections.Generic.List[string]
 [void]$md.Add("| field | value |")
 [void]$md.Add("|---|---|")
 [void]$md.Add("| sprint | $Sprint |")
+[void]$md.Add("| python | $Py |")
 [void]$md.Add("| host | $($report.host) |")
 [void]$md.Add("| passed | $($report.passed)/$($report.total) |")
 [void]$md.Add("| failed | $failed |")
@@ -205,7 +225,7 @@ if ($PushReport) {
     $msg = "host report: $Sprint $($report.passed)/$($report.total) [$stamp]"
     git commit -m $msg 2>&1 | Out-Host
     git push origin main 2>&1 | Out-Host
-    Write-Host "Pushed. Grok can fetch artifacts/host_report_latest.md on next turn." -ForegroundColor Green
+    Write-Host "Pushed." -ForegroundColor Green
 }
 
 if ($failed -gt 0) { exit 1 } else { exit 0 }

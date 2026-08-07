@@ -3,10 +3,10 @@
 .SYNOPSIS
   ETHER host runner - execute sprint batch, capture report for Grok.
 .EXAMPLE
-  .\scripts\host_runner.ps1 -Sprint phaseg_wire -PushReport
+  .\scripts\host_runner.ps1 -Sprint phaseg_verify -PushReport
 #>
 param(
-    [string]$Sprint = "phaseg_wire",
+    [string]$Sprint = "phaseg_verify",
     [string]$CommandsFile = "",
     [switch]$PushReport,
     [switch]$StopOnFail
@@ -19,12 +19,10 @@ if (-not (Test-Path (Join-Path $Root "core"))) {
 }
 Set-Location $Root
 
-# --- QC: resolve Python once, prefer .venv (this host's real path) ---
 $Py = $null
 $candidates = @(
     (Join-Path $Root ".venv\Scripts\python.exe"),
     (Join-Path $Root "venv\Scripts\python.exe"),
-    (Join-Path $Root ".venv\Scripts\python"),
     "python"
 )
 foreach ($c in $candidates) {
@@ -60,7 +58,6 @@ Write-Host "sprint:  $CommandsFile"
 Write-Host "stamp:   $stamp"
 Write-Host ""
 
-# Parse # STEP: blocks
 $raw = Get-Content -Path $CommandsFile -Raw -Encoding UTF8
 $steps = @()
 $current = $null
@@ -79,10 +76,10 @@ foreach ($line in ($raw -split "`r?`n")) {
 if ($null -ne $current) { $steps += $current }
 
 function Rewrite-PythonPath([string]$body) {
-    # Normalize both common venv spellings to the resolved absolute python
-    $body = $body -replace '\.\.?\venv\Scripts\python\.exe', $Py
-    $body = $body -replace '\.\.?\venv\Scripts\python\b', $Py
-    $body = $body -replace '"\.\.\\venv\\Scripts\\python\.exe"', "`"$Py`""
+    $body = $body.Replace(".\.venv\Scripts\python.exe", $Py)
+    $body = $body.Replace(".\venv\Scripts\python.exe", $Py)
+    $body = $body.Replace(".venv\Scripts\python.exe", $Py)
+    $body = $body.Replace("venv\Scripts\python.exe", $Py)
     return $body
 }
 

@@ -1,0 +1,9 @@
+{
+  "id": "009_no_infra_as_code_fail",
+  "teacher": "grok",
+  "craft": "training",
+  "rule": "Never write docker/ollama/connection failures into FAIL vault as coding lessons. Classify fail_kind; only code AssertionError/TypeError/SyntaxError etc. train the curriculum.",
+  "match": "infra|docker|ollama",
+  "code": "core.train_gates.may_record_fail",
+  "taught_at": "2026-08-07"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "006_verified_only_pass",
+  "teacher": "grok",
+  "craft": "training",
+  "rule": "Only store PASS experience when holdout_ok is true OR verification_score>=0.99 with real tests. Unverified conf=1.0 theatre must never enter the vault.",
+  "match": "unverified|verification_too_low",
+  "code": "core.train_gates.may_record_pass",
+  "taught_at": "2026-08-07"
+}

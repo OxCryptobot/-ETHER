@@ -1,0 +1,9 @@
+{
+  "id": "008_prefer_tool_runtime",
+  "teacher": "grok",
+  "craft": "training",
+  "rule": "When ranking few-shot PASSes, boost strategy=tool_runtime. Deprioritize agent_loop and best_of_n (FINDINGS net negative).",
+  "match": "tool_runtime|best_of_n|agent_loop",
+  "code": "core.train_gates.strategy_boost",
+  "taught_at": "2026-08-07"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "007_reject_leaky_fewshot",
+  "teacher": "grok",
+  "craft": "training",
+  "rule": "Reject experience rows that leak holdout tests into objective/code. On retrieve, drop rows that define the target symbol for the current task (prompt_guard.defines_target).",
+  "match": "leak|few.?shot",
+  "code": "core.experience.record + retrieve",
+  "taught_at": "2026-08-07"
+}

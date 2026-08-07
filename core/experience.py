@@ -1,4 +1,11 @@
-"""Experience vault — PASS few-shot + FAIL-kind repair bias + Citrine patterns."""
+"""Experience vault — PASS few-shot + FAIL-kind repair bias + Citrine patterns.
+
+Training doctrine (Grok → apprentice) enforced via core.train_gates:
+  1. Only verified successes enter PASS vault
+  2. Leaky rows rejected (prompt_guard)
+  3. Prefer tool_runtime traces when retrieving
+  4. Infra outages never enter FAIL vault as code lessons
+"""
 
 from __future__ import annotations
 
@@ -30,29 +37,7 @@ def _overlap(a: str, b: str) -> float:
     return len(ta & tb) / max(1, len(ta | tb))
 
 
-_INFRA_SIGNATURES = (
-    "cannot connect to the docker daemon",
-    "failed to connect to the docker api",
-    "error while fetching server api version",
-    "connection refused",
-    "cannot connect to ollama",
-    "ollama down",
-    "max retries exceeded",
-    "name or service not known",
-    "no such host",
-    "read timed out",
-)
-
-_INFRA_FAIL_KINDS = ("dependency", "plan", "exception")
-
 _MAX_VAULT_ROWS = 2000
-
-
-def _is_infra_failure(stderr: str, fail_kind: str) -> bool:
-    if (fail_kind or "").strip().lower() in _INFRA_FAIL_KINDS:
-        return True
-    low = (stderr or "").lower()
-    return any(sig in low for sig in _INFRA_SIGNATURES)
 
 
 def _row_fingerprint(objective: str, code: str) -> str:
@@ -98,9 +83,62 @@ def record(
     holdout_ok: Optional[bool] = None,
     holdout_test: str = "",
     skip_curriculum: bool = False,
-) -> None:
+) -> Dict[str, Any]:
+    """Append to vault if training gates allow. Returns decision meta."""
+    meta: Dict[str, Any] = {"stored": False, "reason": "disabled"}
     if not experience_enabled():
-        return
+        return meta
+
+    try:
+        from core.train_gates import (
+            classify_fail_kind,
+            may_record_fail,
+            may_record_pass,
+            train_gates_enabled,
+        )
+    except Exception:
+        train_gates_enabled = lambda: True  # type: ignore
+        may_record_pass = None  # type: ignore
+        may_record_fail = None  # type: ignore
+        classify_fail_kind = lambda s, e="": e or "runtime"  # type: ignore
+
+    fail_kind = classify_fail_kind(stderr, fail_kind)
+
+    if success:
+        if may_record_pass is not None and train_gates_enabled():
+            ok, reason = may_record_pass(
+                success=True,
+                verification_score=verification_score,
+                total_tests=total_tests,
+                holdout_ok=holdout_ok,
+                confidence=confidence,
+            )
+            if not ok:
+                meta["reason"] = reason
+                return meta
+            meta["gate"] = reason
+    else:
+        if may_record_fail is not None and train_gates_enabled():
+            ok, reason = may_record_fail(
+                success=False, stderr=stderr, fail_kind=fail_kind
+            )
+            if not ok:
+                meta["reason"] = reason
+                return meta
+            meta["gate"] = reason
+
+    # Gate 2 — reject leaky rows against holdout text when present
+    if holdout_test:
+        try:
+            from core.prompt_guard import find_leaks
+
+            if find_leaks(f"{objective}\n{code}", holdout_test):
+                meta["reason"] = "leak_holdout"
+                return meta
+        except Exception:
+            meta["reason"] = "leak_check_error"
+            return meta
+
     VAULT_DIR.mkdir(parents=True, exist_ok=True)
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -115,29 +153,21 @@ def record(
         "stderr": (stderr or "")[:800],
         "fail_kind": fail_kind,
         "task_id": task_id,
+        "train_doctrine": "grok_v1",
     }
-    if holdout_test:
-        try:
-            from core.prompt_guard import find_leaks
-
-            if find_leaks(f"{objective}\n{code}", holdout_test):
-                return
-        except Exception:
-            return
-
-    if not success and _is_infra_failure(stderr, fail_kind):
-        return
 
     path = PASS_PATH if success else FAIL_PATH
-
     fingerprint = _row_fingerprint(objective, code)
     if _fingerprint_seen(path, fingerprint):
-        return
+        meta["reason"] = "duplicate"
+        return meta
     row["fingerprint"] = fingerprint
 
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
     _rotate(path)
+    meta["stored"] = True
+    meta["reason"] = "stored"
 
     if not success and stderr:
         try:
@@ -151,6 +181,7 @@ def record(
         not skip_curriculum
         and os.getenv("ETHER_CURRICULUM", "1") == "1"
         and os.getenv("ETHER_EXPERIENCE_CURRICULUM", "0") == "1"
+        and success
     ):
         try:
             from core.curriculum import record_outcome
@@ -163,6 +194,8 @@ def record(
             )
         except Exception:
             pass
+
+    return meta
 
 
 def _read_jsonl(path: Path, limit: int = 500) -> List[Dict[str, Any]]:
@@ -192,7 +225,7 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
     try:
         from core.prompt_guard import defines_target
 
-        def _same_task(row):
+        def _same_task(row: Dict[str, Any]) -> bool:
             blob = f"{row.get('objective', '')}\n{row.get('code', '')}"
             return bool(defines_target(blob, objective))
 
@@ -200,11 +233,25 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
         fails = [r for r in fails if not _same_task(r)]
     except Exception:
         passes, fails = [], []
-    scored_p = sorted(
-        ((_overlap(objective, r.get("objective", "")), r) for r in passes),
-        key=lambda x: x[0],
-        reverse=True,
-    )
+
+    try:
+        from core.train_gates import strategy_boost
+    except Exception:
+
+        def strategy_boost(s: str) -> float:
+            return 1.0
+
+    def pass_score(r: Dict[str, Any]) -> float:
+        base = _overlap(objective, r.get("objective", ""))
+        base *= strategy_boost(str(r.get("strategy") or ""))
+        # prefer holdout-verified rows
+        if r.get("holdout_ok") is True:
+            base += 0.15
+        ver = float(r.get("verification_score") or 0.0)
+        base += 0.1 * ver
+        return base
+
+    scored_p = sorted(((pass_score(r), r) for r in passes), key=lambda x: x[0], reverse=True)
 
     def fail_score(r: Dict[str, Any]) -> float:
         base = _overlap(objective, r.get("objective", ""))
@@ -219,7 +266,7 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
     parts: List[str] = []
     for i, r in enumerate(top_p, 1):
         parts.append(
-            f"### Success example {i} (conf={r.get('confidence')})\n"
+            f"### Success example {i} (conf={r.get('confidence')} strat={r.get('strategy')})\n"
             f"Objective: {r.get('objective','')}\nCode:\n{r.get('code','')}\n"
         )
     for i, r in enumerate(top_f, 1):
@@ -237,7 +284,6 @@ def retrieve(objective: str, k: int = 3, fail_kind: Optional[str] = None) -> Dic
         except Exception:
             pass
 
-    # Stage 2b: Citrine vector patterns (leak-filtered inside retrieve_pass_patterns)
     n_citrine = 0
     try:
         from core.patterns import retrieve_pass_patterns

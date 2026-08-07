@@ -1,42 +1,18 @@
-# Phase G — Sprint 1: surgical tool surface
+# Phase G — Tool surface expansion
 
 ## Status
 
-| Item | Status |
-|------|--------|
-| `grep` / `glob` | ready (host apply) |
-| `apply_patch` fail-closed | ready |
-| `rollback` | ready |
-| optional ruff in run_tests | ready (`ETHER_TOOL_RUFF=1`) |
+- **job_phaseg_verify_003 PASS** (2026-08-07T18:00:09Z)
+  - restore + wire + import + pytest + scripted hard 5/5 on host
+- Tools added: `grep`, `glob`, `apply_patch`, `rollback` via `core/tool_runtime_ext.py`
+- Host agent job queue operational (direct argv path; PowerShell path-rewrite abandoned)
+- Dashboard: http://127.0.0.1:8787/agent
 
-## CRITICAL — if `core/tool_runtime.py` is the string `placeholder`
+## Operating rule
 
-A bad push temporarily broke the file. Restore the last good version, then apply Phase G:
+Failed host reports are immediate fix + requeue. Direct `argv` jobs preferred over `host_runner` sprints for Python work.
 
-```powershell
-cd C:\Users\Otcde\ETHER
-git fetch origin
-git reset --hard origin/main
+## Remaining
 
-# Restore last known-good tool_runtime
-git show 65666a5:core/tool_runtime.py | Set-Content -Encoding utf8 core\tool_runtime.py
-
-# Verify import
-.\venv\Scripts\python.exe -c "from core.tool_runtime import ToolRuntime; print('OK', len(open('core/tool_runtime.py',encoding='utf-8').read()))"
-```
-
-## Then apply Phase G (after `scripts/apply_phaseg_full.py` is on main)
-
-```powershell
-.\venv\Scripts\python.exe scripts\apply_phaseg_full.py
-.\venv\Scripts\python.exe -m pytest tests\test_tool_runtime.py -q
-git add core/tool_runtime.py tests/test_tool_runtime.py
-git commit -m "phaseG sprint1: grep/glob/apply_patch/rollback + ruff gate"
-git push origin main
-```
-
-## Non-goals
-
-- BoN / curriculum / flywheel online
-- Full swarm
-- Weight fine-tunes on host 4GB
+- Land wired `core/tool_runtime.py` on origin (job `land_runtime_001`)
+- Phase G FINDINGS close-out after origin is non-placeholder

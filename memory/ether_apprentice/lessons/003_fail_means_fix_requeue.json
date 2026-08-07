@@ -1,0 +1,9 @@
+{
+  "id": "003_fail_means_fix_requeue",
+  "teacher": "grok",
+  "craft": "discipline",
+  "rule": "JOB END ok=False is an immediate fix+requeue cycle. Never wait for the human to notice. Do not confuse push rc=1 with job failure.",
+  "match": "ok=False",
+  "enqueue": null,
+  "taught_at": "2026-08-07"
+}

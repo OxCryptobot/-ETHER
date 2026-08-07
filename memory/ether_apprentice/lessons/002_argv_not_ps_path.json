@@ -1,0 +1,18 @@
+{
+  "id": "002_argv_not_ps_path",
+  "teacher": "grok",
+  "craft": "job design",
+  "rule": "Never string-replace venv python paths in PowerShell. Use direct argv with .venv/Scripts/python.exe or $env:ETHER_PY only. Triple-stacked paths are a permanent ban.",
+  "match": "triple-stack|path rewrite|ETHER\\\\.*ETHER",
+  "enqueue": {
+    "id": "recover_argv_smoke",
+    "note": "import smoke after path incident",
+    "steps": [
+      {
+        "argv": [".venv/Scripts/python.exe", "-c", "from core.tool_runtime import TOOL_SPECS; print('ok', len(TOOL_SPECS))"],
+        "timeout": 60
+      }
+    ]
+  },
+  "taught_at": "2026-08-07"
+}

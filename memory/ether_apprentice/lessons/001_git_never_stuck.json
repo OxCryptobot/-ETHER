@@ -1,0 +1,9 @@
+{
+  "id": "001_git_never_stuck",
+  "teacher": "grok",
+  "craft": "host operations",
+  "rule": "Agent is a consumer. Origin always wins. On ff-only fail or push fail after one rebase, reset --hard origin/main. Never idle-spam diverged git as if tests failed.",
+  "match": "ff-only|diverged|push rc=1",
+  "enqueue": null,
+  "taught_at": "2026-08-07"
+}

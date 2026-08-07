@@ -1,0 +1,17 @@
+{
+  "id": "004_no_placeholder_runtime",
+  "teacher": "grok",
+  "craft": "integrity",
+  "rule": "core/tool_runtime.py must never be the literal word placeholder on origin. Restore from known good SHA and wire phaseG extensions.",
+  "match": "placeholder",
+  "enqueue": {
+    "id": "recover_runtime",
+    "note": "restore+wire tool_runtime",
+    "steps": [
+      {"argv": [".venv/Scripts/python.exe", "scripts/restore_tool_runtime.py"], "timeout": 120},
+      {"argv": [".venv/Scripts/python.exe", "scripts/wire_phaseg.py"], "timeout": 60},
+      {"argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; b=Path('core/tool_runtime.py').read_bytes(); assert b'placeholder' not in b[:50]; print(len(b))"], "timeout": 30}
+    ]
+  },
+  "taught_at": "2026-08-07"
+}

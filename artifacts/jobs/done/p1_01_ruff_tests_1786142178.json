@@ -1,0 +1,5 @@
+{
+  "id": "p1_01_ruff_tests",
+  "note": "P1: ruff_gate + tool_runtime unit tests",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_ruff_gate.py", "tests/test_tool_runtime.py", "-q", "--tb=line"], "timeout": 300}]
+}

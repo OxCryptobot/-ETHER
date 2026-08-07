@@ -1,4 +1,4 @@
-"""Collect host_agent job queue, logs, and latest report for the live dashboard."""
+"""Collect host_agent job queue, logs, foreman, apprentice lessons."""
 from __future__ import annotations
 
 import json
@@ -15,6 +15,8 @@ STATUS = ROOT / "memory" / "host_agent" / "status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 REPORT_MD = ROOT / "artifacts" / "host_report_latest.md"
 REPORT_JSON = ROOT / "artifacts" / "host_report_latest.json"
+FOREMAN_STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
+LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
 
 
 def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
@@ -34,15 +36,16 @@ def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
             item["sprint"] = data.get("sprint")
             item["note"] = data.get("note")
             item["created"] = data.get("created")
+            item["source"] = data.get("source")
         except Exception:
             pass
         out.append(item)
-    return out[:30]
+    return out[:40]
 
 
 def _tail_log(max_lines: int = 120) -> List[str]:
     if not LOG.exists():
-        return ["(no agent log yet — start scripts/host_agent.py)"]
+        return ["(no agent log yet — start scripts/ether_host.py)"]
     try:
         lines = LOG.read_text(encoding="utf-8", errors="replace").splitlines()
         return lines[-max_lines:]
@@ -63,10 +66,28 @@ def _read_text(path: Path, limit: int = 12000) -> str:
     if not path.exists():
         return ""
     try:
-        t = path.read_text(encoding="utf-8", errors="replace")
-        return t[:limit]
+        return path.read_text(encoding="utf-8", errors="replace")[:limit]
     except Exception as e:
         return f"(read error: {e})"
+
+
+def _lessons_summary() -> List[Dict[str, str]]:
+    if not LESSONS.exists():
+        return []
+    out = []
+    for p in sorted(LESSONS.glob("*.json")):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            out.append(
+                {
+                    "id": str(d.get("id") or p.stem),
+                    "craft": str(d.get("craft") or ""),
+                    "rule": str(d.get("rule") or "")[:200],
+                }
+            )
+        except Exception:
+            continue
+    return out
 
 
 def collect_host_agent() -> Dict[str, Any]:
@@ -77,6 +98,8 @@ def collect_host_agent() -> Dict[str, Any]:
     last = _read_json(LAST_JOB)
     report = _read_json(REPORT_JSON)
     report_md = _read_text(REPORT_MD)
+    foreman = _read_json(FOREMAN_STATE)
+    lessons = _lessons_summary()
 
     agent_alive = False
     if status.get("heartbeat"):
@@ -106,4 +129,10 @@ def collect_host_agent() -> Dict[str, Any]:
         "log_lines": _tail_log(150),
         "report": report,
         "report_md": report_md,
+        "foreman": foreman,
+        "apprentice": {
+            "teacher": "grok",
+            "lessons": lessons,
+            "n": len(lessons),
+        },
     }

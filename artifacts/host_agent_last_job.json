@@ -1,8 +1,8 @@
 {
-  "job_id": "phaseg_verify_001",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-07T22:35:41.161786+00:00",
-  "sprint": "phaseg_verify",
-  "note": "Close Phase G: restore+wire if needed, pytest, scripted hard 5/5, commit wired runtime"
+  "job_id": "land_runtime_001",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-07T22:35:46.053917+00:00",
+  "sprint": null,
+  "note": "Commit host-wired tool_runtime so origin is no longer placeholder"
 }

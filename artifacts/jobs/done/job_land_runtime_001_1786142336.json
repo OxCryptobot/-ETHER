@@ -1,0 +1,23 @@
+{
+  "id": "land_runtime_001",
+  "created": "2026-08-07T18:01:00Z",
+  "note": "Commit host-wired tool_runtime so origin is no longer placeholder",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/restore_tool_runtime.py"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/wire_phaseg.py"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; b=Path('core/tool_runtime.py').read_bytes(); assert b'placeholder' not in b[:50] and len(b)>10000; print('ready', len(b))"],
+      "timeout": 30
+    },
+    {
+      "cmd": "git add core/tool_runtime.py; git status --short core/tool_runtime.py; if (-not (git diff --cached --quiet -- core/tool_runtime.py)) { git commit -m \"phaseG: land wired tool_runtime on main (end placeholder)\"; git push origin main } else { Write-Host 'tool_runtime already clean on index' }",
+      "timeout": 180
+    }
+  ]
+}

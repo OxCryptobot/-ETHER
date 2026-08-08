@@ -5,18 +5,22 @@ Converts honest batch results into:
   2. Live strategy win-rate stats that influence strategy_boost()
 
 Doctrine: only real measured outcomes. No theatre. train_gates still gate storage.
+
+Observability: strategy_stats and a summary are also mirrored under artifacts/
+so host_agent git_push_report can surface them on origin (memory/ is gitignored).
 """
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 STATS_PATH = ROOT / "memory" / "experience" / "strategy_stats.json"
 PREF_PATH = ROOT / "memory" / "experience" / "preferences.jsonl"
+ARTIFACTS_STATS = ROOT / "artifacts" / "strategy_stats.json"
+ARTIFACTS_SUMMARY = ROOT / "artifacts" / "preference_summary.json"
 
 
 def _now() -> str:
@@ -35,7 +39,13 @@ def load_strategy_stats() -> Dict[str, Any]:
 def save_strategy_stats(stats: Dict[str, Any]) -> None:
     STATS_PATH.parent.mkdir(parents=True, exist_ok=True)
     stats["updated"] = _now()
-    STATS_PATH.write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    text = json.dumps(stats, indent=2)
+    STATS_PATH.write_text(text, encoding="utf-8")
+    try:
+        ARTIFACTS_STATS.parent.mkdir(parents=True, exist_ok=True)
+        ARTIFACTS_STATS.write_text(text, encoding="utf-8")
+    except Exception:
+        pass
 
 
 def live_strategy_boost(strategy: str) -> float:
@@ -49,11 +59,9 @@ def live_strategy_boost(strategy: str) -> float:
     stats = load_strategy_stats()
     s = stats.get("strategies", {}).get((strategy or "").strip())
     if not s or s.get("n", 0) < 3:
-        return base  # not enough data yet
+        return base
 
-    # Empirical success rate, tempered so it cannot explode
     rate = float(s.get("wins", 0)) / max(1, float(s.get("n", 1)))
-    # Blend: 60% static doctrine, 40% measured (conservative while young)
     return 0.6 * base + 0.4 * (0.5 + rate) * base
 
 
@@ -77,11 +85,6 @@ def record_preferences_from_scoreboard(
     scoreboard_path: str | Path,
     min_score_gap: float = 0.15,
 ) -> Dict[str, Any]:
-    """Read a phase scoreboard and emit preference pairs + update live stats.
-
-    Preference: higher score (or success) is preferred over lower.
-    Only writes when there is a real measured difference.
-    """
     path = Path(scoreboard_path)
     meta: Dict[str, Any] = {"stored": 0, "stats_updated": False, "reason": ""}
     if not path.exists():
@@ -99,11 +102,9 @@ def record_preferences_from_scoreboard(
         meta["reason"] = "empty_results"
         return meta
 
-    # Always update live strategy stats from measured rows
     _update_stats_from_rows(rows)
     meta["stats_updated"] = True
 
-    # Form simple preferences: success > failure, higher score > lower
     successes = [r for r in rows if r.get("ok") is True or float(r.get("score") or 0) >= 0.99]
     failures = [r for r in rows if not (r.get("ok") is True or float(r.get("score") or 0) >= 0.99)]
 
@@ -139,6 +140,12 @@ def record_preferences_from_scoreboard(
 
     meta["stored"] = n
     meta["reason"] = "ok"
+    try:
+        summary = preference_summary()
+        ARTIFACTS_SUMMARY.parent.mkdir(parents=True, exist_ok=True)
+        ARTIFACTS_SUMMARY.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    except Exception:
+        pass
     return meta
 
 
@@ -156,3 +163,20 @@ def preference_summary() -> Dict[str, Any]:
         "strategies": stats.get("strategies", {}),
         "updated": stats.get("updated"),
     }
+
+
+def force_reprocess_scoreboards(paths: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Re-run preference extraction over known scoreboards (idempotent append)."""
+    if paths is None:
+        paths = [
+            "artifacts/scoreboard_phase_e_steps24.json",
+            "artifacts/scoreboard_phase_e_ledger40.json",
+            "artifacts/scoreboard_phase_e.json",
+        ]
+    out: Dict[str, Any] = {"processed": [], "total_stored": 0}
+    for p in paths:
+        m = record_preferences_from_scoreboard(p)
+        out["processed"].append({"path": p, **m})
+        out["total_stored"] += int(m.get("stored") or 0)
+    out["summary"] = preference_summary()
+    return out

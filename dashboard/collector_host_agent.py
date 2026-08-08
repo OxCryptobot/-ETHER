@@ -1,4 +1,8 @@
-"""Collect host_agent job queue, logs, foreman, apprentice lessons."""
+"""Collect host_agent job queue, logs, foreman, apprentice lessons.
+
+Path rule (non-negotiable): read what host_agent writes under artifacts/.
+Never rely on memory/ for remote observability — it is gitignored.
+"""
 from __future__ import annotations
 
 import json
@@ -10,13 +14,15 @@ ROOT = Path(__file__).resolve().parents[1]
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
-LOG = ROOT / "memory" / "host_agent" / "agent.log"
-STATUS = ROOT / "memory" / "host_agent" / "status.json"
+# host_agent writes these under artifacts/ (tracked + pushed)
+LOG = ROOT / "artifacts" / "host_agent_log.txt"
+STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 REPORT_MD = ROOT / "artifacts" / "host_report_latest.md"
 REPORT_JSON = ROOT / "artifacts" / "host_report_latest.json"
 FOREMAN_STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
+STATUS_MD = ROOT / "STATUS.md"
 
 
 def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
@@ -29,7 +35,9 @@ def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
         item: Dict[str, Any] = {
             "id": p.stem,
             "name": p.name,
-            "mtime": datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc).isoformat(),
+            "mtime": datetime.fromtimestamp(
+                p.stat().st_mtime, tz=timezone.utc
+            ).isoformat(),
         }
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
@@ -90,6 +98,43 @@ def _lessons_summary() -> List[Dict[str, str]]:
     return out
 
 
+def _phase1_board() -> Dict[str, str]:
+    """Parse STATUS.md package table for live Phase 1 board."""
+    text = _read_text(STATUS_MD, limit=8000)
+    board = {
+        "1A": "unknown",
+        "1B": "unknown",
+        "1C": "unknown",
+        "1D": "unknown",
+    }
+    for line in text.splitlines():
+        if "1A Tool-first" in line or "1A Tool-first default" in line:
+            if "LANDED" in line:
+                board["1A"] = "LANDED"
+            elif "NEXT" in line:
+                board["1A"] = "NEXT"
+            elif "IN PROGRESS" in line:
+                board["1A"] = "IN PROGRESS"
+        elif "1B AgentState" in line:
+            if "WIRED" in line or "LANDED" in line:
+                board["1B"] = "WIRED"
+            elif "QUEUED" in line:
+                board["1B"] = "QUEUED"
+        elif "1C AST" in line:
+            if "QUEUED" in line:
+                board["1C"] = "QUEUED"
+            elif "LANDED" in line:
+                board["1C"] = "LANDED"
+        elif "1D Expand" in line:
+            if "IN PROGRESS" in line:
+                board["1D"] = "IN PROGRESS"
+            elif "LANDED" in line:
+                board["1D"] = "LANDED"
+            elif "QUEUED" in line:
+                board["1D"] = "QUEUED"
+    return board
+
+
 def collect_host_agent() -> Dict[str, Any]:
     pending = _list_jobs(PENDING)
     done = _list_jobs(DONE)
@@ -104,9 +149,11 @@ def collect_host_agent() -> Dict[str, Any]:
     agent_alive = False
     if status.get("heartbeat"):
         try:
-            hb = datetime.fromisoformat(status["heartbeat"].replace("Z", "+00:00"))
+            hb = datetime.fromisoformat(
+                status["heartbeat"].replace("Z", "+00:00")
+            )
             age = (datetime.now(timezone.utc) - hb).total_seconds()
-            agent_alive = age < 60
+            agent_alive = age < 90
             status["heartbeat_age_s"] = round(age, 1)
         except Exception:
             pass
@@ -134,5 +181,11 @@ def collect_host_agent() -> Dict[str, Any]:
             "teacher": "grok",
             "lessons": lessons,
             "n": len(lessons),
+        },
+        "phase1": _phase1_board(),
+        "paths": {
+            "status": str(STATUS.relative_to(ROOT)),
+            "log": str(LOG.relative_to(ROOT)),
+            "last_job": str(LAST_JOB.relative_to(ROOT)),
         },
     }

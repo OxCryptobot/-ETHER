@@ -103,9 +103,14 @@ def git_push_report(job_id: str, ok: bool) -> None:
         "artifacts/jobs/done",
         "artifacts/jobs/failed",
     ]
-    # scoreboards from measure scripts
     for p in (ROOT / "artifacts").glob("scoreboard*.json"):
         paths.append(str(p.relative_to(ROOT)))
+    for p in (ROOT / "artifacts").glob("trace_*.json"):
+        paths.append(str(p.relative_to(ROOT)))
+    for name in ("strategy_stats.json", "preference_summary.json"):
+        p = ROOT / "artifacts" / name
+        if p.exists():
+            paths.append(str(p.relative_to(ROOT)))
     run(["git", "add", "-f", "--"] + paths, timeout=90)
     status = "PASS" if ok else "FAIL"
     c = run(["git", "commit", "-m", f"host agent report: job={job_id} {status}"], timeout=60)
@@ -137,7 +142,9 @@ def list_pending() -> List[Path]:
     return sorted([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"], key=lambda p: p.name)
 
 
-def run_steps(steps: List[Dict[str, Any]]) -> int:
+def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> int:
+    """Run job steps. Default fail-fast. Measure jobs can set continue_on_fail."""
+    last_rc = 0
     for i, step in enumerate(steps, 1):
         argv = step.get("argv")
         cmd = step.get("cmd")
@@ -155,8 +162,11 @@ def run_steps(steps: List[Dict[str, Any]]) -> int:
             print(r.stderr[-1500:], flush=True)
         if r.returncode != 0:
             log(f"step failed rc={r.returncode}")
-            return r.returncode
-    return 0
+            last_rc = r.returncode
+            step_continue = bool(step.get("continue_on_fail", continue_on_fail))
+            if not step_continue:
+                return r.returncode
+    return last_rc
 
 
 def process_job(path: Path) -> bool:
@@ -175,7 +185,8 @@ def process_job(path: Path) -> bool:
     rc = 1
     try:
         if job.get("steps"):
-            rc = run_steps(list(job["steps"]))
+            cont = bool(job.get("continue_on_fail", False))
+            rc = run_steps(list(job["steps"]), continue_on_fail=cont)
         else:
             log("job has no steps")
             rc = 2

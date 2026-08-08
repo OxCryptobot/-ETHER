@@ -1,9 +1,18 @@
 # @ETHER Status
 
-**Updated:** 2026-08-01 — Phase D tool-path measured on host.
+**Updated:** 2026-08-08 — Engineering audit complete. Phase 1 critical path locked. Training wheels remain ON.
 
-Read `docs/FINDINGS.md` before changing anything. Three days of measurement are
-in it and the mistakes are expensive to repeat.
+Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
+
+---
+
+## Non-negotiable doctrine (2026-08-08)
+
+- **GEMS are core.** Streamline only. Never remove or dilute the gem topology.
+- **Training wheels stay ON** until measured lift on expanded repo-oracle suite.
+- One hypothesis per job/cycle. Labradorite structured critique mandatory on non-infra FAIL.
+- LoRA / weight updates gated by dual flags + holdout. Dry-run is the only default.
+- Tool-first is the required direction. Generation-first is no longer the default target.
 
 ---
 
@@ -11,100 +20,86 @@ in it and the mistakes are expensive to repeat.
 
 | | |
 |---|---|
-| Tests | **763** (was 48) |
+| Tests | **763+** |
 | Verification | held-out grading, mutation score 0.966 |
 | Leak channels closed | **7** |
-| `main` | green, and green on a fresh clone |
+| `main` | green on fresh clone for core tests |
 | **Does ETHER beat a bare model on holdout generate?** | **No** (ablation stands) |
-| **Does tool-runtime beat bare on hard repo-oracle pack?** | **Yes** (Phase D) |
+| **Does tool-runtime beat bare on hard repo-oracle pack?** | **Yes** (Phase D 5/5) |
+| AgentState | skeleton landed (`core/agent_state.py`) |
+| LoRA path | data prep + dry-run live; real train dual-flag gated |
+| Evolution loop | introspection mandatory; re-verify jobs enqueued |
 
-### Holdout generate (unchanged — still the honest generate ceiling)
+### Holdout generate (unchanged)
 
 | model | bare | bare+sys | ether |
 |---|---|---|---|
-| `qwen3.6:35b-a3b` | 0.933 | — | 0.874 |
 | `qwen2.5:3b` | 0.317 | 0.333 | 0.292 |
 
-`ether − bare+sys = −0.042`, McNemar p = 0.22. Data: `docs/results/ablation_qwen2.5-3b_clean.json`.
-Agent loop remains net negative. **Any pre-audit conf=1.000 is void.**
+`ether − bare+sys = −0.042`. Agent loop remains net negative on pure generate. **Any pre-audit conf=1.000 is void.**
 
-### Phase D — hard repo-oracle pack (host `qwen3.5:4b`)
+### Phase D — hard repo-oracle (host `qwen3.5:4b`)
 
-Task class: fix broken multi-file packages; oracle = project pytest (not holdout text).
+| arm | hard 5 |
+|-----|--------|
+| **direct** (ToolRuntime) | **5/5** |
+| **pipeline** | **5/5** |
+| **bare** | **0/5** |
 
-| arm | hard 5 (lru/merge/ledger/topo/intervals) |
-|-----|------------------------------------------|
-| **direct** (ToolRuntime only) | **5/5** |
-| **pipeline** (Pipeline + tools + workspace verify, max_steps=16) | **5/5** |
-| **bare** (Pipeline, tools off) | **0/5** |
+This is the signal we are amplifying.
 
-Confounders fixed before claiming pipeline 5/5: batch now loads `.env` (was stuck on Rose default `qwen2.5-coder:3b`); `--max-steps` is honored (was clamped to 12). Ledger/topo failed under 3b/12 and passed under 4b/16.
+---
 
-Scope: this is **not** a claim that generate-side ETHER beats bare on HumanEval-style holdouts. It is evidence that **Observe→Act→Observe tools** clear repo-grounded fix tasks where bare generate does not.
+## Active rollout (from engineering audit + blueprint)
 
-### Why more generation-side work is capped
+### Phase 1 — Critical Fixes (IN PROGRESS)
 
-Oracle pass@3 is the ceiling *any* selector could reach:
+| Package | Status | Success criteria |
+|---------|--------|------------------|
+| 1A Tool-first default | NEXT | tool_runtime only default under wheels; Phase D still 5/5 |
+| 1B AgentState durable | SKELETON LANDED | create/save/load round-trip; shared by gems |
+| 1C AST transactional edits | QUEUED | Python-first; snapshot + rollback on test fail |
+| 1D Expand eval + close current FAILs | IN PROGRESS | tw_e03/e04 diagnosed; 10+ hard tasks |
 
-| arm | pass@1 | oracle pass@3 | headroom |
-|---|---|---|---|
-| `bare+sys` | 0.342 | 0.400 | **+0.058** |
+**Gate to Phase 2:** Tool-first live, AgentState durable across restart, ≥10 hard tasks measured with pipeline lift, evolution FAILs closed.
 
-A perfect, infallible selector gains 5.8 points. **Do not spend a week
-optimising the selector.**
+### Phases 2–7
+See implementation blueprint. Do not start until Phase 1 gate is green.
 
 ---
 
 ## What genuinely works
 
-- **`core/holdout.py`** — grades against unseen assertions; strips the model's
-  own asserts so they cannot preempt; requires a sentinel so `sys.exit(0)`
-  cannot fake a pass.
-- **`core/prompt_guard.py`** — catches leaks by inspecting the finished prompt
-  rather than remembering channels. Found 3 of the 7.
-- **`core/assert_audit.py`** — counts only assertions that could actually fail.
-- **`scripts/ablation.py`** — seeded, resumable, aborts at >25% errors, prints
-  its own minimum detectable effect before running.
-- **Sandbox** — hardened, fails closed, `uid 65534`, all capabilities dropped.
-- **Tool runtime + Clear Quartz workspace verify** — Phase D hard pack 5/5
-  pipeline / 0/5 bare on host 4B.
+- Holdout, prompt_guard, assert_audit, ablation culture
+- Fail-closed sandbox
+- Tool runtime + Clear Quartz on repo-oracle tasks
+- Labradorite structured root_cause + smallest_experiment
+- Offline preference pairs + train_gates
+- GEMS topology (non-negotiable)
 
-The asymmetry worth building on: this system is far better at saying **"this is
-wrong"** than at producing something right — and tools let it *act* on that.
+## Hazards
 
----
-
-## Where to go next
-
-**Phase D pack is measured.** Next leverage is broader repo-grounded tasks
-(real projects, not only five fixtures), still judged by the package's own
-tests. Do not revive best-of-N / curriculum / flywheel without a new positive
-measurement.
-
-Holdout generate remains a weak arm — do not spend cycles on selector polish
-(oracle pass@3 headroom ~5.8pp).
-
----
+- Lifting training wheels without measured lift destroys the preference signal
+- Generation-first default continues to lose to bare model
+- Real LoRA before clean data + dual flags is forbidden
+- A red `main` kills the other machine — `pytest && git push`
 
 ## Running it
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env          # ETHER_PRIMARY_MODEL must match `ollama list`
+cp .env.example .env
 
 pytest -q
 python -m cli.main doctor
-
-# Phase D batch (host)
-python -m scripts.batch_phase_d --arm pipeline --mode live --tier hard --max-steps 16 --timeout 500
+python -m core.lora_train          # dry-run only under wheels
+python -m core.evolution_loop      # introspection cycle
 ```
 
-## Hazards
+## Next action only
 
-- **A red `main` kills the other machine** — `pytest` is a static gate in the
-  flywheel. Use `pytest && git push` as one command.
-- **The flywheel is a third writer** — set `ETHER_FLYWHEEL_PUSH=0` while collaborating.
-- **`ETHER_WARM_SANDBOX` stays off**.
-- Prefer `ETHER_SANDBOX_BACKEND=docker` wherever Docker exists.
-- Measure scripts must `load_dotenv` or Rose falls back to `qwen2.5-coder:3b`.
+1. Land tool-first default (Package 1A)
+2. Wire AgentState into EvolutionController + Selenite
+3. Close any remaining evolution FAILs with Labradorite
+4. Expand repo-oracle suite to ≥10 hard tasks and measure

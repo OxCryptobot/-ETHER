@@ -9,7 +9,9 @@ Hard rules:
 - Labradorite is mandatory on every non-infra FAIL under training wheels.
 - train_gates still gate every experience / preference write.
 - One hypothesis per cycle when training_wheels=True.
-- No LoRA weight updates here — only clean data + structured critique.
+- No LoRA weight updates here — only clean data + structured critique +
+  mandatory self-improvement introspection.
+- The system ALWAYS asks itself the four questions before proposing change.
 """
 from __future__ import annotations
 
@@ -32,6 +34,27 @@ def _now() -> str:
 def _write_json(path: Path, data: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _self_improve_questions(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Mandatory. The system must never skip this."""
+    rc = context.get("root_cause") or "none"
+    hyp = context.get("hypothesis") or "none"
+    return {
+        "questions": [
+            "How do we get better?",
+            "How do we self-improve?",
+            "How can I surpass my limitations?",
+            "What do I need to do?",
+        ],
+        "answers": [
+            "By measuring real outcomes (scoreboards) → offline preference pairs → gated LoRA only after clean data and promote flag.",
+            "Via Labradorite structured root_cause + smallest_experiment, one hypothesis under training wheels, then Citrine memory of the lesson.",
+            "Keep adapters tiny (rank 8–16), VRAM-aware on 4GB, never unrestricted self-modification, always dry-run first.",
+            f"Run lora_prep if needed, call lora_train dry_run, only set ETHER_LORA_TRAIN=1 + ETHER_LORA_PROMOTE=1 after dashboard green. Current root_cause={rc}, hypothesis={str(hyp)[:80]}",
+        ],
+        "rule": "Never unrestricted self-modification. Creative discovery stays inside the gates.",
+    }
 
 
 class EvolutionController:
@@ -77,7 +100,13 @@ class EvolutionController:
             "root_cause": None,
             "smallest_experiment": None,
             "critique_path": None,
+            "introspection": None,
         }
+
+        # --- 0. Mandatory self-improvement questions (always) ---
+        intro = _self_improve_questions({"root_cause": None, "hypothesis": None})
+        report["introspection"] = intro
+        report["stages"].append({"gem": "self", "ok": True, "introspection": intro})
 
         # --- 1. Selenite (plan / hypothesis) ---
         plan_out = self._selenite(objective, original_failure)
@@ -92,7 +121,11 @@ class EvolutionController:
             report["root_cause"] = crit.get("root_cause")
             report["smallest_experiment"] = crit.get("smallest_experiment")
             report["critique_path"] = crit.get("path")
-            # Feed memory bus so next Selenite sees it
+            # Re-answer questions with real context
+            report["introspection"] = _self_improve_questions({
+                "root_cause": report["root_cause"],
+                "hypothesis": hypothesis,
+            })
             try:
                 from core.memory_bus import record_critique
                 record_critique(
@@ -111,7 +144,14 @@ class EvolutionController:
         else:
             report["stages"].append({"gem": "labradorite", "skipped": True, "reason": "no_failure_context"})
 
-        # --- 3. Citrine best-effort (already attempted inside record_critique) ---
+        # --- 3. Optional LoRA readiness signal (never trains here) ---
+        try:
+            from core.lora_train import dry_run_report
+            lora_ready = dry_run_report()
+            report["stages"].append({"gem": "lora_train", "ok": True, "dry_run": lora_ready})
+        except Exception as e:
+            report["stages"].append({"gem": "lora_train", "ok": False, "error": str(e)[:160]})
+
         # --- 4. Amethyst signal ---
         try:
             from core.schemas import Envelope, AmethystRequest
@@ -127,6 +167,7 @@ class EvolutionController:
                             "status": "evolution_cycle",
                             "root_cause": report.get("root_cause"),
                             "training_wheels": self.training_wheels,
+                            "introspection": True,
                             "learn": False,
                         },
                     ),
@@ -218,7 +259,6 @@ class EvolutionController:
                 complexity = float(getattr(res.payload, "complexity_score", 0) or 0)
                 confidence = float(getattr(res.payload, "confidence_score", 0.55) or 0.55)
 
-            # Structured root-cause inference (deterministic, no extra LLM)
             root_cause = "unknown"
             evidence: List[str] = []
             if original_failure:
@@ -239,7 +279,6 @@ class EvolutionController:
                 else:
                     root_cause = "verification_fail"
 
-            # Training-wheels: only one smallest experiment
             smallest = {
                 "hyp": "C" if root_cause == "tool_order" else "D" if root_cause == "repair_quality" else "B",
                 "change": (

@@ -1,0 +1,9 @@
+{
+  "id": "014_self_evolve_from_evidence",
+  "teacher": "grok",
+  "craft": "evolution",
+  "rule": "Self-evolution is gated by evidence. When live mutation results show systematic max_steps failures on the same class (ledger, topo, etc.), the correct agentic move is to raise the measured budget or improve the tool path and re-measure. Do not invent scores. Do not declare victory on partial. Record only what the scoreboard and holdout actually say. After every meaningful measurement, update FINDINGS or the scoreboard path so future-you has ground truth.",
+  "match": "max_steps|budget|scoreboard_phase|mutation|FINDINGS",
+  "code": "scripts.batch_phase_e + core.train_gates",
+  "taught_at": "2026-08-08"
+}

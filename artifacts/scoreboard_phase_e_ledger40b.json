@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "mutation": "ledger_double_total",
+      "fixture": "ledger",
+      "arm": "direct",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 24,
+      "reason": "max_steps",
+      "elapsed_s": 332.43,
+      "mode": "live",
+      "pre_score": 0.667,
+      "read_first": true
+    }
+  ],
+  "passed": 0,
+  "total": 1,
+  "model": "qwen3.5:4b",
+  "updated": "2026-08-08T06:11:10Z"
+}

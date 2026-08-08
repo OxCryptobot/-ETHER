@@ -1,0 +1,31 @@
+{
+  "id": "phase_e_diag_after_budget_060537",
+  "note": "playbook:017_budget_not_always_answer for phase_e_diag_after_budget_060053",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "ledger_no_debit",
+        "--max-steps",
+        "20",
+        "--timeout",
+        "600",
+        "--trace",
+        "--read-first",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_diag.json"
+      ],
+      "timeout": 800
+    }
+  ],
+  "created": "2026-08-08T06:05:37.269435+00:00",
+  "source": "foreman"
+}

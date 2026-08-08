@@ -1,0 +1,21 @@
+{
+  "id": "020_logic_path_fail_to_fix",
+  "teacher": "grok",
+  "craft": "reasoning",
+  "rule": "LOGIC PATH when a job fails (this is how the teacher fixes — copy the procedure, not the outcome).\n\nSTEP 0 — Classify (do not act yet)\n  Read artifacts/host_agent_last_job.json + any scoreboard_*.json written by the job.\n  Extract: ok, reason (max_steps|assert|timeout|exception), score, mutation names that failed, n_steps used.\n\nSTEP 1 — Hypothesis table (pick ONE)\n  A. Budget too low: same mutation never reached a decisive state at low steps, and a higher budget has NOT been measured yet.\n  B. Budget ruled out: two runs at different max_steps both end reason=max_steps / same failing set → do NOT raise steps again.\n  C. Tool/order gap: agent may write before read, or never call the tool that reveals the bug → test --read-first or forced tool order.\n  D. Repair quality: agent sees the bug but produces a weak patch → change decide/prompt, not budget.\n  E. Infra: docker/ollama/path/timeout_infra → fix host, NEVER record as code FAIL.\n\nSTEP 2 — Smallest honest experiment\n  One mutation. One new job id. One controlled change (only the hypothesis under test).\n  Prefer: --trace + scoreboard path that lands on origin.\n  Timeout must be high enough that the experiment finishes; partial scoreboards must still push.\n\nSTEP 3 — After the experiment lands\n  Re-read scoreboard + trace yourself from GitHub.\n  If hypothesis confirmed: write a durable lesson (no self-matching enqueue).\n  If hypothesis falsified: return to STEP 1 with a different letter.\n  NEVER auto-chain playbook recoveries. NEVER match on note starting with playbook: or id containing diag_after_.\n\nSTEP 4 — Preference / ML signal\n  When a clean scoreboard lands, record preference pairs (pass > fail, higher verification preferred).\n  Mirror strategy_stats under artifacts/ so the host and teacher can both see boosts.\n\nThis path is the training data. Outcome alone is not enough — the sequence of decisions is what the agent must internalize.",
+  "match": "",
+  "code": "scripts.foreman + scripts.batch_phase_e + core.preference",
+  "taught_at": "2026-08-08",
+  "example_fix": {
+    "bug": "playbook infinity loop on ledger max_steps",
+    "observed": "20+ phase_e_diag_after_budget_* jobs, same mutation, same reason",
+    "hypothesis": "B — budget ruled out; also playbook self-match",
+    "fix": [
+      "strip enqueue from lessons 017/018",
+      "foreman._is_playbook_recovery guard",
+      "cancel pending diag stubs",
+      "encode this logic path as lesson 020"
+    ],
+    "next_hypothesis": "C or D — tool order / repair quality on ledger+topo"
+  }
+}

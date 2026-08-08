@@ -1,0 +1,10 @@
+{
+  "id": "phase_e_diag_after_budget_080009",
+  "note": "CANCELLED: playbook infinity cleanup — logic path lesson takes over",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "print('cancelled-diag-080009'); raise SystemExit(0)"],
+      "timeout": 30
+    }
+  ]
+}

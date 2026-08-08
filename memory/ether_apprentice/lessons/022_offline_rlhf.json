@@ -1,0 +1,9 @@
+{
+  "id": "022_offline_rlhf",
+  "teacher": "grok",
+  "craft": "self_learning",
+  "rule": "RLHF for ETHER is offline preference learning from measured scoreboards — not PPO theatre.\n\nTOOLS OF THE TRADE:\n1. After every batch that writes artifacts/scoreboard*.json, call core.preference.record_preferences_from_scoreboard (batch_phase_e already does this).\n2. strategy_stats accumulate wins/n; live_strategy_boost blends STRATEGY_TRUST prior with empirical win rate (only after n>=3).\n3. retrieve() already multiplies overlap by strategy_boost — so better arms surface in few-shot automatically.\n4. Never form preference pairs against infra failures (docker/ollama/timeout_infra) — that teaches the wrong lesson.\n5. Observability: artifacts/strategy_stats.json + preference_summary.json + preferences_tail.jsonl must land on origin via git_push_report.\n6. Validate with assert_preferences_healthy() or python -m core.preference (rlhf_tick).\n7. DPO rank score helper exists for when local logprobs are available; until then strategy-level bandit is the policy update.\n\nWHAT NOT TO DO:\n- Do not full-finetune the base coder on every scoreboard.\n- Do not raise max_steps as a substitute for preference learning.\n- Do not store unverified PASS or infra FAIL into the preference stream.\n\nReality: scoreboard → pairs → boosts → retrieve ranking. That is RLHF coming to life on this host.",
+  "match": "",
+  "code": "core.preference.rlhf_tick",
+  "taught_at": "2026-08-08"
+}

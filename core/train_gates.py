@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 PASS_MIN_VERIFICATION = float(os.getenv("ETHER_PASS_MIN_VERIFICATION") or "0.99")
 
 # Strategies ranked for few-shot preference (higher = better teacher signal).
+# These are the prior. Live measurements from preference.py temper them.
 STRATEGY_TRUST = {
     "tool_runtime": 3.0,
     "multifile": 1.5,
@@ -85,8 +86,13 @@ def may_record_fail(
 
 
 def strategy_boost(strategy: str) -> float:
-    """Gate 3 — prefer tool_runtime traces over BoN when ranking few-shots."""
-    return float(STRATEGY_TRUST.get((strategy or "").strip(), 1.0))
+    """Gate 3 — prefer tool_runtime traces; now tempered by live measured win rates."""
+    try:
+        from core.preference import live_strategy_boost
+
+        return float(live_strategy_boost(strategy))
+    except Exception:
+        return float(STRATEGY_TRUST.get((strategy or "").strip(), 1.0))
 
 
 def classify_fail_kind(stderr: str, explicit: str = "") -> str:
@@ -110,9 +116,17 @@ def classify_fail_kind(stderr: str, explicit: str = "") -> str:
 
 
 def doctrine_summary() -> Dict[str, Any]:
+    live = {}
+    try:
+        from core.preference import preference_summary
+
+        live = preference_summary()
+    except Exception:
+        pass
     return {
         "pass_min_verification": PASS_MIN_VERIFICATION,
         "strategy_trust": dict(STRATEGY_TRUST),
+        "live_strategy_stats": live,
         "enabled": train_gates_enabled(),
         "teacher": "grok",
         "rules": [
@@ -120,5 +134,6 @@ def doctrine_summary() -> Dict[str, Any]:
             "reject_leaky_few_shot",
             "prefer_tool_runtime",
             "no_infra_as_code_fail",
+            "learn_from_measured_preferences",
         ],
     }

@@ -1,0 +1,9 @@
+{
+  "id": "019_vault_hygiene",
+  "teacher": "grok",
+  "craft": "learning",
+  "rule": "Experience vault must stay clean: only rows that pass train_gates (verified PASS, no leaky few-shot, code fails only). Rotate at ~2000 rows. Fingerprint-dedup on write. Never store infra/timeout_infra as code fails. Preference pairs and strategy_stats are secondary signals and must also carry train_doctrine. Dirty vault → bad retrieve → worse agent.",
+  "match": "experience|vault|pass.jsonl|fail.jsonl|preference",
+  "code": "core.experience + core.train_gates + core.preference",
+  "taught_at": "2026-08-08"
+}

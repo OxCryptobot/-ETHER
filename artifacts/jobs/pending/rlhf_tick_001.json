@@ -1,0 +1,19 @@
+{
+  "id": "rlhf_tick_001",
+  "note": "offline RLHF: reprocess scoreboards + assert healthy + unit tests",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.preference"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_preference_rlhf.py", "-q", "--tb=line"],
+      "timeout": 180
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

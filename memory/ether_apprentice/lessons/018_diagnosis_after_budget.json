@@ -2,37 +2,9 @@
   "id": "018_diagnosis_after_budget",
   "teacher": "grok",
   "craft": "autonomy",
-  "rule": "When the same hard mutation class (ledger, topo) fails twice with reason=max_steps at different budgets, do not raise steps again. Enqueue a diagnosis job: single mutation + --trace + --read-first. The goal is tool-sequence evidence, not more budget. After the trace lands, form a new hypothesis (never-read, wrong file, shallow rewrite, etc.) and test that hypothesis with the smallest experiment.",
-  "match": "ledger_focus|ledger_no_debit|topo_drop|max_steps|budget ruled",
-  "enqueue": {
-    "id": "phase_e_ledger_trace",
-    "note": "playbook: diagnosis after budget fail — ledger_no_debit with trace + read-first",
-    "continue_on_fail": true,
-    "steps": [
-      {
-        "argv": [
-          ".venv/Scripts/python.exe",
-          "-m",
-          "scripts.batch_phase_e",
-          "--arm",
-          "direct",
-          "--mode",
-          "live",
-          "--mutation",
-          "ledger_no_debit",
-          "--max-steps",
-          "24",
-          "--timeout",
-          "700",
-          "--trace",
-          "--read-first",
-          "--scoreboard",
-          "artifacts/scoreboard_phase_e_ledger_trace.json"
-        ],
-        "timeout": 900
-      }
-    ]
-  },
+  "rule": "When the same hard mutation class (ledger, topo) fails twice with reason=max_steps at different budgets, do not raise steps again. Run ONE diagnosis job: single mutation + --trace + --read-first. Inspect the trace. Form a new hypothesis. Never auto-chain playbook recoveries.",
+  "match": "",
   "code": "scripts.batch_phase_e --trace --read-first",
-  "taught_at": "2026-08-08"
+  "taught_at": "2026-08-08",
+  "note": "enqueue removed 2026-08-08 after infinity playbook loop"
 }

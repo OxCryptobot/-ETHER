@@ -1,0 +1,21 @@
+{
+  "id": "phase_e_mutation_check_001",
+  "note": "Phase E next step: re-check direct tool path on mutation restore pack (lru/merge/ledger/topo/intervals)",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard"
+      ],
+      "timeout": 400
+    }
+  ]
+}

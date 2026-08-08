@@ -1,0 +1,9 @@
+{
+  "id": "012_auto_reload_on_source_change",
+  "teacher": "grok",
+  "craft": "host_ops",
+  "rule": "When origin updates scripts/ether_host.py, host_agent.py or foreman.py, the running process must exit with code 42 so start_ether_host.ps1 can restart it cleanly. Never require the human to Ctrl+C and relaunch after every code push.",
+  "match": "source updated|exit 42|manual restart",
+  "code": "scripts.ether_host._source_changed",
+  "taught_at": "2026-08-07"
+}

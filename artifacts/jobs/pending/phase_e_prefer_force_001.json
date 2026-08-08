@@ -1,0 +1,15 @@
+{
+  "id": "phase_e_prefer_force_001",
+  "note": "P0: force reprocess scoreboards → preferences + strategy_stats mirrored to artifacts/",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.preference import force_reprocess_scoreboards, preference_summary; import json; m = force_reprocess_scoreboards(); print(json.dumps(m, indent=2)); print('SUMMARY', preference_summary())"
+      ],
+      "timeout": 60
+    }
+  ]
+}

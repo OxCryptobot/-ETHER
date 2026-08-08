@@ -1,5 +1,6 @@
 # ONE window ETHER host (dashboard + agent + foreman)
-# Auto-restarts when Python exits with code 42 (source updated on origin)
+# Restarts on ANY exit except clean stop (code 0 = Ctrl+C).
+# This is the last manual start you should need.
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
@@ -18,10 +19,12 @@ if (-not (Test-Path $Py)) {
     exit 1
 }
 
-Write-Host "ETHER HOST one window | auto-reload enabled" -ForegroundColor Green
+Write-Host "ETHER HOST one window | always-restart enabled" -ForegroundColor Green
 Write-Host "dashboard http://127.0.0.1:8787/agent" -ForegroundColor Green
 Write-Host "Ctrl+C to stop permanently" -ForegroundColor DarkGray
 Write-Host ""
+
+$failCount = 0
 
 while ($true) {
     Write-Host "Sync origin/main..." -ForegroundColor Cyan
@@ -33,21 +36,25 @@ while ($true) {
     $code = $LASTEXITCODE
 
     if ($null -eq $code) {
-        $code = 0
+        $code = 1
     }
 
-    if ($code -eq 42) {
-        Write-Host ""
-        Write-Host "Source updated - restarting cleanly..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 1
-        continue
-    }
-
+    # Clean stop only (user Ctrl+C)
     if ($code -eq 0) {
         Write-Host "Stopped cleanly." -ForegroundColor Green
         break
     }
 
-    Write-Host "Process exited with code $code - stopping." -ForegroundColor Red
-    break
+    # Source update (exit 42) or any crash/error -> restart
+    $failCount = $failCount + 1
+    $backoff = [Math]::Min(15, 2 + $failCount)
+
+    if ($code -eq 42) {
+        Write-Host "Source updated - restarting in 1s..." -ForegroundColor Yellow
+        $failCount = 0
+        Start-Sleep -Seconds 1
+    } else {
+        Write-Host "Process exited code $code - restarting in ${backoff}s (attempt $failCount)..." -ForegroundColor Yellow
+        Start-Sleep -Seconds $backoff
+    }
 }

@@ -1,0 +1,9 @@
+{
+  "id": "011_stage_job_directories",
+  "teacher": "grok",
+  "craft": "host_ops",
+  "rule": "When pushing a finished job, always git-add the jobs directories (pending/ done/ failed/), never expand every historical file into the argv list. Directories correctly record both the new done file and the deletion of the pending file. Expanding hundreds of filenames causes WinError 206 and leaves pending files stuck on origin.",
+  "match": "WinError 206|pending still present|filename or extension is too long",
+  "code": "scripts.host_agent.git_push_report",
+  "taught_at": "2026-08-07"
+}

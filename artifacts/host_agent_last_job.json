@@ -1,7 +1,7 @@
 {
-  "job_id": "tw_e06_evolution_reverify",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-08T18:46:11.630854+00:00",
-  "note": "training wheels: re-verify evolution cycle with introspection (must exit 0)"
+  "job_id": "tw_e07_agent_state_smoke",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-08T18:46:15.005773+00:00",
+  "note": "training wheels: AgentState create/save/load round-trip"
 }

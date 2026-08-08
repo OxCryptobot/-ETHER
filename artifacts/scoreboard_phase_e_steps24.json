@@ -1,0 +1,80 @@
+{
+  "results": [
+    {
+      "mutation": "ledger_no_debit",
+      "fixture": "ledger",
+      "arm": "direct",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 24,
+      "reason": "max_steps",
+      "elapsed_s": 386.281,
+      "mode": "live",
+      "pre_score": 0.5
+    },
+    {
+      "mutation": "ledger_double_total",
+      "fixture": "ledger",
+      "arm": "direct",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 24,
+      "reason": "max_steps",
+      "elapsed_s": 350.546,
+      "mode": "live",
+      "pre_score": 0.667
+    },
+    {
+      "mutation": "topo_drop_cycle_raise",
+      "fixture": "topo",
+      "arm": "direct",
+      "ok": false,
+      "score": 0.571,
+      "n_steps": 24,
+      "reason": "max_steps",
+      "elapsed_s": 463.525,
+      "mode": "live",
+      "pre_score": 0.571
+    },
+    {
+      "mutation": "lru_no_evict",
+      "fixture": "lru",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 16,
+      "reason": "tests passed",
+      "elapsed_s": 337.688,
+      "mode": "live",
+      "pre_score": 0.571
+    },
+    {
+      "mutation": "merge_drop_b_tail",
+      "fixture": "merge",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 103.983,
+      "mode": "live",
+      "pre_score": 0.375
+    },
+    {
+      "mutation": "intervals_no_sort",
+      "fixture": "intervals",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 105.312,
+      "mode": "live",
+      "pre_score": 0.875
+    }
+  ],
+  "passed": 3,
+  "total": 6,
+  "model": "qwen3.5:4b",
+  "updated": "2026-08-08T05:08:47Z"
+}

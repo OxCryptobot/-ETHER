@@ -1,7 +1,7 @@
 {
-  "job_id": "tw_e02_lora_prep",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-08T15:01:22.314915+00:00",
-  "note": "training wheels: gated LoRA data prep (no weight updates)"
+  "job_id": "tw_e03_lora_train_dry",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-08T17:53:01.522766+00:00",
+  "note": "training wheels: gated LoRA dry-run + readiness report (no weight updates)"
 }

@@ -3,6 +3,7 @@
   python -m scripts.batch_phase_e --arm direct --mode scripted
   python -m scripts.batch_phase_e --arm direct --mode live --max-steps 16 --timeout 500
   python -m scripts.batch_phase_e --arm bare --mode live --timeout 400
+  python -m scripts.batch_phase_e --arm direct --mode live --mutation ledger_no_debit --trace
 """
 from __future__ import annotations
 
@@ -114,8 +115,52 @@ def _build_mutated_tree(mut: Dict[str, str]) -> Path:
     return staging
 
 
+def _dump_trace(mut_id: str, result: Any) -> Optional[Path]:
+    """Write tool-step trace for diagnosis. Always under artifacts/."""
+    try:
+        steps = []
+        for s in getattr(result, "steps", []) or []:
+            steps.append(
+                {
+                    "step": getattr(s, "step", None),
+                    "tool": getattr(s, "tool", None),
+                    "args": getattr(s, "args", {}),
+                    "ok": getattr(s, "ok", None),
+                    "observation": getattr(s, "observation", {}),
+                }
+            )
+        path = ROOT / "artifacts" / f"trace_{mut_id}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "mutation": mut_id,
+                    "ok": bool(getattr(result, "ok", False)),
+                    "score": float(getattr(result, "score", 0) or 0),
+                    "n_steps": getattr(result, "n_steps", len(steps)),
+                    "reason": getattr(result, "reason", None) or getattr(result, "error", None),
+                    "steps": steps,
+                },
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+        print(f"trace written: {path} ({len(steps)} steps)", flush=True)
+        return path
+    except Exception as e:
+        print(f"trace dump failed: {e}", flush=True)
+        return None
+
+
 def _run_direct(
-    mut: Dict[str, str], live: bool, max_steps: int, timeout: float
+    mut: Dict[str, str],
+    live: bool,
+    max_steps: int,
+    timeout: float,
+    *,
+    read_first: bool = False,
+    dump_trace: bool = False,
 ) -> Dict[str, Any]:
     from core.tool_runtime import ToolRuntime, make_llm_decide_fn
     from core.repo_oracle import run_project_pytest
@@ -159,16 +204,30 @@ def _run_direct(
                 _idx["i"] = i + 1
                 return _plan[i]
 
+        if read_first:
+            objective = (
+                f"Fix the {mut['fixture']} package so all project tests pass. "
+                f"A regression was introduced in {mut['file']}. "
+                f"MANDATORY order: (1) list_files, (2) read_file on {mut['file']}, "
+                f"(3) read_file on tests if present, (4) diagnose the exact bug, "
+                f"(5) apply_patch or write_file with the minimal correct fix, "
+                f"(6) run_tests. Do not write until you have read the broken source."
+            )
+        else:
+            objective = (
+                f"Fix the {mut['fixture']} package so all project tests pass. "
+                f"A regression was introduced; restore correct behaviour."
+            )
+
         rt = ToolRuntime(
             fixture_root=tree,
             decide_fn=decide,
             max_steps=max_steps,
             timeout_s=timeout,
         )
-        result = rt.run(
-            f"Fix the {mut['fixture']} package so all project tests pass. "
-            f"A regression was introduced; restore correct behaviour."
-        )
+        result = rt.run(objective)
+        if dump_trace or (live and not result.ok):
+            _dump_trace(mut["id"], result)
         return {
             "mutation": mut["id"],
             "fixture": mut["fixture"],
@@ -180,6 +239,7 @@ def _run_direct(
             "elapsed_s": round(time.perf_counter() - t0, 3),
             "mode": "live" if live else "scripted",
             "pre_score": float(pre.get("score") or 0),
+            "read_first": read_first,
         }
     finally:
         shutil.rmtree(tree, ignore_errors=True)
@@ -257,6 +317,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--max-steps", type=int, default=16)
     ap.add_argument("--timeout", type=float, default=500.0)
     ap.add_argument("--scoreboard", default="artifacts/scoreboard_phase_e.json")
+    ap.add_argument("--trace", action="store_true", help="always dump tool traces")
+    ap.add_argument(
+        "--read-first",
+        action="store_true",
+        help="stronger objective: force read before write",
+    )
     args = ap.parse_args(argv)
 
     muts = MUTATIONS
@@ -272,7 +338,8 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     model = (os.environ.get("ETHER_PRIMARY_MODEL") or "").strip() or "(unset)"
     print(
-        f"config: model={model} max_steps={args.max_steps} mutations={len(muts)}",
+        f"config: model={model} max_steps={args.max_steps} mutations={len(muts)} "
+        f"read_first={args.read_first} trace={args.trace}",
         flush=True,
     )
 
@@ -287,6 +354,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     live=(args.mode == "live"),
                     max_steps=args.max_steps,
                     timeout=args.timeout,
+                    read_first=args.read_first,
+                    dump_trace=args.trace,
                 )
             else:
                 r = _run_bare(mut, timeout=args.timeout)
@@ -298,7 +367,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                 f"{r.get('reason') or r.get('error') or ''}",
                 flush=True,
             )
-            # Write after every mutation so partial results always land
             _write_scoreboard(sb, rows, model)
 
     n_ok = sum(1 for r in rows if r.get("ok"))
@@ -306,7 +374,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     _write_scoreboard(sb, rows, model)
     print(f"scoreboard final: {sb}", flush=True)
 
-    # Flight learning: convert measured results into preferences + live strategy stats
     try:
         from core.preference import record_preferences_from_scoreboard
 

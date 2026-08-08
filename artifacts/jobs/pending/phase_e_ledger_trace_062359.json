@@ -1,0 +1,31 @@
+{
+  "id": "phase_e_ledger_trace_062359",
+  "note": "playbook:018_diagnosis_after_budget for phase_e_topo_trace_001",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "ledger_no_debit",
+        "--max-steps",
+        "24",
+        "--timeout",
+        "700",
+        "--trace",
+        "--read-first",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_ledger_trace.json"
+      ],
+      "timeout": 900
+    }
+  ],
+  "created": "2026-08-08T06:23:59.416512+00:00",
+  "source": "foreman"
+}

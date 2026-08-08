@@ -1,0 +1,67 @@
+{
+  "results": [
+    {
+      "mutation": "ledger_no_debit",
+      "fixture": "ledger",
+      "arm": "bare",
+      "ok": false,
+      "score": 0.86,
+      "strategy": "multifile",
+      "elapsed_s": 569.592,
+      "mode": "live"
+    },
+    {
+      "mutation": "ledger_double_total",
+      "fixture": "ledger",
+      "arm": "bare",
+      "ok": false,
+      "score": 0.0,
+      "strategy": "no_context",
+      "elapsed_s": 607.632,
+      "mode": "live"
+    },
+    {
+      "mutation": "topo_drop_cycle_raise",
+      "fixture": "topo",
+      "arm": "bare",
+      "ok": true,
+      "score": 1.0,
+      "strategy": "no_context",
+      "elapsed_s": 254.097,
+      "mode": "live"
+    },
+    {
+      "mutation": "lru_no_evict",
+      "fixture": "lru",
+      "arm": "bare",
+      "ok": false,
+      "score": 0.3,
+      "strategy": "multifile",
+      "elapsed_s": 707.579,
+      "mode": "live"
+    },
+    {
+      "mutation": "merge_drop_b_tail",
+      "fixture": "merge",
+      "arm": "bare",
+      "ok": false,
+      "score": 0.5,
+      "strategy": "no_context",
+      "elapsed_s": 39.87,
+      "mode": "live"
+    },
+    {
+      "mutation": "intervals_no_sort",
+      "fixture": "intervals",
+      "arm": "bare",
+      "ok": false,
+      "score": 0.2,
+      "strategy": "minimal",
+      "elapsed_s": 333.308,
+      "mode": "live"
+    }
+  ],
+  "passed": 1,
+  "total": 6,
+  "model": "qwen3.5:4b"
+}

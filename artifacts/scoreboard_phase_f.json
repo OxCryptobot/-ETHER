@@ -1,0 +1,80 @@
+{
+  "results": [
+    {
+      "mutation": "ledger_no_debit",
+      "fixture": "ledger",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.279,
+      "mode": "scripted",
+      "diff_chars": 281
+    },
+    {
+      "mutation": "ledger_double_total",
+      "fixture": "ledger",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.523,
+      "mode": "scripted",
+      "diff_chars": 256
+    },
+    {
+      "mutation": "topo_drop_cycle_raise",
+      "fixture": "topo",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.559,
+      "mode": "scripted",
+      "diff_chars": 272
+    },
+    {
+      "mutation": "lru_no_evict",
+      "fixture": "lru",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.357,
+      "mode": "scripted",
+      "diff_chars": 273
+    },
+    {
+      "mutation": "merge_drop_b_tail",
+      "fixture": "merge",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.308,
+      "mode": "scripted",
+      "diff_chars": 214
+    },
+    {
+      "mutation": "intervals_no_sort",
+      "fixture": "intervals",
+      "arm": "direct",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "reason": "tests passed",
+      "elapsed_s": 2.325,
+      "mode": "scripted",
+      "diff_chars": 406
+    }
+  ],
+  "passed": 6,
+  "total": 6,
+  "model": "qwen3.5:4b",
+  "phase": "F"
+}

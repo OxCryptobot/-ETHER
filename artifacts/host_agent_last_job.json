@@ -1,7 +1,7 @@
 {
-  "job_id": "tw_e07_agent_state_smoke",
+  "job_id": "tw_e08_evolution_hard_reverify",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-08T18:46:15.005773+00:00",
-  "note": "training wheels: AgentState create/save/load round-trip"
+  "finished": "2026-08-08T19:02:17.082157+00:00",
+  "note": "training wheels: re-verify evolution cycle after __main__ harden + AgentState wire (must exit 0)"
 }

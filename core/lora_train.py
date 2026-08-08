@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -54,15 +55,18 @@ def _may_train() -> tuple[bool, str]:
 def _load_jsonl(path: Path, limit: int = 500) -> List[Dict[str, Any]]:
     if not path.exists():
         return []
-    rows = []
-    for line in path.read_text(encoding="utf-8").splitlines()[-limit:]:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rows.append(json.loads(line))
-        except Exception:
-            continue
+    rows: List[Dict[str, Any]] = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines()[-limit:]:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except Exception:
+                continue
+    except Exception:
+        pass
     return rows
 
 
@@ -81,7 +85,10 @@ def dry_run_report() -> Dict[str, Any]:
         "recommended_rank": 8 if len(pairs) + len(sft) < 50 else 16,
         "recommended_max_steps": 20 if _training_wheels() else 100,
         "vram_note": "GTX 1650 4GB → keep rank<=16, target_modules=[q_proj,v_proj] or equivalent",
-        "next": "Set ETHER_LORA_TRAIN=1 and ETHER_LORA_PROMOTE=1 only after dashboard preference health is green",
+        "next": (
+            "Set ETHER_LORA_TRAIN=1 and ETHER_LORA_PROMOTE=1 only after "
+            "dashboard preference health is green"
+        ),
         "doctrine": "offline_rlhf_then_gated_lora",
     }
 
@@ -123,7 +130,6 @@ def train_adapter(
     report["dry_run"] = dry_run
 
     if dry_run:
-        # Simulate the loralib-style flow the user referenced
         report["simulation"] = {
             "import": "import loralib as lora  # or peft / unsloth if installed",
             "layer_example": "lora.Linear(in_features=512, out_features=256, r=rank)",
@@ -138,7 +144,6 @@ def train_adapter(
         _write_report(tid, report)
         return report
 
-    # Real path (only reached when flags + data present)
     may, reason = _may_train()
     if not may:
         report["ok"] = False
@@ -147,7 +152,6 @@ def train_adapter(
         return report
 
     try:
-        # Prefer Unsloth → PEFT → pure loralib fallback
         backend = _detect_backend()
         report["backend"] = backend
 
@@ -163,8 +167,6 @@ def train_adapter(
 
         report.update(adapter_meta)
         report["ok"] = True
-
-        # Citrine-level memory of the adapter
         _record_adapter_in_citrine(report)
 
     except Exception as e:
@@ -178,30 +180,25 @@ def train_adapter(
 def _detect_backend() -> str:
     try:
         import unsloth  # noqa: F401
+
         return "unsloth"
     except Exception:
         pass
     try:
         import peft  # noqa: F401
+
         return "peft"
     except Exception:
         pass
     try:
         import loralib  # noqa: F401
+
         return "loralib"
     except Exception:
         return "torch_manual"
 
 
 def _train_unsloth(base, pairs, sft, rank, max_steps, tid) -> Dict[str, Any]:
-    """Placeholder for real Unsloth QLoRA. Requires unsloth + GPU."""
-    # Real implementation would:
-    # from unsloth import FastLanguageModel
-    # model, tokenizer = FastLanguageModel.from_pretrained(...)
-    # model = FastLanguageModel.get_peft_model(model, r=rank, ...)
-    # trainer = ...
-    # trainer.train()
-    # model.save_pretrained(ADAPTER_DIR / tid)
     raise NotImplementedError(
         "Unsloth path ready in structure; install unsloth + set flags + run on GPU host"
     )
@@ -212,13 +209,6 @@ def _train_peft(base, pairs, sft, rank, max_steps, tid) -> Dict[str, Any]:
 
 
 def _train_loralib_style(base, pairs, sft, rank, max_steps, tid) -> Dict[str, Any]:
-    """Minimal loralib-style path matching the user example.
-
-    This is the concrete expansion of:
-        layer = lora.Linear(...)
-        lora.mark_only_lora_as_trainable(model)
-        torch.save(lora.lora_state_dict(model), ...)
-    """
     try:
         import loralib as lora
         import torch
@@ -226,20 +216,18 @@ def _train_loralib_style(base, pairs, sft, rank, max_steps, tid) -> Dict[str, An
     except Exception as e:
         raise RuntimeError(f"loralib/torch unavailable: {e}") from e
 
-    # Tiny demo network so we never touch a real LLM under wheels
     class TinyCoder(nn.Module):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
             self.fc1 = lora.Linear(128, 64, r=rank)
             self.fc2 = lora.Linear(64, 32, r=rank)
 
-        def forward(self, x):
+        def forward(self, x: Any) -> Any:
             return self.fc2(torch.relu(self.fc1(x)))
 
     model = TinyCoder()
     lora.mark_only_lora_as_trainable(model)
 
-    # One micro step so the checkpoint is non-empty
     opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=1e-3)
     x = torch.randn(4, 128)
     loss = model(x).sum()
@@ -269,7 +257,6 @@ def _write_report(tid: str, report: Dict[str, Any]) -> None:
     path = ADAPTER_DIR / f"train_report_{tid}.json"
     path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     report["report_path"] = str(path.relative_to(ROOT))
-    # Mirror for host observability
     try:
         (ROOT / "artifacts" / "lora_train_last.json").write_text(
             json.dumps(report, indent=2), encoding="utf-8"
@@ -279,11 +266,9 @@ def _write_report(tid: str, report: Dict[str, Any]) -> None:
 
 
 def _record_adapter_in_citrine(report: Dict[str, Any]) -> None:
-    """Citrine-level memory: the system remembers that an adapter exists and what it improved."""
     try:
         from core.registry import build_default_registry
         from core.schemas import CitrineRequest, Envelope
-        from uuid import uuid4
 
         text = (
             f"LoRA adapter trained. id={report.get('id')} backend={report.get('backend')} "
@@ -291,15 +276,17 @@ def _record_adapter_in_citrine(report: Dict[str, Any]) -> None:
             f"pairs={report.get('n_pairs_seen')} sft={report.get('n_sft_seen')}. "
             f"Self-improvement artifact. Query this to recall how the model evolved."
         )
-        docs = [{
-            "text": text,
-            "metadata": {
-                "kind": "lora_adapter",
-                "adapter_id": report.get("id"),
-                "path": report.get("adapter_path"),
-                "train_doctrine": "grok_v1",
-            },
-        }]
+        docs = [
+            {
+                "text": text,
+                "metadata": {
+                    "kind": "lora_adapter",
+                    "adapter_id": report.get("id"),
+                    "path": report.get("adapter_path"),
+                    "train_doctrine": "grok_v1",
+                },
+            }
+        ]
         build_default_registry().execute(
             Envelope(
                 task_id=uuid4(),
@@ -312,7 +299,6 @@ def _record_adapter_in_citrine(report: Dict[str, Any]) -> None:
 
 
 def promote_check() -> Dict[str, Any]:
-    """What the system must ask itself before any weight change."""
     return {
         "questions": [
             "How do we get better?",
@@ -327,6 +313,12 @@ def promote_check() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    import pprint
-    pprint.pprint(dry_run_report())
-    pprint.pprint(train_adapter(dry_run=True))
+    # Host-agent entry: always dry-run under training wheels; exit 0 on success.
+    try:
+        report = dry_run_report()
+        result = train_adapter(dry_run=True)
+        print(json.dumps({"dry_run_report": report, "train_adapter": result}, indent=2))
+        sys.exit(0 if result.get("ok") else 1)
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)[:400]}, indent=2))
+        sys.exit(1)

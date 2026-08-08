@@ -229,6 +229,26 @@ def _run_bare(mut: Dict[str, str], timeout: float) -> Dict[str, Any]:
         shutil.rmtree(tree, ignore_errors=True)
 
 
+def _write_scoreboard(path: Path, rows: List[Dict[str, Any]], model: str) -> None:
+    """Always write current rows so partial results survive timeouts/crashes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    n_ok = sum(1 for r in rows if r.get("ok"))
+    path.write_text(
+        json.dumps(
+            {
+                "results": rows,
+                "passed": n_ok,
+                "total": len(rows),
+                "model": model,
+                "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    print(f"scoreboard (partial): {path}  {n_ok}/{len(rows)}", flush=True)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Phase E mutation-restore batch")
     ap.add_argument("--arm", choices=["direct", "bare", "all"], default="direct")
@@ -256,6 +276,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         flush=True,
     )
 
+    sb = Path(args.scoreboard)
     rows: List[Dict[str, Any]] = []
     for arm in arms:
         print(f"\n=== arm={arm} mode={args.mode} ===", flush=True)
@@ -277,19 +298,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                 f"{r.get('reason') or r.get('error') or ''}",
                 flush=True,
             )
+            # Write after every mutation so partial results always land
+            _write_scoreboard(sb, rows, model)
 
     n_ok = sum(1 for r in rows if r.get("ok"))
     print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
-    sb = Path(args.scoreboard)
-    sb.parent.mkdir(parents=True, exist_ok=True)
-    sb.write_text(
-        json.dumps(
-            {"results": rows, "passed": n_ok, "total": len(rows), "model": model},
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
-    print(f"scoreboard: {sb}", flush=True)
+    _write_scoreboard(sb, rows, model)
+    print(f"scoreboard final: {sb}", flush=True)
     return 0 if n_ok == len(rows) else 1
 
 

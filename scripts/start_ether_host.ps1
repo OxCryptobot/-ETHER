@@ -28,7 +28,7 @@ while ($true) {
 
     if ($code -eq 42) {
         Write-Host ""
-        Write-Host "Source updated — restarting cleanly..." -ForegroundColor Yellow
+        Write-Host "Source updated - restarting cleanly..." -ForegroundColor Yellow
         Start-Sleep -Seconds 1
         continue
     }
@@ -38,6 +38,6 @@ while ($true) {
         break
     }
 
-    Write-Host "Process exited with code $code — stopping." -ForegroundColor Red
+    Write-Host "Process exited with code $code - stopping." -ForegroundColor Red
     break
 }

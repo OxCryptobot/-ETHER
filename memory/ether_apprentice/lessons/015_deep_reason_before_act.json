@@ -1,0 +1,9 @@
+{
+  "id": "015_deep_reason_before_act",
+  "teacher": "grok",
+  "craft": "reasoning",
+  "rule": "Before any corrective action: (1) load the latest scoreboard / last_job / relevant logs, (2) state the observed failure mode in one sentence (e.g. 'ledger mutations exhaust 16-step budget before write_file'), (3) choose the smallest experiment that distinguishes budget vs tool-path vs logic, (4) enqueue that experiment with a new id and clear note. Never shotgun random max-steps increases or re-run the identical failing job. Depth of thought is measured by how cleanly the next job answers the open question.",
+  "match": "requeue|fix|experiment|hypothesis|max.steps",
+  "code": "scripts.foreman + scripts.host_agent",
+  "taught_at": "2026-08-08"
+}

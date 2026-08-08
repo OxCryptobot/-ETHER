@@ -4,7 +4,8 @@
 Git policy (never stuck):
   - On startup: fetch + reset --hard origin/main
   - Each poll: fetch + ff-only; if diverged, reset --hard origin/main
-  - Push report: commit only the finished job + status files; never glob entire done/
+  - Push report: stage the jobs directories + status files (git handles add+delete)
+  - Never expand every historical file into argv (that caused WinError 206)
   - On push fail: one rebase retry then hard reset (origin always wins)
 
 This agent is a *consumer*, not a long-lived feature branch. Matching origin
@@ -116,40 +117,24 @@ def git_sync() -> None:
 def git_push_report(job_id: str, ok: bool, finished_rel: Optional[str] = None) -> None:
     """Best-effort report push. Never leave repo diverged afterward.
 
-    Only stage the finished job file + core status files.
-    Never glob the entire done/ or failed/ history — that caused
-    WinError 206 (command line too long) once hundreds of z_gate files existed.
+    Stage the jobs *directories* (not every individual file).
+    This correctly records both the new file in done/failed AND the
+    deletion of the pending file, without exploding the command line
+    (which previously caused WinError 206).
     """
     paths: List[str] = [
         "artifacts/host_agent_last_job.json",
         "memory/host_agent/status.json",
+        "artifacts/jobs/pending",
+        "artifacts/jobs/done",
+        "artifacts/jobs/failed",
     ]
-    # optional latest reports if present
     for name in ("host_report_latest.md", "host_report_latest.json"):
         p = ROOT / "artifacts" / name
         if p.is_file():
             paths.append(str(p.relative_to(ROOT)))
 
-    # the single finished job that just moved
-    if finished_rel:
-        paths.append(finished_rel)
-
-    # also stage pending so deletions land (empty pending after drain)
-    pending_dir = ROOT / "artifacts" / "jobs" / "pending"
-    if pending_dir.exists():
-        for p in pending_dir.glob("*.json"):
-            if p.name != ".gitkeep":
-                paths.append(str(p.relative_to(ROOT)))
-
-    # de-dupe while preserving order
-    seen = set()
-    unique_paths = []
-    for p in paths:
-        if p not in seen:
-            seen.add(p)
-            unique_paths.append(p)
-
-    run(["git", "add", "-f", "--"] + unique_paths, timeout=60)
+    run(["git", "add", "-f", "--"] + paths, timeout=90)
     status = "PASS" if ok else "FAIL"
     msg = f"host agent report: job={job_id} {status}"
     c = run(["git", "commit", "-m", msg], timeout=60)
@@ -176,7 +161,6 @@ def git_push_report(job_id: str, ok: bool, finished_rel: Optional[str] = None) -
         log(f"push retry rc={p2.returncode}")
         if p2.returncode == 0:
             return
-    # Never stay diverged — origin wins
     git_reset_to_origin("push could not land")
 
 
@@ -302,7 +286,6 @@ def main() -> int:
     print("  dashboard: http://127.0.0.1:8787/agent", flush=True)
     print("=" * 60, flush=True)
 
-    # BOOT: always match origin so we never start on a stuck diverged tree
     git_reset_to_origin("startup")
 
     PENDING.mkdir(parents=True, exist_ok=True)

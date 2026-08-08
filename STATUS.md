@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-08 — Engineering audit complete. Phase 1 critical path locked. Training wheels remain ON.
+**Updated:** 2026-08-08 19:05 — evolution_loop hardened for clean host exit + AgentState wired. Re-verify job enqueued.
 
 Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 
@@ -26,9 +26,9 @@ Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 | `main` | green on fresh clone for core tests |
 | **Does ETHER beat a bare model on holdout generate?** | **No** (ablation stands) |
 | **Does tool-runtime beat bare on hard repo-oracle pack?** | **Yes** (Phase D 5/5) |
-| AgentState | skeleton landed (`core/agent_state.py`) |
+| AgentState | skeleton landed + now wired into EvolutionController |
 | LoRA path | data prep + dry-run live; real train dual-flag gated |
-| Evolution loop | introspection mandatory; re-verify jobs enqueued |
+| Evolution loop | introspection mandatory; __main__ hardened; re-verify enqueued |
 
 ### Holdout generate (unchanged)
 
@@ -57,9 +57,9 @@ This is the signal we are amplifying.
 | Package | Status | Success criteria |
 |---------|--------|------------------|
 | 1A Tool-first default | NEXT | tool_runtime only default under wheels; Phase D still 5/5 |
-| 1B AgentState durable | SKELETON LANDED | create/save/load round-trip; shared by gems |
+| 1B AgentState durable | WIRED into EvolutionController | create/save/load round-trip; shared by gems |
 | 1C AST transactional edits | QUEUED | Python-first; snapshot + rollback on test fail |
-| 1D Expand eval + close current FAILs | IN PROGRESS | tw_e03/e04 diagnosed; 10+ hard tasks |
+| 1D Expand eval + close current FAILs | IN PROGRESS | evolution re-verify enqueued as tw_e08 |
 
 **Gate to Phase 2:** Tool-first live, AgentState durable across restart, ≥10 hard tasks measured with pipeline lift, evolution FAILs closed.
 
@@ -76,6 +76,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - Labradorite structured root_cause + smallest_experiment
 - Offline preference pairs + train_gates
 - GEMS topology (non-negotiable)
+- AgentState durable shared state
 
 ## Hazards
 
@@ -94,12 +95,12 @@ cp .env.example .env
 pytest -q
 python -m cli.main doctor
 python -m core.lora_train          # dry-run only under wheels
-python -m core.evolution_loop      # introspection cycle
+python -m core.evolution_loop      # introspection cycle (now clean exit)
 ```
 
 ## Next action only
 
-1. Land tool-first default (Package 1A)
-2. Wire AgentState into EvolutionController + Selenite
-3. Close any remaining evolution FAILs with Labradorite
-4. Expand repo-oracle suite to ≥10 hard tasks and measure
+1. Host drains tw_e08_evolution_hard_reverify → expect PASS
+2. Land tool-first default (Package 1A)
+3. Expand repo-oracle suite to ≥10 hard tasks and measure
+4. Only after measured lift: discuss wheels

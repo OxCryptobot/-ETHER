@@ -1,0 +1,11 @@
+{
+  "id": "tw_e08_evolution_hard_reverify",
+  "note": "training wheels: re-verify evolution cycle after __main__ harden + AgentState wire (must exit 0)",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.evolution_loop"],
+      "timeout": 180
+    }
+  ]
+}

@@ -12,11 +12,13 @@ Hard rules:
 - No LoRA weight updates here — only clean data + structured critique +
   mandatory self-improvement introspection.
 - The system ALWAYS asks itself the four questions before proposing change.
+- AgentState is the durable shared state across all gems.
 """
 from __future__ import annotations
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -82,13 +84,28 @@ class EvolutionController:
         original_failure: Optional[Dict[str, Any]] = None,
         mode: str = "unit",
         task_id: str = "",
+        thread_id: str = "",
     ) -> Dict[str, Any]:
         """One full evolution cycle.
 
         Returns a structured report that is also written to
         artifacts/evolution_<id>.json and (on FAIL) artifacts/critiques/.
+        AgentState is loaded/saved so state survives across host restarts.
         """
         tid = task_id or str(uuid4())
+
+        # Durable shared state
+        try:
+            from core.agent_state import AgentState
+            state = AgentState.load_or_create(thread_id or tid[:12])
+            state.objective = (objective or "")[:500]
+            state.training_wheels = self.training_wheels
+            if original_failure:
+                state.root_cause = str(original_failure.get("reason") or original_failure.get("error") or "")[:200]
+            state.save()
+        except Exception:
+            state = None
+
         report: Dict[str, Any] = {
             "id": tid,
             "timestamp": _now(),
@@ -101,6 +118,7 @@ class EvolutionController:
             "smallest_experiment": None,
             "critique_path": None,
             "introspection": None,
+            "thread_id": getattr(state, "thread_id", None) if state else None,
         }
 
         # --- 0. Mandatory self-improvement questions (always) ---
@@ -112,6 +130,9 @@ class EvolutionController:
         plan_out = self._selenite(objective, original_failure)
         report["stages"].append({"gem": "selenite", **plan_out})
         hypothesis = plan_out.get("hypothesis") or plan_out.get("reasoning") or ""
+        if state is not None:
+            state.hypothesis = hypothesis[:300]
+            state.save()
 
         # --- 2. Labradorite (mandatory on FAIL paths) ---
         must_critique = bool(original_failure) or not (sandbox_result or {}).get("ok", True)
@@ -126,6 +147,11 @@ class EvolutionController:
                 "root_cause": report["root_cause"],
                 "hypothesis": hypothesis,
             })
+            if state is not None:
+                state.root_cause = report["root_cause"]
+                state.last_critique = str(crit.get("critique") or "")[:400]
+                state.introspection = report["introspection"]
+                state.save()
             try:
                 from core.memory_bus import record_critique
                 record_critique(
@@ -195,6 +221,12 @@ class EvolutionController:
         out_path = ARTIFACTS / f"evolution_{tid[:8]}.json"
         _write_json(out_path, report)
         report["evolution_path"] = str(out_path.relative_to(ROOT))
+
+        if state is not None:
+            state.meta["last_evolution_id"] = tid
+            state.meta["last_evolution_ok"] = True
+            state.save()
+
         return report
 
     def _selenite(self, objective: str, original_failure: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -271,7 +303,7 @@ class EvolutionController:
                     root_cause = "tool_order"
                 elif "parse" in reason or "syntax" in reason:
                     root_cause = "parse_fail"
-                elif "repair" in reason or "fix" in reason:
+                elif "repair" in reason or "test" in reason:
                     root_cause = "repair_quality"
                 elif sandbox_result and not sandbox_result.get("ok"):
                     root_cause = "sandbox_fail"
@@ -323,11 +355,15 @@ def run_evolution_cycle(**kwargs) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    import pprint
-    pprint.pprint(
-        run_evolution_cycle(
+    # Host-agent entry: always structured JSON + clean exit under training wheels.
+    try:
+        result = run_evolution_cycle(
             objective="diagnose max_steps on hard ledger mutation",
             original_failure={"reason": "max_steps", "n_steps": 24, "mutation": "ledger_double"},
             code="# placeholder",
         )
-    )
+        print(json.dumps(result, indent=2, default=str))
+        sys.exit(0 if result.get("ok") else 1)
+    except Exception as exc:
+        print(json.dumps({"ok": False, "error": str(exc)[:400]}, indent=2))
+        sys.exit(1)

@@ -2,6 +2,10 @@
 
 Reads apprentice lessons + blueprint cursor. On idle, enqueues next work.
 On FAIL, applies playbook requeue when a lesson matches.
+
+HARD RULE: never apply a playbook to a job that is itself a playbook recovery
+(note starts with 'playbook:' or id contains '_diag_after_' / recovery markers).
+That produced an infinity loop 2026-08-08.
 """
 from __future__ import annotations
 
@@ -20,7 +24,6 @@ STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
 
-# Ordered curriculum — foreman walks this when queue empty
 CURRICULUM: List[Dict[str, Any]] = [
     {
         "id": "p1_01_ruff_tests",
@@ -229,7 +232,11 @@ def load_lessons() -> List[Dict[str, Any]]:
 
 def pending_ids() -> set:
     PENDING.mkdir(parents=True, exist_ok=True)
-    return {p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem for p in PENDING.glob("*.json") if p.name != ".gitkeep"}
+    return {
+        p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem
+        for p in PENDING.glob("*.json")
+        if p.name != ".gitkeep"
+    }
 
 
 def write_job(job: Dict[str, Any]) -> Path:
@@ -263,15 +270,9 @@ def record_last_job(state: Dict[str, Any]) -> None:
 
 
 def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
-    """If pending empty, place next curriculum job not yet completed.
-
-    Continuous z_gate loop is DISABLED (was causing infinity enqueue once
-    curriculum finished). Re-enable later with cooldown or mode flag if needed.
-    """
     if pending_ids():
         return None
     done = set(state.get("completed") or [])
-    # also treat files in done/ as completed
     if DONE.exists():
         for p in DONE.glob("*.json"):
             done.add(p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem)
@@ -288,13 +289,26 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
         state["cursor"] = i
         state["last_enqueued"] = jid
         return jid
-    # Curriculum complete — stay idle (no continuous z_gate spam)
     state["cursor"] = len(CURRICULUM)
     return None
 
 
+def _is_playbook_recovery(jid: str, note: str) -> bool:
+    """True if this failure is already a playbook recovery — do not chain."""
+    n = (note or "").strip().lower()
+    j = (jid or "").strip().lower()
+    if n.startswith("playbook:"):
+        return True
+    if "diag_after_budget" in j or "diag_after_budget" in n:
+        return True
+    if j.startswith("phase_e_ledger_trace") or j.startswith("phase_e_topo_trace"):
+        # one-shot diagnosis jobs must not re-trigger the same playbook
+        return True
+    return False
+
+
 def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
-    """Match apprentice lessons against last failure; enqueue recovery job."""
+    """Match apprentice lessons against last failure; enqueue recovery job once."""
     if not LAST_JOB.exists():
         return None
     try:
@@ -304,17 +318,24 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
     if last.get("ok") is not False:
         return None
     jid = last.get("job_id") or ""
-    note = (last.get("note") or "") + " " + jid
+    note = last.get("note") or ""
+    if _is_playbook_recovery(jid, note):
+        return None  # never chain playbooks
+    hay = note + " " + jid
     lessons = load_lessons()
     for les in lessons:
         pat = les.get("match") or ""
         if not pat:
             continue
-        if re.search(pat, note, re.I) or re.search(pat, jid, re.I):
+        if re.search(pat, hay, re.I):
             recovery = les.get("enqueue")
             if isinstance(recovery, dict) and recovery.get("id"):
                 rid = recovery["id"] + "_" + datetime.now(timezone.utc).strftime("%H%M%S")
-                job = {**recovery, "id": rid, "note": f"playbook:{les.get('id')} for {jid}"}
+                job = {
+                    **recovery,
+                    "id": rid,
+                    "note": f"playbook:{les.get('id')} for {jid}",
+                }
                 write_job(job)
                 state["last_playbook"] = les.get("id")
                 return rid
@@ -322,7 +343,6 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
 
 
 def tick() -> Dict[str, Any]:
-    """One foreman cycle. Call from ether_host after jobs or on idle."""
     state = load_state()
     record_last_job(state)
     recovered = playbook_on_fail(state)

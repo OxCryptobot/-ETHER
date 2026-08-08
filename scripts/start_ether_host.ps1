@@ -1,4 +1,7 @@
 # ONE window ETHER host (dashboard + agent + foreman)
+# Auto-restarts when the Python process exits with code 42
+# (source files updated on origin).
+#
 #   powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
 
 $ErrorActionPreference = "Continue"
@@ -9,9 +12,32 @@ Set-Location $Root
 $Py = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not (Test-Path $Py)) { Write-Error "Missing $Py"; exit 1 }
 
-Write-Host "Sync origin/main..." -ForegroundColor Cyan
-git fetch origin 2>&1 | Out-Null
-git reset --hard origin/main 2>&1 | Out-Host
+Write-Host "ETHER HOST one window | auto-reload enabled" -ForegroundColor Green
+Write-Host "dashboard http://127.0.0.1:8787/agent" -ForegroundColor Green
+Write-Host "Ctrl+C to stop permanently" -ForegroundColor DarkGray
+Write-Host ""
 
-Write-Host "ETHER HOST one window | dashboard http://127.0.0.1:8787/agent" -ForegroundColor Green
-& $Py scripts\ether_host.py
+while ($true) {
+    Write-Host "Sync origin/main..." -ForegroundColor Cyan
+    git fetch origin 2>&1 | Out-Null
+    git reset --hard origin/main 2>&1 | Out-Host
+
+    Write-Host "Starting ether_host..." -ForegroundColor Cyan
+    & $Py scripts\ether_host.py
+    $code = $LASTEXITCODE
+
+    if ($code -eq 42) {
+        Write-Host ""
+        Write-Host "Source updated — restarting cleanly..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 1
+        continue
+    }
+
+    if ($code -eq 0) {
+        Write-Host "Stopped cleanly." -ForegroundColor Green
+        break
+    }
+
+    Write-Host "Process exited with code $code — stopping." -ForegroundColor Red
+    break
+}

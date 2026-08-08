@@ -1,0 +1,15 @@
+{
+  "id": "phase_e_prefer_001",
+  "note": "Convert scoreboard_phase_e_steps24 into preferences + live strategy stats (lesson 016)",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.preference import record_preferences_from_scoreboard, preference_summary; m = record_preferences_from_scoreboard('artifacts/scoreboard_phase_e_steps24.json'); print(m); print(preference_summary())"
+      ],
+      "timeout": 60
+    }
+  ]
+}

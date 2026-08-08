@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-08 20:01 — Package 1A tool-first default landed. Host idle after tw_e08 PASS.
+**Updated:** 2026-08-08 — SUPER APP dashboard consolidation landed. Package 1A tool-first default LANDED. Host idle after tw_e09.
 
 Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 
@@ -30,6 +30,7 @@ Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 | LoRA path | data prep + dry-run live; real train dual-flag gated |
 | Evolution loop | introspection mandatory; __main__ hardened; tw_e08 PASS |
 | **Tool-first default (1A)** | **LANDED** — defaults ON under training wheels |
+| **Dashboard SUPER APP** | **LANDED** — unified Host + Control Matrix at /agent |
 
 ### Holdout generate (unchanged)
 
@@ -69,6 +70,13 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 
 ---
 
+## Dashboard (SUPER APP)
+
+- URL: `http://127.0.0.1:8787/agent`
+- Unified view: Phase 1 board (live from STATUS.md) + Host Agent queue/log/status + Control Matrix live coding feed + GEMS flow + code preview
+- Poll 1.5 s; paths under `artifacts/` only (collector_host_agent fixed)
+- `/api/host-agent` + `/api/snapshot` both consumed
+
 ## What genuinely works
 
 - Holdout, prompt_guard, assert_audit, ablation culture
@@ -79,6 +87,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - GEMS topology (non-negotiable)
 - AgentState durable shared state
 - **Tool-first default under training wheels (Package 1A)**
+- **SUPER APP dashboard (Host + Control Matrix consolidated)**
 
 ## Hazards
 
@@ -100,9 +109,18 @@ python -m core.lora_train          # dry-run only under wheels
 python -m core.evolution_loop      # introspection cycle (now clean exit)
 ```
 
+Host (one window):
+```powershell
+cd C:\Users\Otcde\ETHER
+git fetch origin
+git reset --hard origin/main
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\start_ether_host.ps1
+```
+
 ## Next action only
 
-1. Host drains tw_e09_tool_first_default (expect PASS)
+1. Open http://127.0.0.1:8787/agent — SUPER APP live
 2. Expand repo-oracle suite to ≥10 hard tasks and measure pipeline lift
 3. Land 1C AST transactional edits only after measurement
 4. Only after measured lift: discuss wheels

@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ETHER Host Agent</title>
+<title>@ETHER SUPER APP — Host + Control Matrix</title>
 <style>
   :root {
     --bg: #0b0f14; --panel: #121821; --border: #1e2a38;
     --text: #d7e0ea; --muted: #7d8b9a; --green: #3ddc97;
-    --red: #ff5c5c; --amber: #f0b429; --cyan: #4cc9f0;
+    --red: #ff5c5c; --amber: #f0b429; --cyan: #4cc9f0; --violet: #9b8cff;
     --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; min-height: 100vh; }
   header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 20px; border-bottom: 1px solid var(--border); background: #0e141c;
-    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 18px; border-bottom: 1px solid var(--border); background: #0e141c;
+    position: sticky; top: 0; z-index: 20;
   }
-  header h1 { margin: 0; font-size: 16px; letter-spacing: 0.04em; }
+  header h1 { margin: 0; font-size: 15px; letter-spacing: 0.04em; }
   header h1 span { color: var(--cyan); }
   .badge {
     display: inline-flex; align-items: center; gap: 8px;
@@ -28,62 +28,108 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
   .dot.off { background: var(--red); }
+  .dot.busy { background: var(--cyan); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
+
+  .phase-board {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    padding: 12px 14px; border-bottom: 1px solid var(--border); background: #0c121a;
+  }
+  .phase-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; text-align: center;
+  }
+  .phase-card .pkg { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .phase-card .st { font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .phase-card.landed .st { color: var(--green); }
+  .phase-card.next .st, .phase-card.progress .st { color: var(--amber); }
+  .phase-card.queued .st { color: var(--cyan); }
+  .phase-card.unknown .st { color: var(--muted); }
+
   main {
-    display: grid; grid-template-columns: 280px 1fr 1fr; grid-template-rows: auto auto 1fr;
-    gap: 12px; padding: 12px; height: calc(100vh - 56px);
+    display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: auto auto 1fr;
+    gap: 10px; padding: 10px; height: calc(100vh - 130px);
   }
   .panel {
     background: var(--panel); border: 1px solid var(--border);
     border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
   }
   .panel h2 {
-    margin: 0; padding: 10px 12px; font-size: 12px; text-transform: uppercase;
+    margin: 0; padding: 8px 12px; font-size: 11px; text-transform: uppercase;
     letter-spacing: 0.08em; color: var(--muted);
     border-bottom: 1px solid var(--border); background: #0e141c;
   }
-  .body { padding: 10px 12px; overflow: auto; flex: 1; }
-  .counts { display: flex; gap: 8px; padding: 10px 12px; }
+  .body { padding: 8px 10px; overflow: auto; flex: 1; }
+  .counts { display: flex; gap: 6px; padding: 8px 10px; }
   .count {
-    flex: 1; text-align: center; padding: 10px 6px;
-    border-radius: 8px; background: #0b1017; border: 1px solid var(--border);
+    flex: 1; text-align: center; padding: 8px 4px;
+    border-radius: 6px; background: #0b1017; border: 1px solid var(--border);
   }
-  .count b { display: block; font-size: 22px; }
-  .count span { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .count b { display: block; font-size: 20px; }
+  .count span { font-size: 10px; color: var(--muted); text-transform: uppercase; }
   .count.pending b { color: var(--amber); }
   .count.done b { color: var(--green); }
   .count.failed b { color: var(--red); }
   .job {
-    padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
-    background: #0b1017; border: 1px solid var(--border); font-size: 12px;
+    padding: 6px 8px; margin-bottom: 4px; border-radius: 5px;
+    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
   }
   .job .id { color: var(--cyan); font-family: var(--mono); }
-  .job .meta { color: var(--muted); margin-top: 2px; }
-  .log, .report, .lesson {
-    font-family: var(--mono); font-size: 11.5px; line-height: 1.45;
+  .job .meta { color: var(--muted); margin-top: 1px; font-size: 10px; }
+  .log, .report, .lesson, .code, .term {
+    font-family: var(--mono); font-size: 11px; line-height: 1.4;
     white-space: pre-wrap; word-break: break-word; color: #b8c4d0;
   }
-  .log .err { color: var(--red); }
-  .log .ok { color: var(--green); }
-  .log .jobline { color: var(--cyan); }
+  .log .err, .term .err { color: var(--red); }
+  .log .ok, .term .ok { color: var(--green); }
+  .log .jobline, .term .live { color: var(--cyan); }
   .span2 { grid-column: span 2; }
-  .status-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .status-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
   .status-row strong { color: var(--text); }
   .lesson-card {
-    border: 1px solid var(--border); border-radius: 6px; padding: 8px;
-    margin-bottom: 6px; background: #0b1017;
+    border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px;
+    margin-bottom: 4px; background: #0b1017;
   }
-  .lesson-card .craft { color: var(--amber); font-size: 11px; text-transform: uppercase; }
+  .lesson-card .craft { color: var(--amber); font-size: 10px; text-transform: uppercase; }
+  .codebox {
+    font-family: var(--mono); font-size: 11px; background: #0a0e16;
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px;
+    height: 100%; overflow: auto; white-space: pre; color: #d5deec; margin: 0;
+  }
+  .term-line { display: grid; grid-template-columns: 54px 1fr; gap: 8px; padding: 2px 0; border-bottom: 1px solid rgba(30,42,56,0.4); }
+  .term-ts { color: var(--muted); font-size: 10px; }
+  .flow {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0;
+  }
+  .flow-node {
+    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: #0b1017; font-size: 11px;
+  }
+  .flow-node b { color: var(--cyan); }
+  .flow-arrow { color: var(--muted); }
   @media (max-width: 1100px) {
     main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
     .span2 { grid-column: span 1; }
+    .phase-board { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>@ETHER</span> Host &mdash; Apprentice Live</h1>
-  <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
+  <h1><span>@ETHER</span> SUPER APP — Host Agent + Control Matrix</h1>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
+    <div class="badge" id="liveCoding">coding: idle</div>
+  </div>
 </header>
+
+<div class="phase-board" id="phaseBoard">
+  <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">—</div></div>
+  <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">—</div></div>
+  <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">—</div></div>
+  <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">—</div></div>
+</div>
+
 <main>
   <section class="panel" style="grid-row: span 3;">
     <h2>Job queue</h2>
@@ -96,20 +142,35 @@
   </section>
 
   <section class="panel span2">
-    <h2>Status / Foreman</h2>
+    <h2>Status / Foreman / Last job</h2>
     <div class="body status-row" id="status">loading...</div>
   </section>
 
   <section class="panel">
-    <h2>Agent log</h2>
+    <h2>Agent log (realtime)</h2>
     <div class="body log" id="log"></div>
   </section>
 
   <section class="panel">
-    <h2>Apprentice lessons (teacher: Grok)</h2>
-    <div class="body" id="lessons"></div>
+    <h2>Live coding / activity feed</h2>
+    <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events…</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Control flow + GEMS</h2>
+    <div class="body">
+      <div class="flow" id="flow"></div>
+      <div style="margin-top:8px" id="gemsHealth"></div>
+      <div style="margin-top:8px" id="lessons"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Generated / last code preview</h2>
+    <pre class="codebox" id="codepane"># waiting for pipeline / tool-runtime output</pre>
   </section>
 </main>
+
 <script>
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
@@ -123,14 +184,24 @@ function colorize(line) {
 }
 function renderJobs(list, title) {
   if (!list || !list.length) return '';
-  return '<div style="color:var(--muted);font-size:11px;margin:8px 0 4px">' + title + '</div>' +
-    list.slice(0, 12).map(j => `
+  return '<div style="color:var(--muted);font-size:10px;margin:6px 0 3px">' + title + '</div>' +
+    list.slice(0, 10).map(j => `
       <div class="job">
         <div class="id">${esc(j.id)}</div>
         <div class="meta">${esc(j.note || j.sprint || '')} ${esc(j.source || '')}</div>
       </div>`).join('');
 }
-async function tick() {
+function setPhase(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const st = (val || 'unknown').toUpperCase();
+  el.querySelector('.st').textContent = st;
+  el.className = 'phase-card ' +
+    (st === 'LANDED' || st === 'WIRED' ? 'landed' :
+     st === 'NEXT' || st === 'IN PROGRESS' ? 'progress' :
+     st === 'QUEUED' ? 'queued' : 'unknown');
+}
+async function tickHost() {
   try {
     const r = await fetch('/api/host-agent');
     const d = await r.json();
@@ -146,21 +217,28 @@ async function tick() {
     const q = d.queue || {};
     document.getElementById('queue').innerHTML =
       renderJobs(q.pending, 'PENDING') +
-      renderJobs(q.done, 'DONE') +
+      renderJobs(q.done, 'RECENT DONE') +
       renderJobs(q.failed, 'FAILED');
 
     const st = d.status || {};
     const last = d.last_job || {};
     const fm = d.foreman || {};
     const ap = d.apprentice || {};
+    const ph = d.phase1 || {};
+    setPhase('p1a', ph['1A']);
+    setPhase('p1b', ph['1B']);
+    setPhase('p1c', ph['1C']);
+    setPhase('p1d', ph['1D']);
+
     document.getElementById('status').innerHTML = `
-      <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong></div>
+      <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
+      <div>phase <strong>${esc(st.phase || '—')}</strong></div>
       <div>current <strong>${esc(st.current_job || last.job_id || '—')}</strong></div>
-      <div>last <strong>${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '—'}</strong></div>
+      <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '—'}</strong> ${esc(last.job_id || '')}</div>
       <div>foreman cursor <strong>${esc(fm.cursor ?? '—')}</strong></div>
       <div>completed <strong>${esc((fm.completed || []).length)}</strong></div>
       <div>lessons <strong>${esc(ap.n ?? 0)}</strong></div>
-      <div>teacher <strong>Grok</strong> &rarr; apprentice <strong>ETHER</strong></div>`;
+      <div>teacher <strong>Grok</strong> → apprentice <strong>ETHER</strong></div>`;
 
     const lines = d.log_lines || [];
     const logEl = document.getElementById('log');
@@ -169,12 +247,58 @@ async function tick() {
 
     const lessons = ap.lessons || [];
     document.getElementById('lessons').innerHTML = lessons.length
-      ? lessons.map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div class="lesson">${esc(L.rule)}</div></div>`).join('')
+      ? '<div style="color:var(--muted);font-size:10px;margin-bottom:4px">APPRENTICE LESSONS</div>' +
+        lessons.slice(0, 8).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div class="lesson">${esc(L.rule)}</div></div>`).join('')
       : '<div class="lesson">(no lessons yet)</div>';
   } catch (e) {
     document.getElementById('alive').textContent = 'dashboard fetch error';
     document.getElementById('dot').className = 'dot off';
   }
+}
+async function tickSnapshot() {
+  try {
+    const r = await fetch('/api/snapshot');
+    const d = await r.json();
+    const consoleData = d.console || {};
+    const busy = !!consoleData.active || (d.current_work && String(d.current_work.phase || '').startsWith('live'));
+    const lc = document.getElementById('liveCoding');
+    lc.textContent = busy ? 'coding: LIVE' : 'coding: idle';
+    if (busy) document.getElementById('dot').className = 'dot busy';
+
+    const term = document.getElementById('term');
+    const lines = consoleData.lines || [];
+    if (lines.length) {
+      term.innerHTML = lines.slice(-40).map(L => {
+        const ts = (L.ts || '').toString();
+        const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+        const cls = /err|fail|error/i.test(L.level || L.text || '') ? 'err' :
+                    /ok|pass/i.test(L.level || L.text || '') ? 'ok' :
+                    /live|job|step/i.test(L.level || L.text || '') ? 'live' : '';
+        return `<div class="term-line ${cls}"><div class="term-ts">${esc(clock || '--:--')}</div><div>${esc(L.text)}</div></div>`;
+      }).join('');
+      term.scrollTop = term.scrollHeight;
+    }
+
+    const code = consoleData.code_preview || (d.latest && d.latest.code) || null;
+    if (code) document.getElementById('codepane').textContent = code;
+
+    const gems = d.gems || [];
+    document.getElementById('flow').innerHTML = gems.length
+      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b> ${esc(g.role || g.layer || '')}</div>`).join('<span class="flow-arrow">→</span>')
+      : '<span style="color:var(--muted)">GEMS topology (Selenite → Rose → Clear Quartz → …)</span>';
+
+    const ha = d.host_agent || {};
+    if (ha.phase1) {
+      setPhase('p1a', ha.phase1['1A']);
+      setPhase('p1b', ha.phase1['1B']);
+      setPhase('p1c', ha.phase1['1C']);
+      setPhase('p1d', ha.phase1['1D']);
+    }
+  } catch (e) { /* non-fatal */ }
+}
+function tick() {
+  tickHost();
+  tickSnapshot();
 }
 tick();
 setInterval(tick, 1500);

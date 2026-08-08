@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""ETHER host agent - job queue consumer.
-
-Git policy (never stuck):
-  - Startup: fetch + reset --hard origin/main
-  - Each poll: fetch + ff-only; if diverged, reset --hard origin/main
-  - Push report: stage job directories + status (handles pending deletes)
-  - Never expand every historical file into argv (WinError 206)
-  - Push fail: one rebase retry then hard reset (origin always wins)
-"""
+"""ETHER host agent - job queue consumer. Simple and reliable."""
 from __future__ import annotations
 
 import json
@@ -17,7 +9,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -25,7 +17,6 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from core.dotenv import load_dotenv
-
     load_dotenv(ROOT / ".env")
 except Exception:
     pass
@@ -34,16 +25,11 @@ POLL = int(os.getenv("ETHER_HOST_AGENT_POLL", "1"))
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
-
-# Status lives under artifacts/ (tracked), NOT memory/ (gitignored).
-# This is required so Grok can see liveness from GitHub.
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LOG = ROOT / "artifacts" / "host_agent_log.txt"
 
 _last_recover_log = 0.0
-_last_liveness_push = 0.0
-LIVENESS_EVERY = 60  # seconds
 
 
 def log(msg: str) -> None:
@@ -73,8 +59,7 @@ def write_status(**extra: Any) -> None:
 
 def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     if cmd and isinstance(cmd[0], str):
-        c0 = cmd[0].replace("\\", "/")
-        name = Path(c0).name.lower()
+        name = Path(cmd[0].replace("\\", "/")).name.lower()
         if name in ("python.exe", "python"):
             cand = (ROOT / cmd[0]).resolve() if not Path(cmd[0]).is_absolute() else Path(cmd[0])
             venv_py = ROOT / ".venv" / "Scripts" / "python.exe"
@@ -83,13 +68,8 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
             elif venv_py.is_file():
                 cmd = [str(venv_py)] + list(cmd[1:])
     return subprocess.run(
-        cmd,
-        cwd=str(ROOT),
-        env=os.environ.copy(),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
+        cmd, cwd=str(ROOT), env=os.environ.copy(),
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout,
     )
 
@@ -103,7 +83,7 @@ def git_reset_to_origin(reason: str) -> bool:
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
     if r.returncode != 0:
-        log(f"reset failed rc={r.returncode} {(r.stderr or '')[:300]}")
+        log(f"reset failed rc={r.returncode}")
         return False
     return True
 
@@ -111,17 +91,21 @@ def git_reset_to_origin(reason: str) -> bool:
 def git_sync() -> None:
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
-    if r.returncode == 0:
-        return
-    git_reset_to_origin("ff-only failed / diverged")
+    if r.returncode != 0:
+        git_reset_to_origin("diverged")
 
 
-def git_push_paths(paths: List[str], msg: str) -> None:
-    """Stage given paths, commit, push. Origin wins on failure."""
-    if not paths:
-        return
+def git_push_report(job_id: str, ok: bool) -> None:
+    paths = [
+        "artifacts/host_agent_last_job.json",
+        "artifacts/host_agent_status.json",
+        "artifacts/jobs/pending",
+        "artifacts/jobs/done",
+        "artifacts/jobs/failed",
+    ]
     run(["git", "add", "-f", "--"] + paths, timeout=90)
-    c = run(["git", "commit", "-m", msg], timeout=60)
+    status = "PASS" if ok else "FAIL"
+    c = run(["git", "commit", "-m", f"host agent report: job={job_id} {status}"], timeout=60)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
     if c.returncode != 0 and "nothing to commit" in combined:
         git_sync()
@@ -134,74 +118,20 @@ def git_push_paths(paths: List[str], msg: str) -> None:
     if p.returncode == 0:
         log("push rc=0")
         return
-    log(f"push rc={p.returncode}; rebase retry")
+    log(f"push rc={p.returncode}; retry")
     run(["git", "fetch", "origin"], timeout=120)
     rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
     if rb.returncode == 0:
         p2 = run(["git", "push", "origin", "main"], timeout=120)
-        log(f"push retry rc={p2.returncode}")
         if p2.returncode == 0:
+            log("push retry rc=0")
             return
-    git_reset_to_origin("push could not land")
-
-
-def git_push_report(job_id: str, ok: bool) -> None:
-    paths = [
-        "artifacts/host_agent_last_job.json",
-        "artifacts/host_agent_status.json",
-        "artifacts/jobs/pending",
-        "artifacts/jobs/done",
-        "artifacts/jobs/failed",
-    ]
-    status = "PASS" if ok else "FAIL"
-    git_push_paths(paths, f"host agent report: job={job_id} {status}")
-
-
-def git_push_liveness() -> None:
-    """Periodic idle heartbeat so remote observers know the host is alive."""
-    global _last_liveness_push
-    now = time.time()
-    if now - _last_liveness_push < LIVENESS_EVERY:
-        return
-    _last_liveness_push = now
-    write_status(current_job=None, phase="idle")
-    git_push_paths(
-        ["artifacts/host_agent_status.json"],
-        "host agent liveness",
-    )
+    git_reset_to_origin("push failed")
 
 
 def list_pending() -> List[Path]:
     PENDING.mkdir(parents=True, exist_ok=True)
-    return sorted(
-        [p for p in PENDING.glob("*.json") if p.name != ".gitkeep"],
-        key=lambda p: p.name,
-    )
-
-
-def run_sprint(name: str) -> int:
-    runner = ROOT / "scripts" / "host_runner.ps1"
-    if not runner.exists():
-        log("host_runner.ps1 missing")
-        return 2
-    r = run(
-        [
-            "powershell",
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(runner),
-            "-Sprint",
-            name,
-        ],
-        timeout=7200,
-    )
-    if r.stdout:
-        print(r.stdout[-4000:], flush=True)
-    if r.stderr:
-        print(r.stderr[-2000:], flush=True)
-    return r.returncode
+    return sorted([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"], key=lambda p: p.name)
 
 
 def run_steps(steps: List[Dict[str, Any]]) -> int:
@@ -212,12 +142,9 @@ def run_steps(steps: List[Dict[str, Any]]) -> int:
         if argv:
             r = run([str(x) for x in argv], timeout=int(step.get("timeout", 3600)))
         elif cmd:
-            r = run(
-                ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
-                timeout=int(step.get("timeout", 3600)),
-            )
+            r = run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
+                    timeout=int(step.get("timeout", 3600)))
         else:
-            log("empty step")
             return 2
         if r.stdout:
             print(r.stdout[-3000:], flush=True)
@@ -244,12 +171,10 @@ def process_job(path: Path) -> bool:
     ok = False
     rc = 1
     try:
-        if job.get("sprint"):
-            rc = run_sprint(str(job["sprint"]))
-        elif job.get("steps"):
+        if job.get("steps"):
             rc = run_steps(list(job["steps"]))
         else:
-            log("job has neither sprint nor steps")
+            log("job has no steps")
             rc = 2
         ok = rc == 0
     except Exception as e:
@@ -261,7 +186,6 @@ def process_job(path: Path) -> bool:
         "ok": ok,
         "rc": rc,
         "finished": datetime.now(timezone.utc).isoformat(),
-        "sprint": job.get("sprint"),
         "note": job.get("note"),
     }
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
@@ -284,9 +208,8 @@ def process_job(path: Path) -> bool:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent - job queue consumer", flush=True)
+    print("  ETHER host_agent", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print(f"  poll={POLL}s", flush=True)
     print("=" * 60, flush=True)
 
     git_reset_to_origin("startup")
@@ -302,7 +225,6 @@ def main() -> int:
             if not jobs:
                 log("idle")
                 write_status(current_job=None, phase="idle")
-                git_push_liveness()
                 time.sleep(max(1, POLL))
                 continue
             for job_path in jobs:

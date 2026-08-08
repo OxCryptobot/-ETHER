@@ -1,0 +1,11 @@
+{
+  "id": "tw_e05_lora_dry_reverify",
+  "note": "training wheels: re-verify gated LoRA dry-run after harden (must exit 0)",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.lora_train"],
+      "timeout": 90
+    }
+  ]
+}

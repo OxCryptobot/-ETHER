@@ -1,0 +1,11 @@
+{
+  "id": "tw_e07_agent_state_smoke",
+  "note": "training wheels: AgentState create/save/load round-trip",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.agent_state import AgentState, latest_state; s=AgentState.load_or_create('smoke01'); s.objective='agent_state smoke'; s.hypothesis='round-trip'; s.save(); s2=AgentState.load('smoke01'); assert s2 and s2.objective=='agent_state smoke'; print('ok', s2.thread_id)"],
+      "timeout": 60
+    }
+  ]
+}

@@ -5,13 +5,13 @@
 
 Dashboard: http://127.0.0.1:8787/agent
 
-Auto-reload: if origin updates scripts/ether_host.py, host_agent.py or
-foreman.py, the process exits with code 42 so start_ether_host.ps1 can
-restart it cleanly. No more manual Ctrl+C after every code push.
+Auto-reload: if origin moves HEAD (new commits that touch host scripts),
+the process exits with code 42 so start_ether_host.ps1 restarts it.
 """
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import threading
 import time
@@ -28,33 +28,44 @@ try:
 except Exception:
     pass
 
-# Critical source files - if any of these change on disk after a git_sync,
-# we exit so the launcher can restart with the new code.
-_WATCHED = [
-    ROOT / "scripts" / "ether_host.py",
-    ROOT / "scripts" / "host_agent.py",
-    ROOT / "scripts" / "foreman.py",
-]
+_WATCHED_REL = (
+    "scripts/ether_host.py",
+    "scripts/host_agent.py",
+    "scripts/foreman.py",
+)
 
 
-def _snapshot_mtimes() -> dict[str, float]:
-    out: dict[str, float] = {}
-    for p in _WATCHED:
-        try:
-            out[str(p)] = p.stat().st_mtime
-        except OSError:
-            out[str(p)] = 0.0
-    return out
+def _run_git(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", *args],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+    )
 
 
-def _source_changed(baseline: dict[str, float]) -> bool:
-    for p in _WATCHED:
-        try:
-            if p.stat().st_mtime > baseline.get(str(p), 0.0):
-                return True
-        except OSError:
-            continue
-    return False
+def _head_sha() -> str:
+    r = _run_git(["rev-parse", "HEAD"])
+    if r.returncode != 0:
+        return ""
+    return (r.stdout or "").strip()
+
+
+def _scripts_changed_since(old_sha: str) -> bool:
+    """True only if HEAD moved AND one of the watched scripts is in the diff."""
+    if not old_sha:
+        return False
+    new_sha = _head_sha()
+    if not new_sha or new_sha == old_sha:
+        return False
+    r = _run_git(["diff", "--name-only", f"{old_sha}..{new_sha}", "--", *_WATCHED_REL])
+    if r.returncode != 0:
+        return False
+    changed = {line.strip().replace("\\", "/") for line in (r.stdout or "").splitlines() if line.strip()}
+    return any(w in changed for w in _WATCHED_REL)
 
 
 def _start_dashboard() -> None:
@@ -69,7 +80,7 @@ def main() -> int:
     print("  dashboard  http://127.0.0.1:8787/agent", flush=True)
     print("  agent      job consumer", flush=True)
     print("  foreman    apprentice curriculum", flush=True)
-    print("  auto-reload on source change (exit 42)", flush=True)
+    print("  auto-reload on script change (exit 42)", flush=True)
     print("=" * 60, flush=True)
 
     t = threading.Thread(target=_start_dashboard, name="dashboard", daemon=True)
@@ -84,7 +95,8 @@ def main() -> int:
     agent.DONE.mkdir(parents=True, exist_ok=True)
     agent.FAILED.mkdir(parents=True, exist_ok=True)
 
-    baseline = _snapshot_mtimes()
+    baseline_sha = _head_sha()
+    agent.log(f"boot HEAD={baseline_sha[:10] if baseline_sha else '?'}")
 
     fr = foreman.tick()
     agent.log(f"foreman boot: {fr}")
@@ -94,10 +106,9 @@ def main() -> int:
             agent.write_status(current_job=None, phase="polling")
             agent.git_sync()
 
-            # After sync, check if our own source was updated on origin
-            if _source_changed(baseline):
-                agent.log("source updated on origin - exiting for clean reload (code 42)")
-                agent.write_status(phase="reloading", note="source changed")
+            if _scripts_changed_since(baseline_sha):
+                agent.log("host scripts updated on origin - exiting for clean reload (code 42)")
+                agent.write_status(phase="reloading", note="scripts changed")
                 return 42
 
             fr = foreman.tick()
@@ -118,9 +129,9 @@ def main() -> int:
             for job_path in jobs:
                 agent.process_job(job_path)
                 agent.git_sync()
-                if _source_changed(baseline):
-                    agent.log("source updated on origin - exiting for clean reload (code 42)")
-                    agent.write_status(phase="reloading", note="source changed")
+                if _scripts_changed_since(baseline_sha):
+                    agent.log("host scripts updated on origin - exiting for clean reload (code 42)")
+                    agent.write_status(phase="reloading", note="scripts changed")
                     return 42
                 fr = foreman.tick()
                 if fr.get("enqueued") or fr.get("playbook"):

@@ -1,0 +1,30 @@
+{
+  "id": "phase_e_ledger_trace_001",
+  "note": "P1: tool-trace + read-first on ledger_no_debit. Budget already ruled out.",
+  "source": "grok",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "ledger_no_debit",
+        "--max-steps",
+        "24",
+        "--timeout",
+        "700",
+        "--trace",
+        "--read-first",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_ledger_trace.json"
+      ],
+      "timeout": 900
+    }
+  ]
+}

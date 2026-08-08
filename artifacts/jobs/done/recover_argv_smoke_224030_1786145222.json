@@ -1,0 +1,16 @@
+{
+  "id": "recover_argv_smoke_224030",
+  "note": "playbook:002_argv_not_ps_path for phaseg_verify_002",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.tool_runtime import TOOL_SPECS; print('ok', len(TOOL_SPECS))"
+      ],
+      "timeout": 60
+    }
+  ],
+  "created": "2026-08-07T22:40:30.056738+00:00",
+  "source": "foreman"
+}

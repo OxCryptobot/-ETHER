@@ -1,0 +1,5 @@
+{
+  "id": "p6_01_swarm_scaffold",
+  "note": "P6: swarm module presence (scaffold)",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; p=Path('core/swarm.py'); print('exists', p.exists()); print('p6_scaffold_ok')"], "timeout": 30}]
+}

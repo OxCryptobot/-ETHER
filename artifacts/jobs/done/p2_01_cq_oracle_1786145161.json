@@ -1,0 +1,5 @@
+{
+  "id": "p2_01_cq_oracle",
+  "note": "P2: CQ multifile + repo oracle suite",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_clear_quartz_multifile.py", "tests/test_repo_oracle.py", "tests/test_repo_oracle_hook.py", "tests/test_repo_oracle_gate.py", "-q", "--tb=line"], "timeout": 300}]
+}

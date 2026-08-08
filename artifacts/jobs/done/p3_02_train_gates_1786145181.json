@@ -1,0 +1,11 @@
+{
+  "id": "p3_02_train_gates",
+  "note": "P3 training doctrine unit tests",
+  "source": "grok_teacher",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

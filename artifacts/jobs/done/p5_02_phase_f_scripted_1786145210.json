@@ -1,0 +1,5 @@
+{
+  "id": "p5_02_phase_f_scripted",
+  "note": "P5: phase F mutation restore scripted 6/6",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_f", "--arm", "direct", "--mode", "scripted"], "timeout": 300}]
+}

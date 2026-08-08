@@ -1,0 +1,11 @@
+{
+  "id": "tw_e03_lora_train_dry",
+  "note": "training wheels: gated LoRA dry-run + readiness report (no weight updates)",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.lora_train"],
+      "timeout": 120
+    }
+  ]
+}

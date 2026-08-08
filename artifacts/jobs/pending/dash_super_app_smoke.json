@@ -1,0 +1,11 @@
+{
+  "id": "dash_super_app_smoke",
+  "note": "smoke: collector_host_agent returns phase1 board + paths under artifacts",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from dashboard.collector_host_agent import collect_host_agent; d=collect_host_agent(); assert 'phase1' in d; assert d['paths']['status'].startswith('artifacts/'); print('SUPER APP collector OK', d.get('phase1'))"],
+      "timeout": 30
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "tw_e10_tool_first_reverify",
+  "note": "training wheels: re-verify tool_runtime_enabled defaults ON under wheels after SUPER APP land; unit tests clean",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.tool_runtime import tool_runtime_enabled; import os; assert tool_runtime_enabled() is True, '1A default failed'; print('1A OK: tool_runtime_enabled=True under wheels')"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

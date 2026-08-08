@@ -1,0 +1,9 @@
+{
+  "id": "016_learn_from_scoreboards",
+  "teacher": "grok",
+  "craft": "evolution",
+  "rule": "Every time a scoreboard_*.json is written, call core.preference.record_preferences_from_scoreboard on it. This turns measured flights into preference pairs and live strategy win rates. Without this step the agent stays in the nest. With it, strategy_boost becomes experience-weighted and the bird improves from its own evidence.",
+  "match": "scoreboard|phase_e|phase_d|phase_f|batch_phase",
+  "code": "core.preference.record_preferences_from_scoreboard",
+  "taught_at": "2026-08-08"
+}

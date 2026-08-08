@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""ETHER host agent — job queue consumer.
+"""ETHER host agent - job queue consumer.
 
 Git policy (never stuck):
-  - On startup: fetch + reset --hard origin/main
+  - Startup: fetch + reset --hard origin/main
   - Each poll: fetch + ff-only; if diverged, reset --hard origin/main
-  - Push report: stage the jobs directories + status files (git handles add+delete)
-  - Never expand every historical file into argv (that caused WinError 206)
-  - On push fail: one rebase retry then hard reset (origin always wins)
-
-This agent is a *consumer*, not a long-lived feature branch. Matching origin
-is always correct so new pending jobs can land.
+  - Push report: stage job directories + status (handles pending deletes)
+  - Never expand every historical file into argv (WinError 206)
+  - Push fail: one rebase retry then hard reset (origin always wins)
 """
 from __future__ import annotations
 
@@ -37,10 +34,16 @@ POLL = int(os.getenv("ETHER_HOST_AGENT_POLL", "1"))
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
-LOG = ROOT / "memory" / "host_agent" / "agent.log"
-STATUS = ROOT / "memory" / "host_agent" / "status.json"
+
+# Status lives under artifacts/ (tracked), NOT memory/ (gitignored).
+# This is required so Grok can see liveness from GitHub.
+STATUS = ROOT / "artifacts" / "host_agent_status.json"
+LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
+LOG = ROOT / "artifacts" / "host_agent_log.txt"
 
 _last_recover_log = 0.0
+_last_liveness_push = 0.0
+LIVENESS_EVERY = 60  # seconds
 
 
 def log(msg: str) -> None:
@@ -106,7 +109,6 @@ def git_reset_to_origin(reason: str) -> bool:
 
 
 def git_sync() -> None:
-    """Always end aligned with origin/main."""
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
     if r.returncode == 0:
@@ -114,45 +116,24 @@ def git_sync() -> None:
     git_reset_to_origin("ff-only failed / diverged")
 
 
-def git_push_report(job_id: str, ok: bool, finished_rel: Optional[str] = None) -> None:
-    """Best-effort report push. Never leave repo diverged afterward.
-
-    Stage the jobs *directories* (not every individual file).
-    This correctly records both the new file in done/failed AND the
-    deletion of the pending file, without exploding the command line
-    (which previously caused WinError 206).
-    """
-    paths: List[str] = [
-        "artifacts/host_agent_last_job.json",
-        "memory/host_agent/status.json",
-        "artifacts/jobs/pending",
-        "artifacts/jobs/done",
-        "artifacts/jobs/failed",
-    ]
-    for name in ("host_report_latest.md", "host_report_latest.json"):
-        p = ROOT / "artifacts" / name
-        if p.is_file():
-            paths.append(str(p.relative_to(ROOT)))
-
+def git_push_paths(paths: List[str], msg: str) -> None:
+    """Stage given paths, commit, push. Origin wins on failure."""
+    if not paths:
+        return
     run(["git", "add", "-f", "--"] + paths, timeout=90)
-    status = "PASS" if ok else "FAIL"
-    msg = f"host agent report: job={job_id} {status}"
     c = run(["git", "commit", "-m", msg], timeout=60)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
     if c.returncode != 0 and "nothing to commit" in combined:
-        log("nothing to commit")
         git_sync()
         return
     if c.returncode != 0:
         log(f"commit rc={c.returncode}")
         git_sync()
         return
-
     p = run(["git", "push", "origin", "main"], timeout=120)
     if p.returncode == 0:
         log("push rc=0")
         return
-
     log(f"push rc={p.returncode}; rebase retry")
     run(["git", "fetch", "origin"], timeout=120)
     rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
@@ -162,6 +143,32 @@ def git_push_report(job_id: str, ok: bool, finished_rel: Optional[str] = None) -
         if p2.returncode == 0:
             return
     git_reset_to_origin("push could not land")
+
+
+def git_push_report(job_id: str, ok: bool) -> None:
+    paths = [
+        "artifacts/host_agent_last_job.json",
+        "artifacts/host_agent_status.json",
+        "artifacts/jobs/pending",
+        "artifacts/jobs/done",
+        "artifacts/jobs/failed",
+    ]
+    status = "PASS" if ok else "FAIL"
+    git_push_paths(paths, f"host agent report: job={job_id} {status}")
+
+
+def git_push_liveness() -> None:
+    """Periodic idle heartbeat so remote observers know the host is alive."""
+    global _last_liveness_push
+    now = time.time()
+    if now - _last_liveness_push < LIVENESS_EVERY:
+        return
+    _last_liveness_push = now
+    write_status(current_job=None, phase="idle")
+    git_push_paths(
+        ["artifacts/host_agent_status.json"],
+        "host agent liveness",
+    )
 
 
 def list_pending() -> List[Path]:
@@ -249,8 +256,6 @@ def process_job(path: Path) -> bool:
         log(f"job exception: {e}")
         ok = False
 
-    art = ROOT / "artifacts"
-    art.mkdir(parents=True, exist_ok=True)
     envelope = {
         "job_id": job_id,
         "ok": ok,
@@ -259,7 +264,7 @@ def process_job(path: Path) -> bool:
         "sprint": job.get("sprint"),
         "note": job.get("note"),
     }
-    (art / "host_agent_last_job.json").write_text(json.dumps(envelope, indent=2), encoding="utf-8")
+    LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
     dest_dir = DONE if ok else FAILED
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -267,11 +272,10 @@ def process_job(path: Path) -> bool:
     if dest.exists():
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
-    finished_rel = str(dest.relative_to(ROOT))
     log(f"JOB END {job_id} ok={ok}")
     write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok)
     try:
-        git_push_report(job_id, ok, finished_rel=finished_rel)
+        git_push_report(job_id, ok)
     except Exception as e:
         log(f"push error: {e}")
         git_sync()
@@ -280,14 +284,12 @@ def process_job(path: Path) -> bool:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent — job queue consumer", flush=True)
+    print("  ETHER host_agent - job queue consumer", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print(f"  poll={POLL}s (idle only)", flush=True)
-    print("  dashboard: http://127.0.0.1:8787/agent", flush=True)
+    print(f"  poll={POLL}s", flush=True)
     print("=" * 60, flush=True)
 
     git_reset_to_origin("startup")
-
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
@@ -299,6 +301,8 @@ def main() -> int:
             jobs = list_pending()
             if not jobs:
                 log("idle")
+                write_status(current_job=None, phase="idle")
+                git_push_liveness()
                 time.sleep(max(1, POLL))
                 continue
             for job_path in jobs:

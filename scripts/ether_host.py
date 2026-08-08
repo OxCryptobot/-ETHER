@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """ETHER Host - ONE window: dashboard + job agent + foreman.
 
-    .\.venv\Scripts\python.exe scripts\ether_host.py
-
-Dashboard: http://127.0.0.1:8787/agent
-
-Auto-reload: if origin moves HEAD (new commits that touch host scripts),
-the process exits with code 42 so start_ether_host.ps1 restarts it.
+Auto-reload: exits 42 only when HEAD moves AND a watched host script changed.
+Launcher restarts on any non-zero exit.
 """
 from __future__ import annotations
 
@@ -55,7 +51,6 @@ def _head_sha() -> str:
 
 
 def _scripts_changed_since(old_sha: str) -> bool:
-    """True only if HEAD moved AND one of the watched scripts is in the diff."""
     if not old_sha:
         return False
     new_sha = _head_sha()
@@ -64,14 +59,27 @@ def _scripts_changed_since(old_sha: str) -> bool:
     r = _run_git(["diff", "--name-only", f"{old_sha}..{new_sha}", "--", *_WATCHED_REL])
     if r.returncode != 0:
         return False
-    changed = {line.strip().replace("\\", "/") for line in (r.stdout or "").splitlines() if line.strip()}
+    changed = {
+        line.strip().replace("\\", "/")
+        for line in (r.stdout or "").splitlines()
+        if line.strip()
+    }
     return any(w in changed for w in _WATCHED_REL)
 
 
 def _start_dashboard() -> None:
-    import uvicorn
+    try:
+        import uvicorn
 
-    uvicorn.run("dashboard.app:app", host="127.0.0.1", port=8787, log_level="warning", reload=False)
+        uvicorn.run(
+            "dashboard.app:app",
+            host="127.0.0.1",
+            port=8787,
+            log_level="warning",
+            reload=False,
+        )
+    except Exception as e:
+        print(f"dashboard failed to start: {e}", flush=True)
 
 
 def main() -> int:
@@ -80,12 +88,11 @@ def main() -> int:
     print("  dashboard  http://127.0.0.1:8787/agent", flush=True)
     print("  agent      job consumer", flush=True)
     print("  foreman    apprentice curriculum", flush=True)
-    print("  auto-reload on script change (exit 42)", flush=True)
     print("=" * 60, flush=True)
 
     t = threading.Thread(target=_start_dashboard, name="dashboard", daemon=True)
     t.start()
-    time.sleep(1.2)
+    time.sleep(1.0)
 
     from scripts import foreman
     import scripts.host_agent as agent
@@ -107,8 +114,8 @@ def main() -> int:
             agent.git_sync()
 
             if _scripts_changed_since(baseline_sha):
-                agent.log("host scripts updated on origin - exiting for clean reload (code 42)")
-                agent.write_status(phase="reloading", note="scripts changed")
+                agent.log("host scripts updated - reload (42)")
+                agent.write_status(phase="reloading")
                 return 42
 
             fr = foreman.tick()
@@ -123,6 +130,7 @@ def main() -> int:
                     phase="idle",
                     foreman=foreman.status(),
                 )
+                agent.git_push_liveness()
                 time.sleep(max(1, agent.POLL))
                 continue
 
@@ -130,8 +138,8 @@ def main() -> int:
                 agent.process_job(job_path)
                 agent.git_sync()
                 if _scripts_changed_since(baseline_sha):
-                    agent.log("host scripts updated on origin - exiting for clean reload (code 42)")
-                    agent.write_status(phase="reloading", note="scripts changed")
+                    agent.log("host scripts updated - reload (42)")
+                    agent.write_status(phase="reloading")
                     return 42
                 fr = foreman.tick()
                 if fr.get("enqueued") or fr.get("playbook"):

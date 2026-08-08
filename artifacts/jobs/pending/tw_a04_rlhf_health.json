@@ -1,0 +1,27 @@
+{
+  "id": "tw_a04_rlhf_health",
+  "note": "training wheels A: post-trace preference reprocess + assert healthy (observability)",
+  "source": "grok",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.preference import rlhf_tick, assert_preferences_healthy; import json; print(json.dumps(rlhf_tick(), indent=2)); print(json.dumps(assert_preferences_healthy(), indent=2))"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_preference_rlhf.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

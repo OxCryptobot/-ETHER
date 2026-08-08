@@ -1,0 +1,30 @@
+{
+  "id": "tw_a02_topo_trace",
+  "note": "training wheels A: tool-trace + read-first on topo_drop_cycle_raise. Budget ruled out. One hyp: C/D.",
+  "source": "grok",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "topo_drop_cycle_raise",
+        "--max-steps",
+        "24",
+        "--timeout",
+        "700",
+        "--trace",
+        "--read-first",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_topo_trace.json"
+      ],
+      "timeout": 900
+    }
+  ]
+}

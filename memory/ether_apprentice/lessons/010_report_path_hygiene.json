@@ -1,0 +1,9 @@
+{
+  "id": "010_report_path_hygiene",
+  "teacher": "grok",
+  "craft": "host_ops",
+  "rule": "Never git-add the entire done/ or failed/ history on every report. Only stage the single finished job file + host_agent_last_job.json + status.json. Globbing hundreds of historical files causes WinError 206 (filename/path too long) on Windows and breaks the push loop.",
+  "match": "WinError 206|path too long|filename or extension is too long",
+  "code": "scripts.host_agent.git_push_report",
+  "taught_at": "2026-08-07"
+}

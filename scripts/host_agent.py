@@ -4,7 +4,8 @@
 Git policy (never stuck):
   - On startup: fetch + reset --hard origin/main
   - Each poll: fetch + ff-only; if diverged, reset --hard origin/main
-  - Push report: commit artifacts only; on push fail try rebase once then abandon
+  - Push report: commit only the finished job + status files; never glob entire done/
+  - On push fail: one rebase retry then hard reset (origin always wins)
 
 This agent is a *consumer*, not a long-lived feature branch. Matching origin
 is always correct so new pending jobs can land.
@@ -18,7 +19,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -100,7 +101,6 @@ def git_reset_to_origin(reason: str) -> bool:
     if r.returncode != 0:
         log(f"reset failed rc={r.returncode} {(r.stderr or '')[:300]}")
         return False
-    # drop untracked job clutter? keep pending from origin only
     return True
 
 
@@ -113,25 +113,43 @@ def git_sync() -> None:
     git_reset_to_origin("ff-only failed / diverged")
 
 
-def git_push_report(job_id: str, ok: bool) -> None:
-    """Best-effort report push. Never leave repo diverged afterward."""
-    paths = [
-        "artifacts/host_report_latest.md",
-        "artifacts/host_report_latest.json",
+def git_push_report(job_id: str, ok: bool, finished_rel: Optional[str] = None) -> None:
+    """Best-effort report push. Never leave repo diverged afterward.
+
+    Only stage the finished job file + core status files.
+    Never glob the entire done/ or failed/ history — that caused
+    WinError 206 (command line too long) once hundreds of z_gate files existed.
+    """
+    paths: List[str] = [
         "artifacts/host_agent_last_job.json",
         "memory/host_agent/status.json",
     ]
-    art = ROOT / "artifacts"
-    if art.exists():
-        for p in list(art.glob("host_report_*.md")) + list(art.glob("host_report_*.json")):
+    # optional latest reports if present
+    for name in ("host_report_latest.md", "host_report_latest.json"):
+        p = ROOT / "artifacts" / name
+        if p.is_file():
             paths.append(str(p.relative_to(ROOT)))
-    for rel in ("artifacts/jobs/done", "artifacts/jobs/failed", "artifacts/jobs/pending"):
-        d = ROOT / rel
-        if d.exists():
-            for p in d.glob("*.json"):
+
+    # the single finished job that just moved
+    if finished_rel:
+        paths.append(finished_rel)
+
+    # also stage pending so deletions land (empty pending after drain)
+    pending_dir = ROOT / "artifacts" / "jobs" / "pending"
+    if pending_dir.exists():
+        for p in pending_dir.glob("*.json"):
+            if p.name != ".gitkeep":
                 paths.append(str(p.relative_to(ROOT)))
 
-    run(["git", "add", "-f", "--"] + paths, timeout=60)
+    # de-dupe while preserving order
+    seen = set()
+    unique_paths = []
+    for p in paths:
+        if p not in seen:
+            seen.add(p)
+            unique_paths.append(p)
+
+    run(["git", "add", "-f", "--"] + unique_paths, timeout=60)
     status = "PASS" if ok else "FAIL"
     msg = f"host agent report: job={job_id} {status}"
     c = run(["git", "commit", "-m", msg], timeout=60)
@@ -158,7 +176,7 @@ def git_push_report(job_id: str, ok: bool) -> None:
         log(f"push retry rc={p2.returncode}")
         if p2.returncode == 0:
             return
-    # Never stay diverged — origin wins; job result already in local done/failed folders
+    # Never stay diverged — origin wins
     git_reset_to_origin("push could not land")
 
 
@@ -265,10 +283,11 @@ def process_job(path: Path) -> bool:
     if dest.exists():
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
+    finished_rel = str(dest.relative_to(ROOT))
     log(f"JOB END {job_id} ok={ok}")
     write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok)
     try:
-        git_push_report(job_id, ok)
+        git_push_report(job_id, ok, finished_rel=finished_rel)
     except Exception as e:
         log(f"push error: {e}")
         git_sync()

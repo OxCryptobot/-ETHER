@@ -1,7 +1,8 @@
-"""Collect host_agent job queue, logs, foreman, apprentice lessons.
+"""Collect host_agent job queue, logs, foreman, apprentice lessons, RLHF.
 
 Path rule (non-negotiable): read what host_agent writes under artifacts/.
 Never rely on memory/ for remote observability — it is gitignored.
+Prefer artifacts/ mirrors for foreman/lessons; fall back only with note.
 """
 from __future__ import annotations
 
@@ -20,16 +21,24 @@ STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 REPORT_MD = ROOT / "artifacts" / "host_report_latest.md"
 REPORT_JSON = ROOT / "artifacts" / "host_report_latest.json"
-FOREMAN_STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
-LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
+# Prefer artifacts mirrors (path rule); fall back to memory/ with explicit note
+FOREMAN_ARTIFACTS = ROOT / "artifacts" / "foreman_state.json"
+FOREMAN_MEMORY = ROOT / "memory" / "host_agent" / "foreman_state.json"
+LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
+LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 STATUS_MD = ROOT / "STATUS.md"
+PREF_SUMMARY = ROOT / "artifacts" / "preference_summary.json"
+STRATEGY_STATS = ROOT / "artifacts" / "strategy_stats.json"
+ARTIFACTS = ROOT / "artifacts"
 
 
 def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
     if not folder.exists():
         return []
     out: List[Dict[str, Any]] = []
-    for p in sorted(folder.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
+    for p in sorted(
+        folder.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True
+    ):
         if p.name == ".gitkeep":
             continue
         item: Dict[str, Any] = {
@@ -79,11 +88,20 @@ def _read_text(path: Path, limit: int = 12000) -> str:
         return f"(read error: {e})"
 
 
-def _lessons_summary() -> List[Dict[str, str]]:
-    if not LESSONS.exists():
-        return []
-    out = []
-    for p in sorted(LESSONS.glob("*.json")):
+def _lessons_summary() -> tuple[List[Dict[str, str]], str]:
+    """Prefer artifacts/lessons; fall back to memory/ with source note."""
+    source = "none"
+    folder = None
+    if LESSONS_ARTIFACTS.exists() and any(LESSONS_ARTIFACTS.glob("*.json")):
+        folder = LESSONS_ARTIFACTS
+        source = "artifacts"
+    elif LESSONS_MEMORY.exists():
+        folder = LESSONS_MEMORY
+        source = "memory_fallback"
+    if folder is None:
+        return [], source
+    out: List[Dict[str, str]] = []
+    for p in sorted(folder.glob("*.json")):
         try:
             d = json.loads(p.read_text(encoding="utf-8"))
             out.append(
@@ -95,7 +113,16 @@ def _lessons_summary() -> List[Dict[str, str]]:
             )
         except Exception:
             continue
-    return out
+    return out, source
+
+
+def _foreman_state() -> tuple[Dict[str, Any], str]:
+    """Prefer artifacts/foreman_state.json; fall back to memory/ with note."""
+    if FOREMAN_ARTIFACTS.exists():
+        return _read_json(FOREMAN_ARTIFACTS), "artifacts"
+    if FOREMAN_MEMORY.exists():
+        return _read_json(FOREMAN_MEMORY), "memory_fallback"
+    return {}, "none"
 
 
 def _phase1_board() -> Dict[str, str]:
@@ -135,6 +162,90 @@ def _phase1_board() -> Dict[str, str]:
     return board
 
 
+def _rlhf_block() -> Dict[str, Any]:
+    """Preference summary + strategy stats for remote RLHF observability."""
+    pref = _read_json(PREF_SUMMARY)
+    stats = _read_json(STRATEGY_STATS)
+    ranked = pref.get("ranked_boosts") or []
+    return {
+        "n_preferences": pref.get("n_preferences"),
+        "n_episodes": pref.get("n_episodes") or stats.get("n_episodes"),
+        "updated": pref.get("updated") or stats.get("updated"),
+        "rlhf": pref.get("rlhf"),
+        "teacher": pref.get("teacher"),
+        "ranked_boosts": ranked[:8],
+        "strategies": pref.get("strategies") or stats.get("strategies") or {},
+        "healthy": bool(pref.get("n_preferences")) and not pref.get("error"),
+        "source": "artifacts/preference_summary.json",
+    }
+
+
+def _recent_scoreboards(limit: int = 8) -> List[Dict[str, Any]]:
+    """Recent scoreboard_*.json under artifacts/ (mtime desc)."""
+    if not ARTIFACTS.exists():
+        return []
+    files = sorted(
+        ARTIFACTS.glob("scoreboard*.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    out: List[Dict[str, Any]] = []
+    for p in files[:limit]:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            summary = data.get("summary") or {}
+            item = {
+                "id": p.stem,
+                "name": p.name,
+                "mtime": datetime.fromtimestamp(
+                    p.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
+                "passed": summary.get("passed"),
+                "total": summary.get("total"),
+                "mode": summary.get("mode"),
+                "arms": summary.get("arms"),
+                "model": summary.get("model"),
+            }
+            out.append(item)
+        except Exception:
+            out.append({"id": p.stem, "name": p.name, "error": "parse"})
+    return out
+
+
+def _critique_backlog(limit: int = 12) -> List[Dict[str, Any]]:
+    """Open critiques: artifacts/critique_*.json or artifacts/critiques/."""
+    paths: List[Path] = []
+    if ARTIFACTS.exists():
+        paths.extend(ARTIFACTS.glob("critique_*.json"))
+        crit_dir = ARTIFACTS / "critiques"
+        if crit_dir.exists():
+            paths.extend(crit_dir.glob("critique_*.json"))
+            paths.extend(crit_dir.glob("*.json"))
+    paths = sorted(set(paths), key=lambda p: p.stat().st_mtime, reverse=True)
+    out: List[Dict[str, Any]] = []
+    for p in paths[:limit]:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            out.append(
+                {
+                    "id": p.stem,
+                    "name": p.name,
+                    "mtime": datetime.fromtimestamp(
+                        p.stat().st_mtime, tz=timezone.utc
+                    ).isoformat(),
+                    "root_cause": data.get("root_cause"),
+                    "confidence": data.get("confidence"),
+                    "smallest_experiment": str(
+                        data.get("smallest_experiment") or ""
+                    )[:180],
+                    "job_id": data.get("job_id") or data.get("fail_job_id"),
+                }
+            )
+        except Exception:
+            out.append({"id": p.stem, "name": p.name, "error": "parse"})
+    return out
+
+
 def collect_host_agent() -> Dict[str, Any]:
     pending = _list_jobs(PENDING)
     done = _list_jobs(DONE)
@@ -143,8 +254,11 @@ def collect_host_agent() -> Dict[str, Any]:
     last = _read_json(LAST_JOB)
     report = _read_json(REPORT_JSON)
     report_md = _read_text(REPORT_MD)
-    foreman = _read_json(FOREMAN_STATE)
-    lessons = _lessons_summary()
+    foreman, foreman_src = _foreman_state()
+    lessons, lessons_src = _lessons_summary()
+    rlhf = _rlhf_block()
+    scoreboards = _recent_scoreboards()
+    critiques = _critique_backlog()
 
     agent_alive = False
     if status.get("heartbeat"):
@@ -177,15 +291,23 @@ def collect_host_agent() -> Dict[str, Any]:
         "report": report,
         "report_md": report_md,
         "foreman": foreman,
+        "foreman_source": foreman_src,
         "apprentice": {
             "teacher": "grok",
             "lessons": lessons,
             "n": len(lessons),
+            "source": lessons_src,
         },
         "phase1": _phase1_board(),
+        "rlhf": rlhf,
+        "scoreboards": scoreboards,
+        "critiques": critiques,
         "paths": {
             "status": str(STATUS.relative_to(ROOT)),
             "log": str(LOG.relative_to(ROOT)),
             "last_job": str(LAST_JOB.relative_to(ROOT)),
+            "pref_summary": str(PREF_SUMMARY.relative_to(ROOT)),
+            "foreman_source": foreman_src,
+            "lessons_source": lessons_src,
         },
     }

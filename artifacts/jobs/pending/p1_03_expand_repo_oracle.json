@@ -1,0 +1,22 @@
+{
+  "id": "p1_03_expand_repo_oracle",
+  "note": "P1 expand + re-verify repo-oracle suite (≥10 hard path)",
+  "continue_on_fail": false,
+  "source": "grok_enqueue",
+  "created": "2026-08-08T21:00:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_repo_oracle.py",
+        "tests/test_repo_oracle_hook.py",
+        "tests/test_repo_oracle_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ]
+}

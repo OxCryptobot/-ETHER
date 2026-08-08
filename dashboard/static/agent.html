@@ -47,7 +47,7 @@
   .phase-card.unknown .st { color: var(--muted); }
 
   main {
-    display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: auto auto 1fr;
+    display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: auto auto auto 1fr;
     gap: 10px; padding: 10px; height: calc(100vh - 130px);
   }
   .panel {
@@ -107,6 +107,25 @@
   }
   .flow-node b { color: var(--cyan); }
   .flow-arrow { color: var(--muted); }
+  .boost {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px; margin: 2px; border-radius: 4px;
+    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+  }
+  .boost .s { color: var(--cyan); font-family: var(--mono); }
+  .boost .b { color: var(--amber); font-weight: 600; }
+  .sb {
+    padding: 5px 8px; margin-bottom: 3px; border-radius: 4px;
+    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+  }
+  .sb .ok { color: var(--green); }
+  .sb .fail { color: var(--red); }
+  .crit {
+    padding: 6px 8px; margin-bottom: 4px; border-radius: 5px;
+    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+  }
+  .crit .rc { color: var(--amber); font-family: var(--mono); }
+  .crit .meta { color: var(--muted); font-size: 10px; margin-top: 2px; }
   @media (max-width: 1100px) {
     main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
     .span2 { grid-column: span 1; }
@@ -131,7 +150,7 @@
 </div>
 
 <main>
-  <section class="panel" style="grid-row: span 3;">
+  <section class="panel" style="grid-row: span 4;">
     <h2>Job queue</h2>
     <div class="counts">
       <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
@@ -147,6 +166,16 @@
   </section>
 
   <section class="panel">
+    <h2>RLHF health + ranked boosts</h2>
+    <div class="body" id="rlhf"><div style="color:var(--muted)">loading…</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Recent scoreboards</h2>
+    <div class="body" id="scoreboards"><div style="color:var(--muted)">loading…</div></div>
+  </section>
+
+  <section class="panel">
     <h2>Agent log (realtime)</h2>
     <div class="body log" id="log"></div>
   </section>
@@ -154,6 +183,11 @@
   <section class="panel">
     <h2>Live coding / activity feed</h2>
     <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events…</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Critique backlog</h2>
+    <div class="body" id="critiques"><div style="color:var(--muted)">no open critiques</div></div>
   </section>
 
   <section class="panel">
@@ -230,14 +264,15 @@ async function tickHost() {
     setPhase('p1c', ph['1C']);
     setPhase('p1d', ph['1D']);
 
+    const fsrc = d.foreman_source || ap.source || '';
     document.getElementById('status').innerHTML = `
       <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
       <div>phase <strong>${esc(st.phase || '—')}</strong></div>
       <div>current <strong>${esc(st.current_job || last.job_id || '—')}</strong></div>
       <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '—'}</strong> ${esc(last.job_id || '')}</div>
-      <div>foreman cursor <strong>${esc(fm.cursor ?? '—')}</strong></div>
+      <div>foreman cursor <strong>${esc(fm.cursor ?? '—')}</strong> <span style="color:var(--muted)">(${esc(fsrc)})</span></div>
       <div>completed <strong>${esc((fm.completed || []).length)}</strong></div>
-      <div>lessons <strong>${esc(ap.n ?? 0)}</strong></div>
+      <div>lessons <strong>${esc(ap.n ?? 0)}</strong> <span style="color:var(--muted)">(${esc(ap.source || '')})</span></div>
       <div>teacher <strong>Grok</strong> → apprentice <strong>ETHER</strong></div>`;
 
     const lines = d.log_lines || [];
@@ -250,6 +285,49 @@ async function tickHost() {
       ? '<div style="color:var(--muted);font-size:10px;margin-bottom:4px">APPRENTICE LESSONS</div>' +
         lessons.slice(0, 8).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div class="lesson">${esc(L.rule)}</div></div>`).join('')
       : '<div class="lesson">(no lessons yet)</div>';
+
+    // RLHF panel
+    const rl = d.rlhf || {};
+    const boosts = rl.ranked_boosts || [];
+    const healthy = rl.healthy ? 'healthy' : 'missing';
+    const healthyColor = rl.healthy ? 'var(--green)' : 'var(--amber)';
+    document.getElementById('rlhf').innerHTML = `
+      <div style="font-size:12px;margin-bottom:6px">
+        pairs <strong>${esc(rl.n_preferences ?? '—')}</strong> ·
+        episodes <strong>${esc(rl.n_episodes ?? '—')}</strong> ·
+        <span style="color:${healthyColor}">${healthy}</span>
+        <span style="color:var(--muted);font-size:10px"> ${esc(rl.updated || '')}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${boosts.length ? boosts.map(b => `
+          <div class="boost">
+            <span class="s">${esc(b.strategy)}</span>
+            <span class="b">${Number(b.boost).toFixed(3)}</span>
+            <span style="color:var(--muted);font-size:10px">${esc(b.wins)}/${esc(b.n)}</span>
+          </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
+      </div>`;
+
+    // Scoreboards
+    const sbs = d.scoreboards || [];
+    document.getElementById('scoreboards').innerHTML = sbs.length
+      ? sbs.map(s => {
+          const ok = s.passed != null && s.total != null
+            ? `<span class="${s.passed === s.total ? 'ok' : 'fail'}">${esc(s.passed)}/${esc(s.total)}</span>`
+            : '—';
+          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok} <span style="color:var(--muted)">${esc(s.mode || '')} ${esc((s.arms || []).join(',') || '')}</span></div>`;
+        }).join('')
+      : '<div style="color:var(--muted)">(no scoreboards on origin)</div>';
+
+    // Critiques
+    const crits = d.critiques || [];
+    document.getElementById('critiques').innerHTML = crits.length
+      ? crits.map(c => `
+          <div class="crit">
+            <div class="rc">${esc(c.root_cause || c.id)}</div>
+            <div class="meta">${esc(c.job_id || '')} conf=${esc(c.confidence ?? '—')}</div>
+            <div style="margin-top:3px;font-size:10px;color:#b8c4d0">${esc(c.smallest_experiment || '')}</div>
+          </div>`).join('')
+      : '<div style="color:var(--muted)">(no open critiques)</div>';
   } catch (e) {
     document.getElementById('alive').textContent = 'dashboard fetch error';
     document.getElementById('dot').className = 'dot off';

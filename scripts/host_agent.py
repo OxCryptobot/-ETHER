@@ -103,6 +103,9 @@ def git_push_report(job_id: str, ok: bool) -> None:
         "artifacts/jobs/done",
         "artifacts/jobs/failed",
     ]
+    # scoreboards from measure scripts
+    for p in (ROOT / "artifacts").glob("scoreboard*.json"):
+        paths.append(str(p.relative_to(ROOT)))
     run(["git", "add", "-f", "--"] + paths, timeout=90)
     status = "PASS" if ok else "FAIL"
     c = run(["git", "commit", "-m", f"host agent report: job={job_id} {status}"], timeout=60)

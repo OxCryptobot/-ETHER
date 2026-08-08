@@ -1,0 +1,25 @@
+{
+  "id": "phase_e_live_steps24_001",
+  "note": "Priority1: Phase E direct live with max-steps 24 (ledger/topo budget test)",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--max-steps",
+        "24",
+        "--timeout",
+        "600",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_steps24.json"
+      ],
+      "timeout": 900
+    }
+  ]
+}

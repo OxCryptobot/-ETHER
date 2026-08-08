@@ -1,8 +1,7 @@
 {
-  "job_id": "phase_e_mutation_check_001",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-08T00:26:13.515990+00:00",
-  "sprint": null,
-  "note": "Phase E next step: re-check direct tool path on mutation restore pack (lru/merge/ledger/topo/intervals)"
+  "job_id": "phase_e_mutation_live_001",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-08T01:07:11.706116+00:00",
+  "note": "Phase E live: direct tool path on mutation restore pack (max-steps 16)"
 }

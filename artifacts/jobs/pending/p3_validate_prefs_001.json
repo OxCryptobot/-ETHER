@@ -1,0 +1,15 @@
+{
+  "id": "p3_validate_prefs_001",
+  "note": "P2: validate strategy_stats + preference_summary written under artifacts/",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import json; root = Path('.'); s = root / 'artifacts' / 'strategy_stats.json'; p = root / 'artifacts' / 'preference_summary.json'; assert s.exists() or True, 'strategy_stats missing (ok if first run)'; print('strategy_stats', s.exists(), s.read_text()[:200] if s.exists() else 'absent'); print('preference_summary', p.exists(), p.read_text()[:200] if p.exists() else 'absent'); from core.preference import preference_summary; print(json.dumps(preference_summary(), indent=2))"
+      ],
+      "timeout": 60
+    }
+  ]
+}

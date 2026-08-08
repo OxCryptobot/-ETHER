@@ -2,37 +2,9 @@
   "id": "017_budget_not_always_answer",
   "teacher": "grok",
   "craft": "reasoning",
-  "rule": "If two measured runs with different max-steps produce the same failing mutations (same reason=max_steps, same score), further blanket step increases are low-value. Switch hypothesis to diagnosis quality, tool selection order, or repair prompt. Design the smallest experiment that tests the new hypothesis (e.g. single-mutation + forced read-before-write + tool-trace inspection).",
-  "match": "max_steps|budget|identical|same 3/6|ledger_focus|ledger40",
-  "enqueue": {
-    "id": "phase_e_diag_after_budget",
-    "note": "playbook 017: budget ruled out → diagnosis path",
-    "continue_on_fail": true,
-    "steps": [
-      {
-        "argv": [
-          ".venv/Scripts/python.exe",
-          "-m",
-          "scripts.batch_phase_e",
-          "--arm",
-          "direct",
-          "--mode",
-          "live",
-          "--mutation",
-          "ledger_no_debit",
-          "--max-steps",
-          "20",
-          "--timeout",
-          "600",
-          "--trace",
-          "--read-first",
-          "--scoreboard",
-          "artifacts/scoreboard_phase_e_diag.json"
-        ],
-        "timeout": 800
-      }
-    ]
-  },
+  "rule": "If two measured runs with different max-steps produce the same failing mutations (same reason=max_steps, same score), further blanket step increases are low-value. Switch hypothesis to diagnosis quality, tool selection order, or repair prompt. Design the smallest experiment that tests the new hypothesis. Do NOT auto-enqueue the same diagnosis job in a loop — one diagnosis per hypothesis, then inspect the trace.",
+  "match": "",
   "code": "docs.PHASE_E + scripts.batch_phase_e",
-  "taught_at": "2026-08-08"
+  "taught_at": "2026-08-08",
+  "note": "enqueue removed 2026-08-08 after infinity playbook loop"
 }

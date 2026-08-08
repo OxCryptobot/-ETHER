@@ -1,7 +1,7 @@
 {
-  "job_id": "dash_super_app_smoke",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-08T20:26:06.594246+00:00",
-  "note": "smoke: collector_host_agent returns phase1 board + paths under artifacts"
+  "job_id": "tw_e10_tool_first_reverify",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-08T20:26:16.943717+00:00",
+  "note": "training wheels: re-verify tool_runtime_enabled defaults ON under wheels after SUPER APP land; unit tests clean"
 }

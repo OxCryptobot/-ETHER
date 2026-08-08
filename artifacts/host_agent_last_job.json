@@ -1,7 +1,7 @@
 {
-  "job_id": "rlhf_tick_001",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-08T08:26:41.139465+00:00",
-  "note": "offline RLHF: reprocess scoreboards + assert healthy + unit tests"
+  "job_id": "tw_a01_ledger_double_trace",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-08T08:43:16.090835+00:00",
+  "note": "training wheels A: tool-trace + read-first on ledger_double_total. Budget ruled out. One hyp: C/D tool order/repair."
 }

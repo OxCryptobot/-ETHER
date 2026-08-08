@@ -8,17 +8,19 @@
 | 2 | `batch_phase_e` direct vs bare | **CLOSED** |
 | 3 | FINDINGS §13 | **CLOSED** |
 | 4 | max-steps 24 remeasure | **CLOSED** — still 3/6 |
+| 5 | ledger-only max-steps **40** | **CLOSED** — still 0/1 max_steps |
 
 ## Headline
 
-| arm | max-steps | pass/6 |
-|-----|-----------|--------|
+| arm | max-steps | pass |
+|-----|-----------|------|
 | direct scripted | — | **6/6** |
 | direct live | 16 | **3/6** |
 | **direct live** | **24** | **3/6** |
+| ledger only | **40** | **0/1** (max_steps, score 0.0) |
 | bare live | — | **1/6** |
 
-Raising budget 16 → 24 produced **zero additional solves**.
+Raising budget 16 → 24 → **40** produced **zero additional ledger solves**.
 
 ### Direct live (max-steps 24)
 
@@ -31,28 +33,25 @@ Raising budget 16 → 24 produced **zero additional solves**.
 | merge_drop_b_tail | **PASS** | 5 |
 | intervals_no_sort | **PASS** | 5 |
 
-### Bare live (prior)
+### Ledger focus (max-steps 40)
 
-| mutation | result |
-|----------|--------|
-| ledger_no_debit | FAIL (0.86) |
-| ledger_double_total | FAIL (0.0) |
-| topo_drop_cycle_raise | **PASS** |
-| lru_no_evict | FAIL (0.3) |
-| merge_drop_b_tail | FAIL (0.5) |
-| intervals_no_sort | FAIL (0.2) |
+| mutation | result | steps | elapsed |
+|----------|--------|-------|--------|
+| ledger_no_debit | FAIL max_steps (0.0) | 40 | ~611s |
 
-## Reading
+(Second ledger mutation scoreboard did not land — host_agent was fail-fast on multi-step; fixed 2026-08-08 with `continue_on_fail`.)
 
-- Mutation-restore is **harder** than Phase D fixtures (tools 5/5 → 3/6).
-- Tools still beat bare (**3/6 vs 1/6**).
-- **Budget is not the bottleneck** for ledger/topo — they exhaust 24 steps without solving.
-- Next work targets diagnosis quality / tool strategy on the hard class (see `docs/FINDINGS_PHASE_E_STEPS24.md`).
+## Reading (honest)
+
+- **Budget is fully ruled out** for the ledger class.
+- Failures are diagnosis / tool-strategy / repair-quality problems.
+- Next work: tool-trace inspection + read-before-write bias + single-mutation experiments.
+- Preference learning + live strategy_stats now mirror under `artifacts/` for remote observability.
 - Six synthetic regressions — not a multi-repo benchmark.
 
 ## Reproduce
 
 ```powershell
-python -m scripts.batch_phase_e --arm direct --mode live --max-steps 24 --timeout 900
-python -m scripts.batch_phase_e --arm bare --mode live --timeout 400
+python -m scripts.batch_phase_e --arm direct --mode live --max-steps 24 --timeout 900 --trace
+python -m scripts.batch_phase_e --arm direct --mode live --mutation ledger_no_debit --max-steps 24 --read-first --trace
 ```

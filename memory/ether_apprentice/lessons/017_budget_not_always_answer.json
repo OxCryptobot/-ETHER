@@ -1,0 +1,9 @@
+{
+  "id": "017_budget_not_always_answer",
+  "teacher": "grok",
+  "craft": "reasoning",
+  "rule": "If two measured runs with different max-steps produce the same failing mutations (same reason=max_steps, same score), further blanket step increases are low-value. Switch hypothesis to diagnosis quality, tool selection order, or repair prompt. Design the smallest experiment that tests the new hypothesis (e.g. single-mutation higher steps + forced read-before-write, or tool-trace inspection).",
+  "match": "max_steps|budget|identical|same 3/6|ledger",
+  "code": "docs.FINDINGS_PHASE_E_STEPS24 + scripts.batch_phase_e",
+  "taught_at": "2026-08-08"
+}

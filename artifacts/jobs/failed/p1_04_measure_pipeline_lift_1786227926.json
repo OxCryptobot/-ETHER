@@ -1,0 +1,22 @@
+{
+  "id": "p1_04_measure_pipeline_lift",
+  "note": "P1 measure pipeline vs direct lift on hard pack (scoreboard)",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard"
+      ],
+      "timeout": 600
+    }
+  ],
+  "created": "2026-08-08T22:15:25.445883+00:00",
+  "source": "foreman"
+}

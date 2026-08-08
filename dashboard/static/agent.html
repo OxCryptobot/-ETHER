@@ -31,6 +31,26 @@
   .dot.busy { background: var(--cyan); animation: blink 1s infinite; }
   @keyframes blink { 50% { opacity: 0.4; } }
 
+  .recovery {
+    display: none;
+    margin: 0; padding: 12px 16px;
+    background: #1a0f0f; border-bottom: 1px solid #5a2020;
+    font-size: 12px;
+  }
+  .recovery.show { display: block; }
+  .recovery h3 {
+    margin: 0 0 6px; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--red);
+  }
+  .recovery p { margin: 0 0 8px; color: var(--muted); }
+  .recovery pre {
+    margin: 0; padding: 10px 12px; background: #0a0e16;
+    border: 1px solid #3a2020; border-radius: 6px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.45;
+    color: #e8c4c4; overflow-x: auto; white-space: pre;
+  }
+  .recovery .note { margin-top: 8px; font-size: 11px; color: var(--amber); }
+
   .phase-board {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
     padding: 12px 14px; border-bottom: 1px solid var(--border); background: #0c121a;
@@ -142,6 +162,17 @@
   </div>
 </header>
 
+<div class="recovery" id="recoveryBanner">
+  <h3>Host offline — one-time recovery</h3>
+  <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave it. Launcher keeps it alive after that.</p>
+  <pre>cd C:\Users\Otcde\ETHER
+git fetch origin
+git reset --hard origin/main
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\start_ether_host.ps1</pre>
+  <div class="note">After restart the dashboard will flip green within ~90 s. Do not re-run unless heartbeat stays dead &gt;2 min with pending jobs unconsumed.</div>
+</div>
+
 <div class="phase-board" id="phaseBoard">
   <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">—</div></div>
   <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">—</div></div>
@@ -235,13 +266,22 @@ function setPhase(id, val) {
      st === 'NEXT' || st === 'IN PROGRESS' ? 'progress' :
      st === 'QUEUED' ? 'queued' : 'unknown');
 }
+function setRecovery(show) {
+  const el = document.getElementById('recoveryBanner');
+  if (!el) return;
+  if (show) el.classList.add('show');
+  else el.classList.remove('show');
+}
 async function tickHost() {
   try {
     const r = await fetch('/api/host-agent');
     const d = await r.json();
     const alive = !!d.agent_alive;
+    const age = (d.status && d.status.heartbeat_age_s != null) ? Number(d.status.heartbeat_age_s) : null;
     document.getElementById('dot').className = 'dot ' + (alive ? 'on' : 'off');
     document.getElementById('alive').textContent = alive ? 'host online' : 'host offline';
+    // Show recovery only when clearly dead (offline or age > 120s)
+    setRecovery(!alive || (age != null && age > 120));
 
     const c = (d.queue && d.queue.counts) || {};
     document.getElementById('c-pending').textContent = c.pending ?? 0;
@@ -331,6 +371,7 @@ async function tickHost() {
   } catch (e) {
     document.getElementById('alive').textContent = 'dashboard fetch error';
     document.getElementById('dot').className = 'dot off';
+    setRecovery(true);
   }
 }
 async function tickSnapshot() {

@@ -8,8 +8,9 @@ negative (FINDINGS §11). This runtime:
 - executes it against a staging copy of a fixture
 - stops when project tests pass or budget is exhausted
 
-Gated by ETHER_TOOL_RUNTIME=1 (default off). Fully testable without a model
-via injectible decide_fn / call_fn.
+Package 1A (2026-08-08): default ON under training wheels. Explicit
+ETHER_TOOL_RUNTIME=0 still forces off. Fully testable without a model via
+injectible decide_fn / call_fn.
 """
 
 from __future__ import annotations
@@ -66,7 +67,18 @@ TOOL_SPECS: Sequence[Dict[str, str]] = (
 
 
 def tool_runtime_enabled() -> bool:
-    return (os.getenv("ETHER_TOOL_RUNTIME") or "").strip() == "1"
+    """Package 1A: tool-first is the required default under training wheels.
+
+    - Explicit ETHER_TOOL_RUNTIME=1 → on
+    - Explicit ETHER_TOOL_RUNTIME=0 → off
+    - Unset + wheels ON (default) → on
+    - Unset + wheels OFF → off
+    """
+    raw = (os.getenv("ETHER_TOOL_RUNTIME") or "").strip()
+    if raw:
+        return raw == "1"
+    wheels_on = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
+    return wheels_on
 
 
 @dataclass
@@ -248,7 +260,12 @@ class ToolRuntime:
         fails = []
         for line in stdout.splitlines():
             s = line.strip()
-            if s.startswith("FAILED ") or s.startswith("E ") or "ValueError" in s or "AssertionError" in s:
+            if (
+                s.startswith("FAILED ")
+                or s.startswith("E ")
+                or "ValueError" in s
+                or "AssertionError" in s
+            ):
                 fails.append(s[:160])
         return {
             "ok": bool(result.get("ok")),
@@ -265,7 +282,9 @@ class ToolRuntime:
         if tool == "read_file":
             return self._obs_read(str(args.get("path") or ""))
         if tool == "write_file":
-            return self._obs_write(str(args.get("path") or ""), str(args.get("content") or ""))
+            return self._obs_write(
+                str(args.get("path") or ""), str(args.get("content") or "")
+            )
         if tool == "run_tests":
             return self._obs_tests()
         if tool == "done":
@@ -309,7 +328,13 @@ class ToolRuntime:
         self.workspace = self._seed()
         messages: List[Dict[str, str]] = [
             {"role": "system", "content": self._system_prompt(objective)},
-            {"role": "user", "content": "Begin. First list_files, then read_file the tests and the broken source, then fix and run_tests."},
+            {
+                "role": "user",
+                "content": (
+                    "Begin. First list_files, then read_file the tests and the "
+                    "broken source, then fix and run_tests."
+                ),
+            },
         ]
         best_score = 0.0
         last_ok = False
@@ -340,14 +365,25 @@ class ToolRuntime:
                 if not isinstance(decision, dict):
                     decision = parse_action(str(decision))
                 tool = str(decision.get("tool") or "done").strip()
-                args = decision.get("args") if isinstance(decision.get("args"), dict) else {}
+                args = (
+                    decision.get("args")
+                    if isinstance(decision.get("args"), dict)
+                    else {}
+                )
                 obs = self._execute(tool, args)
                 rec = StepRecord(
                     step=i + 1,
                     tool=tool,
-                    args={k: (str(v)[:200] if k == "content" else v) for k, v in args.items()},
+                    args={
+                        k: (str(v)[:200] if k == "content" else v)
+                        for k, v in args.items()
+                    },
                     observation={
-                        k: (str(v)[:500] if k in ("stdout", "stderr", "content") else v)
+                        k: (
+                            str(v)[:500]
+                            if k in ("stdout", "stderr", "content")
+                            else v
+                        )
                         for k, v in obs.items()
                     },
                     ok=bool(obs.get("ok")),
@@ -359,7 +395,11 @@ class ToolRuntime:
                     if obs.get("ok"):
                         last_ok = True
                         snap = self._snapshot_code()
-                        kept = str(self.workspace) if self.workspace is not None else None
+                        kept = (
+                            str(self.workspace)
+                            if self.workspace is not None
+                            else None
+                        )
                         self.workspace = None  # caller owns cleanup
                         return RuntimeResult(
                             ok=True,
@@ -375,7 +415,9 @@ class ToolRuntime:
                     if fails:
                         obs = dict(obs)
                         obs["still_failing"] = fails[:8]
-                        obs["hint"] = "Fix ALL remaining failures. Re-read source if needed."
+                        obs["hint"] = (
+                            "Fix ALL remaining failures. Re-read source if needed."
+                        )
 
                 if tool == "done":
                     return RuntimeResult(
@@ -383,22 +425,28 @@ class ToolRuntime:
                         score=best_score,
                         steps=list(self.steps),
                         final_code=self._snapshot_code(),
-                        reason=str(args.get("reason") or obs.get("reason") or "done"),
+                        reason=str(
+                            args.get("reason") or obs.get("reason") or "done"
+                        ),
                         n_steps=len(self.steps),
                         elapsed_s=time.perf_counter() - t0,
                     )
                 messages.append(
                     {
                         "role": "assistant",
-                        "content": json.dumps({"tool": tool, "args": args}, default=str)[:1500],
+                        "content": json.dumps(
+                            {"tool": tool, "args": args}, default=str
+                        )[:1500],
                     }
                 )
                 messages.append(
                     {
                         "role": "user",
-                        "content": "Observation:\n"
-                        + json.dumps(rec.observation, default=str)[:2000]
-                        + "\nNext tool call (JSON only).",
+                        "content": (
+                            "Observation:\n"
+                            + json.dumps(rec.observation, default=str)[:2000]
+                            + "\nNext tool call (JSON only)."
+                        ),
                     }
                 )
             return RuntimeResult(
@@ -426,11 +474,18 @@ def _default_rose_call(
     from uuid import uuid4
 
     from core.registry import build_default_registry
-    from core.schemas import ChatMessage, Envelope, RoseQuartzRequest, RoseQuartzResponse
+    from core.schemas import (
+        ChatMessage,
+        Envelope,
+        RoseQuartzRequest,
+        RoseQuartzResponse,
+    )
 
     reg = build_default_registry()
     chat = [
-        ChatMessage(role=m.get("role", "user"), content=m.get("content") or "")  # type: ignore[arg-type]
+        ChatMessage(
+            role=m.get("role", "user"), content=m.get("content") or ""
+        )  # type: ignore[arg-type]
         for m in messages
     ]
     env = Envelope(
@@ -487,7 +542,6 @@ def run_if_enabled(
     timeout_s=None,
 ):
     """Phase C slice 3 entry — run tool runtime when gated on, else None."""
-    import os
     from pathlib import Path as _P
 
     if not tool_runtime_enabled():
@@ -503,7 +557,9 @@ def run_if_enabled(
         root = _P(raw)
     root = _P(root)
     if not root.is_dir():
-        return RuntimeResult(ok=False, score=0.0, error=f"fixture not found: {root}")
+        return RuntimeResult(
+            ok=False, score=0.0, error=f"fixture not found: {root}"
+        )
     steps = max_steps
     if steps is None:
         try:
@@ -536,6 +592,7 @@ def code_from_result(result):
         parts.append("# file: " + rel + chr(10) + body)
     return (chr(10) + chr(10)).join(parts)
 
+
 # --- phaseG extensions (grep/glob/apply_patch/rollback) ---
 try:
     from core.tool_runtime_ext import EXTRA_SPECS, ToolExtMixin
@@ -564,7 +621,9 @@ try:
             return self._obs_apply_patch(
                 str(args.get("path") or ""),
                 str(args.get("old") or ""),
-                str(args.get("new") if args.get("new") is not None else ""),
+                str(
+                    args.get("new") if args.get("new") is not None else ""
+                ),
             )
         if tool == "rollback":
             return self._obs_rollback()
@@ -590,4 +649,3 @@ except Exception as _ext_err:  # pragma: no cover
     import sys
 
     print("phaseG ext wire skipped:", _ext_err, file=sys.stderr)
-

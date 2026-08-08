@@ -1,0 +1,9 @@
+{
+  "id": "021_never_chain_playbooks",
+  "teacher": "grok",
+  "craft": "autonomy",
+  "rule": "HARD SAFETY for self-evolution. A playbook recovery job must never itself trigger another playbook. Implementation: (1) recovery note MUST start with 'playbook:'; (2) recovery id MUST NOT match the lesson match regex in a way that re-fires; (3) foreman skips if note.startswith('playbook:') or id contains diag_after_budget / recovery markers; (4) lessons that only teach (no enqueue) leave match empty or omit enqueue. Breaking this rule creates infinity loops and burns the host. Measured 2026-08-08: ~20 chained diag jobs before guard landed.",
+  "match": "",
+  "code": "scripts.foreman._is_playbook_recovery",
+  "taught_at": "2026-08-08"
+}

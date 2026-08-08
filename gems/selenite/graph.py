@@ -1,8 +1,9 @@
 """Optional LangGraph planning path for Selenite.
 
 Falls back gracefully if langgraph is missing or graph build fails.
+Synergistic with evolution_loop: PlanState can carry last_critique + hypothesis
+so the next cycle does not re-derive from zero.
 """
-
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, TypedDict
@@ -16,6 +17,10 @@ class PlanState(TypedDict, total=False):
     intent: str
     steps: List[Dict[str, Any]]
     reasoning: str
+    # Synergistic with GEM evolution loop
+    last_critique: str
+    hypothesis: str
+    root_cause: str
 
 
 def _classify_intent(query: str) -> str:
@@ -64,8 +69,17 @@ def _steps_for_intent(intent: str, max_depth: int) -> List[PlanStep]:
     return catalogs.get(intent, catalogs["general"])[:max_depth]
 
 
-def build_plan_with_graph(query: str, max_depth: int = 5) -> Optional[ExecutionPlan]:
-    """Try LangGraph StateGraph. Return None to signal caller to use rule planner."""
+def build_plan_with_graph(
+    query: str,
+    max_depth: int = 5,
+    last_critique: str = "",
+    hypothesis: str = "",
+) -> Optional[ExecutionPlan]:
+    """Try LangGraph StateGraph. Return None to signal caller to use rule planner.
+
+    last_critique / hypothesis are carried so the evolution loop does not lose
+    the Labradorite signal between cycles.
+    """
     try:
         from langgraph.graph import END, StateGraph
     except Exception:
@@ -73,10 +87,26 @@ def build_plan_with_graph(query: str, max_depth: int = 5) -> Optional[ExecutionP
 
     def classify(state: PlanState) -> PlanState:
         intent = _classify_intent(state["query"])
-        return {**state, "intent": intent, "reasoning": f"LangGraph intent={intent}"}
+        reasoning = f"LangGraph intent={intent}"
+        if state.get("root_cause"):
+            reasoning += f" | root_cause={state['root_cause']}"
+        if state.get("hypothesis"):
+            reasoning += f" | hyp={state['hypothesis'][:80]}"
+        return {**state, "intent": intent, "reasoning": reasoning}
 
     def expand(state: PlanState) -> PlanState:
         steps = _steps_for_intent(state.get("intent", "general"), state.get("max_depth", 5))
+        # When we have a prior critique, inject a review step under training wheels
+        if state.get("last_critique") and len(steps) < (state.get("max_depth") or 5):
+            steps.append(
+                PlanStep(
+                    id=len(steps) + 1,
+                    action="review",
+                    target="labradorite",
+                    deps=[steps[-1].id] if steps else [],
+                    description="Apply prior Labradorite critique; keep change minimal",
+                )
+            )
         return {
             **state,
             "steps": [s.model_dump() for s in steps],
@@ -90,10 +120,21 @@ def build_plan_with_graph(query: str, max_depth: int = 5) -> Optional[ExecutionP
         g.add_edge("classify", "expand")
         g.add_edge("expand", END)
         app = g.compile()
-        out = app.invoke({"query": query, "max_depth": max_depth})
+        out = app.invoke(
+            {
+                "query": query,
+                "max_depth": max_depth,
+                "last_critique": (last_critique or "")[:800],
+                "hypothesis": (hypothesis or "")[:300],
+            }
+        )
         steps = [PlanStep(**s) for s in out.get("steps", [])]
         if not steps:
             return None
-        return ExecutionPlan(steps=steps, reasoning=out.get("reasoning", "LangGraph plan"))
+        return ExecutionPlan(
+            steps=steps,
+            reasoning=out.get("reasoning", "LangGraph plan")
+            + (" + critique carried" if last_critique else ""),
+        )
     except Exception:
         return None

@@ -305,6 +305,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
     _write_scoreboard(sb, rows, model)
     print(f"scoreboard final: {sb}", flush=True)
+
+    # Flight learning: convert measured results into preferences + live strategy stats
+    try:
+        from core.preference import record_preferences_from_scoreboard
+
+        pref_meta = record_preferences_from_scoreboard(sb)
+        print(f"preferences: {pref_meta}", flush=True)
+    except Exception as e:
+        print(f"preference record skipped: {e}", flush=True)
+
     return 0 if n_ok == len(rows) else 1
 
 

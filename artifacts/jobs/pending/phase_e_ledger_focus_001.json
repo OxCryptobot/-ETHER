@@ -1,0 +1,47 @@
+{
+  "id": "phase_e_ledger_focus_001",
+  "note": "Focused: only ledger mutations, max-steps 40. Tests whether extreme budget helps or if diagnosis/tool strategy is broken.",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "ledger_no_debit",
+        "--max-steps",
+        "40",
+        "--timeout",
+        "900",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_ledger40.json"
+      ],
+      "timeout": 1200
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--mutation",
+        "ledger_double_total",
+        "--max-steps",
+        "40",
+        "--timeout",
+        "900",
+        "--scoreboard",
+        "artifacts/scoreboard_phase_e_ledger40b.json"
+      ],
+      "timeout": 1200
+    }
+  ]
+}

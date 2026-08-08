@@ -1,0 +1,11 @@
+{
+  "id": "phase_e_diag_after_budget_073734",
+  "note": "CANCELLED: playbook infinity loop cleanup",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "print('cancelled')"],
+      "timeout": 30
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
-  "job_id": "tw_e08_evolution_hard_reverify",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-08T19:02:17.082157+00:00",
-  "note": "training wheels: re-verify evolution cycle after __main__ harden + AgentState wire (must exit 0)"
+  "job_id": "tw_e09_tool_first_default",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-08T20:02:11.428556+00:00",
+  "note": "training wheels: verify tool_runtime_enabled defaults ON under wheels; import + unit path still clean"
 }

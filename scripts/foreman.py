@@ -6,12 +6,21 @@ On FAIL, applies playbook requeue when a lesson matches.
 HARD RULE: never apply a playbook to a job that is itself a playbook recovery
 (note starts with 'playbook:' or id contains '_diag_after_' / recovery markers).
 That produced an infinity loop 2026-08-08.
+
+REVAMP 2026-08-08:
+- Sequential batch fill (BATCH_SIZE under training wheels) so queue can hold next N
+  curriculum items in order when idle. Host still drains FIFO back-to-back.
+- On successful playbook recovery, convert the original failed job file to done/
+  (recovered). Does not hide root cause; only after a recovery PASS.
+- Curriculum expanded with remaining Phase 1 items only. Continuous z_gate still
+  DISABLED. Training wheels stay ON until measured lift + Phase 1 gate green.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -23,6 +32,10 @@ FAILED = ROOT / "artifacts" / "jobs" / "failed"
 STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
+
+# Under training wheels: fill next N sequential curriculum items when pending empty.
+# Raise only after Phase 1 gate is green and measured lift is proven.
+BATCH_SIZE = 3
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -190,6 +203,60 @@ CURRICULUM: List[Dict[str, Any]] = [
             }
         ],
     },
+    # --- Phase 1 remaining (gate work only; do not advance to Phase 2+ until green) ---
+    {
+        "id": "p1_03_expand_repo_oracle",
+        "note": "P1 expand + re-verify repo-oracle suite (≥10 hard path)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "pytest",
+                    "tests/test_repo_oracle.py",
+                    "tests/test_repo_oracle_hook.py",
+                    "tests/test_repo_oracle_gate.py",
+                    "-q",
+                    "--tb=line",
+                ],
+                "timeout": 300,
+            }
+        ],
+    },
+    {
+        "id": "p1_04_measure_pipeline_lift",
+        "note": "P1 measure pipeline vs direct lift on hard pack (scoreboard)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "scripts.batch_phase_d",
+                    "--arm",
+                    "pipeline",
+                    "--mode",
+                    "scripted",
+                    "--tier",
+                    "hard",
+                ],
+                "timeout": 600,
+            }
+        ],
+    },
+    {
+        "id": "p1_05_labradorite_remaining",
+        "note": "P1 Labradorite critique on remaining non-infra FAILs (one hyp)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "core.evolution_loop",
+                ],
+                "timeout": 300,
+            }
+        ],
+    },
 ]
 
 
@@ -250,6 +317,25 @@ def write_job(job: Dict[str, Any]) -> Path:
     return path
 
 
+def _move_failed_to_done(jid: str) -> bool:
+    """Convert a recovered failed job to done/ (file move). Returns True if moved."""
+    src = FAILED / f"{jid}.json"
+    if not src.exists():
+        # also try without job_ prefix variants
+        for p in FAILED.glob(f"*{jid}*.json"):
+            src = p
+            break
+        else:
+            return False
+    DONE.mkdir(parents=True, exist_ok=True)
+    dst = DONE / src.name
+    try:
+        shutil.move(str(src), str(dst))
+        return True
+    except Exception:
+        return False
+
+
 def record_last_job(state: Dict[str, Any]) -> None:
     if not LAST_JOB.exists():
         return
@@ -260,37 +346,62 @@ def record_last_job(state: Dict[str, Any]) -> None:
     jid = last.get("job_id")
     if not jid:
         return
+    note = last.get("note") or ""
     if last.get("ok") is True:
         if jid not in state["completed"]:
             state["completed"].append(jid)
         state["failed"] = [x for x in state.get("failed", []) if x != jid]
+        # Convert original failed job when a playbook recovery PASSes
+        if note.strip().lower().startswith("playbook:"):
+            # note format: playbook:<les_id> for <original_jid>
+            m = re.search(r"for\s+([\w\-\.]+)", note, re.I)
+            if m:
+                orig = m.group(1).strip()
+                if _move_failed_to_done(orig):
+                    if orig not in state["completed"]:
+                        state["completed"].append(orig)
+                    state["failed"] = [x for x in state.get("failed", []) if x != orig]
+                    state["last_converted"] = orig
     elif last.get("ok") is False:
         if jid not in state.get("failed", []):
             state.setdefault("failed", []).append(jid)
 
 
 def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
-    if pending_ids():
+    """Enqueue up to BATCH_SIZE next unfinished curriculum items in sequential order.
+
+    Returns the last id enqueued (or None). Host drains FIFO so order is preserved.
+    Continuous loop remains disabled: stops when curriculum is exhausted.
+    """
+    pending = pending_ids()
+    if len(pending) >= BATCH_SIZE:
         return None
+
     done = set(state.get("completed") or [])
     if DONE.exists():
         for p in DONE.glob("*.json"):
             done.add(p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem)
 
     cursor = int(state.get("cursor") or 0)
+    enqueued: List[str] = []
     for i, item in enumerate(CURRICULUM):
+        if len(pending) + len(enqueued) >= BATCH_SIZE:
+            break
         if i < cursor:
             continue
         jid = item["id"]
-        if jid in done:
+        if jid in done or jid in pending or jid in enqueued:
             state["cursor"] = i + 1
             continue
         write_job(item)
+        enqueued.append(jid)
         state["cursor"] = i
         state["last_enqueued"] = jid
-        return jid
-    state["cursor"] = len(CURRICULUM)
-    return None
+
+    if not enqueued:
+        state["cursor"] = len(CURRICULUM)
+        return None
+    return enqueued[-1]
 
 
 def _is_playbook_recovery(jid: str, note: str) -> bool:
@@ -356,6 +467,7 @@ def tick() -> Dict[str, Any]:
         "cursor": state.get("cursor"),
         "completed_n": len(state.get("completed") or []),
         "lessons": len(lessons),
+        "batch_size": BATCH_SIZE,
         "state": state,
     }
 
@@ -368,8 +480,10 @@ def status() -> Dict[str, Any]:
         "failed": state.get("failed") or [],
         "last_enqueued": state.get("last_enqueued"),
         "last_playbook": state.get("last_playbook"),
+        "last_converted": state.get("last_converted"),
         "lessons": len(load_lessons()),
         "curriculum_len": len(CURRICULUM),
+        "batch_size": BATCH_SIZE,
         "pending": sorted(pending_ids()),
         "mode": state.get("mode", "apprentice"),
         "teacher": state.get("teacher", "grok"),

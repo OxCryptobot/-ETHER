@@ -1,0 +1,11 @@
+{
+  "id": "tw_e01_evolution_smoke",
+  "note": "training wheels: smoke EvolutionController + structured critique path",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.evolution_loop"],
+      "timeout": 120
+    }
+  ]
+}

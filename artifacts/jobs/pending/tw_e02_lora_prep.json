@@ -1,0 +1,11 @@
+{
+  "id": "tw_e02_lora_prep",
+  "note": "training wheels: gated LoRA data prep (no weight updates)",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.lora_prep"],
+      "timeout": 90
+    }
+  ]
+}

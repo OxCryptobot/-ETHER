@@ -107,7 +107,11 @@ def git_push_report(job_id: str, ok: bool) -> None:
         paths.append(str(p.relative_to(ROOT)))
     for p in (ROOT / "artifacts").glob("trace_*.json"):
         paths.append(str(p.relative_to(ROOT)))
-    for name in ("strategy_stats.json", "preference_summary.json"):
+    for name in (
+        "strategy_stats.json",
+        "preference_summary.json",
+        "preferences_tail.jsonl",
+    ):
         p = ROOT / "artifacts" / name
         if p.exists():
             paths.append(str(p.relative_to(ROOT)))

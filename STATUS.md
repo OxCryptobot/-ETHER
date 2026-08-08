@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-08 — SUPER APP dashboard consolidation landed. Package 1A tool-first default LANDED. Host idle after tw_e09.
+**Updated:** 2026-08-08 — Foreman revamp: sequential BATCH_SIZE=3 enqueue + recovered FAIL→done conversion + Phase 1 curriculum expanded (p1_03 expand_repo_oracle, p1_04 measure_pipeline_lift, p1_05 labradorite_remaining). Host will fill pending with next unfinished on next tick. Package 1A LANDED. Training wheels stay ON.
 
 Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 
@@ -31,6 +31,7 @@ Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 | Evolution loop | introspection mandatory; __main__ hardened; tw_e08 PASS |
 | **Tool-first default (1A)** | **LANDED** — defaults ON under training wheels |
 | **Dashboard SUPER APP** | **LANDED** — unified Host + Control Matrix at /agent |
+| **Foreman** | **REVAMPED** — sequential batch fill (BATCH_SIZE=3), recovered conversion, Phase 1 remaining items |
 
 ### Holdout generate (unchanged)
 
@@ -61,7 +62,7 @@ This is the signal we are amplifying.
 | 1A Tool-first default | **LANDED** | tool_runtime only default under wheels; Phase D still 5/5 |
 | 1B AgentState durable | WIRED into EvolutionController | create/save/load round-trip; shared by gems |
 | 1C AST transactional edits | QUEUED | Python-first; snapshot + rollback on test fail |
-| 1D Expand eval + close current FAILs | IN PROGRESS | evolution re-verify PASS (tw_e08); expand suite next |
+| 1D Expand eval + close current FAILs | IN PROGRESS | evolution re-verify PASS (tw_e08); expand suite next (p1_03/04/05 now in curriculum) |
 
 **Gate to Phase 2:** Tool-first live, AgentState durable across restart, ≥10 hard tasks measured with pipeline lift, evolution FAILs closed.
 
@@ -88,6 +89,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - AgentState durable shared state
 - **Tool-first default under training wheels (Package 1A)**
 - **SUPER APP dashboard (Host + Control Matrix consolidated)**
+- **Foreman sequential batch + recovered FAIL conversion**
 
 ## Hazards
 
@@ -120,7 +122,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ## Next action only
 
-1. Open http://127.0.0.1:8787/agent — SUPER APP live
-2. Expand repo-oracle suite to ≥10 hard tasks and measure pipeline lift
+1. Host auto-pulls + tick will enqueue p1_03 → p1_04 → p1_05 (BATCH_SIZE=3 sequential)
+2. Expand repo-oracle suite to ≥10 hard tasks and measure pipeline lift (now in curriculum)
 3. Land 1C AST transactional edits only after measurement
 4. Only after measured lift: discuss wheels

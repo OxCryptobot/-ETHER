@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ETHER Host — ONE window: dashboard + job agent + foreman.
+"""ETHER Host - ONE window: dashboard + job agent + foreman.
 
     .\.venv\Scripts\python.exe scripts\ether_host.py
 
@@ -28,7 +28,7 @@ try:
 except Exception:
     pass
 
-# Critical source files — if any of these change on disk after a git_sync,
+# Critical source files - if any of these change on disk after a git_sync,
 # we exit so the launcher can restart with the new code.
 _WATCHED = [
     ROOT / "scripts" / "ether_host.py",
@@ -65,7 +65,7 @@ def _start_dashboard() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER HOST — single window", flush=True)
+    print("  ETHER HOST - single window", flush=True)
     print("  dashboard  http://127.0.0.1:8787/agent", flush=True)
     print("  agent      job consumer", flush=True)
     print("  foreman    apprentice curriculum", flush=True)
@@ -96,7 +96,7 @@ def main() -> int:
 
             # After sync, check if our own source was updated on origin
             if _source_changed(baseline):
-                agent.log("source updated on origin — exiting for clean reload (code 42)")
+                agent.log("source updated on origin - exiting for clean reload (code 42)")
                 agent.write_status(phase="reloading", note="source changed")
                 return 42
 
@@ -119,7 +119,7 @@ def main() -> int:
                 agent.process_job(job_path)
                 agent.git_sync()
                 if _source_changed(baseline):
-                    agent.log("source updated on origin — exiting for clean reload (code 42)")
+                    agent.log("source updated on origin - exiting for clean reload (code 42)")
                     agent.write_status(phase="reloading", note="source changed")
                     return 42
                 fr = foreman.tick()

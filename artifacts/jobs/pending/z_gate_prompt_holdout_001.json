@@ -1,0 +1,20 @@
+{
+  "id": "z_gate_prompt_holdout_001",
+  "note": "Prompt guard + holdout + train_gates",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_prompt_guard.py",
+        "tests/test_holdout.py",
+        "tests/test_train_gates.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ]
+}

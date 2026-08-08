@@ -1,0 +1,21 @@
+{
+  "id": "z_gate_hard_scripted_001",
+  "note": "Hard scripted 5/5 direct arm",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard"
+      ],
+      "timeout": 400
+    }
+  ]
+}

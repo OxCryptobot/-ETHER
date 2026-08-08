@@ -1,0 +1,20 @@
+{
+  "id": "z_gate_repo_oracle_001",
+  "note": "Repo oracle + clear quartz multifile",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_repo_oracle.py",
+        "tests/test_repo_oracle_hook.py",
+        "tests/test_clear_quartz_multifile.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ]
+}

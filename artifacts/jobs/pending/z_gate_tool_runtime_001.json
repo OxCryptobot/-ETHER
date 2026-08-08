@@ -1,0 +1,19 @@
+{
+  "id": "z_gate_tool_runtime_001",
+  "note": "Core tool_runtime + ruff gate",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_ruff_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ]
+}

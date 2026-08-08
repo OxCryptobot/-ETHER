@@ -1,0 +1,23 @@
+{
+  "id": "phase_e_mutation_live_001",
+  "note": "Phase E live: direct tool path on mutation restore pack (max-steps 16)",
+  "source": "grok",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_e",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "500"
+      ],
+      "timeout": 600
+    }
+  ]
+}

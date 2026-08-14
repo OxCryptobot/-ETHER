@@ -1,0 +1,22 @@
+{
+  "id": "p1_08_expand_hard_count",
+  "note": "P1 confirm hard fixture count + repo-oracle gate (progress toward ≥10 hard tasks)",
+  "continue_on_fail": false,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T17:25:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_repo_oracle.py",
+        "tests/test_repo_oracle_gate.py",
+        "tests/test_repo_oracle_hook.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    }
+  ]
+}

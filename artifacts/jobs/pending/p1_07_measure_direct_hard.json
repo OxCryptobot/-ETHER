@@ -1,0 +1,27 @@
+{
+  "id": "p1_07_measure_direct_hard",
+  "note": "P1 re-measure direct arm hard pack (baseline for lift comparison vs pipeline)",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T17:25:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--timeout",
+        "400",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_07_direct.json"
+      ],
+      "timeout": 600
+    }
+  ]
+}

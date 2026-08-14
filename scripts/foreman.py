@@ -12,6 +12,11 @@ REVAMP 2026-08-14 (permanent standalone):
   with unique timestamp ids (no infinity z_gate).
 - Failed jobs are archived after Labradorite/steady sweep (not left forever).
 - Training wheels stay ON until measured lift + Phase 1 gate green.
+
+FASTTRACK 2026-08-14T21:10Z:
+- Added ss_pipeline_scripted (fast 1D signal, seconds not minutes).
+- Live ledger remains but is no longer the only pipeline measurement.
+- Prefer scripted first so we get honest lift data without burning wall-clock.
 """
 from __future__ import annotations
 
@@ -118,8 +123,14 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_ss_direct.json"], "timeout": 600}],
     },
     {
+        "id_prefix": "ss_pipeline_scripted",
+        "note": "steady: pipeline scripted (fast 1D signal)",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "scripted", "--fixture", "ledger", "--max-steps", "16", "--scoreboard", "artifacts/scoreboard_ss_pipeline_scripted.json"], "timeout": 180}],
+    },
+    {
         "id_prefix": "ss_pipeline_ledger",
-        "note": "steady: pipeline ledger under terminal harden",
+        "note": "steady: pipeline ledger live under terminal harden",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--fixture", "ledger", "--max-steps", "16", "--timeout", "300", "--scoreboard", "artifacts/scoreboard_ss_ledger.json"], "timeout": 480}],
     },

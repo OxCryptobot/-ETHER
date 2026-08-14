@@ -1,0 +1,26 @@
+{
+  "id": "p1_04b_measure_pipeline_lift_verbose",
+  "note": "P1 follow-up: pipeline hard pack with explicit scoreboard (Labradorite after p1_04)",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--timeout",
+        "480",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_04b.json"
+      ],
+      "timeout": 900
+    }
+  ],
+  "created": "2026-08-14T17:40:28.201987+00:00",
+  "source": "foreman"
+}

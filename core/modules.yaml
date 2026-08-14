@@ -7,24 +7,27 @@
 # Entries use the stem form "<subpath>/<module>" relative to core/.
 
 modules:
-  vectors:                              # stage 1 — typed-edge envelope schema (committed now, emitted from stage 2)
+  vectors:
     introduced: "migration(stage1): loop-runner foundation"
     purpose: "Vector/Provenance pydantic models — the octagon's typed, auditable edges (A-3/A-4)"
-  spine/state_io:                       # stage 1 — L1 single-writer kernel (D3)
+  spine/state_io:
     introduced: "migration(stage1): loop-runner foundation"
     purpose: "O_EXCL lockfile + atomic-replace store; sole owner of state RMW"
-  loop/runner:                          # stage 1 — thin stage dispatcher
+  loop/runner:
     introduced: "migration(stage1): loop-runner foundation"
     purpose: "LoopRunner — dispatches extracted Pipeline.run stages behind ETHER_LOOP_RUNNER"
-  loop/handlers/finalize:               # stage 1 — first extracted stage (tail of Pipeline.run)
+  loop/handlers/finalize:
     introduced: "migration(stage1): loop-runner foundation"
     purpose: "FinalizeHandler — learning-record/fabricate/memory-save/status tail, extracted verbatim"
-  loop/handlers/verify:                 # stage 2 — verification-spine extraction from Pipeline.run
+  loop/handlers/verify:
     introduced: "migration(stage2): verification-spine extraction"
     purpose: "VerificationHandler — tool_scan/audit/critique/prompt_guard/holdout/reward spine, extracted verbatim"
-  tool_runtime:                           # Phase C slice 1 — tool-first Observe→Act runtime
+  tool_runtime:
     introduced: "phaseC(slice1): tool-first agent runtime"
     purpose: "ToolRuntime — Observe→Act→Observe over fixture staging; gated by ETHER_TOOL_RUNTIME"
-  pep8_reviewer:                          # FastTrack — GEMS-callable style gate
+  pep8_reviewer:
     introduced: "fasttrack(2026-08-14): embed pep8 skill as tool"
     purpose: "PEP8/ruff structured reviewer — CLI + ToolRuntime pep8_review tool for GEMS agents"
+  failure_types:
+    introduced: "fasttrack(2026-08-14): typed failure contract"
+    purpose: "Canonical failure_type strings for host envelopes + tool runtime + playbooks"

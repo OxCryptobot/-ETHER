@@ -18,6 +18,8 @@ EditTransaction). Syntax-broken Python is rejected before disk write.
 FastTrack 2026-08-14: no_progress early abort — 3 consecutive failed
 run_tests without score gain ends the loop instead of burning remaining
 steps. Stronger hint forces read_file before another write after failures.
+
+FastTrack 2026-08-14: pep8_review tool dispatched via phaseG ext for GEMS.
 """
 
 from __future__ import annotations
@@ -75,13 +77,6 @@ TOOL_SPECS: Sequence[Dict[str, str]] = (
 
 
 def tool_runtime_enabled() -> bool:
-    """Package 1A: tool-first is the required default under training wheels.
-
-    - Explicit ETHER_TOOL_RUNTIME=1 → on
-    - Explicit ETHER_TOOL_RUNTIME=0 → off
-    - Unset + wheels ON (default) → on
-    - Unset + wheels OFF → off
-    """
     raw = (os.getenv("ETHER_TOOL_RUNTIME") or "").strip()
     if raw:
         return raw == "1"
@@ -116,7 +111,6 @@ CallFn = Callable[[List[Dict[str, str]]], str]
 
 
 def _extract_json_objects(raw: str) -> List[str]:
-    """Pull candidate JSON objects, including nested braces (write_file content)."""
     out: List[str] = []
     fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
     if fence:
@@ -155,10 +149,6 @@ def _extract_json_objects(raw: str) -> List[str]:
 
 
 def parse_action(text: str) -> Dict[str, Any]:
-    """Extract a single tool call. Nested {} in write content supported.
-
-    Unparseable returns tool=_retry so the loop continues (not done).
-    """
     raw = (text or "").strip()
     if not raw:
         return {"tool": "_retry", "args": {"reason": "empty model output"}}
@@ -194,7 +184,6 @@ def _blocked(rel: str) -> Optional[str]:
 
 
 def _ast_reject_py(path: str, content: str) -> Optional[str]:
-    """Package 1C: reject syntax-broken Python before any disk write."""
     if not path.replace("\\", "/").endswith(".py"):
         return None
     try:
@@ -259,7 +248,6 @@ class ToolRuntime:
         reason = _blocked(path)
         if reason:
             return {"ok": False, "error": reason}
-        # Package 1C: AST gate for .py before any disk mutation
         ast_err = _ast_reject_py(path, content if content is not None else "")
         if ast_err:
             return {"ok": False, "error": ast_err}
@@ -425,7 +413,7 @@ class ToolRuntime:
                             if self.workspace is not None
                             else None
                         )
-                        self.workspace = None  # caller owns cleanup
+                        self.workspace = None
                         return RuntimeResult(
                             ok=True,
                             score=sc,
@@ -444,7 +432,6 @@ class ToolRuntime:
                             "REQUIRED next: read_file the failing source before "
                             "another write_file. Fix ALL remaining failures."
                         )
-                    # Early abort: 3 consecutive run_tests without score gain
                     if last_fail_score is not None and sc <= last_fail_score + 1e-12:
                         stagnant_fails += 1
                     else:
@@ -513,7 +500,6 @@ def _default_rose_call(
     temperature: float = 0.1,
     max_tokens: int = 512,
 ) -> str:
-    """Call Rose Quartz via the gem registry. Soft import — core stays thin."""
     from uuid import uuid4
 
     from core.registry import build_default_registry
@@ -555,13 +541,6 @@ def make_llm_decide_fn(
     temperature: float = 0.1,
     max_tokens: int = 512,
 ) -> DecideFn:
-    """Build a decide_fn that asks a model for one JSON tool call.
-
-    - `call_fn(messages) -> str` is injectible (tests / offline).
-    - Default call_fn routes through Rose Quartz (Ollama local primary).
-    - Output is always parsed via `parse_action` (fail closed).
-    """
-
     def _call(messages: List[Dict[str, str]]) -> str:
         if call_fn is not None:
             return call_fn(messages)
@@ -584,7 +563,6 @@ def run_if_enabled(
     max_steps=None,
     timeout_s=None,
 ):
-    """Phase C slice 3 entry — run tool runtime when gated on, else None."""
     from pathlib import Path as _P
 
     if not tool_runtime_enabled():
@@ -626,7 +604,6 @@ def run_if_enabled(
 
 
 def code_from_result(result):
-    """Flatten final_code into a single artifact (always # file: markers)."""
     files = result.final_code or {}
     if not files:
         return ""
@@ -636,7 +613,7 @@ def code_from_result(result):
     return (chr(10) + chr(10)).join(parts)
 
 
-# --- phaseG extensions (grep/glob/apply_patch/rollback) ---
+# --- phaseG extensions (grep/glob/apply_patch/rollback/pep8_review) ---
 try:
     from core.tool_runtime_ext import EXTRA_SPECS, ToolExtMixin
 
@@ -650,6 +627,7 @@ try:
         "_obs_rollback",
         "_obs_grep",
         "_obs_glob",
+        "_obs_pep8_review",
         "_push_undo",
         "_resolve_path",
         "_ensure_undo",
@@ -676,6 +654,8 @@ try:
             )
         if tool == "glob":
             return self._obs_glob(str(args.get("pattern") or ""))
+        if tool == "pep8_review":
+            return self._obs_pep8_review(str(args.get("path") or "."))
         if tool == "write_file":
             path = str(args.get("path") or "")
             from core.tool_runtime import _blocked

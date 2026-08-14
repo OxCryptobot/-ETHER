@@ -1,39 +1,29 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T21:34Z — Scripted pipeline path fixed. Soft launch still BLOCKED.
+**Updated:** 2026-08-14T21:39Z — Scripted path fixed. Timeout revise loop wired. Soft launch BLOCKED.
 
 ---
 
 ## Live state
 
-- Host Agent: alive, auto-refilling, direct hard 5/5 PASS.
-- **Fix landed:** `batch_phase_d` pipeline `mode=scripted` now uses ToolRuntime scripted path (final scoreboard, not sentinel-only).
-- **p1_35** enqueued: pipeline scripted hard pack measurement.
-- Timeout → revise lesson wired (`timeout_budget_exhaust`).
-- Pipeline **live** ledger still fails under 4B (expected; terminal harden correct).
+- Host: self-refilling. Direct hard 5/5 PASS.
+- `p1_35` still pending (host must pull + run after long live ledger cycle).
+- Scripted pipeline path fixed in `batch_phase_d` (final scoreboard, not sentinel).
+- Foreman now loads lessons from `artifacts/lessons` first → timeout playbook can fire.
+- Steady rotation prioritizes fast jobs; live ledger moved last.
 
-## Gap tracker (honest)
+## Gap tracker
 
 | Gap | Status |
 |-----|--------|
-| True scripted pipeline measurement | **FIXED this batch** |
-| Phase 1 1D measured lift | IN PROGRESS — waiting p1_35 scoreboard |
-| Hard time allotments + timeout→revise | Lesson wired; full contract still next |
-| Closed Labradorite loop | Partial — playbook lesson live |
-| SUPER APP / Control Matrix | Partial — Phase board parser fixed |
-| Pipeline god-file | Open (extraction after measurements) |
-| Script graveyard | Open (purge after scores captured) |
-| Concurrency / multi-job | Open (later) |
-| Checkpoint/resume | Open (later) |
-
-## FastTrack order
-
-1. Scripted pipeline measurement → **code fixed**, waiting host result on p1_35
-2. Time-allotment contract + continuous revise path
-3. Labradorite loop kept green
-4. Collector/dashboard unification
-5. LoopRunner extraction
-6. Graveyard purge
+| True scripted pipeline measurement | **FIXED** (code) — awaiting p1_35 result |
+| Phase 1 1D measured lift | IN PROGRESS |
+| Hard time allotments + timeout→revise | **Lesson + playbook wired** |
+| Closed Labradorite loop | **Improved** this batch |
+| SUPER APP | Partial |
+| Pipeline god-file | Open |
+| Script graveyard | Open |
+| Concurrency / checkpoint | Open (later) |
 
 ## Phase 1 board
 
@@ -42,11 +32,9 @@
 | 1A Tool-first | COMPLETE |
 | 1B AgentState | COMPLETE |
 | 1C AST transactional | COMPLETE |
-| 1D Measured lift | IN PROGRESS — direct 5/5, pipeline scripted hard pack running |
+| 1D Measured lift | IN PROGRESS |
 
-**Gate:** honest pipeline lift numbers + time discipline + revise loop green.
-
-Training wheels ON. Soft launch blocked.
+Training wheels ON. Soft launch blocked until gate green.
 
 ## Recovery (only if host dies)
 

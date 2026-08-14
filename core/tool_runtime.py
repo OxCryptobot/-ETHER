@@ -14,6 +14,10 @@ injectible decide_fn / call_fn.
 
 Package 1C (2026-08-14): write_file AST-gates .py content (same rule as
 EditTransaction). Syntax-broken Python is rejected before disk write.
+
+FastTrack 2026-08-14: no_progress early abort — 3 consecutive failed
+run_tests without score gain ends the loop instead of burning remaining
+steps. Stronger hint forces read_file before another write after failures.
 """
 
 from __future__ import annotations
@@ -357,6 +361,8 @@ class ToolRuntime:
         ]
         best_score = 0.0
         last_ok = False
+        stagnant_fails = 0
+        last_fail_score = None  # type: Optional[float]
         try:
             for i in range(self.max_steps):
                 if time.perf_counter() - t0 > self.timeout_s:
@@ -435,7 +441,25 @@ class ToolRuntime:
                         obs = dict(obs)
                         obs["still_failing"] = fails[:8]
                         obs["hint"] = (
-                            "Fix ALL remaining failures. Re-read source if needed."
+                            "REQUIRED next: read_file the failing source before "
+                            "another write_file. Fix ALL remaining failures."
+                        )
+                    # Early abort: 3 consecutive run_tests without score gain
+                    if last_fail_score is not None and sc <= last_fail_score + 1e-12:
+                        stagnant_fails += 1
+                    else:
+                        stagnant_fails = 1
+                    last_fail_score = sc
+                    if stagnant_fails >= 3:
+                        return RuntimeResult(
+                            ok=False,
+                            score=best_score,
+                            steps=list(self.steps),
+                            final_code=self._snapshot_code(),
+                            error="no_progress",
+                            reason="no_progress after 3 failed run_tests without score gain",
+                            n_steps=len(self.steps),
+                            elapsed_s=time.perf_counter() - t0,
                         )
 
                 if tool == "done":

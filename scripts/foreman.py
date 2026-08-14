@@ -14,6 +14,9 @@ REVAMP 2026-08-08:
   (recovered). Does not hide root cause; only after a recovery PASS.
 - Curriculum expanded with remaining Phase 1 items only. Continuous z_gate still
   DISABLED. Training wheels stay ON until measured lift + Phase 1 gate green.
+
+2026-08-14: added p1_04b / p1_06 / p1_07 / p1_08 for AST verification +
+measurement follow-ups after Package 1C landed.
 """
 from __future__ import annotations
 
@@ -252,6 +255,91 @@ CURRICULUM: List[Dict[str, Any]] = [
                     ".venv/Scripts/python.exe",
                     "-m",
                     "core.evolution_loop",
+                ],
+                "timeout": 300,
+            }
+        ],
+    },
+    # --- 2026-08-14 additions after Package 1C landed ---
+    {
+        "id": "p1_04b_measure_pipeline_lift_verbose",
+        "note": "P1 follow-up: pipeline hard pack with explicit scoreboard (Labradorite after p1_04)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "scripts.batch_phase_d",
+                    "--arm",
+                    "pipeline",
+                    "--mode",
+                    "scripted",
+                    "--tier",
+                    "hard",
+                    "--timeout",
+                    "480",
+                    "--scoreboard",
+                    "artifacts/scoreboard_p1_04b.json",
+                ],
+                "timeout": 900,
+            }
+        ],
+    },
+    {
+        "id": "p1_06_ast_transaction_tests",
+        "note": "P1 verify Package 1C AST transactional edits",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "pytest",
+                    "tests/test_ast_transaction.py",
+                    "-q",
+                    "--tb=short",
+                ],
+                "timeout": 120,
+            }
+        ],
+    },
+    {
+        "id": "p1_07_measure_direct_hard",
+        "note": "P1 re-measure direct arm hard pack (baseline for lift)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "scripts.batch_phase_d",
+                    "--arm",
+                    "direct",
+                    "--mode",
+                    "scripted",
+                    "--tier",
+                    "hard",
+                    "--timeout",
+                    "400",
+                    "--scoreboard",
+                    "artifacts/scoreboard_p1_07_direct.json",
+                ],
+                "timeout": 600,
+            }
+        ],
+    },
+    {
+        "id": "p1_08_expand_hard_count",
+        "note": "P1 confirm hard fixture count + repo-oracle gate (toward ≥10)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "pytest",
+                    "tests/test_repo_oracle.py",
+                    "tests/test_repo_oracle_gate.py",
+                    "tests/test_repo_oracle_hook.py",
+                    "-q",
+                    "--tb=line",
                 ],
                 "timeout": 300,
             }

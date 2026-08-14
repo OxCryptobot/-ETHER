@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T17:56Z — Host recovered and drained Phase 1 batch. Direct hard 5/5 confirmed. Pipeline measurement still incomplete (p1_04b no scoreboard). Next hyp enqueued under Labradorite. Training wheels ON.
+**Updated:** 2026-08-14T18:15Z — Host stalled again after previous recovery (heartbeat frozen ~18 min, p1_04c not consumed). Recovery re-issued. Scoreboard harness hardened offline. Training wheels ON.
 
 ---
 
@@ -21,44 +21,55 @@
 | 1A Tool-first default | **LANDED** |
 | 1B AgentState durable | **WIRED** |
 | 1C AST transactional edits | **LANDED + VERIFIED** (p1_06 PASS) |
-| 1D Expand eval + close FAILs | **IN PROGRESS** — pipeline scoreboard still missing |
+| 1D Expand eval + close FAILs | **IN PROGRESS** — pipeline measurement still open |
 
 **Gate to Phase 2:** measured pipeline lift on ≥10 hard tasks + evolution FAILs closed.
 
 ---
 
-## Latest results (host drain)
+## Latest results
 
 | Job | Result |
 |-----|--------|
-| p1_04b_measure_pipeline_lift_verbose | **FAIL** (no scoreboard landed) → Labradorite critique written |
+| p1_04b_measure_pipeline_lift_verbose | **FAIL** (no scoreboard) → Labradorite |
 | p1_06_ast_transaction_tests | **PASS** |
-| p1_07_measure_direct_hard | **PASS** — 5/5 hard (direct, scripted) |
+| p1_07_measure_direct_hard | **PASS** — 5/5 hard (direct) |
 | p1_08_expand_hard_count | **PASS** |
 
-Direct baseline is solid. Pipeline lift measurement is the open item.
+Direct baseline solid. Pipeline lift still needs a clean scoreboard.
 
 ---
 
 ## Pending (FIFO)
 
-1. `p1_04c_pipeline_live_hard` — pipeline live + scoreboard (single hyp after critique)
+1. `p1_04c_pipeline_live_hard` — pipeline live + scoreboard (single hyp)
+
+---
+
+## Offline hardening landed this turn
+
+`scripts/batch_phase_d.py` now writes the scoreboard:
+- after every fixture (incremental, partial=true)
+- in a `finally` block (authoritative, partial=false)
+- via atomic temp→replace so a kill cannot leave truncated JSON
+
+A mid-run timeout now leaves usable partial data instead of zero artifacts.
 
 ---
 
 ## What works
 
-- Tool-runtime / direct hard pack **5/5** (re-confirmed 2026-08-14)
-- EditTransaction + AST-gate on write_file (p1_06 green)
+- Tool-runtime / direct hard pack **5/5**
+- EditTransaction + AST-gate (p1_06 green)
 - AgentState durable
-- Host agent recovery + FIFO drain
-- Foreman sequential under wheels
+- Resilient scoreboard harness (new)
 
 ## Next action only
 
-1. Host drains p1_04c (already pending)
-2. Read scoreboard_p1_04c_live.json
-3. If PASS with lift → expand hard count toward ≥10
-4. If FAIL → Labradorite again, one hyp only
+1. Restart host (PowerShell recovery provided)
+2. Host drains p1_04c (now benefits from hardened scoreboard)
+3. Read scoreboard_p1_04c_live.json
+4. If PASS → expand hard count toward ≥10
+5. If FAIL → Labradorite, one hyp only
 
 Do not lift training wheels. Do not start Phase 2.

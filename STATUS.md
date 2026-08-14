@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-08 — Foreman revamp: sequential BATCH_SIZE=3 enqueue + recovered FAIL→done conversion + Phase 1 curriculum expanded (p1_03 expand_repo_oracle, p1_04 measure_pipeline_lift, p1_05 labradorite_remaining). Host will fill pending with next unfinished on next tick. Package 1A LANDED. Training wheels stay ON.
+**Updated:** 2026-08-14 — Package 1C AST transactional edits landed (core/ast_transaction.py + tests). Host still offline since 2026-08-08; recovery already issued once. Training wheels stay ON. Phase 1 gate unchanged.
 
 Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 
@@ -20,7 +20,7 @@ Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 
 | | |
 |---|---|
-| Tests | **763+** |
+| Tests | **763+** (plus new 1C suite) |
 | Verification | held-out grading, mutation score 0.966 |
 | Leak channels closed | **7** |
 | `main` | green on fresh clone for core tests |
@@ -32,6 +32,7 @@ Read `docs/FINDINGS.md` and `docs/GEM_EVOLUTION.md` before changing anything.
 | **Tool-first default (1A)** | **LANDED** — defaults ON under training wheels |
 | **Dashboard SUPER APP** | **LANDED** — unified Host + Control Matrix at /agent |
 | **Foreman** | **REVAMPED** — sequential batch fill (BATCH_SIZE=3), recovered conversion, Phase 1 remaining items |
+| **AST transactional edits (1C)** | **LANDED** — EditTransaction + verify_and_commit + full test suite |
 
 ### Holdout generate (unchanged)
 
@@ -60,8 +61,8 @@ This is the signal we are amplifying.
 | Package | Status | Success criteria |
 |---------|--------|------------------|
 | 1A Tool-first default | **LANDED** | tool_runtime only default under wheels; Phase D still 5/5 |
-| 1B AgentState durable | WIRED into EvolutionController | create/save/load round-trip; shared by gems |
-| 1C AST transactional edits | QUEUED | Python-first; snapshot + rollback on test fail |
+| 1B AgentState durable | **WIRED** into EvolutionController | create/save/load round-trip; shared by gems |
+| 1C AST transactional edits | **LANDED** | Python-first; snapshot + rollback on test fail |
 | 1D Expand eval + close current FAILs | IN PROGRESS | evolution re-verify PASS (tw_e08); expand suite next (p1_03/04/05 now in curriculum) |
 
 **Gate to Phase 2:** Tool-first live, AgentState durable across restart, ≥10 hard tasks measured with pipeline lift, evolution FAILs closed.
@@ -77,6 +78,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - Unified view: Phase 1 board (live from STATUS.md) + Host Agent queue/log/status + Control Matrix live coding feed + GEMS flow + code preview
 - Poll 1.5 s; paths under `artifacts/` only (collector_host_agent fixed)
 - `/api/host-agent` + `/api/snapshot` both consumed
+- Recovery banner surfaces when host heartbeat is stale
 
 ## What genuinely works
 
@@ -90,6 +92,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - **Tool-first default under training wheels (Package 1A)**
 - **SUPER APP dashboard (Host + Control Matrix consolidated)**
 - **Foreman sequential batch + recovered FAIL conversion**
+- **AST transactional edits (Package 1C) — snapshot + rollback**
 
 ## Hazards
 
@@ -97,6 +100,7 @@ See implementation blueprint. Do not start until Phase 1 gate is green.
 - Generation-first default continues to lose to bare model
 - Real LoRA before clean data + dual flags is forbidden
 - A red `main` kills the other machine — `pytest && git push`
+- Host offline > few minutes blocks the entire curriculum
 
 ## Running it
 
@@ -122,7 +126,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ## Next action only
 
-1. Host auto-pulls + tick will enqueue p1_03 → p1_04 → p1_05 (BATCH_SIZE=3 sequential)
-2. Expand repo-oracle suite to ≥10 hard tasks and measure pipeline lift (now in curriculum)
-3. Land 1C AST transactional edits only after measurement
-4. Only after measured lift: discuss wheels
+1. Host recovery (already issued once) — poll artifacts/host_agent_status.json
+2. Labradorite structured critique of p1_04 FAIL, then single smallest measurement follow-up
+3. Wire EditTransaction into tool_runtime write path (post-host recovery)
+4. Expand repo-oracle to ≥10 hard tasks and re-measure pipeline lift
+5. Only after measured lift: discuss wheels

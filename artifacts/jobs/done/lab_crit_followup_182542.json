@@ -1,0 +1,17 @@
+{
+  "id": "lab_crit_followup_182542",
+  "note": "playbook:023_fail_to_learning for p1_04c_pipeline_live_hard",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.evolution_loop"
+      ],
+      "timeout": 300
+    }
+  ],
+  "created": "2026-08-14T18:25:42.347902+00:00",
+  "source": "foreman"
+}

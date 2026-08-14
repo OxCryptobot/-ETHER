@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T17:30Z — Phase 1 code complete offline. Host offline since 2026-08-08 (recovery already issued once). 4 jobs pending for first tick after recovery. Training wheels ON.
+**Updated:** 2026-08-14T17:56Z — Host recovered and drained Phase 1 batch. Direct hard 5/5 confirmed. Pipeline measurement still incomplete (p1_04b no scoreboard). Next hyp enqueued under Labradorite. Training wheels ON.
 
 ---
 
@@ -20,39 +20,45 @@
 |---------|--------|
 | 1A Tool-first default | **LANDED** |
 | 1B AgentState durable | **WIRED** |
-| 1C AST transactional edits | **LANDED + WIRED** into tool_runtime.write_file |
-| 1D Expand eval + close FAILs | **IN PROGRESS** — batch queued |
+| 1C AST transactional edits | **LANDED + VERIFIED** (p1_06 PASS) |
+| 1D Expand eval + close FAILs | **IN PROGRESS** — pipeline scoreboard still missing |
 
 **Gate to Phase 2:** measured pipeline lift on ≥10 hard tasks + evolution FAILs closed.
 
 ---
 
-## Pending batch (FIFO — host will drain)
+## Latest results (host drain)
 
-1. `p1_04b_measure_pipeline_lift_verbose` — pipeline hard + scoreboard
-2. `p1_06_ast_transaction_tests` — 1C + AST-gate tests
-3. `p1_07_measure_direct_hard` — direct baseline
-4. `p1_08_expand_hard_count` — repo-oracle gate toward ≥10
+| Job | Result |
+|-----|--------|
+| p1_04b_measure_pipeline_lift_verbose | **FAIL** (no scoreboard landed) → Labradorite critique written |
+| p1_06_ast_transaction_tests | **PASS** |
+| p1_07_measure_direct_hard | **PASS** — 5/5 hard (direct, scripted) |
+| p1_08_expand_hard_count | **PASS** |
+
+Direct baseline is solid. Pipeline lift measurement is the open item.
+
+---
+
+## Pending (FIFO)
+
+1. `p1_04c_pipeline_live_hard` — pipeline live + scoreboard (single hyp after critique)
 
 ---
 
 ## What works
 
-- Tool-runtime 5/5 vs bare 0/5 on Phase D hard pack
-- AgentState durable across restart
-- EditTransaction (snapshot + rollback + AST gate)
-- write_file AST-gates broken Python before disk write
-- SUPER APP recovery banner + Phase 1 board
-- Foreman BATCH_SIZE=3 sequential fill under wheels
-
-## What is blocked
-
-**Host process is dead.** Heartbeat frozen at 2026-08-08T22:25:26Z.  
-Recovery was already issued once. Until the Windows GPU host is restarted, no job can execute and no scoreboard can land.
+- Tool-runtime / direct hard pack **5/5** (re-confirmed 2026-08-14)
+- EditTransaction + AST-gate on write_file (p1_06 green)
+- AgentState durable
+- Host agent recovery + FIFO drain
+- Foreman sequential under wheels
 
 ## Next action only
 
-1. Restart host (PowerShell recovery already provided)
-2. Confirm heartbeat < 90s
-3. Let the 4 pending jobs drain
-4. Read scoreboards → single next hypothesis
+1. Host drains p1_04c (already pending)
+2. Read scoreboard_p1_04c_live.json
+3. If PASS with lift → expand hard count toward ≥10
+4. If FAIL → Labradorite again, one hyp only
+
+Do not lift training wheels. Do not start Phase 2.

@@ -1,0 +1,32 @@
+{
+  "results": [],
+  "summary": {
+    "passed": 0,
+    "total": 0,
+    "mode": "scripted",
+    "arms": [
+      "pipeline"
+    ],
+    "model": "qwen3.5:4b",
+    "max_steps": 16,
+    "partial": true,
+    "note": "sentinel_on_entry"
+  },
+  "matrix": {
+    "lru": {
+      "pipeline": false
+    },
+    "merge": {
+      "pipeline": false
+    },
+    "ledger": {
+      "pipeline": false
+    },
+    "topo": {
+      "pipeline": false
+    },
+    "intervals": {
+      "pipeline": false
+    }
+  }
+}

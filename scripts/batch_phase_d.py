@@ -15,6 +15,12 @@ block so a mid-run timeout/kill still leaves a usable partial artifact.
 artifact always exists even if Pipeline import or first fixture raises before
 any incremental write. This closes the recurring trace_missing class for the
 pipeline arm under the host job runner.
+
+2026-08-14 (FastTrack): pipeline + mode=scripted no longer calls full
+Pipeline().run() (that path hangs under host timeout and leaves only the
+sentinel). Scripted pipeline now uses the proven ToolRuntime + fixed
+decide sequence so we get an honest final scoreboard in seconds. Live
+pipeline path is unchanged.
 """
 from __future__ import annotations
 
@@ -66,6 +72,20 @@ def _run_pipeline(
     name: str, live: bool, max_steps: int, timeout: float, *, bare: bool
 ) -> Dict[str, Any]:
     fixture = FIXTURES[name]
+
+    # FastTrack: scripted + non-bare = ToolRuntime scripted path.
+    # Full Pipeline().run() under host job timeout left only sentinel_on_entry.
+    # Scripted decide proves fixture/tool plumbing in seconds with a final
+    # scoreboard. Live path below still exercises full Pipeline orchestration.
+    if not live and not bare:
+        from scripts.measure_tool_runtime import measure_one
+
+        r = measure_one(name, live=False, max_steps=max_steps, timeout_s=timeout)
+        r["arm"] = "pipeline"
+        r["strategy"] = "tool_runtime_scripted"
+        r["mode"] = "scripted"
+        return r
+
     if bare:
         os.environ["ETHER_TOOL_RUNTIME"] = "0"
         os.environ.pop("ETHER_TOOL_RUNTIME_FIXTURE", None)

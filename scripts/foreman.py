@@ -17,6 +17,10 @@ FASTTRACK 2026-08-14T21:10Z:
 - Added ss_pipeline_scripted (fast 1D signal, seconds not minutes).
 - Live ledger remains but is no longer the only pipeline measurement.
 - Prefer scripted first so we get honest lift data without burning wall-clock.
+
+FASTTRACK 2026-08-14T21:38Z:
+- load_lessons prefers artifacts/lessons (path rule) then memory fallback.
+- Closes timeout → Labradorite → scripted remeasure loop for host visibility.
 """
 from __future__ import annotations
 
@@ -35,7 +39,8 @@ FAILED = ROOT / "artifacts" / "jobs" / "failed"
 FAILED_ARCH = ROOT / "artifacts" / "jobs" / "failed_archived"
 STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
-LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
+LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
+LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
 BATCH_SIZE = 10
 
@@ -129,12 +134,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "scripted", "--fixture", "ledger", "--max-steps", "16", "--scoreboard", "artifacts/scoreboard_ss_pipeline_scripted.json"], "timeout": 180}],
     },
     {
-        "id_prefix": "ss_pipeline_ledger",
-        "note": "steady: pipeline ledger live under terminal harden",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--fixture", "ledger", "--max-steps", "16", "--timeout", "300", "--scoreboard", "artifacts/scoreboard_ss_ledger.json"], "timeout": 480}],
-    },
-    {
         "id_prefix": "ss_train_gates",
         "note": "steady: doctrine + preference integrity",
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_preference_rlhf.py", "-q", "--tb=line"], "timeout": 180}],
@@ -155,6 +154,12 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "[None for p in sorted(FAILED.glob('*.json')) if p.name != '.gitkeep' and not shutil.move(str(p), str((ARCH/p.name) if not (ARCH/p.name).exists() else ARCH/(p.stem+'_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'))) and not (moved:=moved+1)]; "
             "print('archived_failed', moved)"
         ], "timeout": 60}],
+    },
+    {
+        "id_prefix": "ss_pipeline_ledger",
+        "note": "steady: pipeline ledger live under terminal harden",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--fixture", "ledger", "--max-steps", "16", "--timeout", "300", "--scoreboard", "artifacts/scoreboard_ss_ledger.json"], "timeout": 480}],
     },
 ]
 
@@ -187,14 +192,20 @@ def save_state(state: Dict[str, Any]) -> None:
 
 
 def load_lessons() -> List[Dict[str, Any]]:
-    LESSONS.mkdir(parents=True, exist_ok=True)
-    out: List[Dict[str, Any]] = []
-    for p in sorted(LESSONS.glob("*.json")):
-        try:
-            out.append(json.loads(p.read_text(encoding="utf-8")))
-        except Exception:
+    """Prefer artifacts/lessons (path rule, tracked); fall back to memory/."""
+    by_id: Dict[str, Dict[str, Any]] = {}
+    for folder in (LESSONS_ARTIFACTS, LESSONS_MEMORY):
+        if not folder.exists():
             continue
-    return out
+        for p in sorted(folder.glob("*.json")):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            lid = str(data.get("id") or p.stem)
+            if lid not in by_id:
+                by_id[lid] = data
+    return list(by_id.values())
 
 
 def pending_ids() -> set:

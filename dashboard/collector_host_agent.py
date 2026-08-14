@@ -126,7 +126,11 @@ def _foreman_state() -> tuple[Dict[str, Any], str]:
 
 
 def _phase1_board() -> Dict[str, str]:
-    """Parse STATUS.md package table for live Phase 1 board."""
+    """Parse STATUS.md package table for live Phase 1 board.
+
+    Accepts both legacy labels (LANDED/NEXT/WIRED/QUEUED) and current
+    FastTrack labels (COMPLETE / IN PROGRESS / BLOCKED).
+    """
     text = _read_text(STATUS_MD, limit=8000)
     board = {
         "1A": "unknown",
@@ -135,30 +139,37 @@ def _phase1_board() -> Dict[str, str]:
         "1D": "unknown",
     }
     for line in text.splitlines():
-        if "1A Tool-first" in line or "1A Tool-first default" in line:
-            if "LANDED" in line:
-                board["1A"] = "LANDED"
-            elif "NEXT" in line:
-                board["1A"] = "NEXT"
-            elif "IN PROGRESS" in line:
+        low = line.lower()
+        if "1a tool-first" in low:
+            if "complete" in low or "landed" in low:
+                board["1A"] = "COMPLETE"
+            elif "in progress" in low or "next" in low:
                 board["1A"] = "IN PROGRESS"
-        elif "1B AgentState" in line:
-            if "WIRED" in line or "LANDED" in line:
-                board["1B"] = "WIRED"
-            elif "QUEUED" in line:
+            elif "queued" in low:
+                board["1A"] = "QUEUED"
+        elif "1b agentstate" in low:
+            if "complete" in low or "wired" in low or "landed" in low:
+                board["1B"] = "COMPLETE"
+            elif "queued" in low:
                 board["1B"] = "QUEUED"
-        elif "1C AST" in line:
-            if "QUEUED" in line:
+            elif "in progress" in low:
+                board["1B"] = "IN PROGRESS"
+        elif "1c ast" in low:
+            if "complete" in low or "landed" in low:
+                board["1C"] = "COMPLETE"
+            elif "queued" in low:
                 board["1C"] = "QUEUED"
-            elif "LANDED" in line:
-                board["1C"] = "LANDED"
-        elif "1D Expand" in line:
-            if "IN PROGRESS" in line:
+            elif "in progress" in low:
+                board["1C"] = "IN PROGRESS"
+        elif "1d measured" in low or "1d expand" in low or "1d measured lift" in low:
+            if "complete" in low or "landed" in low:
+                board["1D"] = "COMPLETE"
+            elif "in progress" in low:
                 board["1D"] = "IN PROGRESS"
-            elif "LANDED" in line:
-                board["1D"] = "LANDED"
-            elif "QUEUED" in line:
+            elif "queued" in low:
                 board["1D"] = "QUEUED"
+            elif "blocked" in low:
+                board["1D"] = "BLOCKED"
     return board
 
 

@@ -440,7 +440,9 @@
     "ss_direct_hard_231216_0",
     "ss_direct_hard_232306_0",
     "ss_tool_runtime_232253_3",
-    "ss_train_gates_231228_2"
+    "ss_train_gates_231228_2",
+    "playbook_timeout_revise_232845",
+    "ss_pipeline_ledger_231222_1"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -509,15 +511,14 @@
     "p1_34_pipeline_ledger_scripted",
     "ss_pipeline_ledger_210621_1",
     "ss_pipeline_ledger_211806_1",
-    "ss_pipeline_ledger_231222_1",
     "ss_pipeline_ledger_232310_1"
   ],
-  "last_tick": "2026-08-14T23:34:05.126236+00:00",
+  "last_tick": "2026-08-14T23:34:09.695357+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 24,
-  "last_enqueued": "ss_archive_failed_233404_4",
+  "last_enqueued": "ss_direct_hard_233409_0",
   "last_playbook": "timeout_budget_exhaust",
-  "last_converted": "ss_pipeline_ledger_231157_1",
-  "steady_idx": 130
+  "last_converted": "ss_pipeline_ledger_231222_1",
+  "steady_idx": 131
 }

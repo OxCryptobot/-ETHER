@@ -7,6 +7,9 @@ Arms:
 
   python -m scripts.batch_phase_d --arm direct --mode scripted --tier hard
   python -m scripts.batch_phase_d --arm pipeline --mode live --fixture ledger --max-steps 16 --timeout 500
+
+2026-08-14: scoreboard is now written after every fixture and in a finally
+block so a mid-run timeout/kill still leaves a usable partial artifact.
 """
 from __future__ import annotations
 
@@ -137,6 +140,46 @@ def _run_pipeline(
         }
 
 
+def _write_scoreboard(
+    path: Path,
+    rows: List[Dict[str, Any]],
+    *,
+    mode: str,
+    arms: List[str],
+    model: str,
+    max_steps: int,
+    names: List[str],
+    partial: bool = False,
+) -> None:
+    """Always-safe scoreboard dump. Called after every fixture and in finally."""
+    by: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
+    n_ok = sum(1 for r in rows if r.get("ok"))
+    payload = {
+        "results": rows,
+        "summary": {
+            "passed": n_ok,
+            "total": len(rows),
+            "mode": mode,
+            "arms": arms,
+            "model": model,
+            "max_steps": max_steps,
+            "partial": partial,
+        },
+        "matrix": {
+            n: {a: bool(by.get(n, {}).get(a, {}).get("ok")) for a in arms}
+            for n in names
+        },
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Atomic-ish write: temp then replace so a kill mid-write cannot leave
+    # a truncated JSON that later readers treat as valid.
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    tmp.replace(path)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Phase D batch measure")
     ap.add_argument(
@@ -182,95 +225,99 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     rows: List[Dict[str, Any]] = []
-
-    for arm in arms:
-        print(f"\n=== arm={arm} mode={args.mode} fixtures={names} ===", flush=True)
-        if arm == "direct" and not live and args.jobs > 1 and len(names) > 1:
-            with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-                futs = {
-                    ex.submit(_run_direct, n, False, args.max_steps, args.timeout): n
-                    for n in names
-                }
-                for fut in as_completed(futs):
-                    r = fut.result()
-                    rows.append(r)
-                    st = "PASS" if r.get("ok") else "FAIL"
-                    print(
-                        f"[{st}] {r.get('fixture'):10} arm=direct score={r.get('score')} "
-                        f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s",
-                        flush=True,
-                    )
-            continue
-
-        for name in names:
-            if arm == "direct":
-                r = _run_direct(name, live, args.max_steps, args.timeout)
-            elif arm == "pipeline":
-                r = _run_pipeline(
-                    name, live, args.max_steps, args.timeout, bare=False
-                )
-            else:
-                r = _run_pipeline(
-                    name, live, args.max_steps, args.timeout, bare=True
-                )
-            rows.append(r)
-            st = "PASS" if r.get("ok") else "FAIL"
-            extra = r.get("strategy") or r.get("error") or r.get("reason") or ""
-            print(
-                f"[{st}] {name:10} arm={arm:8} score={r.get('score')} "
-                f"elapsed={r.get('elapsed_s')}s repo_ok={r.get('repo_oracle_ok')} {extra}",
-                flush=True,
-            )
-            if not r.get("ok"):
-                for s in r.get("stages") or []:
-                    print(
-                        f"  stage={s.get('stage')} ok={s.get('success')} {s.get('detail')}",
-                        flush=True,
-                    )
-
-    print("\n=== summary matrix ===", flush=True)
-    by: Dict[str, Dict[str, Any]] = {}
-    for r in rows:
-        by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
-    print(
-        f"{'fixture':10} " + " ".join(f"{a:10}" for a in ("direct", "pipeline", "bare")),
-        flush=True,
-    )
-    blank = "--"
-    for name in names:
-        cells = []
-        for a in ("direct", "pipeline", "bare"):
-            r = by.get(name, {}).get(a)
-            if not r:
-                cells.append(f"{blank:10}")
-            else:
-                mark = "PASS" if r.get("ok") else "FAIL"
-                cells.append(f"{mark:10}")
-        print(f"{name:10} " + " ".join(cells), flush=True)
-
-    n_ok = sum(1 for r in rows if r.get("ok"))
-    print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
-
     sb = Path(args.scoreboard)
-    sb.parent.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "results": rows,
-        "summary": {
-            "passed": n_ok,
-            "total": len(rows),
-            "mode": args.mode,
-            "arms": arms,
-            "model": model,
-            "max_steps": args.max_steps,
-        },
-        "matrix": {
-            n: {a: bool(by.get(n, {}).get(a, {}).get("ok")) for a in arms}
-            for n in names
-        },
-    }
-    sb.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"scoreboard: {sb}", flush=True)
-    return 0 if n_ok == len(rows) else 1
+
+    try:
+        for arm in arms:
+            print(f"\n=== arm={arm} mode={args.mode} fixtures={names} ===", flush=True)
+            if arm == "direct" and not live and args.jobs > 1 and len(names) > 1:
+                with ThreadPoolExecutor(max_workers=args.jobs) as ex:
+                    futs = {
+                        ex.submit(_run_direct, n, False, args.max_steps, args.timeout): n
+                        for n in names
+                    }
+                    for fut in as_completed(futs):
+                        r = fut.result()
+                        rows.append(r)
+                        st = "PASS" if r.get("ok") else "FAIL"
+                        print(
+                            f"[{st}] {r.get('fixture'):10} arm=direct score={r.get('score')} "
+                            f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s",
+                            flush=True,
+                        )
+                        # Incremental dump so a later kill still leaves data.
+                        _write_scoreboard(
+                            sb, rows, mode=args.mode, arms=arms, model=model,
+                            max_steps=args.max_steps, names=names, partial=True,
+                        )
+                continue
+
+            for name in names:
+                if arm == "direct":
+                    r = _run_direct(name, live, args.max_steps, args.timeout)
+                elif arm == "pipeline":
+                    r = _run_pipeline(
+                        name, live, args.max_steps, args.timeout, bare=False
+                    )
+                else:
+                    r = _run_pipeline(
+                        name, live, args.max_steps, args.timeout, bare=True
+                    )
+                rows.append(r)
+                st = "PASS" if r.get("ok") else "FAIL"
+                extra = r.get("strategy") or r.get("error") or r.get("reason") or ""
+                print(
+                    f"[{st}] {name:10} arm={arm:8} score={r.get('score')} "
+                    f"elapsed={r.get('elapsed_s')}s repo_ok={r.get('repo_oracle_ok')} {extra}",
+                    flush=True,
+                )
+                if not r.get("ok"):
+                    for s in r.get("stages") or []:
+                        print(
+                            f"  stage={s.get('stage')} ok={s.get('success')} {s.get('detail')}",
+                            flush=True,
+                        )
+                # Write after every fixture. A host timeout now leaves a partial
+                # but usable scoreboard instead of nothing.
+                _write_scoreboard(
+                    sb, rows, mode=args.mode, arms=arms, model=model,
+                    max_steps=args.max_steps, names=names, partial=True,
+                )
+
+        print("\n=== summary matrix ===", flush=True)
+        by: Dict[str, Dict[str, Any]] = {}
+        for r in rows:
+            by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
+        print(
+            f"{'fixture':10} " + " ".join(f"{a:10}" for a in ("direct", "pipeline", "bare")),
+            flush=True,
+        )
+        blank = "--"
+        for name in names:
+            cells = []
+            for a in ("direct", "pipeline", "bare"):
+                r = by.get(name, {}).get(a)
+                if not r:
+                    cells.append(f"{blank:10}")
+                else:
+                    mark = "PASS" if r.get("ok") else "FAIL"
+                    cells.append(f"{mark:10}")
+            print(f"{name:10} " + " ".join(cells), flush=True)
+
+        n_ok = sum(1 for r in rows if r.get("ok"))
+        print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
+        return 0 if n_ok == len(rows) else 1
+    finally:
+        # Final authoritative write (partial=False). Guarantees an artifact
+        # even if the process is about to be killed by the job runner.
+        try:
+            _write_scoreboard(
+                sb, rows, mode=args.mode, arms=arms, model=model,
+                max_steps=args.max_steps, names=names, partial=False,
+            )
+            print(f"scoreboard: {sb}", flush=True)
+        except Exception as e:
+            print(f"scoreboard write failed: {type(e).__name__}: {e}", flush=True)
 
 
 if __name__ == "__main__":

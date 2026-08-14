@@ -1,0 +1,13 @@
+{
+  "id": "p1_28_direct_hard_rebaseline",
+  "note": "Rebaseline direct ToolRuntime 5/5 after pipeline restore",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T20:04:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--mode", "direct", "--out", "artifacts/scoreboard_p1_28_direct.json"],
+      "timeout": 600
+    }
+  ]
+}

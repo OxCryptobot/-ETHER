@@ -1,0 +1,13 @@
+{
+  "id": "p1_29_train_gates_smoke",
+  "note": "Doctrine gates still green after pipeline refactor",
+  "continue_on_fail": false,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T20:04:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

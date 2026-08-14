@@ -1,0 +1,13 @@
+{
+  "id": "p1_27_pipeline_single_ledger_remeasure",
+  "note": "Single-fixture pipeline re-measure under terminal tool_runtime harden (ledger)",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T20:04:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--mode", "pipeline", "--fixtures", "ledger", "--out", "artifacts/scoreboard_p1_27_pipeline_ledger.json"],
+      "timeout": 600
+    }
+  ]
+}

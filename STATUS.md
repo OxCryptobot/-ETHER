@@ -1,43 +1,32 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T20:56Z — Host live + self-refilling. Soft launch still BLOCKED until measured pipeline lift is honest.
+**Updated:** 2026-08-14T21:11Z — Host live. FastTrack 1D in progress. Soft launch BLOCKED.
 
 ---
 
-## Live state (origin truth)
+## Live state
 
-- Heartbeat fresh. Foreman steady mode active. Pending ~9 jobs (auto-filled).
-- Last job `ss_pipeline_ledger_*` → tool_runtime timeout after 12 steps → `tool_runtime_failed_terminal` (correct, no hang).
-- **Direct arm hard pack: 5/5 PASS** (scripted, ~1.5 s).
-- **Pipeline live ledger: FAIL** (timeout under 16 steps / 4B). That is the Phase 1 1D gap.
+- Heartbeat fresh. Foreman steady active. Direct hard 5/5 PASS.
+- Pipeline live ledger still timeout under tool_runtime (4B) → terminal harden correct.
+- New: `ss_pipeline_scripted` steady template (fast signal).
+- Enqueued: `p1_33` Labradorite critique + `p1_34` scripted ledger measurement.
 
-## Permanent solutions landed this sprint
+## Permanent solutions landed
 
-### Host never idle
-- `host_agent.py` calls `foreman.tick()` on startup, every empty-pending cycle, and after jobs when depth < 5.
-- System runs with or without Grok.
+- Host never idle (tick on empty + depth < 5).
+- Steady mode forever (timestamped, no z_gate infinity).
+- Failed archived by `ss_archive_failed`.
+- Pipeline `tool_runtime_failed_terminal` (no 984s hang).
+- FastTrack: scripted pipeline measurement preferred for 1D feedback speed.
 
-### Queue auto-fills forever
-- After curriculum exhaustion → **steady mode**: rotates `ss_direct_hard`, `ss_pipeline_ledger`, `ss_train_gates`, `ss_tool_runtime`, `ss_archive_failed` with unique timestamp IDs.
-- BATCH_SIZE=10 enforced.
+## SUPER-AUDITOR Phase 1 order (active)
 
-### Failed jobs cleaned
-- `ss_archive_failed` moves noise to `failed_archived/`.
-- Playbook recovery still converts recovered FAILs to done/.
-
-### Pipeline stability
-- Restored + `tool_runtime_failed_terminal` (closes the 984 s hang class).
-
-## SUPER-AUDITOR alignment (2026-08-14)
-
-Ranked killers accepted. Phase 1 FastTrack order:
-
-1. Hard time allotments + timeout-as-typed-error → forced revise path (IN PROGRESS)
-2. Failed → Labradorite critique → smallest experiment → requeue (wired, needs continuous use)
-3. Phase 1–7 board fully visible on SUPER APP + “what’s next” from foreman
-4. Collector path unification (dashboard reads exactly what host_agent writes)
-5. Pipeline god-file extraction finish (LoopRunner spine)
-6. Script graveyard purge after measurements captured
+1. Hard time allotments + timeout-as-typed-error → revise path
+2. Failed → Labradorite → smallest experiment → requeue
+3. Phase board + “what’s next” on SUPER APP
+4. Collector path unification
+5. Finish LoopRunner extraction
+6. Script graveyard purge
 
 ## Phase 1 board
 
@@ -46,11 +35,11 @@ Ranked killers accepted. Phase 1 FastTrack order:
 | 1A Tool-first | COMPLETE |
 | 1B AgentState | COMPLETE |
 | 1C AST transactional | COMPLETE |
-| 1D Measured lift | IN PROGRESS — direct 5/5, pipeline live ledger still timeout |
+| 1D Measured lift | IN PROGRESS — direct 5/5, pipeline scripted measurement running |
 
-**Gate to Phase 2:** honest pipeline lift on expanded hard pack (≥10 tasks) + time-discipline contract live + failed-job revise loop green.
+**Gate:** honest pipeline lift on hard pack + time discipline + revise loop green.
 
-Training wheels ON. Soft launch blocked until the gate is green.
+Training wheels ON. Soft launch blocked.
 
 ## Recovery (only if host dies)
 
@@ -61,5 +50,3 @@ git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\start_ether_host.ps1
 ```
-
-After first successful launch the launcher keeps it alive. Do not restart under normal conditions.

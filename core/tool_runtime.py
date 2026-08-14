@@ -11,10 +11,14 @@ negative (FINDINGS §11). This runtime:
 Package 1A (2026-08-08): default ON under training wheels. Explicit
 ETHER_TOOL_RUNTIME=0 still forces off. Fully testable without a model via
 injectible decide_fn / call_fn.
+
+Package 1C (2026-08-14): write_file AST-gates .py content (same rule as
+EditTransaction). Syntax-broken Python is rejected before disk write.
 """
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
@@ -37,7 +41,7 @@ TOOL_SPECS: Sequence[Dict[str, str]] = (
     },
     {
         "name": "write_file",
-        "doc": "Write/overwrite a text file. args: path, content.",
+        "doc": "Write/overwrite a text file. args: path, content. .py is AST-gated.",
     },
     {
         "name": "grep",
@@ -185,6 +189,17 @@ def _blocked(rel: str) -> Optional[str]:
     return None
 
 
+def _ast_reject_py(path: str, content: str) -> Optional[str]:
+    """Package 1C: reject syntax-broken Python before any disk write."""
+    if not path.replace("\\", "/").endswith(".py"):
+        return None
+    try:
+        ast.parse(content if content is not None else "")
+    except SyntaxError as e:
+        return f"AST reject: {e.msg} (line {e.lineno})"
+    return None
+
+
 class ToolRuntime:
     """Observe → Act loop over a staging copy of a fixture."""
 
@@ -240,6 +255,10 @@ class ToolRuntime:
         reason = _blocked(path)
         if reason:
             return {"ok": False, "error": reason}
+        # Package 1C: AST gate for .py before any disk mutation
+        ast_err = _ast_reject_py(path, content if content is not None else "")
+        if ast_err:
+            return {"ok": False, "error": ast_err}
         target = (self.workspace / path).resolve()
         try:
             target.relative_to(self.workspace.resolve())

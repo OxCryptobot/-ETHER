@@ -1,0 +1,20 @@
+{
+  "results": [],
+  "summary": {
+    "passed": 0,
+    "total": 0,
+    "mode": "scripted",
+    "arms": [
+      "pipeline"
+    ],
+    "model": "qwen3.5:4b",
+    "max_steps": 16,
+    "partial": true,
+    "note": "sentinel_on_entry"
+  },
+  "matrix": {
+    "ledger": {
+      "pipeline": false
+    }
+  }
+}

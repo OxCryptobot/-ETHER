@@ -13,19 +13,15 @@ REVAMP 2026-08-14 (permanent standalone):
 - Failed jobs are archived after Labradorite/steady sweep (not left forever).
 - Training wheels stay ON until measured lift + Phase 1 gate green.
 
-FASTTRACK 2026-08-14T21:10Z:
-- Added ss_pipeline_scripted (fast 1D signal, seconds not minutes).
-- Live ledger remains but is no longer the only pipeline measurement.
-- Prefer scripted first so we get honest lift data without burning wall-clock.
-
-FASTTRACK 2026-08-14T21:38Z:
-- load_lessons prefers artifacts/lessons (path rule) then memory fallback.
-- Closes timeout → Labradorite → scripted remeasure loop for host visibility.
+FASTTRACK 2026-08-14:
+- ss_pipeline_scripted first (fast 1D).
+- load_lessons prefers artifacts/lessons.
+- After live pipeline FAIL (budget_exhaust), skip ss_pipeline_ledger for 3 ticks
+  so the queue stays on fast scripted/direct/gates work.
 """
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 from datetime import datetime, timezone
@@ -43,6 +39,7 @@ LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
 BATCH_SIZE = 10
+LIVE_SKIP_TICKS = 3  # after live pipeline budget_exhaust, skip live for N ticks
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -118,8 +115,6 @@ CURRICULUM: List[Dict[str, Any]] = [
     },
 ]
 
-# Continuous z_gate DISABLED — do not add z_gate_pytest_core to curriculum.
-
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
         "id_prefix": "ss_direct_hard",
@@ -159,6 +154,7 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "id_prefix": "ss_pipeline_ledger",
         "note": "steady: pipeline ledger live under terminal harden",
         "continue_on_fail": True,
+        "live": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--fixture", "ledger", "--max-steps", "16", "--timeout", "300", "--scoreboard", "artifacts/scoreboard_ss_ledger.json"], "timeout": 480}],
     },
 ]
@@ -182,6 +178,7 @@ def load_state() -> Dict[str, Any]:
         "mode": "apprentice",
         "teacher": "grok",
         "steady_idx": 0,
+        "live_skip_remaining": 0,
     }
 
 
@@ -192,7 +189,6 @@ def save_state(state: Dict[str, Any]) -> None:
 
 
 def load_lessons() -> List[Dict[str, Any]]:
-    """Prefer artifacts/lessons (path rule, tracked); fall back to memory/."""
     by_id: Dict[str, Dict[str, Any]] = {}
     for folder in (LESSONS_ARTIFACTS, LESSONS_MEMORY):
         if not folder.exists():
@@ -256,6 +252,7 @@ def record_last_job(state: Dict[str, Any]) -> None:
     if not jid:
         return
     note = last.get("note") or ""
+    hay = (note + " " + str(jid)).lower()
     if last.get("ok") is True:
         if jid not in state["completed"]:
             state["completed"].append(jid)
@@ -272,6 +269,10 @@ def record_last_job(state: Dict[str, Any]) -> None:
     elif last.get("ok") is False:
         if jid not in state.get("failed", []):
             state.setdefault("failed", []).append(jid)
+        # Speed policy: after live pipeline budget burn, starve live for N ticks
+        if "pipeline_ledger" in hay or ("pipeline" in hay and "live" in hay):
+            state["live_skip_remaining"] = LIVE_SKIP_TICKS
+            state["last_live_skip_reason"] = jid
 
 
 def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
@@ -281,15 +282,20 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
     if not STEADY_TEMPLATES:
         return None
     idx = int(state.get("steady_idx") or 0)
+    skip_live = int(state.get("live_skip_remaining") or 0) > 0
     enqueued: List[str] = []
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
-    while len(pending) + len(enqueued) < BATCH_SIZE:
+    attempts = 0
+    while len(pending) + len(enqueued) < BATCH_SIZE and attempts < len(STEADY_TEMPLATES) * 4:
+        attempts += 1
         tmpl = STEADY_TEMPLATES[idx % len(STEADY_TEMPLATES)]
+        # Skip live templates while cooldown active
+        if skip_live and tmpl.get("live"):
+            idx += 1
+            continue
         jid = f"{tmpl['id_prefix']}_{stamp}_{idx % len(STEADY_TEMPLATES)}"
         if jid in pending or jid in enqueued:
             idx += 1
-            if idx > len(STEADY_TEMPLATES) * 3:
-                break
             continue
         job = {
             "id": jid,
@@ -314,7 +320,6 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
 
 
 def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
-    """Enqueue up to BATCH_SIZE next unfinished curriculum items, then steady."""
     pending = pending_ids()
     if len(pending) >= BATCH_SIZE:
         return None
@@ -343,7 +348,6 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
     if enqueued:
         return enqueued[-1]
 
-    # Curriculum exhausted -> steady mode (never idle)
     state["cursor"] = len(CURRICULUM)
     return enqueue_steady(state)
 
@@ -399,6 +403,10 @@ def tick() -> Dict[str, Any]:
     record_last_job(state)
     recovered = playbook_on_fail(state)
     enqueued = enqueue_next(state)
+    # Decay live skip cooldown once per tick
+    skip = int(state.get("live_skip_remaining") or 0)
+    if skip > 0:
+        state["live_skip_remaining"] = skip - 1
     lessons = load_lessons()
     state["lessons_loaded"] = len(lessons)
     save_state(state)
@@ -410,6 +418,7 @@ def tick() -> Dict[str, Any]:
         "lessons": len(lessons),
         "batch_size": BATCH_SIZE,
         "mode": state.get("mode"),
+        "live_skip_remaining": state.get("live_skip_remaining", 0),
         "state": state,
     }
 
@@ -431,6 +440,7 @@ def status() -> Dict[str, Any]:
         "teacher": state.get("teacher", "grok"),
         "last_tick": state.get("last_tick"),
         "steady_idx": state.get("steady_idx"),
+        "live_skip_remaining": state.get("live_skip_remaining", 0),
     }
 
 

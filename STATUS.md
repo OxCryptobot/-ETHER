@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T18:35Z — Failed jobs converted into learning. Steady 10-job pending flow enabled. Training wheels ON.
+**Updated:** 2026-08-14T18:40Z — Phase 1 close-out. 1A/1B/1C complete. 1D measurement jobs enqueued. Training wheels ON.
 
 ---
 
@@ -15,63 +15,50 @@
 
 ---
 
-## Phase 1 board
+## Phase 1 board — CLOSEOUT
 
 | Package | Status |
 |---------|--------|
-| 1A Tool-first default | **LANDED** |
-| 1B AgentState durable | **WIRED** |
-| 1C AST transactional edits | **LANDED + VERIFIED** (p1_06 PASS) |
-| 1D Expand eval + close FAILs | **IN PROGRESS** — pipeline measurement still open; FAILs now feed learning |
+| 1A Tool-first default | **COMPLETE** |
+| 1B AgentState durable | **COMPLETE** (wired + durable) |
+| 1C AST transactional edits | **COMPLETE** (p1_06 PASS + AST-gate live) |
+| 1D Expand eval + measured lift | **IN PROGRESS — final measurement batch** |
 
-**Gate to Phase 2:** measured pipeline lift on ≥10 hard tasks + evolution FAILs closed.
-
----
-
-## Learning from failed queue
-
-| Failed job | Learning action |
-|------------|-----------------|
-| p1_04 / p1_04b / p1_04c | Labradorite critiques written; root_cause = `trace_missing` |
-| Historical phase_e / phaseg / flywheel | Left in failed/ for history; do not re-process blindly |
-| New rule | lesson **023_fail_to_learning** — every non-infra FAIL becomes structured critique + new job id only |
-
-Smallest experiment now in queue: `p1_12_pipeline_single_ledger` (one fixture, live, explicit scoreboard).
+**Gate to Phase 2 (exact):**
+1. Pipeline scoreboard lands on hard pack (p1_12 → p1_17/p1_18)
+2. Pipeline ≥ direct on the measured fixtures (or honest delta recorded)
+3. Hard pack expanded toward ≥10 (currently 5 hard fixtures)
+4. Evolution FAILs closed via Labradorite path
+5. train_gates + preference health green
 
 ---
 
-## Steady pending flow (BATCH_SIZE=10)
+## What is already proven
 
-Foreman now fills up to 10 sequential curriculum / learning jobs when idle. Current pending (FIFO):
-
-1. lab_crit_p1_04c
-2. p1_12_pipeline_single_ledger
-3. p1_09_train_gates_reverify
-4. p1_10_ast_gate_reverify
-5. p1_11_direct_hard_rebaseline
-6. p1_13_tool_runtime_smoke
-7. p1_14_repo_oracle_gate
-8. p1_15_preference_summary
-9. p1_16_evolution_smoke
-10. (foreman will keep topping up from curriculum)
-
-Host is live (heartbeat recent). It will drain FIFO back-to-back.
-
----
-
-## What works
-
-- Tool-runtime / direct hard pack **5/5**
-- EditTransaction + AST-gate (p1_06 green)
-- AgentState durable
+- Direct / tool-runtime hard pack: **5/5** (p1_07, p1_11, phase_d)
+- EditTransaction + write-time AST gate: verified green
+- AgentState durable across gems
 - Resilient scoreboard harness (per-fixture + finally + atomic)
-- Fail → learning pipeline now explicit
+- Fail → Labradorite critique → new job id only (lesson 023)
+
+## Current measurement path (one hyp at a time)
+
+1. `p1_12_pipeline_single_ledger` — single fixture live (smallest experiment after p1_04c)
+2. `p1_17_pipeline_hard_scripted` — full hard pack pipeline scripted (scoreboard reliability)
+3. `p1_18_pipeline_hard_live` — full hard pack pipeline live
+4. `p1_19_direct_vs_pipeline_compare` — side-by-side lift matrix
+5. `p1_20_train_gates_final` — doctrine green
+
+Host is live. It drains FIFO. Steady pending depth maintained.
+
+## Remaining for full Phase 1 green
+
+- Scoreboard must appear for pipeline (p1_12 is the gate for that)
+- Expand hard fixtures from 5 → ≥10 (next concrete work after measurement lands)
+- Confirm no open non-infra evolution FAILs
+
+Do not lift training wheels. Do not start Phase 2 until the gate numbers are on origin.
 
 ## Next action only
 
-1. Host drains the 10-job batch
-2. Read scoreboard_p1_12_ledger.json (or critique from lab_crit)
-3. If scoreboard lands and lift visible → expand toward ≥10 hard
-4. If still missing → next single hyp only (Labradorite again)
-
-Do not lift training wheels. Do not start Phase 2.
+Host drains p1_12 → read `artifacts/scoreboard_p1_12_ledger.json` → if present and usable, proceed to p1_17. If still missing, Labradorite on the single-fixture path only.

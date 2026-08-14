@@ -1,0 +1,27 @@
+{
+  "id": "p1_35_pipeline_scripted_hard",
+  "note": "P1 1D: pipeline arm scripted hard pack after batch_phase_d fix (final scoreboard, not sentinel)",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "120",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_35_pipeline_scripted_hard.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

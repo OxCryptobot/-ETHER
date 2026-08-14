@@ -5,6 +5,10 @@
 - On empty pending, call scripts.foreman.tick() so the system never idles
   and does not depend on chat/Grok to enqueue work.
 - Still drains FIFO, still reports to GitHub, still recovers on diverge.
+
+2026-08-14 FastTrack:
+- Timeouts raise as typed failure_type=timeout on last_job envelope so
+  playbooks and lessons can match without parsing free text only.
 """
 from __future__ import annotations
 
@@ -15,7 +19,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 os.chdir(ROOT)
@@ -153,19 +157,27 @@ def list_pending() -> List[Path]:
     return sorted([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"], key=lambda p: p.name)
 
 
-def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> int:
+def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> Tuple[int, Optional[str]]:
+    """Run steps. Returns (rc, failure_type|None)."""
     last_rc = 0
+    failure_type: Optional[str] = None
     for i, step in enumerate(steps, 1):
         argv = step.get("argv")
         cmd = step.get("cmd")
         log(f"step {i}/{len(steps)}: {argv or cmd}")
-        if argv:
-            r = run([str(x) for x in argv], timeout=int(step.get("timeout", 3600)))
-        elif cmd:
-            r = run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
-                    timeout=int(step.get("timeout", 3600)))
-        else:
-            return 2
+        try:
+            if argv:
+                r = run([str(x) for x in argv], timeout=int(step.get("timeout", 3600)))
+            elif cmd:
+                r = run(
+                    ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
+                    timeout=int(step.get("timeout", 3600)),
+                )
+            else:
+                return 2, "bad_job"
+        except subprocess.TimeoutExpired:
+            log("step timeout (typed failure_type=timeout)")
+            return 124, "timeout"
         if r.stdout:
             print(r.stdout[-3000:], flush=True)
         if r.stderr:
@@ -173,10 +185,11 @@ def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> in
         if r.returncode != 0:
             log(f"step failed rc={r.returncode}")
             last_rc = r.returncode
+            failure_type = "step_fail"
             step_continue = bool(step.get("continue_on_fail", continue_on_fail))
             if not step_continue:
-                return r.returncode
-    return last_rc
+                return r.returncode, failure_type
+    return last_rc, failure_type if last_rc else None
 
 
 def process_job(path: Path) -> bool:
@@ -193,25 +206,38 @@ def process_job(path: Path) -> bool:
     write_status(current_job=job_id, phase="running")
     ok = False
     rc = 1
+    failure_type: Optional[str] = None
     try:
         if job.get("steps"):
             cont = bool(job.get("continue_on_fail", False))
-            rc = run_steps(list(job["steps"]), continue_on_fail=cont)
+            rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont)
         else:
             log("job has no steps")
             rc = 2
+            failure_type = "bad_job"
         ok = rc == 0
+    except subprocess.TimeoutExpired:
+        log("job timeout")
+        ok = False
+        rc = 124
+        failure_type = "timeout"
     except Exception as e:
         log(f"job exception: {e}")
         ok = False
+        failure_type = "exception"
 
-    envelope = {
+    envelope: Dict[str, Any] = {
         "job_id": job_id,
         "ok": ok,
         "rc": rc,
         "finished": datetime.now(timezone.utc).isoformat(),
         "note": job.get("note"),
     }
+    if not ok and failure_type:
+        envelope["failure_type"] = failure_type
+        # Help playbook matchers that scan note
+        if failure_type == "timeout":
+            envelope["note"] = f"{job.get('note') or ''} [failure_type=timeout]".strip()
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
     dest_dir = DONE if ok else FAILED
@@ -220,8 +246,14 @@ def process_job(path: Path) -> bool:
     if dest.exists():
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
-    log(f"JOB END {job_id} ok={ok}")
-    write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok)
+    log(f"JOB END {job_id} ok={ok} failure_type={failure_type}")
+    write_status(
+        current_job=None,
+        phase="idle",
+        last_job=job_id,
+        last_ok=ok,
+        last_failure_type=failure_type,
+    )
     try:
         git_push_report(job_id, ok)
     except Exception as e:
@@ -259,7 +291,6 @@ def main() -> int:
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
 
-    # Bootstrap: fill queue once on start so we never boot into pure idle.
     call_foreman_tick()
 
     while True:
@@ -278,7 +309,6 @@ def main() -> int:
             for job_path in jobs:
                 process_job(job_path)
                 git_sync()
-                # After every job, top up the queue so depth stays steady.
                 if len(list_pending()) < 5:
                     call_foreman_tick()
         except KeyboardInterrupt:

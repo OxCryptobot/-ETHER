@@ -1,0 +1,34 @@
+{
+  "id": "p1_39_typed_failures",
+  "note": "Typed failure contract smoke + protect direct 5/5",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.failure_types import TIMEOUT, classify_runtime_error, envelope; assert classify_runtime_error('timeout')=='timeout'; assert classify_runtime_error('no_progress')=='no_progress'; e=envelope(job_id='t', ok=False, rc=124, failure_type=TIMEOUT); assert e['failure_type']=='timeout'; print('failure_types_ok')"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--jobs",
+        "4",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_39_direct.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

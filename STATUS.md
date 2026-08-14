@@ -1,15 +1,17 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T19:35Z — Restoring core/pipeline.py from known-good commit. Soft launch BLOCKED.
+**Updated:** 2026-08-14T20:03Z — `core/pipeline.py` restored + terminal tool_runtime harden landed. Soft launch still BLOCKED until measured.
 
 ---
 
-## Critical incident (resolved path)
+## Critical incident — CLOSED
 
-`core/pipeline.py` was PLACEHOLDER. b64 parts never landed.  
-**New recovery:** `p1_25_restore_pipeline` now does `git show 1c7cb5a45ea672d039eff1e742868b93550a83c9:core/pipeline.py > core/pipeline.py` then import check.
+`core/pipeline.py` was PLACEHOLDER.  
+**Resolution:** full restore from last known-good content + explicit terminal harden under tool-first.
 
-Host heartbeat is stale (19:23Z). **Run the one-time recovery PowerShell** so the host pulls and drains the queue.
+- Marker `tool_runtime_failed_terminal` is present.
+- Tool-runtime non-ok / max_steps no longer falls into multi-minute generate path (closes 984s hang class).
+- Commit: `a6c519a746a479bcb92a62428dc5f7303f7ed8da`
 
 ## Phase 1 board
 
@@ -18,19 +20,20 @@ Host heartbeat is stale (19:23Z). **Run the one-time recovery PowerShell** so th
 | 1A Tool-first | COMPLETE |
 | 1B AgentState | COMPLETE |
 | 1C AST transactional | COMPLETE |
-| 1D Measured lift | IN PROGRESS — restore → re-measure → expand hard pack |
+| 1D Measured lift | IN PROGRESS — re-measure after host pull |
 
 ## Measured (pre-incident)
 
 - direct scripted hard: **5/5**
-- pipeline live: 0/1 max_steps (hung 984s) — terminal harden still required after restore
+- pipeline live: previously 0/1 max_steps + hang — now terminal, ready for honest re-measure
 
-## Immediate next (host must run)
+## Next (host drains pending)
 
-1. Drain `p1_25` (restore + import)
-2. Confirm Pipeline imports
-3. Enqueue terminal-harden patch job + single-fixture pipeline re-measure
-4. Labradorite on every open FAIL
-5. Keep pending ~10 for steady foreman
+1. Host pulls main (or run recovery PowerShell if still stalled)
+2. `p1_25` becomes a no-op / import confirmation
+3. Single-fixture pipeline re-measure under the new terminal path
+4. Labradorite critique on every remaining FAIL → smallest_experiment
+5. Expand hard pack toward ≥10 only after green measurement
+6. Keep ~10 pending for steady foreman flow
 
-Training wheels ON. Soft launch blocked until measured lift is honest and all FAILs closed.
+Training wheels ON. Soft launch blocked until measured lift is honest and open FAILs are closed.

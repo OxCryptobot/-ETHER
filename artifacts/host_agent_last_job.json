@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_26_lab_crit_p1_21",
+  "job_id": "p1_27_post_restore_harden",
   "ok": false,
   "rc": 1,
-  "finished": "2026-08-14T19:39:08.590664+00:00",
-  "note": "Labradorite critique of p1_21 sentinel FAIL \u2014 produce root_cause + smallest_experiment"
+  "finished": "2026-08-14T19:39:12.346720+00:00",
+  "note": "After restore: inject tool_runtime_failed_terminal harden so failure is terminal under tool-first"
 }

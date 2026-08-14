@@ -1,0 +1,27 @@
+{
+  "id": "p1_04b_measure_pipeline_lift_verbose",
+  "note": "P1 follow-up: pipeline hard pack with explicit scoreboard + tighter per-fixture budget (Labradorite smallest experiment after p1_04 FAIL)",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T17:20:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--timeout",
+        "480",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_04b.json"
+      ],
+      "timeout": 900
+    }
+  ]
+}

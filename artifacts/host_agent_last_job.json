@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_24_train_gates_final",
-  "ok": false,
-  "rc": 2,
-  "finished": "2026-08-14T19:38:59.678016+00:00",
-  "note": "P1 final doctrine + AST + preference health"
+  "job_id": "p1_25_restore_pipeline",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-14T19:39:04.866083+00:00",
+  "note": "EMERGENCY restore core/pipeline.py from known-good commit 1c7cb5a + import check. Harden terminal follows."
 }

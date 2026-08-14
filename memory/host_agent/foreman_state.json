@@ -303,7 +303,8 @@
     "p1_26_pipeline_import_confirm",
     "p1_29_train_gates_smoke",
     "ss_archive_failed_204845_4",
-    "ss_archive_failed_204846_4"
+    "ss_archive_failed_204846_4",
+    "ss_direct_hard_204845_0"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -365,12 +366,12 @@
     "p1_28_direct_hard_rebaseline",
     "p1_30_pep8_pipeline_spot"
   ],
-  "last_tick": "2026-08-14T20:48:54.304269+00:00",
+  "last_tick": "2026-08-14T20:49:01.292301+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 23,
-  "last_enqueued": "ss_pipeline_ledger_204854_1",
+  "last_enqueued": "ss_train_gates_204901_2",
   "last_playbook": "023_fail_to_learning",
   "last_converted": "p1_12_pipeline_single_ledger",
-  "steady_idx": 12
+  "steady_idx": 13
 }

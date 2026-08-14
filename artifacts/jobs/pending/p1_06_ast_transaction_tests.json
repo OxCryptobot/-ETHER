@@ -1,9 +1,9 @@
 {
   "id": "p1_06_ast_transaction_tests",
-  "note": "P1 verify Package 1C AST transactional edits (snapshot + rollback suite)",
+  "note": "P1 verify Package 1C: EditTransaction suite + tool_runtime AST-gate",
   "continue_on_fail": false,
   "source": "grok_enqueue",
-  "created": "2026-08-14T17:25:00+00:00",
+  "created": "2026-08-14T17:30:00+00:00",
   "steps": [
     {
       "argv": [
@@ -11,10 +11,11 @@
         "-m",
         "pytest",
         "tests/test_ast_transaction.py",
+        "tests/test_tool_runtime_ast_gate.py",
         "-q",
         "--tb=short"
       ],
-      "timeout": 120
+      "timeout": 180
     }
   ]
 }

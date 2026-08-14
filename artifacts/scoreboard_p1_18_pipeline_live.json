@@ -1,0 +1,67 @@
+{
+  "results": [
+    {
+      "fixture": "lru",
+      "arm": "pipeline",
+      "ok": false,
+      "score": 0.0,
+      "strategy": "tool_runtime",
+      "status": "error",
+      "repo_oracle_ok": null,
+      "elapsed_s": 984.528,
+      "mode": "live",
+      "stages": [
+        {
+          "stage": "plan",
+          "success": true,
+          "detail": "5 steps tool=False"
+        },
+        {
+          "stage": "tool_assist",
+          "success": true,
+          "detail": "few_shot=2156c exp=4200c"
+        },
+        {
+          "stage": "tool_runtime",
+          "success": false,
+          "detail": "steps=16 score=0.000 reason=max_steps"
+        },
+        {
+          "stage": "code",
+          "success": false,
+          "detail": "timed out"
+        }
+      ],
+      "degraded": [],
+      "model": "qwen3.5:4b"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "pipeline"
+    ],
+    "model": "qwen3.5:4b",
+    "max_steps": 16,
+    "partial": true
+  },
+  "matrix": {
+    "lru": {
+      "pipeline": false
+    },
+    "merge": {
+      "pipeline": false
+    },
+    "ledger": {
+      "pipeline": false
+    },
+    "topo": {
+      "pipeline": false
+    },
+    "intervals": {
+      "pipeline": false
+    }
+  }
+}

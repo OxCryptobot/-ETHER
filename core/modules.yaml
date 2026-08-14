@@ -25,3 +25,6 @@ modules:
   tool_runtime:                           # Phase C slice 1 — tool-first Observe→Act runtime
     introduced: "phaseC(slice1): tool-first agent runtime"
     purpose: "ToolRuntime — Observe→Act→Observe over fixture staging; gated by ETHER_TOOL_RUNTIME"
+  pep8_reviewer:                          # FastTrack — GEMS-callable style gate
+    introduced: "fasttrack(2026-08-14): embed pep8 skill as tool"
+    purpose: "PEP8/ruff structured reviewer — CLI + ToolRuntime pep8_review tool for GEMS agents"

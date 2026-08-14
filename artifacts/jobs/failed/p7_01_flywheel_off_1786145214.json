@@ -1,5 +1,0 @@
-{
-  "id": "p7_01_flywheel_off",
-  "note": "P7: flywheel push must default off",
-  "steps": [{"argv": [".venv/Scripts/python.exe", "-c", "import os; v=(os.getenv('ETHER_FLYWHEEL_PUSH') or '0').strip(); print('ETHER_FLYWHEEL_PUSH', v); assert v in ('0','false','False',''); print('p7_offline_ok')"], "timeout": 30}]
-}

@@ -1,8 +1,8 @@
 {
-  "id": "p1_23_direct_hard_rebaseline",
-  "note": "P1 continuous direct hard baseline (control for lift)",
-  "source": "grok_enqueue",
-  "created": "2026-08-14T19:00:00+00:00",
+  "id": "ss_direct_hard_204845_0",
+  "note": "steady: direct hard baseline",
+  "source": "foreman_steady",
+  "created": "2026-08-14T20:48:45.538591+00:00",
   "steps": [
     {
       "argv": [
@@ -16,9 +16,10 @@
         "--tier",
         "hard",
         "--scoreboard",
-        "artifacts/scoreboard_p1_23_direct.json"
+        "artifacts/scoreboard_ss_direct.json"
       ],
       "timeout": 600
     }
-  ]
+  ],
+  "continue_on_fail": true
 }

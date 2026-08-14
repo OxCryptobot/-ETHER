@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_25_restore_pipeline",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-14T19:39:04.866083+00:00",
-  "note": "EMERGENCY restore core/pipeline.py from known-good commit 1c7cb5a + import check. Harden terminal follows."
+  "job_id": "p1_26_lab_crit_p1_21",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-14T19:39:08.590664+00:00",
+  "note": "Labradorite critique of p1_21 sentinel FAIL \u2014 produce root_cause + smallest_experiment"
 }

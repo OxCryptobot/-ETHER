@@ -1,6 +1,6 @@
 {
   "id": "timeout_budget_exhaust",
-  "match": "timeout|tool_runtime_failed_terminal|budget_exhaust|ss_pipeline_ledger",
+  "match": "timeout|failure_type=timeout|tool_runtime_failed_terminal|budget_exhaust|ss_pipeline_ledger",
   "craft": "time_discipline",
   "rule": "On tool_runtime timeout or terminal harden, enqueue a Labradorite critique then a scripted remeasure — never leave the failure as pure noise.",
   "enqueue": {

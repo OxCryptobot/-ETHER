@@ -1,12 +1,13 @@
 {
   "id": "p1_25_restore_pipeline",
-  "note": "EMERGENCY restore core/pipeline.py from b64 parts + tool_runtime terminal harden",
+  "note": "EMERGENCY restore core/pipeline.py from known-good commit 1c7cb5a + import check. Harden terminal follows.",
   "continue_on_fail": false,
   "source": "grok_enqueue",
-  "created": "2026-08-14T19:28:00+00:00",
+  "created": "2026-08-14T19:40:00+00:00",
   "steps": [
     {
-      "argv": [".venv/Scripts/python.exe", "-m", "scripts.restore_pipeline"],
+      "argv": [".venv/Scripts/python.exe", "-c",
+        "import subprocess, pathlib;\nroot = pathlib.Path('.');\ncontent = subprocess.check_output(['git', 'show', '1c7cb5a45ea672d039eff1e742868b93550a83c9:core/pipeline.py'], text=True, encoding='utf-8');\npath = root / 'core' / 'pipeline.py';\npath.write_text(content, encoding='utf-8');\nprint(f'RESTORED {path} bytes={len(content)} from 1c7cb5a');\nassert 'class Pipeline:' in content\n"],
       "timeout": 60
     },
     {

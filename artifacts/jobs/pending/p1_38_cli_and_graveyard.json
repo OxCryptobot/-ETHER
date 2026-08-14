@@ -1,0 +1,37 @@
+{
+  "id": "p1_38_cli_and_graveyard",
+  "note": "CLI parity smoke + script graveyard inventory (no deletes)",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "status"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "next"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "doctor"],
+      "timeout": 60,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.inventory_script_graveyard"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pep8_tool.py",
+        "tests/test_pep8_reviewer.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

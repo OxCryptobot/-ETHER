@@ -1,0 +1,17 @@
+{
+  "id": "p1_25_restore_pipeline",
+  "note": "EMERGENCY restore core/pipeline.py from b64 parts + tool_runtime terminal harden",
+  "continue_on_fail": false,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T19:28:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.restore_pipeline"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.pipeline import Pipeline; print('Pipeline import OK', Pipeline)"],
+      "timeout": 30
+    }
+  ]
+}

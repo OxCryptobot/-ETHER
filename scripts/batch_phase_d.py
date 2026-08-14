@@ -5,22 +5,10 @@ Arms:
   pipeline — Pipeline + ETHER_TOOL_RUNTIME=1 (Phase D slice 1)
   bare     — Pipeline with tool runtime OFF (generate-only control)
 
-  python -m scripts.batch_phase_d --arm direct --mode scripted --tier hard
-  python -m scripts.batch_phase_d --arm pipeline --mode live --fixture ledger --max-steps 16 --timeout 500
-
-2026-08-14: scoreboard is now written after every fixture and in a finally
-block so a mid-run timeout/kill still leaves a usable partial artifact.
-
-2026-08-14 (harden): write a SENTINEL scoreboard immediately on entry so the
-artifact always exists even if Pipeline import or first fixture raises before
-any incremental write. This closes the recurring trace_missing class for the
-pipeline arm under the host job runner.
-
-2026-08-14 (FastTrack): pipeline + mode=scripted no longer calls full
-Pipeline().run() (that path hangs under host timeout and leaves only the
-sentinel). Scripted pipeline now uses the proven ToolRuntime + fixed
-decide sequence so we get an honest final scoreboard in seconds. Live
-pipeline path is unchanged.
+2026-08-14 FastTrack:
+- pipeline mode=scripted uses ToolRuntime scripted path (final scoreboard).
+- pipeline scripted multi-fixture runs in ThreadPoolExecutor like direct
+  (safe: no shared model, isolated staging workspaces).
 """
 from __future__ import annotations
 
@@ -37,7 +25,6 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# Critical: CLI loads .env; batch must too or Rose Quartz falls back to 3b.
 try:
     from core.dotenv import load_dotenv
 
@@ -73,10 +60,6 @@ def _run_pipeline(
 ) -> Dict[str, Any]:
     fixture = FIXTURES[name]
 
-    # FastTrack: scripted + non-bare = ToolRuntime scripted path.
-    # Full Pipeline().run() under host job timeout left only sentinel_on_entry.
-    # Scripted decide proves fixture/tool plumbing in seconds with a final
-    # scoreboard. Live path below still exercises full Pipeline orchestration.
     if not live and not bare:
         from scripts.measure_tool_runtime import measure_one
 
@@ -93,7 +76,6 @@ def _run_pipeline(
     else:
         os.environ["ETHER_TOOL_RUNTIME"] = "1"
         os.environ["ETHER_TOOL_RUNTIME_FIXTURE"] = str(fixture.resolve())
-        # Honor --max-steps exactly (do not clamp over a higher user budget).
         os.environ["ETHER_TOOL_RUNTIME_STEPS"] = str(int(max_steps))
         os.environ["ETHER_TOOL_RUNTIME_SECONDS"] = str(int(timeout))
         arm = "pipeline"
@@ -177,7 +159,6 @@ def _write_scoreboard(
     partial: bool = False,
     note: str = "",
 ) -> None:
-    """Always-safe scoreboard dump. Called on entry, after every fixture, and in finally."""
     by: Dict[str, Dict[str, Any]] = {}
     for r in rows:
         by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
@@ -200,8 +181,6 @@ def _write_scoreboard(
         },
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    # Atomic-ish write: temp then replace so a kill mid-write cannot leave
-    # a truncated JSON that later readers treat as valid.
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     tmp.replace(path)
@@ -216,12 +195,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--tier", choices=["easy", "hard", "all"], default="hard")
     ap.add_argument("--fixture", default=None)
     ap.add_argument("--timeout", type=float, default=400.0)
-    ap.add_argument(
-        "--max-steps",
-        type=int,
-        default=12,
-        help="Tool-runtime step budget (pipeline sets ETHER_TOOL_RUNTIME_STEPS)",
-    )
+    ap.add_argument("--max-steps", type=int, default=12)
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument(
         "--scoreboard", type=str, default="artifacts/scoreboard_phase_d.json"
@@ -247,16 +221,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     model = (os.environ.get("ETHER_PRIMARY_MODEL") or "").strip() or "(unset → rose default 3b)"
     print(
-        f"config: model={model} max_steps={args.max_steps} timeout={args.timeout}",
+        f"config: model={model} max_steps={args.max_steps} timeout={args.timeout} jobs={args.jobs}",
         flush=True,
     )
 
     rows: List[Dict[str, Any]] = []
     sb = Path(args.scoreboard)
 
-    # SENTINEL: write empty scoreboard immediately so the artifact always
-    # exists on disk even if Pipeline import or first fixture raises hard.
-    # This is the hard fix for the recurring trace_missing class.
     try:
         _write_scoreboard(
             sb,
@@ -276,18 +247,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     try:
         for arm in arms:
             print(f"\n=== arm={arm} mode={args.mode} fixtures={names} ===", flush=True)
-            if arm == "direct" and not live and args.jobs > 1 and len(names) > 1:
+            # Parallel path: scripted direct OR scripted pipeline (no live model).
+            use_pool = (
+                not live
+                and arm in ("direct", "pipeline")
+                and args.jobs > 1
+                and len(names) > 1
+            )
+            if use_pool:
+                runner = _run_direct if arm == "direct" else (
+                    lambda n, *a, **k: _run_pipeline(n, False, args.max_steps, args.timeout, bare=False)
+                )
                 with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-                    futs = {
-                        ex.submit(_run_direct, n, False, args.max_steps, args.timeout): n
-                        for n in names
-                    }
+                    if arm == "direct":
+                        futs = {
+                            ex.submit(_run_direct, n, False, args.max_steps, args.timeout): n
+                            for n in names
+                        }
+                    else:
+                        futs = {
+                            ex.submit(
+                                _run_pipeline, n, False, args.max_steps, args.timeout, bare=False
+                            ): n
+                            for n in names
+                        }
                     for fut in as_completed(futs):
                         r = fut.result()
                         rows.append(r)
                         st = "PASS" if r.get("ok") else "FAIL"
                         print(
-                            f"[{st}] {r.get('fixture'):10} arm=direct score={r.get('score')} "
+                            f"[{st}] {r.get('fixture'):10} arm={arm} score={r.get('score')} "
                             f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s",
                             flush=True,
                         )
@@ -351,8 +340,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
         return 0 if n_ok == len(rows) else 1
     finally:
-        # Final authoritative write (partial=False). Guarantees an artifact
-        # even if the process is about to be killed by the job runner.
         try:
             _write_scoreboard(
                 sb, rows, mode=args.mode, arms=arms, model=model,

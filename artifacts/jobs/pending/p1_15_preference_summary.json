@@ -1,0 +1,16 @@
+{
+  "id": "p1_15_preference_summary",
+  "note": "P1 offline RLHF preference health check (artifacts mirror)",
+  "source": "grok_enqueue",
+  "created": "2026-08-14T18:30:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import json; p=Path('artifacts/preference_summary.json'); assert p.exists(), 'missing preference_summary'; d=json.loads(p.read_text()); print('ok', d.get('n_pairs', d.get('pairs', 'keys='+str(list(d)[:5]))))"
+      ],
+      "timeout": 30
+    }
+  ]
+}

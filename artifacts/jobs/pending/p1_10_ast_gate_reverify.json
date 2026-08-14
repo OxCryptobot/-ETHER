@@ -1,0 +1,20 @@
+{
+  "id": "p1_10_ast_gate_reverify",
+  "note": "P1 AST gate + EditTransaction still green",
+  "source": "grok_enqueue",
+  "created": "2026-08-14T18:30:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_ast_transaction.py",
+        "tests/test_tool_runtime_ast_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

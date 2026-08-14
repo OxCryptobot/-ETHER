@@ -1,0 +1,23 @@
+{
+  "id": "023_fail_to_learning",
+  "craft": "failure",
+  "rule": "Every non-infra FAIL is a learning opportunity. Before any retry: (1) write a Labradorite (or structured) critique with root_cause + evidence + smallest_experiment, (2) record the lesson if a new pattern appears, (3) enqueue only the new job id from the critique. Never re-run the same failed file still sitting in failed/. Never chain playbooks. Convert the failure into durable apprentice knowledge so the same class of error is less likely next time.",
+  "match": "(measure_pipeline|pipeline_live|scoreboard.*missing|trace_missing|p1_04)",
+  "enqueue": {
+    "id": "lab_crit_followup",
+    "note": "playbook:023_fail_to_learning — force structured critique then smallest experiment",
+    "continue_on_fail": true,
+    "steps": [
+      {
+        "argv": [
+          ".venv/Scripts/python.exe",
+          "-m",
+          "core.evolution_loop"
+        ],
+        "timeout": 300
+      }
+    ]
+  },
+  "created": "2026-08-14T18:30:00+00:00",
+  "teacher": "grok"
+}

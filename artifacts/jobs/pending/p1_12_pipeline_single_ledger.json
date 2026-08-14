@@ -1,0 +1,29 @@
+{
+  "id": "p1_12_pipeline_single_ledger",
+  "note": "P1 smallest experiment after p1_04c: single fixture (ledger) pipeline live + scoreboard",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T18:30:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "live",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "400",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_12_ledger.json"
+      ],
+      "timeout": 600
+    }
+  ]
+}

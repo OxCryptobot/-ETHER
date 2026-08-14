@@ -1,0 +1,24 @@
+{
+  "id": "p1_11_direct_hard_rebaseline",
+  "note": "P1 continuous direct hard baseline for lift comparison",
+  "source": "grok_enqueue",
+  "created": "2026-08-14T18:30:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_11_direct.json"
+      ],
+      "timeout": 600
+    }
+  ]
+}

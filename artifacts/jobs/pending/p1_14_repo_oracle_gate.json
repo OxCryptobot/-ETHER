@@ -1,0 +1,20 @@
+{
+  "id": "p1_14_repo_oracle_gate",
+  "note": "P1 repo-oracle gate (toward ≥10 hard tasks)",
+  "source": "grok_enqueue",
+  "created": "2026-08-14T18:30:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_repo_oracle.py",
+        "tests/test_repo_oracle_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    }
+  ]
+}

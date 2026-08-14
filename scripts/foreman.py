@@ -17,6 +17,10 @@ REVAMP 2026-08-08:
 
 2026-08-14: added p1_04b / p1_06 / p1_07 / p1_08 for AST verification +
 measurement follow-ups after Package 1C landed.
+
+2026-08-14 (steady flow): BATCH_SIZE raised to 10 so foreman keeps a constant
+pending depth for continuous learning. Failed jobs are converted into
+Labradorite critiques + lessons + smallest experiments (never blind re-run).
 """
 from __future__ import annotations
 
@@ -36,9 +40,9 @@ STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS = ROOT / "memory" / "ether_apprentice" / "lessons"
 
-# Under training wheels: fill next N sequential curriculum items when pending empty.
-# Raise only after Phase 1 gate is green and measured lift is proven.
-BATCH_SIZE = 3
+# Steady workflow: keep ~10 jobs in pending so the host never idles while
+# Phase 1 measurement + learning from FAILs is open. Training wheels still ON.
+BATCH_SIZE = 10
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -345,6 +349,92 @@ CURRICULUM: List[Dict[str, Any]] = [
             }
         ],
     },
+    # --- Steady learning stream (keep queue full while measuring lift) ---
+    {
+        "id": "p1_09_train_gates_reverify",
+        "note": "P1 doctrine gates + preference health (learning integrity)",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "pytest",
+                    "tests/test_train_gates.py",
+                    "tests/test_preference_rlhf.py",
+                    "-q",
+                    "--tb=line",
+                ],
+                "timeout": 180,
+            }
+        ],
+    },
+    {
+        "id": "p1_10_ast_gate_reverify",
+        "note": "P1 AST gate + EditTransaction still green",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "pytest",
+                    "tests/test_ast_transaction.py",
+                    "tests/test_tool_runtime_ast_gate.py",
+                    "-q",
+                    "--tb=line",
+                ],
+                "timeout": 120,
+            }
+        ],
+    },
+    {
+        "id": "p1_11_direct_hard_rebaseline",
+        "note": "P1 continuous direct hard baseline for lift comparison",
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "scripts.batch_phase_d",
+                    "--arm",
+                    "direct",
+                    "--mode",
+                    "scripted",
+                    "--tier",
+                    "hard",
+                    "--scoreboard",
+                    "artifacts/scoreboard_p1_11_direct.json",
+                ],
+                "timeout": 600,
+            }
+        ],
+    },
+    {
+        "id": "p1_12_pipeline_single_ledger",
+        "note": "P1 smallest pipeline hyp: single hard fixture (ledger) + scoreboard",
+        "continue_on_fail": True,
+        "steps": [
+            {
+                "argv": [
+                    ".venv/Scripts/python.exe",
+                    "-m",
+                    "scripts.batch_phase_d",
+                    "--arm",
+                    "pipeline",
+                    "--mode",
+                    "live",
+                    "--fixture",
+                    "ledger",
+                    "--max-steps",
+                    "16",
+                    "--timeout",
+                    "400",
+                    "--scoreboard",
+                    "artifacts/scoreboard_p1_12_ledger.json",
+                ],
+                "timeout": 600,
+            }
+        ],
+    },
 ]
 
 
@@ -409,7 +499,6 @@ def _move_failed_to_done(jid: str) -> bool:
     """Convert a recovered failed job to done/ (file move). Returns True if moved."""
     src = FAILED / f"{jid}.json"
     if not src.exists():
-        # also try without job_ prefix variants
         for p in FAILED.glob(f"*{jid}*.json"):
             src = p
             break
@@ -439,9 +528,7 @@ def record_last_job(state: Dict[str, Any]) -> None:
         if jid not in state["completed"]:
             state["completed"].append(jid)
         state["failed"] = [x for x in state.get("failed", []) if x != jid]
-        # Convert original failed job when a playbook recovery PASSes
         if note.strip().lower().startswith("playbook:"):
-            # note format: playbook:<les_id> for <original_jid>
             m = re.search(r"for\s+([\w\-\.]+)", note, re.I)
             if m:
                 orig = m.group(1).strip()
@@ -501,7 +588,6 @@ def _is_playbook_recovery(jid: str, note: str) -> bool:
     if "diag_after_budget" in j or "diag_after_budget" in n:
         return True
     if j.startswith("phase_e_ledger_trace") or j.startswith("phase_e_topo_trace"):
-        # one-shot diagnosis jobs must not re-trigger the same playbook
         return True
     return False
 
@@ -519,7 +605,7 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
     jid = last.get("job_id") or ""
     note = last.get("note") or ""
     if _is_playbook_recovery(jid, note):
-        return None  # never chain playbooks
+        return None
     hay = note + " " + jid
     lessons = load_lessons()
     for les in lessons:

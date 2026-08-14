@@ -16,8 +16,9 @@ REVAMP 2026-08-14 (permanent standalone):
 FASTTRACK 2026-08-14:
 - ss_pipeline_scripted first (fast 1D).
 - load_lessons prefers artifacts/lessons.
-- After live pipeline FAIL (budget_exhaust), skip ss_pipeline_ledger for 3 ticks
-  so the queue stays on fast scripted/direct/gates work.
+- After live pipeline FAIL (budget_exhaust), skip ss_pipeline_ledger for 3 ticks.
+- playbook matches include last_job.failure_type (typed timeout contract).
+- each tick refreshes artifacts/whats_next.json for dashboard/CLI.
 """
 from __future__ import annotations
 
@@ -39,7 +40,7 @@ LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
 BATCH_SIZE = 10
-LIVE_SKIP_TICKS = 3  # after live pipeline budget_exhaust, skip live for N ticks
+LIVE_SKIP_TICKS = 3
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -269,7 +270,6 @@ def record_last_job(state: Dict[str, Any]) -> None:
     elif last.get("ok") is False:
         if jid not in state.get("failed", []):
             state.setdefault("failed", []).append(jid)
-        # Speed policy: after live pipeline budget burn, starve live for N ticks
         if "pipeline_ledger" in hay or ("pipeline" in hay and "live" in hay):
             state["live_skip_remaining"] = LIVE_SKIP_TICKS
             state["last_live_skip_reason"] = jid
@@ -289,7 +289,6 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
     while len(pending) + len(enqueued) < BATCH_SIZE and attempts < len(STEADY_TEMPLATES) * 4:
         attempts += 1
         tmpl = STEADY_TEMPLATES[idx % len(STEADY_TEMPLATES)]
-        # Skip live templates while cooldown active
         if skip_live and tmpl.get("live"):
             idx += 1
             continue
@@ -377,7 +376,9 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
     note = last.get("note") or ""
     if _is_playbook_recovery(jid, note):
         return None
-    hay = note + " " + jid
+    # Include typed failure_type so playbooks match without free-text only
+    ftype = str(last.get("failure_type") or "")
+    hay = f"{note} {jid} {ftype}"
     lessons = load_lessons()
     for les in lessons:
         pat = les.get("match") or ""
@@ -403,13 +404,19 @@ def tick() -> Dict[str, Any]:
     record_last_job(state)
     recovered = playbook_on_fail(state)
     enqueued = enqueue_next(state)
-    # Decay live skip cooldown once per tick
     skip = int(state.get("live_skip_remaining") or 0)
     if skip > 0:
         state["live_skip_remaining"] = skip - 1
     lessons = load_lessons()
     state["lessons_loaded"] = len(lessons)
     save_state(state)
+    # Dashboard/CLI contract: refresh whats_next each tick
+    try:
+        from scripts.write_whats_next import main as _wn
+
+        _wn()
+    except Exception:
+        pass
     return {
         "enqueued": enqueued,
         "playbook": recovered,

@@ -1,0 +1,15 @@
+{
+  "id": "p1_33_lab_crit_ledger_timeout",
+  "note": "Labradorite: root_cause + evidence + smallest_experiment for pipeline ledger tool_runtime timeout",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "import json; from pathlib import Path; from datetime import datetime, timezone;\nROOT = Path('.').resolve();\ncrit = {\n  'id': 'p1_33_lab_crit_ledger_timeout',\n  'failed_job': 'ss_pipeline_ledger',\n  'root_cause': 'budget_exhaust',\n  'evidence': [\n    'scoreboard_ss_ledger: tool_runtime steps=12-14 score=0.000 reason=timeout',\n    'degraded: tool_runtime_failed_terminal (correct harden, no hang)',\n    'elapsed ~323-325s, max_steps=16, model=qwen3.5:4b',\n    'direct arm same fixture: 5/5 PASS in ~1.6s scripted'\n  ],\n  'smallest_experiment': {\n    'id': 'p1_34_pipeline_ledger_scripted',\n    'note': 'measure pipeline tool_runtime on ledger in scripted mode to isolate fixture vs model budget',\n    'argv': ['.venv/Scripts/python.exe', '-m', 'scripts.batch_phase_d', '--arm', 'pipeline', '--mode', 'scripted', '--fixture', 'ledger', '--max-steps', '16', '--scoreboard', 'artifacts/scoreboard_p1_34_ledger_scripted.json'],\n    'timeout': 180\n  },\n  'confidence': 0.88,\n  'taxonomy': 'budget_exhaust',\n  'created': datetime.now(timezone.utc).isoformat()\n};\nout = ROOT / 'artifacts' / 'critique_p1_33_ledger_timeout.json';\nout.parent.mkdir(parents=True, exist_ok=True);\nout.write_text(json.dumps(crit, indent=2), encoding='utf-8');\nprint('critique_written', out, crit['root_cause'])\n"
+      ],
+      "timeout": 60
+    }
+  ]
+}

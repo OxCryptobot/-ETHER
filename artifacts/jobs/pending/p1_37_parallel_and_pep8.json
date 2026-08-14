@@ -1,0 +1,50 @@
+{
+  "id": "p1_37_parallel_and_pep8",
+  "note": "FAST: parallel pipeline scripted hard pack + embedded pep8 reviewer",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--jobs",
+        "4",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_37_pipeline_parallel.json"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.pep8_review",
+        "--json",
+        "artifacts/pep8_report_core.json",
+        "core",
+        "scripts"
+      ],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pep8_reviewer.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

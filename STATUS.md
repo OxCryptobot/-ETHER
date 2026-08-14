@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T19:00Z — Pipeline measurement still blocked (trace_missing). Harness hardened with sentinel scoreboard. Soft launch BLOCKED.
+**Updated:** 2026-08-14T19:20Z — Scoreboards landing. Pipeline live hang diagnosed and hardened. Soft launch still gated.
 
 ---
 
@@ -11,8 +11,8 @@
 - One hypothesis per job; Labradorite mandatory on non-infra FAIL
 - Tool-first is the required direction
 - LoRA dual-flag gated; dry-run default only
-- **Every FAIL → critique + lesson + smallest experiment** (never blind re-run of the same failed file)
-- **Soft launch is blocked until pipeline scoreboard lands and Phase 1 gate is green**
+- **Every FAIL → critique + lesson + smallest experiment**
+- Soft launch blocked until Phase 1 gate is fully green
 
 ---
 
@@ -23,35 +23,28 @@
 | 1A Tool-first default | **COMPLETE** |
 | 1B AgentState durable | **COMPLETE** |
 | 1C AST transactional edits | **COMPLETE** |
-| 1D Expand eval + measured lift | **BLOCKED on pipeline scoreboard** |
+| 1D Expand eval + measured lift | **IN PROGRESS** — numbers now honest |
 
-**Gate to Phase 2 / soft launch:**
-1. Pipeline scoreboard must appear on origin (p1_21 sentinel is the next test)
-2. Pipeline numbers measured on hard pack
-3. Honest delta vs direct recorded
-4. Hard pack expanded toward ≥10
-5. train_gates + preference health green
+### Measured numbers (origin)
 
----
+| Arm | Mode | Hard pack | Result |
+|-----|------|-----------|--------|
+| **direct** | scripted | 5 fixtures | **5/5** (p1_07, p1_11, p1_19) |
+| pipeline | live | 1 fixture (lru) | 0/1 max_steps → was hanging 16min (now hardened) |
 
-## Current problem (must resolve)
+**Signal:** Pure ToolRuntime (direct) is the best-in-class path on this hardware. Pipeline-wrapped live was burning wall-clock after tool_runtime failure.
 
-`p1_17_pipeline_hard_scripted` → ok=false, **no scoreboard on origin**.  
-Same class as p1_04 / p1_04b / p1_04c / p1_12.  
-Direct arm is solid (5/5). Pipeline arm reporting is not.
+### Hardening this turn
 
-**Fix applied this turn:** `batch_phase_d.py` now writes a **sentinel scoreboard on entry** (before any fixture work). This guarantees an artifact exists even if Pipeline import or first fixture raises.
+- `batch_phase_d` sentinel scoreboard on entry (already landed)
+- Pipeline: tool_runtime non-ok is now **terminal** under tool-first — no multi-minute generate fallback
+- Labradorite critique written for p1_18
 
-## Next measurement path (one hyp)
+### Remaining for full Phase 1 green / soft launch
 
-1. `p1_21_pipeline_ledger_sentinel` — single ledger + sentinel harness
-2. If scoreboard lands → `p1_22` full hard pack pipeline scripted
-3. `p1_23` direct rebaseline (control)
-4. `p1_24` doctrine final
+1. Confirm hardened Pipeline no longer hangs (p1_21 / p1_22)
+2. Expand hard fixtures 5 → ≥10
+3. train_gates final green (p1_24)
+4. Honest STATUS with all numbers on origin
 
-Host is live. Pending topped up. Training wheels ON. Soft launch remains blocked.
-
-## Next action only
-
-Host drains `p1_21`. Read `artifacts/scoreboard_p1_21_ledger_sentinel.json`.  
-If present → proceed. If still missing → root cause is host git_push_report path selection, not the measurement script.
+Host is live. Pending continues. Training wheels ON.

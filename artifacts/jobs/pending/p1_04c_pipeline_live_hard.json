@@ -1,0 +1,29 @@
+{
+  "id": "p1_04c_pipeline_live_hard",
+  "note": "P1 Labradorite hyp: pipeline live mode hard pack + explicit scoreboard (after p1_04b scripted scoreboard missing)",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T17:56:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "live",
+        "--tier",
+        "hard",
+        "--timeout",
+        "500",
+        "--max-steps",
+        "16",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_04c_live.json"
+      ],
+      "timeout": 1200
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
-  "job_id": "lab_crit_followup_183652",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-14T18:38:05.406704+00:00",
-  "note": "playbook:023_fail_to_learning for p1_12_pipeline_single_ledger"
+  "job_id": "p1_17_pipeline_hard_scripted",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-14T18:53:09.530599+00:00",
+  "note": "P1 1D close: full hard pack pipeline scripted + explicit scoreboard (after p1_12 single succeeds)"
 }

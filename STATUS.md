@@ -1,6 +1,6 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T18:40Z — Phase 1 close-out. 1A/1B/1C complete. 1D measurement jobs enqueued. Training wheels ON.
+**Updated:** 2026-08-14T19:00Z — Pipeline measurement still blocked (trace_missing). Harness hardened with sentinel scoreboard. Soft launch BLOCKED.
 
 ---
 
@@ -12,53 +12,46 @@
 - Tool-first is the required direction
 - LoRA dual-flag gated; dry-run default only
 - **Every FAIL → critique + lesson + smallest experiment** (never blind re-run of the same failed file)
+- **Soft launch is blocked until pipeline scoreboard lands and Phase 1 gate is green**
 
 ---
 
-## Phase 1 board — CLOSEOUT
+## Phase 1 board
 
 | Package | Status |
 |---------|--------|
 | 1A Tool-first default | **COMPLETE** |
-| 1B AgentState durable | **COMPLETE** (wired + durable) |
-| 1C AST transactional edits | **COMPLETE** (p1_06 PASS + AST-gate live) |
-| 1D Expand eval + measured lift | **IN PROGRESS — final measurement batch** |
+| 1B AgentState durable | **COMPLETE** |
+| 1C AST transactional edits | **COMPLETE** |
+| 1D Expand eval + measured lift | **BLOCKED on pipeline scoreboard** |
 
-**Gate to Phase 2 (exact):**
-1. Pipeline scoreboard lands on hard pack (p1_12 → p1_17/p1_18)
-2. Pipeline ≥ direct on the measured fixtures (or honest delta recorded)
-3. Hard pack expanded toward ≥10 (currently 5 hard fixtures)
-4. Evolution FAILs closed via Labradorite path
+**Gate to Phase 2 / soft launch:**
+1. Pipeline scoreboard must appear on origin (p1_21 sentinel is the next test)
+2. Pipeline numbers measured on hard pack
+3. Honest delta vs direct recorded
+4. Hard pack expanded toward ≥10
 5. train_gates + preference health green
 
 ---
 
-## What is already proven
+## Current problem (must resolve)
 
-- Direct / tool-runtime hard pack: **5/5** (p1_07, p1_11, phase_d)
-- EditTransaction + write-time AST gate: verified green
-- AgentState durable across gems
-- Resilient scoreboard harness (per-fixture + finally + atomic)
-- Fail → Labradorite critique → new job id only (lesson 023)
+`p1_17_pipeline_hard_scripted` → ok=false, **no scoreboard on origin**.  
+Same class as p1_04 / p1_04b / p1_04c / p1_12.  
+Direct arm is solid (5/5). Pipeline arm reporting is not.
 
-## Current measurement path (one hyp at a time)
+**Fix applied this turn:** `batch_phase_d.py` now writes a **sentinel scoreboard on entry** (before any fixture work). This guarantees an artifact exists even if Pipeline import or first fixture raises.
 
-1. `p1_12_pipeline_single_ledger` — single fixture live (smallest experiment after p1_04c)
-2. `p1_17_pipeline_hard_scripted` — full hard pack pipeline scripted (scoreboard reliability)
-3. `p1_18_pipeline_hard_live` — full hard pack pipeline live
-4. `p1_19_direct_vs_pipeline_compare` — side-by-side lift matrix
-5. `p1_20_train_gates_final` — doctrine green
+## Next measurement path (one hyp)
 
-Host is live. It drains FIFO. Steady pending depth maintained.
+1. `p1_21_pipeline_ledger_sentinel` — single ledger + sentinel harness
+2. If scoreboard lands → `p1_22` full hard pack pipeline scripted
+3. `p1_23` direct rebaseline (control)
+4. `p1_24` doctrine final
 
-## Remaining for full Phase 1 green
-
-- Scoreboard must appear for pipeline (p1_12 is the gate for that)
-- Expand hard fixtures from 5 → ≥10 (next concrete work after measurement lands)
-- Confirm no open non-infra evolution FAILs
-
-Do not lift training wheels. Do not start Phase 2 until the gate numbers are on origin.
+Host is live. Pending topped up. Training wheels ON. Soft launch remains blocked.
 
 ## Next action only
 
-Host drains p1_12 → read `artifacts/scoreboard_p1_12_ledger.json` → if present and usable, proceed to p1_17. If still missing, Labradorite on the single-fixture path only.
+Host drains `p1_21`. Read `artifacts/scoreboard_p1_21_ledger_sentinel.json`.  
+If present → proceed. If still missing → root cause is host git_push_report path selection, not the measurement script.

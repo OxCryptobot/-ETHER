@@ -1,0 +1,29 @@
+{
+  "id": "p1_22_pipeline_hard_scripted_v2",
+  "note": "P1 full hard pack pipeline scripted after sentinel harness verified",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T19:00:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "400",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_22_pipeline_scripted.json"
+      ],
+      "timeout": 900
+    }
+  ]
+}

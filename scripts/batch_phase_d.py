@@ -10,6 +10,11 @@ Arms:
 
 2026-08-14: scoreboard is now written after every fixture and in a finally
 block so a mid-run timeout/kill still leaves a usable partial artifact.
+
+2026-08-14 (harden): write a SENTINEL scoreboard immediately on entry so the
+artifact always exists even if Pipeline import or first fixture raises before
+any incremental write. This closes the recurring trace_missing class for the
+pipeline arm under the host job runner.
 """
 from __future__ import annotations
 
@@ -150,8 +155,9 @@ def _write_scoreboard(
     max_steps: int,
     names: List[str],
     partial: bool = False,
+    note: str = "",
 ) -> None:
-    """Always-safe scoreboard dump. Called after every fixture and in finally."""
+    """Always-safe scoreboard dump. Called on entry, after every fixture, and in finally."""
     by: Dict[str, Dict[str, Any]] = {}
     for r in rows:
         by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
@@ -166,6 +172,7 @@ def _write_scoreboard(
             "model": model,
             "max_steps": max_steps,
             "partial": partial,
+            "note": note,
         },
         "matrix": {
             n: {a: bool(by.get(n, {}).get(a, {}).get("ok")) for a in arms}
@@ -227,6 +234,25 @@ def main(argv: Optional[List[str]] = None) -> int:
     rows: List[Dict[str, Any]] = []
     sb = Path(args.scoreboard)
 
+    # SENTINEL: write empty scoreboard immediately so the artifact always
+    # exists on disk even if Pipeline import or first fixture raises hard.
+    # This is the hard fix for the recurring trace_missing class.
+    try:
+        _write_scoreboard(
+            sb,
+            rows,
+            mode=args.mode,
+            arms=arms,
+            model=model,
+            max_steps=args.max_steps,
+            names=names,
+            partial=True,
+            note="sentinel_on_entry",
+        )
+        print(f"sentinel scoreboard written: {sb}", flush=True)
+    except Exception as e:
+        print(f"sentinel write failed: {type(e).__name__}: {e}", flush=True)
+
     try:
         for arm in arms:
             print(f"\n=== arm={arm} mode={args.mode} fixtures={names} ===", flush=True)
@@ -245,7 +271,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                             f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s",
                             flush=True,
                         )
-                        # Incremental dump so a later kill still leaves data.
                         _write_scoreboard(
                             sb, rows, mode=args.mode, arms=arms, model=model,
                             max_steps=args.max_steps, names=names, partial=True,
@@ -277,8 +302,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                             f"  stage={s.get('stage')} ok={s.get('success')} {s.get('detail')}",
                             flush=True,
                         )
-                # Write after every fixture. A host timeout now leaves a partial
-                # but usable scoreboard instead of nothing.
                 _write_scoreboard(
                     sb, rows, mode=args.mode, arms=arms, model=model,
                     max_steps=args.max_steps, names=names, partial=True,
@@ -314,6 +337,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             _write_scoreboard(
                 sb, rows, mode=args.mode, arms=arms, model=model,
                 max_steps=args.max_steps, names=names, partial=False,
+                note="final",
             )
             print(f"scoreboard: {sb}", flush=True)
         except Exception as e:

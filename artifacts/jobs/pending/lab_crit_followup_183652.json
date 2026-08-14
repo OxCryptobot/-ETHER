@@ -1,0 +1,17 @@
+{
+  "id": "lab_crit_followup_183652",
+  "note": "playbook:023_fail_to_learning for p1_12_pipeline_single_ledger",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.evolution_loop"
+      ],
+      "timeout": 300
+    }
+  ],
+  "created": "2026-08-14T18:36:52.762662+00:00",
+  "source": "foreman"
+}

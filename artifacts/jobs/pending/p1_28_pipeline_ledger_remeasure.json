@@ -1,0 +1,13 @@
+{
+  "id": "p1_28_pipeline_ledger_remeasure",
+  "note": "Post-restore + harden: single ledger fixture pipeline measurement (continue_on_fail for scoreboard)",
+  "continue_on_fail": true,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T19:36:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--pipeline", "--fixture", "ledger", "--out", "artifacts/scoreboard_p1_28_pipeline_ledger.json"],
+      "timeout": 600
+    }
+  ]
+}

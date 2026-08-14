@@ -1,0 +1,14 @@
+{
+  "id": "p1_31_lab_crit_p1_18",
+  "note": "Labradorite on p1_18 pipeline hard live max_steps FAIL",
+  "continue_on_fail": false,
+  "source": "grok_enqueue",
+  "created": "2026-08-14T19:36:00+00:00",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c",
+        "from pathlib import Path; import json;\nout = Path('artifacts/critiques'); out.mkdir(parents=True, exist_ok=True);\nc = {\n  'job_id': 'p1_18_pipeline_hard_live',\n  'root_cause': 'budget_exhaust',\n  'evidence': 'max_steps reached then hung 984s on generate fallback',\n  'smallest_experiment': {'id': 'p1_27_post_restore_harden', 'note': 'terminal harden'},\n  'confidence': 0.95\n};\n(out / 'critique_p1_18.json').write_text(json.dumps(c, indent=2), encoding='utf-8');\nprint('critique written', c['root_cause'])\n"],
+      "timeout": 60
+    }
+  ]
+}

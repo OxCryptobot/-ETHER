@@ -1,0 +1,24 @@
+{
+  "id": "p1_40_whats_next",
+  "note": "whats_next artifact + tool surface smoke",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.tool_runtime import TOOL_SPECS; names={t['name'] for t in TOOL_SPECS}; assert 'pep8_review' in names; print('tools', sorted(names))"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "next"],
+      "timeout": 60
+    }
+  ]
+}

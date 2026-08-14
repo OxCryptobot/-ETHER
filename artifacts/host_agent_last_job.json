@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_27_post_restore_harden",
+  "job_id": "p1_28_pipeline_ledger_remeasure",
   "ok": false,
-  "rc": 1,
-  "finished": "2026-08-14T19:39:12.346720+00:00",
-  "note": "After restore: inject tool_runtime_failed_terminal harden so failure is terminal under tool-first"
+  "rc": 2,
+  "finished": "2026-08-14T19:39:16.075617+00:00",
+  "note": "Post-restore + harden: single ledger fixture pipeline measurement (continue_on_fail for scoreboard)"
 }

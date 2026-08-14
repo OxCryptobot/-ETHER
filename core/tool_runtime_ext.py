@@ -1,4 +1,8 @@
-"""Phase G tool extensions — mixin for ToolRuntime."""
+"""Phase G tool extensions — mixin for ToolRuntime.
+
+Includes pep8_review so GEMS agents can request a structured style gate
+mid-loop (ruff-first via core.pep8_reviewer).
+"""
 from __future__ import annotations
 
 import re
@@ -10,11 +14,18 @@ EXTRA_SPECS = (
     {"name": "glob", "doc": "List files matching a glob. args: pattern (e.g. '**/*.py')."},
     {"name": "apply_patch", "doc": "Surgical exact-match edit. args: path, old, new. Fail-closed."},
     {"name": "rollback", "doc": "Undo last write_file/apply_patch. No args."},
+    {
+        "name": "pep8_review",
+        "doc": (
+            "PEP8/ruff style review. args: path (optional, default '.') — "
+            "relative to workspace. Returns critical/warning counts + top findings."
+        ),
+    },
 )
 
 
 class ToolExtMixin:
-    """Mixin methods for ToolRuntime (grep/glob/apply_patch/rollback)."""
+    """Mixin methods for ToolRuntime (grep/glob/apply_patch/rollback/pep8_review)."""
 
     workspace: Optional[Path]
     _undo: List[Tuple[str, Optional[str]]]
@@ -145,3 +156,43 @@ class ToolExtMixin:
             if len(matches) >= 80:
                 break
         return {"ok": True, "files": matches, "n": len(matches)}
+
+    def _obs_pep8_review(self, path: str = ".") -> Dict[str, Any]:
+        """GEMS-callable style gate over the staging workspace (or a subpath)."""
+        assert self.workspace is not None
+        rel = (path or ".").strip() or "."
+        if rel in (".", ""):
+            target = self.workspace
+        else:
+            target, err = self._resolve_path(rel)
+            if err:
+                return {"ok": False, "error": err}
+            assert target is not None
+        try:
+            from core.pep8_reviewer import review_paths
+
+            report = review_paths([target])
+        except Exception as e:
+            return {"ok": False, "error": f"pep8_review: {type(e).__name__}: {e}"[:200]}
+
+        top = [
+            {
+                "path": f.path,
+                "line": f.line,
+                "code": f.code,
+                "severity": f.severity,
+                "message": f.message[:160],
+            }
+            for f in report.findings[:15]
+        ]
+        return {
+            "ok": bool(report.ok),
+            "tool": report.tool,
+            "assessment": report.assessment,
+            "n_critical": report.n_critical,
+            "n_warning": report.n_warning,
+            "n_suggestion": report.n_suggestion,
+            "findings": top,
+            "next_actions": list(report.next_actions)[:5],
+            "path": rel,
+        }

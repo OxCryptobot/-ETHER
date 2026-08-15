@@ -1,0 +1,28 @@
+{
+  "id": "p3_8_dashboard_host_first",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Host-first Control Matrix: 15 moonshot tiles + collector contract",
+  "created": "2026-08-15T23:31:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_dashboard_host_first.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from dashboard.collector_moonshots import collect_moonshots; from dashboard.collector_host_agent import collect_host_agent; m=collect_moonshots(); h=collect_host_agent(); assert len(m['tiles'])==15; assert h.get('truth')=='host_agent'; assert 'moonshots' in h; print('ok', h.get('agent_alive'), m['tiles'][0])"
+      ],
+      "timeout": 60
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 {
-  "id": "ss_tool_runtime_145112_3",
+  "id": "ss_tool_runtime_180117_3",
   "note": "steady: tool_runtime + AST gate",
   "source": "foreman_steady",
-  "created": "2026-08-15T14:51:12.615506+00:00",
+  "created": "2026-08-15T18:01:17.724857+00:00",
   "steps": [
     {
       "argv": [
@@ -16,5 +16,6 @@
       ],
       "timeout": 180
     }
-  ]
+  ],
+  "class": "fast"
 }

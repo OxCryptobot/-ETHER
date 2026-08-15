@@ -19,6 +19,12 @@ FASTTRACK 2026-08-14:
 - After live pipeline FAIL (budget_exhaust), skip ss_pipeline_ledger for 3 ticks.
 - playbook matches include last_job.failure_type (typed timeout contract).
 - each tick refreshes artifacts/whats_next.json for dashboard/CLI.
+
+PERF 2026-08-15 (10x throughput):
+- LIVE_SKIP_TICKS raised to 12.
+- STEADY ordered FAST-first; live ledger is rare and gated.
+- Preference refresh + scripted pipeline prioritized over live.
+- Stronger live-fail detection so GPU is not burned on known-timeout fixtures.
 """
 from __future__ import annotations
 
@@ -39,8 +45,8 @@ LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
-BATCH_SIZE = 10
-LIVE_SKIP_TICKS = 3
+BATCH_SIZE = 12
+LIVE_SKIP_TICKS = 12  # was 3 — stop burning cycles on known live ledger timeouts
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -116,13 +122,8 @@ CURRICULUM: List[Dict[str, Any]] = [
     },
 ]
 
+# PERF order: FAST / scripted first. Live ledger is last and gated by live_skip.
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
-    {
-        "id_prefix": "ss_direct_hard",
-        "note": "steady: direct hard baseline",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_ss_direct.json"], "timeout": 600}],
-    },
     {
         "id_prefix": "ss_pipeline_scripted",
         "note": "steady: pipeline scripted (fast 1D signal)",
@@ -130,14 +131,20 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "scripted", "--fixture", "ledger", "--max-steps", "16", "--scoreboard", "artifacts/scoreboard_ss_pipeline_scripted.json"], "timeout": 180}],
     },
     {
-        "id_prefix": "ss_train_gates",
-        "note": "steady: doctrine + preference integrity",
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_preference_rlhf.py", "-q", "--tb=line"], "timeout": 180}],
+        "id_prefix": "ss_direct_hard",
+        "note": "steady: direct hard baseline",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_ss_direct.json"], "timeout": 600}],
     },
     {
         "id_prefix": "ss_tool_runtime",
         "note": "steady: tool_runtime + AST gate",
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "tests/test_ast_transaction.py", "-q", "--tb=line"], "timeout": 180}],
+    },
+    {
+        "id_prefix": "ss_train_gates",
+        "note": "steady: doctrine + preference integrity",
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_preference_rlhf.py", "-q", "--tb=line"], "timeout": 180}],
     },
     {
         "id_prefix": "ss_archive_failed",
@@ -150,6 +157,14 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "[None for p in sorted(FAILED.glob('*.json')) if p.name != '.gitkeep' and not shutil.move(str(p), str((ARCH/p.name) if not (ARCH/p.name).exists() else ARCH/(p.stem+'_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'))) and not (moved:=moved+1)]; "
             "print('archived_failed', moved)"
         ], "timeout": 60}],
+    },
+    {
+        "id_prefix": "ss_pref_refresh",
+        "note": "steady: preference + strategy_stats refresh",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
+            "from core.preference import refresh_artifacts; r=refresh_artifacts(); print('pref_refresh', r)"
+        ], "timeout": 120}],
     },
     {
         "id_prefix": "ss_pipeline_ledger",
@@ -253,7 +268,8 @@ def record_last_job(state: Dict[str, Any]) -> None:
     if not jid:
         return
     note = last.get("note") or ""
-    hay = (note + " " + str(jid)).lower()
+    ftype = str(last.get("failure_type") or "").lower()
+    hay = (note + " " + str(jid) + " " + ftype).lower()
     if last.get("ok") is True:
         if jid not in state["completed"]:
             state["completed"].append(jid)
@@ -270,7 +286,13 @@ def record_last_job(state: Dict[str, Any]) -> None:
     elif last.get("ok") is False:
         if jid not in state.get("failed", []):
             state.setdefault("failed", []).append(jid)
-        if "pipeline_ledger" in hay or ("pipeline" in hay and "live" in hay):
+        # Stronger live/timeout detection — keep GPU free for FAST work
+        if (
+            "pipeline_ledger" in hay
+            or ("pipeline" in hay and "live" in hay)
+            or ftype in ("timeout", "live_fail", "budget_exhaust")
+            or "tool_runtime_failed_terminal" in hay
+        ):
             state["live_skip_remaining"] = LIVE_SKIP_TICKS
             state["last_live_skip_reason"] = jid
 
@@ -309,7 +331,8 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
         write_job(job)
         enqueued.append(jid)
         idx += 1
-        if len(enqueued) >= max(2, BATCH_SIZE // 2):
+        # Prefer filling with FAST jobs; do not flood with live
+        if len(enqueued) >= max(3, BATCH_SIZE // 2):
             break
     state["steady_idx"] = idx
     state["mode"] = "steady"
@@ -377,7 +400,6 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
     note = last.get("note") or ""
     if _is_playbook_recovery(jid, note):
         return None
-    # Include typed failure_type so playbooks match without free-text only
     ftype = str(last.get("failure_type") or "")
     hay = f"{note} {jid} {ftype}"
     lessons = load_lessons()
@@ -411,7 +433,6 @@ def tick() -> Dict[str, Any]:
     lessons = load_lessons()
     state["lessons_loaded"] = len(lessons)
     save_state(state)
-    # Dashboard/CLI contract: refresh whats_next each tick
     try:
         from scripts.write_whats_next import main as _wn
 

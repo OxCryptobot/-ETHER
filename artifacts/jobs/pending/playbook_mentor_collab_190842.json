@@ -1,0 +1,18 @@
+{
+  "id": "playbook_mentor_collab_190842",
+  "note": "playbook:025_mentor_collaboration_schema for p3_soft_launch_measure",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.coding_method import default_method; print(default_method().as_prompt_block()[:400])"
+      ],
+      "timeout": 30
+    }
+  ],
+  "created": "2026-08-15T19:08:42.942966+00:00",
+  "source": "foreman"
+}

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """ETHER host agent - job queue consumer. Standalone + self-refilling.
 
-2026-08-15e:
-- Light push paths include phase3_snapshot.json + lora_dry_tick.json
+2026-08-15f Phase 3.4:
+- On idle, run core.measure_tick (rates + snapshot + soft_launch) throttled
+- Light paths include measure_tick.json + soft_launch_status.json
 """
 from __future__ import annotations
 
@@ -36,8 +37,10 @@ LOG = ROOT / "artifacts" / "host_agent_log.txt"
 _last_recover_log = 0.0
 _last_heavy_push = 0.0
 _last_liveness_push = 0.0
+_last_measure_tick = 0.0
 HEAVY_PUSH_INTERVAL = 180
 LIVENESS_INTERVAL = 55
+MEASURE_INTERVAL = 90
 
 
 def log(msg: str) -> None:
@@ -132,6 +135,8 @@ def _light_paths() -> List[str]:
         "phase3_snapshot.json",
         "lora_dry_tick.json",
         "lora_train_last.json",
+        "soft_launch_status.json",
+        "measure_tick.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -183,6 +188,26 @@ def push_liveness(reason: str = "idle") -> None:
         _commit_and_push(_light_paths(), f"host agent liveness: {reason}", f"liveness({reason})")
     except Exception as e:
         log(f"liveness error: {type(e).__name__}: {e}")
+
+
+def maybe_measure_tick() -> None:
+    """Publish rates/snapshot/soft_launch without depending on STEADY rotation."""
+    global _last_measure_tick
+    now = time.time()
+    if now - _last_measure_tick < MEASURE_INTERVAL:
+        return
+    _last_measure_tick = now
+    try:
+        from core.measure_tick import run as measure_run
+
+        report = measure_run()
+        log(
+            f"measure_tick ok={report.get('ok')} "
+            f"live_n={(report.get('steps') or {}).get('honest_live', {}).get('live_n')} "
+            f"soft_ready={(report.get('steps') or {}).get('soft_launch', {}).get('soft_launch_ready')}"
+        )
+    except Exception as e:
+        log(f"measure_tick error: {type(e).__name__}: {e}")
 
 
 def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
@@ -414,7 +439,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling + nuclear git + mandatory critique)", flush=True)
+    print("  ETHER host_agent (self-refilling + nuclear git + measure_tick)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 
@@ -424,6 +449,7 @@ def main() -> int:
     FAILED.mkdir(parents=True, exist_ok=True)
 
     call_foreman_tick()
+    maybe_measure_tick()
     push_liveness("startup")
 
     while True:
@@ -432,8 +458,9 @@ def main() -> int:
             git_sync()
             jobs = list_pending()
             if not jobs:
-                log("idle -> foreman.tick")
+                log("idle -> foreman.tick + measure_tick")
                 call_foreman_tick()
+                maybe_measure_tick()
                 jobs = list_pending()
                 if not jobs:
                     write_status(current_job=None, phase="idle")
@@ -445,6 +472,7 @@ def main() -> int:
                 git_sync()
                 if len(list_pending()) < 5:
                     call_foreman_tick()
+                    maybe_measure_tick()
         except KeyboardInterrupt:
             log("stop")
             write_status(phase="stopped")

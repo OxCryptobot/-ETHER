@@ -1,8 +1,6 @@
 """Mandatory Labradorite on non-infra FAIL + PlanState replan.
 
-Doctrine: critique is code path, not hope. Every host/tool FAIL that is not
-infrastructure must produce a structured critique artifact, a one-step replan,
-and (optionally) enqueue a FAST recovery hypothesis job.
+Critical fix #7: enqueue at most one recovery per failure_type per hour.
 """
 from __future__ import annotations
 
@@ -178,7 +176,19 @@ def critique_fail(
 
     enqueued_id = None
     if enqueue:
-        enqueued_id = _enqueue_hypothesis_job(job_id, hyp, ft)
+        # Rate limit: one recovery per failure_type per hour
+        try:
+            from core.playbook_limiter import allow_playbook, mark_playbook
+
+            if not allow_playbook(ft, "labradorite"):
+                artifact["enqueued"] = None
+                artifact["enqueue_skipped"] = "rate_limited"
+                return artifact
+            enqueued_id = _enqueue_hypothesis_job(job_id, hyp, ft)
+            if enqueued_id:
+                mark_playbook(ft, "labradorite")
+        except Exception:
+            enqueued_id = _enqueue_hypothesis_job(job_id, hyp, ft)
         artifact["enqueued"] = enqueued_id
     return artifact
 
@@ -187,13 +197,20 @@ def _enqueue_hypothesis_job(
     failed_job_id: str, hypothesis: str, failure_type: str
 ) -> Optional[str]:
     try:
+        from core.queue_governor import may_enqueue
+
+        if not may_enqueue():
+            return None
+    except Exception:
+        pass
+    try:
         PENDING.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%H%M%S")
         safe = re.sub(r"[^\w\-]+", "_", failed_job_id)[:40]
         jid = f"critique_hyp_{safe}_{stamp}"
         job = {
             "id": jid,
-            "class": "fast",
+            "class": "recovery",
             "source": "labradorite_mandatory",
             "created": _now(),
             "note": f"playbook:labradorite for {failed_job_id} [{failure_type}] :: {hypothesis[:120]}",

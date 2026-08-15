@@ -1,5 +1,5 @@
 # ETHER Master Checklist
-**Updated:** 2026-08-15 (batch flex enqueued)
+**Updated:** 2026-08-15 (MCP CQ spike + batch flex)
 
 Soft launch: **BLOCKED** until live tool-path produces an **honest PASS**.  
 Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor doctrine: **LOCKED**.
@@ -49,6 +49,16 @@ Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor
 - [x] Enqueued `05_multi_file_ast_tx` (H4)
 
 All respect FAST-first, one-hypothesis, training wheels, Labradorite on FAIL.
+
+---
+
+## MCP Swarm Integration (new)
+
+- [x] **Spike landed**: `gems/clear_quartz/mcp_server.py` (execute_code / run_project_tests / sandbox_health)
+- [x] Unit proof: `tests/test_mcp_clear_quartz.py` (real sandbox + honest gate rejects generate fallback)
+- [x] Job: `00_mcp_cq_spike_01` (FIFO first, training wheels, install `[mcp]` + pytest)
+- [ ] Citrine as MCP resources (next)
+- [ ] Wire concurrent MCP calls into `swarm_parallel_gems_smoke`
 
 ---
 

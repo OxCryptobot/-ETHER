@@ -1,54 +1,54 @@
 {
   "strategies": {
     "direct": {
-      "n": 14066,
-      "wins": 12802,
-      "score_sum": 12890.504999999988,
+      "n": 14159,
+      "wins": 12887,
+      "score_sum": 12976.075999999988,
       "last_score": 1.0
     },
     "multifile": {
-      "n": 308,
+      "n": 310,
       "wins": 0,
-      "score_sum": 178.6400000000008,
+      "score_sum": 179.80000000000084,
       "last_score": 0.3
     },
     "no_context": {
-      "n": 462,
-      "wins": 154,
-      "score_sum": 231.0,
+      "n": 465,
+      "wins": 155,
+      "score_sum": 232.5,
       "last_score": 0.5
     },
     "minimal": {
-      "n": 154,
+      "n": 155,
       "wins": 0,
-      "score_sum": 30.799999999999923,
+      "score_sum": 30.999999999999922,
       "last_score": 0.2
     },
     "live": {
-      "n": 760,
-      "wins": 760,
-      "score_sum": 760.0,
+      "n": 765,
+      "wins": 765,
+      "score_sum": 765.0,
       "last_score": 1.0
     },
     "scripted": {
-      "n": 760,
-      "wins": 760,
-      "score_sum": 760.0,
+      "n": 765,
+      "wins": 765,
+      "score_sum": 765.0,
       "last_score": 1.0
     },
     "tool_runtime": {
-      "n": 603,
+      "n": 607,
       "wins": 0,
       "score_sum": 0.0,
       "last_score": 0.0
     },
     "tool_runtime_scripted": {
-      "n": 5585,
-      "wins": 5585,
-      "score_sum": 5585.0,
+      "n": 5622,
+      "wins": 5622,
+      "score_sum": 5622.0,
       "last_score": 1.0
     }
   },
-  "updated": "2026-08-15T19:30:28.842102+00:00",
-  "n_episodes": 5882
+  "updated": "2026-08-15T19:30:37.351710+00:00",
+  "n_episodes": 5921
 }

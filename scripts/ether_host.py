@@ -2,6 +2,10 @@
 """ETHER Host - ONE window: dashboard + job agent + foreman.
 
 Simple. No auto-reload. No cleverness. Poll, run, push, repeat.
+
+2026-08-15: idle path now pushes liveness heartbeat every ~60s so
+remote status (Grok + Control Matrix) never goes stale while the
+process is alive.
 """
 from __future__ import annotations
 
@@ -50,6 +54,7 @@ def main() -> int:
 
     fr = foreman.tick()
     agent.log(f"foreman boot: {fr}")
+    agent.push_liveness("startup")
 
     while True:
         try:
@@ -64,6 +69,7 @@ def main() -> int:
             if not jobs:
                 agent.log("idle")
                 agent.write_status(current_job=None, phase="idle", foreman=foreman.status())
+                agent.push_liveness("idle")
                 time.sleep(max(1, agent.POLL))
                 continue
 

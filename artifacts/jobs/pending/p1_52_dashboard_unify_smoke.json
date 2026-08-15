@@ -1,0 +1,24 @@
+{
+  "id": "p1_52_dashboard_unify_smoke",
+  "note": "P1: collector embeds host_agent + whats_next present",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from dashboard.collector import collect_snapshot; s=collect_snapshot(); assert 'host_agent' in s; ha=s.get('host_agent') or {}; print('host_agent_keys', list(ha.keys())[:8] if isinstance(ha, dict) else type(ha)); print('ok')"
+      ],
+      "timeout": 90
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; p=Path('artifacts/whats_next.json'); print('whats_next', p.exists(), p.stat().st_size if p.exists() else 0)"
+      ],
+      "timeout": 30
+    }
+  ]
+}

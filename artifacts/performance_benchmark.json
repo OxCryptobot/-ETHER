@@ -1,11 +1,13 @@
 {
-  "generated_at": "2026-08-15T15:20:00+00:00",
-  "source": "scoreboard_ss_* + host policy + quant/vLLM analysis",
+  "generated_at": "2026-08-15T15:27:00+00:00",
+  "source": "scoreboard_ss_* + host policy + quant/vLLM/TensorRT-LLM analysis",
   "hardware": {
     "gpu": "GTX 1650 4GB",
     "arch": "Turing SM 7.5",
     "ram_gb": 12,
-    "primary_model": "qwen3.5:4b",
+    "primary_model": "qwen3.5:4b-q4_K_M",
+    "primary_model_alias": "qwen3.5:4b",
+    "quant_confirmed": "Q4_K_M (ollama library file_type=Q4_K_M, 3.4GB)",
     "constraint": "host <=4B only",
     "vram_budget_notes": "4GB tight for 4B Q4 + KV. Prefer num_ctx<=8192 (ideally 4096 for live), keep model loaded, single concurrent gen. Target peak VRAM <3.6GB."
   },
@@ -64,78 +66,92 @@
     "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 25+ jobs/h on pure FAST."
   },
   "quantization_impact": {
-    "current": "Ollama qwen3.5:4b (expected Q4-class GGUF)",
-    "recommendation": "Lock Q4_K_M (or explicit Q4_0/Q4_K_S if available). Never Q5+/FP16 on this host.",
-    "vram_estimates_4b": {
-      "Q4_K_M": "~2.3-3.3 GB weights + KV (fits 4GB with ctx<=8k)",
-      "Q5_K_M": "~3.5-4.5 GB — risk of OOM or heavy offload",
-      "Q8_0": "~5+ GB — does not fit",
-      "FP16": "~9-10 GB — impossible"
+    "confirmed_tag": "qwen3.5:4b-q4_K_M",
+    "alias_tag": "qwen3.5:4b",
+    "ollama_library": "file_type=Q4_K_M, 3.4GB (already Q4_K_M — no re-quant needed)",
+    "recommendation": "Lock explicit qwen3.5:4b-q4_K_M when present; alias qwen3.5:4b is identical quant. Never Q5+/FP16 on this host.",
+    "tradeoffs": {
+      "vram_weights": "~2.3-3.4 GB → fits with num_ctx<=8192",
+      "quality_vs_fp16": "~3-5% general; coding/reasoning more sensitive",
+      "vs_q5": "Q5 needs ~3.5-4.5 GB → OOM or offload on 4GB",
+      "vs_q4_0": "Q4_K_M better (critical tensors higher bits)",
+      "knee": "Q4_K_M is the inflection; Q3 hurts agent correctness"
     },
-    "quality": "Q4_K_M typical 3-5% quality drop vs FP16 on general tasks; coding/reasoning more sensitive. Still the only viable point on 4GB.",
     "speed": "Lower quant reduces bandwidth pressure on Turing; primary latency still comes from number of generation steps, not quant alone.",
-    "action": "Verify `ollama show qwen3.5:4b` quant; prefer explicit tag if Q4_K_M variant exists. Measure nvidia-smi peak under direct_hard."
+    "action": "Set ETHER_PRIMARY_MODEL=qwen3.5:4b-q4_K_M (or qwen3.5:4b). Measure nvidia-smi peak under direct_hard."
   },
   "vllm_investigation": {
     "verdict": "NOT primary path for this host (Phase 1)",
     "reasons": [
       "GTX 1650 = Turing SM 7.5: supported for GPTQ/AWQ/GGUF/bitsandbytes but FlashAttention-2 requires SM>=8.0 (falls back)",
       "Host is Windows native; vLLM has no official Windows support (WSL2 or community fork required)",
-      "4GB VRAM is below comfortable vLLM operating point (engine pre-allocates KV; needs low max_model_len + gpu_memory_utilization~0.7)",
-      "Agent tool loops are short, low-concurrency: continuous-batching advantage of vLLM is small vs Ollama/llama.cpp overhead",
-      "Integration cost high vs measured gain on this exact hardware"
+      "4GB VRAM is below comfortable vLLM operating point",
+      "Agent tool loops are short, low-concurrency: continuous-batching advantage small",
+      "Integration cost high vs measured gain"
     ],
-    "when_to_revisit": "Cousin hardware (>=8-12GB, Ampere+) or after WSL2 + controlled TTFT/tokens-per-s A/B against current Ollama baseline.",
+    "when_to_revisit": "Cousin hardware (>=8-12GB, Ampere+) or after WSL2 + controlled TTFT A/B.",
     "keep": "Ollama remains the locked runtime for host <=4B."
+  },
+  "tensorrt_llm_investigation": {
+    "verdict": "NOT viable for this host",
+    "reasons": [
+      "TensorRT-LLM modern support matrix prioritizes Ampere+ / Ada / Hopper / Blackwell; Turing is legacy/community",
+      "Linux x86_64 primary; Windows host would need WSL2 + full CUDA stack rebuild",
+      "Engine build + checkpoint conversion complexity high for solo host",
+      "4GB VRAM far below practical TRT-LLM operating point even with INT4",
+      "TensorRT engine / TensorRT-RTX can target SM 7.5 with limits (no FP8, limited INT8 WoQ) but that is not TensorRT-LLM serving"
+    ],
+    "when_to_revisit": "Never on GTX 1650. Cousin Ampere+ Linux box only.",
+    "keep": "Ollama + GGUF Q4_K_M"
   },
   "latency_mitigation_steps": [
     {
       "id": "LM1",
       "priority": 1,
       "step": "Keep model warm",
-      "detail": "ollama keep_alive high / never unload qwen3.5:4b between jobs. Cold load on 1650 costs seconds."
+      "detail": "ollama keep_alive high / never unload between jobs. Cold load on 1650 costs seconds."
     },
     {
       "id": "LM2",
       "priority": 1,
       "step": "Cap context",
-      "detail": "ETHER_NUM_CTX / num_ctx <= 8192 host-wide; 4096 for any live experiment. KV is the hidden VRAM consumer."
+      "detail": "ETHER_NUM_CTX / num_ctx <= 8192 host-wide; 4096 for any live experiment."
     },
     {
       "id": "LM3",
       "priority": 1,
-      "step": "FAST-first + live purge (already landed)",
-      "detail": "Scripted/direct/tool_runtime before any live. kill_live + live_skip_ticks=36. Residual live pending already purged."
+      "step": "FAST-first + live purge (landed)",
+      "detail": "Scripted/direct/tool_runtime before any live. kill_live + live_skip_ticks=36."
     },
     {
       "id": "LM4",
       "priority": 2,
       "step": "Prefer tool_runtime path",
-      "detail": "Honest tool order + early terminal on bad tool sequences. Avoid full open-ended agent loops on live until Phase 1D green."
+      "detail": "Honest tool order + early terminal. Avoid open live agent loops until Phase 1D green."
     },
     {
       "id": "LM5",
       "priority": 2,
       "step": "Tighten live budgets",
-      "detail": "max_steps and per-step timeout for live must fit inside ~60-120s wall before honest path is proven. Continue_on_fail only for measurement."
+      "detail": "max_steps and per-step timeout must fit realistic wall time."
     },
     {
       "id": "LM6",
       "priority": 2,
       "step": "Single concurrent generation",
-      "detail": "No parallel model loads or concurrent live jobs on 4GB."
+      "detail": "No parallel model loads on 4GB."
     },
     {
       "id": "LM7",
       "priority": 3,
       "step": "Instrument TTFT + tokens/s",
-      "detail": "Add to scoreboard / performance_benchmark so quant or backend changes can be scored honestly."
+      "detail": "Scoreboard fields for honest backend comparisons."
     },
     {
       "id": "LM8",
-      "priority": 3,
-      "step": "Explicit quant tag",
-      "detail": "Prefer qwen3.5:4b-q4_K_M or equivalent if published; document in .env.example and model_select."
+      "priority": 1,
+      "step": "Explicit Q4_K_M tag",
+      "detail": "ETHER_PRIMARY_MODEL=qwen3.5:4b-q4_K_M (landed in .env.example + model_select)."
     }
   ],
   "host_policy": {
@@ -163,13 +179,13 @@
   },
   "gpu_memory_optimization": {
     "priority": [
-      "Keep qwen3.5:4b loaded (ollama keep_alive high)",
+      "Keep qwen3.5:4b-q4_K_M loaded (ollama keep_alive high)",
       "Cap ETHER_NUM_CTX / num_ctx to 8192 or lower on host profile",
-      "Prefer Q4_K_M or Q4_0 quant; avoid higher",
-      "Single concurrent generation; no parallel model loads",
+      "Q4_K_M only — never higher quant on 4GB",
+      "Single concurrent generation",
       "Tool-runtime path avoids full agent loop when possible",
       "Measure nvidia-smi peak during direct_hard vs live"
     ],
-    "hypothesis": "Most of the 148x is inference + KV + tool orchestration overhead; scripted bypasses it entirely. Live honest pass needs tool_order + budget that fits 4GB without OOM/timeout. Quant choice is secondary to number of live generation steps."
+    "hypothesis": "Most of the 148x is inference + KV + tool orchestration; scripted bypasses it. Quant is settled (Q4_K_M). Live honest pass needs tool_order + budget that fits 4GB."
   }
 }

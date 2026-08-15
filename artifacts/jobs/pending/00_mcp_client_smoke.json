@@ -1,0 +1,16 @@
+{
+  "id": "00_mcp_client_smoke",
+  "note": "MCP client + concurrent smoke under training wheels",
+  "continue_on_fail": false,
+  "job_class": "FAST",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_mcp_client.py", "tests/test_mcp_citrine.py", "tests/test_mcp_labradorite.py", "-q", "--tb=line"],
+      "timeout": 180
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.mcp_client import list_mcp_gems, smoke_parallel_gems; print(list_mcp_gems()); r=smoke_parallel_gems(); print('smoke_ok', r.get('ok'), 'n', r.get('n'))"],
+      "timeout": 90
+    }
+  ]
+}

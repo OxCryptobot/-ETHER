@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-15T14:39:00+00:00",
-  "source": "scoreboard_ss_* measured runs",
+  "generated_at": "2026-08-15T14:55:00+00:00",
+  "source": "scoreboard_ss_* measured runs + host policy",
   "hardware": {
     "gpu": "GTX 1650 4GB",
     "ram_gb": 12,
@@ -59,18 +59,20 @@
       "note": "scripted is ~148x faster on same fixture; live currently fails"
     },
     "direct_hard_mean_s": 2.423,
-    "implication": "FAST-first steady path yields ~100x more useful jobs/hour than live-ledger spam"
+    "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 20+ jobs/h on pure FAST."
   },
   "host_policy": {
-    "live_skip_ticks": 12,
-    "steady_order": ["pipeline_scripted", "direct_hard", "tool_runtime", "train_gates", "archive", "pref_refresh", "pipeline_ledger_live"],
+    "live_skip_ticks": 36,
+    "steady_order": ["kill_live", "pipeline_scripted", "direct_hard", "tool_runtime", "train_gates", "archive", "pref_refresh"],
     "git_report": "lightweight for FAST/continue_on_fail",
-    "training_wheels": true
+    "training_wheels": true,
+    "live_in_steady": false
   },
   "targets": {
     "scripted_ledger_p95_s": 5.0,
     "direct_hard_5of5": true,
-    "live_ledger_honest_pass": "OPEN — Phase 1D gate",
-    "host_jobs_per_hour_fast": 12
+    "live_ledger_honest_pass": "OPEN — Phase 1D gate (blocked until measured honest tool path)",
+    "host_jobs_per_hour_fast": 20,
+    "throughput_multiplier_vs_live_spam": 100
   }
 }

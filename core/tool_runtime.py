@@ -308,16 +308,26 @@ class ToolRuntime:
             }
         return {"ok": False, "error": f"unknown tool: {tool}"}
 
-    def _system_prompt(self, objective: str) -> str:
+        def _system_prompt(self, objective: str) -> str:
         tools = "\n".join(f"- {t['name']}: {t['doc']}" for t in TOOL_SPECS)
+        try:
+            from core.coding_method import prompt_suffix
+
+            doctrine = prompt_suffix()
+        except Exception:
+            doctrine = (
+                "Rules: read tests first; surgical edits; run_tests after edits; "
+                "stop on no_progress after 3 stagnant fails.\n"
+            )
         return (
             "You are a coding agent with tools. Each turn, output ONE JSON object only:\n"
             '  {"tool": "<name>", "args": {...}}\n'
             "No markdown, no prose. Tools:\n"
             f"{tools}\n\n"
+            f"{doctrine}\n"
             f"Objective:\n{objective}\n"
-            "Strategy: list/read to understand, write_file to fix, run_tests to verify, "
-            "done when tests pass."
+            "Strategy: list/read tests+source, apply_patch or write_file, run_tests, "
+            "pep8_review when green, done when tests pass."
         )
 
     def _snapshot_code(self) -> Dict[str, str]:

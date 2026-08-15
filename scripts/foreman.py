@@ -302,6 +302,7 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
             "source": "foreman_steady",
             "created": _now(),
             "steps": tmpl["steps"],
+            "class": "live" if tmpl.get("live") else "fast",
         }
         if tmpl.get("continue_on_fail"):
             job["continue_on_fail"] = True

@@ -120,7 +120,7 @@ def _run_pipeline(
                     "detail": str(getattr(s, "detail", ""))[:120],
                 }
             )
-        return {
+        row = {
             "fixture": name,
             "arm": arm,
             "ok": ok,
@@ -134,6 +134,20 @@ def _run_pipeline(
             "degraded": list(getattr(result, "degraded", []) or [])[:6],
             "model": os.environ.get("ETHER_PRIMARY_MODEL", ""),
         }
+        # Honest Phase-1 tool-path gate: generate-fallback / terminal must not count as PASS
+        if live and not bare:
+            try:
+                from core.loop.handlers.tool_runtime_gate import is_honest_tool_path_pass
+
+                if row.get("ok") and not is_honest_tool_path_pass(row):
+                    row["ok"] = False
+                    row["honest_tool_path"] = False
+                    row.setdefault("degraded", []).append("honest_tool_path_reject")
+                else:
+                    row["honest_tool_path"] = bool(row.get("ok"))
+            except Exception:
+                row["honest_tool_path"] = None
+        return row
     except Exception as e:
         return {
             "fixture": name,

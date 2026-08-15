@@ -152,9 +152,56 @@ def git_push_report(job_id: str, ok: bool) -> None:
     git_reset_to_origin("push failed")
 
 
+
+def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
+    """Prefer FAST jobs so live timeouts do not starve the queue."""
+    try:
+        from core.job_class import job_class, FAST, LIVE
+    except Exception:
+        return paths
+
+    def rank(p: Path) -> tuple:
+        try:
+            job = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return (1, p.name)
+        cls = job_class(job)
+        # 0=fast, 1=any, 2=live
+        order = 0 if cls == FAST else (2 if cls == LIVE else 1)
+        return (order, p.name)
+
+    return sorted(paths, key=rank)
+
+
+def _enrich_failure_from_scoreboard(envelope: Dict[str, Any]) -> None:
+    """If job failed, pull failure_type from newest scoreboard if present."""
+    if envelope.get("ok"):
+        return
+    art = ROOT / "artifacts"
+    if not art.exists():
+        return
+    boards = sorted(art.glob("scoreboard*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for b in boards[:3]:
+        try:
+            data = json.loads(b.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for row in data.get("results") or []:
+            deg = " ".join(str(x) for x in (row.get("degraded") or []))
+            if "tool_runtime_failed_terminal" in deg or "timeout" in deg.lower():
+                envelope.setdefault("failure_type", "timeout")
+                envelope["scoreboard"] = b.name
+                return
+            if row.get("ok") is False and row.get("mode") == "live":
+                envelope.setdefault("failure_type", "live_fail")
+                envelope["scoreboard"] = b.name
+                return
+
+
 def list_pending() -> List[Path]:
     PENDING.mkdir(parents=True, exist_ok=True)
-    return sorted([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"], key=lambda p: p.name)
+    paths = [p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]
+    return _sort_pending_fast_first(paths)
 
 
 def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> Tuple[int, Optional[str]]:
@@ -238,6 +285,7 @@ def process_job(path: Path) -> bool:
         # Help playbook matchers that scan note
         if failure_type == "timeout":
             envelope["note"] = f"{job.get('note') or ''} [failure_type=timeout]".strip()
+    _enrich_failure_from_scoreboard(envelope)
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
     dest_dir = DONE if ok else FAILED

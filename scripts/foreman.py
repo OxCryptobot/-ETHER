@@ -1,4 +1,4 @@
-"""ETHER Foreman — Phase 3.5: measure-first, no kill job (host inlines purge)."""
+"""ETHER Foreman — critical ops fixes: depth cap, playbook limit, cursor advance."""
 from __future__ import annotations
 
 import json
@@ -19,7 +19,8 @@ LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
-BATCH_SIZE = 16
+# Critical fix #1: was 16 — self-flooded queue
+BATCH_SIZE = 6
 LIVE_SKIP_TICKS = 36
 
 CURRICULUM: List[Dict[str, Any]] = [
@@ -100,32 +101,26 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
         "id_prefix": "ss_measure_tick",
         "note": "steady: measure_tick (rates+snapshot+soft_launch)",
+        "class": "measure",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"], "timeout": 120}],
     },
     {
         "id_prefix": "ss_honest_live_report",
         "note": "steady: publish honest live tool-path rates",
+        "class": "measure",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"], "timeout": 60}],
     },
     {
-        "id_prefix": "ss_phase3_snapshot",
-        "note": "steady: Phase 3 measurement snapshot",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.phase3_snapshot"], "timeout": 90}],
+        "id_prefix": "ss_tool_runtime",
+        "note": "steady: tool_runtime + AST gate",
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "tests/test_ast_transaction.py", "-q", "--tb=line"], "timeout": 180}],
     },
     {
-        "id_prefix": "ss_soft_launch_status",
-        "note": "steady: soft-launch readiness (never auto-green)",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.soft_launch"], "timeout": 30}],
-    },
-    {
-        "id_prefix": "ss_lora_dry_tick",
-        "note": "steady: LoRA dry tick only (never trains)",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.lora_dry_tick"], "timeout": 60}],
+        "id_prefix": "ss_train_gates",
+        "note": "steady: doctrine + preference integrity",
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_preference_rlhf.py", "-q", "--tb=line"], "timeout": 180}],
     },
     {
         "id_prefix": "ss_pipeline_scripted",
@@ -140,16 +135,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_ss_direct.json"], "timeout": 600}],
     },
     {
-        "id_prefix": "ss_tool_runtime",
-        "note": "steady: tool_runtime + AST gate",
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_tool_runtime.py", "tests/test_ast_transaction.py", "-q", "--tb=line"], "timeout": 180}],
-    },
-    {
-        "id_prefix": "ss_train_gates",
-        "note": "steady: doctrine + preference integrity",
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_preference_rlhf.py", "-q", "--tb=line"], "timeout": 180}],
-    },
-    {
         "id_prefix": "ss_archive_failed",
         "note": "steady: archive old failed jobs",
         "continue_on_fail": True,
@@ -162,22 +147,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
             "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
         ], "timeout": 180}],
-    },
-    {
-        "id_prefix": "ss_phase2_regression",
-        "note": "steady: Phase 2/3 unit regression pack",
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest",
-            "tests/test_plan_state.py",
-            "tests/test_multifile_ast_tx.py",
-            "tests/test_pipeline_orchestration_slice.py",
-            "tests/test_symbol_index.py",
-            "tests/test_lora_dry_tick.py",
-            "tests/test_honest_live_critique_context.py",
-            "tests/test_phase3_snapshot.py",
-            "tests/test_phase32_tool_first_kill.py",
-            "tests/test_soft_launch.py",
-            "tests/test_measure_tick.py",
-            "-q", "--tb=line"], "timeout": 300}],
     },
 ]
 
@@ -310,20 +279,36 @@ def record_last_job(state: Dict[str, Any]) -> None:
 
 
 def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
-    pending = pending_ids()
-    if len(pending) >= BATCH_SIZE:
-        return None
-    if not STEADY_TEMPLATES:
+    try:
+        from core.queue_governor import may_enqueue_steady, max_enqueue_this_tick
+
+        if not may_enqueue_steady(state):
+            return None
+        max_n = max_enqueue_this_tick()
+    except Exception:
+        max_n = 2
+        if len(pending_ids()) >= BATCH_SIZE:
+            return None
+    if max_n <= 0 or not STEADY_TEMPLATES:
         return None
     idx = int(state.get("steady_idx") or 0)
     skip_live = int(state.get("live_skip_remaining") or 0) > 0
+    # Training wheels fuse: no LIVE steady while wheels on
+    wheels = True
+    try:
+        import os
+
+        wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
+    except Exception:
+        pass
     enqueued: List[str] = []
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
     attempts = 0
-    while len(pending) + len(enqueued) < BATCH_SIZE and attempts < len(STEADY_TEMPLATES) * 4:
+    pending = pending_ids()
+    while len(enqueued) < max_n and attempts < len(STEADY_TEMPLATES) * 3:
         attempts += 1
         tmpl = STEADY_TEMPLATES[idx % len(STEADY_TEMPLATES)]
-        if skip_live and tmpl.get("live"):
+        if (skip_live or wheels) and tmpl.get("live"):
             idx += 1
             continue
         jid = f"{tmpl['id_prefix']}_{stamp}_{idx % len(STEADY_TEMPLATES)}"
@@ -336,15 +321,13 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
             "source": "foreman_steady",
             "created": _now(),
             "steps": tmpl["steps"],
-            "class": "live" if tmpl.get("live") else "fast",
+            "class": tmpl.get("class") or ("live" if tmpl.get("live") else "fast"),
         }
         if tmpl.get("continue_on_fail"):
             job["continue_on_fail"] = True
         write_job(job)
         enqueued.append(jid)
         idx += 1
-        if len(enqueued) >= max(4, BATCH_SIZE // 2):
-            break
     state["steady_idx"] = idx
     state["mode"] = "steady"
     if enqueued:
@@ -357,13 +340,25 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
     pending = pending_ids()
     if len(pending) >= BATCH_SIZE:
         return None
+    try:
+        from core.queue_governor import may_enqueue
+
+        if not may_enqueue():
+            return None
+    except Exception:
+        pass
 
     done = set(state.get("completed") or [])
     if DONE.exists():
         for p in DONE.glob("*.json"):
             done.add(p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem)
 
+    # Critical fix #9: advance cursor past all completed curriculum items
     cursor = int(state.get("cursor") or 0)
+    while cursor < len(CURRICULUM) and CURRICULUM[cursor]["id"] in done:
+        cursor += 1
+    state["cursor"] = cursor
+
     enqueued: List[str] = []
     for i, item in enumerate(CURRICULUM):
         if len(pending) + len(enqueued) >= BATCH_SIZE:
@@ -376,8 +371,9 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
             continue
         write_job(item)
         enqueued.append(jid)
-        state["cursor"] = i
+        state["cursor"] = i + 1
         state["last_enqueued"] = jid
+        break  # one curriculum item per tick — less flood
 
     if enqueued:
         return enqueued[-1]
@@ -411,7 +407,7 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
     note = last.get("note") or ""
     if _is_playbook_recovery(jid, note):
         return None
-    ftype = str(last.get("failure_type") or "")
+    ftype = str(last.get("failure_type") or "unknown")
     hay = f"{note} {jid} {ftype}"
     lessons = load_lessons()
     for les in lessons:
@@ -419,15 +415,39 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
         if not pat:
             continue
         if re.search(pat, hay, re.I):
+            lid = str(les.get("id") or "unknown")
+            # Critical fix #2: rate limit
+            try:
+                from core.playbook_limiter import allow_playbook, mark_playbook
+
+                if not allow_playbook(ftype, lid):
+                    state["last_playbook_skipped"] = f"rate_limit:{lid}:{ftype}"
+                    return None
+            except Exception:
+                pass
             recovery = les.get("enqueue")
             if isinstance(recovery, dict) and recovery.get("id"):
+                try:
+                    from core.queue_governor import may_enqueue
+
+                    if not may_enqueue():
+                        return None
+                except Exception:
+                    pass
                 rid = recovery["id"] + "_" + datetime.now(timezone.utc).strftime("%H%M%S")
                 job = {
                     **recovery,
                     "id": rid,
+                    "class": recovery.get("class") or "recovery",
                     "note": f"playbook:{les.get('id')} for {jid}",
                 }
                 write_job(job)
+                try:
+                    from core.playbook_limiter import mark_playbook
+
+                    mark_playbook(ftype, lid)
+                except Exception:
+                    pass
                 state["last_playbook"] = les.get("id")
                 return rid
     return None
@@ -443,6 +463,12 @@ def tick() -> Dict[str, Any]:
         state["live_skip_remaining"] = skip - 1
     lessons = load_lessons()
     state["lessons_loaded"] = len(lessons)
+    try:
+        from core.queue_governor import status_snapshot
+
+        state["governor"] = status_snapshot()
+    except Exception:
+        pass
     save_state(state)
     try:
         from scripts.write_whats_next import main as _wn
@@ -459,6 +485,7 @@ def tick() -> Dict[str, Any]:
         "batch_size": BATCH_SIZE,
         "mode": state.get("mode"),
         "live_skip_remaining": state.get("live_skip_remaining", 0),
+        "governor": state.get("governor"),
         "state": state,
     }
 

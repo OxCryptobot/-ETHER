@@ -1,0 +1,16 @@
+{
+  "id": "00_mcp_lab_01",
+  "note": "MCP Labradorite spike: pytest test_mcp_labradorite + create_server smoke",
+  "continue_on_fail": false,
+  "job_class": "FAST",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_mcp_labradorite.py", "-q", "--tb=line"],
+      "timeout": 90
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from gems.labradorite.mcp_server import create_server, _MCP_AVAILABLE; print('mcp_ok', _MCP_AVAILABLE); s=create_server(); print('server', type(s).__name__)"],
+      "timeout": 45
+    }
+  ]
+}

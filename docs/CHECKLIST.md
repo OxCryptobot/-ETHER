@@ -1,5 +1,5 @@
 # ETHER Master Checklist
-**Updated:** 2026-08-15 (MCP Citrine + CQ surfaces)
+**Updated:** 2026-08-15 (MCP CQ + Citrine + Labradorite surfaces)
 
 Soft launch: **BLOCKED** until live tool-path produces an **honest PASS**.  
 Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor doctrine: **LOCKED**.
@@ -54,17 +54,22 @@ All respect FAST-first, one-hypothesis, training wheels, Labradorite on FAIL.
 
 ## MCP Swarm Integration (new)
 
-- [x] **Spike landed**: `gems/clear_quartz/mcp_server.py` (execute_code / run_project_tests / sandbox_health)
-- [x] Unit proof: `tests/test_mcp_clear_quartz.py` (real sandbox + honest gate rejects generate fallback)
-- [x] Job: `00_mcp_cq_spike_01` (FIFO first, training wheels, install `[mcp]` + pytest)
-- [x] **Citrine MCP resources + tools**: `gems/citrine/mcp_server.py`
-  - Resources: `citrine://health`, `citrine://collections`, `citrine://collections/{name}`
-  - Tools: `search_memory`, `memory_health`, `list_collections`
-- [x] Unit proof: `tests/test_mcp_citrine.py`
-- [x] Job: `00_mcp_citrine_01` (install + pytest + create_server smoke)
-- [ ] Labradorite MCP tools (critique surface)
+Architecture (live):
+```
+ETHER Orchestrator (Selenite + ToolRuntime + honest gate)
+  MCP Client(s)  ──stdio / in-process──►
+    Clear Quartz MCP  (tools: execute_code, run_project_tests, sandbox_health)
+    Citrine MCP       (resources: health/collections; tools: search_memory, ...)
+    Labradorite MCP   (tools: critique_code, profile_complexity)
+    (Rose/Selenite future)
+```
+
+- [x] **CQ MCP**: `gems/clear_quartz/mcp_server.py` + `tests/test_mcp_clear_quartz.py`
+- [x] **Citrine MCP**: `gems/citrine/mcp_server.py` + `tests/test_mcp_citrine.py` + job `00_mcp_citrine_01`
+- [x] **Labradorite MCP**: `gems/labradorite/mcp_server.py` + `tests/test_mcp_labradorite.py` + job `00_mcp_lab_01`
 - [ ] Wire concurrent MCP calls into `swarm_parallel_gems_smoke`
-- [ ] Thin MCP Client in ToolRuntime / Orchestrator (in-process preferred)
+- [ ] Thin MCP Client helper in core (in-process preferred for local-first)
+- [ ] Optional: promote full ETHER loop as MCP server later
 
 ---
 

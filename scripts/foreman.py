@@ -1,4 +1,4 @@
-"""ETHER Foreman — Phase 3.3 measurement-first STEADY rotation."""
+"""ETHER Foreman — Phase 3.5: measure-first, no kill job (host inlines purge)."""
 from __future__ import annotations
 
 import json
@@ -96,13 +96,12 @@ CURRICULUM: List[Dict[str, Any]] = [
     },
 ]
 
-# Measurement-first: publish rates/snapshot before heavy scripted packs
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
-        "id_prefix": "ss_kill_live_pending",
-        "note": "steady: FAST purge residual live ledger pending",
+        "id_prefix": "ss_measure_tick",
+        "note": "steady: measure_tick (rates+snapshot+soft_launch)",
         "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.kill_live_pending"], "timeout": 30}],
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"], "timeout": 120}],
     },
     {
         "id_prefix": "ss_honest_live_report",
@@ -177,6 +176,7 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "tests/test_phase3_snapshot.py",
             "tests/test_phase32_tool_first_kill.py",
             "tests/test_soft_launch.py",
+            "tests/test_measure_tick.py",
             "-q", "--tb=line"], "timeout": 300}],
     },
 ]

@@ -989,7 +989,9 @@
     "ss_direct_hard_090557_0",
     "ss_direct_hard_091735_0",
     "ss_tool_runtime_091722_3",
-    "ss_train_gates_090609_2"
+    "ss_train_gates_090609_2",
+    "playbook_timeout_revise_092340",
+    "ss_pipeline_ledger_090603_1"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1082,15 +1084,14 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "ss_pipeline_ledger_090603_1",
     "ss_pipeline_ledger_091739_1"
   ],
-  "last_tick": "2026-08-15T09:29:23.215207+00:00",
+  "last_tick": "2026-08-15T09:29:27.731593+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 25,
-  "last_enqueued": "ss_archive_failed_092922_4",
+  "last_enqueued": "ss_direct_hard_092927_0",
   "last_playbook": "timeout_budget_exhaust",
-  "last_converted": "ss_pipeline_ledger_090540_1",
-  "steady_idx": 595
+  "last_converted": "ss_pipeline_ledger_090603_1",
+  "steady_idx": 596
 }

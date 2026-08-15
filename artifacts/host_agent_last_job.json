@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_43_fix_indent_and_rebaseline",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-15T02:46:30.327230+00:00",
-  "note": "CRITICAL: fix nested _system_prompt IndentationError then rebaseline scripted arms"
+  "job_id": "p1_44_post_fix_swarm",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-15T02:46:47.467702+00:00",
+  "note": "After IndentationError force-fix: compile + doctrine tests + dual arm scripted"
 }

@@ -1,0 +1,32 @@
+{
+  "results": [],
+  "summary": {
+    "passed": 0,
+    "total": 0,
+    "mode": "scripted",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b",
+    "max_steps": 12,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "lru": {
+      "direct": false
+    },
+    "merge": {
+      "direct": false
+    },
+    "ledger": {
+      "direct": false
+    },
+    "topo": {
+      "direct": false
+    },
+    "intervals": {
+      "direct": false
+    }
+  }
+}

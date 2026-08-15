@@ -1,35 +1,43 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15T01:45Z — **NOT DONE.** Soft launch BLOCKED. Training wheels ON.
+**Updated:** 2026-08-15T02:03Z — Mentor swarm in flight. Soft launch **BLOCKED**.
 
-Host heartbeat healthy. Last steady: **direct hard PASS**.
+Host healthy. Graveyard: **13 apply_* archived**. Last steady direct hard **PASS**.
 
 ---
 
-## Phase 1 board
+## Master checklist
+
+See **`docs/CHECKLIST.md`** (done vs remaining).
+
+## Mentor → apprentice (this swarm)
+
+| Artifact | Purpose |
+|----------|---------|
+| `docs/APPRENTICE_CODING_DOCTRINE.md` | How ETHER must code |
+| `core/coding_method.py` | Machine schema + prompt block |
+| `artifacts/lessons/coding_method_v1.json` | Playbook on coding-loop FAIL |
+| `scripts/patch_doctrine_prompt.py` | Inject doctrine into ToolRuntime |
+| `p1_42_mentor_swarm` | Patch + dual-arm regression |
+
+## Phase 1
 
 | Package | Status |
 |---------|--------|
-| 1A–1C | **COMPLETE** |
-| 1D Measured lift | Scripted **GREEN**; live **OPEN** |
+| 1A–1C | COMPLETE |
+| 1D | Scripted GREEN; live OPEN |
 
-See **`docs/BACKLOG.md`** for the ordered remaining list.
+## Secret sauce (short)
 
-## Building now
-
-- `p1_41` — move 13 `apply_*` one-shots → `scripts/_graveyard/` + write `whats_next` + protect direct 5/5
-- Archive tool: `python -m scripts.archive_script_graveyard --apply`
-
-## Still open (short)
-
-1. Pipeline live under 4B  
-2. SUPER APP bind `whats_next.json`  
-3. Dual dashboard unify  
-4. LoopRunner finish / god-file  
-5. Multi-job FAST pool  
+1. Observe → one tool → Observe  
+2. Read tests before source  
+3. Surgical `apply_patch` > rewrite  
+4. `run_tests` after every edit  
+5. Stop on `no_progress` (3 stagnant)  
+6. Typed failures → critique → requeue  
+7. Scoreboards are truth  
 
 ```text
 python -m scripts.ether_cli status
 python -m scripts.ether_cli next
-python -m scripts.ether_cli doctor
 ```

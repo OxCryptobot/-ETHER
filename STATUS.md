@@ -1,23 +1,24 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 21:28Z — **Phase 3.3 landed**. Soft launch **BLOCKED**.
+**Updated:** 2026-08-15 21:51Z — **Phase 3.4 landed + pushed to main**. Soft launch **BLOCKED**.
 
 ## Law
 Test after every build. Do not break working paths. Never auto-green soft launch.
 
 ## Host
-Alive. Job `p3_3_measure_first` enqueued.
+Alive. Idle path now runs `core.measure_tick` every ~90s (rates + snapshot + soft_launch) and pushes artifacts.
+Job `p3_4_measure_tick_verify` enqueued.
 
-## Phase 3.3
+## Phase 3.4
 | Item | Status |
 |------|--------|
-| STEADY measurement-first | rates → snapshot → soft_launch before heavy packs |
-| `scripts/archive_failed.py` | real module |
-| `core/soft_launch.py` | ready only if rates + wheels off + `ETHER_SOFT_LAUNCH=1` |
-| Tests | `tests/test_soft_launch.py` |
+| `core/measure_tick.py` | **landed** |
+| host idle → measure_tick | **wired** |
+| Light push: measure + soft_launch | **yes** |
+| Tests | `tests/test_measure_tick.py` |
 | Pipeline body | **unchanged** |
 
-## Note
-Old pending `ss_kill_live_pending_*` jobs still carry the broken `-c` one-liner until drained. New enqueues use `scripts.kill_live_pending`.
+## Soft launch
+Blocked until: published rates with live rows + wheels off + `ETHER_SOFT_LAUNCH=1`.
 
-Training wheels ON. Soft launch blocked.
+Training wheels ON.

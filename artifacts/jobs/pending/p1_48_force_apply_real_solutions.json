@@ -1,0 +1,28 @@
+{
+  "id": "p1_48_force_apply_real_solutions",
+  "note": "FORCE apply all real solution patches + mentor drill + protect 5/5",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {"argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_honest_live_score"], "timeout": 60},
+    {"argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_host_fast_first"], "timeout": 60},
+    {"argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_foreman_job_class"], "timeout": 60},
+    {"argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_collector_unify"], "timeout": 60},
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.coding_method import prompt_suffix, default_method; from core.job_class import job_class; from core.loop.handlers.tool_runtime_gate import is_honest_tool_path_pass; assert not is_honest_tool_path_pass({'ok':True,'degraded':['tool_runtime_failed_terminal'],'mode':'live'}); print('mentor', default_method().checklist()); print('suffix_ok', len(prompt_suffix())>50)"
+      ],
+      "timeout": 60
+    },
+    {"argv": ["git", "add", "-A", "--", "scripts/batch_phase_d.py", "scripts/host_agent.py", "scripts/foreman.py", "dashboard/collector.py", "core/", "docs/", "artifacts/lessons/"], "timeout": 60},
+    {"argv": ["git", "commit", "-m", "feat: force-apply honest live + FAST-first + class tags + dashboard unify"], "timeout": 60, "continue_on_fail": true},
+    {"argv": ["git", "push", "origin", "main"], "timeout": 120, "continue_on_fail": true},
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_p1_48_protect.json"],
+      "timeout": 600
+    },
+    {"argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"], "timeout": 60}
+  ]
+}

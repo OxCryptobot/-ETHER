@@ -1,7 +1,7 @@
 {
-  "job_id": "ss_train_gates_130426_2",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-15T13:27:18.036957+00:00",
-  "note": "steady: doctrine + preference integrity"
+  "job_id": "00_mcp_cq_spike_01",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-15T13:27:50.392322+00:00",
+  "note": "MCP Clear Quartz spike: install mcp extra, run unit tests for mcp_server + honest gate proof. Training wheels ON. One hypothesis: MCP tools call real sandbox and is_honest_tool_path_pass still rejects generate fallback."
 }

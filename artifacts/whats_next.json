@@ -1,19 +1,19 @@
 {
-  "generated": "2026-08-15T01:56:05.189499+00:00",
-  "next_job": "p1_41_archive_graveyard",
+  "generated": "2026-08-15T18:00:23.235656+00:00",
+  "next_job": "ss_archive_failed_180023_5",
   "queue_head": [
-    "p1_41_archive_graveyard",
-    "playbook_timeout_revise_015004",
-    "playbook_timeout_revise_015546",
-    "ss_archive_failed_014346_4",
-    "ss_direct_hard_014350_0",
-    "ss_pipeline_ledger_014356_1",
-    "ss_tool_runtime_014343_3",
-    "ss_tool_runtime_015604_3"
+    "ss_archive_failed_180023_5",
+    "ss_direct_hard_180023_2",
+    "ss_kill_live_pending_180023_0",
+    "ss_lean_fast_152700_0",
+    "ss_pipeline_scripted_145500_0",
+    "ss_pipeline_scripted_180023_1",
+    "ss_pref_refresh_180023_6",
+    "ss_tool_runtime_145112_3"
   ],
-  "queue_depth": 10,
-  "host_phase": "running",
-  "last_job": "ss_train_gates_013236_2",
+  "queue_depth": 16,
+  "host_phase": "idle",
+  "last_job": "ss_direct_hard_150331_0",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

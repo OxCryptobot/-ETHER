@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """ETHER host agent - job queue consumer. Standalone + self-refilling.
 
-2026-08-15c NUCLEAR GIT:
-- git_clean_slate() aborts rebase/merge, fetches, hard-resets to origin/main.
-- push_liveness / git_push_report NEVER leave the repo in a stuck rebase or
-  non-fast-forward state. On push reject: clean slate, rewrite status, re-commit,
-  force a clean push path. Untracked done/ history must never block observability.
+2026-08-15d:
+- On non-infra FAIL: mandatory Labradorite via core.critique_on_fail
+- Light push paths include honest_live_rates.json when present
 """
 from __future__ import annotations
 
@@ -86,21 +84,13 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
 
 
 def git_clean_slate(reason: str) -> bool:
-    """Abort any rebase/merge, fetch, hard-reset to origin/main.
-
-    This is the only recovery path. Never leave the repo in interactive rebase,
-    merge conflict, or diverged state. Untracked files are left alone (done/
-    history is local noise and must not block pushes of status/last_job).
-    """
     global _last_recover_log
     now = time.time()
     if now - _last_recover_log > 15:
         log(f"git clean_slate ({reason})")
         _last_recover_log = now
-    # Kill stuck rebase / merge state
     run(["git", "rebase", "--abort"], timeout=30)
     run(["git", "merge", "--abort"], timeout=30)
-    # Drop any staged junk from a failed commit attempt
     run(["git", "reset", "--mixed", "HEAD"], timeout=30)
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
@@ -139,15 +129,18 @@ def _light_paths() -> List[str]:
         "whats_next.json",
         "performance_benchmark.json",
         "foreman_state.json",
+        "honest_live_rates.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
             paths.append(str(p.relative_to(ROOT)))
+    critiques = ROOT / "artifacts" / "critiques"
+    if critiques.exists():
+        paths.append("artifacts/critiques")
     return paths
 
 
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
-    """Add paths, commit, push. On any reject: clean_slate, re-add, re-commit, push once more."""
     run(["git", "add", "-f", "--"] + paths, timeout=45)
     c = run(["git", "commit", "-m", message], timeout=30)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
@@ -162,9 +155,7 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
         log(f"{label} push ok")
         return True
     log(f"{label} push REJECTED rc={p.returncode} err={(p.stderr or '')[:400]}")
-    # Nuclear recovery: clean slate, rewrite the same files, commit, push
     git_clean_slate(f"{label}_reject")
-    # Status/last_job may have been wiped by hard reset — rewrite them
     write_status(current_job=None, phase=label)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
     c2 = run(["git", "commit", "-m", message], timeout=30)
@@ -180,7 +171,6 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
 
 
 def push_liveness(reason: str = "idle") -> None:
-    """Push status + last_job. Never stuck on non-fast-forward or dirty rebase."""
     global _last_liveness_push
     now = time.time()
     if now - _last_liveness_push < LIVENESS_INTERVAL:
@@ -194,7 +184,6 @@ def push_liveness(reason: str = "idle") -> None:
 
 
 def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
-    """Lightweight by default. On reject: clean_slate and retry once."""
     global _last_heavy_push
     now = time.time()
     do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
@@ -206,7 +195,6 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         paths.append(str(p.relative_to(ROOT)))
 
     if do_heavy:
-        # Still avoid full done/ tree (WinError 206). pending + failed only.
         paths.extend(["artifacts/jobs/pending", "artifacts/jobs/failed"])
         _last_heavy_push = now
 
@@ -265,6 +253,30 @@ def _enrich_failure_from_scoreboard(envelope: Dict[str, Any]) -> None:
                 envelope.setdefault("failure_type", "live_fail")
                 envelope["scoreboard"] = b.name
                 return
+
+
+def _mandatory_critique(envelope: Dict[str, Any]) -> None:
+    """Hard-wire Labradorite on non-infra FAIL (doctrine, not optional)."""
+    if envelope.get("ok"):
+        return
+    try:
+        from core.critique_on_fail import critique_fail
+
+        art = critique_fail(
+            job_id=str(envelope.get("job_id") or "unknown"),
+            failure_type=str(envelope.get("failure_type") or ""),
+            note=str(envelope.get("note") or ""),
+            enqueue=True,
+        )
+        if art.get("skipped"):
+            log(f"critique skipped: {art.get('reason')}")
+        else:
+            log(
+                f"Labradorite critique id={art.get('id')} hyp={str(art.get('next_hypothesis') or '')[:80]} "
+                f"enqueued={art.get('enqueued')}"
+            )
+    except Exception as e:
+        log(f"critique_on_fail error: {type(e).__name__}: {e}")
 
 
 def list_pending() -> List[Path]:
@@ -355,6 +367,10 @@ def process_job(path: Path) -> bool:
     _enrich_failure_from_scoreboard(envelope)
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
+    # Doctrine: critique before next hyp — code path, not hope
+    if not ok:
+        _mandatory_critique(envelope)
+
     dest_dir = DONE if ok else FAILED
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / path.name
@@ -398,7 +414,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling + nuclear git)", flush=True)
+    print("  ETHER host_agent (self-refilling + nuclear git + mandatory critique)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 

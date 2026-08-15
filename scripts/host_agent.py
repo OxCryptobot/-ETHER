@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """ETHER host agent - job queue consumer. Standalone + self-refilling.
 
-2026-08-15f Phase 3.4:
-- On idle, run core.measure_tick (rates + snapshot + soft_launch) throttled
-- Light paths include measure_tick.json + soft_launch_status.json
+2026-08-15g Phase 3.5:
+- measure_tick PUSHES immediately (rates no longer die to reset --hard)
+- clean_slate rehydrates measure artifacts after hard reset
+- inline purge_live_pending (no more FAIL-noise kill jobs)
 """
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -30,6 +32,7 @@ POLL = int(os.getenv("ETHER_HOST_AGENT_POLL", "1"))
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
+ARCH = ROOT / "artifacts" / "jobs" / "failed_archived"
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LOG = ROOT / "artifacts" / "host_agent_log.txt"
@@ -40,7 +43,7 @@ _last_liveness_push = 0.0
 _last_measure_tick = 0.0
 HEAVY_PUSH_INTERVAL = 180
 LIVENESS_INTERVAL = 55
-MEASURE_INTERVAL = 90
+MEASURE_INTERVAL = 60
 
 
 def log(msg: str) -> None:
@@ -85,32 +88,20 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     )
 
 
-def git_clean_slate(reason: str) -> bool:
-    global _last_recover_log
-    now = time.time()
-    if now - _last_recover_log > 15:
-        log(f"git clean_slate ({reason})")
-        _last_recover_log = now
-    run(["git", "rebase", "--abort"], timeout=30)
-    run(["git", "merge", "--abort"], timeout=30)
-    run(["git", "reset", "--mixed", "HEAD"], timeout=30)
-    run(["git", "fetch", "origin"], timeout=120)
-    r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
-    if r.returncode != 0:
-        log(f"clean_slate reset failed rc={r.returncode} err={(r.stderr or '')[:300]}")
-        return False
-    return True
-
-
-def git_reset_to_origin(reason: str) -> bool:
-    return git_clean_slate(reason)
-
-
-def git_sync() -> None:
-    run(["git", "fetch", "origin"], timeout=120)
-    r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
-    if r.returncode != 0:
-        git_clean_slate("diverged")
+def _measure_paths() -> List[str]:
+    paths: List[str] = []
+    for name in (
+        "honest_live_rates.json",
+        "phase3_snapshot.json",
+        "soft_launch_status.json",
+        "measure_tick.json",
+        "lora_dry_tick.json",
+        "foreman_state.json",
+    ):
+        p = ROOT / "artifacts" / name
+        if p.exists():
+            paths.append(str(p.relative_to(ROOT)))
+    return paths
 
 
 def _light_paths() -> List[str]:
@@ -148,6 +139,8 @@ def _light_paths() -> List[str]:
 
 
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
+    if not paths:
+        return True
     run(["git", "add", "-f", "--"] + paths, timeout=45)
     c = run(["git", "commit", "-m", message], timeout=30)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
@@ -162,19 +155,79 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
         log(f"{label} push ok")
         return True
     log(f"{label} push REJECTED rc={p.returncode} err={(p.stderr or '')[:400]}")
-    git_clean_slate(f"{label}_reject")
-    write_status(current_job=None, phase=label)
+    # soft recovery: fetch + rebase attempt, avoid wiping measure if possible
+    run(["git", "fetch", "origin"], timeout=120)
+    run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
-    c2 = run(["git", "commit", "-m", message], timeout=30)
-    if c2.returncode != 0 and "nothing to commit" not in ((c2.stdout or "") + (c2.stderr or "")).lower():
-        log(f"{label} re-commit rc={c2.returncode} err={(c2.stderr or '')[:300]}")
-        return False
+    run(["git", "commit", "-m", message], timeout=30)
     p2 = run(["git", "push", "origin", "main"], timeout=90)
     if p2.returncode == 0:
-        log(f"{label} push ok after clean_slate")
+        log(f"{label} push ok after rebase")
         return True
-    log(f"{label} push STILL FAILED rc={p2.returncode} err={(p2.stderr or '')[:400]}")
+    log(f"{label} push STILL FAILED rc={p2.returncode}")
     return False
+
+
+def purge_live_pending() -> int:
+    """In-process kill of residual live-ledger pending — never fails the queue."""
+    PENDING.mkdir(parents=True, exist_ok=True)
+    ARCH.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%H%M%S")
+    killed = 0
+    for pat in ("ss_pipeline_ledger_*.json", "*live*ledger*.json"):
+        for p in list(PENDING.glob(pat)):
+            if p.name == ".gitkeep":
+                continue
+            dst = ARCH / f"{p.stem}_killed_{stamp}.json"
+            try:
+                shutil.move(str(p), str(dst))
+                killed += 1
+            except OSError:
+                pass
+    if killed:
+        log(f"purge_live_pending killed={killed}")
+    return killed
+
+
+def rehydrate_measure() -> None:
+    """After hard reset, rewrite measurement artifacts so rates survive."""
+    try:
+        from core.measure_tick import run as measure_run
+
+        report = measure_run()
+        log(f"rehydrate_measure ok={report.get('ok')}")
+    except Exception as e:
+        log(f"rehydrate_measure error: {type(e).__name__}: {e}")
+
+
+def git_clean_slate(reason: str) -> bool:
+    global _last_recover_log
+    now = time.time()
+    if now - _last_recover_log > 15:
+        log(f"git clean_slate ({reason})")
+        _last_recover_log = now
+    run(["git", "rebase", "--abort"], timeout=30)
+    run(["git", "merge", "--abort"], timeout=30)
+    run(["git", "reset", "--mixed", "HEAD"], timeout=30)
+    run(["git", "fetch", "origin"], timeout=120)
+    r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
+    if r.returncode != 0:
+        log(f"clean_slate reset failed rc={r.returncode} err={(r.stderr or '')[:300]}")
+        return False
+    # Doctrine: measurement must survive nuclear reset
+    rehydrate_measure()
+    return True
+
+
+def git_reset_to_origin(reason: str) -> bool:
+    return git_clean_slate(reason)
+
+
+def git_sync() -> None:
+    run(["git", "fetch", "origin"], timeout=120)
+    r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
+    if r.returncode != 0:
+        git_clean_slate("diverged")
 
 
 def push_liveness(reason: str = "idle") -> None:
@@ -190,11 +243,11 @@ def push_liveness(reason: str = "idle") -> None:
         log(f"liveness error: {type(e).__name__}: {e}")
 
 
-def maybe_measure_tick() -> None:
-    """Publish rates/snapshot/soft_launch without depending on STEADY rotation."""
+def maybe_measure_tick(force: bool = False) -> None:
+    """Write + immediately push rates so reset --hard cannot erase them."""
     global _last_measure_tick
     now = time.time()
-    if now - _last_measure_tick < MEASURE_INTERVAL:
+    if not force and now - _last_measure_tick < MEASURE_INTERVAL:
         return
     _last_measure_tick = now
     try:
@@ -206,6 +259,9 @@ def maybe_measure_tick() -> None:
             f"live_n={(report.get('steps') or {}).get('honest_live', {}).get('live_n')} "
             f"soft_ready={(report.get('steps') or {}).get('soft_launch', {}).get('soft_launch_ready')}"
         )
+        paths = _measure_paths()
+        if paths:
+            _commit_and_push(paths, "host measure_tick: rates+snapshot+soft_launch", "measure")
     except Exception as e:
         log(f"measure_tick error: {type(e).__name__}: {e}")
 
@@ -439,7 +495,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling + nuclear git + measure_tick)", flush=True)
+    print("  ETHER host_agent (Phase 3.5 measure-survive + inline kill)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 
@@ -448,14 +504,16 @@ def main() -> int:
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
 
+    purge_live_pending()
     call_foreman_tick()
-    maybe_measure_tick()
+    maybe_measure_tick(force=True)
     push_liveness("startup")
 
     while True:
         try:
             write_status(current_job=None, phase="polling")
             git_sync()
+            purge_live_pending()
             jobs = list_pending()
             if not jobs:
                 log("idle -> foreman.tick + measure_tick")

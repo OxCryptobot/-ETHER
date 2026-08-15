@@ -1,14 +1,6 @@
 """ETHER Foreman — advances the job queue without chat babysitting.
 
-Reads apprentice lessons + blueprint cursor. On idle, enqueues next work.
-On FAIL, applies playbook requeue when a lesson matches.
-
-HARD RULE: never apply a playbook to a job that is itself a playbook recovery
-(note starts with 'playbook:' or id contains '_diag_after_' / recovery markers).
-
-Phase 3 (2026-08-15):
-- STEADY includes honest_live_report + lora_dry_tick (measurement, not train).
-- Soft launch stays blocked until rates published and mentor sign-off.
+Phase 3.2: kill_live_pending uses a real module (broken -c one-liner removed).
 """
 from __future__ import annotations
 
@@ -110,18 +102,9 @@ CURRICULUM: List[Dict[str, Any]] = [
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
         "id_prefix": "ss_kill_live_pending",
-        "note": "steady: FAST purge any residual live ledger pending",
+        "note": "steady: FAST purge residual live ledger pending",
         "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
-            "from pathlib import Path; import shutil; from datetime import datetime, timezone; "
-            "ROOT=Path('.').resolve(); P=ROOT/'artifacts'/'jobs'/'pending'; ARCH=ROOT/'artifacts'/'jobs'/'failed_archived'; "
-            "ARCH.mkdir(parents=True, exist_ok=True); killed=0; "
-            "for p in list(P.glob('ss_pipeline_ledger_*.json')) + list(P.glob('*live*ledger*.json')): "
-            "  if p.name=='.gitkeep': continue; "
-            "  dst=ARCH/(p.stem+'_killed_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'); "
-            "  try: shutil.move(str(p), str(dst)); killed+=1\n  except Exception as e: print(e); "
-            "print('killed_live_pending', killed)"
-        ], "timeout": 30}],
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.kill_live_pending"], "timeout": 30}],
     },
     {
         "id_prefix": "ss_pipeline_scripted",
@@ -165,7 +148,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
         ], "timeout": 180}],
     },
-    # --- Phase 3 measurement (soft launch still blocked) ---
     {
         "id_prefix": "ss_honest_live_report",
         "note": "steady: publish honest live tool-path rates",
@@ -179,8 +161,14 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.lora_dry_tick"], "timeout": 60}],
     },
     {
+        "id_prefix": "ss_phase3_snapshot",
+        "note": "steady: Phase 3 measurement snapshot",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.phase3_snapshot"], "timeout": 90}],
+    },
+    {
         "id_prefix": "ss_phase2_regression",
-        "note": "steady: Phase 2 unit regression pack",
+        "note": "steady: Phase 2/3 unit regression pack",
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest",
             "tests/test_plan_state.py",
             "tests/test_multifile_ast_tx.py",
@@ -188,7 +176,9 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "tests/test_symbol_index.py",
             "tests/test_lora_dry_tick.py",
             "tests/test_honest_live_critique_context.py",
-            "-q", "--tb=line"], "timeout": 240}],
+            "tests/test_phase3_snapshot.py",
+            "tests/test_phase32_tool_first_kill.py",
+            "-q", "--tb=line"], "timeout": 300}],
     },
 ]
 

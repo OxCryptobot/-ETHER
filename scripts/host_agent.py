@@ -22,6 +22,9 @@
 - push_liveness() every ~60s while idle so artifacts/host_agent_status.json
   on origin always reflects real heartbeat. Fixes false "host offline" when
   the process is alive but not finishing jobs.
+
+2026-08-15b:
+- push_liveness logs full git stdout/stderr on failure (no more silent push death).
 """
 from __future__ import annotations
 
@@ -110,7 +113,7 @@ def git_reset_to_origin(reason: str) -> bool:
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
     if r.returncode != 0:
-        log(f"reset failed rc={r.returncode}")
+        log(f"reset failed rc={r.returncode} out={(r.stdout or '')[:200]} err={(r.stderr or '')[:300]}")
         return False
     return True
 
@@ -123,9 +126,10 @@ def git_sync() -> None:
 
 
 def push_liveness(reason: str = "idle") -> None:
-    """Push status + last_job so remote observability (Grok + Control Matrix) always has a fresh heartbeat.
+    """Push status + last_job so remote observability always has a fresh heartbeat.
 
-    Called from idle loops every LIVENESS_INTERVAL seconds. Lightweight on purpose.
+    Called from idle loops every LIVENESS_INTERVAL seconds. Lightweight.
+    On any failure, logs full git stdout/stderr so silent push death is impossible.
     """
     global _last_liveness_push
     now = time.time()
@@ -133,36 +137,50 @@ def push_liveness(reason: str = "idle") -> None:
         return
     _last_liveness_push = now
     try:
+        # Always refresh status first so the file content is current
+        write_status(current_job=None, phase=reason)
         paths = [
             "artifacts/host_agent_status.json",
             "artifacts/host_agent_last_job.json",
         ]
         if LOG.exists():
             paths.append("artifacts/host_agent_log.txt")
-        # also keep queue visibility alive on origin
         for name in ("pending", "failed"):
             p = ROOT / "artifacts" / "jobs" / name
             if p.exists():
                 paths.append(f"artifacts/jobs/{name}")
-        run(["git", "add", "-f", "--"] + paths, timeout=45)
+        add = run(["git", "add", "-f", "--"] + paths, timeout=45)
+        if add.returncode != 0:
+            log(f"liveness add rc={add.returncode} err={(add.stderr or '')[:400]}")
         c = run(
             ["git", "commit", "-m", f"host agent liveness: {reason}"],
             timeout=30,
         )
         combined = ((c.stdout or "") + (c.stderr or "")).lower()
         if c.returncode != 0 and "nothing to commit" in combined:
+            log(f"liveness nothing to commit ({reason})")
             return
         if c.returncode != 0:
-            log(f"liveness commit rc={c.returncode}")
+            log(f"liveness commit rc={c.returncode} out={(c.stdout or '')[:200]} err={(c.stderr or '')[:400]}")
             return
         p = run(["git", "push", "origin", "main"], timeout=90)
         if p.returncode == 0:
             log(f"liveness push ok ({reason})")
         else:
-            log(f"liveness push rc={p.returncode}")
-            git_sync()
+            log(f"liveness push FAILED rc={p.returncode} out={(p.stdout or '')[:300]} err={(p.stderr or '')[:500]}")
+            # one retry after fetch
+            run(["git", "fetch", "origin"], timeout=60)
+            rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=60)
+            if rb.returncode == 0:
+                p2 = run(["git", "push", "origin", "main"], timeout=90)
+                if p2.returncode == 0:
+                    log(f"liveness push retry ok ({reason})")
+                else:
+                    log(f"liveness push retry FAILED rc={p2.returncode} err={(p2.stderr or '')[:400]}")
+            else:
+                log(f"liveness rebase failed rc={rb.returncode} err={(rb.stderr or '')[:300]}")
     except Exception as e:
-        log(f"liveness push error: {e}")
+        log(f"liveness push error: {type(e).__name__}: {e}")
 
 
 def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
@@ -212,14 +230,14 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         git_sync()
         return
     if c.returncode != 0:
-        log(f"commit rc={c.returncode}")
+        log(f"commit rc={c.returncode} err={(c.stderr or '')[:300]}")
         git_sync()
         return
     p = run(["git", "push", "origin", "main"], timeout=120)
     if p.returncode == 0:
         log(f"push rc=0 ({mode})")
         return
-    log(f"push rc={p.returncode}; retry")
+    log(f"push rc={p.returncode} err={(p.stderr or '')[:400]}; retry")
     run(["git", "fetch", "origin"], timeout=120)
     rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
     if rb.returncode == 0:
@@ -227,6 +245,7 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         if p2.returncode == 0:
             log("push retry rc=0")
             return
+        log(f"push retry still failed rc={p2.returncode} err={(p2.stderr or '')[:300]}")
     git_reset_to_origin("push failed")
 
 

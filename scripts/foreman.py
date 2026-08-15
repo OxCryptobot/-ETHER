@@ -6,33 +6,9 @@ On FAIL, applies playbook requeue when a lesson matches.
 HARD RULE: never apply a playbook to a job that is itself a playbook recovery
 (note starts with 'playbook:' or id contains '_diag_after_' / recovery markers).
 
-REVAMP 2026-08-14 (permanent standalone):
-- host_agent calls tick() on every idle + after jobs so queue never empties.
-- After curriculum exhausted, STEADY mode rotates measurement/learning jobs
-  with unique timestamp ids (no infinity z_gate).
-- Failed jobs are archived after Labradorite/steady sweep (not left forever).
-- Training wheels stay ON until measured lift + Phase 1 gate green.
-
-FASTTRACK 2026-08-14:
-- ss_pipeline_scripted first (fast 1D).
-- load_lessons prefers artifacts/lessons.
-- After live pipeline FAIL (budget_exhaust), skip ss_pipeline_ledger for 3 ticks.
-- playbook matches include last_job.failure_type (typed timeout contract).
-- each tick refreshes artifacts/whats_next.json for dashboard/CLI.
-
-PERF 2026-08-15 (10x throughput):
-- LIVE_SKIP_TICKS raised to 12.
-- STEADY ordered FAST-first; live ledger is rare and gated.
-- Preference refresh + scripted pipeline prioritized over live.
-- Stronger live-fail detection so GPU is not burned on known-timeout fixtures.
-- Mirror state to artifacts/foreman_state.json for Control Matrix.
-
-PERF 2026-08-15b (100x aspiration):
-- LIVE_SKIP_TICKS = 36.
-- live template REMOVED from STEADY (Phase 1D gate still OPEN).
-- ss_kill_live_pending first in STEADY for queue hygiene.
-- BATCH_SIZE = 16.
-- class always set on every job.
+Phase 3 (2026-08-15):
+- STEADY includes honest_live_report + lora_dry_tick (measurement, not train).
+- Soft launch stays blocked until rates published and mentor sign-off.
 """
 from __future__ import annotations
 
@@ -189,6 +165,31 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
         ], "timeout": 180}],
     },
+    # --- Phase 3 measurement (soft launch still blocked) ---
+    {
+        "id_prefix": "ss_honest_live_report",
+        "note": "steady: publish honest live tool-path rates",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"], "timeout": 60}],
+    },
+    {
+        "id_prefix": "ss_lora_dry_tick",
+        "note": "steady: LoRA dry tick only (never trains)",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.lora_dry_tick"], "timeout": 60}],
+    },
+    {
+        "id_prefix": "ss_phase2_regression",
+        "note": "steady: Phase 2 unit regression pack",
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "pytest",
+            "tests/test_plan_state.py",
+            "tests/test_multifile_ast_tx.py",
+            "tests/test_pipeline_orchestration_slice.py",
+            "tests/test_symbol_index.py",
+            "tests/test_lora_dry_tick.py",
+            "tests/test_honest_live_critique_context.py",
+            "-q", "--tb=line"], "timeout": 240}],
+    },
 ]
 
 
@@ -219,7 +220,6 @@ def save_state(state: Dict[str, Any]) -> None:
     state["last_tick"] = _now()
     text = json.dumps(state, indent=2)
     STATE.write_text(text, encoding="utf-8")
-    # Control Matrix visibility — always mirror to artifacts
     try:
         STATE_ARTIFACTS.parent.mkdir(parents=True, exist_ok=True)
         STATE_ARTIFACTS.write_text(text, encoding="utf-8")

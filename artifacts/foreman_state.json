@@ -1363,7 +1363,8 @@
     "ss_tool_runtime_145112_3",
     "ss_tool_runtime_150328_3",
     "ss_train_gates_145109_2",
-    "ss_train_gates_150320_2"
+    "ss_train_gates_150320_2",
+    "ss_train_gates_150336_2"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1459,12 +1460,12 @@
     "00_mcp_cq_spike_01",
     "ss_kill_live_pending_180023_0"
   ],
-  "last_tick": "2026-08-15T18:01:37.435178+00:00",
+  "last_tick": "2026-08-15T18:01:42.452940+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_kill_live_pending_180137_0",
+  "last_enqueued": "ss_pipeline_scripted_180141_1",
   "last_playbook": "coding_method_v1",
   "last_converted": "ss_pipeline_ledger_145102_1",
-  "steady_idx": 904
+  "steady_idx": 905
 }

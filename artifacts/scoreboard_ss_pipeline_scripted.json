@@ -7,7 +7,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.46,
+      "elapsed_s": 0.485,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -29,7 +29,7 @@
     "arms": [
       "pipeline"
     ],
-    "model": "qwen3.5:4b",
+    "model": "qwen3.5:4b-q4_K_M",
     "max_steps": 16,
     "partial": false,
     "note": "final"

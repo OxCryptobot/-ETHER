@@ -1350,7 +1350,8 @@
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
     "playbook_coding_method_refresh_190515",
-    "ss_kill_live_pending_190448_0"
+    "ss_kill_live_pending_190448_0",
+    "ss_direct_hard_190502_2"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,12 +1447,12 @@
     "00_mcp_cq_spike_01",
     "ss_kill_live_pending_190555_0"
   ],
-  "last_tick": "2026-08-15T19:07:37.234299+00:00",
+  "last_tick": "2026-08-15T19:07:45.869501+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_pipeline_scripted_190737_1",
+  "last_enqueued": "ss_direct_hard_190745_2",
   "last_playbook": "coding_method_v1",
   "last_converted": "ss_kill_live_pending_190448_0",
-  "steady_idx": 884
+  "steady_idx": 885
 }

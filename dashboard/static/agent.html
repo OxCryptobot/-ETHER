@@ -66,9 +66,17 @@
   .phase-card.queued .st { color: var(--cyan); }
   .phase-card.unknown .st { color: var(--muted); }
 
+  .whats-next {
+    padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 12px;
+  }
+  .whats-next .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
+  .whats-next .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
+  .whats-next .blocked { color: var(--amber); }
+
   main {
     display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: auto auto auto 1fr;
-    gap: 10px; padding: 10px; height: calc(100vh - 130px);
+    gap: 10px; padding: 10px; height: calc(100vh - 180px);
   }
   .panel {
     background: var(--panel); border: 1px solid var(--border);
@@ -170,7 +178,7 @@ git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\start_ether_host.ps1</pre>
-  <div class="note">After restart the dashboard will flip green within ~90 s. Do not re-run unless heartbeat stays dead &gt;2 min with pending jobs unconsumed.</div>
+  <div class="note">After restart the dashboard will flip green within ~90 s. Do not re-run unless heartbeat stays dead >2 min with pending jobs unconsumed.</div>
 </div>
 
 <div class="phase-board" id="phaseBoard">
@@ -178,6 +186,12 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
   <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">—</div></div>
   <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">—</div></div>
   <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">—</div></div>
+</div>
+
+<div class="whats-next" id="whatsNextBar">
+  <div><span class="label">What's next</span><br><span class="next" id="wnNext">—</span></div>
+  <div><span class="label">Queue depth</span><br><strong id="wnDepth">—</strong></div>
+  <div><span class="label">Blocked</span><br><span class="blocked" id="wnBlocked">—</span></div>
 </div>
 
 <main>
@@ -238,7 +252,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 <script>
 function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":"&#39;"}[c]));
 }
 function colorize(line) {
   const e = esc(line);
@@ -262,9 +276,9 @@ function setPhase(id, val) {
   const st = (val || 'unknown').toUpperCase();
   el.querySelector('.st').textContent = st;
   el.className = 'phase-card ' +
-    (st === 'LANDED' || st === 'WIRED' ? 'landed' :
-     st === 'NEXT' || st === 'IN PROGRESS' ? 'progress' :
-     st === 'QUEUED' ? 'queued' : 'unknown');
+    (st === 'LANDED' || st === 'WIRED' || st === 'COMPLETE' ? 'landed' :
+     st === 'NEXT' || st === 'IN PROGRESS' || st === 'PARTIAL' ? 'progress' :
+     st === 'QUEUED' || st === 'BLOCKED' ? 'queued' : 'unknown');
 }
 function setRecovery(show) {
   const el = document.getElementById('recoveryBanner');
@@ -280,7 +294,6 @@ async function tickHost() {
     const age = (d.status && d.status.heartbeat_age_s != null) ? Number(d.status.heartbeat_age_s) : null;
     document.getElementById('dot').className = 'dot ' + (alive ? 'on' : 'off');
     document.getElementById('alive').textContent = alive ? 'host online' : 'host offline';
-    // Show recovery only when clearly dead (offline or age > 120s)
     setRecovery(!alive || (age != null && age > 120));
 
     const c = (d.queue && d.queue.counts) || {};
@@ -304,6 +317,13 @@ async function tickHost() {
     setPhase('p1c', ph['1C']);
     setPhase('p1d', ph['1D']);
 
+    // What's next bar (from collector whats_next)
+    const wn = d.whats_next || {};
+    document.getElementById('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '—';
+    document.getElementById('wnDepth').textContent = wn.queue_depth != null ? wn.queue_depth : (c.pending ?? '—');
+    const blocked = (wn.blocked || []).slice(0, 2).join(' · ') || '—';
+    document.getElementById('wnBlocked').textContent = blocked;
+
     const fsrc = d.foreman_source || ap.source || '';
     document.getElementById('status').innerHTML = `
       <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
@@ -326,7 +346,6 @@ async function tickHost() {
         lessons.slice(0, 8).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div class="lesson">${esc(L.rule)}</div></div>`).join('')
       : '<div class="lesson">(no lessons yet)</div>';
 
-    // RLHF panel
     const rl = d.rlhf || {};
     const boosts = rl.ranked_boosts || [];
     const healthy = rl.healthy ? 'healthy' : 'missing';
@@ -347,7 +366,6 @@ async function tickHost() {
           </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
       </div>`;
 
-    // Scoreboards
     const sbs = d.scoreboards || [];
     document.getElementById('scoreboards').innerHTML = sbs.length
       ? sbs.map(s => {
@@ -358,7 +376,6 @@ async function tickHost() {
         }).join('')
       : '<div style="color:var(--muted)">(no scoreboards on origin)</div>';
 
-    // Critiques
     const crits = d.critiques || [];
     document.getElementById('critiques').innerHTML = crits.length
       ? crits.map(c => `

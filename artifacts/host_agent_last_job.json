@@ -1,7 +1,7 @@
 {
-  "job_id": "p1_53_live_tool_path_honest",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-15T06:02:03.758696+00:00",
-  "note": "P0 soft-launch gate: pipeline live tool-path under 4B with honest scoring. continue_on_fail for measurement. Labradorite on FAIL."
+  "job_id": "p1_54_dashboard_unify",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-15T06:02:07.881678+00:00",
+  "note": "P1: verify collector + agent.html read the same host_agent paths (status, last_job, log). Smoke only."
 }

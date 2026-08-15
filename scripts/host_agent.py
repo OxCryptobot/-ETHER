@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """ETHER host agent - job queue consumer. Standalone + self-refilling.
 
-2026-08-15d:
-- On non-infra FAIL: mandatory Labradorite via core.critique_on_fail
-- Light push paths include honest_live_rates.json when present
+2026-08-15e:
+- Light push paths include phase3_snapshot.json + lora_dry_tick.json
 """
 from __future__ import annotations
 
@@ -130,6 +129,9 @@ def _light_paths() -> List[str]:
         "performance_benchmark.json",
         "foreman_state.json",
         "honest_live_rates.json",
+        "phase3_snapshot.json",
+        "lora_dry_tick.json",
+        "lora_train_last.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -256,7 +258,6 @@ def _enrich_failure_from_scoreboard(envelope: Dict[str, Any]) -> None:
 
 
 def _mandatory_critique(envelope: Dict[str, Any]) -> None:
-    """Hard-wire Labradorite on non-infra FAIL (doctrine, not optional)."""
     if envelope.get("ok"):
         return
     try:
@@ -367,7 +368,6 @@ def process_job(path: Path) -> bool:
     _enrich_failure_from_scoreboard(envelope)
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
 
-    # Doctrine: critique before next hyp — code path, not hope
     if not ok:
         _mandatory_critique(envelope)
 

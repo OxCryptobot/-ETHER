@@ -1,0 +1,37 @@
+{
+  "id": "p3_2_verify",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 3.2: tests + kill_live + snapshot publish",
+  "created": "2026-08-15T21:18:30+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase32_tool_first_kill.py",
+        "tests/test_phase3_snapshot.py",
+        "tests/test_pipeline_orchestration_slice.py",
+        "tests/test_lora_dry_tick.py",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 360
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.kill_live_pending"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.phase3_snapshot"],
+      "timeout": 90
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"],
+      "timeout": 60
+    }
+  ]
+}

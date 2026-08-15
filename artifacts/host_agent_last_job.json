@@ -1,8 +1,7 @@
 {
-  "job_id": "ss_kill_live_pending_222404_0",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-15T22:30:09.395862+00:00",
-  "note": "steady: FAST purge any residual live ledger pending",
-  "failure_type": "step_fail"
+  "job_id": "p3_6_critical_ops",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-15T22:30:22.485632+00:00",
+  "note": "Critical ops batch: governor playbook kpi latency tests + measure"
 }

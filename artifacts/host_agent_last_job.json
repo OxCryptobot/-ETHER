@@ -1,7 +1,8 @@
 {
-  "job_id": "ss_archive_failed_190808_5",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-15T19:08:26.402270+00:00",
-  "note": "steady: archive old failed jobs (cleanup noise)"
+  "job_id": "p3_soft_launch_measure",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-15T19:08:36.262021+00:00",
+  "note": "Phase 3: snapshot + tests; soft launch stays blocked",
+  "failure_type": "step_fail"
 }

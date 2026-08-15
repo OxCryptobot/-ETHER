@@ -38,7 +38,6 @@ header h1 span { color: var(--cyan); }
 .dot.off { background: var(--red); }
 .dot.busy { background: var(--cyan); animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: 0.35; } }
-
 .recovery {
   display: none; margin: 0; padding: 12px 16px;
   background: #1a0f0f; border-bottom: 1px solid #5a2020; font-size: 12px;
@@ -53,7 +52,6 @@ header h1 span { color: var(--cyan); }
   color: #e8c4c4; overflow-x: auto; white-space: pre;
 }
 .recovery .note { margin-top: 8px; font-size: 11px; color: var(--amber); }
-
 .phase-board {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
   padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0b1118;
@@ -68,10 +66,13 @@ header h1 span { color: var(--cyan); }
 .phase-card.progress .st { color: var(--amber); }
 .phase-card.queued .st { color: var(--cyan); }
 .phase-card.unknown .st { color: var(--muted); }
-
 .matrix-strip {
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
   padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
+}
+.moonshot-board {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1018;
 }
 .m-card {
   background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
@@ -83,19 +84,17 @@ header h1 span { color: var(--cyan); }
 .m-card.good .val { color: var(--green); }
 .m-card.warn .val { color: var(--amber); }
 .m-card.bad .val { color: var(--red); }
-
 .whats-next {
   padding: 8px 14px; border-bottom: 1px solid var(--border); background: #0a1016;
   display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px;
 }
 .whats-next .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; }
 .whats-next .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
-
 main {
   display: grid;
   grid-template-columns: 240px 1fr 1fr;
   grid-template-rows: auto auto 1fr;
-  gap: 8px; padding: 8px; height: calc(100vh - 220px);
+  gap: 8px; padding: 8px; height: calc(100vh - 280px);
 }
 .panel {
   background: var(--panel); border: 1px solid var(--border);
@@ -181,13 +180,13 @@ main {
 @media (max-width: 1100px) {
   main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
   .span2 { grid-column: span 1; }
-  .phase-board, .matrix-strip { grid-template-columns: repeat(2, 1fr); }
+  .phase-board, .matrix-strip, .moonshot-board { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>@ETHER</span> Control Matrix</h1>
+  <h1><span>@ETHER</span> Control Matrix <span style="color:var(--muted);font-size:11px;font-weight:400">host-first</span></h1>
   <div class="badges">
     <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
     <div class="badge" id="liveCoding">coding: idle</div>
@@ -197,13 +196,13 @@ main {
 
 <div class="recovery" id="recoveryBanner">
   <h3>Host offline -- one-time recovery</h3>
-  <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave the window open. Launcher keeps it alive after that.</p>
+  <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave the window open.</p>
   <pre>cd C:\Users\Otcde\ETHER
 git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\recover_host.ps1 -Hard</pre>
-  <div class="note">After restart the dashboard flips green within ~90 s. Do not re-run unless heartbeat stays dead >2 min with pending jobs unconsumed.</div>
+  <div class="note">After restart the dashboard flips green within ~90 s.</div>
 </div>
 
 <div class="phase-board" id="phaseBoard">
@@ -220,6 +219,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
   <div class="m-card" id="mRatio"><div class="label">Scripted/Live</div><div class="val" id="mRatioVal">--</div><div class="sub">latency ratio</div></div>
   <div class="m-card" id="mLast"><div class="label">Last job</div><div class="val" id="mLastVal">--</div><div class="sub" id="mLastSub">--</div></div>
   <div class="m-card" id="mSkip"><div class="label">Live skip left</div><div class="val" id="mSkipVal">--</div><div class="sub">foreman</div></div>
+</div>
+
+<div class="moonshot-board" id="moonshotBoard">
+  <div class="m-card"><div class="label">Moonshots</div><div class="val">—</div><div class="sub">loading…</div></div>
 </div>
 
 <div class="whats-next" id="whatsNextBar">
@@ -239,37 +242,30 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
     </div>
     <div class="body" id="queue"></div>
   </section>
-
   <section class="panel span2">
     <h2>Status / Foreman / Last job</h2>
     <div class="body status-grid" id="status">loading...</div>
   </section>
-
   <section class="panel">
     <h2>RLHF health + ranked boosts</h2>
     <div class="body" id="rlhf"><div style="color:var(--muted)">loading...</div></div>
   </section>
-
   <section class="panel">
     <h2>Recent scoreboards</h2>
     <div class="body" id="scoreboards"><div style="color:var(--muted)">loading...</div></div>
   </section>
-
   <section class="panel">
     <h2>Agent log</h2>
     <div class="body log" id="log"></div>
   </section>
-
   <section class="panel">
     <h2>Live coding / activity</h2>
     <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events...</div></div>
   </section>
-
   <section class="panel">
     <h2>Critique backlog</h2>
     <div class="body" id="critiques"><div style="color:var(--muted)">no open critiques</div></div>
   </section>
-
   <section class="panel">
     <h2>Control flow + GEMS + lessons</h2>
     <div class="body">
@@ -277,7 +273,6 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
       <div style="margin-top:6px" id="lessons"></div>
     </div>
   </section>
-
   <section class="panel">
     <h2>Code preview</h2>
     <pre class="codebox" id="codepane"># waiting for pipeline / tool-runtime output</pre>
@@ -331,6 +326,22 @@ function setCard(id, good) {
   if (good === true) el.classList.add('good');
   else if (good === false) el.classList.add('bad');
   else if (good === 'warn') el.classList.add('warn');
+}
+function renderMoonshots(moonshots) {
+  const el = document.getElementById('moonshotBoard');
+  if (!el) return;
+  const tiles = (moonshots && moonshots.tiles) || [];
+  if (!tiles.length) {
+    el.innerHTML = '<div class="m-card"><div class="label">Moonshots</div><div class="val">—</div><div class="sub">waiting measure_tick</div></div>';
+    return;
+  }
+  el.innerHTML = tiles.map(t => {
+    let cls = 'm-card';
+    if (t.good === true) cls += ' good';
+    else if (t.good === false || t.warn) cls += ' bad';
+    const val = t.value === true ? 'OK' : t.value === false ? 'NO' : (t.value ?? '—');
+    return '<div class="' + cls + '"><div class="label">' + esc(t.label) + '</div><div class="val">' + esc(val) + '</div><div class="sub">' + esc(t.sub || '') + '</div></div>';
+  }).join('');
 }
 
 async function tickHost() {
@@ -391,6 +402,7 @@ async function tickHost() {
     setPhase('p1b', ph['1B']);
     setPhase('p1c', ph['1C']);
     setPhase('p1d', ph['1D']);
+    renderMoonshots(d.moonshots);
 
     const wn = d.whats_next || {};
     document.getElementById('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '--';
@@ -433,14 +445,12 @@ async function tickHost() {
         pairs <strong>${esc(rl.n_preferences ?? '--')}</strong> ·
         episodes <strong>${esc(rl.n_episodes ?? '--')}</strong> ·
         <span style="color:${healthyColor}">${healthy}</span>
-        <span style="color:var(--muted);font-size:9px"> ${esc(rl.updated || '')}</span>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:3px">
         ${boosts.length ? boosts.map(b => `
           <div class="boost">
             <span class="s">${esc(b.strategy)}</span>
             <span class="b">${Number(b.boost).toFixed(3)}</span>
-            <span style="color:var(--muted);font-size:9px">${esc(b.wins)}/${esc(b.n)}</span>
           </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
       </div>`;
 
@@ -450,17 +460,16 @@ async function tickHost() {
           const ok = s.passed != null && s.total != null
             ? `<span class="${s.passed === s.total ? 'ok' : 'fail'}">${esc(s.passed)}/${esc(s.total)}</span>`
             : '--';
-          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok} <span style="color:var(--muted)">${esc(s.mode || '')}</span></div>`;
+          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok}</div>`;
         }).join('')
-      : '<div style="color:var(--muted)">(no scoreboards on origin)</div>';
+      : '<div style="color:var(--muted)">(no scoreboards)</div>';
 
     const crits = d.critiques || [];
     document.getElementById('critiques').innerHTML = crits.length
       ? crits.map(c => `
           <div class="crit">
             <div class="rc">${esc(c.root_cause || c.id)}</div>
-            <div class="meta">${esc(c.job_id || '')} conf=${esc(c.confidence ?? '--')}</div>
-            <div style="margin-top:2px;font-size:10px;color:#b0bcc8">${esc(c.smallest_experiment || '')}</div>
+            <div class="meta">${esc(c.job_id || '')}</div>
           </div>`).join('')
       : '<div style="color:var(--muted)">(no open critiques)</div>';
   } catch (e) {
@@ -475,32 +484,25 @@ async function tickSnapshot() {
     const r = await fetch('/api/snapshot');
     const d = await r.json();
     const consoleData = d.console || {};
-    const busy = !!consoleData.active || (d.current_work && String(d.current_work.phase || '').startsWith('live'));
-    const lc = document.getElementById('liveCoding');
-    lc.textContent = busy ? 'coding: LIVE' : 'coding: idle';
+    const busy = !!consoleData.active;
+    document.getElementById('liveCoding').textContent = busy ? 'coding: LIVE' : 'coding: idle';
     if (busy) document.getElementById('dot').className = 'dot busy';
-
     const term = document.getElementById('term');
     const lines = consoleData.lines || [];
     if (lines.length) {
       term.innerHTML = lines.slice(-40).map(L => {
         const ts = (L.ts || '').toString();
         const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
-        const cls = /err|fail|error/i.test(L.level || L.text || '') ? 'err' :
-                    /ok|pass/i.test(L.level || L.text || '') ? 'ok' :
-                    /live|job|step/i.test(L.level || L.text || '') ? 'live' : '';
-        return `<div class="term-line ${cls}"><div class="term-ts">${esc(clock || '--:--')}</div><div>${esc(L.text)}</div></div>`;
+        return `<div class="term-line"><div class="term-ts">${esc(clock || '--:--')}</div><div>${esc(L.text)}</div></div>`;
       }).join('');
       term.scrollTop = term.scrollHeight;
     }
-
     const code = consoleData.code_preview || (d.latest && d.latest.code) || null;
     if (code) document.getElementById('codepane').textContent = code;
-
     const gems = d.gems || [];
     document.getElementById('flow').innerHTML = gems.length
-      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b> ${esc(g.role || g.layer || '')}</div>`).join('<span class="flow-arrow">-></span>')
-      : '<span style="color:var(--muted);font-size:11px">Selenite -> Rose Quartz -> Clear Quartz -> Labradorite -> Amethyst</span>';
+      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b></div>`).join('<span class="flow-arrow">-></span>')
+      : '<span style="color:var(--muted);font-size:11px">Selenite -> Rose Quartz -> Clear Quartz -> Labradorite</span>';
   } catch (e) { /* non-fatal */ }
 }
 

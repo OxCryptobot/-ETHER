@@ -1,0 +1,38 @@
+{
+  "id": "mentor_coding_loop",
+  "match": "no_progress|unparseable|AST reject|tool_runtime_failed_terminal|max_steps",
+  "craft": "mentor",
+  "rule": "Mentor loop: list_files → read tests → read source → one apply_patch → run_tests. Stop after 3 stagnant fails. Never rewrite whole files. Never generate-fallback after terminal. Scoreboard is truth.",
+  "enqueue": {
+    "id": "playbook_mentor_coding_loop",
+    "note": "playbook:mentor_coding_loop doctrine drill",
+    "class": "fast",
+    "continue_on_fail": true,
+    "steps": [
+      {
+        "argv": [
+          ".venv/Scripts/python.exe",
+          "-c",
+          "from core.coding_method import default_method, prompt_suffix; m=default_method(); assert 'run_tests' in prompt_suffix(); print('doctrine', m.checklist())"
+        ],
+        "timeout": 60
+      },
+      {
+        "argv": [
+          ".venv/Scripts/python.exe",
+          "-m",
+          "scripts.batch_phase_d",
+          "--arm",
+          "direct",
+          "--mode",
+          "scripted",
+          "--fixture",
+          "ledger",
+          "--scoreboard",
+          "artifacts/scoreboard_mentor_drill.json"
+        ],
+        "timeout": 180
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-15T23:07:47.766572+00:00",
+  "updated": "2026-08-15T23:43:16.794391+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -19,7 +19,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.692,
+      "elapsed_s": 0.566,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -34,13 +34,31 @@
       "strategy": "tool_runtime_scripted"
     },
     {
+      "fixture": "topo",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.877,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
       "fixture": "lru",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.967,
+      "elapsed_s": 0.878,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -58,31 +76,13 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 1.016,
+      "elapsed_s": 0.88,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
         "read_file",
         "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.031,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
         "write_file",
         "run_tests"
       ],
@@ -96,7 +96,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.044,
+      "elapsed_s": 0.886,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -114,7 +114,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.679,
+      "elapsed_s": 0.55,
       "reason": "tests passed",
       "tools": [
         "list_files",

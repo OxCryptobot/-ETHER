@@ -1,0 +1,20 @@
+{
+  "id": "ss_train_gates_113444_2",
+  "note": "steady: doctrine + preference integrity",
+  "source": "foreman_steady",
+  "created": "2026-08-15T11:34:44.828238+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_train_gates.py",
+        "tests/test_preference_rlhf.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

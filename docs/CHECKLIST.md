@@ -1,5 +1,5 @@
 # ETHER Master Checklist
-**Updated:** 2026-08-15 (MCP CQ spike + batch flex)
+**Updated:** 2026-08-15 (MCP Citrine + CQ surfaces)
 
 Soft launch: **BLOCKED** until live tool-path produces an **honest PASS**.  
 Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor doctrine: **LOCKED**.
@@ -57,8 +57,14 @@ All respect FAST-first, one-hypothesis, training wheels, Labradorite on FAIL.
 - [x] **Spike landed**: `gems/clear_quartz/mcp_server.py` (execute_code / run_project_tests / sandbox_health)
 - [x] Unit proof: `tests/test_mcp_clear_quartz.py` (real sandbox + honest gate rejects generate fallback)
 - [x] Job: `00_mcp_cq_spike_01` (FIFO first, training wheels, install `[mcp]` + pytest)
-- [ ] Citrine as MCP resources (next)
+- [x] **Citrine MCP resources + tools**: `gems/citrine/mcp_server.py`
+  - Resources: `citrine://health`, `citrine://collections`, `citrine://collections/{name}`
+  - Tools: `search_memory`, `memory_health`, `list_collections`
+- [x] Unit proof: `tests/test_mcp_citrine.py`
+- [x] Job: `00_mcp_citrine_01` (install + pytest + create_server smoke)
+- [ ] Labradorite MCP tools (critique surface)
 - [ ] Wire concurrent MCP calls into `swarm_parallel_gems_smoke`
+- [ ] Thin MCP Client in ToolRuntime / Orchestrator (in-process preferred)
 
 ---
 

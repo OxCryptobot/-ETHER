@@ -1,0 +1,20 @@
+{
+  "id": "00_mcp_citrine_01",
+  "note": "MCP Citrine spike: install [mcp] + pytest test_mcp_citrine + create_server smoke",
+  "continue_on_fail": false,
+  "job_class": "FAST",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pip", "install", "-e", ".[mcp,dev]", "--quiet"],
+      "timeout": 180
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_mcp_citrine.py", "-q", "--tb=line"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from gems.citrine.mcp_server import create_server, _MCP_AVAILABLE; print('mcp_ok', _MCP_AVAILABLE); s=create_server(); print('server', type(s).__name__)"],
+      "timeout": 60
+    }
+  ]
+}

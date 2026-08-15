@@ -1296,7 +1296,8 @@
     "ss_archive_failed_001",
     "ss_archive_failed_141215_4",
     "ss_clean_live_ledger_spam",
-    "ss_direct_hard_001"
+    "ss_direct_hard_001",
+    "ss_direct_hard_141218_0"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1391,12 +1392,12 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-15T14:24:47.029871+00:00",
+  "last_tick": "2026-08-15T14:24:56.448921+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 25,
-  "last_enqueued": "ss_pipeline_ledger_142447_1",
+  "last_enqueued": "ss_train_gates_142453_2",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_141155_1",
-  "steady_idx": 842
+  "steady_idx": 843
 }

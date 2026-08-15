@@ -1,30 +1,27 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 18:35Z — **Phase 1 P0 landed · Phase 2 started**. Soft launch **BLOCKED**.
+**Updated:** 2026-08-15 18:38Z — Phase 2.2 multi-file AST tx landed. Soft launch **BLOCKED**.
 
 ## Host
-Alive (heartbeat fresh). Steady FAST jobs PASS. Nuclear git clean_slate in effect.
+Alive. Steady FAST PASS. Nuclear git clean_slate active.
 
-## Phase 1 (done)
-| Item | Status |
-|------|--------|
-| Honest live rates | `core/honest_live.py` + `scripts/honest_live_report.py` |
-| Mandatory Labradorite | `core/critique_on_fail.py` in `host_agent` |
-| Context compress v0 | `core/context.compress_text` |
+## Phase map
 
-## Phase 2 (in progress)
-| Item | Status |
-|------|--------|
-| PlanState confidence + one-step replan | **LANDED** `core/plan_state.py` |
-| Critique → PlanState hyp | **LANDED** |
-| Multi-file AST tx harden | next |
-| Pipeline monolith split (orchestration slice) | next |
-| Symbol graph v0 | later |
+| Phase | Item | Status |
+|-------|------|--------|
+| 1 | Honest live rates | LANDED |
+| 1 | Mandatory Labradorite | LANDED |
+| 1 | Context compress v0 | LANDED |
+| 2.1 | PlanState replan | LANDED |
+| **2.2** | **Multi-file AST tx harden** | **LANDED** |
+| 2.3 | Pipeline orchestration slice | NEXT |
+| 2.4 | Symbol/file index v0 | queued |
+| 2.5 | LoRA dry tick only | queued |
 
-## Gate
-Soft launch blocked until published `live_honest_rate` on expanded hard suite. Training wheels ON.
-
+## Verify on host
 ```powershell
+.venv\Scripts\python.exe -m pytest tests/test_multifile_ast_tx.py tests/test_plan_state.py tests/test_honest_live_critique_context.py -q
 .venv\Scripts\python.exe -m scripts.honest_live_report
-.venv\Scripts\python.exe -m pytest tests/test_honest_live_critique_context.py tests/test_plan_state.py -q
 ```
+
+Training wheels ON. No soft launch without published live_honest_rate.

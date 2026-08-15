@@ -1,7 +1,8 @@
 {
-  "job_id": "ss_archive_failed_184542_5",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-15T18:45:57.221521+00:00",
-  "note": "steady: archive old failed jobs (cleanup noise)"
+  "job_id": "ss_kill_live_pending_184401_0",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-15T18:46:03.559150+00:00",
+  "note": "steady: FAST purge any residual live ledger pending",
+  "failure_type": "step_fail"
 }

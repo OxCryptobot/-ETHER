@@ -17,9 +17,11 @@ EditTransaction). Syntax-broken Python is rejected before disk write.
 
 FastTrack 2026-08-14: no_progress early abort — 3 consecutive failed
 run_tests without score gain ends the loop instead of burning remaining
-steps. Stronger hint forces read_file before another write after failures.
+steps.
 
 FastTrack 2026-08-14: pep8_review tool dispatched via phaseG ext for GEMS.
+
+Mentor 2026-08-15: coding_method.prompt_suffix injected into system prompt.
 """
 
 from __future__ import annotations
@@ -308,7 +310,7 @@ class ToolRuntime:
             }
         return {"ok": False, "error": f"unknown tool: {tool}"}
 
-        def _system_prompt(self, objective: str) -> str:
+    def _system_prompt(self, objective: str) -> str:
         tools = "\n".join(f"- {t['name']}: {t['doc']}" for t in TOOL_SPECS)
         try:
             from core.coding_method import prompt_suffix

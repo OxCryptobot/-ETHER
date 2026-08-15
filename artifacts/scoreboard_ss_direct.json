@@ -1,13 +1,31 @@
 {
   "results": [
     {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.624,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
       "fixture": "ledger",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.652,
+      "elapsed_s": 0.628,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -27,7 +45,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.662,
+      "elapsed_s": 0.646,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -45,25 +63,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.668,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.67,
+      "elapsed_s": 0.647,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -81,7 +81,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.51,
+      "elapsed_s": 0.473,
       "reason": "tests passed",
       "tools": [
         "list_files",

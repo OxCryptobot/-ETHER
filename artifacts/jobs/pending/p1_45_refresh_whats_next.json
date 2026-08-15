@@ -1,0 +1,23 @@
+{
+  "id": "p1_45_refresh_whats_next",
+  "note": "Refresh whats_next.json after recovery + UI bind",
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "status"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.coding_method import prompt_suffix; from core.tool_runtime import TOOL_SPECS; assert 'pep8_review' in {t['name'] for t in TOOL_SPECS}; print('ok', len(prompt_suffix()))"
+      ],
+      "timeout": 60
+    }
+  ]
+}

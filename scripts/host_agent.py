@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ETHER host agent — critical ops: schedule rank + latency budget + measure survive."""
+"""ETHER host agent — moonshots: FAST-first hard gate + zero-click + measure panels."""
 from __future__ import annotations
 
 import json
@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from core.dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 except Exception:
     pass
@@ -76,8 +77,13 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
             elif venv_py.is_file():
                 cmd = [str(venv_py)] + list(cmd[1:])
     return subprocess.run(
-        cmd, cwd=str(ROOT), env=os.environ.copy(),
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        cmd,
+        cwd=str(ROOT),
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=timeout,
     )
 
@@ -90,6 +96,15 @@ def _measure_paths() -> List[str]:
         "soft_launch_status.json",
         "measure_tick.json",
         "honest_kpi.json",
+        "latency_slo.json",
+        "honest_sparkline.json",
+        "context_budget.json",
+        "scoreboard_latest.json",
+        "shadow_tags.json",
+        "gem_energy.json",
+        "ast_edit_kpi.json",
+        "smoothness.json",
+        "microbench.json",
         "lora_dry_tick.json",
         "foreman_state.json",
         "playbook_limiter.json",
@@ -111,20 +126,13 @@ def _light_paths() -> List[str]:
         p = ROOT / "artifacts" / "jobs" / name
         if p.exists():
             paths.append(f"artifacts/jobs/{name}")
+    paths.extend(_measure_paths())
     for name in (
         "strategy_stats.json",
         "preference_summary.json",
         "preferences_tail.jsonl",
         "whats_next.json",
         "performance_benchmark.json",
-        "foreman_state.json",
-        "honest_live_rates.json",
-        "phase3_snapshot.json",
-        "lora_dry_tick.json",
-        "lora_train_last.json",
-        "soft_launch_status.json",
-        "measure_tick.json",
-        "honest_kpi.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -151,7 +159,7 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     if p.returncode == 0:
         log(f"{label} push ok")
         return True
-    log(f"{label} push REJECTED rc={p.returncode} err={(p.stderr or '')[:400]}")
+    log(f"{label} push REJECTED rc={p.returncode}")
     run(["git", "fetch", "origin"], timeout=120)
     run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
@@ -206,7 +214,7 @@ def git_clean_slate(reason: str) -> bool:
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
     if r.returncode != 0:
-        log(f"clean_slate reset failed rc={r.returncode} err={(r.stderr or '')[:300]}")
+        log(f"clean_slate reset failed rc={r.returncode}")
         return False
     rehydrate_measure()
     return True
@@ -246,15 +254,14 @@ def maybe_measure_tick(force: bool = False) -> None:
         from core.measure_tick import run as measure_run
 
         report = measure_run()
-        kpi = (report.get("steps") or {}).get("honest_kpi") or {}
+        sm = (report.get("steps") or {}).get("smoothness") or {}
         log(
-            f"measure_tick ok={report.get('ok')} "
-            f"kpi={kpi.get('primary_kpi')} "
-            f"live_n={(report.get('steps') or {}).get('honest_live', {}).get('live_n')}"
+            f"measure_tick ok={report.get('ok')} smoothness={sm.get('score')} "
+            f"kpi={(report.get('steps') or {}).get('honest_kpi', {}).get('primary_kpi')}"
         )
         paths = _measure_paths()
         if paths:
-            _commit_and_push(paths, "host measure_tick: rates+kpi+soft_launch", "measure")
+            _commit_and_push(paths, "host measure_tick: moonshot panels", "measure")
     except Exception as e:
         log(f"measure_tick error: {type(e).__name__}: {e}")
 
@@ -266,23 +273,19 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
     paths = list(_light_paths())
     for p in (ROOT / "artifacts").glob("scoreboard*.json"):
         paths.append(str(p.relative_to(ROOT)))
-    for p in (ROOT / "artifacts").glob("trace_*.json"):
-        paths.append(str(p.relative_to(ROOT)))
     if do_heavy:
         paths.extend(["artifacts/jobs/pending", "artifacts/jobs/failed"])
         _last_heavy_push = now
     status = "PASS" if ok else "FAIL"
     mode = "light" if light and not do_heavy else "full"
-    msg = f"host agent report: job={job_id} {status} ({mode})"
     try:
-        _commit_and_push(paths, msg, f"report({job_id})")
+        _commit_and_push(paths, f"host agent report: job={job_id} {status} ({mode})", f"report({job_id})")
     except Exception as e:
         log(f"report push error: {e}")
         git_clean_slate("report_error")
 
 
 def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
-    """Critical fix #8: MEASURE > RECOVERY > FAST > LIVE."""
     try:
         from core.job_class import schedule_rank
     except Exception:
@@ -295,7 +298,14 @@ def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
         except Exception:
             return (9, p.name)
 
-    return sorted(paths, key=rank)
+    sorted_paths = sorted(paths, key=rank)
+    # Moonshot 13: hard gate — drop LIVE while non-LIVE pending
+    try:
+        from core.host_schedule import filter_fast_first
+
+        return filter_fast_first(sorted_paths)
+    except Exception:
+        return sorted_paths
 
 
 def _enrich_failure_from_scoreboard(envelope: Dict[str, Any]) -> None:
@@ -339,12 +349,18 @@ def _mandatory_critique(envelope: Dict[str, Any]) -> None:
         elif art.get("enqueue_skipped"):
             log(f"critique rate-limited: {art.get('enqueue_skipped')}")
         else:
-            log(
-                f"Labradorite critique id={art.get('id')} hyp={str(art.get('next_hypothesis') or '')[:80]} "
-                f"enqueued={art.get('enqueued')}"
-            )
+            log(f"Labradorite critique id={art.get('id')} enqueued={art.get('enqueued')}")
     except Exception as e:
         log(f"critique_on_fail error: {type(e).__name__}: {e}")
+    # Moonshot 23: zero-click scripted twin
+    try:
+        from core.zero_click_recovery import maybe_recover
+
+        zid = maybe_recover(envelope)
+        if zid:
+            log(f"zero_click_recovery enqueued={zid}")
+    except Exception as e:
+        log(f"zero_click error: {type(e).__name__}: {e}")
 
 
 def list_pending() -> List[Path]:
@@ -360,7 +376,6 @@ def run_steps(
 ) -> Tuple[int, Optional[str]]:
     last_rc = 0
     failure_type: Optional[str] = None
-    # Critical fix #4: clamp timeout by latency budget
     budget_cap = 3600
     if job is not None:
         try:
@@ -372,8 +387,7 @@ def run_steps(
     for i, step in enumerate(steps, 1):
         argv = step.get("argv")
         cmd = step.get("cmd")
-        raw_to = int(step.get("timeout", 3600))
-        to = min(raw_to, budget_cap)
+        to = min(int(step.get("timeout", 3600)), budget_cap)
         log(f"step {i}/{len(steps)} timeout={to}s: {argv or cmd}")
         try:
             if argv:
@@ -396,8 +410,7 @@ def run_steps(
             log(f"step failed rc={r.returncode}")
             last_rc = r.returncode
             failure_type = "step_fail"
-            step_continue = bool(step.get("continue_on_fail", continue_on_fail))
-            if not step_continue:
+            if not bool(step.get("continue_on_fail", continue_on_fail)):
                 return r.returncode, failure_type
     return last_rc, failure_type if last_rc else None
 
@@ -412,6 +425,19 @@ def process_job(path: Path) -> bool:
         return False
 
     job_id = job.get("id") or path.stem
+    # Moonshot 19: training wheels — refuse LIVE class at runtime
+    try:
+        from core.job_class import job_class, LIVE
+        from core.queue_governor import training_wheels_on
+
+        if training_wheels_on() and job_class(job) == LIVE:
+            log(f"TRAINING_WHEELS: skip LIVE job {job_id}")
+            FAILED.mkdir(parents=True, exist_ok=True)
+            path.rename(FAILED / f"{path.stem}_wheels_skip.json")
+            return False
+    except Exception:
+        pass
+
     log(f"JOB START {job_id}")
     write_status(current_job=job_id, phase="running")
     ok = False
@@ -422,12 +448,10 @@ def process_job(path: Path) -> bool:
         if job.get("steps"):
             rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont, job=job)
         else:
-            log("job has no steps")
             rc = 2
             failure_type = "bad_job"
         ok = rc == 0
     except subprocess.TimeoutExpired:
-        log("job timeout")
         ok = False
         rc = 124
         failure_type = "timeout"
@@ -449,7 +473,6 @@ def process_job(path: Path) -> bool:
             envelope["note"] = f"{job.get('note') or ''} [failure_type=timeout]".strip()
     _enrich_failure_from_scoreboard(envelope)
     LAST_JOB.write_text(json.dumps(envelope, indent=2), encoding="utf-8")
-
     if not ok:
         _mandatory_critique(envelope)
 
@@ -460,13 +483,7 @@ def process_job(path: Path) -> bool:
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
     log(f"JOB END {job_id} ok={ok} failure_type={failure_type}")
-    write_status(
-        current_job=None,
-        phase="idle",
-        last_job=job_id,
-        last_ok=ok,
-        last_failure_type=failure_type,
-    )
+    write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok, last_failure_type=failure_type)
     light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery")
     try:
         git_push_report(job_id, ok, light=light)
@@ -481,41 +498,31 @@ def call_foreman_tick() -> None:
         from scripts.foreman import tick
 
         result = tick()
-        enq = result.get("enqueued")
-        pb = result.get("playbook")
-        gov = result.get("governor") or {}
         log(
-            f"foreman.tick enqueued={enq} playbook={pb} cursor={result.get('cursor')} "
-            f"pending={gov.get('pending')} may_steady={gov.get('may_enqueue_steady')}"
+            f"foreman.tick enqueued={result.get('enqueued')} playbook={result.get('playbook')} "
+            f"cursor={result.get('cursor')}"
         )
         write_status(
             current_job=None,
             phase="foreman_tick",
-            last_enqueued=enq,
+            last_enqueued=result.get("enqueued"),
             foreman_cursor=result.get("cursor"),
-            live_skip_remaining=result.get("live_skip_remaining"),
-            governor=gov,
+            governor=result.get("governor"),
         )
     except Exception as e:
         log(f"foreman.tick failed: {e}")
 
 
 def main() -> int:
-    print("=" * 60, flush=True)
-    print("  ETHER host_agent (critical ops: governor + latency + kpi)", flush=True)
-    print(f"  root={ROOT}", flush=True)
-    print("=" * 60, flush=True)
-
+    print("ETHER host_agent (moonshots + critical ops)", flush=True)
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
-
     purge_live_pending()
     call_foreman_tick()
     maybe_measure_tick(force=True)
     push_liveness("startup")
-
     while True:
         try:
             write_status(current_job=None, phase="polling")
@@ -523,7 +530,6 @@ def main() -> int:
             purge_live_pending()
             jobs = list_pending()
             if not jobs:
-                log("idle -> foreman.tick + measure_tick")
                 call_foreman_tick()
                 maybe_measure_tick()
                 jobs = list_pending()
@@ -539,7 +545,6 @@ def main() -> int:
                     call_foreman_tick()
                     maybe_measure_tick()
         except KeyboardInterrupt:
-            log("stop")
             write_status(phase="stopped")
             return 0
         except Exception as e:

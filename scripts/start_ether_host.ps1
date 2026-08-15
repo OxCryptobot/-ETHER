@@ -9,8 +9,8 @@
 #   42 = source updated on origin -> restart in 1s
 #   other = crash -> restart with backoff (never stays dead)
 #
-# -Recover / -Hard: kill stale, hard-reset to origin/main, optional venv rebuild,
-# then enter the self-healing loop in THIS process (no nested powershell).
+# -Recover / -Hard: kill stale, abort rebase/merge, hard-reset to origin/main,
+# optional venv rebuild, then self-healing loop in THIS process.
 
 param(
     [switch]$Recover,
@@ -27,6 +27,24 @@ function Write-Banner {
 function Write-Ok  { param([string]$msg) Write-Host "  OK   $msg" -ForegroundColor Green }
 function Write-Warn { param([string]$msg) Write-Host "  WARN $msg" -ForegroundColor Yellow }
 function Write-Fail { param([string]$msg) Write-Host "  FAIL $msg" -ForegroundColor Red }
+
+function Clear-GitState {
+    # Nuclear: abort any stuck rebase/merge, then hard reset to origin/main
+    try { git rebase --abort 2>$null | Out-Null } catch {}
+    try { git merge --abort 2>$null | Out-Null } catch {}
+    try { git reset --mixed HEAD 2>$null | Out-Null } catch {}
+    $fetchOut = git fetch origin 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Warn "git fetch rc=$LASTEXITCODE : $fetchOut" }
+    $resetOut = git reset --hard origin/main 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "git reset failed: $resetOut"
+        return $false
+    }
+    $head = (git rev-parse --short HEAD 2>$null)
+    if (-not $head) { $head = "?" }
+    Write-Ok "HEAD=$head (clean slate)"
+    return $true
+}
 
 # --- resolve repo root ---
 $Root = $null
@@ -98,19 +116,9 @@ if ($Hard) {
 if ($killed -eq 0) { Write-Ok "no stale host python" } else { Write-Ok "killed $killed process(es)" }
 Start-Sleep -Seconds 1
 
-# --- 2. Git hard reset to origin/main ---
-Write-Banner "[2] git fetch + reset --hard origin/main" "Cyan"
-try { git merge --abort 2>$null | Out-Null } catch {}
-$fetchOut = git fetch origin 2>&1
-if ($LASTEXITCODE -ne 0) { Write-Warn "git fetch rc=$LASTEXITCODE : $fetchOut" }
-$resetOut = git reset --hard origin/main 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Write-Fail "git reset failed: $resetOut"
-    exit 1
-}
-$head = (git rev-parse --short HEAD 2>$null)
-if (-not $head) { $head = "?" }
-Write-Ok "HEAD=$head"
+# --- 2. Nuclear git clean slate ---
+Write-Banner "[2] git clean slate (abort rebase/merge + hard reset)" "Cyan"
+if (-not (Clear-GitState)) { exit 1 }
 
 # --- 3. Venv ---
 Write-Banner "[3] venv" "Cyan"
@@ -155,7 +163,7 @@ if (-not (Test-Path -LiteralPath $Py)) {
     exit 2
 }
 
-# --- 4. Forced import probe (must succeed before loop) ---
+# --- 4. Forced import probe ---
 Write-Banner "[4] boot probe (import host_agent + foreman)" "Cyan"
 $probeCode = @"
 import sys
@@ -184,7 +192,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Ok "boot probe passed"
 
-# --- 5. Self-healing loop (same process, never nested) ---
+# --- 5. Self-healing loop ---
 Write-Host ""
 Write-Banner "========================================" "Green"
 Write-Banner " ENTERING SELF-HEALING LOOP" "Green"
@@ -197,15 +205,8 @@ $backoff = 3
 $maxBackoff = 30
 
 while ($true) {
-    Write-Banner "[sync] git fetch + reset --hard origin/main" "Cyan"
-    git fetch origin 2>&1 | Out-Null
-    $reset = git reset --hard origin/main 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warn "reset failed: $reset"
-    } else {
-        $h = (git rev-parse --short HEAD 2>$null)
-        Write-Banner "[sync] HEAD=$h" "DarkGray"
-    }
+    Write-Banner "[sync] clean slate + start" "Cyan"
+    [void](Clear-GitState)
 
     Write-Banner "[start] scripts\ether_host.py" "Cyan"
     & $Py "scripts\ether_host.py"

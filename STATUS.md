@@ -1,30 +1,23 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 19:07Z — **Phase 3 batch landed**. Soft launch **BLOCKED**.
+**Updated:** 2026-08-15 21:18Z — **Phase 3.2 landed**. Soft launch **BLOCKED**.
 
 ## Law
-**Test after every build. Do not break working paths.** Defaults stay safe:
-- `ETHER_LOOP_RUNNER=0`
-- `ETHER_SYMBOL_INDEX=0`
-- LoRA dry-tick only
-- Soft launch blocked until rates + mentor sign-off
+Test after every build. Do not break working paths.
 
 ## Host
-Alive. Job `p3_soft_launch_measure` enqueued.
+Alive. Job `p3_2_verify` enqueued (tests + kill + snapshot + rates).
 
-## Phase 3 batch
+## Phase 3.2
 | Item | Status |
 |------|--------|
-| Steady: `ss_honest_live_report` | **in STEADY** |
-| Steady: `ss_lora_dry_tick` | **in STEADY** |
-| Steady: `ss_phase2_regression` | **in STEADY** |
-| `core/phase3_snapshot.py` | **landed** |
-| Tests | `tests/test_phase3_snapshot.py` |
-| Pipeline body rewrite | **not done** (by design — no risk) |
+| Fix `ss_kill_live_pending` SyntaxError | **fixed** → `scripts/kill_live_pending.py` |
+| `core/pipeline_tool_first.py` | **landed** (adapter only; Pipeline body not rewritten) |
+| Light push: rates + snapshot + lora_dry | **host_agent** |
+| Steady: `ss_phase3_snapshot` | **added** |
+| Tests | `tests/test_phase32_tool_first_kill.py` |
 
-## Next (Phase 3.2 after host green)
-1. Read published `artifacts/honest_live_rates.json` + `phase3_snapshot.json`
-2. Optional: behavior-preserving wire of `decide_tool_first_terminal` into Pipeline terminal block
-3. Expanded hard suite measurement only when mentor requests live runs
+## Still blocked
+Soft launch until published rates + mentor sign-off. No live hard suite without explicit request.
 
 Training wheels ON.

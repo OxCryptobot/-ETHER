@@ -9,23 +9,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "core" / "tool_runtime.py"
 
-OLD = '''    def _system_prompt(self, objective: str) -> str:
-        tools = "\\n".join(f"- {t['name']}: {t['doc']}" for t in TOOL_SPECS)
-        return (
-            "You are a coding agent with tools. Each turn, output ONE JSON object only:\\n"
-            '  {"tool": "<name>", "args": {...}}\\n'
-            "No markdown, no prose. Tools:\\n"
-            f"{tools}\\n\\n"
-            f"Objective:\\n{objective}\\n"
-            "Strategy: list/read to understand, write_file to fix, run_tests to verify, "
-            "done when tests pass."
-        )
-'''
 
-NEW = '''    def _system_prompt(self, objective: str) -> str:
+def main() -> int:
+    text = TARGET.read_text(encoding="utf-8")
+    if "from core.coding_method import prompt_suffix" in text:
+        print("already_patched")
+        return 0
+
+    marker = "def _system_prompt(self, objective: str) -> str:"
+    if marker not in text:
+        print("anchor_missing")
+        return 2
+
+    new_fn = '''    def _system_prompt(self, objective: str) -> str:
         tools = "\\n".join(f"- {t['name']}: {t['doc']}" for t in TOOL_SPECS)
         try:
             from core.coding_method import prompt_suffix
+
             doctrine = prompt_suffix()
         except Exception:
             doctrine = (
@@ -43,17 +43,24 @@ NEW = '''    def _system_prompt(self, objective: str) -> str:
             "pep8_review when green, done when tests pass."
         )
 '''
+    # Fix double-escaped newlines to real Python source escapes
+    new_fn = new_fn.replace("\\\\n", "\\n")
 
+    start = text.index(marker)
+    # Find end of function: next method at same indent
+    rest = text[start:]
+    lines = rest.splitlines(keepends=True)
+    end_rel = len(lines[0])
+    for line in lines[1:]:
+        if line.startswith("    def ") or line.startswith("def "):
+            break
+        end_rel += len(line)
+    else:
+        print("end_missing")
+        return 3
 
-def main() -> int:
-    text = TARGET.read_text(encoding="utf-8")
-    if "from core.coding_method import prompt_suffix" in text:
-        print("already_patched")
-        return 0
-    if OLD not in text:
-        print("anchor_missing")
-        return 2
-    TARGET.write_text(text.replace(OLD, NEW, 1), encoding="utf-8")
+    updated = text[:start] + new_fn + "\n" + text[start + end_rel :]
+    TARGET.write_text(updated, encoding="utf-8")
     print("patched", TARGET)
     return 0
 

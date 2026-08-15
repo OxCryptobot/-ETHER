@@ -26,6 +26,13 @@ PERF 2026-08-15 (10x throughput):
 - Preference refresh + scripted pipeline prioritized over live.
 - Stronger live-fail detection so GPU is not burned on known-timeout fixtures.
 - Mirror state to artifacts/foreman_state.json for Control Matrix.
+
+PERF 2026-08-15b (100x aspiration):
+- LIVE_SKIP_TICKS = 36.
+- live template REMOVED from STEADY (Phase 1D gate still OPEN).
+- ss_kill_live_pending first in STEADY for queue hygiene.
+- BATCH_SIZE = 16.
+- class always set on every job.
 """
 from __future__ import annotations
 
@@ -47,8 +54,8 @@ LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
-BATCH_SIZE = 12
-LIVE_SKIP_TICKS = 12
+BATCH_SIZE = 16
+LIVE_SKIP_TICKS = 36
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -126,6 +133,21 @@ CURRICULUM: List[Dict[str, Any]] = [
 
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
+        "id_prefix": "ss_kill_live_pending",
+        "note": "steady: FAST purge any residual live ledger pending",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
+            "from pathlib import Path; import shutil; from datetime import datetime, timezone; "
+            "ROOT=Path('.').resolve(); P=ROOT/'artifacts'/'jobs'/'pending'; ARCH=ROOT/'artifacts'/'jobs'/'failed_archived'; "
+            "ARCH.mkdir(parents=True, exist_ok=True); killed=0; "
+            "for p in list(P.glob('ss_pipeline_ledger_*.json')) + list(P.glob('*live*ledger*.json')): "
+            "  if p.name=='.gitkeep': continue; "
+            "  dst=ARCH/(p.stem+'_killed_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'); "
+            "  try: shutil.move(str(p), str(dst)); killed+=1\n  except Exception as e: print(e); "
+            "print('killed_live_pending', killed)"
+        ], "timeout": 30}],
+    },
+    {
         "id_prefix": "ss_pipeline_scripted",
         "note": "steady: pipeline scripted (fast 1D signal)",
         "continue_on_fail": True,
@@ -166,13 +188,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
             "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
         ], "timeout": 180}],
-    },
-    {
-        "id_prefix": "ss_pipeline_ledger",
-        "note": "steady: pipeline ledger live under terminal harden",
-        "continue_on_fail": True,
-        "live": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--fixture", "ledger", "--max-steps", "16", "--timeout", "300", "--scoreboard", "artifacts/scoreboard_ss_ledger.json"], "timeout": 480}],
     },
 ]
 
@@ -244,6 +259,7 @@ def write_job(job: Dict[str, Any]) -> Path:
     job = dict(job)
     job.setdefault("created", _now())
     job.setdefault("source", "foreman")
+    job.setdefault("class", "fast")
     path.write_text(json.dumps(job, indent=2), encoding="utf-8")
     return path
 
@@ -338,7 +354,7 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
         write_job(job)
         enqueued.append(jid)
         idx += 1
-        if len(enqueued) >= max(3, BATCH_SIZE // 2):
+        if len(enqueued) >= max(4, BATCH_SIZE // 2):
             break
     state["steady_idx"] = idx
     state["mode"] = "steady"

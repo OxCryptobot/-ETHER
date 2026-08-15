@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-08-15T23:01:10.126482+00:00",
+  "soft_launch_ready": false,
+  "soft_launch_blocked": true,
+  "blocked_reasons": [
+    "live_honest_rate_below_0.99",
+    "training_wheels_on",
+    "ETHER_SOFT_LAUNCH_not_1"
+  ],
+  "threshold": 0.99,
+  "rates_status": "measuring",
+  "live_n": 26,
+  "live_honest_rate": 0.3462,
+  "training_wheels": true,
+  "explicit_flag": false,
+  "snapshot_ok": true,
+  "note": "Ready only when rates green + wheels off + ETHER_SOFT_LAUNCH=1. This module never auto-lifts gates."
+}

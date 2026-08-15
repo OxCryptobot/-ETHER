@@ -1,0 +1,25 @@
+{
+  "updated": "2026-08-15T23:01:10.089059+00:00",
+  "scripted": {
+    "n": 124,
+    "p50": 2.123,
+    "p95": 3.905,
+    "max": 6.203
+  },
+  "live": {
+    "n": 26,
+    "p50": 334.213,
+    "p95": 683.497,
+    "max": 984.528
+  },
+  "tool_runtime": {
+    "n": 41,
+    "p50": 1.868,
+    "p95": 317.624,
+    "max": 984.528
+  },
+  "live_over_scripted_p95": 175.03,
+  "alert_ratio_threshold": 10.0,
+  "alert": true,
+  "note": "Alert when live p95 > Nx scripted p95"
+}

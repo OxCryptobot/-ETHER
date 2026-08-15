@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-08-15T23:01:10.109255+00:00",
+  "phase": "3",
+  "soft_launch_blocked": true,
+  "training_wheels": true,
+  "flags": {
+    "ETHER_LOOP_RUNNER": false,
+    "ETHER_SYMBOL_INDEX": false
+  },
+  "honest_live": {
+    "updated": "2026-08-15T23:01:10.097175+00:00",
+    "n_rows": 163,
+    "ok_n": 140,
+    "honest_pass_n": 140,
+    "honest_pass_rate": 0.8589,
+    "live_n": 26,
+    "live_ok_n": 9,
+    "live_honest_n": 9,
+    "live_honest_rate": 0.3462,
+    "live_ok_honest_rate": 1.0,
+    "disguised_pass_n": 0,
+    "disguised_pass_rate": 0.0,
+    "tool_live_n": 13,
+    "soft_launch_blocked": true,
+    "gate": "is_honest_tool_path_pass",
+    "note": "Soft launch stays blocked until live_honest_rate is measured on expanded hard suite and meets threshold. Zero live rows => unknown, not green.",
+    "status": "measuring"
+  },
+  "lora_dry_tick": {
+    "ok": true,
+    "trained": false,
+    "dry_run": true,
+    "path": "artifacts/lora_dry_tick.json"
+  },
+  "tool_first_gate": {
+    "pass_ok": true,
+    "pass_terminal": true,
+    "fail_ok": false,
+    "fail_terminal": true,
+    "fail_degraded": [
+      "tool_runtime_failed_terminal"
+    ]
+  },
+  "errors": [],
+  "ok": true,
+  "note": "Measurement only. Soft launch requires expanded hard suite live_honest_rate + mentor sign-off."
+}

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-08-15T23:01:10.109255+00:00",
+  "ok": true,
+  "dry_run": true,
+  "forced_dry": true,
+  "trained": false,
+  "adapter_written": false,
+  "readiness": {
+    "timestamp": "2026-08-15T23:01:10.102252+00:00",
+    "training_wheels": true,
+    "may_train": false,
+    "gate_reason": "training_wheels_require_ETHER_LORA_TRAIN=1",
+    "n_preference_pairs": 48,
+    "n_success_sft": 500,
+    "recommended_rank": 16,
+    "recommended_max_steps": 20,
+    "vram_note": "GTX 1650 4GB \u2192 keep rank<=16, target_modules=[q_proj,v_proj] or equivalent",
+    "next": "Set ETHER_LORA_TRAIN=1 and ETHER_LORA_PROMOTE=1 only after dashboard preference health is green",
+    "doctrine": "offline_rlhf_then_gated_lora"
+  },
+  "train_adapter": {
+    "ok": true,
+    "dry_run": true,
+    "forced_dry_run": true,
+    "message": "dry-run complete \u2014 structure ready for real train when flags lifted",
+    "report_path": "artifacts\\lora_adapters\\train_report_3169a40e-101.json"
+  },
+  "doctrine": "dry_tick_only_phase_2_5",
+  "next": "Keep collecting preference pairs. Real train only after ETHER_LORA_TRAIN=1 + ETHER_LORA_PROMOTE=1 + green preference health."
+}

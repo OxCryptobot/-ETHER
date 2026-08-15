@@ -1,11 +1,12 @@
 {
-  "generated_at": "2026-08-15T14:55:00+00:00",
-  "source": "scoreboard_ss_* measured runs + host policy",
+  "generated_at": "2026-08-15T15:08:00+00:00",
+  "source": "scoreboard_ss_* measured runs + host policy + purge",
   "hardware": {
     "gpu": "GTX 1650 4GB",
     "ram_gb": 12,
     "primary_model": "qwen3.5:4b",
-    "constraint": "host <=4B only"
+    "constraint": "host <=4B only",
+    "vram_budget_notes": "4GB tight for 4B Q4 + KV cache. Prefer num_ctx<=8192, keep model loaded, avoid concurrent loads. Target peak VRAM <3.6GB to leave headroom for tool runtime + OS."
   },
   "scripted_baselines": {
     "pipeline_ledger": {
@@ -56,23 +57,43 @@
       "scripted_s": 2.142,
       "live_s": 317.817,
       "ratio": 148.4,
-      "note": "scripted is ~148x faster on same fixture; live currently fails"
+      "note": "scripted is ~148x faster on same fixture; live currently fails. Root: full LLM multi-step tool loop on 1650 vs deterministic scripted path."
     },
     "direct_hard_mean_s": 2.423,
-    "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 20+ jobs/h on pure FAST."
+    "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 20+ jobs/h on pure FAST. Residual live pending purged 2026-08-15T15:05."
   },
   "host_policy": {
     "live_skip_ticks": 36,
     "steady_order": ["kill_live", "pipeline_scripted", "direct_hard", "tool_runtime", "train_gates", "archive", "pref_refresh"],
     "git_report": "lightweight for FAST/continue_on_fail",
     "training_wheels": true,
-    "live_in_steady": false
+    "live_in_steady": false,
+    "fast_first_sort": true
   },
   "targets": {
-    "scripted_ledger_p95_s": 5.0,
+    "scripted_ledger_p95_s": 4.0,
     "direct_hard_5of5": true,
-    "live_ledger_honest_pass": "OPEN — Phase 1D gate (blocked until measured honest tool path)",
-    "host_jobs_per_hour_fast": 20,
-    "throughput_multiplier_vs_live_spam": 100
+    "direct_hard_mean_s": 3.0,
+    "live_ledger_honest_pass": "OPEN — Phase 1D gate (blocked until measured honest tool path with is_honest_tool_path_pass)",
+    "host_jobs_per_hour_fast": 25,
+    "throughput_multiplier_vs_live_spam": 100,
+    "vram_peak_gb": 3.6,
+    "control_matrix": {
+      "class_mix_pending": "required",
+      "live_skip_remaining": "required",
+      "throughput": "required",
+      "performance": "required"
+    }
+  },
+  "gpu_memory_optimization": {
+    "priority": [
+      "Keep qwen3.5:4b loaded (ollama keep_alive high)",
+      "Cap ETHER_NUM_CTX / num_ctx to 8192 or lower on host profile",
+      "Prefer Q4_K_M or Q4_0 quant; avoid higher",
+      "Single concurrent generation; no parallel model loads",
+      "Tool-runtime path avoids full agent loop when possible",
+      "Measure nvidia-smi peak during direct_hard vs live"
+    ],
+    "hypothesis": "Most of the 148x is inference + KV + tool orchestration overhead; scripted bypasses it entirely. Live honest pass needs tool_order + budget that fits 4GB without OOM/timeout."
   }
 }

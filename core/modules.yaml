@@ -1,10 +1,4 @@
 # core/modules.yaml — core module registry (A-6/A-8 shim-proliferation guard)
-#
-# Every non-__init__ module under core/ that is not yet imported by another
-# core module must be listed here with its purpose and the stage that
-# introduced it. The topology suite (tests/test_topology.py, rule D3/D5) and
-# the continuous-audit pack (ARCH-005) fail on an unregistered new module.
-# Entries use the stem form "<subpath>/<module>" relative to core/.
 
 modules:
   vectors:
@@ -31,3 +25,6 @@ modules:
   failure_types:
     introduced: "fasttrack(2026-08-14): typed failure contract"
     purpose: "Canonical failure_type strings for host envelopes + tool runtime + playbooks"
+  coding_method:
+    introduced: "mentor(2026-08-15): apprentice coding doctrine schema"
+    purpose: "CodingMethod + SYSTEM_RULES — mentor best practices injected into ToolRuntime prompts"

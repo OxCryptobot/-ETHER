@@ -1,12 +1,12 @@
-# ETHER host launcher — single window, self-healing
+# ETHER host launcher -- single window, self-healing
 #
 #   powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
 #   powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1 -Recover
 #
 # Exit codes from ether_host.py / host_agent:
-#   0  = clean stop (Ctrl+C) → exit permanently
-#   42 = source updated on origin → restart in 1s
-#   other = crash → restart with backoff (never stays dead)
+#   0  = clean stop (Ctrl+C) -> exit permanently
+#   42 = source updated on origin -> restart in 1s
+#   other = crash -> restart with backoff (never stays dead)
 #
 # -Recover: kill stale host python processes, hard-reset to origin/main, then start.
 
@@ -31,7 +31,7 @@ $env:ETHER_ROOT = $Root
 $env:PYTHONIOENCODING = "utf-8"
 $env:PYTHONPATH = $Root
 
-# Host model lock (GTX 1650 4GB) — do not override if already set in .env via process
+# Host model lock (GTX 1650 4GB) -- do not override if already set in .env via process
 if (-not $env:ETHER_PRIMARY_MODEL) {
     $env:ETHER_PRIMARY_MODEL = "qwen3.5:4b-q4_K_M"
 }
@@ -41,11 +41,12 @@ if (-not $env:ETHER_HW_PROFILE) {
 
 $Py = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not (Test-Path -LiteralPath $Py)) {
-    Write-Error "Missing $Py — create venv first: python -m venv .venv && .venv\Scripts\pip install -e ."
+    Write-Error "Missing $Py -- create venv first: python -m venv .venv ; .venv\Scripts\pip install -e ."
     exit 1
 }
 
-function Write-Banner([string]$msg, [string]$color = "Cyan") {
+function Write-Banner {
+    param([string]$msg, [string]$color = "Cyan")
     Write-Host $msg -ForegroundColor $color
 }
 
@@ -64,21 +65,28 @@ function Sync-Origin {
 
 function Stop-StaleHost {
     # Kill only processes clearly running ether_host / host_agent under this root
-    $patterns = @("ether_host.py", "host_agent.py", "scripts\\ether_host", "scripts/ether_host")
+    $patterns = @("ether_host.py", "host_agent.py", "scripts\ether_host", "scripts/ether_host")
     $killed = 0
-    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.Name -match "python" -and
-            $_.CommandLine -and
-            ($patterns | Where-Object { $_.CommandLine -like "*$_*" })
-        } |
-        ForEach-Object {
-            try {
-                Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
-                $killed++
-                Write-Banner "[recover] killed pid=$($_.ProcessId)" "Yellow"
-            } catch {}
+    $procs = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
+    foreach ($p in $procs) {
+        if ($p.Name -match "python" -and $p.CommandLine) {
+            $cmd = $p.CommandLine
+            $hit = $false
+            foreach ($pat in $patterns) {
+                if ($cmd -like "*$pat*") {
+                    $hit = $true
+                    break
+                }
+            }
+            if ($hit) {
+                try {
+                    Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
+                    $killed++
+                    Write-Banner "[recover] killed pid=$($p.ProcessId)" "Yellow"
+                } catch {}
+            }
         }
+    }
     if ($killed -eq 0) {
         Write-Banner "[recover] no stale host python found" "DarkGray"
     }
@@ -115,13 +123,13 @@ while ($true) {
     }
 
     if ($code -eq 42) {
-        Write-Banner "[reload] source updated (exit 42) — restart in 1s" "Cyan"
+        Write-Banner "[reload] source updated (exit 42) -- restart in 1s" "Cyan"
         $backoff = 3
         Start-Sleep -Seconds 1
         continue
     }
 
-    Write-Banner "[crash] exit=$code — restart in ${backoff}s" "Yellow"
+    Write-Banner "[crash] exit=$code -- restart in ${backoff}s" "Yellow"
     Start-Sleep -Seconds $backoff
     $backoff = [Math]::Min($backoff * 2, $maxBackoff)
 }

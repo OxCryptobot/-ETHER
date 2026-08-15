@@ -2072,3 +2072,7 @@
 [2026-08-15T18:42:53.226785+00:00] JOB START ss_pipeline_scripted_184035_1
 [2026-08-15T18:42:53.227782+00:00] step 1/1: ['.venv/Scripts/python.exe', '-m', 'scripts.batch_phase_d', '--arm', 'pipeline', '--mode', 'scripted', '--fixture', 'ledger', '--max-steps', '16', '--scoreboard', 'artifacts/scoreboard_ss_pipeline_scripted.json']
 [2026-08-15T18:42:54.200081+00:00] JOB END ss_pipeline_scripted_184035_1 ok=True failure_type=None
+[2026-08-15T18:43:09.433668+00:00] report(ss_pipeline_scripted_184121_1) push ok after clean_slate
+[2026-08-15T18:43:10.242312+00:00] JOB START ss_pref_refresh_184022_6
+[2026-08-15T18:43:10.243314+00:00] step 1/1: ['.venv/Scripts/python.exe', '-c', 'from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))']
+[2026-08-15T18:43:11.316229+00:00] JOB END ss_pref_refresh_184022_6 ok=True failure_type=None

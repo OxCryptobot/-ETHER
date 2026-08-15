@@ -1,15 +1,12 @@
-"""Collect host_agent job queue, logs, foreman, apprentice lessons, RLHF.
+"""Collect host_agent job queue, logs, foreman, apprentice lessons, RLHF, moonshots.
 
 Path rule (non-negotiable): read what host_agent writes under artifacts/.
 Never rely on memory/ for remote observability — it is gitignored.
-Prefer artifacts/ mirrors for foreman/lessons; fall back only with note.
 
-2026-08-15 Control Matrix:
+2026-08-15 Control Matrix host-first:
 - job class mix (fast/live/any)
-- live_skip_remaining exposure
-- recent fail taxonomy
-- throughput signals (jobs in last window)
-- performance_benchmark (scripted vs live measured times)
+- moonshot panels (smoothness, honest KPI, latency SLO, …)
+- NO legacy flywheel/guardian/batch as primary health
 """
 from __future__ import annotations
 
@@ -31,7 +28,6 @@ FOREMAN_ARTIFACTS = ROOT / "artifacts" / "foreman_state.json"
 FOREMAN_MEMORY = ROOT / "memory" / "host_agent" / "foreman_state.json"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
-STATUS_MD = ROOT / "STATUS.md"
 PREF_SUMMARY = ROOT / "artifacts" / "preference_summary.json"
 STRATEGY_STATS = ROOT / "artifacts" / "strategy_stats.json"
 WHATS_NEXT = ROOT / "artifacts" / "whats_next.json"
@@ -88,6 +84,7 @@ def _infer_class(job: Dict[str, Any]) -> str:
             "tool_runtime",
             "benchmark",
             "kill_live",
+            "measure",
         )
     ):
         return "fast"
@@ -106,7 +103,7 @@ def _class_mix(jobs: List[Dict[str, Any]]) -> Dict[str, int]:
 
 def _tail_log(max_lines: int = 120) -> List[str]:
     if not LOG.exists():
-        return ["(no agent log yet — start scripts/ether_host.py)"]
+        return ["(no agent log yet — start scripts/host_agent.py)"]
     try:
         lines = LOG.read_text(encoding="utf-8", errors="replace").splitlines()
         return lines[-max_lines:]
@@ -210,41 +207,12 @@ def _phase1_board() -> Dict[str, str]:
     elif prefer_patch or apply_pref:
         board["1C"] = "PARTIAL"
 
-    live_scoreboards = list(ARTIFACTS.glob("scoreboard*p1_53*")) if ARTIFACTS.exists() else []
-    live_honest = False
-    for p in live_scoreboards:
-        try:
-            data = json.loads(p.read_text(encoding="utf-8"))
-            for row in data.get("results") or []:
-                if row.get("ok") and row.get("honest_tool_path") is True:
-                    live_honest = True
-                    break
-        except Exception:
-            pass
-    if live_honest:
-        board["1D"] = "LANDED"
+    rates = _read_json(ARTIFACTS / "honest_kpi.json")
+    if rates.get("honest_tool_pass") and rates.get("tool_attempts"):
+        board["1D"] = "LANDED" if (rates.get("honest_rate") or 0) > 0 else "BLOCKED"
     else:
         board["1D"] = "BLOCKED"
 
-    text = _read_text(STATUS_MD, limit=8000).lower()
-    if text:
-        for key, patterns in (
-            ("1A", ("1a tool-first", "1a tool first")),
-            ("1B", ("1b agentstate", "1b agent state")),
-            ("1C", ("1c ast",)),
-            ("1D", ("1d expand", "1d measured", "1d eval")),
-        ):
-            for line in text.splitlines():
-                if any(p in line for p in patterns):
-                    if "complete" in line or "landed" in line or "wired" in line:
-                        board[key] = "LANDED"
-                    elif "blocked" in line:
-                        board[key] = "BLOCKED"
-                    elif "in progress" in line or "next" in line or "partial" in line:
-                        if board[key] == "unknown":
-                            board[key] = "IN PROGRESS"
-                    elif "queued" in line and board[key] == "unknown":
-                        board[key] = "QUEUED"
     return board
 
 
@@ -368,7 +336,6 @@ def _fail_taxonomy(failed: List[Dict[str, Any]], last: Dict[str, Any]) -> Dict[s
 
 
 def _perf_summary(bench: Dict[str, Any]) -> Dict[str, Any]:
-    """Compact view for Control Matrix."""
     if not bench or bench.get("error"):
         return {"available": False}
     scripted = (bench.get("scripted_baselines") or {}).get("pipeline_ledger") or {}
@@ -424,9 +391,18 @@ def collect_host_agent() -> Dict[str, Any]:
     fail_tax = _fail_taxonomy(failed, last)
     perf = _perf_summary(perf_bench)
 
+    moonshots: Dict[str, Any] = {}
+    try:
+        from dashboard.collector_moonshots import collect_moonshots
+
+        moonshots = collect_moonshots()
+    except Exception as e:
+        moonshots = {"error": str(e)[:160], "tiles": []}
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "agent_alive": agent_alive,
+        "truth": "host_agent",
         "status": status,
         "last_job": last,
         "whats_next": whats_next,
@@ -454,7 +430,10 @@ def collect_host_agent() -> Dict[str, Any]:
             or status.get("last_failure_type"),
             "performance": perf,
         },
-        "performance_benchmark": perf_bench if perf_bench and not perf_bench.get("error") else None,
+        "moonshots": moonshots,
+        "performance_benchmark": perf_bench
+        if perf_bench and not perf_bench.get("error")
+        else None,
         "log_lines": _tail_log(150),
         "report": report,
         "report_md": report_md,

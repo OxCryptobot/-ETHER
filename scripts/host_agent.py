@@ -1,30 +1,11 @@
 #!/usr/bin/env python3
 """ETHER host agent - job queue consumer. Standalone + self-refilling.
 
-2026-08-14 permanent fix:
-- On empty pending, call scripts.foreman.tick() so the system never idles
-  and does not depend on chat/Grok to enqueue work.
-- Still drains FIFO, still reports to GitHub, still recovers on diverge.
-
-2026-08-14 FastTrack:
-- Timeouts raise as typed failure_type=timeout on last_job envelope so
-  playbooks and lessons can match without parsing free text only.
-
-2026-08-15 PERF 10x:
-- git_push_report is lightweight (no full done/ tree every job — prevents
-  WinError 206 and massive push latency as history grows).
-- Strict FAST-first ranking; LIVE jobs always last.
-- continue_on_fail measurement jobs use light report path.
-- Explicit live-ledger pending killer support.
-- Always push performance_benchmark.json + foreman_state.json.
-
-2026-08-15 LIVENESS:
-- push_liveness() every ~60s while idle so artifacts/host_agent_status.json
-  on origin always reflects real heartbeat. Fixes false "host offline" when
-  the process is alive but not finishing jobs.
-
-2026-08-15b:
-- push_liveness logs full git stdout/stderr on failure (no more silent push death).
+2026-08-15c NUCLEAR GIT:
+- git_clean_slate() aborts rebase/merge, fetches, hard-resets to origin/main.
+- push_liveness / git_push_report NEVER leave the repo in a stuck rebase or
+  non-fast-forward state. On push reject: clean slate, rewrite status, re-commit,
+  force a clean push path. Untracked done/ history must never block observability.
 """
 from __future__ import annotations
 
@@ -58,8 +39,8 @@ LOG = ROOT / "artifacts" / "host_agent_log.txt"
 _last_recover_log = 0.0
 _last_heavy_push = 0.0
 _last_liveness_push = 0.0
-HEAVY_PUSH_INTERVAL = 180  # seconds between full tree pushes
-LIVENESS_INTERVAL = 55     # seconds between idle heartbeat pushes
+HEAVY_PUSH_INTERVAL = 180
+LIVENESS_INTERVAL = 55
 
 
 def log(msg: str) -> None:
@@ -104,100 +85,53 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
     )
 
 
-def git_reset_to_origin(reason: str) -> bool:
+def git_clean_slate(reason: str) -> bool:
+    """Abort any rebase/merge, fetch, hard-reset to origin/main.
+
+    This is the only recovery path. Never leave the repo in interactive rebase,
+    merge conflict, or diverged state. Untracked files are left alone (done/
+    history is local noise and must not block pushes of status/last_job).
+    """
     global _last_recover_log
     now = time.time()
-    if now - _last_recover_log > 30:
-        log(f"git recover ({reason}): reset --hard origin/main")
+    if now - _last_recover_log > 15:
+        log(f"git clean_slate ({reason})")
         _last_recover_log = now
+    # Kill stuck rebase / merge state
+    run(["git", "rebase", "--abort"], timeout=30)
+    run(["git", "merge", "--abort"], timeout=30)
+    # Drop any staged junk from a failed commit attempt
+    run(["git", "reset", "--mixed", "HEAD"], timeout=30)
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
     if r.returncode != 0:
-        log(f"reset failed rc={r.returncode} out={(r.stdout or '')[:200]} err={(r.stderr or '')[:300]}")
+        log(f"clean_slate reset failed rc={r.returncode} err={(r.stderr or '')[:300]}")
         return False
     return True
+
+
+def git_reset_to_origin(reason: str) -> bool:
+    return git_clean_slate(reason)
 
 
 def git_sync() -> None:
     run(["git", "fetch", "origin"], timeout=120)
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
     if r.returncode != 0:
-        git_reset_to_origin("diverged")
+        git_clean_slate("diverged")
 
 
-def push_liveness(reason: str = "idle") -> None:
-    """Push status + last_job so remote observability always has a fresh heartbeat.
-
-    Called from idle loops every LIVENESS_INTERVAL seconds. Lightweight.
-    On any failure, logs full git stdout/stderr so silent push death is impossible.
-    """
-    global _last_liveness_push
-    now = time.time()
-    if now - _last_liveness_push < LIVENESS_INTERVAL:
-        return
-    _last_liveness_push = now
-    try:
-        # Always refresh status first so the file content is current
-        write_status(current_job=None, phase=reason)
-        paths = [
-            "artifacts/host_agent_status.json",
-            "artifacts/host_agent_last_job.json",
-        ]
-        if LOG.exists():
-            paths.append("artifacts/host_agent_log.txt")
-        for name in ("pending", "failed"):
-            p = ROOT / "artifacts" / "jobs" / name
-            if p.exists():
-                paths.append(f"artifacts/jobs/{name}")
-        add = run(["git", "add", "-f", "--"] + paths, timeout=45)
-        if add.returncode != 0:
-            log(f"liveness add rc={add.returncode} err={(add.stderr or '')[:400]}")
-        c = run(
-            ["git", "commit", "-m", f"host agent liveness: {reason}"],
-            timeout=30,
-        )
-        combined = ((c.stdout or "") + (c.stderr or "")).lower()
-        if c.returncode != 0 and "nothing to commit" in combined:
-            log(f"liveness nothing to commit ({reason})")
-            return
-        if c.returncode != 0:
-            log(f"liveness commit rc={c.returncode} out={(c.stdout or '')[:200]} err={(c.stderr or '')[:400]}")
-            return
-        p = run(["git", "push", "origin", "main"], timeout=90)
-        if p.returncode == 0:
-            log(f"liveness push ok ({reason})")
-        else:
-            log(f"liveness push FAILED rc={p.returncode} out={(p.stdout or '')[:300]} err={(p.stderr or '')[:500]}")
-            # one retry after fetch
-            run(["git", "fetch", "origin"], timeout=60)
-            rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=60)
-            if rb.returncode == 0:
-                p2 = run(["git", "push", "origin", "main"], timeout=90)
-                if p2.returncode == 0:
-                    log(f"liveness push retry ok ({reason})")
-                else:
-                    log(f"liveness push retry FAILED rc={p2.returncode} err={(p2.stderr or '')[:400]}")
-            else:
-                log(f"liveness rebase failed rc={rb.returncode} err={(rb.stderr or '')[:300]}")
-    except Exception as e:
-        log(f"liveness push error: {type(e).__name__}: {e}")
-
-
-def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
-    """Lightweight by default. Full tree only on interval or non-light jobs."""
-    global _last_heavy_push
-    now = time.time()
-    do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
-
+def _light_paths() -> List[str]:
     paths = [
-        "artifacts/host_agent_last_job.json",
         "artifacts/host_agent_status.json",
+        "artifacts/host_agent_last_job.json",
     ]
-
-    for p in (ROOT / "artifacts").glob("scoreboard*.json"):
-        paths.append(str(p.relative_to(ROOT)))
-    for p in (ROOT / "artifacts").glob("trace_*.json"):
-        paths.append(str(p.relative_to(ROOT)))
+    if LOG.exists():
+        paths.append("artifacts/host_agent_log.txt")
+    for name in ("pending", "failed"):
+        p = ROOT / "artifacts" / "jobs" / name
+        if p.exists():
+            paths.append(f"artifacts/jobs/{name}")
     for name in (
         "strategy_stats.json",
         "preference_summary.json",
@@ -209,48 +143,84 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         p = ROOT / "artifacts" / name
         if p.exists():
             paths.append(str(p.relative_to(ROOT)))
+    return paths
 
-    if do_heavy:
-        paths.extend([
-            "artifacts/jobs/pending",
-            "artifacts/jobs/failed",
-            "memory/host_agent",
-        ])
-        _last_heavy_push = now
 
-    run(["git", "add", "-f", "--"] + paths, timeout=90)
-    status = "PASS" if ok else "FAIL"
-    mode = "light" if light and not do_heavy else "full"
-    c = run(
-        ["git", "commit", "-m", f"host agent report: job={job_id} {status} ({mode})"],
-        timeout=60,
-    )
+def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
+    """Add paths, commit, push. On any reject: clean_slate, re-add, re-commit, push once more."""
+    run(["git", "add", "-f", "--"] + paths, timeout=45)
+    c = run(["git", "commit", "-m", message], timeout=30)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
     if c.returncode != 0 and "nothing to commit" in combined:
-        git_sync()
-        return
+        log(f"{label} nothing to commit")
+        return True
     if c.returncode != 0:
-        log(f"commit rc={c.returncode} err={(c.stderr or '')[:300]}")
-        git_sync()
-        return
-    p = run(["git", "push", "origin", "main"], timeout=120)
+        log(f"{label} commit rc={c.returncode} err={(c.stderr or '')[:300]}")
+        return False
+    p = run(["git", "push", "origin", "main"], timeout=90)
     if p.returncode == 0:
-        log(f"push rc=0 ({mode})")
+        log(f"{label} push ok")
+        return True
+    log(f"{label} push REJECTED rc={p.returncode} err={(p.stderr or '')[:400]}")
+    # Nuclear recovery: clean slate, rewrite the same files, commit, push
+    git_clean_slate(f"{label}_reject")
+    # Status/last_job may have been wiped by hard reset — rewrite them
+    write_status(current_job=None, phase=label)
+    run(["git", "add", "-f", "--"] + paths, timeout=45)
+    c2 = run(["git", "commit", "-m", message], timeout=30)
+    if c2.returncode != 0 and "nothing to commit" not in ((c2.stdout or "") + (c2.stderr or "")).lower():
+        log(f"{label} re-commit rc={c2.returncode} err={(c2.stderr or '')[:300]}")
+        return False
+    p2 = run(["git", "push", "origin", "main"], timeout=90)
+    if p2.returncode == 0:
+        log(f"{label} push ok after clean_slate")
+        return True
+    log(f"{label} push STILL FAILED rc={p2.returncode} err={(p2.stderr or '')[:400]}")
+    return False
+
+
+def push_liveness(reason: str = "idle") -> None:
+    """Push status + last_job. Never stuck on non-fast-forward or dirty rebase."""
+    global _last_liveness_push
+    now = time.time()
+    if now - _last_liveness_push < LIVENESS_INTERVAL:
         return
-    log(f"push rc={p.returncode} err={(p.stderr or '')[:400]}; retry")
-    run(["git", "fetch", "origin"], timeout=120)
-    rb = run(["git", "pull", "--rebase", "origin", "main"], timeout=120)
-    if rb.returncode == 0:
-        p2 = run(["git", "push", "origin", "main"], timeout=120)
-        if p2.returncode == 0:
-            log("push retry rc=0")
-            return
-        log(f"push retry still failed rc={p2.returncode} err={(p2.stderr or '')[:300]}")
-    git_reset_to_origin("push failed")
+    _last_liveness_push = now
+    try:
+        write_status(current_job=None, phase=reason)
+        _commit_and_push(_light_paths(), f"host agent liveness: {reason}", f"liveness({reason})")
+    except Exception as e:
+        log(f"liveness error: {type(e).__name__}: {e}")
+
+
+def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
+    """Lightweight by default. On reject: clean_slate and retry once."""
+    global _last_heavy_push
+    now = time.time()
+    do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
+
+    paths = list(_light_paths())
+    for p in (ROOT / "artifacts").glob("scoreboard*.json"):
+        paths.append(str(p.relative_to(ROOT)))
+    for p in (ROOT / "artifacts").glob("trace_*.json"):
+        paths.append(str(p.relative_to(ROOT)))
+
+    if do_heavy:
+        # Still avoid full done/ tree (WinError 206). pending + failed only.
+        paths.extend(["artifacts/jobs/pending", "artifacts/jobs/failed"])
+        _last_heavy_push = now
+
+    status = "PASS" if ok else "FAIL"
+    mode = "light" if light and not do_heavy else "full"
+    msg = f"host agent report: job={job_id} {status} ({mode})"
+    try:
+        _commit_and_push(paths, msg, f"report({job_id})")
+    except Exception as e:
+        log(f"report push error: {e}")
+        git_clean_slate("report_error")
 
 
 def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
-    """Strict FAST first. LIVE always last."""
     try:
         from core.job_class import job_class, FAST, LIVE
     except Exception:
@@ -404,7 +374,7 @@ def process_job(path: Path) -> bool:
         git_push_report(job_id, ok, light=light)
     except Exception as e:
         log(f"push error: {e}")
-        git_sync()
+        git_clean_slate("push_error")
     return ok
 
 
@@ -428,11 +398,11 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling + PERF 10x + liveness)", flush=True)
+    print("  ETHER host_agent (self-refilling + nuclear git)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 
-    git_reset_to_origin("startup")
+    git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
@@ -466,7 +436,7 @@ def main() -> int:
         except Exception as e:
             log(f"loop error: {e}")
             try:
-                git_sync()
+                git_clean_slate("loop_error")
             except Exception:
                 pass
             time.sleep(max(1, POLL))

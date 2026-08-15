@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-15T23:44:33.628821+00:00",
+  "updated": "2026-08-15T23:45:07.375795+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -12,6 +12,27 @@
   "scripted_ok_rate": 0.9562,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.498,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
     {
       "fixture": "topo",
       "tier": "hard",
@@ -103,27 +124,6 @@
       ],
       "model": "",
       "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.566,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "pipeline",
-      "strategy": "tool_runtime_scripted"
     },
     {
       "fixture": "ledger",

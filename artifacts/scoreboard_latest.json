@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-15T23:45:39.765245+00:00",
+  "updated": "2026-08-15T23:46:36.219831+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -19,7 +19,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.498,
+      "elapsed_s": 0.464,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -34,31 +34,13 @@
       "strategy": "tool_runtime_scripted"
     },
     {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.695,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
       "fixture": "ledger",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.695,
+      "elapsed_s": 0.78,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -72,13 +54,13 @@
       "arm": "direct"
     },
     {
-      "fixture": "merge",
+      "fixture": "topo",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.701,
+      "elapsed_s": 0.789,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -96,7 +78,25 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.702,
+      "elapsed_s": 0.796,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.804,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -114,7 +114,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.466,
+      "elapsed_s": 0.587,
       "reason": "tests passed",
       "tools": [
         "list_files",

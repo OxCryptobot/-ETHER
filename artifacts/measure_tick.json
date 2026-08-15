@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-15T23:45:39.859246+00:00",
+  "timestamp": "2026-08-15T23:46:36.340323+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-15T23:45:39.728245+00:00",
+      "updated": "2026-08-15T23:46:36.191553+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-15T23:45:39.739246+00:00",
+      "updated": "2026-08-15T23:46:36.200628+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -51,7 +51,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-15T23:45:39.748246+00:00",
+      "updated": "2026-08-15T23:46:36.208746+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -60,7 +60,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-15T23:45:39.751248+00:00",
+      "updated": "2026-08-15T23:46:36.210746+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -73,7 +73,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-15T23:45:39.765245+00:00",
+      "updated": "2026-08-15T23:46:36.219831+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -88,14 +88,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-15T23:45:39.785245+00:00",
+      "updated": "2026-08-15T23:46:36.237941+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-15T23:45:39.787246+00:00",
+      "updated": "2026-08-15T23:46:36.263949+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -116,13 +116,13 @@
         "labradorite": 15,
         "grandidierite": 0
       },
-      "last_gem": "clear-quartz",
-      "last_job": "ss_tool_runtime_234456_2",
+      "last_gem": "rose-quartz",
+      "last_job": "ss_honest_live_report_234624_1",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-15T23:45:39.795245+00:00",
+      "updated": "2026-08-15T23:46:36.276941+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -135,11 +135,11 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-15T23:45:39.814245+00:00",
+      "updated": "2026-08-15T23:46:36.296143+00:00",
       "score": 75.0,
       "grade": "B",
       "reasons": [
-        "queue_ok:4",
+        "queue_ok:3",
         "honest:140/144",
         "latency_alert:175.03",
         "critique_n:15"
@@ -168,14 +168,14 @@
       ]
     },
     "governor": {
-      "pending": 4,
+      "pending": 3,
       "max_pending": 6,
       "steady_pause_at": 4,
       "steady_resume_at": 2,
       "high_depth": 8,
       "high_hold_s": 120.0,
       "may_enqueue": true,
-      "may_enqueue_steady": false,
+      "may_enqueue_steady": true,
       "max_enqueue_this_tick": 2,
       "training_wheels": true
     }

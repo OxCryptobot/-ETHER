@@ -1,28 +1,30 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 18:30Z — **THREE P0 MOVES LANDED**. Soft launch still **BLOCKED** (measurement only).
+**Updated:** 2026-08-15 18:35Z — **Phase 1 P0 landed · Phase 2 started**. Soft launch **BLOCKED**.
 
-## Phase 1 packages
+## Host
+Alive (heartbeat fresh). Steady FAST jobs PASS. Nuclear git clean_slate in effect.
 
-| Package | Status | Evidence |
-|---------|--------|----------|
-| 1A Tool-first | **LANDED** | `coding_method` + `is_honest_tool_path_pass` + ToolRuntimeGateHandler |
-| 1B AgentState | **LANDED** | `core/agent_state.py` |
-| 1C AST edits | **LANDED** | prefer_patch + apply_patch + doctrine |
-| 1D Honest live rates | **LANDED** | `core/honest_live.py` → `artifacts/honest_live_rates.json` |
-| Mandatory Labradorite | **LANDED** | `core/critique_on_fail.py` wired in `host_agent.process_job` |
-| Context compress v0 | **LANDED** | `core/context.compress_text` extractive budget |
+## Phase 1 (done)
+| Item | Status |
+|------|--------|
+| Honest live rates | `core/honest_live.py` + `scripts/honest_live_report.py` |
+| Mandatory Labradorite | `core/critique_on_fail.py` in `host_agent` |
+| Context compress v0 | `core/context.compress_text` |
+
+## Phase 2 (in progress)
+| Item | Status |
+|------|--------|
+| PlanState confidence + one-step replan | **LANDED** `core/plan_state.py` |
+| Critique → PlanState hyp | **LANDED** |
+| Multi-file AST tx harden | next |
+| Pipeline monolith split (orchestration slice) | next |
+| Symbol graph v0 | later |
 
 ## Gate
+Soft launch blocked until published `live_honest_rate` on expanded hard suite. Training wheels ON.
 
-Soft launch blocked until **published** `live_honest_rate` on expanded hard suite meets threshold.  
-Training wheels ON. FAST-first. Host self-heals (nuclear git clean_slate).
-
-Publish rates:
 ```powershell
 .venv\Scripts\python.exe -m scripts.honest_live_report
+.venv\Scripts\python.exe -m pytest tests/test_honest_live_critique_context.py tests/test_plan_state.py -q
 ```
-
-## Mentor
-
-`core/coding_method.py` · `docs/APPRENTICE_CODING_DOCTRINE.md` · critique artifacts under `artifacts/critiques/`

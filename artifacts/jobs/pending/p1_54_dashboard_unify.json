@@ -1,0 +1,18 @@
+{
+  "id": "p1_54_dashboard_unify",
+  "class": "fast",
+  "note": "P1: verify collector + agent.html read the same host_agent paths (status, last_job, log). Smoke only.",
+  "source": "swarm_mentor",
+  "created": "2026-08-15T06:00:00+00:00",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import json; root=Path('.'); status=root/'artifacts'/'host_agent_status.json'; last=root/'artifacts'/'host_agent_last_job.json'; assert status.exists(), 'missing host_agent_status.json'; assert last.exists(), 'missing host_agent_last_job.json'; s=json.loads(status.read_text()); print('phase', s.get('phase')); print('last_job', s.get('last_job')); print('heartbeat', s.get('heartbeat')); print('DASHBOARD_PATHS_OK')"
+      ],
+      "timeout": 30
+    }
+  ]
+}

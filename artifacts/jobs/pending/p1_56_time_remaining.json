@@ -1,0 +1,18 @@
+{
+  "id": "p1_56_time_remaining",
+  "class": "fast",
+  "note": "P1: time-remaining field readiness check. Status already has heartbeat; next UI step is remaining estimate.",
+  "source": "swarm_mentor",
+  "created": "2026-08-15T06:00:00+00:00",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import json; p=Path('artifacts/host_agent_status.json'); d=json.loads(p.read_text()) if p.exists() else {}; print('keys', sorted(d.keys())); print('has_heartbeat', 'heartbeat' in d); print('phase', d.get('phase')); print('TIME_REMAINING_READINESS_OK')"
+      ],
+      "timeout": 30
+    }
+  ]
+}

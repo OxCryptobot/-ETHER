@@ -1,0 +1,46 @@
+{
+  "id": "025_mentor_collaboration_schema",
+  "title": "Mentor collaboration schema + secret sauce transfer",
+  "created": "2026-08-15",
+  "source": "Grok mentor swarm",
+  "doctrine_tags": ["tool_first", "tests_first", "surgical_edit", "no_progress", "honest_scoring", "collaboration"],
+  "summary": "Canonical collaboration contract between Grok (mentor) and ETHER (apprentice). Encodes best-in-class coding method and how to ask for help without burning green paths.",
+  "coding_method": {
+    "name": "ether_tool_first_v1",
+    "step_order": ["list_files", "read_file", "grep", "glob", "apply_patch", "write_file", "run_tests", "pep8_review", "rollback", "done"],
+    "rules": [
+      "Output ONE JSON tool call per turn",
+      "Read failing tests before editing source",
+      "Prefer apply_patch for surgical edits",
+      "After every meaningful edit, run_tests",
+      "If run_tests fails 3 times without score gain, done with reason no_progress",
+      "Never emit eval/exec/__import__",
+      "Python must AST-parse",
+      "pep8_review after tests pass",
+      "One hypothesis per cycle",
+      "done only when tests pass or honest give-up with typed reason"
+    ],
+    "max_stagnant_test_fails": 3
+  },
+  "collaboration_protocol": {
+    "when_blocked": [
+      "State the measured failure (failure_type, scoreboard path, last tool)",
+      "State the smallest experiment that would falsify the current hypothesis",
+      "Do not request a full rewrite of a path that is already 5/5 green"
+    ],
+    "when_green": [
+      "Leave scoreboard + trace on disk",
+      "Do not 'improve' a verified green path without a new hypothesis and a new scoreboard"
+    ],
+    "mentor_response_style": "Provide the next smallest experiment or the exact surgical change. Prefer measured truth over narrative."
+  },
+  "secret_sauce": [
+    "Observe → one tool → Observe",
+    "Tests are the oracle",
+    "Scoreboards are truth",
+    "No generate fallback after tool_runtime terminal",
+    "Typed failure → Labradorite → smallest experiment → requeue",
+    "Hardware honesty: primary ≤4B; prefer scripted verification for Phase 1 reliability bar"
+  ],
+  "injection": "Append coding_method.prompt_suffix() into ToolRuntime system prompt. Load this lesson on FAIL or on mentor collaboration turns."
+}

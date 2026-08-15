@@ -1,0 +1,18 @@
+{
+  "id": "p1_55_labradorite_continuous",
+  "class": "fast",
+  "note": "P1: verify fail taxonomy + lesson path exists so continuous Labradorite requeue can fire. Doctrine presence check.",
+  "source": "swarm_mentor",
+  "created": "2026-08-15T06:00:00+00:00",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; root=Path('.'); doctrine=root/'docs'/'APPRENTICE_CODING_DOCTRINE.md'; method=root/'core'/'coding_method.py'; lessons=root/'memory'/'ether_apprentice'/'lessons'; assert doctrine.exists(), 'missing doctrine'; assert method.exists(), 'missing coding_method'; assert lessons.exists(), 'missing lessons dir'; files=list(lessons.glob('*.json')); print('lessons', len(files)); print('LABRADORITE_PATH_OK')"
+      ],
+      "timeout": 30
+    }
+  ]
+}

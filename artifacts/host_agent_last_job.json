@@ -1,9 +1,7 @@
 {
-  "job_id": "ss_kill_live_pending_180023_0",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-15T18:00:29.968634+00:00",
-  "note": "steady: FAST purge any residual live ledger pending",
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_ss_ledger.json"
+  "job_id": "ss_direct_hard_180023_2",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-15T18:00:34.932613+00:00",
+  "note": "steady: direct hard baseline"
 }

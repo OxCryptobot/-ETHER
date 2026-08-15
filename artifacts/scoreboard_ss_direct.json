@@ -1,13 +1,13 @@
 {
   "results": [
     {
-      "fixture": "merge",
+      "fixture": "topo",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.857,
+      "elapsed_s": 0.675,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -25,7 +25,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.86,
+      "elapsed_s": 0.684,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -37,13 +37,13 @@
       "arm": "direct"
     },
     {
-      "fixture": "topo",
+      "fixture": "merge",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.861,
+      "elapsed_s": 0.69,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -61,7 +61,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 1.874,
+      "elapsed_s": 0.69,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -81,7 +81,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.19,
+      "elapsed_s": 0.504,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -100,7 +100,7 @@
     "arms": [
       "direct"
     ],
-    "model": "qwen3.5:4b",
+    "model": "qwen3.5:4b-q4_K_M",
     "max_steps": 12,
     "partial": false,
     "note": "final"

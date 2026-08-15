@@ -1,4 +1,4 @@
-"""Phase 3.4/3.6 — always-safe measurement tick + honest KPI."""
+"""Measure tick — rates + all moonshot observability panels."""
 from __future__ import annotations
 
 import json
@@ -12,6 +12,18 @@ OUT = ROOT / "artifacts" / "measure_tick.json"
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _safe(name: str, fn) -> Dict[str, Any]:
+    try:
+        out = fn()
+        if isinstance(out, dict):
+            slim = {k: out[k] for k in list(out)[:12] if k not in ("results_tail", "points", "tags", "strip")}
+            slim["ok"] = out.get("ok", True)
+            return slim
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": f"{type(e).__name__}:{e}"[:200]}
 
 
 def run() -> Dict[str, Any]:
@@ -30,36 +42,33 @@ def run() -> Dict[str, Any]:
             "soft_launch_blocked": rates.get("soft_launch_blocked"),
         }
     except Exception as e:
-        errors.append(f"honest_live:{type(e).__name__}:{e}")
+        errors.append(f"honest_live:{e}")
         steps["honest_live"] = {"ok": False, "error": str(e)[:200]}
 
-    try:
-        from core.honest_kpi import compute
-
-        kpi = compute()
-        steps["honest_kpi"] = {
-            "ok": bool(kpi.get("ok")),
-            "primary_kpi": kpi.get("primary_kpi"),
-            "honest_tool_pass": kpi.get("honest_tool_pass"),
-            "tool_attempts": kpi.get("tool_attempts"),
-            "disguised_pass_n": kpi.get("disguised_pass_n"),
-        }
-    except Exception as e:
-        errors.append(f"honest_kpi:{type(e).__name__}:{e}")
-        steps["honest_kpi"] = {"ok": False, "error": str(e)[:200]}
+    panels = [
+        ("honest_kpi", lambda: __import__("core.honest_kpi", fromlist=["compute"]).compute()),
+        ("latency_slo", lambda: __import__("core.latency_slo", fromlist=["compute"]).compute()),
+        ("honest_sparkline", lambda: __import__("core.honest_sparkline", fromlist=["compute"]).compute()),
+        ("context_budget", lambda: __import__("core.context_budget", fromlist=["publish_sample"]).publish_sample()),
+        ("scoreboard_rollup", lambda: __import__("core.scoreboard_rollup", fromlist=["rollup"]).rollup()),
+        ("shadow_tag", lambda: __import__("core.shadow_tag", fromlist=["compute"]).compute()),
+        ("gem_energy", lambda: __import__("core.gem_energy", fromlist=["publish"]).publish()),
+        ("ast_edit_kpi", lambda: __import__("core.ast_edit_kpi", fromlist=["compute"]).compute()),
+        ("smoothness", lambda: __import__("core.smoothness", fromlist=["compute"]).compute()),
+        ("model_router", lambda: __import__("core.model_router", fromlist=["status"]).status()),
+    ]
+    for name, fn in panels:
+        steps[name] = _safe(name, fn)
+        if steps[name].get("ok") is False:
+            errors.append(name)
 
     try:
         from core.phase3_snapshot import build_snapshot
 
         snap = build_snapshot()
-        steps["phase3_snapshot"] = {
-            "ok": bool(snap.get("ok")),
-            "path": snap.get("path"),
-            "trained": (snap.get("lora_dry_tick") or {}).get("trained"),
-        }
+        steps["phase3_snapshot"] = {"ok": bool(snap.get("ok")), "path": snap.get("path")}
     except Exception as e:
-        errors.append(f"phase3_snapshot:{type(e).__name__}:{e}")
-        steps["phase3_snapshot"] = {"ok": False, "error": str(e)[:200]}
+        steps["phase3_snapshot"] = {"ok": False, "error": str(e)[:160]}
 
     try:
         from core.soft_launch import evaluate
@@ -69,11 +78,9 @@ def run() -> Dict[str, Any]:
             "ok": True,
             "soft_launch_ready": gate.get("soft_launch_ready"),
             "blocked_reasons": gate.get("blocked_reasons"),
-            "path": gate.get("path"),
         }
     except Exception as e:
-        errors.append(f"soft_launch:{type(e).__name__}:{e}")
-        steps["soft_launch"] = {"ok": False, "error": str(e)[:200]}
+        steps["soft_launch"] = {"ok": False, "error": str(e)[:160]}
 
     try:
         from core.queue_governor import status_snapshot
@@ -88,7 +95,7 @@ def run() -> Dict[str, Any]:
         "errors": errors,
         "steps": steps,
         "soft_launch_blocked": True,
-        "doctrine": "measure_only_critical_ops",
+        "doctrine": "moonshot_observability_tick",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -99,6 +106,5 @@ def run() -> Dict[str, Any]:
 if __name__ == "__main__":
     import sys
 
-    out = run()
-    print(json.dumps(out, indent=2))
+    print(json.dumps(run(), indent=2))
     sys.exit(0)

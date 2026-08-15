@@ -163,8 +163,8 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "note": "steady: preference + strategy_stats refresh",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
-            "from core.preference import refresh_artifacts; r=refresh_artifacts(); print('pref_refresh', r)"
-        ], "timeout": 120}],
+            "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
+        ], "timeout": 180}],
     },
     {
         "id_prefix": "ss_pipeline_ledger",

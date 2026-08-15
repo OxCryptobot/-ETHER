@@ -16,6 +16,7 @@
 - Strict FAST-first ranking; LIVE jobs always last.
 - continue_on_fail measurement jobs use light report path.
 - Explicit live-ledger pending killer support.
+- Always push performance_benchmark.json + foreman_state.json.
 """
 from __future__ import annotations
 
@@ -120,13 +121,11 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
     now = time.time()
     do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
 
-    # Always critical observability
     paths = [
         "artifacts/host_agent_last_job.json",
         "artifacts/host_agent_status.json",
     ]
 
-    # Scoreboards + traces for the current measurement
     for p in (ROOT / "artifacts").glob("scoreboard*.json"):
         paths.append(str(p.relative_to(ROOT)))
     for p in (ROOT / "artifacts").glob("trace_*.json"):
@@ -136,19 +135,19 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         "preference_summary.json",
         "preferences_tail.jsonl",
         "whats_next.json",
+        "performance_benchmark.json",
+        "foreman_state.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
             paths.append(str(p.relative_to(ROOT)))
 
     if do_heavy:
-        # Directory adds only on heavy path — avoid WinError 206 on huge done/
         paths.extend([
             "artifacts/jobs/pending",
             "artifacts/jobs/failed",
             "memory/host_agent",
         ])
-        # done/ is large; only add recent files pattern if needed later
         _last_heavy_push = now
 
     run(["git", "add", "-f", "--"] + paths, timeout=90)
@@ -194,13 +193,11 @@ def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
         except Exception:
             return (1, p.name)
         cls = job_class(job)
-        # 0 = FAST, 1 = any, 2 = LIVE
         order = 0 if cls == FAST else (2 if cls == LIVE else 1)
-        # Secondary: cleaner / archive first among FAST
         note = str(job.get("note") or "").lower()
         jid = str(job.get("id") or "").lower()
         prio = 0
-        if "clean" in jid or "archive" in jid or "clean" in note:
+        if "clean" in jid or "archive" in jid or "kill_live" in jid or "clean" in note:
             prio = -1
         return (order, prio, p.name)
 
@@ -333,7 +330,6 @@ def process_job(path: Path) -> bool:
         last_ok=ok,
         last_failure_type=failure_type,
     )
-    # Light report for measurement / continue_on_fail jobs
     light = cont or str(job.get("class") or "").lower() == "fast"
     try:
         git_push_report(job_id, ok, light=light)

@@ -1,11 +1,11 @@
 {
-  "generated": "2026-08-15T22:55:12.521244+00:00",
-  "next_job": "p3_7_moonshots",
+  "generated": "2026-08-15T22:55:25.401956+00:00",
+  "next_job": "playbook_coding_method_refresh_225128",
   "queue_head": [
-    "p3_7_moonshots",
     "playbook_coding_method_refresh_225128",
     "playbook_coding_method_refresh_225137",
     "playbook_coding_method_refresh_225512",
+    "ss_archive_failed_225525_5",
     "ss_direct_hard_225110_2",
     "ss_direct_hard_225247_2",
     "ss_direct_hard_225438_2",
@@ -13,9 +13,9 @@
   ],
   "queue_depth": 16,
   "host_phase": "idle",
-  "last_job": "ss_kill_live_pending_225224_0",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_job": "p3_7_moonshots",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

@@ -1,0 +1,18 @@
+{
+  "id": "ss_archive_failed_225525_5",
+  "note": "steady: archive old failed jobs (cleanup noise)",
+  "source": "foreman_steady",
+  "created": "2026-08-15T22:55:25.387767+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import shutil; from datetime import datetime, timezone; ROOT=Path('.').resolve(); FAILED=ROOT/'artifacts'/'jobs'/'failed'; ARCH=ROOT/'artifacts'/'jobs'/'failed_archived'; ARCH.mkdir(parents=True, exist_ok=True); moved=0; [None for p in sorted(FAILED.glob('*.json')) if p.name != '.gitkeep' and not shutil.move(str(p), str((ARCH/p.name) if not (ARCH/p.name).exists() else ARCH/(p.stem+'_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'))) and not (moved:=moved+1)]; print('archived_failed', moved)"
+      ],
+      "timeout": 60
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

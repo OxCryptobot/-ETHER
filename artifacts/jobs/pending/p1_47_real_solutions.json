@@ -1,0 +1,66 @@
+{
+  "id": "p1_47_real_solutions",
+  "note": "Real solutions: honest live scoring + FAST-first host + foreman class tags",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_honest_live_score"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_host_fast_first"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_foreman_job_class"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_collector_unify"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.loop.handlers.tool_runtime_gate import is_honest_tool_path_pass; assert not is_honest_tool_path_pass({'ok':True,'degraded':['tool_runtime_failed_terminal'],'mode':'live'}); assert is_honest_tool_path_pass({'ok':True,'degraded':[],'mode':'scripted','strategy':'tool_runtime_scripted'}); from core.job_class import job_class; print('ok', job_class({'class':'fast'}))"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "add", "-A", "--", "scripts/batch_phase_d.py", "scripts/host_agent.py", "scripts/foreman.py", "dashboard/collector.py"],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "commit", "-m", "feat: honest live score + FAST-first host + foreman class + dashboard unify"],
+      "timeout": 60,
+      "continue_on_fail": true
+    },
+    {
+      "argv": ["git", "push", "origin", "main"],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_47_protect.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    }
+  ]
+}

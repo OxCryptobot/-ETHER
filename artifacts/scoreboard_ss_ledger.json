@@ -8,7 +8,7 @@
       "strategy": "tool_runtime",
       "status": "error",
       "repo_oracle_ok": null,
-      "elapsed_s": 318.686,
+      "elapsed_s": 319.14,
       "mode": "live",
       "stages": [
         {
@@ -48,8 +48,8 @@
     ],
     "model": "qwen3.5:4b",
     "max_steps": 16,
-    "partial": false,
-    "note": "final"
+    "partial": true,
+    "note": ""
   },
   "matrix": {
     "ledger": {

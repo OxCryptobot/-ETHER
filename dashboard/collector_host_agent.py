@@ -9,6 +9,7 @@ Prefer artifacts/ mirrors for foreman/lessons; fall back only with note.
 - live_skip_remaining exposure
 - recent fail taxonomy
 - throughput signals (jobs in last window)
+- performance_benchmark (scripted vs live measured times)
 """
 from __future__ import annotations
 
@@ -34,6 +35,7 @@ STATUS_MD = ROOT / "STATUS.md"
 PREF_SUMMARY = ROOT / "artifacts" / "preference_summary.json"
 STRATEGY_STATS = ROOT / "artifacts" / "strategy_stats.json"
 WHATS_NEXT = ROOT / "artifacts" / "whats_next.json"
+PERF_BENCH = ROOT / "artifacts" / "performance_benchmark.json"
 ARTIFACTS = ROOT / "artifacts"
 
 
@@ -73,7 +75,21 @@ def _infer_class(job: Dict[str, Any]) -> str:
     hay = note + " " + jid
     if any(x in hay for x in ("live", "pipeline_ledger", "ss_pipeline_ledger")):
         return "live"
-    if any(x in hay for x in ("scripted", "pytest", "ruff", "archive", "clean", "pref", "train_gates", "tool_runtime")):
+    if any(
+        x in hay
+        for x in (
+            "scripted",
+            "pytest",
+            "ruff",
+            "archive",
+            "clean",
+            "pref",
+            "train_gates",
+            "tool_runtime",
+            "benchmark",
+            "kill_live",
+        )
+    ):
         return "fast"
     return "any"
 
@@ -315,7 +331,6 @@ def _critique_backlog(limit: int = 12) -> List[Dict[str, Any]]:
 
 
 def _throughput_signal(done: List[Dict[str, Any]], window_min: int = 30) -> Dict[str, Any]:
-    """Jobs finished in the last window."""
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(minutes=window_min)
     count = 0
@@ -352,6 +367,30 @@ def _fail_taxonomy(failed: List[Dict[str, Any]], last: Dict[str, Any]) -> Dict[s
     return {"counts": types, "last_failure_type": last.get("failure_type")}
 
 
+def _perf_summary(bench: Dict[str, Any]) -> Dict[str, Any]:
+    """Compact view for Control Matrix."""
+    if not bench or bench.get("error"):
+        return {"available": False}
+    scripted = (bench.get("scripted_baselines") or {}).get("pipeline_ledger") or {}
+    direct = (bench.get("scripted_baselines") or {}).get("direct_hard_pack") or {}
+    live = (bench.get("live_contrast") or {}).get("pipeline_ledger_live") or {}
+    speed = bench.get("speedup") or {}
+    ratio = (speed.get("scripted_vs_live_ledger") or {}).get("ratio")
+    return {
+        "available": True,
+        "generated_at": bench.get("generated_at"),
+        "scripted_ledger_s": scripted.get("elapsed_s"),
+        "scripted_ledger_ok": scripted.get("ok"),
+        "direct_hard_mean_s": direct.get("mean_elapsed_s"),
+        "direct_hard_passed": f"{direct.get('passed')}/{direct.get('total')}",
+        "live_ledger_s": live.get("elapsed_s"),
+        "live_ledger_ok": live.get("ok"),
+        "scripted_vs_live_ratio": ratio,
+        "model": (bench.get("hardware") or {}).get("primary_model"),
+        "targets": bench.get("targets"),
+    }
+
+
 def collect_host_agent() -> Dict[str, Any]:
     pending = _list_jobs(PENDING)
     done = _list_jobs(DONE, limit=60)
@@ -366,6 +405,7 @@ def collect_host_agent() -> Dict[str, Any]:
     scoreboards = _recent_scoreboards()
     critiques = _critique_backlog()
     whats_next = _read_json(WHATS_NEXT)
+    perf_bench = _read_json(PERF_BENCH)
 
     agent_alive = False
     if status.get("heartbeat"):
@@ -382,6 +422,7 @@ def collect_host_agent() -> Dict[str, Any]:
     pending_mix = _class_mix(pending)
     throughput = _throughput_signal(done)
     fail_tax = _fail_taxonomy(failed, last)
+    perf = _perf_summary(perf_bench)
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -401,15 +442,19 @@ def collect_host_agent() -> Dict[str, Any]:
             "class_mix_pending": pending_mix,
         },
         "control_matrix": {
-            "live_skip_remaining": status.get("live_skip_remaining") or foreman.get("live_skip_remaining"),
+            "live_skip_remaining": status.get("live_skip_remaining")
+            or foreman.get("live_skip_remaining"),
             "foreman_mode": foreman.get("mode"),
             "foreman_cursor": foreman.get("cursor"),
             "class_mix_pending": pending_mix,
             "throughput": throughput,
             "fail_taxonomy": fail_tax,
             "last_ok": last.get("ok"),
-            "last_failure_type": last.get("failure_type") or status.get("last_failure_type"),
+            "last_failure_type": last.get("failure_type")
+            or status.get("last_failure_type"),
+            "performance": perf,
         },
+        "performance_benchmark": perf_bench if perf_bench and not perf_bench.get("error") else None,
         "log_lines": _tail_log(150),
         "report": report,
         "report_md": report_md,
@@ -431,6 +476,7 @@ def collect_host_agent() -> Dict[str, Any]:
             "last_job": str(LAST_JOB.relative_to(ROOT)),
             "whats_next": str(WHATS_NEXT.relative_to(ROOT)),
             "pref_summary": str(PREF_SUMMARY.relative_to(ROOT)),
+            "performance_benchmark": "artifacts/performance_benchmark.json",
             "foreman_source": foreman_src,
             "lessons_source": lessons_src,
         },

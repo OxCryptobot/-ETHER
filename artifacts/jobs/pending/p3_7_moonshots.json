@@ -1,0 +1,30 @@
+{
+  "id": "p3_7_moonshots",
+  "class": "measure",
+  "source": "mentor",
+  "note": "Moonshots 11-25 verify AFTER host restart",
+  "created": "2026-08-15T22:54:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_moonshots.py",
+        "tests/test_critical_ops.py",
+        "tests/test_measure_tick.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 420
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.microbench"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 180
+    }
+  ]
+}

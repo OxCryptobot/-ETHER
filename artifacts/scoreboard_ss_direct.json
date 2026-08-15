@@ -7,7 +7,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.875,
+      "elapsed_s": 0.871,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -25,25 +25,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.877,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "merge",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.888,
+      "elapsed_s": 0.883,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -61,7 +43,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.905,
+      "elapsed_s": 0.889,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -75,13 +57,31 @@
       "arm": "direct"
     },
     {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.899,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
       "fixture": "intervals",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.627,
+      "elapsed_s": 0.601,
       "reason": "tests passed",
       "tools": [
         "list_files",

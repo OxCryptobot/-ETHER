@@ -25,6 +25,7 @@ PERF 2026-08-15 (10x throughput):
 - STEADY ordered FAST-first; live ledger is rare and gated.
 - Preference refresh + scripted pipeline prioritized over live.
 - Stronger live-fail detection so GPU is not burned on known-timeout fixtures.
+- Mirror state to artifacts/foreman_state.json for Control Matrix.
 """
 from __future__ import annotations
 
@@ -41,12 +42,13 @@ DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
 FAILED_ARCH = ROOT / "artifacts" / "jobs" / "failed_archived"
 STATE = ROOT / "memory" / "host_agent" / "foreman_state.json"
+STATE_ARTIFACTS = ROOT / "artifacts" / "foreman_state.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
 BATCH_SIZE = 12
-LIVE_SKIP_TICKS = 12  # was 3 — stop burning cycles on known live ledger timeouts
+LIVE_SKIP_TICKS = 12
 
 CURRICULUM: List[Dict[str, Any]] = [
     {
@@ -122,7 +124,6 @@ CURRICULUM: List[Dict[str, Any]] = [
     },
 ]
 
-# PERF order: FAST / scripted first. Live ledger is last and gated by live_skip.
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
         "id_prefix": "ss_pipeline_scripted",
@@ -201,7 +202,14 @@ def load_state() -> Dict[str, Any]:
 def save_state(state: Dict[str, Any]) -> None:
     STATE.parent.mkdir(parents=True, exist_ok=True)
     state["last_tick"] = _now()
-    STATE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    text = json.dumps(state, indent=2)
+    STATE.write_text(text, encoding="utf-8")
+    # Control Matrix visibility — always mirror to artifacts
+    try:
+        STATE_ARTIFACTS.parent.mkdir(parents=True, exist_ok=True)
+        STATE_ARTIFACTS.write_text(text, encoding="utf-8")
+    except Exception:
+        pass
 
 
 def load_lessons() -> List[Dict[str, Any]]:
@@ -286,7 +294,6 @@ def record_last_job(state: Dict[str, Any]) -> None:
     elif last.get("ok") is False:
         if jid not in state.get("failed", []):
             state.setdefault("failed", []).append(jid)
-        # Stronger live/timeout detection — keep GPU free for FAST work
         if (
             "pipeline_ledger" in hay
             or ("pipeline" in hay and "live" in hay)
@@ -331,7 +338,6 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
         write_job(job)
         enqueued.append(jid)
         idx += 1
-        # Prefer filling with FAST jobs; do not flood with live
         if len(enqueued) >= max(3, BATCH_SIZE // 2):
             break
     state["steady_idx"] = idx

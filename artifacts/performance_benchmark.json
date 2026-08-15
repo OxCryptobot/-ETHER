@@ -1,12 +1,13 @@
 {
-  "generated_at": "2026-08-15T15:08:00+00:00",
-  "source": "scoreboard_ss_* measured runs + host policy + purge",
+  "generated_at": "2026-08-15T15:20:00+00:00",
+  "source": "scoreboard_ss_* + host policy + quant/vLLM analysis",
   "hardware": {
     "gpu": "GTX 1650 4GB",
+    "arch": "Turing SM 7.5",
     "ram_gb": 12,
     "primary_model": "qwen3.5:4b",
     "constraint": "host <=4B only",
-    "vram_budget_notes": "4GB tight for 4B Q4 + KV cache. Prefer num_ctx<=8192, keep model loaded, avoid concurrent loads. Target peak VRAM <3.6GB to leave headroom for tool runtime + OS."
+    "vram_budget_notes": "4GB tight for 4B Q4 + KV. Prefer num_ctx<=8192 (ideally 4096 for live), keep model loaded, single concurrent gen. Target peak VRAM <3.6GB."
   },
   "scripted_baselines": {
     "pipeline_ledger": {
@@ -60,8 +61,83 @@
       "note": "scripted is ~148x faster on same fixture; live currently fails. Root: full LLM multi-step tool loop on 1650 vs deterministic scripted path."
     },
     "direct_hard_mean_s": 2.423,
-    "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 20+ jobs/h on pure FAST. Residual live pending purged 2026-08-15T15:05."
+    "implication": "FAST-first + live purge yields ~100x more useful jobs/hour than live-ledger spam. Target 25+ jobs/h on pure FAST."
   },
+  "quantization_impact": {
+    "current": "Ollama qwen3.5:4b (expected Q4-class GGUF)",
+    "recommendation": "Lock Q4_K_M (or explicit Q4_0/Q4_K_S if available). Never Q5+/FP16 on this host.",
+    "vram_estimates_4b": {
+      "Q4_K_M": "~2.3-3.3 GB weights + KV (fits 4GB with ctx<=8k)",
+      "Q5_K_M": "~3.5-4.5 GB — risk of OOM or heavy offload",
+      "Q8_0": "~5+ GB — does not fit",
+      "FP16": "~9-10 GB — impossible"
+    },
+    "quality": "Q4_K_M typical 3-5% quality drop vs FP16 on general tasks; coding/reasoning more sensitive. Still the only viable point on 4GB.",
+    "speed": "Lower quant reduces bandwidth pressure on Turing; primary latency still comes from number of generation steps, not quant alone.",
+    "action": "Verify `ollama show qwen3.5:4b` quant; prefer explicit tag if Q4_K_M variant exists. Measure nvidia-smi peak under direct_hard."
+  },
+  "vllm_investigation": {
+    "verdict": "NOT primary path for this host (Phase 1)",
+    "reasons": [
+      "GTX 1650 = Turing SM 7.5: supported for GPTQ/AWQ/GGUF/bitsandbytes but FlashAttention-2 requires SM>=8.0 (falls back)",
+      "Host is Windows native; vLLM has no official Windows support (WSL2 or community fork required)",
+      "4GB VRAM is below comfortable vLLM operating point (engine pre-allocates KV; needs low max_model_len + gpu_memory_utilization~0.7)",
+      "Agent tool loops are short, low-concurrency: continuous-batching advantage of vLLM is small vs Ollama/llama.cpp overhead",
+      "Integration cost high vs measured gain on this exact hardware"
+    ],
+    "when_to_revisit": "Cousin hardware (>=8-12GB, Ampere+) or after WSL2 + controlled TTFT/tokens-per-s A/B against current Ollama baseline.",
+    "keep": "Ollama remains the locked runtime for host <=4B."
+  },
+  "latency_mitigation_steps": [
+    {
+      "id": "LM1",
+      "priority": 1,
+      "step": "Keep model warm",
+      "detail": "ollama keep_alive high / never unload qwen3.5:4b between jobs. Cold load on 1650 costs seconds."
+    },
+    {
+      "id": "LM2",
+      "priority": 1,
+      "step": "Cap context",
+      "detail": "ETHER_NUM_CTX / num_ctx <= 8192 host-wide; 4096 for any live experiment. KV is the hidden VRAM consumer."
+    },
+    {
+      "id": "LM3",
+      "priority": 1,
+      "step": "FAST-first + live purge (already landed)",
+      "detail": "Scripted/direct/tool_runtime before any live. kill_live + live_skip_ticks=36. Residual live pending already purged."
+    },
+    {
+      "id": "LM4",
+      "priority": 2,
+      "step": "Prefer tool_runtime path",
+      "detail": "Honest tool order + early terminal on bad tool sequences. Avoid full open-ended agent loops on live until Phase 1D green."
+    },
+    {
+      "id": "LM5",
+      "priority": 2,
+      "step": "Tighten live budgets",
+      "detail": "max_steps and per-step timeout for live must fit inside ~60-120s wall before honest path is proven. Continue_on_fail only for measurement."
+    },
+    {
+      "id": "LM6",
+      "priority": 2,
+      "step": "Single concurrent generation",
+      "detail": "No parallel model loads or concurrent live jobs on 4GB."
+    },
+    {
+      "id": "LM7",
+      "priority": 3,
+      "step": "Instrument TTFT + tokens/s",
+      "detail": "Add to scoreboard / performance_benchmark so quant or backend changes can be scored honestly."
+    },
+    {
+      "id": "LM8",
+      "priority": 3,
+      "step": "Explicit quant tag",
+      "detail": "Prefer qwen3.5:4b-q4_K_M or equivalent if published; document in .env.example and model_select."
+    }
+  ],
   "host_policy": {
     "live_skip_ticks": 36,
     "steady_order": ["kill_live", "pipeline_scripted", "direct_hard", "tool_runtime", "train_gates", "archive", "pref_refresh"],
@@ -94,6 +170,6 @@
       "Tool-runtime path avoids full agent loop when possible",
       "Measure nvidia-smi peak during direct_hard vs live"
     ],
-    "hypothesis": "Most of the 148x is inference + KV + tool orchestration overhead; scripted bypasses it entirely. Live honest pass needs tool_order + budget that fits 4GB without OOM/timeout."
+    "hypothesis": "Most of the 148x is inference + KV + tool orchestration overhead; scripted bypasses it entirely. Live honest pass needs tool_order + budget that fits 4GB without OOM/timeout. Quant choice is secondary to number of live generation steps."
   }
 }

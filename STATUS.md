@@ -1,40 +1,32 @@
 # @ETHER Status
 
-**Updated:** 2026-08-14T22:42Z — **NOT DONE.** Soft launch BLOCKED. Training wheels ON.
+**Updated:** 2026-08-15T01:45Z — **NOT DONE.** Soft launch BLOCKED. Training wheels ON.
+
+Host heartbeat healthy. Last steady: **direct hard PASS**.
 
 ---
 
-## Goal skill — Phase 1 board (truth)
+## Phase 1 board
 
 | Package | Status |
 |---------|--------|
-| **1A Tool-first default** | **COMPLETE** |
-| **1B AgentState durable** | **COMPLETE** |
-| **1C AST transactional edits** | **COMPLETE** |
-| **1D Measured lift** | Scripted **GREEN** (direct + pipeline hard 5/5, including parallel). Live under 4B **OPEN**. |
+| 1A–1C | **COMPLETE** |
+| 1D Measured lift | Scripted **GREEN**; live **OPEN** |
 
-**Gate to Phase 2:** still blocked — live pipeline lift not proven; soft launch not authorized.
+See **`docs/BACKLOG.md`** for the ordered remaining list.
 
-## This batch
+## Building now
 
-- `core/failure_types.py` — typed failure taxonomy
-- `host_agent` stamps `failure_type=timeout` on step/job TimeoutExpired
-- modules.yaml registered
-- Host healthy; last steady direct hard **PASS**
+- `p1_41` — move 13 `apply_*` one-shots → `scripts/_graveyard/` + write `whats_next` + protect direct 5/5
+- Archive tool: `python -m scripts.archive_script_graveyard --apply`
 
-## Verified green (do not regress)
+## Still open (short)
 
-- Direct hard scripted 5/5
-- Pipeline hard scripted 5/5 (serial + parallel)
-- Self-refill + live-skip + no_progress + pep8_review tool + ether_cli
-
-## Still open
-
-- Pipeline live lift (4B budget)
-- God-file extraction
-- Dual dashboard unify
-- Graveyard archive (inventory only so far)
-- Full SUPER APP what’s-next UI
+1. Pipeline live under 4B  
+2. SUPER APP bind `whats_next.json`  
+3. Dual dashboard unify  
+4. LoopRunner finish / god-file  
+5. Multi-job FAST pool  
 
 ```text
 python -m scripts.ether_cli status

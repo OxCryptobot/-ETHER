@@ -1,0 +1,17 @@
+{
+  "id": "swarm_parallel_gems_smoke",
+  "note": "C2 lightweight swarm smoke under training wheels: two independent Clear Quartz style runs + AgentState merge point (one-hyp, measured)",
+  "continue_on_fail": true,
+  "source": "grok_batch_flex_2026-08-15",
+  "created": "2026-08-15T07:12:20+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.agent_state import AgentState; from concurrent.futures import ThreadPoolExecutor; import json; s=AgentState.load_or_create('swarm_smoke'); s.objective='swarm parallel smoke'; s.save(); def work(i): a=AgentState.load_or_create(f'swarm_w{i}'); a.objective=f'worker {i}'; a.meta['hyp']=f'h{i}'; a.save(); return a.thread_id; ids=[];\nwith ThreadPoolExecutor(2) as ex: ids=[f.result() for f in [ex.submit(work,i) for i in (1,2)]]; s.meta['workers']=ids; s.save(); print(json.dumps({'ok':True,'thread':s.thread_id,'workers':ids}))"
+      ],
+      "timeout": 60
+    }
+  ]
+}

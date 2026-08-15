@@ -1,0 +1,31 @@
+{
+  "id": "p1_53_live_tool_path_honest",
+  "note": "H2 soft-launch blocker measurement: live pipeline tool-path under 4B + is_honest_tool_path_pass (continue_on_fail, Labradorite on any FAIL)",
+  "continue_on_fail": true,
+  "source": "grok_batch_flex_2026-08-15",
+  "created": "2026-08-15T07:12:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "live",
+        "--tier",
+        "hard",
+        "--fixture",
+        "ledger",
+        "--timeout",
+        "280",
+        "--max-steps",
+        "12",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_53_live_honest.json"
+      ],
+      "timeout": 420
+    }
+  ]
+}

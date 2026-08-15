@@ -1,4 +1,8 @@
-"""Real multi-file workflow under memory/scratch only."""
+"""Real multi-file workflow under memory/scratch only.
+
+Phase 2.2: write_pair routes through EditTransaction so every .py is
+AST-gated and multi-file apply is all-or-nothing with rollback.
+"""
 
 from __future__ import annotations
 
@@ -9,8 +13,6 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 SCRATCH = ROOT / "memory" / "scratch"
 
-# Injected into the generation prompt for multi-file objectives.
-# Must stay aligned with extract_file_blocks / run_multifile_cycle.
 _GENERATION_ADDON = (
     "Multi-file format (required when more than one module is needed):\n"
     "# file: util.py\n"
@@ -23,7 +25,6 @@ _GENERATION_ADDON = (
 
 
 def generation_prompt_addon() -> str:
-    """Directive the pipeline appends for multi-file objectives."""
     return _GENERATION_ADDON
 
 
@@ -40,13 +41,90 @@ def is_multifile_objective(objective: str) -> bool:
     )
 
 
-def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
-    """Write name->content under scratch. Reject path escape. All-or-nothing."""
+def _normalize_name(raw_name: str) -> Optional[str]:
+    name = str(raw_name).replace("\\", "/").strip().lstrip("/")
+    if not name or ".." in Path(name).parts or Path(name).is_absolute():
+        return None
+    if not name.endswith(".py"):
+        name = name + ".py"
+    return name
+
+
+def write_pair(
+    files: Dict[str, str],
+    *,
+    verify: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """Write name->content under scratch. AST gate + all-or-nothing.
+
+    Uses EditTransaction when available. Optional verify() callable: if it
+    returns False, full rollback.
+    """
     SCRATCH.mkdir(parents=True, exist_ok=True)
     scratch = SCRATCH.resolve()
+
+    normalized: Dict[str, str] = {}
+    for raw_name, content in (files or {}).items():
+        name = _normalize_name(raw_name)
+        if name is None:
+            return {"ok": False, "error": "path escape"}
+        path = (SCRATCH / name).resolve()
+        try:
+            path.relative_to(scratch)
+        except ValueError:
+            return {"ok": False, "error": "outside scratch"}
+        normalized[name] = content if content is not None else ""
+
+    if not normalized:
+        return {"ok": False, "error": "no files"}
+
+    # Prefer transactional AST-safe path
+    try:
+        from core.ast_transaction import EditTransaction
+
+        with EditTransaction(SCRATCH, require_ast=True) as tx:
+            for name, content in normalized.items():
+                tx.write(name, content)
+            if verify is not None:
+                result = tx.verify_and_commit(lambda: bool(verify()))
+            else:
+                result = tx.commit()
+            if not result.ok:
+                return {
+                    "ok": False,
+                    "error": result.error or "transaction failed",
+                    "rolled_back": result.rolled_back,
+                    "written": result.written,
+                }
+            written = []
+            for rel in result.written:
+                written.append(str((SCRATCH / rel).relative_to(ROOT)).replace("\\", "/"))
+            return {
+                "ok": True,
+                "written": written,
+                "transactional": True,
+                "ast_gated": True,
+            }
+    except ValueError as e:
+        # AST reject or path escape from EditTransaction
+        return {"ok": False, "error": str(e), "ast_reject": True}
+    except Exception as e:
+        # Fall through to legacy path only if import/tx infra fails
+        legacy_err = f"{type(e).__name__}: {e}"
+
+    # Legacy fallback (should be rare)
+    return _write_pair_legacy(normalized, fallback_error=legacy_err)
+
+
+def _write_pair_legacy(
+    files: Dict[str, str],
+    *,
+    fallback_error: str = "",
+) -> Dict[str, Any]:
     written: List[str] = []
     backups: List[Tuple[Path, Optional[bytes]]] = []
     made_dirs: List[Path] = []
+    scratch = SCRATCH.resolve()
 
     def _rollback(error: str) -> Dict[str, Any]:
         for path, prior in reversed(backups):
@@ -62,23 +140,25 @@ def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
                 d.rmdir()
             except OSError:
                 pass
-        return {"ok": False, "error": error}
+        out = {"ok": False, "error": error, "transactional": False}
+        if fallback_error:
+            out["tx_error"] = fallback_error[:200]
+        return out
 
-    def _contained(path: Path) -> bool:
-        try:
-            return path.resolve().is_relative_to(scratch)
-        except (OSError, ValueError, RuntimeError):
-            return False
-
-    for raw_name, content in (files or {}).items():
-        name = str(raw_name).replace("\\", "/").strip().lstrip("/")
-        if not name or ".." in Path(name).parts or Path(name).is_absolute():
-            return _rollback("path escape")
-        if not name.endswith(".py"):
-            name = name + ".py"
+    for name, content in files.items():
         path = SCRATCH / name
-        if not _contained(path):
+        try:
+            path.resolve().relative_to(scratch)
+        except ValueError:
             return _rollback("outside scratch")
+        # AST gate even on legacy path
+        if name.endswith(".py"):
+            import ast
+
+            try:
+                ast.parse(content or "")
+            except SyntaxError as e:
+                return _rollback(f"AST reject for {name}: {e.msg} (line {e.lineno})")
 
         cur = SCRATCH
         for part in Path(name).parts[:-1]:
@@ -93,9 +173,6 @@ def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
                 return _rollback(f"mkdir failed: {e}")
             made_dirs.append(cur)
 
-        if not _contained(path):
-            return _rollback("outside scratch")
-
         try:
             prior = path.read_bytes() if path.is_file() else None
         except OSError:
@@ -105,8 +182,8 @@ def write_pair(files: Dict[str, str]) -> Dict[str, Any]:
             path.write_text(content if content is not None else "", encoding="utf-8")
         except OSError as e:
             return _rollback(f"write failed: {e}")
-        written.append(str(path.relative_to(ROOT)))
-    return {"ok": True, "written": written}
+        written.append(str(path.relative_to(ROOT)).replace("\\", "/"))
+    return {"ok": True, "written": written, "transactional": False, "ast_gated": True}
 
 
 def extract_file_blocks(code: str) -> Dict[str, str]:

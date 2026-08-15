@@ -1,7 +1,7 @@
 {
-  "job_id": "ss_archive_failed_141215_4",
+  "job_id": "ss_clean_live_ledger_spam",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-15T14:24:33.331280+00:00",
-  "note": "steady: archive old failed jobs (cleanup noise)"
+  "finished": "2026-08-15T14:24:36.711313+00:00",
+  "note": "one-shot: remove pending live ledger jobs that burn GPU on known timeout"
 }

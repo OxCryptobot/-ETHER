@@ -8,7 +8,7 @@
       "strategy": "tool_runtime",
       "status": "error",
       "repo_oracle_ok": null,
-      "elapsed_s": 326.651,
+      "elapsed_s": 338.523,
       "mode": "live",
       "stages": [
         {
@@ -24,7 +24,7 @@
         {
           "stage": "tool_runtime",
           "success": false,
-          "detail": "steps=15 score=0.000 reason=timeout"
+          "detail": "steps=13 score=0.000 reason=timeout"
         },
         {
           "stage": "tool_runtime",

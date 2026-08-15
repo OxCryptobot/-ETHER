@@ -7,25 +7,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.917,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.926,
+      "elapsed_s": 0.884,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -43,7 +25,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.934,
+      "elapsed_s": 0.89,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -61,7 +43,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.935,
+      "elapsed_s": 0.904,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -75,13 +57,13 @@
       "arm": "direct"
     },
     {
-      "fixture": "intervals",
+      "fixture": "topo",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.6,
+      "elapsed_s": 0.91,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -94,16 +76,16 @@
     }
   ],
   "summary": {
-    "passed": 5,
-    "total": 5,
+    "passed": 4,
+    "total": 4,
     "mode": "scripted",
     "arms": [
       "direct"
     ],
     "model": "qwen3.5:4b-q4_K_M",
     "max_steps": 12,
-    "partial": false,
-    "note": "final"
+    "partial": true,
+    "note": ""
   },
   "matrix": {
     "lru": {
@@ -119,7 +101,7 @@
       "direct": true
     },
     "intervals": {
-      "direct": true
+      "direct": false
     }
   }
 }

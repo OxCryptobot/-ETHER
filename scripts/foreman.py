@@ -1,7 +1,4 @@
-"""ETHER Foreman — advances the job queue without chat babysitting.
-
-Phase 3.2: kill_live_pending uses a real module (broken -c one-liner removed).
-"""
+"""ETHER Foreman — Phase 3.3 measurement-first STEADY rotation."""
 from __future__ import annotations
 
 import json
@@ -99,12 +96,37 @@ CURRICULUM: List[Dict[str, Any]] = [
     },
 ]
 
+# Measurement-first: publish rates/snapshot before heavy scripted packs
 STEADY_TEMPLATES: List[Dict[str, Any]] = [
     {
         "id_prefix": "ss_kill_live_pending",
         "note": "steady: FAST purge residual live ledger pending",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.kill_live_pending"], "timeout": 30}],
+    },
+    {
+        "id_prefix": "ss_honest_live_report",
+        "note": "steady: publish honest live tool-path rates",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"], "timeout": 60}],
+    },
+    {
+        "id_prefix": "ss_phase3_snapshot",
+        "note": "steady: Phase 3 measurement snapshot",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.phase3_snapshot"], "timeout": 90}],
+    },
+    {
+        "id_prefix": "ss_soft_launch_status",
+        "note": "steady: soft-launch readiness (never auto-green)",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.soft_launch"], "timeout": 30}],
+    },
+    {
+        "id_prefix": "ss_lora_dry_tick",
+        "note": "steady: LoRA dry tick only (never trains)",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.lora_dry_tick"], "timeout": 60}],
     },
     {
         "id_prefix": "ss_pipeline_scripted",
@@ -130,15 +152,9 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
     },
     {
         "id_prefix": "ss_archive_failed",
-        "note": "steady: archive old failed jobs (cleanup noise)",
+        "note": "steady: archive old failed jobs",
         "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
-            "from pathlib import Path; import shutil; from datetime import datetime, timezone; "
-            "ROOT=Path('.').resolve(); FAILED=ROOT/'artifacts'/'jobs'/'failed'; ARCH=ROOT/'artifacts'/'jobs'/'failed_archived'; "
-            "ARCH.mkdir(parents=True, exist_ok=True); moved=0; "
-            "[None for p in sorted(FAILED.glob('*.json')) if p.name != '.gitkeep' and not shutil.move(str(p), str((ARCH/p.name) if not (ARCH/p.name).exists() else ARCH/(p.stem+'_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json'))) and not (moved:=moved+1)]; "
-            "print('archived_failed', moved)"
-        ], "timeout": 60}],
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.archive_failed"], "timeout": 60}],
     },
     {
         "id_prefix": "ss_pref_refresh",
@@ -147,24 +163,6 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "steps": [{"argv": [".venv/Scripts/python.exe", "-c",
             "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
         ], "timeout": 180}],
-    },
-    {
-        "id_prefix": "ss_honest_live_report",
-        "note": "steady: publish honest live tool-path rates",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"], "timeout": 60}],
-    },
-    {
-        "id_prefix": "ss_lora_dry_tick",
-        "note": "steady: LoRA dry tick only (never trains)",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.lora_dry_tick"], "timeout": 60}],
-    },
-    {
-        "id_prefix": "ss_phase3_snapshot",
-        "note": "steady: Phase 3 measurement snapshot",
-        "continue_on_fail": True,
-        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.phase3_snapshot"], "timeout": 90}],
     },
     {
         "id_prefix": "ss_phase2_regression",
@@ -178,6 +176,7 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
             "tests/test_honest_live_critique_context.py",
             "tests/test_phase3_snapshot.py",
             "tests/test_phase32_tool_first_kill.py",
+            "tests/test_soft_launch.py",
             "-q", "--tb=line"], "timeout": 300}],
     },
 ]

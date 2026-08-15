@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""ETHER host agent - job queue consumer. Standalone + self-refilling.
-
-2026-08-15g Phase 3.5:
-- measure_tick PUSHES immediately (rates no longer die to reset --hard)
-- clean_slate rehydrates measure artifacts after hard reset
-- inline purge_live_pending (no more FAIL-noise kill jobs)
-"""
+"""ETHER host agent — critical ops: schedule rank + latency budget + measure survive."""
 from __future__ import annotations
 
 import json
@@ -95,8 +89,10 @@ def _measure_paths() -> List[str]:
         "phase3_snapshot.json",
         "soft_launch_status.json",
         "measure_tick.json",
+        "honest_kpi.json",
         "lora_dry_tick.json",
         "foreman_state.json",
+        "playbook_limiter.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -128,6 +124,7 @@ def _light_paths() -> List[str]:
         "lora_train_last.json",
         "soft_launch_status.json",
         "measure_tick.json",
+        "honest_kpi.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -155,7 +152,6 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
         log(f"{label} push ok")
         return True
     log(f"{label} push REJECTED rc={p.returncode} err={(p.stderr or '')[:400]}")
-    # soft recovery: fetch + rebase attempt, avoid wiping measure if possible
     run(["git", "fetch", "origin"], timeout=120)
     run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
@@ -169,7 +165,6 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
 
 
 def purge_live_pending() -> int:
-    """In-process kill of residual live-ledger pending — never fails the queue."""
     PENDING.mkdir(parents=True, exist_ok=True)
     ARCH.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
@@ -190,7 +185,6 @@ def purge_live_pending() -> int:
 
 
 def rehydrate_measure() -> None:
-    """After hard reset, rewrite measurement artifacts so rates survive."""
     try:
         from core.measure_tick import run as measure_run
 
@@ -214,7 +208,6 @@ def git_clean_slate(reason: str) -> bool:
     if r.returncode != 0:
         log(f"clean_slate reset failed rc={r.returncode} err={(r.stderr or '')[:300]}")
         return False
-    # Doctrine: measurement must survive nuclear reset
     rehydrate_measure()
     return True
 
@@ -244,7 +237,6 @@ def push_liveness(reason: str = "idle") -> None:
 
 
 def maybe_measure_tick(force: bool = False) -> None:
-    """Write + immediately push rates so reset --hard cannot erase them."""
     global _last_measure_tick
     now = time.time()
     if not force and now - _last_measure_tick < MEASURE_INTERVAL:
@@ -254,14 +246,15 @@ def maybe_measure_tick(force: bool = False) -> None:
         from core.measure_tick import run as measure_run
 
         report = measure_run()
+        kpi = (report.get("steps") or {}).get("honest_kpi") or {}
         log(
             f"measure_tick ok={report.get('ok')} "
-            f"live_n={(report.get('steps') or {}).get('honest_live', {}).get('live_n')} "
-            f"soft_ready={(report.get('steps') or {}).get('soft_launch', {}).get('soft_launch_ready')}"
+            f"kpi={kpi.get('primary_kpi')} "
+            f"live_n={(report.get('steps') or {}).get('honest_live', {}).get('live_n')}"
         )
         paths = _measure_paths()
         if paths:
-            _commit_and_push(paths, "host measure_tick: rates+snapshot+soft_launch", "measure")
+            _commit_and_push(paths, "host measure_tick: rates+kpi+soft_launch", "measure")
     except Exception as e:
         log(f"measure_tick error: {type(e).__name__}: {e}")
 
@@ -270,17 +263,14 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
     global _last_heavy_push
     now = time.time()
     do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
-
     paths = list(_light_paths())
     for p in (ROOT / "artifacts").glob("scoreboard*.json"):
         paths.append(str(p.relative_to(ROOT)))
     for p in (ROOT / "artifacts").glob("trace_*.json"):
         paths.append(str(p.relative_to(ROOT)))
-
     if do_heavy:
         paths.extend(["artifacts/jobs/pending", "artifacts/jobs/failed"])
         _last_heavy_push = now
-
     status = "PASS" if ok else "FAIL"
     mode = "light" if light and not do_heavy else "full"
     msg = f"host agent report: job={job_id} {status} ({mode})"
@@ -292,24 +282,18 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
 
 
 def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
+    """Critical fix #8: MEASURE > RECOVERY > FAST > LIVE."""
     try:
-        from core.job_class import job_class, FAST, LIVE
+        from core.job_class import schedule_rank
     except Exception:
         return sorted(paths, key=lambda p: p.name)
 
     def rank(p: Path) -> tuple:
         try:
             job = json.loads(p.read_text(encoding="utf-8"))
+            return schedule_rank(job)
         except Exception:
-            return (1, p.name)
-        cls = job_class(job)
-        order = 0 if cls == FAST else (2 if cls == LIVE else 1)
-        note = str(job.get("note") or "").lower()
-        jid = str(job.get("id") or "").lower()
-        prio = 0
-        if "clean" in jid or "archive" in jid or "kill_live" in jid or "clean" in note:
-            prio = -1
-        return (order, prio, p.name)
+            return (9, p.name)
 
     return sorted(paths, key=rank)
 
@@ -352,6 +336,8 @@ def _mandatory_critique(envelope: Dict[str, Any]) -> None:
         )
         if art.get("skipped"):
             log(f"critique skipped: {art.get('reason')}")
+        elif art.get("enqueue_skipped"):
+            log(f"critique rate-limited: {art.get('enqueue_skipped')}")
         else:
             log(
                 f"Labradorite critique id={art.get('id')} hyp={str(art.get('next_hypothesis') or '')[:80]} "
@@ -367,20 +353,35 @@ def list_pending() -> List[Path]:
     return _sort_pending_fast_first(paths)
 
 
-def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> Tuple[int, Optional[str]]:
+def run_steps(
+    steps: List[Dict[str, Any]],
+    continue_on_fail: bool = False,
+    job: Optional[Dict[str, Any]] = None,
+) -> Tuple[int, Optional[str]]:
     last_rc = 0
     failure_type: Optional[str] = None
+    # Critical fix #4: clamp timeout by latency budget
+    budget_cap = 3600
+    if job is not None:
+        try:
+            from core.latency_budget import step_timeout_for_job
+
+            budget_cap = step_timeout_for_job(job, default=3600)
+        except Exception:
+            pass
     for i, step in enumerate(steps, 1):
         argv = step.get("argv")
         cmd = step.get("cmd")
-        log(f"step {i}/{len(steps)}: {argv or cmd}")
+        raw_to = int(step.get("timeout", 3600))
+        to = min(raw_to, budget_cap)
+        log(f"step {i}/{len(steps)} timeout={to}s: {argv or cmd}")
         try:
             if argv:
-                r = run([str(x) for x in argv], timeout=int(step.get("timeout", 3600)))
+                r = run([str(x) for x in argv], timeout=to)
             elif cmd:
                 r = run(
                     ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd],
-                    timeout=int(step.get("timeout", 3600)),
+                    timeout=to,
                 )
             else:
                 return 2, "bad_job"
@@ -419,7 +420,7 @@ def process_job(path: Path) -> bool:
     cont = bool(job.get("continue_on_fail", False))
     try:
         if job.get("steps"):
-            rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont)
+            rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont, job=job)
         else:
             log("job has no steps")
             rc = 2
@@ -466,7 +467,7 @@ def process_job(path: Path) -> bool:
         last_ok=ok,
         last_failure_type=failure_type,
     )
-    light = cont or str(job.get("class") or "").lower() == "fast"
+    light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery")
     try:
         git_push_report(job_id, ok, light=light)
     except Exception as e:
@@ -478,16 +479,22 @@ def process_job(path: Path) -> bool:
 def call_foreman_tick() -> None:
     try:
         from scripts.foreman import tick
+
         result = tick()
         enq = result.get("enqueued")
         pb = result.get("playbook")
-        log(f"foreman.tick enqueued={enq} playbook={pb} cursor={result.get('cursor')} live_skip={result.get('live_skip_remaining')}")
+        gov = result.get("governor") or {}
+        log(
+            f"foreman.tick enqueued={enq} playbook={pb} cursor={result.get('cursor')} "
+            f"pending={gov.get('pending')} may_steady={gov.get('may_enqueue_steady')}"
+        )
         write_status(
             current_job=None,
             phase="foreman_tick",
             last_enqueued=enq,
             foreman_cursor=result.get("cursor"),
             live_skip_remaining=result.get("live_skip_remaining"),
+            governor=gov,
         )
     except Exception as e:
         log(f"foreman.tick failed: {e}")
@@ -495,7 +502,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (Phase 3.5 measure-survive + inline kill)", flush=True)
+    print("  ETHER host_agent (critical ops: governor + latency + kpi)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 
@@ -528,7 +535,7 @@ def main() -> int:
             for job_path in jobs:
                 process_job(job_path)
                 git_sync()
-                if len(list_pending()) < 5:
+                if len(list_pending()) < 3:
                     call_foreman_tick()
                     maybe_measure_tick()
         except KeyboardInterrupt:

@@ -1,0 +1,10 @@
+{
+  "job_id": "p1_18_pipeline_hard_live",
+  "root_cause": "budget_exhaust",
+  "evidence": "max_steps reached then hung 984s on generate fallback",
+  "smallest_experiment": {
+    "id": "p1_27_post_restore_harden",
+    "note": "terminal harden"
+  },
+  "confidence": 0.95
+}

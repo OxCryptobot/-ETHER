@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-08-08T19:02:10.526715+00:00",
+  "task_id": "28408eed-1810-40fb-866e-8afe2147454b",
+  "objective": "diagnose max_steps on hard ledger mutation",
+  "root_cause": "budget_exhaust",
+  "evidence": [
+    "n_steps=24"
+  ],
+  "confidence": 0.55,
+  "severity": "improve",
+  "critique": "[improve] ~1 lines, complexity=0.01. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "complexity_score": 0.01,
+  "smallest_experiment": {
+    "hyp": "B",
+    "change": "reduce scope or raise max_steps only after measured bottleneck",
+    "mutation": "ledger_double"
+  },
+  "train_doctrine": "grok_v1",
+  "training_wheels": true
+}

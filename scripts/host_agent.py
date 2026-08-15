@@ -17,6 +17,11 @@
 - continue_on_fail measurement jobs use light report path.
 - Explicit live-ledger pending killer support.
 - Always push performance_benchmark.json + foreman_state.json.
+
+2026-08-15 LIVENESS:
+- push_liveness() every ~60s while idle so artifacts/host_agent_status.json
+  on origin always reflects real heartbeat. Fixes false "host offline" when
+  the process is alive but not finishing jobs.
 """
 from __future__ import annotations
 
@@ -49,7 +54,9 @@ LOG = ROOT / "artifacts" / "host_agent_log.txt"
 
 _last_recover_log = 0.0
 _last_heavy_push = 0.0
+_last_liveness_push = 0.0
 HEAVY_PUSH_INTERVAL = 180  # seconds between full tree pushes
+LIVENESS_INTERVAL = 55     # seconds between idle heartbeat pushes
 
 
 def log(msg: str) -> None:
@@ -113,6 +120,49 @@ def git_sync() -> None:
     r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
     if r.returncode != 0:
         git_reset_to_origin("diverged")
+
+
+def push_liveness(reason: str = "idle") -> None:
+    """Push status + last_job so remote observability (Grok + Control Matrix) always has a fresh heartbeat.
+
+    Called from idle loops every LIVENESS_INTERVAL seconds. Lightweight on purpose.
+    """
+    global _last_liveness_push
+    now = time.time()
+    if now - _last_liveness_push < LIVENESS_INTERVAL:
+        return
+    _last_liveness_push = now
+    try:
+        paths = [
+            "artifacts/host_agent_status.json",
+            "artifacts/host_agent_last_job.json",
+        ]
+        if LOG.exists():
+            paths.append("artifacts/host_agent_log.txt")
+        # also keep queue visibility alive on origin
+        for name in ("pending", "failed"):
+            p = ROOT / "artifacts" / "jobs" / name
+            if p.exists():
+                paths.append(f"artifacts/jobs/{name}")
+        run(["git", "add", "-f", "--"] + paths, timeout=45)
+        c = run(
+            ["git", "commit", "-m", f"host agent liveness: {reason}"],
+            timeout=30,
+        )
+        combined = ((c.stdout or "") + (c.stderr or "")).lower()
+        if c.returncode != 0 and "nothing to commit" in combined:
+            return
+        if c.returncode != 0:
+            log(f"liveness commit rc={c.returncode}")
+            return
+        p = run(["git", "push", "origin", "main"], timeout=90)
+        if p.returncode == 0:
+            log(f"liveness push ok ({reason})")
+        else:
+            log(f"liveness push rc={p.returncode}")
+            git_sync()
+    except Exception as e:
+        log(f"liveness push error: {e}")
 
 
 def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
@@ -359,7 +409,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling + PERF 10x)", flush=True)
+    print("  ETHER host_agent (self-refilling + PERF 10x + liveness)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 
@@ -369,6 +419,7 @@ def main() -> int:
     FAILED.mkdir(parents=True, exist_ok=True)
 
     call_foreman_tick()
+    push_liveness("startup")
 
     while True:
         try:
@@ -381,6 +432,7 @@ def main() -> int:
                 jobs = list_pending()
                 if not jobs:
                     write_status(current_job=None, phase="idle")
+                    push_liveness("idle")
                     time.sleep(max(2, POLL * 2))
                     continue
             for job_path in jobs:

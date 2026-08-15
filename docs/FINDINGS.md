@@ -354,3 +354,23 @@ Bare live PASS only: `topo_drop_cycle_raise`.
 1. Phase D 5/5 does **not** automatically transfer to regression-style mutations — ledger/topo need more budget or stronger tool prompts.
 2. Tools still outperform bare on this pack (3/6 vs 1/6); bare is not competitive on lru/merge/intervals.
 3. Next evidence-ranked step remains **real external repos** (TASKS #1), not selector polish.
+
+---
+
+## 14. 148× latency gap + quant / vLLM (2026-08-15)
+
+Measured on host (GTX 1650 4GB, `qwen3.5:4b`):
+
+| path | elapsed | result |
+|------|---------|--------|
+| pipeline scripted (ledger) | 2.142 s | PASS |
+| pipeline live (ledger) | 317.817 s | FAIL (tool_runtime timeout) |
+| ratio | **148.4×** | |
+
+Root cause is not quant alone. Scripted is deterministic tool path; live pays full multi-step LLM inference + KV + orchestration on Turing bandwidth. Direct hard pack mean is already ~2.4 s (5/5).
+
+**Quantization:** Q4_K_M (or Q4_0) is the only viable point. Q5+ / FP16 does not fit 4 GB without offload. Quality loss is real but secondary to step count.
+
+**vLLM:** Investigated and **rejected as primary path** for this host. Reasons: Windows (no official support), 4 GB below comfortable operating point, FlashAttention-2 needs SM ≥ 8.0, continuous-batching advantage is small for short agent tool loops. Keep Ollama. Revisit only on cousin hardware or after WSL2 + measured TTFT/tok/s A/B.
+
+**Policy locked:** FAST-first + live purge (`live_skip_ticks=36`, kill_live first). Latency mitigation checklist in `artifacts/performance_benchmark.json` and `docs/models.md`. Phase 1D (honest live tool path) remains the gate; do not re-introduce live into steady until it is measured green.

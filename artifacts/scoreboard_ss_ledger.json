@@ -8,7 +8,7 @@
       "strategy": "tool_runtime",
       "status": "error",
       "repo_oracle_ok": null,
-      "elapsed_s": 325.344,
+      "elapsed_s": 325.55,
       "mode": "live",
       "stages": [
         {
@@ -24,7 +24,7 @@
         {
           "stage": "tool_runtime",
           "success": false,
-          "detail": "steps=12 score=0.000 reason=timeout"
+          "detail": "steps=13 score=0.000 reason=timeout"
         },
         {
           "stage": "tool_runtime",
@@ -35,7 +35,8 @@
       "degraded": [
         "tool_runtime_failed_terminal"
       ],
-      "model": "qwen3.5:4b"
+      "model": "qwen3.5:4b",
+      "honest_tool_path": false
     }
   ],
   "summary": {

@@ -400,6 +400,17 @@ def _current_work(runs: List[Dict[str, Any]], heartbeat: Optional[str], latest: 
     }
 
 
+
+def _host_agent_block() -> Dict[str, Any]:
+    """Unify dual dashboard: Control Matrix snapshot embeds host agent collector."""
+    try:
+        from dashboard.collector_host_agent import collect_host_agent
+
+        return collect_host_agent()
+    except Exception as e:
+        return {"error": str(e)[:160]}
+
+
 def collect_snapshot() -> Dict[str, Any]:
     try:
         return _collect_snapshot_inner()
@@ -628,4 +639,5 @@ def _collect_snapshot_inner() -> Dict[str, Any]:
         },
         "latest": latest,
         "last_fail": last_fail,
+        "host_agent": _host_agent_block(),
     }

@@ -1,9 +1,8 @@
-"""AST transactional edits — Package 1C.
+"""AST transactional edits — Package 1C + Phase 2.2 multi-file.
 
 Python-first. Snapshot every target file before mutation. On verification
 failure, restore the exact prior bytes. This is the shared safety layer for
-tool_runtime, Clear Quartz, and any future write path that touches real
-source under the working tree.
+tool_runtime, Clear Quartz, multifile, and any future write path.
 
 Design rules (locked):
 - Never write without a live snapshot.
@@ -46,16 +45,7 @@ class EditResult:
 
 
 class EditTransaction:
-    """Context-manager transactional editor for one or more source files.
-
-    Usage:
-        with EditTransaction(ROOT) as tx:
-            tx.write("core/foo.py", new_source)
-            # optional: tx.write("core/bar.py", other)
-            result = tx.verify_and_commit(verify_fn)
-            # result.ok True  -> changes stay
-            # result.ok False -> all files restored, result.rolled_back True
-    """
+    """Context-manager transactional editor for one or more source files."""
 
     def __init__(
         self,
@@ -80,10 +70,6 @@ class EditTransaction:
             self.rollback()
         self._closed = True
 
-    # ------------------------------------------------------------------
-    # Path safety
-    # ------------------------------------------------------------------
-
     def _resolve(self, rel: Union[str, Path]) -> Path:
         p = Path(rel)
         if p.is_absolute():
@@ -98,10 +84,6 @@ class EditTransaction:
         if ".." in Path(rel).parts:
             raise ValueError(f"path escape via ..: {rel}")
         return target
-
-    # ------------------------------------------------------------------
-    # Snapshot + write
-    # ------------------------------------------------------------------
 
     def _snapshot(self, path: Path) -> None:
         if path in self._snapshots:
@@ -123,7 +105,6 @@ class EditTransaction:
             )
 
     def write(self, rel: Union[str, Path], content: str, *, encoding: str = "utf-8") -> None:
-        """Stage a write. Does not touch disk until commit or verify_and_commit."""
         if self._closed:
             raise RuntimeError("transaction already closed")
         path = self._resolve(rel)
@@ -140,6 +121,23 @@ class EditTransaction:
         self._snapshot(path)
         self._pending[path] = data
 
+    def apply_many(self, files: Dict[str, str], *, encoding: str = "utf-8") -> None:
+        """Stage many relative path -> content writes. All AST-gated before any apply."""
+        if self._closed:
+            raise RuntimeError("transaction already closed")
+        # Parse-all first so a late syntax error does not leave partial staging intent
+        for rel, content in (files or {}).items():
+            path = self._resolve(rel)
+            if self.require_ast and path.suffix == ".py":
+                try:
+                    ast.parse(content if content is not None else "")
+                except SyntaxError as e:
+                    raise ValueError(
+                        f"AST reject for {rel}: {e.msg} (line {e.lineno})"
+                    ) from e
+        for rel, content in (files or {}).items():
+            self.write(rel, content if content is not None else "", encoding=encoding)
+
     def write_bytes(self, rel: Union[str, Path], data: bytes) -> None:
         if self._closed:
             raise RuntimeError("transaction already closed")
@@ -151,10 +149,6 @@ class EditTransaction:
                 raise ValueError(f"AST/encoding reject for {rel}: {e}") from e
         self._snapshot(path)
         self._pending[path] = data
-
-    # ------------------------------------------------------------------
-    # Apply / rollback / commit
-    # ------------------------------------------------------------------
 
     def _apply_pending(self) -> List[str]:
         written: List[str] = []
@@ -168,7 +162,6 @@ class EditTransaction:
         return written
 
     def rollback(self) -> None:
-        """Restore every snapshotted file to its prior state."""
         for path, snap in self._snapshots.items():
             try:
                 if snap.existed:
@@ -183,8 +176,6 @@ class EditTransaction:
         self._closed = True
 
     def commit(self) -> EditResult:
-        """Apply pending writes without verification. Use only when caller
-        already verified or the write is pure metadata."""
         if self._closed:
             return EditResult(ok=False, error="transaction closed")
         written = self._apply_pending()
@@ -199,11 +190,6 @@ class EditTransaction:
         *,
         on_fail_rollback: bool = True,
     ) -> EditResult:
-        """Apply, run verify(), keep on success, rollback on failure.
-
-        verify must be a zero-arg callable that returns True on success.
-        Exceptions inside verify are treated as failure.
-        """
         if self._closed:
             return EditResult(ok=False, error="transaction closed")
 
@@ -240,10 +226,6 @@ class EditTransaction:
             error=err or "verify returned False (no rollback)",
         )
 
-    # ------------------------------------------------------------------
-    # Introspection
-    # ------------------------------------------------------------------
-
     @property
     def pending_paths(self) -> List[str]:
         out = []
@@ -266,7 +248,18 @@ def transactional_write(
     *,
     root: Union[str, Path] = ROOT,
 ) -> EditResult:
-    """One-shot helper: write a single file under a transaction + verify."""
     with EditTransaction(root) as tx:
         tx.write(path, content)
+        return tx.verify_and_commit(verify)
+
+
+def transactional_write_many(
+    files: Dict[str, str],
+    verify: Callable[[], bool],
+    *,
+    root: Union[str, Path] = ROOT,
+) -> EditResult:
+    """Multi-file atomic write under AST gate + verify."""
+    with EditTransaction(root) as tx:
+        tx.apply_many(files)
         return tx.verify_and_commit(verify)

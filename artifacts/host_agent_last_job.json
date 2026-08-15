@@ -1,7 +1,7 @@
 {
-  "job_id": "00_mcp_cq_spike_01",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-15T13:27:50.392322+00:00",
-  "note": "MCP Clear Quartz spike: install mcp extra, run unit tests for mcp_server + honest gate proof. Training wheels ON. One hypothesis: MCP tools call real sandbox and is_honest_tool_path_pass still rejects generate fallback."
+  "job_id": "playbook_timeout_revise_132135",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-15T13:27:55.107737+00:00",
+  "note": "playbook:timeout_budget_exhaust for ss_pipeline_ledger_130420_1"
 }

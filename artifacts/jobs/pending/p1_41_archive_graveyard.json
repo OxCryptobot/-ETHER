@@ -1,0 +1,53 @@
+{
+  "id": "p1_41_archive_graveyard",
+  "note": "Archive one-shot apply_* into scripts/_graveyard and push",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.archive_script_graveyard",
+        "--apply"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "add", "-A", "--", "scripts/", "artifacts/script_graveyard_archive.json", "artifacts/whats_next.json", "docs/BACKLOG.md"],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "commit", "-m", "chore: archive apply_* one-shots to scripts/_graveyard"],
+      "timeout": 60,
+      "continue_on_fail": true
+    },
+    {
+      "argv": ["git", "push", "origin", "main"],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--jobs",
+        "4",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_41_direct.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

@@ -1,31 +1,30 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 19:01Z — Phase 2.5 LoRA dry tick landed. Soft launch **BLOCKED**.
+**Updated:** 2026-08-15 19:07Z — **Phase 3 batch landed**. Soft launch **BLOCKED**.
 
 ## Law
-**Test after every build. Do not break working paths.**
-- `ETHER_LOOP_RUNNER=0` default
-- `ETHER_SYMBOL_INDEX=0` default
-- LoRA: dry tick only; real train needs `ETHER_LORA_TRAIN=1` + `ETHER_LORA_PROMOTE=1`
+**Test after every build. Do not break working paths.** Defaults stay safe:
+- `ETHER_LOOP_RUNNER=0`
+- `ETHER_SYMBOL_INDEX=0`
+- LoRA dry-tick only
+- Soft launch blocked until rates + mentor sign-off
 
 ## Host
-Alive. Job `p2_5_lora_dry_tick_verify` enqueued (pytest suite + dry tick CLI).
+Alive. Job `p3_soft_launch_measure` enqueued.
 
-## Phase 2 map
+## Phase 3 batch
+| Item | Status |
+|------|--------|
+| Steady: `ss_honest_live_report` | **in STEADY** |
+| Steady: `ss_lora_dry_tick` | **in STEADY** |
+| Steady: `ss_phase2_regression` | **in STEADY** |
+| `core/phase3_snapshot.py` | **landed** |
+| Tests | `tests/test_phase3_snapshot.py` |
+| Pipeline body rewrite | **not done** (by design — no risk) |
 
-| Phase | Item | Status |
-|-------|------|--------|
-| 2.1 | PlanState replan | done |
-| 2.2 | Multi-file AST tx | done |
-| 2.3 | Orchestration slice | done |
-| 2.4 | Symbol/file index v0 | done |
-| **2.5** | **LoRA dry tick only** | **done** |
-
-**Phase 2 complete pending host green on verify jobs.**
-
-## Phase 3 (next after green)
-1. Soft-launch measurement: publish honest live rates on expanded hard suite
-2. Wire decide_tool_first_terminal into Pipeline (behavior-preserving)
-3. Steady template: ss_lora_dry_tick + ss_honest_live_report
+## Next (Phase 3.2 after host green)
+1. Read published `artifacts/honest_live_rates.json` + `phase3_snapshot.json`
+2. Optional: behavior-preserving wire of `decide_tool_first_terminal` into Pipeline terminal block
+3. Expanded hard suite measurement only when mentor requests live runs
 
 Training wheels ON.

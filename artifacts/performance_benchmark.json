@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-08-15T14:39:00+00:00",
+  "source": "scoreboard_ss_* measured runs",
+  "hardware": {
+    "gpu": "GTX 1650 4GB",
+    "ram_gb": 12,
+    "primary_model": "qwen3.5:4b",
+    "constraint": "host <=4B only"
+  },
+  "scripted_baselines": {
+    "pipeline_ledger": {
+      "arm": "pipeline",
+      "mode": "scripted",
+      "fixture": "ledger",
+      "ok": true,
+      "score": 1.0,
+      "elapsed_s": 2.142,
+      "n_steps": 6,
+      "strategy": "tool_runtime_scripted",
+      "scoreboard": "artifacts/scoreboard_ss_pipeline_scripted.json"
+    },
+    "direct_hard_pack": {
+      "arm": "direct",
+      "mode": "scripted",
+      "tier": "hard",
+      "passed": 5,
+      "total": 5,
+      "fixtures": {
+        "lru": {"elapsed_s": 2.552, "n_steps": 4, "ok": true},
+        "merge": {"elapsed_s": 2.575, "n_steps": 4, "ok": true},
+        "topo": {"elapsed_s": 2.577, "n_steps": 4, "ok": true},
+        "ledger": {"elapsed_s": 2.746, "n_steps": 6, "ok": true},
+        "intervals": {"elapsed_s": 1.665, "n_steps": 4, "ok": true}
+      },
+      "mean_elapsed_s": 2.423,
+      "max_elapsed_s": 2.746,
+      "scoreboard": "artifacts/scoreboard_ss_direct.json"
+    }
+  },
+  "live_contrast": {
+    "pipeline_ledger_live": {
+      "arm": "pipeline",
+      "mode": "live",
+      "fixture": "ledger",
+      "ok": false,
+      "score": 0.0,
+      "elapsed_s": 317.817,
+      "reason": "tool_runtime timeout -> tool_runtime_failed_terminal",
+      "model": "qwen3.5:4b",
+      "honest_tool_path": false,
+      "scoreboard": "artifacts/scoreboard_ss_ledger.json"
+    }
+  },
+  "speedup": {
+    "scripted_vs_live_ledger": {
+      "scripted_s": 2.142,
+      "live_s": 317.817,
+      "ratio": 148.4,
+      "note": "scripted is ~148x faster on same fixture; live currently fails"
+    },
+    "direct_hard_mean_s": 2.423,
+    "implication": "FAST-first steady path yields ~100x more useful jobs/hour than live-ledger spam"
+  },
+  "host_policy": {
+    "live_skip_ticks": 12,
+    "steady_order": ["pipeline_scripted", "direct_hard", "tool_runtime", "train_gates", "archive", "pref_refresh", "pipeline_ledger_live"],
+    "git_report": "lightweight for FAST/continue_on_fail",
+    "training_wheels": true
+  },
+  "targets": {
+    "scripted_ledger_p95_s": 5.0,
+    "direct_hard_5of5": true,
+    "live_ledger_honest_pass": "OPEN — Phase 1D gate",
+    "host_jobs_per_hour_fast": 12
+  }
+}

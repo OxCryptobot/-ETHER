@@ -1,0 +1,77 @@
+{
+  "id": "p1_49_batch_phase_wave",
+  "note": "Batch phase build: pipeline+direct scripted hard, mentor doctrine, whats_next",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; t=Path('scripts/batch_phase_d.py').read_text(encoding='utf-8'); assert 'is_honest_tool_path_pass' in t; t2=Path('scripts/host_agent.py').read_text(encoding='utf-8'); assert '_sort_pending_fast_first' in t2; print('patches_present')"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_49_direct.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_49_pipeline.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.coding_method import default_method, prompt_suffix; m=default_method(); assert m.name=='ether_tool_first_v1'; assert 'run_tests' in prompt_suffix(); print('mentor_ok', m.checklist())"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_coding_method.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "status"],
+      "timeout": 60,
+      "continue_on_fail": true
+    }
+  ]
+}

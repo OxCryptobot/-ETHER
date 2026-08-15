@@ -1,24 +1,23 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 21:51Z — **Phase 3.4 landed + pushed to main**. Soft launch **BLOCKED**.
+**Updated:** 2026-08-15 22:12Z — **Phase 3.5 landed + pushed**. Soft launch **BLOCKED**.
 
 ## Law
 Test after every build. Do not break working paths. Never auto-green soft launch.
 
-## Host
-Alive. Idle path now runs `core.measure_tick` every ~90s (rates + snapshot + soft_launch) and pushes artifacts.
-Job `p3_4_measure_tick_verify` enqueued.
+## Root cause fixed
+`git reset --hard origin/main` was wiping unpublished measure artifacts. Host now:
+1. **Pushes measure immediately** after writing rates/snapshot/soft_launch
+2. **Rehydrates measure** after every clean_slate
+3. **Inlines purge_live_pending** (no more `ss_kill_live_pending` FAIL noise)
 
-## Phase 3.4
+## Phase 3.5
 | Item | Status |
 |------|--------|
-| `core/measure_tick.py` | **landed** |
-| host idle → measure_tick | **wired** |
-| Light push: measure + soft_launch | **yes** |
-| Tests | `tests/test_measure_tick.py` |
-| Pipeline body | **unchanged** |
+| Immediate measure push | **yes** |
+| clean_slate → rehydrate_measure | **yes** |
+| Kill STEADY job removed | **yes** |
+| Tests | `tests/test_phase35_host_hygiene.py` |
+| Job | `p3_5_measure_survive` |
 
-## Soft launch
-Blocked until: published rates with live rows + wheels off + `ETHER_SOFT_LAUNCH=1`.
-
-Training wheels ON.
+Pipeline body **unchanged**. Training wheels **ON**.

@@ -1,0 +1,87 @@
+{
+  "id": "p1_42_mentor_swarm",
+  "note": "Batch: inject doctrine into tool_runtime + multi regression",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_doctrine_prompt"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.coding_method import default_method, prompt_suffix; m=default_method(); assert m.name=='ether_tool_first_v1'; assert 'run_tests' in prompt_suffix(); print('coding_method_ok', m.checklist())"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.tool_runtime import ToolRuntime, TOOL_SPECS; names={t['name'] for t in TOOL_SPECS}; assert 'pep8_review' in names; print('tools_ok', len(names))"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "add", "-A", "--", "core/tool_runtime.py", "core/coding_method.py", "docs/", "artifacts/lessons/"],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "commit", "-m", "feat: inject mentor coding_method into ToolRuntime system prompt"],
+      "timeout": 60,
+      "continue_on_fail": true
+    },
+    {
+      "argv": ["git", "push", "origin", "main"],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--jobs",
+        "4",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_42_direct.json"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--jobs",
+        "4",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_42_pipeline.json"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "doctor"],
+      "timeout": 60,
+      "continue_on_fail": true
+    }
+  ]
+}

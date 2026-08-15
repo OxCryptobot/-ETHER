@@ -8,7 +8,7 @@
       "strategy": "repair_heavy",
       "status": "complete",
       "repo_oracle_ok": null,
-      "elapsed_s": 276.132,
+      "elapsed_s": 195.979,
       "mode": "live",
       "stages": [
         {
@@ -19,7 +19,7 @@
         {
           "stage": "tool_assist",
           "success": true,
-          "detail": "few_shot=3308c exp=4200c"
+          "detail": "few_shot=4511c exp=4200c"
         },
         {
           "stage": "tool_runtime",

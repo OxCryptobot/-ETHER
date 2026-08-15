@@ -1,33 +1,13 @@
 {
   "results": [
     {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.795,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "merge",
+      "fixture": "lru",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.815,
+      "elapsed_s": 0.85,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -45,43 +25,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.816,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.816,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "intervals",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.732,
+      "elapsed_s": 0.855,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -94,8 +38,8 @@
     }
   ],
   "summary": {
-    "passed": 5,
-    "total": 5,
+    "passed": 2,
+    "total": 2,
     "mode": "scripted",
     "arms": [
       "direct"
@@ -110,16 +54,16 @@
       "direct": true
     },
     "merge": {
-      "direct": true
+      "direct": false
     },
     "ledger": {
-      "direct": true
+      "direct": false
     },
     "topo": {
       "direct": true
     },
     "intervals": {
-      "direct": true
+      "direct": false
     }
   }
 }

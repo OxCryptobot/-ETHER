@@ -1,8 +1,8 @@
-"""Mandatory Labradorite on non-infra FAIL.
+"""Mandatory Labradorite on non-infra FAIL + PlanState replan.
 
 Doctrine: critique is code path, not hope. Every host/tool FAIL that is not
-infrastructure must produce a structured critique artifact and (optionally)
-enqueue a FAST recovery hypothesis job.
+infrastructure must produce a structured critique artifact, a one-step replan,
+and (optionally) enqueue a FAST recovery hypothesis job.
 """
 from __future__ import annotations
 
@@ -55,7 +55,6 @@ def is_infra_fail(
 
 
 def _run_labradorite(code: str = "", objective: str = "") -> Dict[str, Any]:
-    """Best-effort structured critique; never raises to caller."""
     try:
         from core.schemas import Envelope, LabradoriteRequest
         from gems.labradorite.profiler import Labradorite
@@ -98,6 +97,17 @@ def _run_labradorite(code: str = "", objective: str = "") -> Dict[str, Any]:
 
 
 def _next_hypothesis(failure_type: str, suggestions: List[str]) -> str:
+    try:
+        from core.plan_state import plan_from_failure
+
+        plan = plan_from_failure(
+            objective=suggestions[0] if suggestions else failure_type,
+            failure_type=failure_type or "unknown",
+        )
+        if plan.get("hypothesis"):
+            return str(plan["hypothesis"])[:200]
+    except Exception:
+        pass
     ft = (failure_type or "").lower()
     if ft in ("timeout", "budget_exhaust", "max_steps"):
         return "reduce scope: one file, one assert, tool_runtime scripted only"
@@ -121,7 +131,6 @@ def critique_fail(
     objective: str = "",
     enqueue: bool = True,
 ) -> Dict[str, Any]:
-    """Run Labradorite and persist critique. Skip infra."""
     if is_infra_fail(
         failure_type=failure_type, fail_kind=fail_kind, stderr=stderr, note=note
     ):
@@ -133,17 +142,32 @@ def critique_fail(
         }
 
     lab = _run_labradorite(code=code, objective=objective or note)
-    hyp = _next_hypothesis(failure_type or fail_kind, lab.get("suggested_improvements") or [])
+    ft = failure_type or fail_kind or "unknown"
+    hyp = _next_hypothesis(ft, lab.get("suggested_improvements") or [])
+    plan_meta: Dict[str, Any] = {}
+    try:
+        from core.plan_state import plan_from_failure
+
+        plan_meta = plan_from_failure(
+            objective=objective or note or job_id,
+            failure_type=ft,
+        )
+        if plan_meta.get("hypothesis"):
+            hyp = str(plan_meta["hypothesis"])[:200]
+    except Exception:
+        pass
+
     artifact = {
         "id": f"critique_{job_id}_{datetime.now(timezone.utc).strftime('%H%M%S')}",
         "job_id": job_id,
         "created": _now(),
-        "failure_type": failure_type or fail_kind or "unknown",
+        "failure_type": ft,
         "note": (note or "")[:300],
         "labradorite_ok": bool(lab.get("ok")),
         "critique": lab.get("critique") or "",
         "suggested_improvements": lab.get("suggested_improvements") or [],
         "next_hypothesis": hyp,
+        "plan": plan_meta,
         "source": "critique_on_fail",
         "mandatory": True,
     }
@@ -154,7 +178,7 @@ def critique_fail(
 
     enqueued_id = None
     if enqueue:
-        enqueued_id = _enqueue_hypothesis_job(job_id, hyp, failure_type or fail_kind)
+        enqueued_id = _enqueue_hypothesis_job(job_id, hyp, ft)
         artifact["enqueued"] = enqueued_id
     return artifact
 
@@ -162,7 +186,6 @@ def critique_fail(
 def _enqueue_hypothesis_job(
     failed_job_id: str, hypothesis: str, failure_type: str
 ) -> Optional[str]:
-    """FAST playbook-style recovery: tool_runtime + train_gates reverify."""
     try:
         PENDING.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%H%M%S")
@@ -183,6 +206,7 @@ def _enqueue_hypothesis_job(
                         "pytest",
                         "tests/test_tool_runtime.py",
                         "tests/test_train_gates.py",
+                        "tests/test_honest_live_critique_context.py",
                         "-q",
                         "--tb=line",
                     ],

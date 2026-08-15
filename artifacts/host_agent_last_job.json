@@ -1,7 +1,7 @@
 {
-  "job_id": "plan_confidence_replan",
+  "job_id": "multi_file_ast_tx",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-15T07:19:04.210312+00:00",
-  "note": "H3 PlanState confidence + replan node: Selenite carries last_critique + force replan on stagnation (measured under wheels)"
+  "finished": "2026-08-15T07:19:08.996978+00:00",
+  "note": "H4 strengthen transactional multi-file AST + AgentCheckpoint rollback under concurrent gems (prefer_patch already landed)"
 }

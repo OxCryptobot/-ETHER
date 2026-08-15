@@ -1,0 +1,54 @@
+{
+  "id": "p1_46_priority_swarm",
+  "note": "P1–P3 foundation swarm: dashboard unify + job_class + checkpoint + protect scripted",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.patch_collector_unify"],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.job_class import job_class, pick_next, FAST, LIVE; from core.checkpoint import AgentCheckpoint, save_checkpoint; from core.loop.handlers.tool_runtime_gate import ToolRuntimeGateHandler, ToolRuntimeGateContext, is_honest_tool_path_pass; assert job_class({'id':'ss_direct_hard'})=='fast' or job_class({'note':'scripted'})=='fast'; g=ToolRuntimeGateHandler().run(ToolRuntimeGateContext(True, False, 0.0, 'timeout')); assert g.terminal and not g.ok; assert not is_honest_tool_path_pass({'ok':True,'degraded':['tool_runtime_failed_terminal'],'mode':'live'}); c=AgentCheckpoint('t1','tool_runtime'); p=save_checkpoint(c); print('ok', p.name, g.reason)"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "add", "-A", "--", "dashboard/collector.py", "core/"],
+      "timeout": 60
+    },
+    {
+      "argv": ["git", "commit", "-m", "feat: unify host_agent into Control Matrix snapshot + P2/P3 foundations"],
+      "timeout": 60,
+      "continue_on_fail": true
+    },
+    {
+      "argv": ["git", "push", "origin", "main"],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_46_direct.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    }
+  ]
+}

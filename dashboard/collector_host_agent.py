@@ -122,41 +122,92 @@ def _foreman_state() -> tuple[Dict[str, Any], str]:
     return {}, "none"
 
 
+def _exists(rel: str) -> bool:
+    return (ROOT / rel).exists()
+
+
+def _file_contains(rel: str, needle: str) -> bool:
+    p = ROOT / rel
+    if not p.exists():
+        return False
+    try:
+        return needle in p.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return False
+
+
 def _phase1_board() -> Dict[str, str]:
-    text = _read_text(STATUS_MD, limit=8000)
+    """Evidence-based Phase 1 status. Never leave UNKNOWN when code is present."""
     board = {"1A": "unknown", "1B": "unknown", "1C": "unknown", "1D": "unknown"}
-    for line in text.splitlines():
-        low = line.lower()
-        if "1a tool-first" in low:
-            if "complete" in low or "landed" in low:
-                board["1A"] = "COMPLETE"
-            elif "in progress" in low or "next" in low:
-                board["1A"] = "IN PROGRESS"
-            elif "queued" in low:
-                board["1A"] = "QUEUED"
-        elif "1b agentstate" in low:
-            if "complete" in low or "wired" in low or "landed" in low:
-                board["1B"] = "COMPLETE"
-            elif "queued" in low:
-                board["1B"] = "QUEUED"
-            elif "in progress" in low:
-                board["1B"] = "IN PROGRESS"
-        elif "1c ast" in low:
-            if "complete" in low or "landed" in low:
-                board["1C"] = "COMPLETE"
-            elif "queued" in low:
-                board["1C"] = "QUEUED"
-            elif "in progress" in low:
-                board["1C"] = "IN PROGRESS"
-        elif "1d measured" in low or "1d expand" in low or "1d measured lift" in low:
-            if "complete" in low or "landed" in low:
-                board["1D"] = "COMPLETE"
-            elif "in progress" in low:
-                board["1D"] = "IN PROGRESS"
-            elif "queued" in low:
-                board["1D"] = "QUEUED"
-            elif "blocked" in low:
-                board["1D"] = "BLOCKED"
+
+    # 1A Tool-first: coding_method + honest gate + tool_runtime gate handler
+    has_method = _exists("core/coding_method.py")
+    has_gate = _exists("core/loop/handlers/tool_runtime_gate.py")
+    has_honest = _file_contains(
+        "core/loop/handlers/tool_runtime_gate.py", "is_honest_tool_path_pass"
+    )
+    has_suffix = _file_contains("core/coding_method.py", "prompt_suffix")
+    if has_method and has_gate and has_honest and has_suffix:
+        board["1A"] = "LANDED"
+    elif has_method or has_gate:
+        board["1A"] = "PARTIAL"
+
+    # 1B AgentState: durable state module present + used
+    has_state = _exists("core/agent_state.py")
+    used_in_evo = _file_contains("core/evolution_loop.py", "AgentState")
+    if has_state and used_in_evo:
+        board["1B"] = "LANDED"
+    elif has_state:
+        board["1B"] = "PARTIAL"
+
+    # 1C AST / surgical edits: prefer_patch + apply_patch doctrine
+    prefer_patch = _file_contains("core/coding_method.py", "prefer_patch")
+    apply_pref = _file_contains("core/coding_method.py", "apply_patch")
+    doctrine = _exists("docs/APPRENTICE_CODING_DOCTRINE.md")
+    if prefer_patch and apply_pref and doctrine:
+        board["1C"] = "LANDED"
+    elif prefer_patch or apply_pref:
+        board["1C"] = "PARTIAL"
+
+    # 1D Expand eval / measured lift: blocked until honest live tool-path PASS
+    # Scripted hard is green; live remains the soft-launch gate.
+    live_scoreboards = list(ARTIFACTS.glob("scoreboard*p1_53*")) if ARTIFACTS.exists() else []
+    live_honest = False
+    for p in live_scoreboards:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            for row in data.get("results") or []:
+                if row.get("ok") and row.get("honest_tool_path") is True:
+                    live_honest = True
+                    break
+        except Exception:
+            pass
+    if live_honest:
+        board["1D"] = "LANDED"
+    else:
+        # Scripted baseline exists → work is in progress, not absent
+        board["1D"] = "BLOCKED"
+
+    # Optional STATUS.md override (keywords still honored if present)
+    text = _read_text(STATUS_MD, limit=8000).lower()
+    if text:
+        for key, patterns in (
+            ("1A", ("1a tool-first", "1a tool first")),
+            ("1B", ("1b agentstate", "1b agent state")),
+            ("1C", ("1c ast",)),
+            ("1D", ("1d expand", "1d measured", "1d eval")),
+        ):
+            for line in text.splitlines():
+                if any(p in line for p in patterns):
+                    if "complete" in line or "landed" in line or "wired" in line:
+                        board[key] = "LANDED"
+                    elif "blocked" in line:
+                        board[key] = "BLOCKED"
+                    elif "in progress" in line or "next" in line or "partial" in line:
+                        if board[key] == "unknown":
+                            board[key] = "IN PROGRESS"
+                    elif "queued" in line and board[key] == "unknown":
+                        board[key] = "QUEUED"
     return board
 
 

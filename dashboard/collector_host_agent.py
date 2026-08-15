@@ -3,11 +3,17 @@
 Path rule (non-negotiable): read what host_agent writes under artifacts/.
 Never rely on memory/ for remote observability — it is gitignored.
 Prefer artifacts/ mirrors for foreman/lessons; fall back only with note.
+
+2026-08-15 Control Matrix:
+- job class mix (fast/live/any)
+- live_skip_remaining exposure
+- recent fail taxonomy
+- throughput signals (jobs in last window)
 """
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -31,7 +37,7 @@ WHATS_NEXT = ROOT / "artifacts" / "whats_next.json"
 ARTIFACTS = ROOT / "artifacts"
 
 
-def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
+def _list_jobs(folder: Path, limit: int = 40) -> List[Dict[str, Any]]:
     if not folder.exists():
         return []
     out: List[Dict[str, Any]] = []
@@ -53,10 +59,33 @@ def _list_jobs(folder: Path) -> List[Dict[str, Any]]:
             item["note"] = data.get("note")
             item["created"] = data.get("created")
             item["source"] = data.get("source")
+            item["class"] = data.get("class") or _infer_class(data)
+            item["continue_on_fail"] = data.get("continue_on_fail")
         except Exception:
             pass
         out.append(item)
-    return out[:40]
+    return out[:limit]
+
+
+def _infer_class(job: Dict[str, Any]) -> str:
+    note = str(job.get("note") or "").lower()
+    jid = str(job.get("id") or "").lower()
+    hay = note + " " + jid
+    if any(x in hay for x in ("live", "pipeline_ledger", "ss_pipeline_ledger")):
+        return "live"
+    if any(x in hay for x in ("scripted", "pytest", "ruff", "archive", "clean", "pref", "train_gates", "tool_runtime")):
+        return "fast"
+    return "any"
+
+
+def _class_mix(jobs: List[Dict[str, Any]]) -> Dict[str, int]:
+    mix = {"fast": 0, "live": 0, "any": 0}
+    for j in jobs:
+        cls = str(j.get("class") or "any").lower()
+        if cls not in mix:
+            cls = "any"
+        mix[cls] += 1
+    return mix
 
 
 def _tail_log(max_lines: int = 120) -> List[str]:
@@ -137,10 +166,8 @@ def _file_contains(rel: str, needle: str) -> bool:
 
 
 def _phase1_board() -> Dict[str, str]:
-    """Evidence-based Phase 1 status. Never leave UNKNOWN when code is present."""
     board = {"1A": "unknown", "1B": "unknown", "1C": "unknown", "1D": "unknown"}
 
-    # 1A Tool-first: coding_method + honest gate + tool_runtime gate handler
     has_method = _exists("core/coding_method.py")
     has_gate = _exists("core/loop/handlers/tool_runtime_gate.py")
     has_honest = _file_contains(
@@ -152,7 +179,6 @@ def _phase1_board() -> Dict[str, str]:
     elif has_method or has_gate:
         board["1A"] = "PARTIAL"
 
-    # 1B AgentState: durable state module present + used
     has_state = _exists("core/agent_state.py")
     used_in_evo = _file_contains("core/evolution_loop.py", "AgentState")
     if has_state and used_in_evo:
@@ -160,7 +186,6 @@ def _phase1_board() -> Dict[str, str]:
     elif has_state:
         board["1B"] = "PARTIAL"
 
-    # 1C AST / surgical edits: prefer_patch + apply_patch doctrine
     prefer_patch = _file_contains("core/coding_method.py", "prefer_patch")
     apply_pref = _file_contains("core/coding_method.py", "apply_patch")
     doctrine = _exists("docs/APPRENTICE_CODING_DOCTRINE.md")
@@ -169,8 +194,6 @@ def _phase1_board() -> Dict[str, str]:
     elif prefer_patch or apply_pref:
         board["1C"] = "PARTIAL"
 
-    # 1D Expand eval / measured lift: blocked until honest live tool-path PASS
-    # Scripted hard is green; live remains the soft-launch gate.
     live_scoreboards = list(ARTIFACTS.glob("scoreboard*p1_53*")) if ARTIFACTS.exists() else []
     live_honest = False
     for p in live_scoreboards:
@@ -185,10 +208,8 @@ def _phase1_board() -> Dict[str, str]:
     if live_honest:
         board["1D"] = "LANDED"
     else:
-        # Scripted baseline exists → work is in progress, not absent
         board["1D"] = "BLOCKED"
 
-    # Optional STATUS.md override (keywords still honored if present)
     text = _read_text(STATUS_MD, limit=8000).lower()
     if text:
         for key, patterns in (
@@ -293,9 +314,47 @@ def _critique_backlog(limit: int = 12) -> List[Dict[str, Any]]:
     return out
 
 
+def _throughput_signal(done: List[Dict[str, Any]], window_min: int = 30) -> Dict[str, Any]:
+    """Jobs finished in the last window."""
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=window_min)
+    count = 0
+    for j in done:
+        m = j.get("mtime")
+        if not m:
+            continue
+        try:
+            dt = datetime.fromisoformat(m.replace("Z", "+00:00"))
+            if dt >= cutoff:
+                count += 1
+        except Exception:
+            continue
+    return {
+        "window_min": window_min,
+        "jobs_finished": count,
+        "jobs_per_hour_est": round(count * (60 / max(1, window_min)), 1),
+    }
+
+
+def _fail_taxonomy(failed: List[Dict[str, Any]], last: Dict[str, Any]) -> Dict[str, Any]:
+    types: Dict[str, int] = {}
+    for j in failed[:20]:
+        note = str(j.get("note") or "").lower()
+        if "timeout" in note:
+            types["timeout"] = types.get("timeout", 0) + 1
+        elif "live" in note or "pipeline_ledger" in note:
+            types["live_fail"] = types.get("live_fail", 0) + 1
+        else:
+            types["other"] = types.get("other", 0) + 1
+    if last.get("failure_type"):
+        ft = str(last["failure_type"])
+        types[ft] = types.get(ft, 0) + 1
+    return {"counts": types, "last_failure_type": last.get("failure_type")}
+
+
 def collect_host_agent() -> Dict[str, Any]:
     pending = _list_jobs(PENDING)
-    done = _list_jobs(DONE)
+    done = _list_jobs(DONE, limit=60)
     failed = _list_jobs(FAILED)
     status = _read_json(STATUS)
     last = _read_json(LAST_JOB)
@@ -320,6 +379,10 @@ def collect_host_agent() -> Dict[str, Any]:
         except Exception:
             pass
 
+    pending_mix = _class_mix(pending)
+    throughput = _throughput_signal(done)
+    fail_tax = _fail_taxonomy(failed, last)
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "agent_alive": agent_alive,
@@ -335,6 +398,17 @@ def collect_host_agent() -> Dict[str, Any]:
                 "done": len(done),
                 "failed": len(failed),
             },
+            "class_mix_pending": pending_mix,
+        },
+        "control_matrix": {
+            "live_skip_remaining": status.get("live_skip_remaining") or foreman.get("live_skip_remaining"),
+            "foreman_mode": foreman.get("mode"),
+            "foreman_cursor": foreman.get("cursor"),
+            "class_mix_pending": pending_mix,
+            "throughput": throughput,
+            "fail_taxonomy": fail_tax,
+            "last_ok": last.get("ok"),
+            "last_failure_type": last.get("failure_type") or status.get("last_failure_type"),
         },
         "log_lines": _tail_log(150),
         "report": report,

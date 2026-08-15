@@ -369,8 +369,25 @@ Measured on host (GTX 1650 4GB, `qwen3.5:4b`):
 
 Root cause is not quant alone. Scripted is deterministic tool path; live pays full multi-step LLM inference + KV + orchestration on Turing bandwidth. Direct hard pack mean is already ~2.4 s (5/5).
 
-**Quantization:** Q4_K_M (or Q4_0) is the only viable point. Q5+ / FP16 does not fit 4 GB without offload. Quality loss is real but secondary to step count.
+**Quantization:** Q4_K_M is the only viable point. Q5+ / FP16 does not fit 4 GB without offload. Quality loss is real but secondary to step count.
 
 **vLLM:** Investigated and **rejected as primary path** for this host. Reasons: Windows (no official support), 4 GB below comfortable operating point, FlashAttention-2 needs SM ≥ 8.0, continuous-batching advantage is small for short agent tool loops. Keep Ollama. Revisit only on cousin hardware or after WSL2 + measured TTFT/tok/s A/B.
 
 **Policy locked:** FAST-first + live purge (`live_skip_ticks=36`, kill_live first). Latency mitigation checklist in `artifacts/performance_benchmark.json` and `docs/models.md`. Phase 1D (honest live tool path) remains the gate; do not re-introduce live into steady until it is measured green.
+
+---
+
+## 15. Q4_K_M confirmed + TensorRT-LLM rejected (2026-08-15)
+
+**Ollama library fact:** `qwen3.5:4b` blob reports `general.file_type = Q4_K_M` (3.4GB). Explicit tag `qwen3.5:4b-q4_K_M` exists and is preferred.
+
+| Tag | Quant | Action |
+|-----|-------|--------|
+| `qwen3.5:4b-q4_K_M` | Q4_K_M | **Locked primary** in `.env.example` + `PREFERRED_HOST` |
+| `qwen3.5:4b` | Q4_K_M (same) | Alias OK |
+
+**Q4_K_M tradeoffs on 4GB Turing:** weights fit; ~3–5% quality drop vs FP16; Q5 does not fit; Q3 hurts agent correctness. Knee of the curve.
+
+**TensorRT-LLM:** Not viable. Modern support matrix prioritizes Ampere+; Linux-first; 4GB impractical; engine build cost high. TensorRT engine/RTX can target SM 7.5 with limits, but that is not TRT-LLM serving. Stay on Ollama + GGUF.
+
+All of the above is in `artifacts/performance_benchmark.json`, `docs/models.md`, `core/model_select.py`, `.env.example`.

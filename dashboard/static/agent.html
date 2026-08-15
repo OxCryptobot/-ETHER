@@ -3,199 +3,234 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>@ETHER SUPER APP — Host + Control Matrix</title>
+<title>@ETHER Control Matrix</title>
 <style>
-  :root {
-    --bg: #0b0f14; --panel: #121821; --border: #1e2a38;
-    --text: #d7e0ea; --muted: #7d8b9a; --green: #3ddc97;
-    --red: #ff5c5c; --amber: #f0b429; --cyan: #4cc9f0; --violet: #9b8cff;
-    --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; min-height: 100vh; }
-  header {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 18px; border-bottom: 1px solid var(--border); background: #0e141c;
-    position: sticky; top: 0; z-index: 20;
-  }
-  header h1 { margin: 0; font-size: 15px; letter-spacing: 0.04em; }
-  header h1 span { color: var(--cyan); }
-  .badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 4px 10px; border-radius: 999px; font-size: 12px;
-    border: 1px solid var(--border); background: var(--panel);
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-  .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .dot.off { background: var(--red); }
-  .dot.busy { background: var(--cyan); animation: blink 1s infinite; }
-  @keyframes blink { 50% { opacity: 0.4; } }
+:root {
+  --bg: #0a0e14;
+  --panel: #111820;
+  --border: #1c2836;
+  --text: #d5dee8;
+  --muted: #7a8796;
+  --green: #3ddc97;
+  --red: #ff5c5c;
+  --amber: #f0b429;
+  --cyan: #4cc9f0;
+  --violet: #9b8cff;
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; min-height: 100vh; }
+header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border); background: #0c121a;
+  position: sticky; top: 0; z-index: 30;
+}
+header h1 { margin: 0; font-size: 14px; letter-spacing: 0.05em; font-weight: 600; }
+header h1 span { color: var(--cyan); }
+.badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px; font-size: 11px;
+  border: 1px solid var(--border); background: var(--panel);
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.off { background: var(--red); }
+.dot.busy { background: var(--cyan); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.35; } }
 
-  .recovery {
-    display: none;
-    margin: 0; padding: 12px 16px;
-    background: #1a0f0f; border-bottom: 1px solid #5a2020;
-    font-size: 12px;
-  }
-  .recovery.show { display: block; }
-  .recovery h3 {
-    margin: 0 0 6px; font-size: 12px; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--red);
-  }
-  .recovery p { margin: 0 0 8px; color: var(--muted); }
-  .recovery pre {
-    margin: 0; padding: 10px 12px; background: #0a0e16;
-    border: 1px solid #3a2020; border-radius: 6px;
-    font-family: var(--mono); font-size: 11px; line-height: 1.45;
-    color: #e8c4c4; overflow-x: auto; white-space: pre;
-  }
-  .recovery .note { margin-top: 8px; font-size: 11px; color: var(--amber); }
+.recovery {
+  display: none; margin: 0; padding: 12px 16px;
+  background: #1a0f0f; border-bottom: 1px solid #5a2020; font-size: 12px;
+}
+.recovery.show { display: block; }
+.recovery h3 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--red); }
+.recovery p { margin: 0 0 8px; color: var(--muted); }
+.recovery pre {
+  margin: 0; padding: 10px 12px; background: #0a0e16;
+  border: 1px solid #3a2020; border-radius: 6px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.45;
+  color: #e8c4c4; overflow-x: auto; white-space: pre;
+}
+.recovery .note { margin-top: 8px; font-size: 11px; color: var(--amber); }
 
-  .phase-board {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-    padding: 12px 14px; border-bottom: 1px solid var(--border); background: #0c121a;
-  }
-  .phase-card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 12px; text-align: center;
-  }
-  .phase-card .pkg { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-  .phase-card .st { font-size: 16px; font-weight: 700; margin-top: 4px; }
-  .phase-card.landed .st { color: var(--green); }
-  .phase-card.next .st, .phase-card.progress .st { color: var(--amber); }
-  .phase-card.queued .st { color: var(--cyan); }
-  .phase-card.unknown .st { color: var(--muted); }
+.phase-board {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0b1118;
+}
+.phase-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; text-align: center;
+}
+.phase-card .pkg { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.phase-card .st { font-size: 14px; font-weight: 700; margin-top: 3px; }
+.phase-card.landed .st { color: var(--green); }
+.phase-card.progress .st { color: var(--amber); }
+.phase-card.queued .st { color: var(--cyan); }
+.phase-card.unknown .st { color: var(--muted); }
 
-  .whats-next {
-    padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 12px;
-  }
-  .whats-next .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
-  .whats-next .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
-  .whats-next .blocked { color: var(--amber); }
+.matrix-strip {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
+}
+.m-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
+  padding: 8px 10px; text-align: center;
+}
+.m-card .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.m-card .val { font-size: 15px; font-weight: 700; margin-top: 2px; font-family: var(--mono); }
+.m-card .sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.m-card.good .val { color: var(--green); }
+.m-card.warn .val { color: var(--amber); }
+.m-card.bad .val { color: var(--red); }
 
-  main {
-    display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: auto auto auto 1fr;
-    gap: 10px; padding: 10px; height: calc(100vh - 180px);
-  }
-  .panel {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
-  }
-  .panel h2 {
-    margin: 0; padding: 8px 12px; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--muted);
-    border-bottom: 1px solid var(--border); background: #0e141c;
-  }
-  .body { padding: 8px 10px; overflow: auto; flex: 1; }
-  .counts { display: flex; gap: 6px; padding: 8px 10px; }
-  .count {
-    flex: 1; text-align: center; padding: 8px 4px;
-    border-radius: 6px; background: #0b1017; border: 1px solid var(--border);
-  }
-  .count b { display: block; font-size: 20px; }
-  .count span { font-size: 10px; color: var(--muted); text-transform: uppercase; }
-  .count.pending b { color: var(--amber); }
-  .count.done b { color: var(--green); }
-  .count.failed b { color: var(--red); }
-  .job {
-    padding: 6px 8px; margin-bottom: 4px; border-radius: 5px;
-    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
-  }
-  .job .id { color: var(--cyan); font-family: var(--mono); }
-  .job .meta { color: var(--muted); margin-top: 1px; font-size: 10px; }
-  .log, .report, .lesson, .code, .term {
-    font-family: var(--mono); font-size: 11px; line-height: 1.4;
-    white-space: pre-wrap; word-break: break-word; color: #b8c4d0;
-  }
-  .log .err, .term .err { color: var(--red); }
-  .log .ok, .term .ok { color: var(--green); }
-  .log .jobline, .term .live { color: var(--cyan); }
-  .span2 { grid-column: span 2; }
-  .status-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-  .status-row strong { color: var(--text); }
-  .lesson-card {
-    border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px;
-    margin-bottom: 4px; background: #0b1017;
-  }
-  .lesson-card .craft { color: var(--amber); font-size: 10px; text-transform: uppercase; }
-  .codebox {
-    font-family: var(--mono); font-size: 11px; background: #0a0e16;
-    border: 1px solid var(--border); border-radius: 6px; padding: 8px;
-    height: 100%; overflow: auto; white-space: pre; color: #d5deec; margin: 0;
-  }
-  .term-line { display: grid; grid-template-columns: 54px 1fr; gap: 8px; padding: 2px 0; border-bottom: 1px solid rgba(30,42,56,0.4); }
-  .term-ts { color: var(--muted); font-size: 10px; }
-  .flow {
-    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0;
-  }
-  .flow-node {
-    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
-    background: #0b1017; font-size: 11px;
-  }
-  .flow-node b { color: var(--cyan); }
-  .flow-arrow { color: var(--muted); }
-  .boost {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 8px; margin: 2px; border-radius: 4px;
-    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
-  }
-  .boost .s { color: var(--cyan); font-family: var(--mono); }
-  .boost .b { color: var(--amber); font-weight: 600; }
-  .sb {
-    padding: 5px 8px; margin-bottom: 3px; border-radius: 4px;
-    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
-  }
-  .sb .ok { color: var(--green); }
-  .sb .fail { color: var(--red); }
-  .crit {
-    padding: 6px 8px; margin-bottom: 4px; border-radius: 5px;
-    background: #0b1017; border: 1px solid var(--border); font-size: 11px;
-  }
-  .crit .rc { color: var(--amber); font-family: var(--mono); }
-  .crit .meta { color: var(--muted); font-size: 10px; margin-top: 2px; }
-  @media (max-width: 1100px) {
-    main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
-    .span2 { grid-column: span 1; }
-    .phase-board { grid-template-columns: repeat(2, 1fr); }
-  }
+.whats-next {
+  padding: 8px 14px; border-bottom: 1px solid var(--border); background: #0a1016;
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px;
+}
+.whats-next .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; }
+.whats-next .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
+
+main {
+  display: grid;
+  grid-template-columns: 240px 1fr 1fr;
+  grid-template-rows: auto auto 1fr;
+  gap: 8px; padding: 8px; height: calc(100vh - 220px);
+}
+.panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 9px; overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+}
+.panel h2 {
+  margin: 0; padding: 7px 10px; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted);
+  border-bottom: 1px solid var(--border); background: #0c121a; flex-shrink: 0;
+}
+.body { padding: 7px 9px; overflow: auto; flex: 1; min-height: 0; }
+.counts { display: flex; gap: 5px; padding: 7px 9px; flex-shrink: 0; }
+.count {
+  flex: 1; text-align: center; padding: 6px 3px;
+  border-radius: 5px; background: #0b1017; border: 1px solid var(--border);
+}
+.count b { display: block; font-size: 18px; font-family: var(--mono); }
+.count span { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+.count.pending b { color: var(--amber); }
+.count.done b { color: var(--green); }
+.count.failed b { color: var(--red); }
+.job {
+  padding: 5px 7px; margin-bottom: 3px; border-radius: 4px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+}
+.job .id { color: var(--cyan); font-family: var(--mono); font-size: 11px; }
+.job .meta { color: var(--muted); margin-top: 1px; font-size: 10px; }
+.job .cls { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 9px; margin-left: 4px; }
+.job .cls.fast { background: #0d2a1a; color: var(--green); }
+.job .cls.live { background: #2a1a0d; color: var(--amber); }
+.job .cls.any { background: #1a1a2a; color: var(--violet); }
+.log, .term {
+  font-family: var(--mono); font-size: 10.5px; line-height: 1.4;
+  white-space: pre-wrap; word-break: break-word; color: #b0bcc8;
+}
+.log .err, .term .err { color: var(--red); }
+.log .ok, .term .ok { color: var(--green); }
+.log .jobline, .term .live { color: var(--cyan); }
+.span2 { grid-column: span 2; }
+.status-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px 12px; font-size: 11px; color: var(--muted);
+}
+.status-grid strong { color: var(--text); }
+.lesson-card {
+  border: 1px solid var(--border); border-radius: 4px; padding: 5px 7px;
+  margin-bottom: 3px; background: #0b1017;
+}
+.lesson-card .craft { color: var(--amber); font-size: 9px; text-transform: uppercase; }
+.boost {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 7px; margin: 2px; border-radius: 4px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 10px;
+}
+.boost .s { color: var(--cyan); font-family: var(--mono); }
+.boost .b { color: var(--amber); font-weight: 600; }
+.sb {
+  padding: 4px 7px; margin-bottom: 2px; border-radius: 4px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+}
+.sb .ok { color: var(--green); }
+.sb .fail { color: var(--red); }
+.crit {
+  padding: 5px 7px; margin-bottom: 3px; border-radius: 4px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+}
+.crit .rc { color: var(--amber); font-family: var(--mono); }
+.crit .meta { color: var(--muted); font-size: 10px; margin-top: 1px; }
+.flow { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 4px 0; }
+.flow-node {
+  padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border);
+  background: #0b1017; font-size: 10px;
+}
+.flow-node b { color: var(--cyan); }
+.flow-arrow { color: var(--muted); font-size: 11px; }
+.term-line { display: grid; grid-template-columns: 50px 1fr; gap: 6px; padding: 1px 0; border-bottom: 1px solid rgba(30,42,56,0.35); }
+.term-ts { color: var(--muted); font-size: 9px; }
+.codebox {
+  font-family: var(--mono); font-size: 10.5px; background: #0a0e16;
+  border: 1px solid var(--border); border-radius: 5px; padding: 7px;
+  height: 100%; overflow: auto; white-space: pre; color: #c8d2e0; margin: 0;
+}
+@media (max-width: 1100px) {
+  main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+  .span2 { grid-column: span 1; }
+  .phase-board, .matrix-strip { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
 <header>
-  <h1><span>@ETHER</span> SUPER APP — Host Agent + Control Matrix</h1>
-  <div style="display:flex;gap:10px;align-items:center">
+  <h1><span>@ETHER</span> Control Matrix</h1>
+  <div class="badges">
     <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
     <div class="badge" id="liveCoding">coding: idle</div>
+    <div class="badge" id="modelBadge">model: --</div>
   </div>
 </header>
 
 <div class="recovery" id="recoveryBanner">
-  <h3>Host offline — one-time recovery</h3>
-  <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave it. Launcher keeps it alive after that.</p>
+  <h3>Host offline -- one-time recovery</h3>
+  <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave the window open. Launcher keeps it alive after that.</p>
   <pre>cd C:\Users\Otcde\ETHER
 git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\start_ether_host.ps1</pre>
-  <div class="note">After restart the dashboard will flip green within ~90 s. Do not re-run unless heartbeat stays dead >2 min with pending jobs unconsumed.</div>
+.\scripts\recover_host.ps1 -Hard</pre>
+  <div class="note">After restart the dashboard flips green within ~90 s. Do not re-run unless heartbeat stays dead >2 min with pending jobs unconsumed.</div>
 </div>
 
 <div class="phase-board" id="phaseBoard">
-  <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">—</div></div>
-  <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">—</div></div>
-  <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">—</div></div>
-  <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">—</div></div>
+  <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">--</div></div>
+  <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">--</div></div>
+  <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">--</div></div>
+  <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">--</div></div>
+</div>
+
+<div class="matrix-strip" id="matrixStrip">
+  <div class="m-card" id="mThroughput"><div class="label">Throughput</div><div class="val" id="mTpVal">--</div><div class="sub" id="mTpSub">jobs/h est</div></div>
+  <div class="m-card" id="mFast"><div class="label">Pending FAST</div><div class="val" id="mFastVal">0</div><div class="sub">class mix</div></div>
+  <div class="m-card" id="mLive"><div class="label">Pending LIVE</div><div class="val" id="mLiveVal">0</div><div class="sub">quarantine target</div></div>
+  <div class="m-card" id="mRatio"><div class="label">Scripted/Live</div><div class="val" id="mRatioVal">--</div><div class="sub">latency ratio</div></div>
+  <div class="m-card" id="mLast"><div class="label">Last job</div><div class="val" id="mLastVal">--</div><div class="sub" id="mLastSub">--</div></div>
+  <div class="m-card" id="mSkip"><div class="label">Live skip left</div><div class="val" id="mSkipVal">--</div><div class="sub">foreman</div></div>
 </div>
 
 <div class="whats-next" id="whatsNextBar">
-  <div><span class="label">What's next</span><br><span class="next" id="wnNext">—</span></div>
-  <div><span class="label">Queue depth</span><br><strong id="wnDepth">—</strong></div>
-  <div><span class="label">Blocked</span><br><span class="blocked" id="wnBlocked">—</span></div>
+  <div><span class="label">What's next</span><br><span class="next" id="wnNext">--</span></div>
+  <div><span class="label">Queue depth</span><br><strong id="wnDepth">--</strong></div>
+  <div><span class="label">Blocked</span><br><span id="wnBlocked" style="color:var(--amber)">--</span></div>
+  <div><span class="label">Foreman cursor</span><br><strong id="wnCursor">--</strong></div>
 </div>
 
 <main>
-  <section class="panel" style="grid-row: span 4;">
+  <section class="panel" style="grid-row: span 3;">
     <h2>Job queue</h2>
     <div class="counts">
       <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
@@ -207,27 +242,27 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
   <section class="panel span2">
     <h2>Status / Foreman / Last job</h2>
-    <div class="body status-row" id="status">loading...</div>
+    <div class="body status-grid" id="status">loading...</div>
   </section>
 
   <section class="panel">
     <h2>RLHF health + ranked boosts</h2>
-    <div class="body" id="rlhf"><div style="color:var(--muted)">loading…</div></div>
+    <div class="body" id="rlhf"><div style="color:var(--muted)">loading...</div></div>
   </section>
 
   <section class="panel">
     <h2>Recent scoreboards</h2>
-    <div class="body" id="scoreboards"><div style="color:var(--muted)">loading…</div></div>
+    <div class="body" id="scoreboards"><div style="color:var(--muted)">loading...</div></div>
   </section>
 
   <section class="panel">
-    <h2>Agent log (realtime)</h2>
+    <h2>Agent log</h2>
     <div class="body log" id="log"></div>
   </section>
 
   <section class="panel">
-    <h2>Live coding / activity feed</h2>
-    <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events…</div></div>
+    <h2>Live coding / activity</h2>
+    <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events...</div></div>
   </section>
 
   <section class="panel">
@@ -236,23 +271,22 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
   </section>
 
   <section class="panel">
-    <h2>Control flow + GEMS</h2>
+    <h2>Control flow + GEMS + lessons</h2>
     <div class="body">
       <div class="flow" id="flow"></div>
-      <div style="margin-top:8px" id="gemsHealth"></div>
-      <div style="margin-top:8px" id="lessons"></div>
+      <div style="margin-top:6px" id="lessons"></div>
     </div>
   </section>
 
   <section class="panel">
-    <h2>Generated / last code preview</h2>
+    <h2>Code preview</h2>
     <pre class="codebox" id="codepane"># waiting for pipeline / tool-runtime output</pre>
   </section>
 </main>
 
 <script>
 function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":"&#39;"}[c]));
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 }
 function colorize(line) {
   const e = esc(line);
@@ -261,12 +295,16 @@ function colorize(line) {
   if (/JOB |foreman|sprint |step /i.test(line)) return '<span class="jobline">' + e + '</span>';
   return e;
 }
+function clsTag(c) {
+  const v = (c || 'any').toLowerCase();
+  return '<span class="cls ' + v + '">' + esc(v) + '</span>';
+}
 function renderJobs(list, title) {
   if (!list || !list.length) return '';
-  return '<div style="color:var(--muted);font-size:10px;margin:6px 0 3px">' + title + '</div>' +
-    list.slice(0, 10).map(j => `
+  return '<div style="color:var(--muted);font-size:9px;margin:5px 0 2px">' + title + '</div>' +
+    list.slice(0, 12).map(j => `
       <div class="job">
-        <div class="id">${esc(j.id)}</div>
+        <div class="id">${esc(j.id)}${clsTag(j.class)}</div>
         <div class="meta">${esc(j.note || j.sprint || '')} ${esc(j.source || '')}</div>
       </div>`).join('');
 }
@@ -286,6 +324,15 @@ function setRecovery(show) {
   if (show) el.classList.add('show');
   else el.classList.remove('show');
 }
+function setCard(id, good) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('good', 'warn', 'bad');
+  if (good === true) el.classList.add('good');
+  else if (good === false) el.classList.add('bad');
+  else if (good === 'warn') el.classList.add('warn');
+}
+
 async function tickHost() {
   try {
     const r = await fetch('/api/host-agent');
@@ -293,7 +340,9 @@ async function tickHost() {
     const alive = !!d.agent_alive;
     const age = (d.status && d.status.heartbeat_age_s != null) ? Number(d.status.heartbeat_age_s) : null;
     document.getElementById('dot').className = 'dot ' + (alive ? 'on' : 'off');
-    document.getElementById('alive').textContent = alive ? 'host online' : 'host offline';
+    document.getElementById('alive').textContent = alive
+      ? (age != null ? 'host online (' + Math.round(age) + 's)' : 'host online')
+      : 'host offline';
     setRecovery(!alive || (age != null && age > 120));
 
     const c = (d.queue && d.queue.counts) || {};
@@ -307,6 +356,32 @@ async function tickHost() {
       renderJobs(q.done, 'RECENT DONE') +
       renderJobs(q.failed, 'FAILED');
 
+    const cm = d.control_matrix || {};
+    const mix = cm.class_mix_pending || q.class_mix_pending || {};
+    const tp = cm.throughput || {};
+    const perf = cm.performance || {};
+    document.getElementById('mTpVal').textContent = tp.jobs_per_hour_est != null ? tp.jobs_per_hour_est : '--';
+    document.getElementById('mTpSub').textContent = (tp.jobs_finished || 0) + ' in ' + (tp.window_min || 30) + 'm';
+    setCard('mThroughput', (tp.jobs_per_hour_est || 0) > 2 ? true : (tp.jobs_per_hour_est > 0 ? 'warn' : false));
+
+    document.getElementById('mFastVal').textContent = mix.fast ?? 0;
+    document.getElementById('mLiveVal').textContent = mix.live ?? 0;
+    setCard('mFast', (mix.fast || 0) > 0 ? true : null);
+    setCard('mLive', (mix.live || 0) > 0 ? false : true);
+
+    const ratio = perf.scripted_vs_live_ratio;
+    document.getElementById('mRatioVal').textContent = ratio != null ? Number(ratio).toFixed(1) + 'x' : '--';
+    setCard('mRatio', ratio != null && ratio > 10 ? false : (ratio != null ? true : null));
+
+    const lastOk = cm.last_ok;
+    document.getElementById('mLastVal').textContent = lastOk === true ? 'PASS' : lastOk === false ? 'FAIL' : '--';
+    document.getElementById('mLastSub').textContent = cm.last_failure_type || (d.last_job && d.last_job.job_id) || '--';
+    setCard('mLast', lastOk === true ? true : lastOk === false ? false : null);
+
+    const skip = cm.live_skip_remaining;
+    document.getElementById('mSkipVal').textContent = skip != null ? skip : '--';
+    setCard('mSkip', skip === 0 ? true : (skip > 0 ? 'warn' : null));
+
     const st = d.status || {};
     const last = d.last_job || {};
     const fm = d.foreman || {};
@@ -317,23 +392,26 @@ async function tickHost() {
     setPhase('p1c', ph['1C']);
     setPhase('p1d', ph['1D']);
 
-    // What's next bar (from collector whats_next)
     const wn = d.whats_next || {};
-    document.getElementById('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '—';
-    document.getElementById('wnDepth').textContent = wn.queue_depth != null ? wn.queue_depth : (c.pending ?? '—');
-    const blocked = (wn.blocked || []).slice(0, 2).join(' · ') || '—';
-    document.getElementById('wnBlocked').textContent = blocked;
+    document.getElementById('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '--';
+    document.getElementById('wnDepth').textContent = wn.queue_depth != null ? wn.queue_depth : (c.pending ?? '--');
+    document.getElementById('wnBlocked').textContent = ((wn.blocked || []).slice(0, 2).join(' | ')) || '--';
+    document.getElementById('wnCursor').textContent = fm.cursor ?? '--';
+
+    const model = (d.performance_benchmark && d.performance_benchmark.hardware && d.performance_benchmark.hardware.primary_model)
+      || (perf && perf.model) || 'qwen3.5:4b-q4_K_M';
+    document.getElementById('modelBadge').textContent = 'model: ' + model;
 
     const fsrc = d.foreman_source || ap.source || '';
     document.getElementById('status').innerHTML = `
-      <div>heartbeat <strong>${esc(st.heartbeat || '—')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
-      <div>phase <strong>${esc(st.phase || '—')}</strong></div>
-      <div>current <strong>${esc(st.current_job || last.job_id || '—')}</strong></div>
-      <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '—'}</strong> ${esc(last.job_id || '')}</div>
-      <div>foreman cursor <strong>${esc(fm.cursor ?? '—')}</strong> <span style="color:var(--muted)">(${esc(fsrc)})</span></div>
+      <div>heartbeat <strong>${esc(st.heartbeat || '--')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
+      <div>phase <strong>${esc(st.phase || '--')}</strong></div>
+      <div>current <strong>${esc(st.current_job || last.job_id || '--')}</strong></div>
+      <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '--'}</strong> ${esc(last.job_id || '')}</div>
+      <div>foreman <strong>${esc(fm.cursor ?? '--')}</strong> <span style="color:var(--muted)">(${esc(fsrc)})</span></div>
       <div>completed <strong>${esc((fm.completed || []).length)}</strong></div>
       <div>lessons <strong>${esc(ap.n ?? 0)}</strong> <span style="color:var(--muted)">(${esc(ap.source || '')})</span></div>
-      <div>teacher <strong>Grok</strong> → apprentice <strong>ETHER</strong></div>`;
+      <div>teacher <strong>Grok</strong> to apprentice <strong>ETHER</strong></div>`;
 
     const lines = d.log_lines || [];
     const logEl = document.getElementById('log');
@@ -342,27 +420,27 @@ async function tickHost() {
 
     const lessons = ap.lessons || [];
     document.getElementById('lessons').innerHTML = lessons.length
-      ? '<div style="color:var(--muted);font-size:10px;margin-bottom:4px">APPRENTICE LESSONS</div>' +
-        lessons.slice(0, 8).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div class="lesson">${esc(L.rule)}</div></div>`).join('')
-      : '<div class="lesson">(no lessons yet)</div>';
+      ? '<div style="color:var(--muted);font-size:9px;margin-bottom:3px">APPRENTICE LESSONS</div>' +
+        lessons.slice(0, 6).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div style="font-size:10px">${esc(L.rule)}</div></div>`).join('')
+      : '<div style="color:var(--muted);font-size:11px">(no lessons yet)</div>';
 
     const rl = d.rlhf || {};
     const boosts = rl.ranked_boosts || [];
     const healthy = rl.healthy ? 'healthy' : 'missing';
     const healthyColor = rl.healthy ? 'var(--green)' : 'var(--amber)';
     document.getElementById('rlhf').innerHTML = `
-      <div style="font-size:12px;margin-bottom:6px">
-        pairs <strong>${esc(rl.n_preferences ?? '—')}</strong> ·
-        episodes <strong>${esc(rl.n_episodes ?? '—')}</strong> ·
+      <div style="font-size:11px;margin-bottom:5px">
+        pairs <strong>${esc(rl.n_preferences ?? '--')}</strong> ·
+        episodes <strong>${esc(rl.n_episodes ?? '--')}</strong> ·
         <span style="color:${healthyColor}">${healthy}</span>
-        <span style="color:var(--muted);font-size:10px"> ${esc(rl.updated || '')}</span>
+        <span style="color:var(--muted);font-size:9px"> ${esc(rl.updated || '')}</span>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">
+      <div style="display:flex;flex-wrap:wrap;gap:3px">
         ${boosts.length ? boosts.map(b => `
           <div class="boost">
             <span class="s">${esc(b.strategy)}</span>
             <span class="b">${Number(b.boost).toFixed(3)}</span>
-            <span style="color:var(--muted);font-size:10px">${esc(b.wins)}/${esc(b.n)}</span>
+            <span style="color:var(--muted);font-size:9px">${esc(b.wins)}/${esc(b.n)}</span>
           </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
       </div>`;
 
@@ -371,8 +449,8 @@ async function tickHost() {
       ? sbs.map(s => {
           const ok = s.passed != null && s.total != null
             ? `<span class="${s.passed === s.total ? 'ok' : 'fail'}">${esc(s.passed)}/${esc(s.total)}</span>`
-            : '—';
-          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok} <span style="color:var(--muted)">${esc(s.mode || '')} ${esc((s.arms || []).join(',') || '')}</span></div>`;
+            : '--';
+          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok} <span style="color:var(--muted)">${esc(s.mode || '')}</span></div>`;
         }).join('')
       : '<div style="color:var(--muted)">(no scoreboards on origin)</div>';
 
@@ -381,8 +459,8 @@ async function tickHost() {
       ? crits.map(c => `
           <div class="crit">
             <div class="rc">${esc(c.root_cause || c.id)}</div>
-            <div class="meta">${esc(c.job_id || '')} conf=${esc(c.confidence ?? '—')}</div>
-            <div style="margin-top:3px;font-size:10px;color:#b8c4d0">${esc(c.smallest_experiment || '')}</div>
+            <div class="meta">${esc(c.job_id || '')} conf=${esc(c.confidence ?? '--')}</div>
+            <div style="margin-top:2px;font-size:10px;color:#b0bcc8">${esc(c.smallest_experiment || '')}</div>
           </div>`).join('')
       : '<div style="color:var(--muted)">(no open critiques)</div>';
   } catch (e) {
@@ -391,6 +469,7 @@ async function tickHost() {
     setRecovery(true);
   }
 }
+
 async function tickSnapshot() {
   try {
     const r = await fetch('/api/snapshot');
@@ -420,22 +499,12 @@ async function tickSnapshot() {
 
     const gems = d.gems || [];
     document.getElementById('flow').innerHTML = gems.length
-      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b> ${esc(g.role || g.layer || '')}</div>`).join('<span class="flow-arrow">→</span>')
-      : '<span style="color:var(--muted)">GEMS topology (Selenite → Rose → Clear Quartz → …)</span>';
-
-    const ha = d.host_agent || {};
-    if (ha.phase1) {
-      setPhase('p1a', ha.phase1['1A']);
-      setPhase('p1b', ha.phase1['1B']);
-      setPhase('p1c', ha.phase1['1C']);
-      setPhase('p1d', ha.phase1['1D']);
-    }
+      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b> ${esc(g.role || g.layer || '')}</div>`).join('<span class="flow-arrow">-></span>')
+      : '<span style="color:var(--muted);font-size:11px">Selenite -> Rose Quartz -> Clear Quartz -> Labradorite -> Amethyst</span>';
   } catch (e) { /* non-fatal */ }
 }
-function tick() {
-  tickHost();
-  tickSnapshot();
-}
+
+function tick() { tickHost(); tickSnapshot(); }
 tick();
 setInterval(tick, 1500);
 </script>

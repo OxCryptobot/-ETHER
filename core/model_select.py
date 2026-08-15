@@ -26,8 +26,11 @@ PREFERRED_COUSIN = [
     "llama3.2:3b",
 ]
 
-# Owner host (GTX 1650 4GB / 12GB RAM) — prefer Qwen 3.5 4B, never >4B class
+# Owner host (GTX 1650 4GB / 12GB RAM) — Q4_K_M only, never >4B class.
+# ollama library qwen3.5:4b is already file_type=Q4_K_M (3.4GB).
+# Explicit :4b-q4_K_M tag preferred when present for clarity.
 PREFERRED_HOST = [
+    "qwen3.5:4b-q4_K_M",
     "qwen3.5:4b",
     "qwen3.5:4b-instruct",
     "qwen3:4b",

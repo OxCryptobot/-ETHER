@@ -1,51 +1,13 @@
 {
   "results": [
     {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 1.049,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.072,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
       "fixture": "merge",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.074,
+      "elapsed_s": 0.945,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -63,7 +25,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.081,
+      "elapsed_s": 0.957,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -75,13 +37,13 @@
       "arm": "direct"
     },
     {
-      "fixture": "intervals",
+      "fixture": "lru",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.793,
+      "elapsed_s": 0.964,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -91,19 +53,39 @@
       ],
       "model": "",
       "arm": "direct"
+    },
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.976,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
     }
   ],
   "summary": {
-    "passed": 5,
-    "total": 5,
+    "passed": 4,
+    "total": 4,
     "mode": "scripted",
     "arms": [
       "direct"
     ],
     "model": "qwen3.5:4b-q4_K_M",
     "max_steps": 12,
-    "partial": false,
-    "note": "final"
+    "partial": true,
+    "note": ""
   },
   "matrix": {
     "lru": {
@@ -119,7 +101,7 @@
       "direct": true
     },
     "intervals": {
-      "direct": true
+      "direct": false
     }
   }
 }

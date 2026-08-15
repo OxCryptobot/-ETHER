@@ -1,0 +1,16 @@
+{
+  "id": "ss_clean_live_ledger_spam",
+  "note": "one-shot: remove pending live ledger jobs that burn GPU on known timeout",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import shutil; ROOT=Path('.').resolve(); P=ROOT/'artifacts'/'jobs'/'pending'; removed=0;\nfor p in list(P.glob('ss_pipeline_ledger_*.json')):\n  try: p.unlink(); removed+=1\n  except Exception: pass\nprint('removed_live_ledger_pending', removed)"
+      ],
+      "timeout": 30
+    }
+  ]
+}

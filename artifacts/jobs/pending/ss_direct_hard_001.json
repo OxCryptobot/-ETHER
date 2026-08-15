@@ -1,0 +1,13 @@
+{
+  "id": "ss_direct_hard_001",
+  "note": "FAST: direct hard baseline remeasure",
+  "class": "fast",
+  "continue_on_fail": true,
+  "source": "max_swarm",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "scripted", "--tier", "hard", "--scoreboard", "artifacts/scoreboard_ss_direct.json"],
+      "timeout": 600
+    }
+  ]
+}

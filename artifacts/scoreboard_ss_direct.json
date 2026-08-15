@@ -1,13 +1,13 @@
 {
   "results": [
     {
-      "fixture": "merge",
+      "fixture": "topo",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.949,
+      "elapsed_s": 0.825,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -25,67 +25,13 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.951,
+      "elapsed_s": 0.834,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
         "read_file",
         "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.978,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.006,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "intervals",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.084,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
         "write_file",
         "run_tests"
       ],
@@ -94,8 +40,8 @@
     }
   ],
   "summary": {
-    "passed": 5,
-    "total": 5,
+    "passed": 2,
+    "total": 2,
     "mode": "scripted",
     "arms": [
       "direct"
@@ -107,10 +53,10 @@
   },
   "matrix": {
     "lru": {
-      "direct": true
+      "direct": false
     },
     "merge": {
-      "direct": true
+      "direct": false
     },
     "ledger": {
       "direct": true
@@ -119,7 +65,7 @@
       "direct": true
     },
     "intervals": {
-      "direct": true
+      "direct": false
     }
   }
 }

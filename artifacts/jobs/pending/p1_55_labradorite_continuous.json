@@ -1,0 +1,21 @@
+{
+  "id": "p1_55_labradorite_continuous",
+  "note": "P1: continuous fail→Labradorite→requeue drill (lesson-driven)",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; import json; lessons=list(Path('memory/ether_apprentice/lessons').glob('*.json')) if Path('memory/ether_apprentice/lessons').exists() else list(Path('artifacts/lessons').glob('*.json')); print('lessons_n', len(lessons)); assert len(lessons)>=5; print('labradorite_ready')"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_coding_method.py", "-q", "--tb=line"],
+      "timeout": 120,
+      "continue_on_fail": true
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.coding_method import default_method, prompt_suffix; m=default_method(); assert 'no_progress' in prompt_suffix() or 'run_tests' in prompt_suffix(); print('mentor_drill', m.checklist())"],
+      "timeout": 30
+    }
+  ]
+}

@@ -1,44 +1,45 @@
-# ETHER Master Checklist (2026-08-15)
+# ETHER Master Checklist (2026-08-15 swarm update)
 
 Soft launch: **BLOCKED** until live tool-path produces an honest PASS.  
-Training wheels: **ON**. Scripted protect: **GREEN**.
+Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first host: **ON**. Mentor doctrine: **LOCKED**.
 
-## DONE (do not break)
+## DONE (do not break — verified on main)
 
 - [x] 1A Tool-first / 1B AgentState / 1C AST edits
-- [x] tool_runtime compile OK + mentor doctrine inject
+- [x] tool_runtime compile OK + mentor doctrine inject (`core/coding_method.py` + prompt_suffix)
 - [x] Direct hard scripted **5/5** (p1_44, p1_46, p1_49)
 - [x] Pipeline hard scripted **5/5** (p1_44, p1_49)
 - [x] Host self-refill + live-skip + no_progress + typed timeout
 - [x] pep8_review GEMS tool + ether_cli + whats_next writer
 - [x] 13× apply_* → graveyard
-- [x] Apprentice doctrine + coding_method schema + lessons
+- [x] Apprentice doctrine + coding_method schema + lessons 001–024
 - [x] SUPER APP What's next bar + collector whats_next field
 - [x] ToolRuntimeGateHandler + is_honest_tool_path_pass
 - [x] job_class FAST/LIVE contract + FAST-first host sort
 - [x] AgentCheckpoint schema (P3 foundation)
 - [x] live_tool_path_timeout Labradorite lesson
-- [x] Honest live scoring in batch_phase_d (on main, verified by p1_49)
+- [x] Honest live scoring in batch_phase_d (verified by p1_49)
 - [x] FAST-first host list_pending (on main)
 - [x] Foreman tags class=fast|live (on main)
 - [x] Collector snapshot embeds host_agent (on main)
 - [x] p1_49 batch phase wave PASS (dual-arm scripted hard + mentor + whats_next)
+- [x] Mentor coding loop schema + APPRENTICE_CODING_DOCTRINE.md + lesson 024
 
-## REMAINING — P0 (soft-launch gate)
+## REMAINING — P0 (soft-launch gate — batch now)
 
-- [ ] Pipeline **live tool-path** lift under 4B (honest; no generate-fallback PASS)
-- [ ] Soft launch authorization (requires above)
+- [ ] **Pipeline live tool-path lift under 4B** (honest; no generate-fallback PASS). Job: `p1_53_live_tool_path_honest`
+- [ ] Soft launch authorization (requires above honest live PASS + scoreboard truth)
 
-## REMAINING — P1
+## REMAINING — P1 (batch parallel after P0 signal)
 
-- [ ] Dual dashboard fully unified in UI (API already embeds host_agent)
-- [ ] Continuous fail→Labradorite→requeue exercised end-to-end (lesson-driven)
-- [ ] Time remaining per active job in SUPER APP
+- [ ] Dual dashboard fully unified in UI (API already embeds; smoke `p1_54_dashboard_unify`)
+- [ ] Continuous fail→Labradorite→requeue exercised end-to-end (lesson-driven `p1_55_labradorite_continuous`)
+- [ ] Time remaining per active job in SUPER APP (`p1_56_time_remaining`)
 
 ## REMAINING — P2
 
 - [ ] More LoopRunner slices (god-file still large)
-- [ ] Host uses job_class end-to-end in every steady path (already tagged)
+- [ ] Host uses job_class end-to-end in every steady path (already tagged; verify)
 - [ ] Archive remaining build_* one-shots
 
 ## REMAINING — P3
@@ -47,17 +48,33 @@ Training wheels: **ON**. Scripted protect: **GREEN**.
 - [ ] RAG/Citrine first-class in tool loop
 - [ ] Rich CLI streaming / interrupt
 
-## Mentor secret sauce (locked)
+## Mentor secret sauce (locked — Grok → ETHER apprentice)
 
 Files: `docs/APPRENTICE_CODING_DOCTRINE.md` · `core/coding_method.py` · `artifacts/lessons/mentor_coding_loop.json` · `artifacts/lessons/024_mentor_coding_method_v2.json`
 
-1. Observe → **one** tool → Observe
-2. Read **tests first**, then minimal source
-3. Surgical `apply_patch` preferred over rewrite
-4. `run_tests` after every meaningful edit
-5. Stop on `no_progress` (3 stagnant fails)
-6. Typed failures → critique → smallest experiment → requeue
-7. Scoreboards are truth — not chat narrative
-8. **No generate fallback** after tool_runtime terminal
-9. Style (`pep8_review`) only after structural green
-10. One hypothesis per cycle
+**Best-in-class methodology (transfer this judgment):**
+
+1. Observe → **one** tool → Observe (never multi-tool walls)
+2. Read **tests first**, then minimal source under test
+3. Form **one** hypothesis only
+4. Surgical `apply_patch` preferred over rewrite / write_file
+5. `run_tests` after every meaningful edit
+6. Stop on `no_progress` (3 stagnant fails without score gain)
+7. Typed failures → Labradorite critique → smallest_experiment → requeue
+8. Scoreboards are truth — not chat narrative or model confidence
+9. **No generate fallback** after tool_runtime terminal (is_honest_tool_path_pass)
+10. Style (`pep8_review`) only after structural green
+11. One hypothesis per cycle; hardware honesty (≤4B primary)
+12. Collaboration: measured failure + smallest experiment when blocked; leave scoreboard when green
+
+Schema: `CodingMethod` + `STEP_ORDER` + `SYSTEM_RULES` + `prompt_suffix()` injected into ToolRuntime system prompt.
+
+## Swarm batch order (this turn)
+
+1. `p1_53_live_tool_path_honest` (class=live, continue_on_fail for measurement, Labradorite on FAIL)
+2. `p1_54_dashboard_unify` (class=fast)
+3. `p1_55_labradorite_continuous` (class=fast)
+4. `p1_56_time_remaining` (class=fast)
+5. Steady FAST protect continues via foreman
+
+Host drains FAST first. Training wheels stay ON until honest live PASS.

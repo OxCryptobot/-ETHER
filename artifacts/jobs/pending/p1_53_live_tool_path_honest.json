@@ -1,0 +1,21 @@
+{
+  "id": "p1_53_live_tool_path_honest",
+  "note": "P0 soft-launch gate: pipeline live tool-path under 4B with is_honest_tool_path_pass (no generate-fallback PASS). class=live",
+  "class": "live",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.loop.handlers.tool_runtime_gate import is_honest_tool_path_pass; assert not is_honest_tool_path_pass({'ok': True, 'degraded': ['tool_runtime_failed_terminal'], 'mode': 'live'}); assert is_honest_tool_path_pass({'ok': True, 'mode': 'live', 'score': 1.0}); print('honest_gate_ok')"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "live", "--tier", "hard", "--fixture", "ledger", "--scoreboard", "artifacts/scoreboard_p1_53_live_honest.json"],
+      "timeout": 900
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "import json, pathlib; p=pathlib.Path('artifacts/scoreboard_p1_53_live_honest.json'); d=json.loads(p.read_text()) if p.exists() else {}; print('scoreboard_rows', len(d.get('results') or [])); print('any_ok', any(r.get('ok') for r in (d.get('results') or [])))"],
+      "timeout": 30,
+      "continue_on_fail": true
+    }
+  ]
+}

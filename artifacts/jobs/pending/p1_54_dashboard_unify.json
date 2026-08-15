@@ -1,0 +1,16 @@
+{
+  "id": "p1_54_dashboard_unify",
+  "note": "P1: dual dashboard unify smoke — collector + agent.html read same host_agent paths",
+  "class": "fast",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from dashboard.collector_host_agent import collect; s=collect(); assert 'host_agent' in s or 'heartbeat' in str(s); print('collector_ok', list(s.keys())[:8] if isinstance(s, dict) else type(s))"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; html=(Path('dashboard/static/agent.html').read_text(encoding='utf-8')); assert 'host_agent' in html or 'heartbeat' in html or '/api/host-agent' in html; print('agent_html_ok')"],
+      "timeout": 30
+    }
+  ]
+}

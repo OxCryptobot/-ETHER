@@ -1,0 +1,17 @@
+{
+  "id": "p1_56_time_remaining",
+  "note": "P1: time remaining per active job in SUPER APP / collector",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; import json; st=json.loads(Path('artifacts/host_agent_status.json').read_text()) if Path('artifacts/host_agent_status.json').exists() else {}; print('status_keys', list(st.keys())); print('phase', st.get('phase')); print('ok')"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from pathlib import Path; html=Path('dashboard/static/agent.html').read_text(encoding='utf-8') if Path('dashboard/static/agent.html').exists() else ''; print('has_time' , 'time' in html.lower() or 'remaining' in html.lower() or 'eta' in html.lower()); print('agent_html_len', len(html))"],
+      "timeout": 30,
+      "continue_on_fail": true
+    }
+  ]
+}

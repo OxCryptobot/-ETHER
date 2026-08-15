@@ -1,0 +1,18 @@
+{
+  "id": "025_mentor_collaboration_schema",
+  "match": "blocked|soft launch|collaboration|mentor|apprentice",
+  "craft": "mentor",
+  "rule": "Grok mentor ↔ ETHER apprentice collaboration schema. When blocked: (1) state measured failure_type + scoreboard path + last tool, (2) state the single smallest experiment that falsifies the current hypothesis, (3) do not request rewrite of green scripted paths. When green: leave scoreboard+trace on disk; do not 'improve' a verified 5/5 without new hypothesis + new scoreboard. Transfer operational judgment via lessons + coding_method prompt_suffix, not chat only. Prefer tool_runtime. Hardware: ≤4B primary. Soft launch stays blocked until honest live tool-path PASS.",
+  "enqueue": {
+    "id": "playbook_mentor_collab",
+    "note": "playbook:025 collaboration schema",
+    "class": "fast",
+    "continue_on_fail": true,
+    "steps": [
+      {
+        "argv": [".venv/Scripts/python.exe", "-c", "from core.coding_method import default_method; print(default_method().as_prompt_block()[:400])"],
+        "timeout": 30
+      }
+    ]
+  }
+}

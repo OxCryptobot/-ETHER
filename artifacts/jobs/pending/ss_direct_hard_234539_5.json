@@ -1,0 +1,26 @@
+{
+  "id": "ss_direct_hard_234539_5",
+  "note": "steady: direct hard baseline",
+  "source": "foreman_steady",
+  "created": "2026-08-15T23:45:39.679246+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_ss_direct.json"
+      ],
+      "timeout": 600
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

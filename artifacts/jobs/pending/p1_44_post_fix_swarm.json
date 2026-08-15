@@ -1,0 +1,70 @@
+{
+  "id": "p1_44_post_fix_swarm",
+  "note": "After IndentationError force-fix: compile + doctrine tests + dual arm scripted",
+  "continue_on_fail": true,
+  "class": "fast",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "import ast; from pathlib import Path; ast.parse(Path('core/tool_runtime.py').read_text(encoding='utf-8')); from core.tool_runtime import ToolRuntime, TOOL_SPECS; from core.coding_method import prompt_suffix; print('compile_ok', 'pep8_review' in {t['name'] for t in TOOL_SPECS}, len(prompt_suffix()))"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_coding_method.py",
+        "tests/test_pep8_tool.py",
+        "tests/test_tool_runtime.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_44_direct.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_44_pipeline.json"
+      ],
+      "timeout": 600
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.write_whats_next"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_cli", "doctor"],
+      "timeout": 60,
+      "continue_on_fail": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "id": "playbook_timeout_revise_101647",
+  "note": "playbook:timeout_budget_exhaust for ss_pipeline_ledger_100512_1",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "import json; from pathlib import Path; from datetime import datetime, timezone; p=Path('artifacts/critique_timeout_auto.json'); p.write_text(json.dumps({'id':'critique_timeout_auto','root_cause':'budget_exhaust','taxonomy':'budget_exhaust','evidence':['auto from playbook'],'smallest_experiment':'ss_pipeline_scripted','created':datetime.now(timezone.utc).isoformat()}, indent=2), encoding='utf-8'); print('critique_auto_written', p)"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "16",
+        "--scoreboard",
+        "artifacts/scoreboard_playbook_timeout_scripted.json"
+      ],
+      "timeout": 180
+    }
+  ],
+  "created": "2026-08-15T10:16:47.800525+00:00",
+  "source": "foreman"
+}

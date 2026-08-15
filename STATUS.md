@@ -1,43 +1,31 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15T02:03Z — Mentor swarm in flight. Soft launch **BLOCKED**.
-
-Host healthy. Graveyard: **13 apply_* archived**. Last steady direct hard **PASS**.
+**Updated:** 2026-08-15T02:34Z — **CRITICAL FIX IN FLIGHT** (`p1_43`). Soft launch BLOCKED.
 
 ---
 
-## Master checklist
+## Incident (honest)
 
-See **`docs/CHECKLIST.md`** (done vs remaining).
+Doctrine prompt injection nested `_system_prompt` inside `_execute` → **IndentationError**.  
+`tool_runtime` fell back every run (`tool_runtime_fallback:IndentationError`).  
+Steady `ss_pipeline_ledger` **ok=true** was **generate/repair_heavy path**, NOT tool-first lift. Do not treat as 1D live green.
 
-## Mentor → apprentice (this swarm)
+## Building now
 
-| Artifact | Purpose |
-|----------|---------|
-| `docs/APPRENTICE_CODING_DOCTRINE.md` | How ETHER must code |
-| `core/coding_method.py` | Machine schema + prompt block |
-| `artifacts/lessons/coding_method_v1.json` | Playbook on coding-loop FAIL |
-| `scripts/patch_doctrine_prompt.py` | Inject doctrine into ToolRuntime |
-| `p1_42_mentor_swarm` | Patch + dual-arm regression |
+- `scripts/fix_tool_runtime_indent.py` — un-nest + restore compile  
+- `p1_43` — fix, push, clean direct+pipeline **scripted** rebaseline  
+- Dashboard collector now includes **`whats_next`**
 
-## Phase 1
+## Remaining (short)
 
-| Package | Status |
-|---------|--------|
-| 1A–1C | COMPLETE |
-| 1D | Scripted GREEN; live OPEN |
+| Pri | Item |
+|-----|------|
+| P0 | Restore tool_runtime compile (p1_43) |
+| P0 | Re-verify scripted 5/5 both arms |
+| P0 | Live lift only after tool path works again |
+| P1 | SUPER APP UI bind for whats_next |
+| P2 | LoopRunner / god-file |
 
-## Secret sauce (short)
+See `docs/CHECKLIST.md`.
 
-1. Observe → one tool → Observe  
-2. Read tests before source  
-3. Surgical `apply_patch` > rewrite  
-4. `run_tests` after every edit  
-5. Stop on `no_progress` (3 stagnant)  
-6. Typed failures → critique → requeue  
-7. Scoreboards are truth  
-
-```text
-python -m scripts.ether_cli status
-python -m scripts.ether_cli next
-```
+Training wheels ON. Soft launch still blocked.

@@ -3,12 +3,12 @@
     {
       "fixture": "ledger",
       "arm": "pipeline",
-      "ok": true,
-      "score": 1.0,
-      "strategy": "repair_heavy",
-      "status": "complete",
+      "ok": false,
+      "score": 0.0,
+      "strategy": "tool_runtime",
+      "status": "error",
       "repo_oracle_ok": null,
-      "elapsed_s": 172.566,
+      "elapsed_s": 331.605,
       "mode": "live",
       "stages": [
         {
@@ -24,47 +24,22 @@
         {
           "stage": "tool_runtime",
           "success": false,
-          "detail": "fallback:IndentationError:expected an indented block after function definition on line 311 (tool_runtime.py, line 312)"
+          "detail": "steps=13 score=0.000 reason=timeout"
         },
         {
-          "stage": "context",
-          "success": true,
-          "detail": "skipped \u2014 self-contained objective"
-        },
-        {
-          "stage": "code",
-          "success": true,
-          "detail": "2238 chars strategy=repair_heavy model=qwen3.5:4b burst=False"
-        },
-        {
-          "stage": "sandbox",
-          "success": true,
-          "detail": "exit=0 exec=1.0 ver=1.0"
-        },
-        {
-          "stage": "tool_scan",
-          "success": true,
-          "detail": "secrets_clean=True risky_exec=False"
-        },
-        {
-          "stage": "audit",
-          "success": true,
-          "detail": "risk=0.0"
-        },
-        {
-          "stage": "memory_save",
-          "success": true,
-          "detail": "success_pattern citrine=True"
+          "stage": "tool_runtime",
+          "success": false,
+          "detail": "tool_runtime_failed_terminal"
         }
       ],
       "degraded": [
-        "tool_runtime_fallback:IndentationError"
+        "tool_runtime_failed_terminal"
       ],
       "model": "qwen3.5:4b"
     }
   ],
   "summary": {
-    "passed": 1,
+    "passed": 0,
     "total": 1,
     "mode": "live",
     "arms": [
@@ -77,7 +52,7 @@
   },
   "matrix": {
     "ledger": {
-      "pipeline": true
+      "pipeline": false
     }
   }
 }

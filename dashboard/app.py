@@ -1,4 +1,4 @@
-"""FastAPI app for @ETHER Control Matrix."""
+"""FastAPI app for @ETHER Control Matrix — host-agent first."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.4.6")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.0")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,26 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.4.6"
-        try:
-            from dashboard.collector_health import load_auto_health
-
-            data["auto_health"] = load_auto_health()
-        except Exception:
-            data["auto_health"] = {}
-        try:
-            from dashboard.collector_batch import collect_batch_autonomy
-
-            data.update(collect_batch_autonomy())
-        except Exception as e:
-            data["batch"] = {"error": str(e)[:120]}
-            data["autonomy"] = {}
-        try:
-            from core.infra_status import collect_infra
-
-            data["infra"] = collect_infra()
-        except Exception as e:
-            data["infra"] = {"overall": "unknown", "alerts": [{"level": "bad", "text": str(e)[:120]}]}
+        data["api_version"] = "0.5.0"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -77,38 +58,20 @@ def _safe_snapshot() -> dict:
             "project": "@ETHER",
             "error": str(e),
             "traceback": traceback.format_exc()[-1500:],
-            "summary": {},
-            "intelligence": {},
-            "matrix_steps": [],
-            "runs": [],
-            "gems": [],
+            "host_agent": {},
             "console": {
                 "lines": [{"ts": "", "level": "err", "text": f"snapshot error: {e}"}],
                 "active": False,
             },
-            "connections": {},
-            "policy": {},
-            "tools": {"quarantine": [], "persistent": []},
-            "history": [],
-            "workflow": [],
-            "skills": [],
-            "benchmarks": {},
-            "current_work": {},
-            "learning": {},
-            "latest": {},
-            "auto_health": {},
-            "batch": {},
-            "autonomy": {},
-            "infra": {"overall": "down", "alerts": [{"level": "bad", "text": "snapshot failed"}]},
-            "host_agent": {},
         }
 
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> FileResponse:
-    path = STATIC / "index.html"
+    """Primary dashboard is host-agent Control Matrix (no legacy Overview)."""
+    path = STATIC / "agent.html"
     if not path.exists():
-        raise HTTPException(500, "dashboard/static/index.html missing — pull latest main")
+        raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
     return FileResponse(path)
 
 
@@ -120,12 +83,31 @@ def agent_page() -> FileResponse:
     return FileResponse(path)
 
 
+@app.get("/legacy", response_class=HTMLResponse)
+def legacy_page() -> FileResponse:
+    """Archived multipage UI — not primary health."""
+    path = STATIC / "index.html"
+    if not path.exists():
+        raise HTTPException(404, "legacy index missing")
+    return FileResponse(path)
+
+
 @app.get("/api/host-agent")
 def host_agent_api() -> dict:
     try:
         from dashboard.collector_host_agent import collect_host_agent
 
         return collect_host_agent()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/moonshots")
+def moonshots_api() -> dict:
+    try:
+        from dashboard.collector_moonshots import collect_moonshots
+
+        return collect_moonshots()
     except Exception as e:
         raise HTTPException(500, str(e)) from e
 
@@ -157,7 +139,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.4.6"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.5.0", "truth": "host_agent"}
 
 
 @app.get("/api/health-check")
@@ -216,8 +198,13 @@ async def ws_feed(ws: WebSocket) -> None:
     await ws.accept()
     try:
         while True:
-            await ws.send_json(_safe_snapshot())
-            await asyncio.sleep(1.0)
+            try:
+                from dashboard.collector_host_agent import collect_host_agent
+
+                await ws.send_json(collect_host_agent())
+            except Exception as e:
+                await ws.send_json({"error": str(e)[:200]})
+            await asyncio.sleep(1.5)
     except WebSocketDisconnect:
         return
     except Exception:

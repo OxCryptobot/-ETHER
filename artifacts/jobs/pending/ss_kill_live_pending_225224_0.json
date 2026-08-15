@@ -1,0 +1,18 @@
+{
+  "id": "ss_kill_live_pending_225224_0",
+  "note": "steady: FAST purge any residual live ledger pending",
+  "source": "foreman_steady",
+  "created": "2026-08-15T22:52:24.281014+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; import shutil; from datetime import datetime, timezone; ROOT=Path('.').resolve(); P=ROOT/'artifacts'/'jobs'/'pending'; ARCH=ROOT/'artifacts'/'jobs'/'failed_archived'; ARCH.mkdir(parents=True, exist_ok=True); killed=0; for p in list(P.glob('ss_pipeline_ledger_*.json')) + list(P.glob('*live*ledger*.json')):   if p.name=='.gitkeep': continue;   dst=ARCH/(p.stem+'_killed_'+datetime.now(timezone.utc).strftime('%H%M%S')+'.json');   try: shutil.move(str(p), str(dst)); killed+=1\n  except Exception as e: print(e); print('killed_live_pending', killed)"
+      ],
+      "timeout": 30
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

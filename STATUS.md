@@ -1,31 +1,39 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15T02:34Z — **CRITICAL FIX IN FLIGHT** (`p1_43`). Soft launch BLOCKED.
+**Updated:** 2026-08-15T03:00Z — **RECOVERED.** Soft launch still **BLOCKED** (live tool-path not proven).
 
 ---
 
-## Incident (honest)
+## Verified green (post IndentationError fix)
 
-Doctrine prompt injection nested `_system_prompt` inside `_execute` → **IndentationError**.  
-`tool_runtime` fell back every run (`tool_runtime_fallback:IndentationError`).  
-Steady `ss_pipeline_ledger` **ok=true** was **generate/repair_heavy path**, NOT tool-first lift. Do not treat as 1D live green.
+| Scoreboard | Result |
+|------------|--------|
+| `scoreboard_p1_44_direct` | **5/5 PASS** |
+| `scoreboard_p1_44_pipeline` | **5/5 PASS** (tool_runtime_scripted) |
+| `tool_runtime.py` compile | **OK** + mentor doctrine |
+| Host | Alive; last steady direct hard **PASS** |
 
-## Building now
+## Landed this wave
 
-- `scripts/fix_tool_runtime_indent.py` — un-nest + restore compile  
-- `p1_43` — fix, push, clean direct+pipeline **scripted** rebaseline  
-- Dashboard collector now includes **`whats_next`**
+- Critical un-nest `_system_prompt` on main
+- Mentor doctrine + `coding_method` schema
+- SUPER APP **What's next** bar (`agent.html` + collector)
+- Graveyard 13× apply_*
+- pep8 tool, ether_cli, typed timeouts
 
-## Remaining (short)
+## Still open
 
-| Pri | Item |
-|-----|------|
-| P0 | Restore tool_runtime compile (p1_43) |
-| P0 | Re-verify scripted 5/5 both arms |
-| P0 | Live lift only after tool path works again |
-| P1 | SUPER APP UI bind for whats_next |
-| P2 | LoopRunner / god-file |
+1. Pipeline **live** lift on real tool path (not generate-fallback)
+2. Soft launch gate
+3. Dual dashboard full unify
+4. LoopRunner / god-file
+5. FAST/LIVE multi-job workers
 
-See `docs/CHECKLIST.md`.
+## Mentor contract
 
-Training wheels ON. Soft launch still blocked.
+`docs/APPRENTICE_CODING_DOCTRINE.md` · `core/coding_method.py`
+
+```text
+python -m scripts.ether_cli status
+python -m scripts.ether_cli next
+```

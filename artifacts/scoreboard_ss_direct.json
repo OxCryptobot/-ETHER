@@ -1,51 +1,13 @@
 {
   "results": [
     {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.927,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
       "fixture": "merge",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.937,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.963,
+      "elapsed_s": 0.826,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -63,11 +25,49 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.966,
+      "elapsed_s": 0.838,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.845,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.846,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
         "write_file",
         "run_tests"
       ],
@@ -81,7 +81,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.567,
+      "elapsed_s": 0.571,
       "reason": "tests passed",
       "tools": [
         "list_files",

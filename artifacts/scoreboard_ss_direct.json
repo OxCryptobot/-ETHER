@@ -1,17 +1,19 @@
 {
   "results": [
     {
-      "fixture": "lru",
+      "fixture": "ledger",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.884,
+      "n_steps": 6,
+      "elapsed_s": 0.633,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
+        "read_file",
+        "write_file",
         "write_file",
         "run_tests"
       ],
@@ -25,7 +27,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.89,
+      "elapsed_s": 0.644,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -37,19 +39,17 @@
       "arm": "direct"
     },
     {
-      "fixture": "ledger",
+      "fixture": "lru",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.904,
+      "n_steps": 4,
+      "elapsed_s": 0.655,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
-        "read_file",
-        "write_file",
         "write_file",
         "run_tests"
       ],
@@ -63,7 +63,25 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.91,
+      "elapsed_s": 0.656,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
+      "fixture": "intervals",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.474,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -76,16 +94,16 @@
     }
   ],
   "summary": {
-    "passed": 4,
-    "total": 4,
+    "passed": 5,
+    "total": 5,
     "mode": "scripted",
     "arms": [
       "direct"
     ],
     "model": "qwen3.5:4b-q4_K_M",
     "max_steps": 12,
-    "partial": true,
-    "note": ""
+    "partial": false,
+    "note": "final"
   },
   "matrix": {
     "lru": {
@@ -101,7 +119,7 @@
       "direct": true
     },
     "intervals": {
-      "direct": false
+      "direct": true
     }
   }
 }

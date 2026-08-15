@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-15T21:51:58.907508+00:00",
+  "generated": "2026-08-15T21:52:09.007962+00:00",
   "next_job": "p3_4_measure_tick_verify",
   "queue_head": [
     "p3_4_measure_tick_verify",
@@ -8,12 +8,12 @@
     "playbook_coding_method_refresh_215134",
     "ss_archive_failed_215008_5",
     "ss_direct_hard_214816_2",
-    "ss_direct_hard_214932_2",
-    "ss_pipeline_scripted_214806_1"
+    "ss_pipeline_scripted_214806_1",
+    "ss_pipeline_scripted_214921_1"
   ],
   "queue_depth": 16,
-  "host_phase": "report(ss_direct_hard_214816_2)",
-  "last_job": "playbook_coding_method_refresh_214737",
+  "host_phase": "idle",
+  "last_job": "ss_direct_hard_214932_2",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

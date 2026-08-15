@@ -1349,14 +1349,7 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "playbook_coding_method_refresh_222735",
-    "ss_kill_live_pending_222534_0",
-    "ss_direct_hard_222957_2",
-    "ss_pipeline_scripted_222708_1",
-    "ss_pipeline_scripted_222748_1",
-    "ss_pipeline_scripted_222947_1",
-    "ss_pref_refresh_222523_6",
-    "ss_tool_runtime_222210_3"
+    "ss_tool_runtime_222322_3"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1451,12 +1444,12 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-15T22:32:14.664304+00:00",
+  "last_tick": "2026-08-15T22:33:21.897666+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_kill_live_pending_223214_0",
+  "last_enqueued": "ss_pipeline_scripted_223321_1",
   "last_playbook": "timeout_budget_exhaust",
-  "last_converted": "ss_kill_live_pending_222534_0",
-  "steady_idx": 890
+  "last_converted": "ss_pipeline_ledger_145102_1",
+  "steady_idx": 884
 }

@@ -1,5 +1,5 @@
 # ETHER Master Checklist
-**Updated:** 2026-08-15 (phase board FIXED — evidence-based)
+**Updated:** 2026-08-15 (batch flex enqueued)
 
 Soft launch: **BLOCKED** until live tool-path produces an **honest PASS**.  
 Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor doctrine: **LOCKED**.
@@ -13,9 +13,7 @@ Training wheels: **ON**. Scripted protect: **GREEN**. FAST-first: **ON**. Mentor
 | 1A Tool-first | **LANDED** | coding_method + honest gate + ToolRuntimeGateHandler |
 | 1B AgentState | **LANDED** | core/agent_state.py + evolution_loop wire |
 | 1C AST edits | **LANDED** | prefer_patch + surgical doctrine |
-| 1D Expand eval | **BLOCKED** | Needs honest live tool-path PASS |
-
-Dashboard was showing UNKNOWN because collector parsed a fragile STATUS.md. Fixed: evidence-based detection in `dashboard/collector_host_agent.py`.
+| 1D Expand eval | **IN MEASUREMENT** | p1_53 enqueued |
 
 ---
 
@@ -34,30 +32,23 @@ Dashboard was showing UNKNOWN because collector parsed a fragile STATUS.md. Fixe
 
 ---
 
-## REMAINING — P0
+## REMAINING — P0 (batch flex in flight)
 
-- [ ] **Pipeline live tool-path lift under 4B** (honest) — `p1_53_live_tool_path_honest` requeued
+- [ ] **Pipeline live tool-path lift under 4B** (honest) — `00_p1_53_live_tool_path_honest` enqueued (continue_on_fail)
 - [ ] Soft launch authorization (requires above)
 
 ---
 
-## REMAINING — P1
+## Batch flex (Critical/High from super-auditor)
 
-- [x] Dual dashboard path smoke (p1_54 done)
-- [x] Labradorite path presence (p1_55 done)
-- [x] Time remaining readiness (p1_56 done)
-- [x] Mentor collaboration schema lesson 025
+- [x] Enqueued `00_p1_53_live_tool_path_honest`
+- [x] Enqueued `01_lora_continuous_dry_tick` (C1)
+- [x] Enqueued `02_swarm_parallel_gems_smoke` (C2)
+- [x] Enqueued `03_ctx_compress_v0` (H1)
+- [x] Enqueued `04_plan_confidence_replan` (H3)
+- [x] Enqueued `05_multi_file_ast_tx` (H4)
 
----
-
-## REMAINING — P2 / P3
-
-- [ ] More LoopRunner slices
-- [ ] Expand hard oracle suite
-- [ ] Wire checkpoint into long ToolRuntime runs
-- [ ] RAG / Citrine first-class
-- [ ] Full AgentState durability across EvolutionController + Selenite
-- [ ] Rich CLI streaming / interrupt
+All respect FAST-first, one-hypothesis, training wheels, Labradorite on FAIL.
 
 ---
 

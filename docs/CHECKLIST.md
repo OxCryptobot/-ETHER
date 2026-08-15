@@ -4,60 +4,51 @@ Soft launch: **BLOCKED**. Training wheels: **ON**.
 
 ## DONE
 
-- [x] 1A Tool-first default
-- [x] 1B AgentState durable
-- [x] 1C AST transactional edits
-- [x] Direct hard scripted 5/5
-- [x] Pipeline hard scripted 5/5 (serial)
-- [x] Pipeline hard scripted 5/5 (parallel ThreadPool)
-- [x] Host self-refill / foreman.tick never idle
-- [x] Live-skip after pipeline budget_exhaust
-- [x] no_progress early abort (3 stagnant run_tests)
-- [x] Typed `failure_type` on host timeout
-- [x] Timeout playbook lesson + failure_type match
-- [x] `pep8_review` GEMS tool in TOOL_SPECS
-- [x] `ether_cli` status/queue/phase/next/doctor
-- [x] `write_whats_next` + foreman tick refresh
-- [x] Archive 13× `apply_*` → `scripts/_graveyard/`
-- [x] `docs/BACKLOG.md`
+- [x] 1A / 1B / 1C
+- [x] Direct + pipeline hard scripted 5/5 (pre-incident baseline)
+- [x] Host self-refill, live-skip, no_progress, typed timeouts
+- [x] pep8_review tool, ether_cli, whats_next writer
+- [x] Archive 13× apply_* → scripts/_graveyard/
+- [x] Apprentice doctrine + coding_method schema + lesson
+- [x] Dashboard collector exposes whats_next
+- [x] **tool_runtime IndentationError FIXED on main (compile OK + doctrine)**
 
-## IN FLIGHT / THIS SWARM
+## IN FLIGHT
 
-- [ ] Apprentice coding doctrine (mentor → ETHER)
-- [ ] `core/coding_method.py` schema for agents
-- [ ] Doctrine injected into ToolRuntime system prompt
-- [ ] Lesson JSON for coding method
-- [ ] whats_next always on disk after tick
-- [ ] Regression: direct hard + pep8 tool + doctrine import
+- [ ] p1_44: pytest doctrine + dual scripted rebaseline after fix
+- [ ] Confirm direct hard PASS post-fix
+- [ ] Confirm pipeline scripted 5/5 post-fix
 
-## REMAINING — P0 (gate)
+## REMAINING — P0
 
-- [ ] Pipeline **live** lift under 4B on hard pack
-- [ ] Soft-launch gate decision (only after live truth)
+- [ ] Pipeline **live** lift on **tool path** (not generate-fallback)
+- [ ] Soft launch only after live tool-path truth
 
-## REMAINING — P1 (ops)
+## REMAINING — P1
 
-- [ ] Failed → Labradorite → requeue continuous (not partial)
-- [ ] SUPER APP binds `artifacts/whats_next.json`
-- [ ] Single collector path (kill dual dashboard drift)
-- [ ] Time remaining shown per active job in UI
+- [ ] SUPER APP UI binds whats_next
+- [ ] Dual dashboard → one collector
+- [ ] Continuous fail → Labradorite → requeue
 
-## REMAINING — P2 (architecture)
+## REMAINING — P2
 
-- [ ] Next LoopRunner stage extraction from pipeline.py
-- [ ] pipeline.py thin façade (god-file dead)
-- [ ] Inventory + archive `build_*` one-shots
-- [ ] Host FAST vs LIVE job classes (parallel workers)
+- [ ] LoopRunner stage extraction / kill god-file
+- [ ] Host FAST vs LIVE workers
+- [ ] Archive remaining build_* bloat
 
-## REMAINING — P3 (later)
+## REMAINING — P3
 
-- [ ] Checkpoint/resume long agent runs
-- [ ] Citrine/RAG first-class in tool_runtime
-- [ ] CLI streaming + interrupt + session resume
-- [ ] Multi-host mesh (not needed solo)
+- [ ] Checkpoint/resume, RAG-first, rich CLI
 
-## Non-goals (do not start)
+## Mentor secret sauce (always on)
 
-- [ ] Soft launch without 1D live truth
-- [ ] Training wheels off
-- [ ] 7B+ auto-pull on GTX 1650
+1. Observe → one tool → Observe
+2. Read tests before source
+3. Surgical apply_patch
+4. run_tests after every edit
+5. no_progress after 3 stagnant fails
+6. Typed failures → critique → requeue
+7. Scoreboards are truth
+8. No generate fallback after tool_runtime terminal
+
+`docs/APPRENTICE_CODING_DOCTRINE.md` · `core/coding_method.py`

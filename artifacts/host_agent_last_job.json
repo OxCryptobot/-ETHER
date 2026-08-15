@@ -1,7 +1,7 @@
 {
-  "job_id": "ss_train_gates_023353_2",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-15T02:46:17.254325+00:00",
-  "note": "steady: doctrine + preference integrity"
+  "job_id": "p1_43_fix_indent_and_rebaseline",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-15T02:46:30.327230+00:00",
+  "note": "CRITICAL: fix nested _system_prompt IndentationError then rebaseline scripted arms"
 }

@@ -1,0 +1,37 @@
+{
+  "id": "coding_method_v1",
+  "match": "no_progress|unparseable|AST reject|max_steps|step_fail",
+  "craft": "coding_method",
+  "rule": "On coding-loop failure, re-assert tool-first doctrine: read tests first, surgical apply_patch, run_tests, stop on no_progress. Do not generate-fallback.",
+  "enqueue": {
+    "id": "playbook_coding_method_refresh",
+    "note": "playbook:coding_method_v1 doctrine refresh",
+    "continue_on_fail": true,
+    "steps": [
+      {
+        "argv": [
+          ".venv/Scripts/python.exe",
+          "-c",
+          "from core.coding_method import default_method, prompt_suffix; m=default_method(); print(m.name); print(prompt_suffix()[:400]); print('checklist', m.checklist())"
+        ],
+        "timeout": 60
+      },
+      {
+        "argv": [
+          ".venv/Scripts/python.exe",
+          "-m",
+          "scripts.batch_phase_d",
+          "--arm",
+          "direct",
+          "--mode",
+          "scripted",
+          "--fixture",
+          "ledger",
+          "--scoreboard",
+          "artifacts/scoreboard_playbook_coding_method.json"
+        ],
+        "timeout": 180
+      }
+    ]
+  }
+}

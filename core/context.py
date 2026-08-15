@@ -2,6 +2,9 @@
 
 Citrine-lite without Qdrant. Compress ranks paragraphs by query term
 overlap and fits a hard char budget (poisoning defense + token discipline).
+
+Phase 2.4: optional symbol index block only when ETHER_SYMBOL_INDEX=1.
+Default path is unchanged.
 """
 from __future__ import annotations
 
@@ -36,7 +39,6 @@ def compress_text(
     if len(text) <= max_chars:
         return text
 
-    # Split on blank lines; fall back to fixed windows
     paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     if len(paras) <= 1:
         paras = [text[i : i + 400] for i in range(0, len(text), 400)]
@@ -45,7 +47,6 @@ def compress_text(
     scored: List[Tuple[float, int, str]] = []
     for i, p in enumerate(paras):
         if not q_terms:
-            # head/tail bias without query
             score = 2.0 if i < 2 or i >= len(paras) - 2 else 1.0
         else:
             toks = set(_tokenize(p))
@@ -70,7 +71,7 @@ def compress_text(
         if used >= max_chars:
             break
 
-    chosen.sort(key=lambda x: x[0])  # restore document order
+    chosen.sort(key=lambda x: x[0])
     out = "\n\n".join(c for _, c in chosen)
     return out[:max_chars]
 
@@ -87,6 +88,17 @@ def gather_workspace_context(root: Path, query: str = "", max_chars: int = 3500)
             block = format_block(query, k=4)
             if block:
                 parts.append("### Repo BM25 hits\n" + block)
+        except Exception:
+            pass
+
+    # Phase 2.4: symbol/file index — opt-in only (ETHER_SYMBOL_INDEX=1)
+    if os.getenv("ETHER_SYMBOL_INDEX", "0") == "1" and query:
+        try:
+            from core.symbol_index import format_block as symbol_format
+
+            sym = symbol_format(query, root=root, k=8, max_chars=min(1800, max_chars))
+            if sym:
+                parts.append("### Symbol index\n" + sym)
         except Exception:
             pass
 

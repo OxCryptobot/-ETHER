@@ -1,0 +1,13 @@
+{
+  "id": "ss_pipeline_scripted_002",
+  "note": "FAST: pipeline scripted ledger remeasure",
+  "class": "fast",
+  "continue_on_fail": true,
+  "source": "max_swarm_perf",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "pipeline", "--mode", "scripted", "--fixture", "ledger", "--max-steps", "16", "--scoreboard", "artifacts/scoreboard_ss_pipeline_scripted.json"],
+      "timeout": 180
+    }
+  ]
+}

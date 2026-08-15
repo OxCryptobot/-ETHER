@@ -9,6 +9,13 @@
 2026-08-14 FastTrack:
 - Timeouts raise as typed failure_type=timeout on last_job envelope so
   playbooks and lessons can match without parsing free text only.
+
+2026-08-15 PERF 10x:
+- git_push_report is lightweight (no full done/ tree every job — prevents
+  WinError 206 and massive push latency as history grows).
+- Strict FAST-first ranking; LIVE jobs always last.
+- continue_on_fail measurement jobs use light report path.
+- Explicit live-ledger pending killer support.
 """
 from __future__ import annotations
 
@@ -40,6 +47,8 @@ LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LOG = ROOT / "artifacts" / "host_agent_log.txt"
 
 _last_recover_log = 0.0
+_last_heavy_push = 0.0
+HEAVY_PUSH_INTERVAL = 180  # seconds between full tree pushes
 
 
 def log(msg: str) -> None:
@@ -105,15 +114,19 @@ def git_sync() -> None:
         git_reset_to_origin("diverged")
 
 
-def git_push_report(job_id: str, ok: bool) -> None:
+def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
+    """Lightweight by default. Full tree only on interval or non-light jobs."""
+    global _last_heavy_push
+    now = time.time()
+    do_heavy = (not light) or (now - _last_heavy_push > HEAVY_PUSH_INTERVAL)
+
+    # Always critical observability
     paths = [
         "artifacts/host_agent_last_job.json",
         "artifacts/host_agent_status.json",
-        "artifacts/jobs/pending",
-        "artifacts/jobs/done",
-        "artifacts/jobs/failed",
-        "memory/host_agent",
     ]
+
+    # Scoreboards + traces for the current measurement
     for p in (ROOT / "artifacts").glob("scoreboard*.json"):
         paths.append(str(p.relative_to(ROOT)))
     for p in (ROOT / "artifacts").glob("trace_*.json"):
@@ -122,13 +135,29 @@ def git_push_report(job_id: str, ok: bool) -> None:
         "strategy_stats.json",
         "preference_summary.json",
         "preferences_tail.jsonl",
+        "whats_next.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
             paths.append(str(p.relative_to(ROOT)))
+
+    if do_heavy:
+        # Directory adds only on heavy path — avoid WinError 206 on huge done/
+        paths.extend([
+            "artifacts/jobs/pending",
+            "artifacts/jobs/failed",
+            "memory/host_agent",
+        ])
+        # done/ is large; only add recent files pattern if needed later
+        _last_heavy_push = now
+
     run(["git", "add", "-f", "--"] + paths, timeout=90)
     status = "PASS" if ok else "FAIL"
-    c = run(["git", "commit", "-m", f"host agent report: job={job_id} {status}"], timeout=60)
+    mode = "light" if light and not do_heavy else "full"
+    c = run(
+        ["git", "commit", "-m", f"host agent report: job={job_id} {status} ({mode})"],
+        timeout=60,
+    )
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
     if c.returncode != 0 and "nothing to commit" in combined:
         git_sync()
@@ -139,7 +168,7 @@ def git_push_report(job_id: str, ok: bool) -> None:
         return
     p = run(["git", "push", "origin", "main"], timeout=120)
     if p.returncode == 0:
-        log("push rc=0")
+        log(f"push rc=0 ({mode})")
         return
     log(f"push rc={p.returncode}; retry")
     run(["git", "fetch", "origin"], timeout=120)
@@ -152,13 +181,12 @@ def git_push_report(job_id: str, ok: bool) -> None:
     git_reset_to_origin("push failed")
 
 
-
 def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
-    """Prefer FAST jobs so live timeouts do not starve the queue."""
+    """Strict FAST first. LIVE always last."""
     try:
         from core.job_class import job_class, FAST, LIVE
     except Exception:
-        return paths
+        return sorted(paths, key=lambda p: p.name)
 
     def rank(p: Path) -> tuple:
         try:
@@ -166,15 +194,20 @@ def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
         except Exception:
             return (1, p.name)
         cls = job_class(job)
-        # 0=fast, 1=any, 2=live
+        # 0 = FAST, 1 = any, 2 = LIVE
         order = 0 if cls == FAST else (2 if cls == LIVE else 1)
-        return (order, p.name)
+        # Secondary: cleaner / archive first among FAST
+        note = str(job.get("note") or "").lower()
+        jid = str(job.get("id") or "").lower()
+        prio = 0
+        if "clean" in jid or "archive" in jid or "clean" in note:
+            prio = -1
+        return (order, prio, p.name)
 
     return sorted(paths, key=rank)
 
 
 def _enrich_failure_from_scoreboard(envelope: Dict[str, Any]) -> None:
-    """If job failed, pull failure_type from newest scoreboard if present."""
     if envelope.get("ok"):
         return
     art = ROOT / "artifacts"
@@ -205,7 +238,6 @@ def list_pending() -> List[Path]:
 
 
 def run_steps(steps: List[Dict[str, Any]], continue_on_fail: bool = False) -> Tuple[int, Optional[str]]:
-    """Run steps. Returns (rc, failure_type|None)."""
     last_rc = 0
     failure_type: Optional[str] = None
     for i, step in enumerate(steps, 1):
@@ -254,9 +286,9 @@ def process_job(path: Path) -> bool:
     ok = False
     rc = 1
     failure_type: Optional[str] = None
+    cont = bool(job.get("continue_on_fail", False))
     try:
         if job.get("steps"):
-            cont = bool(job.get("continue_on_fail", False))
             rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont)
         else:
             log("job has no steps")
@@ -282,7 +314,6 @@ def process_job(path: Path) -> bool:
     }
     if not ok and failure_type:
         envelope["failure_type"] = failure_type
-        # Help playbook matchers that scan note
         if failure_type == "timeout":
             envelope["note"] = f"{job.get('note') or ''} [failure_type=timeout]".strip()
     _enrich_failure_from_scoreboard(envelope)
@@ -302,8 +333,10 @@ def process_job(path: Path) -> bool:
         last_ok=ok,
         last_failure_type=failure_type,
     )
+    # Light report for measurement / continue_on_fail jobs
+    light = cont or str(job.get("class") or "").lower() == "fast"
     try:
-        git_push_report(job_id, ok)
+        git_push_report(job_id, ok, light=light)
     except Exception as e:
         log(f"push error: {e}")
         git_sync()
@@ -311,18 +344,18 @@ def process_job(path: Path) -> bool:
 
 
 def call_foreman_tick() -> None:
-    """Permanent self-fill: never depend on chat to keep pending non-empty."""
     try:
         from scripts.foreman import tick
         result = tick()
         enq = result.get("enqueued")
         pb = result.get("playbook")
-        log(f"foreman.tick enqueued={enq} playbook={pb} cursor={result.get('cursor')}")
+        log(f"foreman.tick enqueued={enq} playbook={pb} cursor={result.get('cursor')} live_skip={result.get('live_skip_remaining')}")
         write_status(
             current_job=None,
             phase="foreman_tick",
             last_enqueued=enq,
             foreman_cursor=result.get("cursor"),
+            live_skip_remaining=result.get("live_skip_remaining"),
         )
     except Exception as e:
         log(f"foreman.tick failed: {e}")
@@ -330,7 +363,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  ETHER host_agent (self-refilling)", flush=True)
+    print("  ETHER host_agent (self-refilling + PERF 10x)", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("=" * 60, flush=True)
 

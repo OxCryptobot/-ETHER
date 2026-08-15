@@ -1,0 +1,17 @@
+{
+  "id": "ss_kill_live_ledger_now",
+  "note": "FAST: purge any remaining live ledger pending jobs",
+  "class": "fast",
+  "continue_on_fail": true,
+  "source": "max_swarm_perf",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from pathlib import Path; ROOT=Path('.').resolve(); P=ROOT/'artifacts'/'jobs'/'pending'; n=0\nfor p in list(P.glob('ss_pipeline_ledger_*.json')) + list(P.glob('*pipeline_ledger*')):\n  try:\n    p.unlink(); n+=1\n  except Exception as e:\n    print('skip', p.name, e)\nprint('killed_live_ledger', n)"
+      ],
+      "timeout": 30
+    }
+  ]
+}

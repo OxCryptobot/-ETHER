@@ -1,4 +1,4 @@
-# ETHER host recovery — one shot (hardened)
+# ETHER host recovery -- one shot (hardened)
 #
 # Use when Grok reports stale heartbeat + pending jobs not consumed,
 # or after live-spam / MERGE_HEAD / broken venv.
@@ -43,7 +43,7 @@ $env:ETHER_ROOT = $Root
 $env:PYTHONIOENCODING = "utf-8"
 $env:PYTHONPATH = $Root
 
-# Host model lock (GTX 1650 4GB) — explicit Q4_K_M
+# Host model lock (GTX 1650 4GB) -- explicit Q4_K_M
 if (-not $env:ETHER_PRIMARY_MODEL) {
     $env:ETHER_PRIMARY_MODEL = "qwen3.5:4b-q4_K_M"
 }
@@ -51,18 +51,32 @@ if (-not $env:ETHER_HW_PROFILE) {
     $env:ETHER_HW_PROFILE = "host"
 }
 
-function Write-Banner([string]$msg, [string]$color = "Cyan") {
+function Write-Banner {
+    param([string]$msg, [string]$color = "Cyan")
     Write-Host $msg -ForegroundColor $color
 }
 
-function Write-Ok([string]$msg) { Write-Host "  OK   $msg" -ForegroundColor Green }
-function Write-Warn([string]$msg) { Write-Host "  WARN $msg" -ForegroundColor Yellow }
-function Write-Fail([string]$msg) { Write-Host "  FAIL $msg" -ForegroundColor Red }
+function Write-Ok {
+    param([string]$msg)
+    Write-Host "  OK   $msg" -ForegroundColor Green
+}
+
+function Write-Warn {
+    param([string]$msg)
+    Write-Host "  WARN $msg" -ForegroundColor Yellow
+}
+
+function Write-Fail {
+    param([string]$msg)
+    Write-Host "  FAIL $msg" -ForegroundColor Red
+}
 
 Write-Banner "========================================" "Green"
 Write-Banner " ETHER HOST RECOVERY" "Green"
 Write-Banner " root=$Root" "DarkGray"
-if ($Hard) { Write-Banner " mode=HARD (venv rebuild)" "Yellow" }
+if ($Hard) {
+    Write-Banner " mode=HARD (venv rebuild)" "Yellow"
+}
 Write-Banner "========================================" "Green"
 Write-Host ""
 
@@ -76,38 +90,45 @@ Write-Banner "[1/5] kill stale host python" "Cyan"
 $patterns = @(
     "ether_host.py",
     "host_agent.py",
-    "scripts\\ether_host",
+    "scripts\ether_host",
     "scripts/ether_host",
-    "scripts\\host_agent",
+    "scripts\host_agent",
     "scripts/host_agent",
     "cli.main dashboard",
     "uvicorn.*dashboard"
 )
 $killed = 0
-Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
-    Where-Object {
-        $_.Name -match "python" -and
-        $_.CommandLine -and
-        ($patterns | Where-Object { $_.CommandLine -like "*$_*" })
-    } |
-    ForEach-Object {
-        try {
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
-            $killed++
-            Write-Warn "killed pid=$($_.ProcessId)"
-        } catch {}
-    }
-
-if ($Hard) {
-    # Broader kill under -Hard only (matches classic RECOVERY.md)
-    Get-Process -Name python -ErrorAction SilentlyContinue |
-        ForEach-Object {
+$procs = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
+foreach ($p in $procs) {
+    if ($p.Name -match "python" -and $p.CommandLine) {
+        $cmd = $p.CommandLine
+        $hit = $false
+        foreach ($pat in $patterns) {
+            if ($cmd -like "*$pat*") {
+                $hit = $true
+                break
+            }
+        }
+        if ($hit) {
             try {
-                Stop-Process -Id $_.Id -Force -ErrorAction Stop
+                Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
                 $killed++
-                Write-Warn "HARD killed python pid=$($_.Id)"
+                Write-Warn "killed pid=$($p.ProcessId)"
             } catch {}
         }
+    }
+}
+
+if ($Hard) {
+    # Broader kill under -Hard only
+    $allPy = Get-Process -Name python -ErrorAction SilentlyContinue
+    foreach ($p in $allPy) {
+        try {
+            Stop-Process -Id $p.Id -Force -ErrorAction Stop
+            $killed++
+            Write-Warn "HARD killed python pid=$($p.Id)"
+        } catch {}
+    }
 }
 
 if ($killed -eq 0) {
@@ -139,42 +160,41 @@ New-Item -ItemType Directory -Force -Path $failedDir | Out-Null
 
 $quarantined = 0
 if (Test-Path -LiteralPath $pendingDir) {
-    Get-ChildItem -LiteralPath $pendingDir -Filter "*.json" -ErrorAction SilentlyContinue |
-        ForEach-Object {
-            $name = $_.Name
-            $idLower = $name.ToLowerInvariant()
-            $isLiveSpam = $false
-            $reason = ""
+    $files = Get-ChildItem -LiteralPath $pendingDir -Filter "*.json" -ErrorAction SilentlyContinue
+    foreach ($f in $files) {
+        $name = $f.Name
+        $idLower = $name.ToLowerInvariant()
+        $isLiveSpam = $false
+        $reason = ""
 
-            # Filename heuristics (common live ledger / long-running patterns)
-            if ($idLower -match "live" -or $idLower -match "ledger" -or $idLower -match "_live_") {
-                $isLiveSpam = $true
-                $reason = "name_match"
-            }
+        if ($idLower -match "live" -or $idLower -match "ledger" -or $idLower -match "_live_") {
+            $isLiveSpam = $true
+            $reason = "name_match"
+        }
 
-            # Content heuristics: long timeout + live/ledger signals
-            if (-not $isLiveSpam) {
-                try {
-                    $raw = Get-Content -LiteralPath $_.FullName -Raw -ErrorAction Stop
-                    if ($raw -match '"timeout"\s*:\s*(3\d{2}|[4-9]\d{2}|\d{4,})' -and
-                        ($raw -match 'live' -or $raw -match 'ledger' -or $raw -match '"class"\s*:\s*"live"')) {
-                        $isLiveSpam = $true
-                        $reason = "content_timeout_live"
-                    }
-                } catch {}
-            }
-
-            if ($isLiveSpam) {
-                $dest = Join-Path $failedDir $name
-                try {
-                    Move-Item -LiteralPath $_.FullName -Destination $dest -Force
-                    $quarantined++
-                    Write-Warn "quarantined $name ($reason) -> failed/"
-                } catch {
-                    Write-Fail "could not move $name : $_"
+        if (-not $isLiveSpam) {
+            try {
+                $raw = Get-Content -LiteralPath $f.FullName -Raw -ErrorAction Stop
+                $hasLongTimeout = $raw -match '"timeout"\s*:\s*(3\d{2}|[4-9]\d{2}|\d{4,})'
+                $hasLiveSignal = ($raw -match "live") -or ($raw -match "ledger") -or ($raw -match '"class"\s*:\s*"live"')
+                if ($hasLongTimeout -and $hasLiveSignal) {
+                    $isLiveSpam = $true
+                    $reason = "content_timeout_live"
                 }
+            } catch {}
+        }
+
+        if ($isLiveSpam) {
+            $dest = Join-Path $failedDir $name
+            try {
+                Move-Item -LiteralPath $f.FullName -Destination $dest -Force
+                $quarantined++
+                Write-Warn "quarantined $name ($reason) -> failed/"
+            } catch {
+                Write-Fail "could not move $name : $_"
             }
         }
+    }
 }
 
 if ($quarantined -eq 0) {
@@ -196,7 +216,7 @@ if ($needVenv) {
     Write-Banner "  creating .venv + editable install..." "DarkGray"
     python -m venv .venv
     if (-not (Test-Path -LiteralPath $Py)) {
-        Write-Fail "venv create failed — python not found on PATH?"
+        Write-Fail "venv create failed -- python not found on PATH?"
         exit 1
     }
     & $Py -m pip install -U pip -q
@@ -207,10 +227,9 @@ if ($needVenv) {
     }
     Write-Ok "venv rebuilt + editable install"
 } else {
-    # Light health check
     $probe = & $Py -c "import sys; print(sys.executable)" 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Write-Fail "python probe failed: $probe — re-run with -Hard"
+        Write-Fail "python probe failed: $probe -- re-run with -Hard"
         exit 1
     }
     Write-Ok "venv ok ($probe)"
@@ -220,13 +239,13 @@ if ($needVenv) {
 Write-Banner "[5/5] start self-healing host loop" "Cyan"
 $Launcher = Join-Path $Root "scripts\start_ether_host.ps1"
 if (-not (Test-Path -LiteralPath $Launcher)) {
-    Write-Fail "Missing $Launcher — origin/main incomplete?"
+    Write-Fail "Missing $Launcher -- origin/main incomplete?"
     exit 1
 }
 
 Write-Host ""
 Write-Banner "========================================" "Green"
-Write-Banner " RECOVERY COMPLETE — entering launcher" "Green"
+Write-Banner " RECOVERY COMPLETE -- entering launcher" "Green"
 Write-Banner " dashboard  http://127.0.0.1:8787/agent" "DarkGray"
 Write-Banner " model      $($env:ETHER_PRIMARY_MODEL)" "DarkGray"
 Write-Banner " Ctrl+C     stop permanently" "DarkGray"

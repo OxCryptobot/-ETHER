@@ -1,0 +1,29 @@
+{
+  "id": "ss_pipeline_ledger_121621_1",
+  "note": "steady: pipeline ledger under terminal harden",
+  "source": "foreman_steady",
+  "created": "2026-08-15T12:16:21.223450+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "live",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "300",
+        "--scoreboard",
+        "artifacts/scoreboard_ss_ledger.json"
+      ],
+      "timeout": 480
+    }
+  ],
+  "continue_on_fail": true
+}

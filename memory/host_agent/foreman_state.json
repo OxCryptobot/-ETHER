@@ -884,7 +884,8 @@
     "playbook_timeout_revise_073615",
     "ss_pipeline_ledger_071920_1",
     "ss_archive_failed_073052_4",
-    "ss_direct_hard_073034_0"
+    "ss_direct_hard_073034_0",
+    "ss_direct_hard_073624_0"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -978,12 +979,12 @@
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0"
   ],
-  "last_tick": "2026-08-15T07:37:00.652877+00:00",
+  "last_tick": "2026-08-15T07:37:07.731996+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 25,
-  "last_enqueued": "ss_pipeline_ledger_073700_1",
+  "last_enqueued": "ss_train_gates_073707_2",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_071920_1",
-  "steady_idx": 507
+  "steady_idx": 508
 }

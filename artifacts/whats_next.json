@@ -1,21 +1,21 @@
 {
-  "generated": "2026-08-15T21:39:33.359717+00:00",
-  "next_job": "playbook_coding_method_refresh_213633",
+  "generated": "2026-08-15T21:39:42.913353+00:00",
+  "next_job": "playbook_coding_method_refresh_213641",
   "queue_head": [
-    "playbook_coding_method_refresh_213633",
     "playbook_coding_method_refresh_213641",
     "playbook_coding_method_refresh_213925",
     "playbook_coding_method_refresh_213933",
     "ss_archive_failed_213916_5",
     "ss_direct_hard_213742_2",
     "ss_direct_hard_213849_2",
-    "ss_pipeline_scripted_213732_1"
+    "ss_pipeline_scripted_213732_1",
+    "ss_pipeline_scripted_213840_1"
   ],
   "queue_depth": 16,
   "host_phase": "idle",
-  "last_job": "ss_kill_live_pending_213830_0",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_job": "playbook_coding_method_refresh_213633",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

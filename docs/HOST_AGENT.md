@@ -18,14 +18,16 @@ cd C:\Users\Otcde\ETHER
 powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
 ```
 
-**Recovery** (stale heartbeat, pending not draining, or after a long idle):
+**Recovery** (stale heartbeat, pending not draining, live spam, or after a long idle):
 
 ```powershell
 cd C:\Users\Otcde\ETHER
 powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1
+# broken venv / ModuleNotFound → add -Hard
+powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1 -Hard
 ```
 
-`recover_host.ps1` kills stale host python processes, `git fetch` + `reset --hard origin/main`, then enters the self-healing launcher loop.
+`recover_host.ps1` kills stale host python, aborts MERGE_HEAD, hard-resets to origin/main, quarantines stuck live/ledger pending jobs (FAST-first hygiene), optionally rebuilds `.venv` (`-Hard`), then enters the self-healing launcher loop.
 
 ### Launcher exit contract (`start_ether_host.ps1`)
 

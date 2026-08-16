@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T00:09:33.503851+00:00",
+  "updated": "2026-08-16T00:11:08.543056+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -19,7 +19,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.608,
+      "elapsed_s": 0.552,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -40,7 +40,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.912,
+      "elapsed_s": 0.789,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -58,25 +58,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.922,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.927,
+      "elapsed_s": 0.795,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -94,7 +76,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.934,
+      "elapsed_s": 0.796,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -108,13 +90,31 @@
       "arm": "direct"
     },
     {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.804,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
       "fixture": "intervals",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.578,
+      "elapsed_s": 0.484,
       "reason": "tests passed",
       "tools": [
         "list_files",

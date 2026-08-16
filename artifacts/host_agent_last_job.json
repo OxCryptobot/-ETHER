@@ -1,7 +1,13 @@
 {
-  "job_id": "p_phase3_measurement",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-16T05:30:04.305989+00:00",
-  "note": "Phase 3 MEASURE package: AgentState, LoRA dry, critique wire, gems; wheels ON; no train; no soft launch"
+  "job_id": "p_phase4_scaffold",
+  "ok": false,
+  "rc": 4,
+  "finished": "2026-08-16T05:32:11.641169+00:00",
+  "note": "Phase 4 SCAFFOLD: toolkit + MCP schema + plan-only swarm; wheels ON; no live MCP; no auto-promote",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  },
+  "failure_type": "step_fail"
 }

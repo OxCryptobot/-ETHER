@@ -1,0 +1,37 @@
+{
+  "id": "p_phase1d_retire_ui",
+  "class": "fast",
+  "source": "mentor",
+  "note": "1D retirement check + style gate + UI tile — wheels ON",
+  "created": "2026-08-16T04:03:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase1d_retirement_style.py",
+        "tests/test_timeout_retirement_oracle.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase1d_status"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.strangler_style_gate"
+      ],
+      "timeout": 60
+    }
+  ]
+}

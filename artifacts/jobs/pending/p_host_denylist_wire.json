@@ -1,0 +1,21 @@
+{
+  "id": "p_host_denylist_wire",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Host denylist wire + policy tests — runs when host is back",
+  "created": "2026-08-16T03:23:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_live_fixture_policy.py",
+        "tests/test_timeout_diagnosis.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    }
+  ]
+}

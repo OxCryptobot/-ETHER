@@ -15,15 +15,18 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 DIAG = ROOT / "artifacts" / "timeout_diagnosis.json"
 OUT = ROOT / "artifacts" / "live_fixture_policy.json"
 
-# Hard denylist seed — known GPU-burners / hang fixtures (extend via diagnosis)
+# Hard denylist seed — chronic timeout fixtures from diagnosis (1D retirement)
 SEED_DENY: List[str] = [
     "ledger",
     "pipeline_ledger",
     "ss_pipeline_ledger",
+    "lru",
+    "topo",
+    "intervals",
 ]
 
-TOP_N = int(os.getenv("ETHER_LIVE_DENY_TOP_N", "5"))
-MIN_TIMEOUT_HITS = int(os.getenv("ETHER_LIVE_DENY_MIN_HITS", "2"))
+TOP_N = int(os.getenv("ETHER_LIVE_DENY_TOP_N", "8"))
+MIN_TIMEOUT_HITS = int(os.getenv("ETHER_LIVE_DENY_MIN_HITS", "1"))
 
 
 def _load_diag() -> Dict[str, Any]:
@@ -48,13 +51,14 @@ def deny_set(*, top_n: Optional[int] = None, min_hits: Optional[int] = None) -> 
     return denied
 
 
-def should_skip_live(fixture: str = "", *, job: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def should_skip_live(
+    fixture: str = "", *, job: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """Return skip decision for a prospective LIVE job."""
     hay = (fixture or "").lower()
     if job:
         hay = " ".join(
-            str(job.get(k) or "")
-            for k in ("fixture", "id", "note", "name")
+            str(job.get(k) or "") for k in ("fixture", "id", "note", "name")
         ).lower()
     denied = deny_set()
     hit = next((d for d in denied if d and d in hay), None)

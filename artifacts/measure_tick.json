@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T00:21:54.759266+00:00",
+  "timestamp": "2026-08-16T00:22:41.230117+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T00:21:54.464117+00:00",
+      "updated": "2026-08-16T00:22:40.849237+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T00:21:54.491794+00:00",
+      "updated": "2026-08-16T00:22:40.882483+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -51,7 +51,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T00:21:54.520978+00:00",
+      "updated": "2026-08-16T00:22:40.916895+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -60,7 +60,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T00:21:54.523093+00:00",
+      "updated": "2026-08-16T00:22:40.920896+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -73,7 +73,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T00:21:54.550261+00:00",
+      "updated": "2026-08-16T00:22:40.961415+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -88,14 +88,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T00:21:54.590657+00:00",
+      "updated": "2026-08-16T00:22:41.006929+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T00:21:54.601865+00:00",
+      "updated": "2026-08-16T00:22:41.012018+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -117,12 +117,12 @@
         "grandidierite": 0
       },
       "last_gem": "labradorite",
-      "last_job": "ss_measure_tick_002037_0",
+      "last_job": "ss_pref_refresh_002037_7",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T00:21:54.630061+00:00",
+      "updated": "2026-08-16T00:22:41.077640+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -135,7 +135,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T00:21:54.691596+00:00",
+      "updated": "2026-08-16T00:22:41.153394+00:00",
       "score": 75.0,
       "grade": "B",
       "reasons": [

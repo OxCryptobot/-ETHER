@@ -1,7 +1,12 @@
 {
-  "job_id": "critique_hyp_p_phase4_scaffold_053211",
+  "job_id": "p_phase5_experiment",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:32:41.797215+00:00",
-  "note": "playbook:labradorite for p_phase4_scaffold [step_fail] :: isolate failing step; FAST reverify"
+  "finished": "2026-08-16T05:35:24.735143+00:00",
+  "note": "Phase 5 EXPERIMENT: moonshots + lessons + research flags OFF; wheels ON; no live experiments",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

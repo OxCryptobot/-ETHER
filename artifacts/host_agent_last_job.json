@@ -1,8 +1,7 @@
 {
-  "job_id": "p2a_canary_archgo_054910",
-  "ok": false,
-  "rc": 4,
-  "finished": "2026-08-16T05:50:05.219288+00:00",
-  "note": "Phase 2A terminal+score canary + phase1_gate ARCH_GO surface under wheels ON. No soft launch. Adapter stays OFF.",
-  "failure_type": "step_fail"
+  "job_id": "p2a_diag_terminal_055020",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-16T05:51:32.826165+00:00",
+  "note": "DIAG: isolate pipeline_terminal_canary and phase2a_status under wheels"
 }

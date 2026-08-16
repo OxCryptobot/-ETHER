@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T02:07:34.333814+00:00",
+  "timestamp": "2026-08-16T02:09:02.937820+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T02:07:33.479571+00:00",
+      "updated": "2026-08-16T02:09:02.609795+00:00",
       "ok": true,
       "honest_tool_pass": 137,
       "tool_attempts": 141,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T02:07:33.492661+00:00",
+      "updated": "2026-08-16T02:09:02.640969+00:00",
       "scripted": {
         "n": 121,
         "p50": 2.158,
@@ -37,55 +37,21 @@
         "p95": 683.497,
         "max": 984.528
       },
-      "live_completed": {
-        "n": 9,
-        "p50": 103.983,
-        "p95": 304.252,
-        "max": 337.688
-      },
-      "live_timeout": {
-        "n": 16,
-        "p50": 373.609,
-        "p95": 776.816,
-        "max": 984.528
-      },
       "tool_runtime": {
         "n": 41,
         "p50": 1.868,
         "p95": 317.624,
         "max": 984.528
       },
-      "live_over_scripted_p95": 77.81,
-      "live_all_over_scripted_p95": 174.81,
-      "live_timeout_rate": 0.6154,
-      "timeout_floor_s": 120.0,
+      "live_over_scripted_p95": 174.81,
       "alert_ratio_threshold": 10.0,
       "alert": true,
-      "ok": true
-    },
-    "live_budget": {
-      "updated": "2026-08-16T02:07:33.493661+00:00",
-      "training_wheels": true,
-      "max_wall_s": 90,
-      "max_steps": 12,
-      "step_timeout_s": 25,
-      "live_enqueue_allowed": false,
-      "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
-      "path": "artifacts/live_budget.json",
-      "ok": true
-    },
-    "critique_plan_wire": {
-      "updated": "2026-08-16T02:07:33.499759+00:00",
-      "n_critiques": 12,
-      "n_replanned": 12,
-      "latest_hypothesis": "isolate failing step; FAST reverify",
-      "training_wheels": true,
-      "note": "Critique FAIL \u2192 PlanState.replan. Never auto-lifts soft launch.",
-      "path": "artifacts/critique_plan_wire.json",
+      "note": "Alert when live p95 > Nx scripted p95",
+      "path": "artifacts/latency_slo.json",
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T02:07:33.511867+00:00",
+      "updated": "2026-08-16T02:09:02.671230+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +60,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T02:07:33.514868+00:00",
+      "updated": "2026-08-16T02:09:02.677231+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -107,7 +73,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T02:07:33.534505+00:00",
+      "updated": "2026-08-16T02:09:02.707496+00:00",
       "n_rows": 160,
       "honest_n": 137,
       "honest_rate": 0.8562,
@@ -122,14 +88,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T02:07:33.563223+00:00",
+      "updated": "2026-08-16T02:09:02.755907+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T02:07:33.567223+00:00",
+      "updated": "2026-08-16T02:09:02.760008+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -150,13 +116,13 @@
         "labradorite": 20,
         "grandidierite": 0
       },
-      "last_gem": "rose-quartz",
-      "last_job": "ss_honest_live_report_020707_1",
+      "last_gem": "labradorite",
+      "last_job": "ss_pref_refresh_020640_7",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T02:07:33.581542+00:00",
+      "updated": "2026-08-16T02:09:02.792316+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -169,18 +135,16 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T02:07:33.609861+00:00",
-      "score": 53.0,
-      "grade": "C",
+      "updated": "2026-08-16T02:09:02.859958+00:00",
+      "score": 75.0,
+      "grade": "B",
       "reasons": [
-        "queue_high:5",
+        "queue_ok:3",
         "honest:137/141",
-        "timeout_rate_high:0.6154",
-        "latency_alert:77.81",
-        "latency_all:174.81",
+        "latency_alert:174.81",
         "critique_n:20"
       ],
-      "note": "0-100 machine health; 1D timeout rate scored separately",
+      "note": "0-100 machine health for Control Matrix",
       "path": "artifacts/smoothness.json",
       "ok": true
     },
@@ -188,43 +152,6 @@
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
-      "ok": true
-    },
-    "phase1d_status": {
-      "updated": "2026-08-16T02:07:33.705894+00:00",
-      "phase": "1D",
-      "name": "Measured lift",
-      "status": "ADVANCING",
-      "checks_ok": 5,
-      "checks_n": 5,
-      "training_wheels": true,
-      "soft_launch": false,
-      "note": "1D infrastructure advancing; live honest lift still OPEN under 4B.",
-      "path": "artifacts/phase1d_status.json",
-      "ok": true
-    },
-    "pipeline_strangler": {
-      "updated": "2026-08-16T02:07:33.710992+00:00",
-      "pipeline_bytes": 75183,
-      "pipeline_lines": 1656,
-      "warn_bytes": 40000,
-      "over_budget": true,
-      "extracted_n": 8,
-      "extracted_ok": 8,
-      "tool_first_contract_ok": true,
-      "score_contract_ok": true,
-      "terminal_contract_ok": true,
-      "adapter_default_off": true,
-      "ok": true
-    },
-    "symbol_index": {
-      "updated": "2026-08-16T02:07:34.270595+00:00",
-      "enabled_flag": false,
-      "n_files": 120,
-      "n_with_symbols": 113,
-      "query": "pipeline tool_runtime host_agent",
-      "note": "Snapshot only. Pipeline uses index only when ETHER_SYMBOL_INDEX=1.",
-      "path": "artifacts/symbol_index.json",
       "ok": true
     },
     "phase3_snapshot": {
@@ -241,19 +168,16 @@
       ]
     },
     "governor": {
-      "pending": 5,
+      "pending": 3,
       "max_pending": 6,
       "steady_pause_at": 4,
       "steady_resume_at": 2,
       "high_depth": 8,
       "high_hold_s": 120.0,
       "may_enqueue": true,
-      "may_enqueue_steady": false,
-      "max_enqueue_this_tick": 1,
+      "may_enqueue_steady": true,
+      "max_enqueue_this_tick": 2,
       "training_wheels": true
-    },
-    "whats_next": {
-      "ok": true
     }
   },
   "soft_launch_blocked": true,

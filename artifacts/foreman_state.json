@@ -1349,24 +1349,7 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "ss_tool_runtime_020212_2",
-    "p_cli_doctor_strangler",
-    "ss_pipeline_scripted_020240_4",
-    "ss_pref_refresh_020131_7",
-    "ss_train_gates_020240_3",
-    "ss_archive_failed_020430_6",
-    "ss_direct_hard_020430_5",
-    "ss_pipeline_scripted_020404_4",
-    "ss_train_gates_020404_3",
-    "ss_honest_live_report_020521_1",
-    "ss_measure_tick_020455_0",
-    "ss_pref_refresh_020455_7",
-    "ss_tool_runtime_020521_2",
-    "ss_archive_failed_020612_6",
-    "ss_pipeline_scripted_020547_4",
-    "ss_train_gates_020547_3",
-    "ss_honest_live_report_020707_1",
-    "ss_measure_tick_020640_0"
+    "ss_pref_refresh_020640_7"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1459,19 +1442,18 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01",
-    "ss_direct_hard_020612_5"
+    "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-16T02:07:46.223818+00:00",
+  "last_tick": "2026-08-16T02:09:05.301671+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_pipeline_scripted_020733_4",
+  "last_enqueued": "ss_pipeline_scripted_020903_4",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
-  "steady_idx": 901,
+  "steady_idx": 885,
   "governor": {
-    "pending": 4,
+    "pending": 5,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1479,8 +1461,7 @@
     "high_hold_s": 120.0,
     "may_enqueue": true,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 2,
+    "max_enqueue_this_tick": 1,
     "training_wheels": true
-  },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T02:44:04.327511+00:00",
+  "updated": "2026-08-16T02:45:23.773833+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -15,13 +15,14 @@
     "rose-quartz": 0,
     "citrine": 0,
     "selenite": 0,
-    "amethyst": 0,
+    "amethyst": 1,
     "black-tourmaline": 0,
     "labradorite": 21,
     "grandidierite": 0
   },
-  "last_gem": "labradorite",
-  "last_job": "ss_pref_refresh_024223_7",
+  "last_gem": "amethyst",
+  "last_job": "ss_train_gates_024318_3",
+  "active_n": 2,
   "strip": [
     {
       "gem": "clear-quartz",
@@ -45,8 +46,8 @@
     },
     {
       "gem": "amethyst",
-      "n": 0,
-      "active": false
+      "n": 1,
+      "active": true
     },
     {
       "gem": "black-tourmaline",
@@ -56,7 +57,7 @@
     {
       "gem": "labradorite",
       "n": 21,
-      "active": true
+      "active": false
     },
     {
       "gem": "grandidierite",

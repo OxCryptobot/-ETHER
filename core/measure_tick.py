@@ -33,6 +33,8 @@ def _safe(name: str, fn) -> Dict[str, Any]:
                     "top",
                     "results",
                     "samples",
+                    "top_fixtures",
+                    "top_strategies",
                 )
             }
             slim["ok"] = out.get("ok", True)
@@ -89,6 +91,10 @@ def run() -> Dict[str, Any]:
         (
             "strangler_style",
             lambda: __import__("core.strangler_style_gate", fromlist=["check"]).check(),
+        ),
+        (
+            "timeout_diagnosis",
+            lambda: __import__("core.timeout_diagnosis", fromlist=["compute"]).compute(),
         ),
     ]
     for name, fn in panels:

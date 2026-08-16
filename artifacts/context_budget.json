@@ -1,11 +1,14 @@
 {
-  "updated": "2026-08-16T02:58:58.499125+00:00",
+  "updated": "2026-08-16T03:22:40.519549+00:00",
   "raw_chars": 9050,
   "out_chars": 9048,
   "max_chars": 12000,
   "raw_tokens_est": 2262,
   "out_tokens_est": 2262,
   "compress_ratio": 0.9998,
+  "utilization": 0.754,
+  "grade": "WARM",
   "over_budget": false,
-  "note": "tokens estimated at ~4 chars/token"
+  "status": "WARM",
+  "note": "tokens estimated at ~4 chars/token; grade=OK|WARM|HOT|OVER|COMPRESSED"
 }

@@ -1,7 +1,12 @@
 {
-  "job_id": "p_timeout_diag",
+  "job_id": "p_live_fixture_policy",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T02:59:03.639849+00:00",
-  "note": "Timeout fixture ranking + UI tiles \u2014 measurement only, wheels ON"
+  "finished": "2026-08-16T03:22:47.274645+00:00",
+  "note": "LIVE fixture denylist advisory \u2014 wheels ON, no LIVE enqueue",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

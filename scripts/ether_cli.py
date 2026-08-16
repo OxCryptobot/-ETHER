@@ -40,9 +40,7 @@ def _load(path: Path) -> Dict[str, Any]:
 def _list_jobs(folder: Path) -> List[str]:
     if not folder.exists():
         return []
-    return sorted(
-        p.stem for p in folder.glob("*.json") if p.name != ".gitkeep"
-    )
+    return sorted(p.stem for p in folder.glob("*.json") if p.name != ".gitkeep")
 
 
 def cmd_status(_: argparse.Namespace) -> int:
@@ -85,22 +83,35 @@ def cmd_queue(_: argparse.Namespace) -> int:
 
 
 def cmd_phase(_: argparse.Namespace) -> int:
-    print("Phase 1 board (from STATUS.md + measured truth)")
+    print("Phase board (measured)")
     print("  1A Tool-first          COMPLETE")
     print("  1B AgentState          COMPLETE")
     print("  1C AST transactional   COMPLETE")
-    print("  1D Measured lift       scripted GREEN (direct+pipeline 5/5); live OPEN")
+    p1d = _load(ROOT / "artifacts" / "phase1d_status.json")
+    if p1d:
+        print(
+            f"  1D Measured lift       {p1d.get('status')} "
+            f"checks={p1d.get('checks_ok')}/{p1d.get('checks_n')}"
+        )
+    else:
+        print("  1D Measured lift       PARTIAL (scripted GREEN; live OPEN)")
     print("Soft launch             BLOCKED until live gap closed or gate policy updated")
+    ps = _load(ROOT / "artifacts" / "pipeline_strangler.json")
+    if ps:
+        print(
+            f"Pipeline strangler       {ps.get('status')} "
+            f"extracts={ps.get('extracted_ok')}/{ps.get('extracted_n')} "
+            f"adapter_off={ps.get('adapter_default_off')}"
+        )
     if STATUS_MD.exists():
         print()
         print("STATUS.md head:")
-        for line in STATUS_MD.read_text(encoding="utf-8").splitlines()[:20]:
+        for line in STATUS_MD.read_text(encoding="utf-8").splitlines()[:16]:
             print(f"  {line}")
     return 0
 
 
 def cmd_next(_: argparse.Namespace) -> int:
-    """What's next — from pending head + foreman if available."""
     pending = _list_jobs(PENDING)
     if pending:
         print(f"next job: {pending[0]}")
@@ -112,8 +123,10 @@ def cmd_next(_: argparse.Namespace) -> int:
         from scripts.foreman import status as fstatus
 
         s = fstatus()
-        print(f"foreman mode={s.get('mode')} cursor={s.get('cursor')} "
-              f"live_skip={s.get('live_skip_remaining')}")
+        print(
+            f"foreman mode={s.get('mode')} cursor={s.get('cursor')} "
+            f"live_skip={s.get('live_skip_remaining')}"
+        )
         if s.get("last_playbook"):
             print(f"last_playbook={s.get('last_playbook')}")
     except Exception as e:
@@ -142,13 +155,40 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     n_failed = len(_list_jobs(FAILED))
     if n_failed > 20:
         issues.append(f"WARNING: failed queue large ({n_failed}) — run archive")
+
+    # Strangler contracts
+    try:
+        from core.pipeline_strangler import compute as strangler_compute
+
+        ps = strangler_compute()
+        if ps.get("extracted_ok") != ps.get("extracted_n"):
+            issues.append(
+                f"WARNING: strangler extracts {ps.get('extracted_ok')}/{ps.get('extracted_n')}"
+            )
+        if not ps.get("adapter_default_off", True):
+            issues.append("WARNING: pipeline adapter flag appears ON (expected OFF)")
+        if not ps.get("terminal_contract_ok", True):
+            issues.append("WARNING: terminal contract failed")
+    except Exception as e:
+        issues.append(f"WARNING: strangler check error: {e}")
+
+    try:
+        from core.pipeline_adapter import terminal_adapter_enabled
+
+        if terminal_adapter_enabled():
+            issues.append("INFO: ETHER_PIPELINE_TERMINAL=1 (experimental path active)")
+    except Exception:
+        pass
+
     if not issues:
         print("doctor: OK")
         return 0
     print("doctor: issues")
     for i in issues:
         print(f"  - {i}")
-    return 1
+    # INFO-only should not fail doctor hard
+    hard = [x for x in issues if not x.startswith("INFO:")]
+    return 1 if hard else 0
 
 
 def main(argv: list[str] | None = None) -> int:

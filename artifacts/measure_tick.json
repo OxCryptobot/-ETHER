@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T01:10:36.734809+00:00",
+  "timestamp": "2026-08-16T01:11:55.107036+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T01:10:36.366581+00:00",
+      "updated": "2026-08-16T01:11:54.931021+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T01:10:36.402580+00:00",
+      "updated": "2026-08-16T01:11:54.958953+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -37,21 +37,55 @@
         "p95": 683.497,
         "max": 984.528
       },
+      "live_completed": {
+        "n": 9,
+        "p50": 103.983,
+        "p95": 304.252,
+        "max": 337.688
+      },
+      "live_timeout": {
+        "n": 16,
+        "p50": 373.609,
+        "p95": 776.816,
+        "max": 984.528
+      },
       "tool_runtime": {
         "n": 41,
         "p50": 1.868,
         "p95": 317.624,
         "max": 984.528
       },
-      "live_over_scripted_p95": 175.03,
+      "live_over_scripted_p95": 77.91,
+      "live_all_over_scripted_p95": 175.03,
+      "live_timeout_rate": 0.6154,
+      "timeout_floor_s": 120.0,
       "alert_ratio_threshold": 10.0,
       "alert": true,
-      "note": "Alert when live p95 > Nx scripted p95",
-      "path": "artifacts/latency_slo.json",
+      "ok": true
+    },
+    "live_budget": {
+      "updated": "2026-08-16T01:11:54.959457+00:00",
+      "training_wheels": true,
+      "max_wall_s": 90,
+      "max_steps": 12,
+      "step_timeout_s": 25,
+      "live_enqueue_allowed": false,
+      "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
+      "path": "artifacts/live_budget.json",
+      "ok": true
+    },
+    "critique_plan_wire": {
+      "updated": "2026-08-16T01:11:54.959457+00:00",
+      "n_critiques": 12,
+      "n_replanned": 12,
+      "latest_hypothesis": "re-read failing test; single apply_patch; abort after one stagnant",
+      "training_wheels": true,
+      "note": "Critique FAIL \u2192 PlanState.replan. Never auto-lifts soft launch.",
+      "path": "artifacts/critique_plan_wire.json",
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T01:10:36.439581+00:00",
+      "updated": "2026-08-16T01:11:54.975091+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -60,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T01:10:36.443579+00:00",
+      "updated": "2026-08-16T01:11:54.975091+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -73,7 +107,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T01:10:36.498582+00:00",
+      "updated": "2026-08-16T01:11:54.990717+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -88,14 +122,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T01:10:36.549581+00:00",
+      "updated": "2026-08-16T01:11:55.009159+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T01:10:36.554581+00:00",
+      "updated": "2026-08-16T01:11:55.009159+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -116,13 +150,13 @@
         "labradorite": 17,
         "grandidierite": 0
       },
-      "last_gem": "rose-quartz",
-      "last_job": "ss_pipeline_scripted_010900_4",
+      "last_gem": "labradorite",
+      "last_job": "ss_train_gates_011049_3",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T01:10:36.587783+00:00",
+      "updated": "2026-08-16T01:11:55.024786+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -135,13 +169,13 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T01:10:36.669189+00:00",
+      "updated": "2026-08-16T01:11:55.056038+00:00",
       "score": 75.0,
       "grade": "B",
       "reasons": [
         "queue_ok:4",
         "honest:140/144",
-        "latency_alert:175.03",
+        "latency_alert:77.91",
         "critique_n:17"
       ],
       "note": "0-100 machine health for Control Matrix",

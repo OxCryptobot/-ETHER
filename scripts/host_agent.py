@@ -136,6 +136,7 @@ def _measure_paths() -> List[str]:
         "eligible_rates.json",
         "host_health.json",
         "phase1_gate.json",
+        "honest_path_progress.json",
         "pipeline_strangler.json",
         "phase1d_status.json",
     ):

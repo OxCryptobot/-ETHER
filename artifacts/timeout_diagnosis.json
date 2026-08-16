@@ -1,0 +1,162 @@
+{
+  "updated": "2026-08-16T03:53:45.581316+00:00",
+  "live_n": 26,
+  "timeout_n": 16,
+  "timeout_rate": 0.6154,
+  "timeout_floor_s": 120.0,
+  "top_fixtures": [
+    {
+      "fixture": "ledger",
+      "n": 11
+    },
+    {
+      "fixture": "lru",
+      "n": 2
+    },
+    {
+      "fixture": "topo",
+      "n": 2
+    },
+    {
+      "fixture": "intervals",
+      "n": 1
+    }
+  ],
+  "top_strategies": [
+    {
+      "strategy": "default",
+      "n": 8
+    },
+    {
+      "strategy": "tool_runtime",
+      "n": 4
+    },
+    {
+      "strategy": "multifile",
+      "n": 2
+    },
+    {
+      "strategy": "no_context",
+      "n": 1
+    },
+    {
+      "strategy": "minimal",
+      "n": 1
+    }
+  ],
+  "by_arm": {
+    "pipeline": 4,
+    "direct": 8,
+    "bare": 4
+  },
+  "samples": [
+    {
+      "fixture": "ledger",
+      "strategy": "tool_runtime",
+      "arm": "pipeline",
+      "duration_s": 335.118,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "tool_runtime",
+      "arm": "pipeline",
+      "duration_s": 270.282,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "tool_runtime",
+      "arm": "pipeline",
+      "duration_s": 317.624,
+      "failure_type": null
+    },
+    {
+      "fixture": "lru",
+      "strategy": "tool_runtime",
+      "arm": "pipeline",
+      "duration_s": 984.528,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 339.675,
+      "failure_type": null
+    },
+    {
+      "fixture": "topo",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 424.14,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 360.937,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 274.569,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 611.251,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 386.281,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 350.546,
+      "failure_type": null
+    },
+    {
+      "fixture": "topo",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 463.525,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "multifile",
+      "arm": "bare",
+      "duration_s": 569.592,
+      "failure_type": null
+    },
+    {
+      "fixture": "ledger",
+      "strategy": "no_context",
+      "arm": "bare",
+      "duration_s": 607.632,
+      "failure_type": null
+    },
+    {
+      "fixture": "lru",
+      "strategy": "multifile",
+      "arm": "bare",
+      "duration_s": 707.579,
+      "failure_type": null
+    }
+  ],
+  "target_rate": 0.25,
+  "ok": false,
+  "note": "Measurement only. Prefer retiring top timeout fixtures from LIVE enqueue until rate < 0.25. Wheels stay ON."
+}

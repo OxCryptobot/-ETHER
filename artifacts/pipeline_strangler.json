@@ -1,0 +1,49 @@
+{
+  "updated": "2026-08-16T03:53:43.391972+00:00",
+  "pipeline_bytes": 75183,
+  "pipeline_lines": 1656,
+  "warn_bytes": 40000,
+  "over_budget": true,
+  "extracted_n": 8,
+  "extracted_ok": 8,
+  "imports": [
+    {
+      "mod": "core.pipeline_tool_first",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_select",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_hooks",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_burst",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_score",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_terminal",
+      "ok": true
+    },
+    {
+      "mod": "core.pipeline_adapter",
+      "ok": true
+    },
+    {
+      "mod": "core.loop.tool_first",
+      "ok": true
+    }
+  ],
+  "tool_first_contract_ok": true,
+  "score_contract_ok": true,
+  "terminal_contract_ok": true,
+  "adapter_default_off": true,
+  "status": "STRANGLER_ACTIVE",
+  "note": "God-file still large; pure slices importable. Adapter flag default OFF. No Pipeline.run body change."
+}

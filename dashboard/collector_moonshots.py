@@ -1,7 +1,4 @@
-"""Moonshot panels for Control Matrix — host-agent artifacts only.
-
-No flywheel / guardian / legacy batch. Reads measure_tick outputs under artifacts/.
-"""
+"""Moonshot panels for Control Matrix — host-agent artifacts only."""
 from __future__ import annotations
 
 import json
@@ -48,6 +45,14 @@ def collect_moonshots() -> Dict[str, Any]:
     strangler = _read("pipeline_strangler.json")
     ast_kpi = _read("ast_edit_kpi.json")
     phase1d = _read("phase1d_status.json")
+
+    adapter_on = False
+    try:
+        from core.pipeline_adapter import terminal_adapter_enabled
+
+        adapter_on = terminal_adapter_enabled()
+    except Exception:
+        adapter_on = False
 
     pending_n = 0
     pending_dir = ARTIFACTS / "jobs" / "pending"
@@ -103,15 +108,6 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": isinstance(to_rate, (int, float)) and 0.25 <= to_rate < 0.5,
         },
         {
-            "id": "live_budget",
-            "label": "Live budget",
-            "value": live_budget.get("max_wall_s") or "—",
-            "sub": f"steps={live_budget.get('max_steps')} wall_s",
-            "good": isinstance(live_budget.get("max_wall_s"), int)
-            and live_budget.get("max_wall_s") <= 120,
-            "warn": wheels_on,
-        },
-        {
             "id": "strangler",
             "label": "Pipeline slice",
             "value": strangler.get("status") or "—",
@@ -119,6 +115,14 @@ def collect_moonshots() -> Dict[str, Any]:
             f"kb={round((strangler.get('pipeline_bytes') or 0)/1024, 1)}",
             "good": strangler.get("status") in ("STRANGLER_ACTIVE", "HEALTHY_SLICE"),
             "warn": strangler.get("over_budget") is True,
+        },
+        {
+            "id": "adapter",
+            "label": "Terminal adapter",
+            "value": "ON" if adapter_on else "OFF",
+            "sub": "ETHER_PIPELINE_TERMINAL",
+            "good": not adapter_on,
+            "warn": adapter_on,
         },
         {
             "id": "ast_edit",
@@ -169,19 +173,21 @@ def collect_moonshots() -> Dict[str, Any]:
             "good": phase1d.get("status") in ("ADVANCING", "PARTIAL"),
         },
         {
+            "id": "live_budget",
+            "label": "Live budget",
+            "value": live_budget.get("max_wall_s") or "—",
+            "sub": f"steps={live_budget.get('max_steps')} wall_s",
+            "good": isinstance(live_budget.get("max_wall_s"), int)
+            and live_budget.get("max_wall_s") <= 120,
+            "warn": wheels_on,
+        },
+        {
             "id": "microbench",
             "label": "Microbench",
             "value": micro.get("ok") if micro else ("FROZEN" if frozen else "—"),
             "sub": "hot-path / freeze",
             "good": micro.get("ok") is True and not frozen,
             "warn": frozen or micro.get("ok") is False,
-        },
-        {
-            "id": "gem_energy",
-            "label": "GEM energy",
-            "value": gem.get("last_gem") or gem.get("gem") or "—",
-            "sub": gem.get("last_job") or "modular intel",
-            "good": True if gem else None,
         },
         {
             "id": "measure_tick",
@@ -201,6 +207,7 @@ def collect_moonshots() -> Dict[str, Any]:
             "latency_slo": latency,
             "live_budget": live_budget,
             "strangler": strangler,
+            "adapter_on": adapter_on,
             "ast_kpi": ast_kpi,
             "soft_launch": soft,
             "measure_tick": measure,
@@ -209,6 +216,7 @@ def collect_moonshots() -> Dict[str, Any]:
             "wheels_on": wheels_on,
             "pending_n": pending_n,
             "live_rates": rates,
+            "gem": gem,
         },
-        "note": "Host-first panels + strangler + AST KPI.",
+        "note": "Host-first panels + strangler + adapter flag.",
     }

@@ -17,7 +17,9 @@ OUT = ROOT / "artifacts" / "live_fixture_policy.json"
 
 # Hard denylist seed — known GPU-burners / hang fixtures (extend via diagnosis)
 SEED_DENY: List[str] = [
-    # leave empty unless known; diagnosis tops fill dynamically
+    "ledger",
+    "pipeline_ledger",
+    "ss_pipeline_ledger",
 ]
 
 TOP_N = int(os.getenv("ETHER_LIVE_DENY_TOP_N", "5"))
@@ -69,6 +71,7 @@ def publish() -> Dict[str, Any]:
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
         "denied": denied,
+        "seed": list(SEED_DENY),
         "top_n": TOP_N,
         "min_hits": MIN_TIMEOUT_HITS,
         "diag_rate": _load_diag().get("timeout_rate"),

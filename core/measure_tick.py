@@ -21,7 +21,7 @@ def _safe(name: str, fn) -> Dict[str, Any]:
             slim = {
                 k: out[k]
                 for k in list(out)[:12]
-                if k not in ("results_tail", "points", "tags", "strip", "events_tail")
+                if k not in ("results_tail", "points", "tags", "strip", "events_tail", "checks")
             }
             slim["ok"] = out.get("ok", True)
             return slim
@@ -65,6 +65,7 @@ def run() -> Dict[str, Any]:
         ("ast_edit_kpi", lambda: __import__("core.ast_edit_kpi", fromlist=["compute"]).compute()),
         ("smoothness", lambda: __import__("core.smoothness", fromlist=["compute"]).compute()),
         ("model_router", lambda: __import__("core.model_router", fromlist=["status"]).status()),
+        ("phase1d_status", lambda: __import__("core.phase1d_status", fromlist=["compute"]).compute()),
     ]
     for name, fn in panels:
         steps[name] = _safe(name, fn)
@@ -97,6 +98,14 @@ def run() -> Dict[str, Any]:
         steps["governor"] = status_snapshot()
     except Exception as e:
         steps["governor"] = {"error": str(e)[:120]}
+
+    try:
+        from scripts.write_whats_next import main as wn_main
+
+        wn_main()
+        steps["whats_next"] = {"ok": True}
+    except Exception as e:
+        steps["whats_next"] = {"ok": False, "error": str(e)[:120]}
 
     report: Dict[str, Any] = {
         "timestamp": _now(),

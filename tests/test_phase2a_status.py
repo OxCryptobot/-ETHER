@@ -12,3 +12,8 @@ def test_phase2a_status():
     assert "terminal_canary" in ids
     assert "score_canary" in ids
     assert "adapter_off" in ids
+    assert "architecture_go" in ids
+    assert "wheels_on" in ids
+    # Adapter must stay OFF during 2A canary phase
+    adapter = next(c for c in out["checks"] if c["id"] == "adapter_off")
+    assert adapter["ok"] is True, adapter

@@ -1,0 +1,29 @@
+{
+  "id": "p_strangler_score",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Strangler score slice + UI tiles — no Pipeline.run mutate",
+  "created": "2026-08-16T01:45:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_score.py",
+        "tests/test_pipeline_strangler.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.pipeline_strangler"
+      ],
+      "timeout": 60
+    }
+  ]
+}

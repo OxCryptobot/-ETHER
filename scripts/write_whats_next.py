@@ -19,6 +19,16 @@ STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST = ROOT / "artifacts" / "host_agent_last_job.json"
 
 
+def _load(name: str) -> dict:
+    p = ROOT / "artifacts" / name
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def main() -> int:
     pending = (
         sorted(p.stem for p in PENDING.glob("*.json") if p.name != ".gitkeep")
@@ -35,25 +45,26 @@ def main() -> int:
     except Exception:
         pass
 
-    p1d_detail = "scripted GREEN; live OPEN under 4B; latency honesty + live_budget landed"
-    try:
-        p1d = json.loads((ROOT / "artifacts" / "phase1d_status.json").read_text(encoding="utf-8"))
-        p1d_detail = (
-            f"checks {p1d.get('checks_ok')}/{p1d.get('checks_n')} "
-            f"status={p1d.get('status')}; live OPEN under 4B"
-        )
-    except Exception:
-        pass
+    p1d = _load("phase1d_status.json")
+    p1d_detail = (
+        f"checks {p1d.get('checks_ok')}/{p1d.get('checks_n')} status={p1d.get('status')}; live OPEN under 4B"
+        if p1d
+        else "scripted GREEN; live OPEN under 4B; latency honesty + live_budget landed"
+    )
 
-    pipe_note = "pipeline_god_file: STRANGLER_ACTIVE (pure slices green; body still large)"
-    try:
-        ps = json.loads((ROOT / "artifacts" / "pipeline_strangler.json").read_text(encoding="utf-8"))
-        pipe_note = (
-            f"pipeline_god_file: {ps.get('status')} "
-            f"bytes={ps.get('pipeline_bytes')} extracted={ps.get('extracted_ok')}/{ps.get('extracted_n')}"
-        )
-    except Exception:
-        pass
+    ps = _load("pipeline_strangler.json")
+    pipe_note = (
+        f"pipeline_god_file: {ps.get('status')} "
+        f"bytes={ps.get('pipeline_bytes')} extracted={ps.get('extracted_ok')}/{ps.get('extracted_n')}"
+        if ps
+        else "pipeline_god_file: STRANGLER_ACTIVE (pure slices green; body still large)"
+    )
+
+    ctx = _load("context_budget.json")
+    ctx_note = f"context:{ctx.get('grade') or ctx.get('status') or '—'} util={ctx.get('utilization')}"
+
+    router = _load("model_router.json")
+    lane_note = f"lanes fast={router.get('fast_model')} live={router.get('live_model')}" if router else "lanes: default"
 
     phase_board = [
         {"id": "1A", "name": "Tool-first", "status": "COMPLETE"},
@@ -83,10 +94,16 @@ def main() -> int:
         "last_failure_type": last.get("failure_type"),
         "phase_board": phase_board,
         "blocked": blocked,
+        "signals": {
+            "context": ctx_note,
+            "model_router": lane_note,
+            "adapter_default_off": ps.get("adapter_default_off") if ps else True,
+        },
         "resolved": [
             "dual_dashboard: host-first Control Matrix (/) — legacy at /legacy only",
             "1D latency honesty + live_budget + critique→Plan wire",
-            "pipeline pure slices: tool_first / select / hooks / burst importable",
+            "pipeline pure slices: tool_first/score/terminal/adapter (flag OFF)",
+            "model dual-lane router + context grades + microbench schedule",
         ],
         "operator": [
             "python -m scripts.ether_cli status",

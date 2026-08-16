@@ -1,4 +1,4 @@
-"""Phase 1 gate to Phase 2 — metrics GO/NO_GO."""
+"""Phase 1 gate to Phase 2 — metrics GO/NO_GO + architecture_go."""
 from __future__ import annotations
 
 
@@ -7,12 +7,12 @@ def test_phase1_gate_structure():
 
     out = compute()
     assert out.get("phase_gate") == "1_to_2"
-    assert out.get("status") in ("GO", "NO_GO")
+    assert out.get("status") in ("GO", "NO_GO", "ARCH_GO", "FULL_GO")
     assert "metrics_go" in out
+    assert "architecture_go" in out
     ids = {c["id"] for c in out.get("checks") or []}
     assert "timeout_rate_eligible" in ids
     assert "honest_rate_eligible" in ids
-    # Never auto soft-launch
     assert out.get("soft_launch_ready") is False or out.get("training_wheels") is True
 
 

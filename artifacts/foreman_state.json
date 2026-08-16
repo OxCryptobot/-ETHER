@@ -1430,7 +1430,8 @@
     "ss_pipeline_scripted_003934_4",
     "ss_train_gates_003934_3",
     "ss_honest_live_report_004051_1",
-    "ss_measure_tick_004026_0"
+    "ss_measure_tick_004026_0",
+    "ss_pref_refresh_004026_7"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1525,16 +1526,16 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-16T00:41:26.834458+00:00",
+  "last_tick": "2026-08-16T00:41:39.479340+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_pipeline_scripted_004115_4",
+  "last_enqueued": "ss_archive_failed_004139_6",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
-  "steady_idx": 965,
+  "steady_idx": 967,
   "governor": {
-    "pending": 4,
+    "pending": 5,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1542,7 +1543,7 @@
     "high_hold_s": 120.0,
     "may_enqueue": true,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 2,
+    "max_enqueue_this_tick": 1,
     "training_wheels": true
   }
 }

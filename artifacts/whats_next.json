@@ -1,16 +1,16 @@
 {
-  "generated": "2026-08-16T01:59:45.433217+00:00",
-  "next_job": "ss_honest_live_report_015904_1",
+  "generated": "2026-08-16T02:00:13.239978+00:00",
+  "next_job": "p_strangler_adapter",
   "queue_head": [
+    "p_strangler_adapter",
     "ss_honest_live_report_015904_1",
     "ss_pipeline_scripted_015945_4",
-    "ss_pref_refresh_015841_7",
     "ss_tool_runtime_015904_2",
     "ss_train_gates_015945_3"
   ],
   "queue_depth": 5,
-  "host_phase": "idle",
-  "last_job": "ss_measure_tick_015841_0",
+  "host_phase": "polling",
+  "last_job": "ss_pref_refresh_015841_7",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

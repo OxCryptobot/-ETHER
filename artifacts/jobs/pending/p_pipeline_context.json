@@ -1,0 +1,29 @@
+{
+  "id": "p_pipeline_context",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Pure pipeline_context extract — no Pipeline.run edit",
+  "created": "2026-08-16T04:10:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_context.py",
+        "tests/test_pipeline_prep.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.pipeline_strangler"
+      ],
+      "timeout": 60
+    }
+  ]
+}

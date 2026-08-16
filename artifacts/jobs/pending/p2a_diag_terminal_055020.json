@@ -1,0 +1,37 @@
+{
+  "id": "p2a_diag_terminal_055020",
+  "note": "DIAG: isolate pipeline_terminal_canary and phase2a_status under wheels",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_terminal_canary.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 90
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase2a_status.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 90
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.pipeline_terminal_canary import run_matrix; import json; print(json.dumps(run_matrix(), indent=2))"
+      ],
+      "timeout": 60
+    }
+  ]
+}

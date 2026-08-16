@@ -1,15 +1,15 @@
 {
-  "generated": "2026-08-16T01:53:37.165356+00:00",
-  "next_job": "p_strangler_wire_v2",
+  "generated": "2026-08-16T01:53:50.351943+00:00",
+  "next_job": "ss_pipeline_scripted_015322_4",
   "queue_head": [
-    "p_strangler_wire_v2",
     "ss_pipeline_scripted_015322_4",
     "ss_tool_runtime_015144_2",
-    "ss_train_gates_015322_3"
+    "ss_train_gates_015322_3",
+    "zcr_tool_runtime_scripted_015338"
   ],
   "queue_depth": 4,
   "host_phase": "idle",
-  "last_job": "ss_measure_tick_015115_0",
+  "last_job": "p_strangler_wire_v2",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

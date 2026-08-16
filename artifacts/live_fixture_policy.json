@@ -1,6 +1,7 @@
 {
-  "updated": "2026-08-16T05:06:44.359208+00:00",
+  "updated": "2026-08-16T05:13:25.676865+00:00",
   "denied": [
+    "intervals",
     "ledger",
     "lru",
     "pipeline_ledger",
@@ -10,10 +11,13 @@
   "seed": [
     "ledger",
     "pipeline_ledger",
-    "ss_pipeline_ledger"
+    "ss_pipeline_ledger",
+    "lru",
+    "topo",
+    "intervals"
   ],
-  "top_n": 5,
-  "min_hits": 2,
+  "top_n": 8,
+  "min_hits": 1,
   "diag_rate": 0.6154,
   "note": "Advisory denylist for LIVE; wheels/gates still control enqueue"
 }

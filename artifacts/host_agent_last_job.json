@@ -1,12 +1,7 @@
 {
-  "job_id": "p_architecture_go",
+  "job_id": "p_phase2a_terminal_canary",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:21:12.658321+00:00",
-  "note": "Split ARCH_GO (scripted) vs metrics_go (eligible LIVE); wheels ON, adapter OFF",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  }
+  "finished": "2026-08-16T05:22:15.730705+00:00",
+  "note": "Phase 2A: pure terminal canary matrix; adapter OFF; wheels ON"
 }

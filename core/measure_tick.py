@@ -37,6 +37,7 @@ def _safe(name: str, fn) -> Dict[str, Any]:
                     "top_strategies",
                     "denied",
                     "actions",
+                    "blockers",
                 )
             }
             slim["ok"] = out.get("ok", True)
@@ -121,6 +122,10 @@ def run() -> Dict[str, Any]:
         (
             "phase1_gate",
             lambda: __import__("core.phase1_gate", fromlist=["compute"]).compute(),
+        ),
+        (
+            "honest_path_progress",
+            lambda: __import__("core.honest_path_progress", fromlist=["compute"]).compute(),
         ),
     ]
     for name, fn in panels:

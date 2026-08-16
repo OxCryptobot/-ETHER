@@ -18,7 +18,8 @@ PIPELINE = ROOT / "core" / "pipeline.py"
 EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_tool_first", "role": "tool-first terminal decision"},
     {"mod": "core.pipeline_select", "role": "strategy selection + bandit context"},
-    {"mod": "core.pipeline_hooks", "role": "bandit context / hooks"},
+    {"mod": "core.pipeline_hooks", "role": "thin facade over pure slices"},
+    {"mod": "core.pipeline_prep", "role": "sandbox code prep pure extract"},
     {"mod": "core.pipeline_burst", "role": "burst-on-retry policy slice"},
     {"mod": "core.pipeline_score", "role": "score clamp + degrade merge + envelopes"},
     {"mod": "core.pipeline_terminal", "role": "composed terminal decision API"},
@@ -90,7 +91,9 @@ def compute() -> Dict[str, Any]:
     try:
         from core.pipeline_adapter import terminal_adapter_enabled, status as adapter_status
 
-        adapter_off = terminal_adapter_enabled() is False or adapter_status()["default"] == "0"
+        adapter_off = (
+            terminal_adapter_enabled() is False or adapter_status()["default"] == "0"
+        )
     except Exception:
         adapter_off = False
 
@@ -98,13 +101,24 @@ def compute() -> Dict[str, Any]:
     try:
         from core.pipeline_oracle import apply_repo_oracle_gate
 
-        # Import + signature only; inactive when hook disabled
         oracle_ok = callable(apply_repo_oracle_gate)
     except Exception:
         oracle_ok = False
 
+    prep_ok = False
+    try:
+        from core.pipeline_prep import prepare_code_for_sandbox, no_code_prep
+
+        with no_code_prep():
+            code, meta = prepare_code_for_sandbox("x=1", "simple")
+        prep_ok = code == "x=1" and meta.get("bypassed") is True
+    except Exception:
+        prep_ok = False
+
     status = "IN_PROGRESS"
-    contracts = tool_first_ok and score_ok and terminal_ok and adapter_off and oracle_ok
+    contracts = (
+        tool_first_ok and score_ok and terminal_ok and adapter_off and oracle_ok and prep_ok
+    )
     if size == 0:
         status = "MISSING"
     elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and contracts:
@@ -126,6 +140,7 @@ def compute() -> Dict[str, Any]:
         "terminal_contract_ok": terminal_ok,
         "adapter_default_off": adapter_off,
         "oracle_contract_ok": oracle_ok,
+        "prep_contract_ok": prep_ok,
         "status": status,
         "note": (
             "God-file still large; pure slices importable. "

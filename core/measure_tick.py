@@ -110,6 +110,14 @@ def run() -> Dict[str, Any]:
             "push_hygiene",
             lambda: __import__("core.push_hygiene", fromlist=["compute"]).compute(),
         ),
+        (
+            "eligible_rates",
+            lambda: __import__("core.eligible_rates", fromlist=["compute"]).compute(),
+        ),
+        (
+            "host_health",
+            lambda: __import__("core.host_health", fromlist=["compute"]).compute(),
+        ),
     ]
     for name, fn in panels:
         steps[name] = _safe(name, fn)

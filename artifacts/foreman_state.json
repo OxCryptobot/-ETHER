@@ -1370,7 +1370,8 @@
     "ss_train_gates_024728_3",
     "ss_honest_live_report_024838_1",
     "ss_measure_tick_024815_0",
-    "ss_pref_refresh_024815_7"
+    "ss_pref_refresh_024815_7",
+    "ss_tool_runtime_024838_2"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1465,7 +1466,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-16T02:49:24.316516+00:00",
+  "last_tick": "2026-08-16T02:49:38.094349+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1474,7 +1475,7 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 903,
   "governor": {
-    "pending": 5,
+    "pending": 4,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1482,7 +1483,7 @@
     "high_hold_s": 120.0,
     "may_enqueue": true,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 1,
+    "max_enqueue_this_tick": 2,
     "training_wheels": true
   }
 }

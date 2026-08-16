@@ -16,16 +16,15 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "pipeline_strangler.json"
 PIPELINE = ROOT / "core" / "pipeline.py"
 
-# Modules already extracted / safe to import without Pipeline side effects
 EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_tool_first", "role": "tool-first terminal decision"},
     {"mod": "core.pipeline_select", "role": "strategy selection + bandit context"},
     {"mod": "core.pipeline_hooks", "role": "bandit context / hooks"},
     {"mod": "core.pipeline_burst", "role": "burst-on-retry policy slice"},
+    {"mod": "core.pipeline_score", "role": "score clamp + degrade merge + envelopes"},
     {"mod": "core.loop.tool_first", "role": "pure tool-first terminal helper"},
 ]
 
-# Soft budget: warn above this (bytes). 75KB is known debt.
 WARN_BYTES = 40_000
 
 
@@ -49,7 +48,6 @@ def compute() -> Dict[str, Any]:
     imports = [_import_ok(e["mod"]) for e in EXTRACTED]
     ok_n = sum(1 for i in imports if i.get("ok"))
 
-    # Prove tool-first pure contract still holds
     tool_first_ok = False
     try:
         from core.pipeline_tool_first import decide_pipeline_tool_first
@@ -63,13 +61,26 @@ def compute() -> Dict[str, Any]:
     except Exception:
         tool_first_ok = False
 
+    score_ok = False
+    try:
+        from core.pipeline_score import clamp_score, merge_degraded, terminal_fail_envelope
+
+        score_ok = (
+            clamp_score(1.5) == 1.0
+            and clamp_score(-1) == 0.0
+            and merge_degraded(["a"], "a", "b") == ["a", "b"]
+            and terminal_fail_envelope(stage="t", marker="m")["ok"] is False
+        )
+    except Exception:
+        score_ok = False
+
     status = "IN_PROGRESS"
     if size == 0:
         status = "MISSING"
-    elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and tool_first_ok:
+    elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and tool_first_ok and score_ok:
         status = "HEALTHY_SLICE"
-    elif ok_n == len(EXTRACTED) and tool_first_ok:
-        status = "STRANGLER_ACTIVE"  # debt remains but slices green
+    elif ok_n == len(EXTRACTED) and tool_first_ok and score_ok:
+        status = "STRANGLER_ACTIVE"
 
     payload: Dict[str, Any] = {
         "updated": datetime.now(timezone.utc).isoformat(),
@@ -81,6 +92,7 @@ def compute() -> Dict[str, Any]:
         "extracted_ok": ok_n,
         "imports": imports,
         "tool_first_contract_ok": tool_first_ok,
+        "score_contract_ok": score_ok,
         "status": status,
         "note": (
             "God-file still large; pure slices must stay importable. "

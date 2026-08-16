@@ -64,7 +64,25 @@ def main() -> int:
     ctx_note = f"context:{ctx.get('grade') or ctx.get('status') or '—'} util={ctx.get('utilization')}"
 
     router = _load("model_router.json")
-    lane_note = f"lanes fast={router.get('fast_model')} live={router.get('live_model')}" if router else "lanes: default"
+    lane_note = (
+        f"lanes fast={router.get('fast_model')} live={router.get('live_model')}"
+        if router
+        else "lanes: default"
+    )
+
+    retire = _load("timeout_retirement.json")
+    if not retire:
+        try:
+            from core.timeout_retirement import compute as retire_compute
+
+            retire = retire_compute()
+        except Exception:
+            retire = {}
+    acts = retire.get("actions") or []
+    retire_note = (
+        f"timeout_retire rate={retire.get('timeout_rate')} "
+        f"action={(acts[0] if acts else '—')}"
+    )
 
     phase_board = [
         {"id": "1A", "name": "Tool-first", "status": "COMPLETE"},
@@ -82,6 +100,11 @@ def main() -> int:
         "soft_launch: blocked until live lift or explicit gate policy",
         pipe_note,
     ]
+    if retire.get("timeout_rate") is not None and not retire.get("ok"):
+        blocked.append(
+            f"live_timeout_rate={retire.get('timeout_rate')} "
+            f"(target < {retire.get('target_rate')})"
+        )
 
     payload = {
         "generated": datetime.now(timezone.utc).isoformat(),
@@ -97,12 +120,14 @@ def main() -> int:
         "signals": {
             "context": ctx_note,
             "model_router": lane_note,
+            "timeout_retirement": retire_note,
             "adapter_default_off": ps.get("adapter_default_off") if ps else True,
         },
         "resolved": [
             "dashboard: single Control Matrix at http://127.0.0.1:8787/ only",
             "1D latency honesty + live_budget + critique→Plan wire",
-            "pipeline pure slices: tool_first/score/terminal/adapter (flag OFF)",
+            "pipeline pure slices: tool_first/score/terminal/adapter/oracle (flag OFF)",
+            "timeout diagnosis + retirement plan + LIVE denylist",
             "model dual-lane router + context grades + microbench schedule",
         ],
         "operator": [

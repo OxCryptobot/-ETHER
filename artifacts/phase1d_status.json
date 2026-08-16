@@ -1,0 +1,43 @@
+{
+  "updated": "2026-08-16T04:31:31.747862+00:00",
+  "phase": "1D",
+  "name": "Measured lift",
+  "status": "ADVANCING",
+  "checks_ok": 6,
+  "checks_n": 6,
+  "checks": [
+    {
+      "id": "latency_timeout_split",
+      "ok": true,
+      "detail": "to_rate=0.6154 completed_ratio=77.91"
+    },
+    {
+      "id": "live_budget",
+      "ok": true,
+      "detail": "max_wall_s=90 wheels=True"
+    },
+    {
+      "id": "critique_plan_wire",
+      "ok": true,
+      "detail": "n_replanned=12 critiques=12"
+    },
+    {
+      "id": "moonshot_1d_tiles",
+      "ok": true,
+      "detail": "tiles=15"
+    },
+    {
+      "id": "timeout_retirement_plan",
+      "ok": true,
+      "detail": "rate=0.6154 actions=4"
+    },
+    {
+      "id": "soft_launch_still_blocked",
+      "ok": true,
+      "detail": "['live_honest_rate_below_0.99', 'training_wheels_on', 'ETHER_SOFT_LAUNCH_not_1']"
+    }
+  ],
+  "training_wheels": true,
+  "soft_launch": false,
+  "note": "1D infrastructure advancing; live honest lift still OPEN under 4B."
+}

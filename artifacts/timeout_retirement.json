@@ -1,0 +1,40 @@
+{
+  "updated": "2026-08-16T04:31:32.334672+00:00",
+  "timeout_rate": 0.6154,
+  "target_rate": 0.25,
+  "ok": false,
+  "live_n": 26,
+  "timeout_n": 16,
+  "top_fixtures": [
+    {
+      "fixture": "ledger",
+      "n": 11
+    },
+    {
+      "fixture": "lru",
+      "n": 2
+    },
+    {
+      "fixture": "topo",
+      "n": 2
+    },
+    {
+      "fixture": "intervals",
+      "n": 1
+    }
+  ],
+  "denied": [
+    "ledger",
+    "lru",
+    "pipeline_ledger",
+    "ss_pipeline_ledger",
+    "topo"
+  ],
+  "actions": [
+    "keep_wheels_on",
+    "do_not_enqueue_live",
+    "retire_top_fixture:ledger",
+    "prefer_scripted_steady_only"
+  ],
+  "note": "Retirement plan only. Does not lift wheels or soft launch. Target live_timeout_rate < 0.25."
+}

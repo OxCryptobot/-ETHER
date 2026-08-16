@@ -1,0 +1,28 @@
+{
+  "id": "p_phase6_operator",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 6 OPERATOR: CLI + phase board + host-heal contracts; wheels ON; no soft launch",
+  "created": "2026-08-16T05:36:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase6_complete.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase6_status"
+      ],
+      "timeout": 240
+    }
+  ]
+}

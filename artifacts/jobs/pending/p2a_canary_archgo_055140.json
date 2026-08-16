@@ -1,0 +1,28 @@
+{
+  "id": "p2a_canary_archgo_055140",
+  "note": "Phase 2A terminal+score canary + phase1_gate ARCH_GO surface under wheels ON. No soft launch. Adapter stays OFF. Fixed: dropped missing test_eligible_rates.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_terminal_canary.py",
+        "tests/test_phase2a_status.py",
+        "tests/test_phase1_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick"
+      ],
+      "timeout": 120
+    }
+  ]
+}

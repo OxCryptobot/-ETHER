@@ -1,15 +1,16 @@
 {
-  "generated": "2026-08-16T01:42:40.193134+00:00",
+  "generated": "2026-08-16T01:42:53.294757+00:00",
   "next_job": "p_strangler_pipeline",
   "queue_head": [
     "p_strangler_pipeline",
-    "ss_measure_tick_014030_0",
     "ss_pipeline_scripted_014147_4",
-    "ss_train_gates_014147_3"
+    "ss_pipeline_scripted_014251_4",
+    "ss_train_gates_014147_3",
+    "ss_train_gates_014251_3"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "running",
-  "last_job": "ss_tool_runtime_014059_2",
+  "last_job": "ss_measure_tick_014030_0",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

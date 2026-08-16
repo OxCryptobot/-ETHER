@@ -1,17 +1,16 @@
 {
-  "generated": "2026-08-16T02:45:24.078558+00:00",
-  "next_job": "p_steady_micro_whats",
+  "generated": "2026-08-16T02:45:35.694040+00:00",
+  "next_job": "ss_archive_failed_024433_6",
   "queue_head": [
-    "p_steady_micro_whats",
     "ss_archive_failed_024433_6",
     "ss_direct_hard_024433_5",
     "ss_pipeline_scripted_024519_4",
     "ss_train_gates_024404_3",
     "ss_train_gates_024519_3"
   ],
-  "queue_depth": 6,
-  "host_phase": "running",
-  "last_job": "ss_train_gates_024318_3",
+  "queue_depth": 5,
+  "host_phase": "idle",
+  "last_job": "p_steady_micro_whats",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -34,23 +33,13 @@
       "id": "1D",
       "name": "Measured lift",
       "status": "PARTIAL",
-      "detail": "checks 5/5 status=ADVANCING; live OPEN under 4B"
+      "detail": "scripted GREEN both arms; live OPEN under 4B"
     }
   ],
   "blocked": [
     "soft_launch: blocked until live lift or explicit gate policy",
-    "pipeline_god_file: STRANGLER_ACTIVE bytes=75183 extracted=8/8"
-  ],
-  "signals": {
-    "context": "context:WARM util=0.754",
-    "model_router": "lanes fast=qwen3.5:4b-q4_K_M live=qwen3.5:4b-q4_K_M",
-    "adapter_default_off": true
-  },
-  "resolved": [
-    "dual_dashboard: host-first Control Matrix (/) \u2014 legacy at /legacy only",
-    "1D latency honesty + live_budget + critique\u2192Plan wire",
-    "pipeline pure slices: tool_first/score/terminal/adapter (flag OFF)",
-    "model dual-lane router + context grades + microbench schedule"
+    "pipeline_god_file: still open",
+    "dual_dashboard: still open"
   ],
   "operator": [
     "python -m scripts.ether_cli status",

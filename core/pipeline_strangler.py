@@ -22,6 +22,7 @@ EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_burst", "role": "burst-on-retry policy slice"},
     {"mod": "core.pipeline_score", "role": "score clamp + degrade merge + envelopes"},
     {"mod": "core.pipeline_terminal", "role": "composed terminal decision API"},
+    {"mod": "core.pipeline_adapter", "role": "flag-gated terminal wire (default OFF)"},
     {"mod": "core.loop.tool_first", "role": "pure tool-first terminal helper"},
 ]
 
@@ -84,8 +85,17 @@ def compute() -> Dict[str, Any]:
     except Exception:
         terminal_ok = False
 
+    adapter_off = False
+    try:
+        from core.pipeline_adapter import terminal_adapter_enabled, status as adapter_status
+
+        # Contract: default must be OFF in production path
+        adapter_off = terminal_adapter_enabled() is False or adapter_status()["default"] == "0"
+    except Exception:
+        adapter_off = False
+
     status = "IN_PROGRESS"
-    contracts = tool_first_ok and score_ok and terminal_ok
+    contracts = tool_first_ok and score_ok and terminal_ok and adapter_off
     if size == 0:
         status = "MISSING"
     elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and contracts:
@@ -105,10 +115,11 @@ def compute() -> Dict[str, Any]:
         "tool_first_contract_ok": tool_first_ok,
         "score_contract_ok": score_ok,
         "terminal_contract_ok": terminal_ok,
+        "adapter_default_off": adapter_off,
         "status": status,
         "note": (
-            "God-file still large; pure slices must stay importable. "
-            "No Pipeline.run body change in this phase."
+            "God-file still large; pure slices importable. "
+            "Adapter flag default OFF. No Pipeline.run body change."
         ),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)

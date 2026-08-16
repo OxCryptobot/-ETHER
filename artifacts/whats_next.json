@@ -1,9 +1,13 @@
 {
-  "generated": "2026-08-16T19:30:20.465629+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-16T19:35:47.056003+00:00",
+  "next_job": "p1_60_scripted_hard_expand_193012",
+  "queue_head": [
+    "p1_60_scripted_hard_expand_193012",
+    "p1_61_measure_tick_refresh_193013",
+    "p1_62_train_gates_pep8_193014"
+  ],
+  "queue_depth": 3,
+  "host_phase": "running",
   "last_job": "p1_59_tool_runtime_ast_191954",
   "last_ok": true,
   "last_failure_type": null,

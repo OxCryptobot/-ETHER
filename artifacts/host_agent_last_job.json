@@ -1,7 +1,12 @@
 {
-  "job_id": "p1_59_tool_runtime_ast_191954",
+  "job_id": "p1_61_measure_tick_refresh_193013",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T19:27:28.049830+00:00",
-  "note": "1D one-hyp: tool_runtime + AST transactional gate re-verify; protect what works"
+  "finished": "2026-08-16T19:35:47.423153+00:00",
+  "note": "1D one-hyp: measure_tick + honest_live_report refresh under denylist; measurement only",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

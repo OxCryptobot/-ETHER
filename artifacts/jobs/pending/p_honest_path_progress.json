@@ -1,0 +1,52 @@
+{
+  "id": "p_honest_path_progress",
+  "class": "fast",
+  "source": "mentor",
+  "note": "1D: scripted honest progress + force eligible/gate publish — wheels ON",
+  "created": "2026-08-16T05:13:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_honest_path_progress.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.eligible_rates"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase1_gate"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.honest_path_progress"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick"
+      ],
+      "timeout": 120
+    }
+  ]
+}

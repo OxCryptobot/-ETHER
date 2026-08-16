@@ -1,0 +1,28 @@
+{
+  "id": "p_phase7_north_star",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 7 SYSTEM PACKAGE: pillars + living checklist + roadmap; wheels ON; autonomous_claim=false",
+  "created": "2026-08-16T05:38:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase7_complete.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 360
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase7_status"
+      ],
+      "timeout": 300
+    }
+  ]
+}

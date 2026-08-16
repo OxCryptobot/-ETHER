@@ -23,6 +23,8 @@ TARGETS = [
     "core/pipeline_burst.py",
     "core/pipeline_select.py",
     "core/pipeline_oracle.py",
+    "core/pipeline_prep.py",
+    "core/pipeline_hooks.py",
     "core/pipeline_strangler.py",
     "core/timeout_diagnosis.py",
     "core/timeout_retirement.py",

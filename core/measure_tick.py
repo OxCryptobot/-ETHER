@@ -21,7 +21,7 @@ def _safe(name: str, fn) -> Dict[str, Any]:
             slim = {
                 k: out[k]
                 for k in list(out)[:12]
-                if k not in ("results_tail", "points", "tags", "strip")
+                if k not in ("results_tail", "points", "tags", "strip", "events_tail")
             }
             slim["ok"] = out.get("ok", True)
             return slim
@@ -53,6 +53,10 @@ def run() -> Dict[str, Any]:
         ("honest_kpi", lambda: __import__("core.honest_kpi", fromlist=["compute"]).compute()),
         ("latency_slo", lambda: __import__("core.latency_slo", fromlist=["compute"]).compute()),
         ("live_budget", lambda: __import__("core.live_budget", fromlist=["publish"]).publish()),
+        (
+            "critique_plan_wire",
+            lambda: __import__("core.critique_plan_wire", fromlist=["wire_latest"]).wire_latest(),
+        ),
         ("honest_sparkline", lambda: __import__("core.honest_sparkline", fromlist=["compute"]).compute()),
         ("context_budget", lambda: __import__("core.context_budget", fromlist=["publish_sample"]).publish_sample()),
         ("scoreboard_rollup", lambda: __import__("core.scoreboard_rollup", fromlist=["rollup"]).rollup()),

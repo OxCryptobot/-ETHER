@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.1")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.2")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.1"
+        data["api_version"] = "0.5.2"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -75,7 +75,6 @@ def index() -> FileResponse:
     return FileResponse(path)
 
 
-# Old bookmarks → single home (no alternate UIs)
 @app.get("/agent")
 def agent_gone() -> RedirectResponse:
     return RedirectResponse(url="/", status_code=301)
@@ -133,7 +132,49 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.5.1", "truth": "host_agent"}
+    """Local truth: dashboard up + host heartbeat from disk (no git)."""
+    host: dict = {}
+    try:
+        from core.host_health import compute as host_compute
+
+        host = host_compute()
+    except Exception as e:
+        host = {"ok": False, "error": str(e)[:160]}
+    eligible: dict = {}
+    try:
+        p = ROOT / "artifacts" / "eligible_rates.json"
+        if p.exists():
+            eligible = json_load_safe(p)
+    except Exception:
+        pass
+    return {
+        "ok": True,
+        "service": "ether-dashboard",
+        "version": "0.5.2",
+        "truth": "host_agent_local",
+        "git_required": False,
+        "host": {
+            "alive": host.get("alive"),
+            "age_s": host.get("age_s"),
+            "phase": host.get("phase"),
+            "last_job": host.get("last_job"),
+            "ok": host.get("ok"),
+        },
+        "eligible": {
+            "timeout_rate_eligible": eligible.get("timeout_rate_eligible"),
+            "honest_rate_eligible": eligible.get("honest_rate_eligible"),
+            "live_eligible_n": eligible.get("live_eligible_n"),
+        },
+    }
+
+
+def json_load_safe(path: Path) -> dict:
+    import json
+
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 @app.get("/api/health-check")

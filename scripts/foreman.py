@@ -19,7 +19,6 @@ LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LESSONS_MEMORY = ROOT / "memory" / "ether_apprentice" / "lessons"
 LESSONS_ARTIFACTS = ROOT / "artifacts" / "lessons"
 
-# Critical fix #1: was 16 — self-flooded queue
 BATCH_SIZE = 6
 LIVE_SKIP_TICKS = 36
 
@@ -104,6 +103,13 @@ STEADY_TEMPLATES: List[Dict[str, Any]] = [
         "class": "measure",
         "continue_on_fail": True,
         "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"], "timeout": 120}],
+    },
+    {
+        "id_prefix": "ss_microbench",
+        "note": "steady: microbench_schedule (skip if fresh <5m)",
+        "class": "measure",
+        "continue_on_fail": True,
+        "steps": [{"argv": [".venv/Scripts/python.exe", "-m", "core.microbench_schedule"], "timeout": 90}],
     },
     {
         "id_prefix": "ss_honest_live_report",
@@ -293,7 +299,6 @@ def enqueue_steady(state: Dict[str, Any]) -> Optional[str]:
         return None
     idx = int(state.get("steady_idx") or 0)
     skip_live = int(state.get("live_skip_remaining") or 0) > 0
-    # Training wheels fuse: no LIVE steady while wheels on
     wheels = True
     try:
         import os
@@ -353,7 +358,6 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
         for p in DONE.glob("*.json"):
             done.add(p.stem.replace("job_", "") if p.name.startswith("job_") else p.stem)
 
-    # Critical fix #9: advance cursor past all completed curriculum items
     cursor = int(state.get("cursor") or 0)
     while cursor < len(CURRICULUM) and CURRICULUM[cursor]["id"] in done:
         cursor += 1
@@ -373,7 +377,7 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
         enqueued.append(jid)
         state["cursor"] = i + 1
         state["last_enqueued"] = jid
-        break  # one curriculum item per tick — less flood
+        break
 
     if enqueued:
         return enqueued[-1]
@@ -416,7 +420,6 @@ def playbook_on_fail(state: Dict[str, Any]) -> Optional[str]:
             continue
         if re.search(pat, hay, re.I):
             lid = str(les.get("id") or "unknown")
-            # Critical fix #2: rate limit
             try:
                 from core.playbook_limiter import allow_playbook, mark_playbook
 

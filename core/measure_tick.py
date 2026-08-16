@@ -31,6 +31,8 @@ def _safe(name: str, fn) -> Dict[str, Any]:
                     "imports",
                     "steps",
                     "top",
+                    "results",
+                    "samples",
                 )
             }
             slim["ok"] = out.get("ok", True)
@@ -83,6 +85,10 @@ def run() -> Dict[str, Any]:
         (
             "symbol_index",
             lambda: __import__("core.symbol_index_pub", fromlist=["publish"]).publish(),
+        ),
+        (
+            "strangler_style",
+            lambda: __import__("core.strangler_style_gate", fromlist=["check"]).check(),
         ),
     ]
     for name, fn in panels:

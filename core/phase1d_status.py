@@ -55,22 +55,40 @@ def compute() -> Dict[str, Any]:
     except Exception as e:
         add("critique_plan_wire", False, str(e))
 
-    # Host-first dashboard
+    # Host-first dashboard tiles for 1D
     try:
         from dashboard.collector_moonshots import collect_moonshots
 
         m = collect_moonshots()
         ids = {t["id"] for t in m.get("tiles") or []}
-        need = {"latency_slo", "live_timeout", "live_budget", "plan_wire"}
+        need = {"latency_slo", "live_timeout", "live_budget", "timeout_retire"}
         add("moonshot_1d_tiles", need.issubset(ids), f"tiles={len(ids)}")
     except Exception as e:
         add("moonshot_1d_tiles", False, str(e))
+
+    # Timeout retirement plan present (does not require rate green)
+    try:
+        from core.timeout_retirement import compute as retire_compute
+
+        r = retire_compute()
+        has_plan = isinstance(r.get("actions"), list) and r.get("target_rate") == 0.25
+        add(
+            "timeout_retirement_plan",
+            has_plan,
+            f"rate={r.get('timeout_rate')} actions={len(r.get('actions') or [])}",
+        )
+    except Exception as e:
+        add("timeout_retirement_plan", False, str(e))
 
     # Soft launch still blocked (expected)
     try:
         soft = json.loads((ROOT / "artifacts" / "soft_launch_status.json").read_text(encoding="utf-8"))
         blocked = bool(soft.get("soft_launch_blocked") or not soft.get("soft_launch_ready"))
-        add("soft_launch_still_blocked", blocked, str(soft.get("blocked_reasons") or soft.get("note") or "")[:120])
+        add(
+            "soft_launch_still_blocked",
+            blocked,
+            str(soft.get("blocked_reasons") or soft.get("note") or "")[:120],
+        )
     except Exception as e:
         add("soft_launch_still_blocked", True, f"unknown:{e}")
 

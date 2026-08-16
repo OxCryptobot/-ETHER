@@ -112,6 +112,9 @@ def _measure_paths() -> List[str]:
         "lora_dry_tick.json",
         "foreman_state.json",
         "playbook_limiter.json",
+        "timeout_diagnosis.json",
+        "live_fixture_policy.json",
+        "pipeline_strangler.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -304,9 +307,11 @@ def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
 
     sorted_paths = sorted(paths, key=rank)
     try:
-        from core.host_schedule import filter_fast_first
+        from core.host_schedule import filter_fast_first, filter_live_denylist
 
-        return filter_fast_first(sorted_paths)
+        sorted_paths = filter_fast_first(sorted_paths)
+        sorted_paths = filter_live_denylist(sorted_paths)
+        return sorted_paths
     except Exception:
         return sorted_paths
 
@@ -386,7 +391,6 @@ def run_steps(
             budget_cap = step_timeout_for_job(job, default=3600)
         except Exception:
             pass
-        # Phase 1D: live_budget hard ceiling (stricter of the two)
         try:
             lb = job.get("live_budget") or {}
             if lb.get("max_wall_s"):
@@ -435,7 +439,6 @@ def process_job(path: Path) -> bool:
 
     job_id = job.get("id") or path.stem
 
-    # Phase 1D: clamp live step timeouts before any execution
     try:
         from core.live_budget import apply_to_job
 
@@ -448,7 +451,7 @@ def process_job(path: Path) -> bool:
     except Exception as e:
         log(f"live_budget skip: {type(e).__name__}: {e}")
 
-    # Moonshot 19: training wheels — refuse LIVE class at runtime
+    # Training wheels — refuse LIVE class at runtime
     try:
         from core.job_class import job_class, LIVE
         from core.queue_governor import training_wheels_on
@@ -458,6 +461,21 @@ def process_job(path: Path) -> bool:
             FAILED.mkdir(parents=True, exist_ok=True)
             path.rename(FAILED / f"{path.stem}_wheels_skip.json")
             return False
+    except Exception:
+        pass
+
+    # Timeout denylist — skip chronic LIVE fixtures even if wheels ever off
+    try:
+        from core.job_class import job_class, LIVE
+        from core.live_fixture_policy import should_skip_live
+
+        if job_class(job) == LIVE:
+            dec = should_skip_live(job=job)
+            if dec.get("skip"):
+                log(f"LIVE_DENYLIST: skip {job_id} reason={dec.get('reason')}")
+                FAILED.mkdir(parents=True, exist_ok=True)
+                path.rename(FAILED / f"{path.stem}_deny_skip.json")
+                return False
     except Exception:
         pass
 
@@ -545,7 +563,7 @@ def call_foreman_tick() -> None:
 
 
 def main() -> int:
-    print("ETHER host_agent (moonshots + 1D live_budget)", flush=True)
+    print("ETHER host_agent (moonshots + 1D live_budget + denylist)", flush=True)
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)

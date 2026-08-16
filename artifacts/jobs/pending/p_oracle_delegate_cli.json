@@ -1,0 +1,29 @@
+{
+  "id": "p_oracle_delegate_cli",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Oracle delegate + whats_next retirement signal — wheels ON",
+  "created": "2026-08-16T04:05:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_oracle_delegate_whats_next.py",
+        "tests/test_phase1d_retirement_style.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.write_whats_next"
+      ],
+      "timeout": 60
+    }
+  ]
+}

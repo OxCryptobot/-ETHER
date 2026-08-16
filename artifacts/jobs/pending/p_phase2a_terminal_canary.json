@@ -1,0 +1,37 @@
+{
+  "id": "p_phase2a_terminal_canary",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 2A: pure terminal canary matrix; adapter OFF; wheels ON",
+  "created": "2026-08-16T05:22:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_terminal_canary.py",
+        "tests/test_architecture_go.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.pipeline_terminal_canary"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase1_gate"
+      ],
+      "timeout": 90
+    }
+  ]
+}

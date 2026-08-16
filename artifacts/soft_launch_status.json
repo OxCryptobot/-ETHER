@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T05:30:04.241321+00:00",
+  "timestamp": "2026-08-16T05:32:30.697032+00:00",
   "soft_launch_ready": false,
   "soft_launch_blocked": true,
   "blocked_reasons": [
@@ -9,12 +9,10 @@
   ],
   "threshold": 0.99,
   "rates_status": "measuring",
-  "rate_source": "eligible",
-  "live_n": 2,
-  "live_honest_rate": 0.5,
-  "timeout_rate_eligible": 0.0,
+  "live_n": 26,
+  "live_honest_rate": 0.3462,
   "training_wheels": true,
   "explicit_flag": false,
   "snapshot_ok": true,
-  "note": "Ready only when eligible/raw rates green + wheels off + ETHER_SOFT_LAUNCH=1. This module never auto-lifts gates."
+  "note": "Ready only when rates green + wheels off + ETHER_SOFT_LAUNCH=1. This module never auto-lifts gates."
 }

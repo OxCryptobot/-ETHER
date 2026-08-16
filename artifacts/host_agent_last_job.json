@@ -1,13 +1,7 @@
 {
-  "job_id": "p_phase4_scaffold",
-  "ok": false,
-  "rc": 4,
-  "finished": "2026-08-16T05:32:11.641169+00:00",
-  "note": "Phase 4 SCAFFOLD: toolkit + MCP schema + plan-only swarm; wheels ON; no live MCP; no auto-promote",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  },
-  "failure_type": "step_fail"
+  "job_id": "zcr_tool_runtime_scripted_053211",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-16T05:32:34.066198+00:00",
+  "note": "zero-click: scripted twin after p_phase4_scaffold tool_runtime fail"
 }

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T02:10:22.461035+00:00",
+  "timestamp": "2026-08-16T02:12:09.919439+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,24 +11,24 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T02:10:21.497783+00:00",
+      "updated": "2026-08-16T02:12:09.045438+00:00",
       "ok": true,
-      "honest_tool_pass": 137,
-      "tool_attempts": 141,
-      "honest_rate": 0.9716,
+      "honest_tool_pass": 140,
+      "tool_attempts": 144,
+      "honest_rate": 0.9722,
       "disguised_pass_n": 0,
-      "n_rows": 160,
-      "primary_kpi": "137/141",
+      "n_rows": 163,
+      "primary_kpi": "140/144",
       "gate": "is_honest_tool_path_pass",
       "note": "Primary 1A KPI. Generate-fallback never counts as honest pass.",
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T02:10:21.507867+00:00",
+      "updated": "2026-08-16T02:12:09.059437+00:00",
       "scripted": {
-        "n": 121,
-        "p50": 2.158,
-        "p95": 3.91,
+        "n": 124,
+        "p50": 2.123,
+        "p95": 3.905,
         "max": 6.203
       },
       "live": {
@@ -55,8 +55,8 @@
         "p95": 317.624,
         "max": 984.528
       },
-      "live_over_scripted_p95": 77.81,
-      "live_all_over_scripted_p95": 174.81,
+      "live_over_scripted_p95": 77.91,
+      "live_all_over_scripted_p95": 175.03,
       "live_timeout_rate": 0.6154,
       "timeout_floor_s": 120.0,
       "alert_ratio_threshold": 10.0,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T02:10:21.509865+00:00",
+      "updated": "2026-08-16T02:12:09.061439+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T02:10:21.515864+00:00",
+      "updated": "2026-08-16T02:12:09.067437+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "isolate failing step; FAST reverify",
@@ -85,16 +85,16 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T02:10:21.524978+00:00",
+      "updated": "2026-08-16T02:12:09.080438+00:00",
       "n": 50,
       "green_n": 47,
-      "sparkline": "GGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+      "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
       "note": "G=honest pass, R=ok but not honest, .=fail",
       "path": "artifacts/honest_sparkline.json",
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T02:10:21.527979+00:00",
+      "updated": "2026-08-16T02:12:09.084439+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -107,29 +107,29 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T02:10:21.539250+00:00",
-      "n_rows": 160,
-      "honest_n": 137,
-      "honest_rate": 0.8562,
+      "updated": "2026-08-16T02:12:09.097437+00:00",
+      "n_rows": 163,
+      "honest_n": 140,
+      "honest_rate": 0.8589,
       "live_n": 26,
       "live_ok_n": 9,
       "live_honest_n": 9,
       "live_honest_rate": 0.3462,
-      "scripted_n": 134,
-      "scripted_ok_n": 128,
-      "scripted_ok_rate": 0.9552,
+      "scripted_n": 137,
+      "scripted_ok_n": 131,
+      "scripted_ok_rate": 0.9562,
       "disguised_pass_n": 0,
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T02:10:21.558473+00:00",
+      "updated": "2026-08-16T02:12:09.123438+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T02:10:21.561473+00:00",
+      "updated": "2026-08-16T02:12:09.127437+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -151,12 +151,12 @@
         "grandidierite": 0
       },
       "last_gem": "labradorite",
-      "last_job": "ss_train_gates_020903_3",
+      "last_job": "ss_train_gates_021059_3",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T02:10:21.572473+00:00",
+      "updated": "2026-08-16T02:12:09.140440+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -169,15 +169,15 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T02:10:21.592556+00:00",
+      "updated": "2026-08-16T02:12:09.170442+00:00",
       "score": 65.0,
       "grade": "C",
       "reasons": [
         "queue_ok:4",
-        "honest:137/141",
+        "honest:140/144",
         "timeout_rate_high:0.6154",
-        "latency_alert:77.81",
-        "latency_all:174.81",
+        "latency_alert:77.91",
+        "latency_all:175.03",
         "critique_n:20"
       ],
       "note": "0-100 machine health; 1D timeout rate scored separately",
@@ -191,7 +191,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T02:10:21.669932+00:00",
+      "updated": "2026-08-16T02:12:09.265438+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -204,7 +204,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T02:10:21.675950+00:00",
+      "updated": "2026-08-16T02:12:09.270439+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -218,7 +218,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-16T02:10:22.381228+00:00",
+      "updated": "2026-08-16T02:12:09.803439+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 113,

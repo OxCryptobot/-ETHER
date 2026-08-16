@@ -1,16 +1,15 @@
 {
-  "generated": "2026-08-16T02:32:48.245037+00:00",
+  "generated": "2026-08-16T02:32:58.477972+00:00",
   "next_job": "ss_archive_failed_023246_6",
   "queue_head": [
     "ss_archive_failed_023246_6",
     "ss_direct_hard_023246_5",
-    "ss_measure_tick_023124_0",
     "ss_pipeline_scripted_023223_4",
     "ss_train_gates_023223_3"
   ],
-  "queue_depth": 5,
-  "host_phase": "running",
-  "last_job": "ss_pref_refresh_023124_7",
+  "queue_depth": 4,
+  "host_phase": "idle",
+  "last_job": "ss_measure_tick_023124_0",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -33,17 +32,13 @@
       "id": "1D",
       "name": "Measured lift",
       "status": "PARTIAL",
-      "detail": "checks 5/5 status=ADVANCING; live OPEN under 4B"
+      "detail": "scripted GREEN both arms; live OPEN under 4B"
     }
   ],
   "blocked": [
     "soft_launch: blocked until live lift or explicit gate policy",
-    "pipeline_god_file: STRANGLER_ACTIVE bytes=75183 extracted=8/8"
-  ],
-  "resolved": [
-    "dual_dashboard: host-first Control Matrix (/) \u2014 legacy at /legacy only",
-    "1D latency honesty + live_budget + critique\u2192Plan wire",
-    "pipeline pure slices: tool_first / select / hooks / burst importable"
+    "pipeline_god_file: still open",
+    "dual_dashboard: still open"
   ],
   "operator": [
     "python -m scripts.ether_cli status",

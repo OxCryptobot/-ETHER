@@ -49,6 +49,8 @@ def collect_moonshots() -> Dict[str, Any]:
     tdiag = _read("timeout_diagnosis.json")
     retire = _read("timeout_retirement.json")
     hygiene = _read("push_hygiene.json")
+    eligible = _read("eligible_rates.json")
+    host_h = _read("host_health.json")
 
     adapter_on = False
     try:
@@ -94,6 +96,9 @@ def collect_moonshots() -> Dict[str, Any]:
     if hyg_val is None:
         hyg_val = "—"
 
+    elig_to = eligible.get("timeout_rate_eligible")
+    elig_honest = eligible.get("honest_rate_eligible")
+
     tiles: List[Dict[str, Any]] = [
         {
             "id": "smoothness",
@@ -121,11 +126,35 @@ def collect_moonshots() -> Dict[str, Any]:
         },
         {
             "id": "live_timeout",
-            "label": "Live timeouts",
+            "label": "Live timeouts (raw)",
             "value": to_rate if to_rate is not None else "—",
             "sub": f"n_to={(latency.get('live_timeout') or {}).get('n')}",
             "good": (to_rate or 0) < 0.25 if isinstance(to_rate, (int, float)) else None,
             "warn": isinstance(to_rate, (int, float)) and 0.25 <= to_rate < 0.5,
+        },
+        {
+            "id": "eligible_timeout",
+            "label": "Timeout eligible",
+            "value": elig_to if elig_to is not None else "—",
+            "sub": f"n={eligible.get('live_eligible_n')} denied={eligible.get('denied_live_n')}",
+            "good": bool(eligible.get("timeout_eligible_ok")),
+            "warn": elig_to is not None and elig_to >= 0.25,
+        },
+        {
+            "id": "eligible_honest",
+            "label": "Honest eligible",
+            "value": elig_honest if elig_honest is not None else "—",
+            "sub": f"target=0.99 wheels_on",
+            "good": bool(eligible.get("honest_eligible_ok")),
+            "warn": elig_honest is not None and elig_honest < 0.99,
+        },
+        {
+            "id": "host_health",
+            "label": "Host local",
+            "value": "UP" if host_h.get("alive") else "DOWN",
+            "sub": f"age={host_h.get('age_s')}s git=no",
+            "good": bool(host_h.get("alive")),
+            "warn": not bool(host_h.get("alive")),
         },
         {
             "id": "timeout_diag",
@@ -233,6 +262,8 @@ def collect_moonshots() -> Dict[str, Any]:
             "smoothness": smoothness,
             "honest_kpi": honest_kpi,
             "latency_slo": latency,
+            "eligible_rates": eligible,
+            "host_health": host_h,
             "timeout_diagnosis": tdiag,
             "timeout_retirement": retire,
             "push_hygiene": hygiene,
@@ -251,5 +282,5 @@ def collect_moonshots() -> Dict[str, Any]:
             "gem": gem,
             "micro": micro,
         },
-        "note": "Projected timeout rate after denylist (wheels stay ON).",
+        "note": "P1 critical: eligible KPIs + local host health (git not required).",
     }

@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-16T04:31:35.733169+00:00",
-  "next_job": "p_phase1d_retire_ui",
+  "generated": "2026-08-16T04:31:40.824429+00:00",
+  "next_job": "p_pipeline_context",
   "queue_head": [
-    "p_phase1d_retire_ui",
     "p_pipeline_context",
     "p_pipeline_prep",
     "p_select_denylist_seed"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "p_oracle_delegate_cli",
+  "queue_depth": 3,
+  "host_phase": "idle",
+  "last_job": "p_phase1d_retire_ui",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

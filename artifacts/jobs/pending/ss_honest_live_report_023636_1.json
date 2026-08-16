@@ -1,0 +1,18 @@
+{
+  "id": "ss_honest_live_report_023636_1",
+  "note": "steady: publish honest live tool-path rates",
+  "source": "foreman_steady",
+  "created": "2026-08-16T02:36:36.090409+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.honest_live_report"
+      ],
+      "timeout": 60
+    }
+  ],
+  "class": "measure",
+  "continue_on_fail": true
+}

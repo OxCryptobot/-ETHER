@@ -1,15 +1,16 @@
 {
-  "generated": "2026-08-16T02:53:05.969673+00:00",
-  "next_job": "ss_measure_tick_025253_0",
+  "generated": "2026-08-16T02:53:17.655236+00:00",
+  "next_job": "ss_honest_live_report_025317_1",
   "queue_head": [
+    "ss_honest_live_report_025317_1",
     "ss_measure_tick_025253_0",
-    "ss_pipeline_scripted_025158_4",
     "ss_pref_refresh_025253_7",
+    "ss_tool_runtime_025317_2",
     "ss_train_gates_025158_3"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "ss_direct_hard_025223_5",
+  "last_job": "ss_pipeline_scripted_025158_4",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

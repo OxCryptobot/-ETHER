@@ -1,9 +1,11 @@
 {
-  "generated": "2026-08-16T04:50:38.421251+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-16T04:51:43.405840+00:00",
+  "next_job": "p_phase1d_projected",
+  "queue_head": [
+    "p_phase1d_projected"
+  ],
+  "queue_depth": 1,
+  "host_phase": "idle",
   "last_job": "p_timeout_retire_expand",
   "last_ok": true,
   "last_failure_type": null,

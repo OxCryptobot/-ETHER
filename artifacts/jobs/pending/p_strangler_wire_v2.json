@@ -1,0 +1,29 @@
+{
+  "id": "p_strangler_wire_v2",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Strangler v2: tool_first+score, symbol_index_pub, zero_click — no Pipeline.run",
+  "created": "2026-08-16T01:53:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_strangler_wire_v2.py",
+        "tests/test_pipeline_score.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 300
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.symbol_index_pub"
+      ],
+      "timeout": 90
+    }
+  ]
+}

@@ -1,15 +1,15 @@
 {
-  "generated": "2026-08-16T03:22:45.721542+00:00",
-  "next_job": "p_live_fixture_policy",
+  "generated": "2026-08-16T03:24:31.460825+00:00",
+  "next_job": "p_host_denylist_wire",
   "queue_head": [
-    "p_live_fixture_policy",
+    "p_host_denylist_wire",
     "ss_pipeline_scripted_025516_4",
     "ss_tool_runtime_025453_2",
     "ss_train_gates_025516_3"
   ],
   "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "p_timeout_diag",
+  "host_phase": "idle",
+  "last_job": "p_live_fixture_policy",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

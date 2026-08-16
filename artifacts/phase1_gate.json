@@ -1,0 +1,22 @@
+{
+  "updated": "2026-08-16T05:13:25.710202+00:00",
+  "phase_gate": "1_to_2",
+  "metrics_go": false,
+  "status": "NO_GO",
+  "checks": [
+    {"id": "eligible_sample_size", "ok": false, "detail": "live_eligible_n=3 min=5"},
+    {"id": "timeout_rate_eligible", "ok": true, "detail": "rate=0.0 target<0.25"},
+    {"id": "honest_rate_eligible", "ok": false, "detail": "rate=0.6667 target>=0.99"},
+    {"id": "wheels_still_on_expected", "ok": true, "detail": "training_wheels=True"},
+    {"id": "soft_launch_module_blocked", "ok": true, "detail": "blocked"}
+  ],
+  "checks_ok": 3,
+  "checks_n": 5,
+  "timeout_rate_eligible": 0.0,
+  "honest_rate_eligible": 0.6667,
+  "live_eligible_n": 3,
+  "timeout_rate_raw": 0.6154,
+  "training_wheels": true,
+  "soft_launch_ready": false,
+  "note": "metrics_go unlocks Phase 2 architecture only. Soft launch still needs human flags."
+}

@@ -1,9 +1,14 @@
 """Phase 1 → Phase 2 gate status.
 
-GO only when:
-  - timeout_rate_eligible < 0.25 (with live_eligible_n > 0)
-  - honest_rate_eligible >= 0.99 (with live_eligible_n > 0)
-  - soft_launch still blocked until human flags (reported, not flipped here)
+Two independent unlocks (never auto soft-launch):
+
+  metrics_go (FULL_GO):
+    timeout_rate_eligible < 0.25 AND honest_rate_eligible >= 0.99
+    AND live_eligible_n >= min — needed for soft-launch discussion only
+
+  architecture_go (ARCH_GO):
+    scripted_honest_rate >= 0.90 AND strangler extracted contracts OK
+    — allows Phase 2A pipeline canary / pure-slice work under wheels ON
 
 Never lifts wheels. Never sets ETHER_SOFT_LAUNCH.
 """
@@ -13,13 +18,14 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 OUT = ROOT / "artifacts" / "phase1_gate.json"
 TARGET_TIMEOUT = 0.25
 TARGET_HONEST = 0.99
 MIN_ELIGIBLE_N = int(os.getenv("ETHER_GATE_MIN_ELIGIBLE_N", "5"))
+ARCH_SCRIPTED_HONEST = float(os.getenv("ETHER_ARCH_SCRIPTED_HONEST", "0.90"))
 
 
 def compute() -> Dict[str, Any]:
@@ -58,16 +64,71 @@ def compute() -> Dict[str, Any]:
         }
     )
 
+    scripted_honest: Optional[float] = None
+    try:
+        from core.honest_path_progress import compute as hpp
+
+        progress = hpp()
+        scripted_honest = progress.get("scripted_honest_rate")
+    except Exception:
+        progress = {}
+        try:
+            from core.honest_live import classify_row, collect_scoreboard_rows
+
+            rows = collect_scoreboard_rows()
+            sn = sh = 0
+            for r in rows:
+                c = classify_row(r)
+                if c.get("live"):
+                    continue
+                sn += 1
+                if c.get("honest"):
+                    sh += 1
+            scripted_honest = round(sh / sn, 4) if sn else None
+        except Exception:
+            scripted_honest = None
+
+    checks.append(
+        {
+            "id": "scripted_honest_for_architecture",
+            "ok": scripted_honest is not None
+            and scripted_honest >= ARCH_SCRIPTED_HONEST,
+            "detail": f"scripted_honest={scripted_honest} target>={ARCH_SCRIPTED_HONEST}",
+        }
+    )
+
+    strangler_ok = False
+    try:
+        from core.pipeline_strangler import compute as st_compute
+
+        st = st_compute()
+        strangler_ok = bool(
+            st.get("extracted_ok") == st.get("extracted_n")
+            and st.get("extracted_n", 0) >= 8
+            and st.get("adapter_default_off") is True
+        )
+        checks.append(
+            {
+                "id": "strangler_ready",
+                "ok": strangler_ok,
+                "detail": (
+                    f"extracted={st.get('extracted_ok')}/{st.get('extracted_n')} "
+                    f"adapter_off={st.get('adapter_default_off')}"
+                ),
+            }
+        )
+    except Exception as e:
+        checks.append({"id": "strangler_ready", "ok": False, "detail": str(e)[:80]})
+
     wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
     checks.append(
         {
             "id": "wheels_still_on_expected",
-            "ok": True,  # informational — ON is correct until gate passes
+            "ok": True,
             "detail": f"training_wheels={wheels}",
         }
     )
 
-    # soft launch must remain blocked by soft_launch module; we only report
     try:
         from core.soft_launch import evaluate
 
@@ -85,30 +146,45 @@ def compute() -> Dict[str, Any]:
             {"id": "soft_launch_module_blocked", "ok": False, "detail": str(e)[:80]}
         )
 
-    metric_ok = all(
+    metrics_go = all(
         c["ok"]
         for c in checks
         if c["id"]
         in ("eligible_sample_size", "timeout_rate_eligible", "honest_rate_eligible")
     )
-    # Gate to Phase 2 architecture work is metric_ok; soft launch is separate human step
+    architecture_go = all(
+        c["ok"]
+        for c in checks
+        if c["id"] in ("scripted_honest_for_architecture", "strangler_ready")
+    )
+
+    if metrics_go:
+        status = "FULL_GO"
+    elif architecture_go:
+        status = "ARCH_GO"
+    else:
+        status = "NO_GO"
+
     payload: Dict[str, Any] = {
         "updated": datetime.now(timezone.utc).isoformat(),
         "phase_gate": "1_to_2",
-        "metrics_go": metric_ok,
-        "status": "GO" if metric_ok else "NO_GO",
+        "metrics_go": metrics_go,
+        "architecture_go": architecture_go,
+        "status": status,
         "checks": checks,
         "checks_ok": sum(1 for c in checks if c["ok"]),
         "checks_n": len(checks),
         "timeout_rate_eligible": to_e,
         "honest_rate_eligible": ho_e,
         "live_eligible_n": n_e,
+        "scripted_honest_rate": scripted_honest,
         "timeout_rate_raw": elig.get("timeout_rate_raw"),
         "training_wheels": wheels,
         "soft_launch_ready": bool(soft.get("soft_launch_ready")),
         "note": (
-            "metrics_go unlocks Phase 2 architecture work only. "
-            "Soft launch still needs wheels off + ETHER_SOFT_LAUNCH=1 by human."
+            "ARCH_GO = Phase 2A architecture under wheels ON (adapter still default OFF). "
+            "FULL_GO / metrics_go = eligible LIVE rates for soft-launch discussion only. "
+            "Never auto-lifts wheels or ETHER_SOFT_LAUNCH."
         ),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)

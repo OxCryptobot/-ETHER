@@ -47,7 +47,6 @@ MEASURE_INTERVAL = 60
 
 
 def _rotate_log_if_needed() -> None:
-    """Keep local log under size; never rely on git for log storage."""
     try:
         if LOG.exists() and LOG.stat().st_size > LOG_MAX_BYTES:
             bak = LOG.with_suffix(".txt.prev")
@@ -134,6 +133,9 @@ def _measure_paths() -> List[str]:
         "live_fixture_policy.json",
         "timeout_retirement.json",
         "push_hygiene.json",
+        "eligible_rates.json",
+        "host_health.json",
+        "phase1_gate.json",
         "pipeline_strangler.json",
         "phase1d_status.json",
     ):
@@ -144,7 +146,6 @@ def _measure_paths() -> List[str]:
 
 
 def _light_paths() -> List[str]:
-    """Paths safe to push. Never include host_agent_log.txt (GitHub 100MB limit)."""
     paths = [
         "artifacts/host_agent_status.json",
         "artifacts/host_agent_last_job.json",

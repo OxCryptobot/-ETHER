@@ -2,6 +2,7 @@
 """ETHER host agent — moonshots: FAST-first hard gate + zero-click + measure panels.
 
 Phase 1D: live_budget clamp on live jobs (never lifts training wheels).
+Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
 """
 from __future__ import annotations
 
@@ -34,6 +35,7 @@ ARCH = ROOT / "artifacts" / "jobs" / "failed_archived"
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
 LAST_JOB = ROOT / "artifacts" / "host_agent_last_job.json"
 LOG = ROOT / "artifacts" / "host_agent_log.txt"
+LOG_MAX_BYTES = int(os.getenv("ETHER_HOST_LOG_MAX_BYTES", str(8 * 1024 * 1024)))
 
 _last_recover_log = 0.0
 _last_heavy_push = 0.0
@@ -44,10 +46,26 @@ LIVENESS_INTERVAL = 55
 MEASURE_INTERVAL = 60
 
 
+def _rotate_log_if_needed() -> None:
+    """Keep local log under size; never rely on git for log storage."""
+    try:
+        if LOG.exists() and LOG.stat().st_size > LOG_MAX_BYTES:
+            bak = LOG.with_suffix(".txt.prev")
+            if bak.exists():
+                bak.unlink()
+            LOG.rename(bak)
+    except Exception:
+        try:
+            LOG.write_text("", encoding="utf-8")
+        except Exception:
+            pass
+
+
 def log(msg: str) -> None:
     line = f"[{datetime.now(timezone.utc).isoformat()}] {msg}"
     print(line, flush=True)
     try:
+        _rotate_log_if_needed()
         LOG.parent.mkdir(parents=True, exist_ok=True)
         with LOG.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
@@ -114,7 +132,9 @@ def _measure_paths() -> List[str]:
         "playbook_limiter.json",
         "timeout_diagnosis.json",
         "live_fixture_policy.json",
+        "timeout_retirement.json",
         "pipeline_strangler.json",
+        "phase1d_status.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -123,12 +143,12 @@ def _measure_paths() -> List[str]:
 
 
 def _light_paths() -> List[str]:
+    """Paths safe to push. Never include host_agent_log.txt (100MB GitHub limit)."""
     paths = [
         "artifacts/host_agent_status.json",
         "artifacts/host_agent_last_job.json",
     ]
-    if LOG.exists():
-        paths.append("artifacts/host_agent_log.txt")
+    # intentionally omit LOG — caused GH001 large file rejects
     for name in ("pending", "failed"):
         p = ROOT / "artifacts" / "jobs" / name
         if p.exists():
@@ -153,6 +173,10 @@ def _light_paths() -> List[str]:
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     if not paths:
         return True
+    # Hard filter: never stage the log even if a caller passes it
+    paths = [p for p in paths if not p.replace("\\", "/").endswith("host_agent_log.txt")]
+    if not paths:
+        return True
     run(["git", "add", "-f", "--"] + paths, timeout=45)
     c = run(["git", "commit", "-m", message], timeout=30)
     combined = ((c.stdout or "") + (c.stderr or "")).lower()
@@ -166,7 +190,8 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     if p.returncode == 0:
         log(f"{label} push ok")
         return True
-    log(f"{label} push REJECTED rc={p.returncode}")
+    err = ((p.stderr or "") + (p.stdout or ""))[:500]
+    log(f"{label} push REJECTED rc={p.returncode} err={err}")
     run(["git", "fetch", "origin"], timeout=120)
     run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
@@ -175,7 +200,8 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     if p2.returncode == 0:
         log(f"{label} push ok after rebase")
         return True
-    log(f"{label} push STILL FAILED rc={p2.returncode}")
+    err2 = ((p2.stderr or "") + (p2.stdout or ""))[:500]
+    log(f"{label} push STILL FAILED rc={p2.returncode} err={err2}")
     return False
 
 
@@ -451,7 +477,6 @@ def process_job(path: Path) -> bool:
     except Exception as e:
         log(f"live_budget skip: {type(e).__name__}: {e}")
 
-    # Training wheels — refuse LIVE class at runtime
     try:
         from core.job_class import job_class, LIVE
         from core.queue_governor import training_wheels_on
@@ -464,7 +489,6 @@ def process_job(path: Path) -> bool:
     except Exception:
         pass
 
-    # Timeout denylist — skip chronic LIVE fixtures even if wheels ever off
     try:
         from core.job_class import job_class, LIVE
         from core.live_fixture_policy import should_skip_live
@@ -563,7 +587,8 @@ def call_foreman_tick() -> None:
 
 
 def main() -> int:
-    print("ETHER host_agent (moonshots + 1D live_budget + denylist)", flush=True)
+    print("ETHER host_agent (no-log-push + 1D + denylist)", flush=True)
+    _rotate_log_if_needed()
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)

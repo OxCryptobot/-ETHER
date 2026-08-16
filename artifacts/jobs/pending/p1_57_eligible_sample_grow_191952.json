@@ -1,0 +1,18 @@
+{
+  "id": "p1_57_eligible_sample_grow_191952",
+  "note": "1D one-hyp: measure_tick + honest live rates under active denylist; grow eligible_n toward gate min=5; wheels ON; measurement only; no soft launch",
+  "continue_on_fail": true,
+  "source": "grok_batchphase",
+  "created": "2026-08-16T18:52:00+00:00",
+  "class": "measure",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"],
+      "timeout": 60
+    }
+  ]
+}

@@ -103,6 +103,12 @@ def cmd_phase(_: argparse.Namespace) -> int:
             f"extracts={ps.get('extracted_ok')}/{ps.get('extracted_n')} "
             f"adapter_off={ps.get('adapter_default_off')}"
         )
+    retire = _load(ROOT / "artifacts" / "timeout_retirement.json")
+    if retire:
+        print(
+            f"Timeout retirement       rate={retire.get('timeout_rate')} "
+            f"target={retire.get('target_rate')} ok={retire.get('ok')}"
+        )
     if STATUS_MD.exists():
         print()
         print("STATUS.md head:")
@@ -156,7 +162,6 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     if n_failed > 20:
         issues.append(f"WARNING: failed queue large ({n_failed}) — run archive")
 
-    # Strangler contracts
     try:
         from core.pipeline_strangler import compute as strangler_compute
 
@@ -180,13 +185,24 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     except Exception:
         pass
 
+    try:
+        from core.timeout_retirement import compute as retire_compute
+
+        r = retire_compute()
+        rate = r.get("timeout_rate")
+        if rate is not None and rate >= float(r.get("target_rate") or 0.25):
+            issues.append(
+                f"INFO: live_timeout_rate={rate} (target < {r.get('target_rate')}) — keep wheels ON"
+            )
+    except Exception as e:
+        issues.append(f"INFO: timeout_retirement unavailable: {e}")
+
     if not issues:
         print("doctor: OK")
         return 0
     print("doctor: issues")
     for i in issues:
         print(f"  - {i}")
-    # INFO-only should not fail doctor hard
     hard = [x for x in issues if not x.startswith("INFO:")]
     return 1 if hard else 0
 

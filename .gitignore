@@ -43,6 +43,11 @@ tools/persistent/*
 *.bin
 models/
 
+# Host runtime logs (can exceed GitHub 100MB limit)
+artifacts/host_agent_log.txt
+artifacts/*.log
+*.log
+
 # Environment
 .env
 .env.*

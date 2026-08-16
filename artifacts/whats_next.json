@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-16T05:32:30.912409+00:00",
+  "generated": "2026-08-16T05:32:38.684156+00:00",
   "next_job": "critique_hyp_p_phase4_scaffold_053211",
   "queue_head": [
-    "critique_hyp_p_phase4_scaffold_053211",
-    "zcr_tool_runtime_scripted_053211"
+    "critique_hyp_p_phase4_scaffold_053211"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "p_phase4_scaffold",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "queue_depth": 1,
+  "host_phase": "polling",
+  "last_job": "zcr_tool_runtime_scripted_053211",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

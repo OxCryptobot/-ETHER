@@ -1,7 +1,8 @@
 {
-  "job_id": "ss_archive_failed_001504_6",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-16T00:15:18.940837+00:00",
-  "note": "steady: archive old failed jobs"
+  "job_id": "ss_direct_hard_001504_5",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-16T00:16:15.164914+00:00",
+  "note": "steady: direct hard baseline",
+  "failure_type": "step_fail"
 }

@@ -1,0 +1,23 @@
+{
+  "id": "critique_hyp_ss_direct_hard_001504_5_001615",
+  "class": "recovery",
+  "source": "labradorite_mandatory",
+  "created": "2026-08-16T00:16:15.220308+00:00",
+  "note": "playbook:labradorite for ss_direct_hard_001504_5 [step_fail] :: isolate failing step; FAST reverify",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "tests/test_honest_live_critique_context.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

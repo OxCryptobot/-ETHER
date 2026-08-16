@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""ETHER host agent — moonshots: FAST-first hard gate + zero-click + measure panels."""
+"""ETHER host agent — moonshots: FAST-first hard gate + zero-click + measure panels.
+
+Phase 1D: live_budget clamp on live jobs (never lifts training wheels).
+"""
 from __future__ import annotations
 
 import json
@@ -97,6 +100,7 @@ def _measure_paths() -> List[str]:
         "measure_tick.json",
         "honest_kpi.json",
         "latency_slo.json",
+        "live_budget.json",
         "honest_sparkline.json",
         "context_budget.json",
         "scoreboard_latest.json",
@@ -299,7 +303,6 @@ def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
             return (9, p.name)
 
     sorted_paths = sorted(paths, key=rank)
-    # Moonshot 13: hard gate — drop LIVE while non-LIVE pending
     try:
         from core.host_schedule import filter_fast_first
 
@@ -352,7 +355,6 @@ def _mandatory_critique(envelope: Dict[str, Any]) -> None:
             log(f"Labradorite critique id={art.get('id')} enqueued={art.get('enqueued')}")
     except Exception as e:
         log(f"critique_on_fail error: {type(e).__name__}: {e}")
-    # Moonshot 23: zero-click scripted twin
     try:
         from core.zero_click_recovery import maybe_recover
 
@@ -382,6 +384,13 @@ def run_steps(
             from core.latency_budget import step_timeout_for_job
 
             budget_cap = step_timeout_for_job(job, default=3600)
+        except Exception:
+            pass
+        # Phase 1D: live_budget hard ceiling (stricter of the two)
+        try:
+            lb = job.get("live_budget") or {}
+            if lb.get("max_wall_s"):
+                budget_cap = min(budget_cap, int(lb["max_wall_s"]))
         except Exception:
             pass
     for i, step in enumerate(steps, 1):
@@ -425,6 +434,20 @@ def process_job(path: Path) -> bool:
         return False
 
     job_id = job.get("id") or path.stem
+
+    # Phase 1D: clamp live step timeouts before any execution
+    try:
+        from core.live_budget import apply_to_job
+
+        job = apply_to_job(job)
+        if job.get("live_budget"):
+            log(
+                f"live_budget applied max_wall_s={job['live_budget'].get('max_wall_s')} "
+                f"job={job_id}"
+            )
+    except Exception as e:
+        log(f"live_budget skip: {type(e).__name__}: {e}")
+
     # Moonshot 19: training wheels — refuse LIVE class at runtime
     try:
         from core.job_class import job_class, LIVE
@@ -467,6 +490,8 @@ def process_job(path: Path) -> bool:
         "finished": datetime.now(timezone.utc).isoformat(),
         "note": job.get("note"),
     }
+    if job.get("live_budget"):
+        envelope["live_budget"] = job["live_budget"]
     if not ok and failure_type:
         envelope["failure_type"] = failure_type
         if failure_type == "timeout":
@@ -483,7 +508,13 @@ def process_job(path: Path) -> bool:
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
     log(f"JOB END {job_id} ok={ok} failure_type={failure_type}")
-    write_status(current_job=None, phase="idle", last_job=job_id, last_ok=ok, last_failure_type=failure_type)
+    write_status(
+        current_job=None,
+        phase="idle",
+        last_job=job_id,
+        last_ok=ok,
+        last_failure_type=failure_type,
+    )
     light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery")
     try:
         git_push_report(job_id, ok, light=light)
@@ -514,7 +545,7 @@ def call_foreman_tick() -> None:
 
 
 def main() -> int:
-    print("ETHER host_agent (moonshots + critical ops)", flush=True)
+    print("ETHER host_agent (moonshots + 1D live_budget)", flush=True)
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)

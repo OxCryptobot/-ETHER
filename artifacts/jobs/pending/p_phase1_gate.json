@@ -1,0 +1,45 @@
+{
+  "id": "p_phase1_gate",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 1→2 gate status from eligible rates — wheels ON, no soft launch",
+  "created": "2026-08-16T05:05:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase1_gate.py",
+        "tests/test_phase1_critical.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.eligible_rates"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase1_gate"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.soft_launch"
+      ],
+      "timeout": 30
+    }
+  ]
+}

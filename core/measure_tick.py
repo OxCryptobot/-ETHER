@@ -106,6 +106,10 @@ def run() -> Dict[str, Any]:
             "timeout_retirement",
             lambda: __import__("core.timeout_retirement", fromlist=["compute"]).compute(),
         ),
+        (
+            "push_hygiene",
+            lambda: __import__("core.push_hygiene", fromlist=["compute"]).compute(),
+        ),
     ]
     for name, fn in panels:
         steps[name] = _safe(name, fn)

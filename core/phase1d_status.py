@@ -20,9 +20,10 @@ def compute() -> Dict[str, Any]:
     def add(name: str, ok: bool, detail: str = "") -> None:
         checks.append({"id": name, "ok": ok, "detail": detail[:160]})
 
-    # Latency honesty
     try:
-        lat = json.loads((ROOT / "artifacts" / "latency_slo.json").read_text(encoding="utf-8"))
+        lat = json.loads(
+            (ROOT / "artifacts" / "latency_slo.json").read_text(encoding="utf-8")
+        )
         add(
             "latency_timeout_split",
             "live_timeout" in lat and "live_completed" in lat,
@@ -31,9 +32,10 @@ def compute() -> Dict[str, Any]:
     except Exception as e:
         add("latency_timeout_split", False, str(e))
 
-    # Live budget
     try:
-        lb = json.loads((ROOT / "artifacts" / "live_budget.json").read_text(encoding="utf-8"))
+        lb = json.loads(
+            (ROOT / "artifacts" / "live_budget.json").read_text(encoding="utf-8")
+        )
         add(
             "live_budget",
             isinstance(lb.get("max_wall_s"), int) and lb["max_wall_s"] <= 120,
@@ -42,7 +44,6 @@ def compute() -> Dict[str, Any]:
     except Exception as e:
         add("live_budget", False, str(e))
 
-    # Critique plan wire
     try:
         from core.critique_plan_wire import wire_latest
 
@@ -55,7 +56,6 @@ def compute() -> Dict[str, Any]:
     except Exception as e:
         add("critique_plan_wire", False, str(e))
 
-    # Host-first dashboard tiles for 1D
     try:
         from dashboard.collector_moonshots import collect_moonshots
 
@@ -66,7 +66,6 @@ def compute() -> Dict[str, Any]:
     except Exception as e:
         add("moonshot_1d_tiles", False, str(e))
 
-    # Timeout retirement plan present (does not require rate green)
     try:
         from core.timeout_retirement import compute as retire_compute
 
@@ -77,13 +76,23 @@ def compute() -> Dict[str, Any]:
             has_plan,
             f"rate={r.get('timeout_rate')} actions={len(r.get('actions') or [])}",
         )
+        proj = r.get("projected") or {}
+        add(
+            "denylist_projected_under_target",
+            bool(proj.get("under_target")),
+            f"proj={proj.get('projected_timeout_rate')} rm={proj.get('timeout_removed')}",
+        )
     except Exception as e:
         add("timeout_retirement_plan", False, str(e))
+        add("denylist_projected_under_target", False, str(e)[:80])
 
-    # Soft launch still blocked (expected)
     try:
-        soft = json.loads((ROOT / "artifacts" / "soft_launch_status.json").read_text(encoding="utf-8"))
-        blocked = bool(soft.get("soft_launch_blocked") or not soft.get("soft_launch_ready"))
+        soft = json.loads(
+            (ROOT / "artifacts" / "soft_launch_status.json").read_text(encoding="utf-8")
+        )
+        blocked = bool(
+            soft.get("soft_launch_blocked") or not soft.get("soft_launch_ready")
+        )
         add(
             "soft_launch_still_blocked",
             blocked,
@@ -103,7 +112,10 @@ def compute() -> Dict[str, Any]:
         "checks": checks,
         "training_wheels": True,
         "soft_launch": False,
-        "note": "1D infrastructure advancing; live honest lift still OPEN under 4B.",
+        "note": (
+            "1D advancing. Projected timeout under target via denylist is not "
+            "the same as measured live honest rate. Wheels stay ON."
+        ),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

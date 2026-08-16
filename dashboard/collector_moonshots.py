@@ -48,6 +48,7 @@ def collect_moonshots() -> Dict[str, Any]:
     ctx = _read("context_budget.json")
     tdiag = _read("timeout_diagnosis.json")
     retire = _read("timeout_retirement.json")
+    hygiene = _read("push_hygiene.json")
 
     adapter_on = False
     try:
@@ -85,6 +86,10 @@ def collect_moonshots() -> Dict[str, Any]:
     acts = retire.get("actions") or []
     if acts:
         retire_action = str(acts[0])[:36]
+
+    hyg_val = hygiene.get("log_mb")
+    if hyg_val is None:
+        hyg_val = "—"
 
     tiles: List[Dict[str, Any]] = [
         {
@@ -134,6 +139,14 @@ def collect_moonshots() -> Dict[str, Any]:
             "sub": f"rate={retire.get('timeout_rate')} target={retire.get('target_rate')}",
             "good": bool(retire.get("ok")),
             "warn": not bool(retire.get("ok")) if retire else None,
+        },
+        {
+            "id": "push_hygiene",
+            "label": "Push hygiene",
+            "value": f"{hyg_val} MB",
+            "sub": f"gitignore={hygiene.get('gitignore_has_log')} ok={hygiene.get('ok')}",
+            "good": bool(hygiene.get("ok")),
+            "warn": bool(hygiene.get("over_warn")),
         },
         {
             "id": "context",
@@ -219,6 +232,7 @@ def collect_moonshots() -> Dict[str, Any]:
             "latency_slo": latency,
             "timeout_diagnosis": tdiag,
             "timeout_retirement": retire,
+            "push_hygiene": hygiene,
             "context": ctx,
             "live_budget": live_budget,
             "strangler": strangler,
@@ -234,5 +248,5 @@ def collect_moonshots() -> Dict[str, Any]:
             "gem": gem,
             "micro": micro,
         },
-        "note": "Host-first + timeout retirement plan tile.",
+        "note": "Host-first + push hygiene GH001 guard tile.",
     }

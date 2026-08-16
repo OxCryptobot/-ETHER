@@ -1446,17 +1446,18 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01"
+    "00_mcp_cq_spike_01",
+    "p_phase7_north_star"
   ],
-  "last_tick": "2026-08-16T05:38:55.895204+00:00",
+  "last_tick": "2026-08-16T05:41:00.152955+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
   "last_enqueued": "ss_train_gates_150336_2",
-  "last_playbook": "timeout_budget_exhaust",
+  "last_playbook": "live_tool_path_timeout",
   "last_converted": "p_phase4_scaffold",
   "steady_idx": 883,
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail",
+  "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
   "governor": {
     "pending": 1,
     "max_pending": 6,
@@ -1468,5 +1469,7 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "live_skip_remaining": 35,
+  "last_live_skip_reason": "p_phase7_north_star"
 }

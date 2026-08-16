@@ -1,8 +1,12 @@
 {
-  "job_id": "p_phase7_north_star",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-16T05:40:55.930784+00:00",
-  "note": "Phase 7 SYSTEM PACKAGE: pillars + living checklist + roadmap; wheels ON; autonomous_claim=false [failure_type=timeout]",
-  "failure_type": "timeout"
+  "job_id": "playbook_live_timeout_learn_054059",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-16T05:41:01.092091+00:00",
+  "note": "playbook:live_tool_path_timeout for p_phase7_north_star",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

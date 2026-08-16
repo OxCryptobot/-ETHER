@@ -1,14 +1,14 @@
 {
-  "generated": "2026-08-16T05:38:55.895204+00:00",
-  "next_job": "p_phase7_north_star",
+  "generated": "2026-08-16T05:41:00.160017+00:00",
+  "next_job": "playbook_live_timeout_learn_054059",
   "queue_head": [
-    "p_phase7_north_star"
+    "playbook_live_timeout_learn_054059"
   ],
   "queue_depth": 1,
   "host_phase": "polling",
-  "last_job": "p_phase6_operator",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "p_phase7_north_star",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

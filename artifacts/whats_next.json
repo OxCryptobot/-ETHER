@@ -1,15 +1,16 @@
 {
-  "generated": "2026-08-16T00:22:42.907053+00:00",
-  "next_job": "p1d_plan_wire_ui",
+  "generated": "2026-08-16T00:22:55.558701+00:00",
+  "next_job": "ss_pipeline_scripted_002123_4",
   "queue_head": [
-    "p1d_plan_wire_ui",
     "ss_pipeline_scripted_002123_4",
+    "ss_pipeline_scripted_002255_4",
     "ss_train_gates_001944_3",
-    "ss_train_gates_002123_3"
+    "ss_train_gates_002123_3",
+    "ss_train_gates_002255_3"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "ss_pref_refresh_002037_7",
+  "queue_depth": 5,
+  "host_phase": "idle",
+  "last_job": "p1d_plan_wire_ui",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

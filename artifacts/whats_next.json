@@ -1,8 +1,10 @@
 {
-  "generated": "2026-08-16T05:16:52.070171+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-16T05:17:32.988660+00:00",
+  "next_job": "p_gate_visible",
+  "queue_head": [
+    "p_gate_visible"
+  ],
+  "queue_depth": 1,
   "host_phase": "polling",
   "last_job": "p_honest_path_progress",
   "last_ok": true,
@@ -27,7 +29,7 @@
       "id": "1D",
       "name": "Measured lift",
       "status": "PARTIAL",
-      "detail": "checks 7/7 status=ADVANCING; live OPEN under 4B"
+      "detail": "checks 6/6 status=ADVANCING; live OPEN under 4B"
     }
   ],
   "blocked": [

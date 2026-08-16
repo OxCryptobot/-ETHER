@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T05:13:25.676865+00:00",
+  "updated": "2026-08-16T05:17:19.900267+00:00",
   "timeout_rate": 0.6154,
   "target_rate": 0.25,
   "ok": false,
@@ -24,27 +24,17 @@
     }
   ],
   "denied": [
-    "intervals",
     "ledger",
     "lru",
     "pipeline_ledger",
     "ss_pipeline_ledger",
     "topo"
   ],
-  "projected": {
-    "live_n_adj": 10,
-    "timeout_n_adj": 0,
-    "timeout_removed": 16,
-    "projected_timeout_rate": 0.0,
-    "under_target": true,
-    "sample_n": 15
-  },
   "actions": [
     "keep_wheels_on",
     "do_not_enqueue_live",
     "retire_top_fixture:ledger",
-    "prefer_scripted_steady_only",
-    "denylist_covers_historical_timeouts"
+    "prefer_scripted_steady_only"
   ],
-  "note": "Retirement plan only. Does not lift wheels or soft launch. Target live_timeout_rate < 0.25. projected_* assumes denied fixtures never ran LIVE."
+  "note": "Retirement plan only. Does not lift wheels or soft launch. Target live_timeout_rate < 0.25."
 }

@@ -45,6 +45,16 @@ def main() -> int:
     except Exception:
         pass
 
+    pipe_note = "pipeline_god_file: STRANGLER_ACTIVE (pure slices green; body still large)"
+    try:
+        ps = json.loads((ROOT / "artifacts" / "pipeline_strangler.json").read_text(encoding="utf-8"))
+        pipe_note = (
+            f"pipeline_god_file: {ps.get('status')} "
+            f"bytes={ps.get('pipeline_bytes')} extracted={ps.get('extracted_ok')}/{ps.get('extracted_n')}"
+        )
+    except Exception:
+        pass
+
     phase_board = [
         {"id": "1A", "name": "Tool-first", "status": "COMPLETE"},
         {"id": "1B", "name": "AgentState", "status": "COMPLETE"},
@@ -59,8 +69,7 @@ def main() -> int:
 
     blocked = [
         "soft_launch: blocked until live lift or explicit gate policy",
-        "pipeline_god_file: still open",
-        # dual_dashboard RESOLVED — host-first Control Matrix is primary
+        pipe_note,
     ]
 
     payload = {
@@ -77,6 +86,7 @@ def main() -> int:
         "resolved": [
             "dual_dashboard: host-first Control Matrix (/) — legacy at /legacy only",
             "1D latency honesty + live_budget + critique→Plan wire",
+            "pipeline pure slices: tool_first / select / hooks / burst importable",
         ],
         "operator": [
             "python -m scripts.ether_cli status",

@@ -1,17 +1,18 @@
 {
-  "generated": "2026-08-16T00:16:28.358720+00:00",
+  "generated": "2026-08-16T00:16:40.373590+00:00",
   "next_job": "critique_hyp_ss_direct_hard_001504_5_001615",
   "queue_head": [
     "critique_hyp_ss_direct_hard_001504_5_001615",
     "ss_archive_failed_001504_6",
-    "ss_pipeline_scripted_001438_4",
-    "ss_train_gates_001438_3"
+    "ss_pipeline_scripted_001640_4",
+    "ss_train_gates_001438_3",
+    "ss_train_gates_001640_3"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "ss_direct_hard_001504_5",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_job": "ss_pipeline_scripted_001438_4",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

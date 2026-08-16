@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T02:12:09.919439+00:00",
+  "timestamp": "2026-08-16T02:14:00.813010+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T02:12:09.045438+00:00",
+      "updated": "2026-08-16T02:13:59.923484+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T02:12:09.059437+00:00",
+      "updated": "2026-08-16T02:13:59.935485+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T02:12:09.061439+00:00",
+      "updated": "2026-08-16T02:13:59.937484+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T02:12:09.067437+00:00",
+      "updated": "2026-08-16T02:13:59.943485+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "isolate failing step; FAST reverify",
@@ -85,7 +85,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T02:12:09.080438+00:00",
+      "updated": "2026-08-16T02:13:59.954484+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T02:12:09.084439+00:00",
+      "updated": "2026-08-16T02:13:59.958485+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -107,7 +107,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T02:12:09.097437+00:00",
+      "updated": "2026-08-16T02:13:59.973485+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -122,14 +122,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T02:12:09.123438+00:00",
+      "updated": "2026-08-16T02:14:00.005487+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T02:12:09.127437+00:00",
+      "updated": "2026-08-16T02:14:00.010485+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -151,12 +151,12 @@
         "grandidierite": 0
       },
       "last_gem": "labradorite",
-      "last_job": "ss_train_gates_021059_3",
+      "last_job": "ss_train_gates_021248_3",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T02:12:09.140440+00:00",
+      "updated": "2026-08-16T02:14:00.026486+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -169,7 +169,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T02:12:09.170442+00:00",
+      "updated": "2026-08-16T02:14:00.054484+00:00",
       "score": 65.0,
       "grade": "C",
       "reasons": [
@@ -191,7 +191,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T02:12:09.265438+00:00",
+      "updated": "2026-08-16T02:14:00.139485+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -204,7 +204,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T02:12:09.270439+00:00",
+      "updated": "2026-08-16T02:14:00.144485+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -218,7 +218,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-16T02:12:09.803439+00:00",
+      "updated": "2026-08-16T02:14:00.707895+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 113,

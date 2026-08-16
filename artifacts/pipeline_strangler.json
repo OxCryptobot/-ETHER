@@ -1,11 +1,11 @@
 {
-  "updated": "2026-08-16T03:53:43.391972+00:00",
+  "updated": "2026-08-16T03:59:25.473101+00:00",
   "pipeline_bytes": 75183,
   "pipeline_lines": 1656,
   "warn_bytes": 40000,
   "over_budget": true,
-  "extracted_n": 8,
-  "extracted_ok": 8,
+  "extracted_n": 9,
+  "extracted_ok": 9,
   "imports": [
     {
       "mod": "core.pipeline_tool_first",
@@ -36,6 +36,10 @@
       "ok": true
     },
     {
+      "mod": "core.pipeline_oracle",
+      "ok": true
+    },
+    {
       "mod": "core.loop.tool_first",
       "ok": true
     }
@@ -44,6 +48,7 @@
   "score_contract_ok": true,
   "terminal_contract_ok": true,
   "adapter_default_off": true,
+  "oracle_contract_ok": true,
   "status": "STRANGLER_ACTIVE",
   "note": "God-file still large; pure slices importable. Adapter flag default OFF. No Pipeline.run body change."
 }

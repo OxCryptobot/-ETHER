@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-16T03:54:13.198777+00:00",
-  "next_job": "ss_pipeline_scripted_025516_4",
+  "generated": "2026-08-16T03:59:23.617806+00:00",
+  "next_job": "p_timeout_retire_oracle",
   "queue_head": [
-    "ss_pipeline_scripted_025516_4"
+    "p_timeout_retire_oracle"
   ],
   "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "p_host_denylist_wire",
+  "host_phase": "polling",
+  "last_job": "ss_pipeline_scripted_025516_4",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -42,7 +42,7 @@
     "adapter_default_off": true
   },
   "resolved": [
-    "dual_dashboard: host-first Control Matrix (/) \u2014 legacy at /legacy only",
+    "dashboard: single Control Matrix at http://127.0.0.1:8787/ only",
     "1D latency honesty + live_budget + critique\u2192Plan wire",
     "pipeline pure slices: tool_first/score/terminal/adapter (flag OFF)",
     "model dual-lane router + context grades + microbench schedule"

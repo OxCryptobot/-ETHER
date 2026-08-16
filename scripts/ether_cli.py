@@ -109,6 +109,12 @@ def cmd_phase(_: argparse.Namespace) -> int:
             f"Timeout retirement       rate={retire.get('timeout_rate')} "
             f"target={retire.get('target_rate')} ok={retire.get('ok')}"
         )
+    hyg = _load(ROOT / "artifacts" / "push_hygiene.json")
+    if hyg:
+        print(
+            f"Push hygiene             log_mb={hyg.get('log_mb')} "
+            f"gitignore={hyg.get('gitignore_has_log')} ok={hyg.get('ok')}"
+        )
     if STATUS_MD.exists():
         print()
         print("STATUS.md head:")
@@ -196,6 +202,27 @@ def cmd_doctor(_: argparse.Namespace) -> int:
             )
     except Exception as e:
         issues.append(f"INFO: timeout_retirement unavailable: {e}")
+
+    try:
+        from core.push_hygiene import compute as hyg_compute
+
+        h = hyg_compute()
+        if not h.get("gitignore_has_log"):
+            issues.append("WARNING: host_agent_log.txt not in .gitignore")
+        if h.get("over_github"):
+            issues.append(
+                f"CRITICAL: host log {h.get('log_mb')}MB >= 100MB (GH001 risk)"
+            )
+        elif h.get("over_warn"):
+            issues.append(
+                f"WARNING: host log {h.get('log_mb')}MB (rotate before 100MB)"
+            )
+        else:
+            issues.append(
+                f"INFO: push_hygiene log_mb={h.get('log_mb')} ok={h.get('ok')}"
+            )
+    except Exception as e:
+        issues.append(f"INFO: push_hygiene unavailable: {e}")
 
     if not issues:
         print("doctor: OK")

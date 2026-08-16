@@ -118,6 +118,10 @@ def run() -> Dict[str, Any]:
             "host_health",
             lambda: __import__("core.host_health", fromlist=["compute"]).compute(),
         ),
+        (
+            "phase1_gate",
+            lambda: __import__("core.phase1_gate", fromlist=["compute"]).compute(),
+        ),
     ]
     for name, fn in panels:
         steps[name] = _safe(name, fn)
@@ -140,6 +144,7 @@ def run() -> Dict[str, Any]:
             "ok": True,
             "soft_launch_ready": gate.get("soft_launch_ready"),
             "blocked_reasons": gate.get("blocked_reasons"),
+            "rate_source": gate.get("rate_source"),
         }
     except Exception as e:
         steps["soft_launch"] = {"ok": False, "error": str(e)[:160]}

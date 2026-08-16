@@ -1,12 +1,7 @@
 {
-  "job_id": "p1_61_measure_tick_refresh_193013",
+  "job_id": "p1_60_scripted_hard_expand_193012",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T19:35:47.423153+00:00",
-  "note": "1D one-hyp: measure_tick + honest_live_report refresh under denylist; measurement only",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  }
+  "finished": "2026-08-16T19:35:52.708057+00:00",
+  "note": "1D one-hyp: expand/rebaseline hard scripted (includes merge non-denied); protect 0.9565 honest signal; wheels ON"
 }

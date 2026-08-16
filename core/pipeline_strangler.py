@@ -23,6 +23,7 @@ EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_score", "role": "score clamp + degrade merge + envelopes"},
     {"mod": "core.pipeline_terminal", "role": "composed terminal decision API"},
     {"mod": "core.pipeline_adapter", "role": "flag-gated terminal wire (default OFF)"},
+    {"mod": "core.pipeline_oracle", "role": "repo-oracle gate pure extract"},
     {"mod": "core.loop.tool_first", "role": "pure tool-first terminal helper"},
 ]
 
@@ -89,13 +90,21 @@ def compute() -> Dict[str, Any]:
     try:
         from core.pipeline_adapter import terminal_adapter_enabled, status as adapter_status
 
-        # Contract: default must be OFF in production path
         adapter_off = terminal_adapter_enabled() is False or adapter_status()["default"] == "0"
     except Exception:
         adapter_off = False
 
+    oracle_ok = False
+    try:
+        from core.pipeline_oracle import apply_repo_oracle_gate
+
+        # Import + signature only; inactive when hook disabled
+        oracle_ok = callable(apply_repo_oracle_gate)
+    except Exception:
+        oracle_ok = False
+
     status = "IN_PROGRESS"
-    contracts = tool_first_ok and score_ok and terminal_ok and adapter_off
+    contracts = tool_first_ok and score_ok and terminal_ok and adapter_off and oracle_ok
     if size == 0:
         status = "MISSING"
     elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and contracts:
@@ -116,6 +125,7 @@ def compute() -> Dict[str, Any]:
         "score_contract_ok": score_ok,
         "terminal_contract_ok": terminal_ok,
         "adapter_default_off": adapter_off,
+        "oracle_contract_ok": oracle_ok,
         "status": status,
         "note": (
             "God-file still large; pure slices importable. "

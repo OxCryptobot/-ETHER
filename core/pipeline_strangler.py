@@ -2,7 +2,6 @@
 
 Tracks extracted pure modules vs core/pipeline.py size.
 Does NOT modify Pipeline.run. Measurement + inventory only.
-Default path stays identical — THE LAW.
 """
 from __future__ import annotations
 
@@ -22,6 +21,7 @@ EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_hooks", "role": "bandit context / hooks"},
     {"mod": "core.pipeline_burst", "role": "burst-on-retry policy slice"},
     {"mod": "core.pipeline_score", "role": "score clamp + degrade merge + envelopes"},
+    {"mod": "core.pipeline_terminal", "role": "composed terminal decision API"},
     {"mod": "core.loop.tool_first", "role": "pure tool-first terminal helper"},
 ]
 
@@ -74,12 +74,23 @@ def compute() -> Dict[str, Any]:
     except Exception:
         score_ok = False
 
+    terminal_ok = False
+    try:
+        from core.pipeline_terminal import decide_terminal
+
+        fail = decide_terminal(tool_runtime_enabled=True, tool_runtime_done=False)
+        ok = decide_terminal(tool_runtime_enabled=True, tool_runtime_done=True, score=1.0)
+        terminal_ok = fail["should_fail"] is True and ok["ok"] is True
+    except Exception:
+        terminal_ok = False
+
     status = "IN_PROGRESS"
+    contracts = tool_first_ok and score_ok and terminal_ok
     if size == 0:
         status = "MISSING"
-    elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and tool_first_ok and score_ok:
+    elif size <= WARN_BYTES and ok_n == len(EXTRACTED) and contracts:
         status = "HEALTHY_SLICE"
-    elif ok_n == len(EXTRACTED) and tool_first_ok and score_ok:
+    elif ok_n == len(EXTRACTED) and contracts:
         status = "STRANGLER_ACTIVE"
 
     payload: Dict[str, Any] = {
@@ -93,6 +104,7 @@ def compute() -> Dict[str, Any]:
         "imports": imports,
         "tool_first_contract_ok": tool_first_ok,
         "score_contract_ok": score_ok,
+        "terminal_contract_ok": terminal_ok,
         "status": status,
         "note": (
             "God-file still large; pure slices must stay importable. "

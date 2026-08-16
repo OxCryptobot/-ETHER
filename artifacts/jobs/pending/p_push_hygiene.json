@@ -1,0 +1,28 @@
+{
+  "id": "p_push_hygiene",
+  "class": "fast",
+  "source": "mentor",
+  "note": "GH001 prevention — log never staged; hygiene artifact",
+  "created": "2026-08-16T04:33:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_host_log_push_hygiene.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.push_hygiene"
+      ],
+      "timeout": 30
+    }
+  ]
+}

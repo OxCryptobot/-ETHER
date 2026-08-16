@@ -100,7 +100,7 @@ def main() -> int:
             "adapter_default_off": ps.get("adapter_default_off") if ps else True,
         },
         "resolved": [
-            "dual_dashboard: host-first Control Matrix (/) — legacy at /legacy only",
+            "dashboard: single Control Matrix at http://127.0.0.1:8787/ only",
             "1D latency honesty + live_budget + critique→Plan wire",
             "pipeline pure slices: tool_first/score/terminal/adapter (flag OFF)",
             "model dual-lane router + context grades + microbench schedule",

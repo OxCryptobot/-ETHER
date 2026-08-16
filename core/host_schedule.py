@@ -15,16 +15,24 @@ def filter_fast_first(paths: List[Path]) -> List[Path]:
         try:
             job = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
-            jobs.append((p, "fast"))
+            jobs.append((p, "fast", {}))
             continue
-        jobs.append((p, job_class(job)))
+        jobs.append((p, job_class(job), job))
 
-    has_blocking = any(c in (FAST, MEASURE, RECOVERY, "any") for _, c in jobs if c != LIVE)
-    # also treat unknown as blocking relative to live
-    has_non_live = any(c != LIVE for _, c in jobs)
+    has_non_live = any(c != LIVE for _, c, _ in jobs)
     if has_non_live:
-        return [p for p, c in jobs if c != LIVE]
-    return [p for p, _ in jobs]
+        return [p for p, c, _ in jobs if c != LIVE]
+    # All live — still drop denylisted fixtures if policy available
+    return [p for p, c, job in jobs if c != LIVE or not _deny_live(job)]
+
+
+def _deny_live(job: dict) -> bool:
+    try:
+        from core.live_fixture_policy import should_skip_live
+
+        return bool(should_skip_live(job=job).get("skip"))
+    except Exception:
+        return False
 
 
 def is_live_job(path: Path) -> bool:
@@ -33,3 +41,21 @@ def is_live_job(path: Path) -> bool:
         return job_class(job) == LIVE
     except Exception:
         return False
+
+
+def filter_live_denylist(paths: List[Path]) -> List[Path]:
+    """Drop LIVE jobs matching timeout denylist; leave non-LIVE untouched."""
+    out: List[Path] = []
+    for p in paths:
+        if not is_live_job(p):
+            out.append(p)
+            continue
+        try:
+            job = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            out.append(p)
+            continue
+        if _deny_live(job):
+            continue
+        out.append(p)
+    return out

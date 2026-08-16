@@ -1,15 +1,16 @@
 {
-  "generated": "2026-08-16T01:39:21.644853+00:00",
+  "generated": "2026-08-16T01:39:35.600185+00:00",
   "next_job": "p1d_batch_closed_loop",
   "queue_head": [
     "p1d_batch_closed_loop",
-    "ss_pref_refresh_013609_7",
+    "ss_pipeline_scripted_013935_4",
     "ss_tool_runtime_013637_2",
-    "ss_train_gates_013737_3"
+    "ss_train_gates_013737_3",
+    "ss_train_gates_013935_3"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "ss_pipeline_scripted_013737_4",
+  "last_job": "ss_pref_refresh_013609_7",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

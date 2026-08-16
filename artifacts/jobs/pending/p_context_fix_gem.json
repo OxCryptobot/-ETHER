@@ -1,0 +1,21 @@
+{
+  "id": "p_context_fix_gem",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Fix context OVER test + gem energy heuristics",
+  "created": "2026-08-16T02:19:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_context_microbench_sched.py",
+        "tests/test_gem_energy.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    }
+  ]
+}

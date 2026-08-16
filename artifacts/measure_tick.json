@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T01:48:05.944897+00:00",
+  "timestamp": "2026-08-16T01:50:23.775981+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T01:48:05.648389+00:00",
+      "updated": "2026-08-16T01:50:23.510399+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T01:48:05.659518+00:00",
+      "updated": "2026-08-16T01:50:23.522534+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T01:48:05.661518+00:00",
+      "updated": "2026-08-16T01:50:23.524535+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T01:48:05.668618+00:00",
+      "updated": "2026-08-16T01:50:23.529706+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "re-read failing test; single apply_patch; abort after one stagnant",
@@ -85,7 +85,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T01:48:05.680715+00:00",
+      "updated": "2026-08-16T01:50:23.539804+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T01:48:05.683715+00:00",
+      "updated": "2026-08-16T01:50:23.541805+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -107,7 +107,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T01:48:05.696834+00:00",
+      "updated": "2026-08-16T01:50:23.552958+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -122,14 +122,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T01:48:05.721156+00:00",
+      "updated": "2026-08-16T01:50:23.572516+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T01:48:05.725156+00:00",
+      "updated": "2026-08-16T01:50:23.575115+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -150,13 +150,13 @@
         "labradorite": 17,
         "grandidierite": 0
       },
-      "last_gem": "labradorite",
-      "last_job": "ss_pref_refresh_014345_7",
+      "last_gem": "rose-quartz",
+      "last_job": "ss_honest_live_report_014957_1",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T01:48:05.736814+00:00",
+      "updated": "2026-08-16T01:50:23.587834+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -169,7 +169,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T01:48:05.760114+00:00",
+      "updated": "2026-08-16T01:50:23.608112+00:00",
       "score": 53.0,
       "grade": "C",
       "reasons": [
@@ -191,7 +191,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T01:48:05.851036+00:00",
+      "updated": "2026-08-16T01:50:23.697812+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -204,7 +204,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T01:48:05.853034+00:00",
+      "updated": "2026-08-16T01:50:23.701815+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T01:18:10.343303+00:00",
+  "updated": "2026-08-16T01:19:19.098281+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -19,7 +19,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.477,
+      "elapsed_s": 0.466,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -40,25 +40,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.638,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.639,
+      "elapsed_s": 0.634,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -76,7 +58,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.638,
+      "elapsed_s": 0.644,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -90,13 +72,31 @@
       "arm": "direct"
     },
     {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.646,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    },
+    {
       "fixture": "merge",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.645,
+      "elapsed_s": 0.653,
       "reason": "tests passed",
       "tools": [
         "list_files",

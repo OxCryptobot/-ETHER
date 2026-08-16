@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T01:18:10.391205+00:00",
+  "updated": "2026-08-16T01:19:19.151578+00:00",
   "scripted": {
     "n": 124,
     "p50": 2.123,
@@ -12,14 +12,29 @@
     "p95": 683.497,
     "max": 984.528
   },
+  "live_completed": {
+    "n": 9,
+    "p50": 103.983,
+    "p95": 304.252,
+    "max": 337.688
+  },
+  "live_timeout": {
+    "n": 16,
+    "p50": 373.609,
+    "p95": 776.816,
+    "max": 984.528
+  },
   "tool_runtime": {
     "n": 41,
     "p50": 1.868,
     "p95": 317.624,
     "max": 984.528
   },
-  "live_over_scripted_p95": 175.03,
+  "live_over_scripted_p95": 77.91,
+  "live_all_over_scripted_p95": 175.03,
+  "live_timeout_rate": 0.6154,
+  "timeout_floor_s": 120.0,
   "alert_ratio_threshold": 10.0,
   "alert": true,
-  "note": "Alert when live p95 > Nx scripted p95"
+  "note": "Primary ratio uses completed live when n>0; live_all includes timeouts. Alert when primary live p95 > Nx scripted p95."
 }

@@ -1,15 +1,16 @@
 {
-  "generated": "2026-08-16T02:05:35.221885+00:00",
-  "next_job": "ss_honest_live_report_020521_1",
+  "generated": "2026-08-16T02:05:48.467926+00:00",
+  "next_job": "ss_measure_tick_020455_0",
   "queue_head": [
-    "ss_honest_live_report_020521_1",
     "ss_measure_tick_020455_0",
+    "ss_pipeline_scripted_020547_4",
     "ss_pref_refresh_020455_7",
-    "ss_tool_runtime_020521_2"
+    "ss_tool_runtime_020521_2",
+    "ss_train_gates_020547_3"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "ss_train_gates_020404_3",
+  "queue_depth": 5,
+  "host_phase": "running",
+  "last_job": "ss_honest_live_report_020521_1",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -32,13 +33,17 @@
       "id": "1D",
       "name": "Measured lift",
       "status": "PARTIAL",
-      "detail": "scripted GREEN both arms; live OPEN under 4B"
+      "detail": "checks 5/5 status=ADVANCING; live OPEN under 4B"
     }
   ],
   "blocked": [
     "soft_launch: blocked until live lift or explicit gate policy",
-    "pipeline_god_file: still open",
-    "dual_dashboard: still open"
+    "pipeline_god_file: STRANGLER_ACTIVE bytes=75183 extracted=8/8"
+  ],
+  "resolved": [
+    "dual_dashboard: host-first Control Matrix (/) \u2014 legacy at /legacy only",
+    "1D latency honesty + live_budget + critique\u2192Plan wire",
+    "pipeline pure slices: tool_first / select / hooks / burst importable"
   ],
   "operator": [
     "python -m scripts.ether_cli status",

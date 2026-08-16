@@ -1,0 +1,37 @@
+{
+  "id": "p1d_latency_budget_verify",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 1D: latency honesty + live budget — do not break host",
+  "created": "2026-08-16T00:14:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase1d_latency_budget.py",
+        "tests/test_dashboard_host_first.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.latency_slo"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.live_budget"
+      ],
+      "timeout": 30
+    }
+  ]
+}

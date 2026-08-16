@@ -1,11 +1,6 @@
-"""Pipeline tool-first terminal adapter — Phase 3.2.
+"""Pipeline tool-first terminal adapter — Phase 3.2 + score slice.
 
-Pure function mirroring the existing Pipeline terminal harden:
-  if tool_first enabled and not done → FAIL with tool_runtime_failed_terminal
-  else continue
-
-Does not import Pipeline. Safe to unit-test. Wire into Pipeline.run only
-behind a feature flag or after mentor sign-off so default path stays identical.
+Pure function. Does not import Pipeline. Uses pipeline_score for envelopes.
 """
 from __future__ import annotations
 
@@ -13,6 +8,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from core.loop.tool_first import decide_tool_first_terminal
+from core.pipeline_score import clamp_score, merge_degraded, terminal_fail_envelope
 
 
 @dataclass(frozen=True)
@@ -22,6 +18,8 @@ class ToolFirstDecision:
     fail_stage: str
     fail_msg: str
     reason: str
+    score: float = 0.0
+    envelope: Optional[dict] = None
 
 
 def decide_pipeline_tool_first(
@@ -41,12 +39,21 @@ def decide_pipeline_tool_first(
         degraded=list(degraded or []),
     )
     if tool_runtime_enabled and not tool_runtime_done:
+        env = terminal_fail_envelope(
+            stage="tool_runtime",
+            marker="tool_runtime_failed_terminal",
+            score=clamp_score(score),
+            msg="tool_runtime_failed_terminal",
+            degraded=merge_degraded(degraded, "tool_runtime_failed_terminal"),
+        )
         return ToolFirstDecision(
             should_fail=True,
             degrade_marker="tool_runtime_failed_terminal",
             fail_stage="tool_runtime",
             fail_msg="tool_runtime_failed_terminal",
             reason=out.reason,
+            score=env["score"],
+            envelope=env,
         )
     return ToolFirstDecision(
         should_fail=False,
@@ -54,4 +61,6 @@ def decide_pipeline_tool_first(
         fail_stage="",
         fail_msg="",
         reason=out.reason,
+        score=clamp_score(score),
+        envelope=None,
     )

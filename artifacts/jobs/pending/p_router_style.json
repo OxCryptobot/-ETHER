@@ -1,0 +1,36 @@
+{
+  "id": "p_router_style",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Model dual-lane publish + strangler AST hygiene — no Pipeline.run",
+  "created": "2026-08-16T02:15:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_model_router_style.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.strangler_style_gate"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.model_router import status; import json; print(json.dumps(status(), indent=2))"
+      ],
+      "timeout": 30
+    }
+  ]
+}

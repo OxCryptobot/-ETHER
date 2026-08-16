@@ -22,7 +22,11 @@ TARGETS = [
     "core/pipeline_adapter.py",
     "core/pipeline_burst.py",
     "core/pipeline_select.py",
+    "core/pipeline_oracle.py",
     "core/pipeline_strangler.py",
+    "core/timeout_diagnosis.py",
+    "core/timeout_retirement.py",
+    "core/live_fixture_policy.py",
 ]
 
 
@@ -66,7 +70,7 @@ def check() -> Dict[str, Any]:
         "n": len(TARGETS),
         "results": results,
         "ruff": ruff_info,
-        "note": "AST parse hygiene on strangler slices; ruff optional",
+        "note": "AST parse hygiene on strangler + timeout policy slices; ruff optional",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

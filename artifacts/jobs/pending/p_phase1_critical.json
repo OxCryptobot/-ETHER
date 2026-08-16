@@ -1,0 +1,44 @@
+{
+  "id": "p_phase1_critical",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Audit Phase 1 Critical: eligible-set KPIs + local host_health — wheels ON",
+  "created": "2026-08-16T05:03:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase1_critical.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.eligible_rates"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.host_health"
+      ],
+      "timeout": 30
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick"
+      ],
+      "timeout": 120
+    }
+  ]
+}

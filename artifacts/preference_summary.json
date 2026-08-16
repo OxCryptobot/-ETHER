@@ -1,115 +1,115 @@
 {
-  "n_preferences": 5077,
-  "n_episodes": 13994,
+  "n_preferences": 5091,
+  "n_episodes": 14033,
   "strategies": {
     "direct": {
-      "n": 33388,
-      "wins": 30460,
-      "score_sum": 30667.27299999997,
+      "n": 33481,
+      "wins": 30545,
+      "score_sum": 30752.84399999997,
       "last_score": 1.0
     },
     "multifile": {
-      "n": 724,
+      "n": 726,
       "wins": 0,
-      "score_sum": 419.920000000006,
+      "score_sum": 421.080000000006,
       "last_score": 0.3
     },
     "no_context": {
-      "n": 1086,
-      "wins": 362,
-      "score_sum": 543.0,
+      "n": 1089,
+      "wins": 363,
+      "score_sum": 544.5,
       "last_score": 0.5
     },
     "minimal": {
-      "n": 362,
+      "n": 363,
       "wins": 0,
-      "score_sum": 72.40000000000049,
+      "score_sum": 72.60000000000049,
       "last_score": 0.2
     },
     "live": {
-      "n": 1800,
-      "wins": 1800,
-      "score_sum": 1800.0,
+      "n": 1805,
+      "wins": 1805,
+      "score_sum": 1805.0,
       "last_score": 1.0
     },
     "scripted": {
-      "n": 1800,
-      "wins": 1800,
-      "score_sum": 1800.0,
+      "n": 1805,
+      "wins": 1805,
+      "score_sum": 1805.0,
       "last_score": 1.0
     },
     "tool_runtime": {
-      "n": 1435,
+      "n": 1439,
       "wins": 0,
       "score_sum": 0.0,
       "last_score": 0.0
     },
     "tool_runtime_scripted": {
-      "n": 13281,
-      "wins": 13281,
-      "score_sum": 13281.0,
+      "n": 13318,
+      "wins": 13318,
+      "score_sum": 13318.0,
       "last_score": 1.0
     }
   },
   "ranked_boosts": [
     {
       "strategy": "tool_runtime",
-      "n": 1435,
+      "n": 1439,
       "wins": 0,
       "win_rate": 0.0,
       "boost": 2.25
     },
     {
       "strategy": "live",
-      "n": 1800,
-      "wins": 1800,
+      "n": 1805,
+      "wins": 1805,
       "win_rate": 1.0,
       "boost": 1.25
     },
     {
       "strategy": "scripted",
-      "n": 1800,
-      "wins": 1800,
+      "n": 1805,
+      "wins": 1805,
       "win_rate": 1.0,
       "boost": 1.25
     },
     {
       "strategy": "tool_runtime_scripted",
-      "n": 13281,
-      "wins": 13281,
+      "n": 13318,
+      "wins": 13318,
       "win_rate": 1.0,
       "boost": 1.25
     },
     {
       "strategy": "direct",
-      "n": 33388,
-      "wins": 30460,
+      "n": 33481,
+      "wins": 30545,
       "win_rate": 0.9123,
       "boost": 1.2062
     },
     {
       "strategy": "multifile",
-      "n": 724,
+      "n": 726,
       "wins": 0,
       "win_rate": 0.0,
-      "boost": 1.1405
+      "boost": 1.1404
     },
     {
       "strategy": "no_context",
-      "n": 1086,
-      "wins": 362,
+      "n": 1089,
+      "wins": 363,
       "win_rate": 0.3333,
       "boost": 0.9167
     },
     {
       "strategy": "minimal",
-      "n": 362,
+      "n": 363,
       "wins": 0,
       "win_rate": 0.0,
-      "boost": 0.6999
+      "boost": 0.6998
     }
   ],
-  "updated": "2026-08-16T02:04:18.684177+00:00",
+  "updated": "2026-08-16T02:06:00.950314+00:00",
   "rlhf": "offline_scoreboard_pairs",
   "teacher": "grok"
 }

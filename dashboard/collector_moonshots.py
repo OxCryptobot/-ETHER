@@ -47,6 +47,7 @@ def collect_moonshots() -> Dict[str, Any]:
     phase1d = _read("phase1d_status.json")
     ctx = _read("context_budget.json")
     tdiag = _read("timeout_diagnosis.json")
+    retire = _read("timeout_retirement.json")
 
     adapter_on = False
     try:
@@ -79,6 +80,11 @@ def collect_moonshots() -> Dict[str, Any]:
     top_fx = "—"
     if tdiag.get("top_fixtures"):
         top_fx = str(tdiag["top_fixtures"][0].get("fixture") or "—")[:28]
+
+    retire_action = "—"
+    acts = retire.get("actions") or []
+    if acts:
+        retire_action = str(acts[0])[:36]
 
     tiles: List[Dict[str, Any]] = [
         {
@@ -120,6 +126,14 @@ def collect_moonshots() -> Dict[str, Any]:
             "sub": f"rate={tdiag.get('timeout_rate')} n={tdiag.get('timeout_n')}",
             "good": bool(tdiag.get("ok")),
             "warn": not bool(tdiag.get("ok")) if tdiag else None,
+        },
+        {
+            "id": "timeout_retire",
+            "label": "Timeout retirement",
+            "value": retire_action,
+            "sub": f"rate={retire.get('timeout_rate')} target={retire.get('target_rate')}",
+            "good": bool(retire.get("ok")),
+            "warn": not bool(retire.get("ok")) if retire else None,
         },
         {
             "id": "context",
@@ -204,6 +218,7 @@ def collect_moonshots() -> Dict[str, Any]:
             "honest_kpi": honest_kpi,
             "latency_slo": latency,
             "timeout_diagnosis": tdiag,
+            "timeout_retirement": retire,
             "context": ctx,
             "live_budget": live_budget,
             "strangler": strangler,
@@ -219,5 +234,5 @@ def collect_moonshots() -> Dict[str, Any]:
             "gem": gem,
             "micro": micro,
         },
-        "note": "Host-first + timeout diagnosis + context grade.",
+        "note": "Host-first + timeout retirement plan tile.",
     }

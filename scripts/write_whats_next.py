@@ -20,16 +20,28 @@ LAST = ROOT / "artifacts" / "host_agent_last_job.json"
 
 
 def main() -> int:
-    pending = sorted(
-        p.stem for p in PENDING.glob("*.json") if p.name != ".gitkeep"
-    ) if PENDING.exists() else []
-    host = {}
-    last = {}
+    pending = (
+        sorted(p.stem for p in PENDING.glob("*.json") if p.name != ".gitkeep")
+        if PENDING.exists()
+        else []
+    )
+    host: dict = {}
+    last: dict = {}
     try:
         if STATUS.exists():
             host = json.loads(STATUS.read_text(encoding="utf-8"))
         if LAST.exists():
             last = json.loads(LAST.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+    p1d_detail = "scripted GREEN; live OPEN under 4B; latency honesty + live_budget landed"
+    try:
+        p1d = json.loads((ROOT / "artifacts" / "phase1d_status.json").read_text(encoding="utf-8"))
+        p1d_detail = (
+            f"checks {p1d.get('checks_ok')}/{p1d.get('checks_n')} "
+            f"status={p1d.get('status')}; live OPEN under 4B"
+        )
     except Exception:
         pass
 
@@ -41,14 +53,14 @@ def main() -> int:
             "id": "1D",
             "name": "Measured lift",
             "status": "PARTIAL",
-            "detail": "scripted GREEN both arms; live OPEN under 4B",
+            "detail": p1d_detail,
         },
     ]
 
     blocked = [
         "soft_launch: blocked until live lift or explicit gate policy",
         "pipeline_god_file: still open",
-        "dual_dashboard: still open",
+        # dual_dashboard RESOLVED — host-first Control Matrix is primary
     ]
 
     payload = {
@@ -62,6 +74,10 @@ def main() -> int:
         "last_failure_type": last.get("failure_type"),
         "phase_board": phase_board,
         "blocked": blocked,
+        "resolved": [
+            "dual_dashboard: host-first Control Matrix (/) — legacy at /legacy only",
+            "1D latency honesty + live_budget + critique→Plan wire",
+        ],
         "operator": [
             "python -m scripts.ether_cli status",
             "python -m scripts.ether_cli next",

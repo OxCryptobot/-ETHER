@@ -17,7 +17,8 @@ PIPELINE = ROOT / "core" / "pipeline.py"
 
 EXTRACTED: List[Dict[str, str]] = [
     {"mod": "core.pipeline_tool_first", "role": "tool-first terminal decision"},
-    {"mod": "core.pipeline_select", "role": "strategy selection + bandit context"},
+    {"mod": "core.pipeline_select", "role": "strategy selection"},
+    {"mod": "core.pipeline_context", "role": "bandit context pure extract"},
     {"mod": "core.pipeline_hooks", "role": "thin facade over pure slices"},
     {"mod": "core.pipeline_prep", "role": "sandbox code prep pure extract"},
     {"mod": "core.pipeline_burst", "role": "burst-on-retry policy slice"},
@@ -115,9 +116,24 @@ def compute() -> Dict[str, Any]:
     except Exception:
         prep_ok = False
 
+    ctx_ok = False
+    try:
+        from core.pipeline_context import bandit_context
+
+        c = bandit_context("refactor module", tier=1, fail_kind="timeout")
+        ctx_ok = c.get("multifile") is True and c.get("tier") == 1
+    except Exception:
+        ctx_ok = False
+
     status = "IN_PROGRESS"
     contracts = (
-        tool_first_ok and score_ok and terminal_ok and adapter_off and oracle_ok and prep_ok
+        tool_first_ok
+        and score_ok
+        and terminal_ok
+        and adapter_off
+        and oracle_ok
+        and prep_ok
+        and ctx_ok
     )
     if size == 0:
         status = "MISSING"
@@ -141,6 +157,7 @@ def compute() -> Dict[str, Any]:
         "adapter_default_off": adapter_off,
         "oracle_contract_ok": oracle_ok,
         "prep_contract_ok": prep_ok,
+        "context_contract_ok": ctx_ok,
         "status": status,
         "note": (
             "God-file still large; pure slices importable. "

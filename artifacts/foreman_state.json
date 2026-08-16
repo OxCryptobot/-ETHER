@@ -1350,7 +1350,8 @@
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
     "p_gate_visible",
-    "p_architecture_go"
+    "p_architecture_go",
+    "p_phase2a_terminal_canary"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1445,7 +1446,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-16T05:21:40.829062+00:00",
+  "last_tick": "2026-08-16T05:22:20.439148+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1454,7 +1455,7 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

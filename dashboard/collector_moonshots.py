@@ -82,10 +82,13 @@ def collect_moonshots() -> Dict[str, Any]:
     if tdiag.get("top_fixtures"):
         top_fx = str(tdiag["top_fixtures"][0].get("fixture") or "—")[:28]
 
-    retire_action = "—"
-    acts = retire.get("actions") or []
-    if acts:
-        retire_action = str(acts[0])[:36]
+    proj = retire.get("projected") or {}
+    proj_rate = proj.get("projected_timeout_rate")
+    retire_value = proj_rate if proj_rate is not None else (retire.get("actions") or ["—"])[0]
+    retire_sub = (
+        f"raw={retire.get('timeout_rate')} proj={proj_rate} "
+        f"rm={proj.get('timeout_removed')}"
+    )
 
     hyg_val = hygiene.get("log_mb")
     if hyg_val is None:
@@ -135,10 +138,10 @@ def collect_moonshots() -> Dict[str, Any]:
         {
             "id": "timeout_retire",
             "label": "Timeout retirement",
-            "value": retire_action,
-            "sub": f"rate={retire.get('timeout_rate')} target={retire.get('target_rate')}",
-            "good": bool(retire.get("ok")),
-            "warn": not bool(retire.get("ok")) if retire else None,
+            "value": retire_value,
+            "sub": retire_sub,
+            "good": bool(proj.get("under_target")),
+            "warn": not bool(proj.get("under_target")) if proj else None,
         },
         {
             "id": "push_hygiene",
@@ -248,5 +251,5 @@ def collect_moonshots() -> Dict[str, Any]:
             "gem": gem,
             "micro": micro,
         },
-        "note": "Host-first + push hygiene GH001 guard tile.",
+        "note": "Projected timeout rate after denylist (wheels stay ON).",
     }

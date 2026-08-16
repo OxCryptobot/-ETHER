@@ -1,0 +1,18 @@
+{
+  "id": "ss_measure_tick_011317_0",
+  "note": "steady: measure_tick (rates+snapshot+soft_launch)",
+  "source": "foreman_steady",
+  "created": "2026-08-16T01:13:17.128881+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick"
+      ],
+      "timeout": 120
+    }
+  ],
+  "class": "measure",
+  "continue_on_fail": true
+}

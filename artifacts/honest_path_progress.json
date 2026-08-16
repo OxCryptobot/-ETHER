@@ -1,12 +1,12 @@
 {
-  "updated": "2026-08-16T05:13:25.760210+00:00",
-  "scripted_n": 137,
-  "scripted_ok_n": 131,
-  "scripted_honest_n": 131,
-  "scripted_honest_rate": 0.9562,
-  "scripted_ok_rate": 0.9562,
-  "toolish_n": 131,
-  "toolish_honest_n": 131,
+  "updated": "2026-08-16T18:54:21.654656+00:00",
+  "scripted_n": 138,
+  "scripted_ok_n": 132,
+  "scripted_honest_n": 132,
+  "scripted_honest_rate": 0.9565,
+  "scripted_ok_rate": 0.9565,
+  "toolish_n": 132,
+  "toolish_honest_n": 132,
   "toolish_honest_rate": 1.0,
   "eligible": {
     "live_eligible_n": 3,
@@ -15,17 +15,15 @@
     "timeout_rate_raw": 0.6154
   },
   "phase1_gate": {
-    "status": "NO_GO",
+    "status": "ARCH_GO",
     "metrics_go": false
   },
   "blockers": [
-    "eligible_sample_size:live_eligible_n=3 min=5",
-    "honest_rate_eligible:rate=0.6667 target>=0.99",
     "training_wheels_on",
     "prefer_scripted_until_eligible_honest"
   ],
   "wheels_on": true,
   "soft_launch_blocked": true,
-  "ok": true,
-  "note": "Scripted honest is the active progress signal under wheels ON."
+  "note": "Under wheels ON, scripted honest/tool rates are the active progress signal. Eligible LIVE rates gate soft launch; metrics_go gates Phase 2.",
+  "ok": true
 }

@@ -1,7 +1,12 @@
 {
-  "job_id": "p_pipeline_prep",
+  "job_id": "p_select_denylist_seed",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T04:31:46.688560+00:00",
-  "note": "Pure pipeline_prep extract + style \u2014 no Pipeline.run edit"
+  "finished": "2026-08-16T04:31:50.722346+00:00",
+  "note": "Select\u2192pure context + ledger LIVE denylist seed \u2014 wheels ON",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-16T04:31:45.916984+00:00",
-  "next_job": "p_pipeline_prep",
+  "generated": "2026-08-16T04:31:49.822445+00:00",
+  "next_job": "p_select_denylist_seed",
   "queue_head": [
-    "p_pipeline_prep",
     "p_select_denylist_seed"
   ],
-  "queue_depth": 2,
-  "host_phase": "running",
-  "last_job": "p_pipeline_context",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "p_pipeline_prep",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

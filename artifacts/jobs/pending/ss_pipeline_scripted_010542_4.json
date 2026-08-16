@@ -1,0 +1,28 @@
+{
+  "id": "ss_pipeline_scripted_010542_4",
+  "note": "steady: pipeline scripted (fast 1D signal)",
+  "source": "foreman_steady",
+  "created": "2026-08-16T01:05:42.768499+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "16",
+        "--scoreboard",
+        "artifacts/scoreboard_ss_pipeline_scripted.json"
+      ],
+      "timeout": 180
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

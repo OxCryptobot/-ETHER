@@ -38,6 +38,7 @@ def _safe(name: str, fn) -> Dict[str, Any]:
                     "denied",
                     "actions",
                     "blockers",
+                    "cases",
                 )
             }
             slim["ok"] = out.get("ok", True)
@@ -126,6 +127,19 @@ def run() -> Dict[str, Any]:
         (
             "honest_path_progress",
             lambda: __import__("core.honest_path_progress", fromlist=["compute"]).compute(),
+        ),
+        # Phase 2A surfaces (ARCH_GO under wheels ON)
+        (
+            "pipeline_terminal_canary",
+            lambda: __import__("core.pipeline_terminal_canary", fromlist=["run_matrix"]).run_matrix(),
+        ),
+        (
+            "pipeline_score_canary",
+            lambda: __import__("core.pipeline_score_canary", fromlist=["run_matrix"]).run_matrix(),
+        ),
+        (
+            "phase2a_status",
+            lambda: __import__("core.phase2a_status", fromlist=["compute"]).compute(),
         ),
     ]
     for name, fn in panels:

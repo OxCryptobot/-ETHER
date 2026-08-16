@@ -1,6 +1,7 @@
 """Moonshot panels for Control Matrix — host-agent artifacts only.
 
 No flywheel / guardian / legacy batch. Reads measure_tick outputs under artifacts/.
+Phase 1D: latency completed vs timeout + live_budget ceilings visible.
 """
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ def _age_s(iso: Optional[str]) -> Optional[float]:
 
 
 def collect_moonshots() -> Dict[str, Any]:
-    """Fifteen host-first panels for the unified Control Matrix."""
+    """Host-first panels for the unified Control Matrix."""
     smoothness = _read("smoothness.json")
     honest_kpi = _read("honest_kpi.json")
     latency = _read("latency_slo.json")
@@ -48,8 +49,9 @@ def collect_moonshots() -> Dict[str, Any]:
     gem = _read("gem_energy.json")
     rates = _read("honest_live_rates.json")
     phase3 = _read("phase3_snapshot.json")
+    live_budget = _read("live_budget.json")
+    plan_wire = _read("critique_plan_wire.json")
 
-    # Queue governor signal from pending count
     pending_n = 0
     pending_dir = ARTIFACTS / "jobs" / "pending"
     if pending_dir.exists():
@@ -62,6 +64,14 @@ def collect_moonshots() -> Dict[str, Any]:
         wheels_on = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
     except Exception:
         pass
+
+    # Prefer completed-live ratio when available; show timeout rate in sub
+    lat_val = latency.get("live_over_scripted_p95")
+    lat_all = latency.get("live_all_over_scripted_p95")
+    to_rate = latency.get("live_timeout_rate")
+    lat_sub = "completed/scripted p95"
+    if to_rate is not None:
+        lat_sub = f"to_rate={to_rate} all={lat_all}"
 
     tiles: List[Dict[str, Any]] = [
         {
@@ -83,17 +93,27 @@ def collect_moonshots() -> Dict[str, Any]:
         {
             "id": "latency_slo",
             "label": "Latency SLO",
-            "value": latency.get("live_over_scripted_p95"),
-            "sub": "live/scripted p95",
+            "value": lat_val,
+            "sub": lat_sub,
             "good": not latency.get("alert"),
             "warn": bool(latency.get("alert")),
         },
         {
-            "id": "sparkline",
-            "label": "Honest spark",
-            "value": (spark.get("summary") or spark.get("last") or spark.get("n") or "—"),
-            "sub": "last runs",
-            "good": True if spark else None,
+            "id": "live_timeout",
+            "label": "Live timeouts",
+            "value": to_rate if to_rate is not None else "—",
+            "sub": f"n_to={(latency.get('live_timeout') or {}).get('n')} floor={latency.get('timeout_floor_s')}",
+            "good": (to_rate or 0) < 0.25 if isinstance(to_rate, (int, float)) else None,
+            "warn": isinstance(to_rate, (int, float)) and 0.25 <= to_rate < 0.5,
+        },
+        {
+            "id": "live_budget",
+            "label": "Live budget",
+            "value": live_budget.get("max_wall_s") or "—",
+            "sub": f"steps={live_budget.get('max_steps')} wall_s",
+            "good": isinstance(live_budget.get("max_wall_s"), int)
+            and live_budget.get("max_wall_s") <= 120,
+            "warn": wheels_on,
         },
         {
             "id": "queue_gov",
@@ -104,16 +124,11 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": 6 < pending_n <= 8,
         },
         {
-            "id": "context",
-            "label": "Context budget",
-            "value": ctx.get("ratio") or ctx.get("tokens_in") or ctx.get("status") or "—",
-            "sub": ctx.get("note") or "tokens/max",
-            "good": True if ctx and not ctx.get("error") else None,
-        },
-        {
             "id": "soft_launch",
             "label": "Soft launch",
-            "value": soft.get("status") or soft.get("blocked") or ("ready" if soft.get("ok") else "—"),
+            "value": soft.get("status")
+            or soft.get("blocked")
+            or ("ready" if soft.get("ok") else "—"),
             "sub": (soft.get("reason") or soft.get("note") or "")[:40],
             "good": bool(soft.get("ok")),
             "warn": soft.get("blocked") is True,
@@ -127,11 +142,29 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": wheels_on,
         },
         {
-            "id": "rollup",
-            "label": "Scoreboard",
-            "value": rollup.get("honest_rate") or rollup.get("summary") or rollup.get("n") or "—",
-            "sub": "latest rollup",
-            "good": True if rollup and not rollup.get("error") else None,
+            "id": "plan_wire",
+            "label": "Critique→Plan",
+            "value": plan_wire.get("n_replanned")
+            if plan_wire
+            else "—",
+            "sub": (plan_wire.get("latest_hypothesis") or "PlanState")[:36]
+            if plan_wire
+            else "idle",
+            "good": (plan_wire.get("n_replanned") or 0) >= 0 if plan_wire else None,
+        },
+        {
+            "id": "sparkline",
+            "label": "Honest spark",
+            "value": (spark.get("summary") or spark.get("last") or spark.get("n") or "—"),
+            "sub": "last runs",
+            "good": True if spark else None,
+        },
+        {
+            "id": "context",
+            "label": "Context budget",
+            "value": ctx.get("ratio") or ctx.get("tokens_in") or ctx.get("status") or "—",
+            "sub": ctx.get("note") or "tokens/max",
+            "good": True if ctx and not ctx.get("error") else None,
         },
         {
             "id": "microbench",
@@ -152,29 +185,17 @@ def collect_moonshots() -> Dict[str, Any]:
             "id": "measure_tick",
             "label": "Measure tick",
             "value": measure.get("ok") if measure else "—",
-            "sub": f"age={_age_s(measure.get('updated') or measure.get('ts'))}s",
+            "sub": f"age={_age_s(measure.get('updated') or measure.get('ts') or measure.get('timestamp'))}s",
             "good": measure.get("ok") is True,
         },
         {
             "id": "honest_rates",
             "label": "Live rates",
-            "value": rates.get("honest_rate") or rates.get("primary") or "—",
-            "sub": "honest_live_rates",
-            "good": (rates.get("honest_rate") or 0) >= 0.2 if isinstance(rates.get("honest_rate"), (int, float)) else None,
-        },
-        {
-            "id": "phase3",
-            "label": "Phase3 snap",
-            "value": phase3.get("status") or phase3.get("ok") or "—",
-            "sub": "snapshot",
-            "good": phase3.get("ok") is True,
-        },
-        {
-            "id": "model_lane",
-            "label": "Model lane",
-            "value": "qwen4b FAST",
-            "sub": "router: FAST vs LIVE",
-            "good": True,
+            "value": rates.get("live_honest_rate") or rates.get("honest_rate") or rates.get("primary") or "—",
+            "sub": f"live_n={rates.get('live_n')}",
+            "good": (rates.get("live_honest_rate") or 0) >= 0.5
+            if isinstance(rates.get("live_honest_rate"), (int, float))
+            else None,
         },
     ]
 
@@ -185,12 +206,13 @@ def collect_moonshots() -> Dict[str, Any]:
             "smoothness": smoothness,
             "honest_kpi": honest_kpi,
             "latency_slo": latency,
+            "live_budget": live_budget,
             "soft_launch": soft,
             "measure_tick": measure,
-            "microbench": micro,
+            "plan_wire": plan_wire,
             "frozen": frozen,
             "wheels_on": wheels_on,
             "pending_n": pending_n,
         },
-        "note": "Host-first moonshot panels only. No legacy flywheel/guardian.",
+        "note": "Host-first moonshot panels. 1D latency honesty + critique→Plan.",
     }

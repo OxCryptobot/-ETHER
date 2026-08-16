@@ -1,12 +1,7 @@
 {
-  "job_id": "p_select_denylist_seed",
+  "job_id": "p_push_hygiene",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T04:31:50.722346+00:00",
-  "note": "Select\u2192pure context + ledger LIVE denylist seed \u2014 wheels ON",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  }
+  "finished": "2026-08-16T04:33:10.295649+00:00",
+  "note": "GH001 prevention \u2014 log never staged; hygiene artifact"
 }

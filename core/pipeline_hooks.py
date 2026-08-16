@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any, Dict
 
 # Re-export pure prep API (backward compatible imports)
 from core.pipeline_prep import (  # noqa: F401
@@ -11,18 +11,8 @@ from core.pipeline_prep import (  # noqa: F401
     prepare_code_for_sandbox,
 )
 
-
-def bandit_context(objective: str, tier: int = 0, fail_kind: str = "") -> Dict[str, Any]:
-    try:
-        from core.multifile import is_multifile_objective
-
-        multifile = is_multifile_objective(objective)
-    except Exception:
-        o = (objective or "").lower()
-        multifile = any(
-            k in o for k in ("class", "module", "refactor", "file", "package", "multi")
-        )
-    return {"tier": tier, "fail_kind": fail_kind, "multifile": multifile}
+# Re-export pure context API
+from core.pipeline_context import bandit_context  # noqa: F401
 
 
 def apply_repo_oracle_gate(

@@ -1,0 +1,24 @@
+{
+  "id": "critique_ss_direct_hard_020612_5_020642",
+  "job_id": "ss_direct_hard_020612_5",
+  "created": "2026-08-16T02:06:42.705766+00:00",
+  "failure_type": "step_fail",
+  "note": "steady: direct hard baseline",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

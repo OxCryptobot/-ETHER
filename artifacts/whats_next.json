@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-16T03:54:00.220405+00:00",
-  "next_job": "p_host_denylist_wire",
+  "generated": "2026-08-16T03:54:13.198777+00:00",
+  "next_job": "ss_pipeline_scripted_025516_4",
   "queue_head": [
-    "p_host_denylist_wire",
     "ss_pipeline_scripted_025516_4"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "ss_train_gates_025516_3",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "p_host_denylist_wire",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

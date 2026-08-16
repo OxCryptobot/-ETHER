@@ -1,6 +1,7 @@
 """Mandatory Labradorite on non-infra FAIL + PlanState replan.
 
 Critical fix #7: enqueue at most one recovery per failure_type per hour.
+Phase 1D: refresh critique_plan_wire after each critique artifact.
 """
 from __future__ import annotations
 
@@ -174,9 +175,20 @@ def critique_fail(
     path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
     artifact["path"] = str(path.relative_to(ROOT)).replace("\\", "/")
 
+    # Phase 1D: keep board PlanState wire fresh after every FAIL critique
+    try:
+        from core.critique_plan_wire import wire_latest
+
+        wire = wire_latest()
+        artifact["plan_wire"] = {
+            "n_replanned": wire.get("n_replanned"),
+            "latest_hypothesis": wire.get("latest_hypothesis"),
+        }
+    except Exception:
+        pass
+
     enqueued_id = None
     if enqueue:
-        # Rate limit: one recovery per failure_type per hour
         try:
             from core.playbook_limiter import allow_playbook, mark_playbook
 

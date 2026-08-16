@@ -36,6 +36,7 @@ def _safe(name: str, fn) -> Dict[str, Any]:
                     "top_fixtures",
                     "top_strategies",
                     "denied",
+                    "actions",
                 )
             }
             slim["ok"] = out.get("ok", True)
@@ -100,6 +101,10 @@ def run() -> Dict[str, Any]:
         (
             "live_fixture_policy",
             lambda: __import__("core.live_fixture_policy", fromlist=["publish"]).publish(),
+        ),
+        (
+            "timeout_retirement",
+            lambda: __import__("core.timeout_retirement", fromlist=["compute"]).compute(),
         ),
     ]
     for name, fn in panels:

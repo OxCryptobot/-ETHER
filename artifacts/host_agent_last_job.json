@@ -1,7 +1,12 @@
 {
-  "job_id": "p_doctor_hygiene",
+  "job_id": "p_timeout_retire_expand",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T04:37:38.225186+00:00",
-  "note": "CLI doctor reports push hygiene / log size"
+  "finished": "2026-08-16T04:45:52.743970+00:00",
+  "note": "1D: expand LIVE denylist (lru/topo/intervals) + projected rate \u2014 wheels ON",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

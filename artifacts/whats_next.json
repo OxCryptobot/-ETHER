@@ -1,18 +1,17 @@
 {
-  "generated": "2026-08-16T02:01:46.264808+00:00",
+  "generated": "2026-08-16T02:01:59.474818+00:00",
   "next_job": "critique_hyp_ss_direct_hard_020105_5_020133",
   "queue_head": [
     "critique_hyp_ss_direct_hard_020105_5_020133",
     "ss_measure_tick_020131_0",
-    "ss_pipeline_scripted_020037_4",
     "ss_pref_refresh_020131_7",
     "ss_train_gates_020037_3"
   ],
-  "queue_depth": 5,
+  "queue_depth": 4,
   "host_phase": "idle",
-  "last_job": "ss_direct_hard_020105_5",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_job": "ss_pipeline_scripted_020037_4",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

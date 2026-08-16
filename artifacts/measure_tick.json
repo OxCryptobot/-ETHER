@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T02:21:43.259948+00:00",
+  "timestamp": "2026-08-16T02:23:28.867178+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T02:21:42.419526+00:00",
+      "updated": "2026-08-16T02:23:28.133584+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T02:21:42.436712+00:00",
+      "updated": "2026-08-16T02:23:28.144683+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T02:21:42.438841+00:00",
+      "updated": "2026-08-16T02:23:28.145682+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T02:21:42.444841+00:00",
+      "updated": "2026-08-16T02:23:28.150785+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "isolate failing step; FAST reverify",
@@ -85,7 +85,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T02:21:42.469206+00:00",
+      "updated": "2026-08-16T02:23:28.163887+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T02:21:42.473206+00:00",
+      "updated": "2026-08-16T02:23:28.167885+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -109,7 +109,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T02:21:42.486309+00:00",
+      "updated": "2026-08-16T02:23:28.181104+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -124,14 +124,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T02:21:42.512514+00:00",
+      "updated": "2026-08-16T02:23:28.202314+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T02:21:42.515515+00:00",
+      "updated": "2026-08-16T02:23:28.205314+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -153,13 +153,13 @@
         "grandidierite": 0
       },
       "last_gem": "rose-quartz",
-      "last_job": "ss_honest_live_report_022115_1",
+      "last_job": "ss_honest_live_report_022301_1",
       "active_n": 2,
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T02:21:42.527627+00:00",
+      "updated": "2026-08-16T02:23:28.216422+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -172,7 +172,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T02:21:42.550912+00:00",
+      "updated": "2026-08-16T02:23:28.243764+00:00",
       "score": 53.0,
       "grade": "C",
       "reasons": [
@@ -188,7 +188,7 @@
       "ok": true
     },
     "model_router": {
-      "updated": "2026-08-16T02:21:42.551913+00:00",
+      "updated": "2026-08-16T02:23:28.244765+00:00",
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
@@ -197,7 +197,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T02:21:42.633879+00:00",
+      "updated": "2026-08-16T02:23:28.328496+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -210,7 +210,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T02:21:42.638999+00:00",
+      "updated": "2026-08-16T02:23:28.333496+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -224,7 +224,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-16T02:21:43.168041+00:00",
+      "updated": "2026-08-16T02:23:28.790578+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 113,
@@ -234,7 +234,7 @@
       "ok": true
     },
     "strangler_style": {
-      "updated": "2026-08-16T02:21:43.174039+00:00",
+      "updated": "2026-08-16T02:23:28.795610+00:00",
       "ok": true,
       "ok_n": 7,
       "n": 7,

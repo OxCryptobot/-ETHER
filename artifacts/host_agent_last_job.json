@@ -1,7 +1,7 @@
 {
-  "job_id": "p2a_diag_terminal_055020",
+  "job_id": "hygiene_log_truncate_055220",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:51:32.826165+00:00",
-  "note": "DIAG: isolate pipeline_terminal_canary and phase2a_status under wheels"
+  "finished": "2026-08-16T05:53:50.753202+00:00",
+  "note": "CRITICAL hygiene: truncate artifacts/host_agent_log.txt if > 8MB to prevent GH001 push rejection"
 }

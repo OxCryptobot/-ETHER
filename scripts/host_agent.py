@@ -133,6 +133,7 @@ def _measure_paths() -> List[str]:
         "timeout_diagnosis.json",
         "live_fixture_policy.json",
         "timeout_retirement.json",
+        "push_hygiene.json",
         "pipeline_strangler.json",
         "phase1d_status.json",
     ):
@@ -143,12 +144,11 @@ def _measure_paths() -> List[str]:
 
 
 def _light_paths() -> List[str]:
-    """Paths safe to push. Never include host_agent_log.txt (100MB GitHub limit)."""
+    """Paths safe to push. Never include host_agent_log.txt (GitHub 100MB limit)."""
     paths = [
         "artifacts/host_agent_status.json",
         "artifacts/host_agent_last_job.json",
     ]
-    # intentionally omit LOG — caused GH001 large file rejects
     for name in ("pending", "failed"):
         p = ROOT / "artifacts" / "jobs" / name
         if p.exists():
@@ -173,7 +173,6 @@ def _light_paths() -> List[str]:
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     if not paths:
         return True
-    # Hard filter: never stage the log even if a caller passes it
     paths = [p for p in paths if not p.replace("\\", "/").endswith("host_agent_log.txt")]
     if not paths:
         return True

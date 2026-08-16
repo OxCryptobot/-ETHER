@@ -1,0 +1,23 @@
+{
+  "updated": "2026-08-16T05:13:25.693531+00:00",
+  "denied": ["intervals", "ledger", "lru", "pipeline_ledger", "ss_pipeline_ledger", "topo"],
+  "live_raw_n": 26,
+  "live_eligible_n": 3,
+  "denied_live_n": 23,
+  "timeout_raw_n": 16,
+  "timeout_eligible_n": 0,
+  "timeout_rate_raw": 0.6154,
+  "timeout_rate_eligible": 0.0,
+  "honest_eligible_n": 2,
+  "ok_eligible_n": 2,
+  "honest_rate_eligible": 0.6667,
+  "target_timeout": 0.25,
+  "target_honest": 0.99,
+  "timeout_eligible_ok": true,
+  "honest_eligible_ok": false,
+  "wheels_must_stay_on": true,
+  "soft_launch_blocked": true,
+  "publish_ok": true,
+  "ok": true,
+  "note": "Eligible = live rows not matching timeout denylist. Soft launch uses eligible rates."
+}

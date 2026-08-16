@@ -45,6 +45,8 @@ def collect_moonshots() -> Dict[str, Any]:
     strangler = _read("pipeline_strangler.json")
     ast_kpi = _read("ast_edit_kpi.json")
     phase1d = _read("phase1d_status.json")
+    ctx = _read("context_budget.json")
+    tdiag = _read("timeout_diagnosis.json")
 
     adapter_on = False
     try:
@@ -73,6 +75,10 @@ def collect_moonshots() -> Dict[str, Any]:
     lat_sub = "completed/scripted p95"
     if to_rate is not None:
         lat_sub = f"to_rate={to_rate} all={lat_all}"
+
+    top_fx = "—"
+    if tdiag.get("top_fixtures"):
+        top_fx = str(tdiag["top_fixtures"][0].get("fixture") or "—")[:28]
 
     tiles: List[Dict[str, Any]] = [
         {
@@ -108,6 +114,22 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": isinstance(to_rate, (int, float)) and 0.25 <= to_rate < 0.5,
         },
         {
+            "id": "timeout_diag",
+            "label": "Timeout top fixture",
+            "value": top_fx,
+            "sub": f"rate={tdiag.get('timeout_rate')} n={tdiag.get('timeout_n')}",
+            "good": bool(tdiag.get("ok")),
+            "warn": not bool(tdiag.get("ok")) if tdiag else None,
+        },
+        {
+            "id": "context",
+            "label": "Context budget",
+            "value": ctx.get("grade") or ctx.get("status") or "—",
+            "sub": f"util={ctx.get('utilization')}",
+            "good": (ctx.get("grade") or "") in ("OK", "COMPRESSED"),
+            "warn": (ctx.get("grade") or "") in ("WARM", "HOT"),
+        },
+        {
             "id": "strangler",
             "label": "Pipeline slice",
             "value": strangler.get("status") or "—",
@@ -123,21 +145,6 @@ def collect_moonshots() -> Dict[str, Any]:
             "sub": "ETHER_PIPELINE_TERMINAL",
             "good": not adapter_on,
             "warn": adapter_on,
-        },
-        {
-            "id": "ast_edit",
-            "label": "AST / multifile",
-            "value": ast_kpi.get("primary") or "—",
-            "sub": f"ast_rate={ast_kpi.get('ast_rate')}",
-            "good": (ast_kpi.get("multifile_n") or 0) >= 0,
-        },
-        {
-            "id": "queue_gov",
-            "label": "Queue depth",
-            "value": pending_n,
-            "sub": "governor cap 8",
-            "good": pending_n <= 6,
-            "warn": 6 < pending_n <= 8,
         },
         {
             "id": "soft_launch",
@@ -157,15 +164,6 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": wheels_on,
         },
         {
-            "id": "plan_wire",
-            "label": "Critique→Plan",
-            "value": plan_wire.get("n_replanned") if plan_wire else "—",
-            "sub": (plan_wire.get("latest_hypothesis") or "PlanState")[:36]
-            if plan_wire
-            else "idle",
-            "good": True if plan_wire else None,
-        },
-        {
             "id": "phase1d",
             "label": "1D status",
             "value": phase1d.get("status") or "—",
@@ -182,12 +180,12 @@ def collect_moonshots() -> Dict[str, Any]:
             "warn": wheels_on,
         },
         {
-            "id": "microbench",
-            "label": "Microbench",
-            "value": micro.get("ok") if micro else ("FROZEN" if frozen else "—"),
-            "sub": "hot-path / freeze",
-            "good": micro.get("ok") is True and not frozen,
-            "warn": frozen or micro.get("ok") is False,
+            "id": "queue_gov",
+            "label": "Queue depth",
+            "value": pending_n,
+            "sub": "governor cap 8",
+            "good": pending_n <= 6,
+            "warn": 6 < pending_n <= 8,
         },
         {
             "id": "measure_tick",
@@ -205,6 +203,8 @@ def collect_moonshots() -> Dict[str, Any]:
             "smoothness": smoothness,
             "honest_kpi": honest_kpi,
             "latency_slo": latency,
+            "timeout_diagnosis": tdiag,
+            "context": ctx,
             "live_budget": live_budget,
             "strangler": strangler,
             "adapter_on": adapter_on,
@@ -217,6 +217,7 @@ def collect_moonshots() -> Dict[str, Any]:
             "pending_n": pending_n,
             "live_rates": rates,
             "gem": gem,
+            "micro": micro,
         },
-        "note": "Host-first panels + strangler + adapter flag.",
+        "note": "Host-first + timeout diagnosis + context grade.",
     }

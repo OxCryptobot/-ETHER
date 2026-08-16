@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T05:32:30.716754+00:00",
+  "timestamp": "2026-08-16T05:50:05.181518+00:00",
   "ok": false,
   "errors": [
     "timeout_diagnosis",
@@ -14,24 +14,24 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T05:32:27.575213+00:00",
+      "updated": "2026-08-16T05:49:22.244959+00:00",
       "ok": true,
-      "honest_tool_pass": 140,
-      "tool_attempts": 144,
-      "honest_rate": 0.9722,
+      "honest_tool_pass": 141,
+      "tool_attempts": 145,
+      "honest_rate": 0.9724,
       "disguised_pass_n": 0,
-      "n_rows": 163,
-      "primary_kpi": "140/144",
+      "n_rows": 164,
+      "primary_kpi": "141/145",
       "gate": "is_honest_tool_path_pass",
       "note": "Primary 1A KPI. Generate-fallback never counts as honest pass.",
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T05:32:27.596561+00:00",
+      "updated": "2026-08-16T05:49:22.255107+00:00",
       "scripted": {
-        "n": 124,
-        "p50": 2.123,
-        "p95": 3.905,
+        "n": 125,
+        "p50": 2.09,
+        "p95": 3.903,
         "max": 6.203
       },
       "live": {
@@ -53,13 +53,13 @@
         "max": 984.528
       },
       "tool_runtime": {
-        "n": 41,
+        "n": 42,
         "p50": 1.868,
-        "p95": 317.624,
+        "p95": 315.257,
         "max": 984.528
       },
-      "live_over_scripted_p95": 77.91,
-      "live_all_over_scripted_p95": 175.03,
+      "live_over_scripted_p95": 77.95,
+      "live_all_over_scripted_p95": 175.12,
       "live_timeout_rate": 0.6154,
       "timeout_floor_s": 120.0,
       "alert_ratio_threshold": 10.0,
@@ -67,7 +67,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T05:32:27.612188+00:00",
+      "updated": "2026-08-16T05:49:22.256107+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -78,26 +78,26 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T05:32:27.612188+00:00",
+      "updated": "2026-08-16T05:49:22.260231+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
-      "latest_hypothesis": "isolate failing step; FAST reverify",
+      "latest_hypothesis": "shrink wall budget; scripted tool_runtime only; one file",
       "training_wheels": true,
       "note": "Critique FAIL \u2192 PlanState.replan. Never auto-lifts soft launch.",
       "path": "artifacts/critique_plan_wire.json",
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T05:32:27.662079+00:00",
+      "updated": "2026-08-16T05:49:22.269232+00:00",
       "n": 50,
       "green_n": 47,
-      "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+      "sparkline": "GGGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
       "note": "G=honest pass, R=ok but not honest, .=fail",
       "path": "artifacts/honest_sparkline.json",
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T05:32:27.662079+00:00",
+      "updated": "2026-08-16T05:49:22.271232+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -112,29 +112,29 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T05:32:27.693328+00:00",
-      "n_rows": 163,
-      "honest_n": 140,
-      "honest_rate": 0.8589,
+      "updated": "2026-08-16T05:49:22.281317+00:00",
+      "n_rows": 164,
+      "honest_n": 141,
+      "honest_rate": 0.8598,
       "live_n": 26,
       "live_ok_n": 9,
       "live_honest_n": 9,
       "live_honest_rate": 0.3462,
-      "scripted_n": 137,
-      "scripted_ok_n": 131,
-      "scripted_ok_rate": 0.9562,
+      "scripted_n": 138,
+      "scripted_ok_n": 132,
+      "scripted_ok_rate": 0.9565,
       "disguised_pass_n": 0,
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T05:32:27.744290+00:00",
+      "updated": "2026-08-16T05:49:22.300522+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T05:32:27.759913+00:00",
+      "updated": "2026-08-16T05:49:22.304527+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -152,17 +152,17 @@
         "selenite": 0,
         "amethyst": 0,
         "black-tourmaline": 0,
-        "labradorite": 22,
+        "labradorite": 24,
         "grandidierite": 0
       },
       "last_gem": "rose-quartz",
-      "last_job": "p_phase4_scaffold",
+      "last_job": "playbook_live_timeout_learn_054059",
       "active_n": 2,
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T05:32:27.795247+00:00",
+      "updated": "2026-08-16T05:49:22.313751+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -175,16 +175,16 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T05:32:27.860793+00:00",
+      "updated": "2026-08-16T05:49:22.332034+00:00",
       "score": 40.0,
       "grade": "D",
       "reasons": [
-        "queue_ok:2",
-        "honest:140/144",
+        "queue_ok:1",
+        "honest:141/145",
         "timeout_rate_high:0.6154",
-        "latency_alert:77.91",
-        "latency_all:175.03",
-        "critique_n:22",
+        "latency_alert:77.95",
+        "latency_all:175.12",
+        "critique_n:24",
         "steady_frozen"
       ],
       "note": "0-100 machine health; 1D timeout rate scored separately",
@@ -192,7 +192,7 @@
       "ok": true
     },
     "model_router": {
-      "updated": "2026-08-16T05:32:27.860793+00:00",
+      "updated": "2026-08-16T05:49:22.333034+00:00",
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
@@ -201,20 +201,20 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T05:32:28.024130+00:00",
+      "updated": "2026-08-16T05:49:22.456650+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
-      "checks_ok": 6,
-      "checks_n": 6,
+      "checks_ok": 7,
+      "checks_n": 7,
       "training_wheels": true,
       "soft_launch": false,
-      "note": "1D infrastructure advancing; live honest lift still OPEN under 4B.",
+      "note": "1D advancing. Projected timeout under target via denylist is not the same as measured live honest rate. Wheels stay ON.",
       "path": "artifacts/phase1d_status.json",
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T05:32:28.024130+00:00",
+      "updated": "2026-08-16T05:49:22.463842+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -228,7 +228,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-16T05:32:30.500305+00:00",
+      "updated": "2026-08-16T05:49:22.839350+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 115,
@@ -238,7 +238,7 @@
       "ok": true
     },
     "strangler_style": {
-      "updated": "2026-08-16T05:32:30.518939+00:00",
+      "updated": "2026-08-16T05:49:22.848350+00:00",
       "ok": true,
       "ok_n": 14,
       "n": 14,
@@ -249,7 +249,7 @@
       "path": "artifacts/strangler_style_gate.json"
     },
     "timeout_diagnosis": {
-      "updated": "2026-08-16T05:32:30.550195+00:00",
+      "updated": "2026-08-16T05:49:22.856594+00:00",
       "live_n": 26,
       "timeout_n": 16,
       "timeout_rate": 0.6154,
@@ -264,28 +264,151 @@
       "note": "Measurement only. Prefer retiring top timeout fixtures from LIVE enqueue until rate < 0.25. Wheels stay ON."
     },
     "live_fixture_policy": {
-      "updated": "2026-08-16T05:32:30.565818+00:00",
+      "updated": "2026-08-16T05:49:22.866748+00:00",
       "seed": [
         "ledger",
         "pipeline_ledger",
-        "ss_pipeline_ledger"
+        "ss_pipeline_ledger",
+        "lru",
+        "topo",
+        "intervals"
       ],
-      "top_n": 5,
-      "min_hits": 2,
+      "top_n": 8,
+      "min_hits": 1,
       "diag_rate": 0.6154,
       "note": "Advisory denylist for LIVE; wheels/gates still control enqueue",
       "path": "artifacts/live_fixture_policy.json",
       "ok": true
     },
     "timeout_retirement": {
-      "updated": "2026-08-16T05:32:30.615733+00:00",
+      "updated": "2026-08-16T05:49:22.883957+00:00",
       "timeout_rate": 0.6154,
       "target_rate": 0.25,
       "ok": false,
       "live_n": 26,
       "timeout_n": 16,
-      "note": "Retirement plan only. Does not lift wheels or soft launch. Target live_timeout_rate < 0.25.",
+      "projected": {
+        "live_n_adj": 10,
+        "timeout_n_adj": 0,
+        "timeout_removed": 16,
+        "projected_timeout_rate": 0.0,
+        "under_target": true,
+        "sample_n": 15
+      },
+      "note": "Retirement plan only. Does not lift wheels or soft launch. Target live_timeout_rate < 0.25. projected_* assumes denied fixtures never ran LIVE.",
       "path": "artifacts/timeout_retirement.json"
+    },
+    "push_hygiene": {
+      "updated": "2026-08-16T05:49:22.884956+00:00",
+      "log_bytes": 64380,
+      "log_mb": 0.06,
+      "github_limit_mb": 100,
+      "warn_mb": 20,
+      "over_warn": false,
+      "over_github": false,
+      "gitignore_has_log": true,
+      "ok": true,
+      "note": "host_agent_log must stay local; never git-add",
+      "path": "artifacts/push_hygiene.json"
+    },
+    "eligible_rates": {
+      "updated": "2026-08-16T05:49:22.895146+00:00",
+      "live_raw_n": 26,
+      "live_eligible_n": 3,
+      "denied_live_n": 23,
+      "timeout_raw_n": 16,
+      "timeout_eligible_n": 0,
+      "timeout_rate_raw": 0.6154,
+      "timeout_rate_eligible": 0.0,
+      "honest_eligible_n": 2,
+      "ok_eligible_n": 2,
+      "honest_rate_eligible": 0.6667,
+      "ok": true
+    },
+    "host_health": {
+      "updated": "2026-08-16T05:49:22.903352+00:00",
+      "ok": true,
+      "alive": true,
+      "heartbeat": "2026-08-16T05:49:21.412028+00:00",
+      "age_s": 1.5,
+      "stale_after_s": 120.0,
+      "phase": "running",
+      "current_job": "p2a_canary_archgo_054910",
+      "last_job": "playbook_live_timeout_learn_054059",
+      "last_ok": true,
+      "root": "C:\\Users\\Otcde\\ETHER",
+      "git_required": false
+    },
+    "phase1_gate": {
+      "updated": "2026-08-16T05:49:37.036616+00:00",
+      "phase_gate": "1_to_2",
+      "metrics_go": false,
+      "architecture_go": true,
+      "status": "ARCH_GO",
+      "checks_ok": 5,
+      "checks_n": 7,
+      "timeout_rate_eligible": 0.0,
+      "honest_rate_eligible": 0.6667,
+      "live_eligible_n": 3,
+      "scripted_honest_rate": 0.9565,
+      "ok": true
+    },
+    "honest_path_progress": {
+      "updated": "2026-08-16T05:49:51.204777+00:00",
+      "scripted_n": 138,
+      "scripted_ok_n": 132,
+      "scripted_honest_n": 132,
+      "scripted_honest_rate": 0.9565,
+      "scripted_ok_rate": 0.9565,
+      "toolish_n": 132,
+      "toolish_honest_n": 132,
+      "toolish_honest_rate": 1.0,
+      "eligible": {
+        "live_eligible_n": 3,
+        "timeout_rate_eligible": 0.0,
+        "honest_rate_eligible": 0.6667,
+        "timeout_rate_raw": 0.6154
+      },
+      "phase1_gate": {
+        "status": "ARCH_GO",
+        "metrics_go": false
+      },
+      "ok": true
+    },
+    "pipeline_terminal_canary": {
+      "updated": "2026-08-16T05:49:51.205752+00:00",
+      "phase": "2A",
+      "n": 5,
+      "passed": 5,
+      "ok": true,
+      "adapter_enabled": false,
+      "adapter_must_stay_off": true,
+      "wheels_on": true,
+      "note": "Canary only \u2014 pure terminal matrix. No Pipeline.run body change. Adapter flag default OFF.",
+      "path": "artifacts/pipeline_terminal_canary.json"
+    },
+    "pipeline_score_canary": {
+      "updated": "2026-08-16T05:49:51.207752+00:00",
+      "phase": "2A",
+      "n": 8,
+      "passed": 8,
+      "ok": true,
+      "adapter_enabled": false,
+      "note": "Score pure canary. No Pipeline.run change.",
+      "path": "artifacts/pipeline_score_canary.json"
+    },
+    "phase2a_status": {
+      "updated": "2026-08-16T05:50:05.105277+00:00",
+      "phase": "2A",
+      "name": "Strangler canaries under wheels",
+      "status": "PASS",
+      "checks_ok": 5,
+      "checks_n": 5,
+      "architecture_go": true,
+      "soft_launch_blocked": true,
+      "note": "2A = pure canaries only. No LIVE. No soft launch. Adapter OFF.",
+      "path": "artifacts/phase2a_status.json",
+      "ok": true
     },
     "phase3_snapshot": {
       "ok": true,
@@ -298,10 +421,11 @@
         "live_honest_rate_below_0.99",
         "training_wheels_on",
         "ETHER_SOFT_LAUNCH_not_1"
-      ]
+      ],
+      "rate_source": "eligible"
     },
     "governor": {
-      "pending": 2,
+      "pending": 1,
       "max_pending": 6,
       "steady_pause_at": 4,
       "steady_resume_at": 2,

@@ -1,17 +1,38 @@
 {
-  "updated": "2026-08-16T05:32:27.693328+00:00",
-  "n_rows": 163,
-  "honest_n": 140,
-  "honest_rate": 0.8589,
+  "updated": "2026-08-16T05:49:22.281317+00:00",
+  "n_rows": 164,
+  "honest_n": 141,
+  "honest_rate": 0.8598,
   "live_n": 26,
   "live_ok_n": 9,
   "live_honest_n": 9,
   "live_honest_rate": 0.3462,
-  "scripted_n": 137,
-  "scripted_ok_n": 131,
-  "scripted_ok_rate": 0.9562,
+  "scripted_n": 138,
+  "scripted_ok_n": 132,
+  "scripted_ok_rate": 0.9565,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.54,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
     {
       "fixture": "ledger",
       "tier": "hard",
@@ -427,24 +448,6 @@
         "read_file",
         "read_file",
         "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 2.639,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
         "write_file",
         "run_tests"
       ],

@@ -1,12 +1,8 @@
 {
-  "job_id": "playbook_live_timeout_learn_054059",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-16T05:41:01.092091+00:00",
-  "note": "playbook:live_tool_path_timeout for p_phase7_north_star",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  }
+  "job_id": "p2a_canary_archgo_054910",
+  "ok": false,
+  "rc": 4,
+  "finished": "2026-08-16T05:50:05.219288+00:00",
+  "note": "Phase 2A terminal+score canary + phase1_gate ARCH_GO surface under wheels ON. No soft launch. Adapter stays OFF.",
+  "failure_type": "step_fail"
 }

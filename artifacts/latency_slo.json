@@ -1,9 +1,9 @@
 {
-  "updated": "2026-08-16T05:32:27.860793+00:00",
+  "updated": "2026-08-16T05:49:22.331033+00:00",
   "scripted": {
-    "n": 124,
-    "p50": 2.123,
-    "p95": 3.905,
+    "n": 125,
+    "p50": 2.09,
+    "p95": 3.903,
     "max": 6.203
   },
   "live": {
@@ -25,13 +25,13 @@
     "max": 984.528
   },
   "tool_runtime": {
-    "n": 41,
+    "n": 42,
     "p50": 1.868,
-    "p95": 317.624,
+    "p95": 315.257,
     "max": 984.528
   },
-  "live_over_scripted_p95": 77.91,
-  "live_all_over_scripted_p95": 175.03,
+  "live_over_scripted_p95": 77.95,
+  "live_all_over_scripted_p95": 175.12,
   "live_timeout_rate": 0.6154,
   "timeout_floor_s": 120.0,
   "alert_ratio_threshold": 10.0,

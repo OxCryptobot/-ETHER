@@ -1,7 +1,8 @@
 {
-  "job_id": "ss_measure_tick_021617_0",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-16T02:17:16.005825+00:00",
-  "note": "steady: measure_tick (rates+snapshot+soft_launch)"
+  "job_id": "p_context_micro_sched",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-16T02:17:29.608270+00:00",
+  "note": "Context grades + microbench cadence \u2014 measurement only",
+  "failure_type": "step_fail"
 }

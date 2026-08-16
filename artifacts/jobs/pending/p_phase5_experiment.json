@@ -1,0 +1,28 @@
+{
+  "id": "p_phase5_experiment",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 5 EXPERIMENT: moonshots + lessons + research flags OFF; wheels ON; no live experiments",
+  "created": "2026-08-16T05:34:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase5_complete.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.phase5_status"
+      ],
+      "timeout": 180
+    }
+  ]
+}

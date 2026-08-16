@@ -1,0 +1,21 @@
+{
+  "id": "p1d_host_budget_wire",
+  "class": "fast",
+  "source": "mentor",
+  "note": "Phase 1D host wire: live_budget clamp in process_job/run_steps",
+  "created": "2026-08-16T00:18:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_host_live_budget_wire.py",
+        "tests/test_phase1d_latency_budget.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 240
+    }
+  ]
+}

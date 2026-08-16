@@ -1,7 +1,12 @@
 {
-  "job_id": "p2a_canary_archgo_055140",
+  "job_id": "p1_57_eligible_sample_grow_191952",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:55:24.940266+00:00",
-  "note": "Phase 2A terminal+score canary + phase1_gate ARCH_GO surface under wheels ON. No soft launch. Adapter stays OFF. Fixed: dropped missing test_eligible_rates."
+  "finished": "2026-08-16T19:27:15.309792+00:00",
+  "note": "1D one-hyp: measure_tick + honest live rates under active denylist; grow eligible_n toward gate min=5; wheels ON; measurement only; no soft launch",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

@@ -1,15 +1,15 @@
 {
-  "generated": "2026-08-16T02:03:17.314778+00:00",
-  "next_job": "ss_pipeline_scripted_020240_4",
+  "generated": "2026-08-16T02:03:51.541636+00:00",
+  "next_job": "p_cli_doctor_strangler",
   "queue_head": [
+    "p_cli_doctor_strangler",
     "ss_pipeline_scripted_020240_4",
     "ss_pref_refresh_020131_7",
-    "ss_tool_runtime_020212_2",
     "ss_train_gates_020240_3"
   ],
   "queue_depth": 4,
-  "host_phase": "idle",
-  "last_job": "critique_hyp_ss_direct_hard_020105_5_020133",
+  "host_phase": "polling",
+  "last_job": "ss_tool_runtime_020212_2",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

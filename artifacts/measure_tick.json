@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T00:14:21.346581+00:00",
+  "timestamp": "2026-08-16T00:17:46.091968+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,24 +11,24 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T00:14:20.998511+00:00",
+      "updated": "2026-08-16T00:17:45.927876+00:00",
       "ok": true,
-      "honest_tool_pass": 140,
-      "tool_attempts": 144,
-      "honest_rate": 0.9722,
+      "honest_tool_pass": 136,
+      "tool_attempts": 140,
+      "honest_rate": 0.9714,
       "disguised_pass_n": 0,
-      "n_rows": 163,
-      "primary_kpi": "140/144",
+      "n_rows": 159,
+      "primary_kpi": "136/140",
       "gate": "is_honest_tool_path_pass",
       "note": "Primary 1A KPI. Generate-fallback never counts as honest pass.",
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T00:14:21.032850+00:00",
+      "updated": "2026-08-16T00:17:45.940989+00:00",
       "scripted": {
-        "n": 124,
-        "p50": 2.123,
-        "p95": 3.905,
+        "n": 120,
+        "p50": 2.165,
+        "p95": 3.916,
         "max": 6.203
       },
       "live": {
@@ -37,30 +37,54 @@
         "p95": 683.497,
         "max": 984.528
       },
+      "live_completed": {
+        "n": 9,
+        "p50": 103.983,
+        "p95": 304.252,
+        "max": 337.688
+      },
+      "live_timeout": {
+        "n": 16,
+        "p50": 373.609,
+        "p95": 776.816,
+        "max": 984.528
+      },
       "tool_runtime": {
         "n": 41,
         "p50": 1.868,
         "p95": 317.624,
         "max": 984.528
       },
-      "live_over_scripted_p95": 175.03,
+      "live_over_scripted_p95": 77.69,
+      "live_all_over_scripted_p95": 174.54,
+      "live_timeout_rate": 0.6154,
+      "timeout_floor_s": 120.0,
       "alert_ratio_threshold": 10.0,
       "alert": true,
-      "note": "Alert when live p95 > Nx scripted p95",
-      "path": "artifacts/latency_slo.json",
+      "ok": true
+    },
+    "live_budget": {
+      "updated": "2026-08-16T00:17:45.943126+00:00",
+      "training_wheels": true,
+      "max_wall_s": 90,
+      "max_steps": 12,
+      "step_timeout_s": 25,
+      "live_enqueue_allowed": false,
+      "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
+      "path": "artifacts/live_budget.json",
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T00:14:21.072105+00:00",
+      "updated": "2026-08-16T00:17:45.955234+00:00",
       "n": 50,
       "green_n": 47,
-      "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+      "sparkline": "GGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
       "note": "G=honest pass, R=ok but not honest, .=fail",
       "path": "artifacts/honest_sparkline.json",
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T00:14:21.076176+00:00",
+      "updated": "2026-08-16T00:17:45.958235+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -73,29 +97,29 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T00:14:21.109436+00:00",
-      "n_rows": 163,
-      "honest_n": 140,
-      "honest_rate": 0.8589,
+      "updated": "2026-08-16T00:17:45.971347+00:00",
+      "n_rows": 159,
+      "honest_n": 136,
+      "honest_rate": 0.8553,
       "live_n": 26,
       "live_ok_n": 9,
       "live_honest_n": 9,
       "live_honest_rate": 0.3462,
-      "scripted_n": 137,
-      "scripted_ok_n": 131,
-      "scripted_ok_rate": 0.9562,
+      "scripted_n": 133,
+      "scripted_ok_n": 127,
+      "scripted_ok_rate": 0.9549,
       "disguised_pass_n": 0,
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T00:14:21.153018+00:00",
+      "updated": "2026-08-16T00:17:45.996754+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T00:14:21.167133+00:00",
+      "updated": "2026-08-16T00:17:45.999754+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -113,16 +137,16 @@
         "selenite": 0,
         "amethyst": 0,
         "black-tourmaline": 0,
-        "labradorite": 15,
+        "labradorite": 17,
         "grandidierite": 0
       },
       "last_gem": "labradorite",
-      "last_job": "ss_pref_refresh_001200_7",
+      "last_job": "ss_train_gates_001640_3",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T00:14:21.200380+00:00",
+      "updated": "2026-08-16T00:17:46.011979+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -135,14 +159,14 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T00:14:21.267020+00:00",
+      "updated": "2026-08-16T00:17:46.035177+00:00",
       "score": 75.0,
       "grade": "B",
       "reasons": [
         "queue_ok:4",
-        "honest:140/144",
-        "latency_alert:175.03",
-        "critique_n:15"
+        "honest:136/140",
+        "latency_alert:77.69",
+        "critique_n:17"
       ],
       "note": "0-100 machine health for Control Matrix",
       "path": "artifacts/smoothness.json",

@@ -1,0 +1,37 @@
+{
+  "id": "p_timeout_retire_expand",
+  "class": "fast",
+  "source": "mentor",
+  "note": "1D: expand LIVE denylist (lru/topo/intervals) + projected rate — wheels ON",
+  "created": "2026-08-16T04:45:00+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_timeout_retire_expand.py",
+        "tests/test_select_denylist_seed.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.timeout_retirement"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.live_fixture_policy"
+      ],
+      "timeout": 30
+    }
+  ]
+}

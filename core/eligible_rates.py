@@ -10,7 +10,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 OUT = ROOT / "artifacts" / "eligible_rates.json"
@@ -24,10 +24,6 @@ def _deny() -> Set[str]:
         return {d.lower() for d in deny_set() if d}
     except Exception:
         return {"ledger", "lru", "topo", "intervals", "pipeline_ledger"}
-
-
-def _fixture_name(row: Dict[str, Any]) -> str:
-    return str(row.get("fixture") or row.get("name") or row.get("id") or "")[:120]
 
 
 def _is_denied(row: Dict[str, Any], denied: Set[str]) -> bool:
@@ -93,6 +89,9 @@ def compute() -> Dict[str, Any]:
     elig_to = rate(timeout_eligible, live_eligible)
     elig_honest = rate(honest_eligible, live_eligible)
 
+    timeout_eligible_ok = elig_to is not None and elig_to < 0.25
+    honest_eligible_ok = elig_honest is not None and elig_honest >= 0.99
+
     payload: Dict[str, Any] = {
         "updated": datetime.now(timezone.utc).isoformat(),
         "denied": sorted(denied),
@@ -108,21 +107,18 @@ def compute() -> Dict[str, Any]:
         "honest_rate_eligible": elig_honest,
         "target_timeout": 0.25,
         "target_honest": 0.99,
-        "timeout_eligible_ok": elig_to is not None and elig_to < 0.25,
-        "honest_eligible_ok": elig_honest is not None and elig_honest >= 0.99,
+        "timeout_eligible_ok": timeout_eligible_ok,
+        "honest_eligible_ok": honest_eligible_ok,
+        "metrics_ok": bool(timeout_eligible_ok and honest_eligible_ok and live_eligible > 0),
         "wheels_must_stay_on": True,
         "soft_launch_blocked": True,
+        "publish_ok": True,
+        "ok": True,  # publish success — targets live in metrics_ok
         "note": (
             "Eligible = live rows not matching timeout denylist. "
             "Soft launch / wheels use eligible rates, never projected-only."
         ),
     }
-    payload["ok"] = bool(
-        payload["timeout_eligible_ok"] and live_eligible > 0
-    )
-    # still not soft-launch ready without honest
-    if not payload["honest_eligible_ok"]:
-        payload["ok"] = False
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

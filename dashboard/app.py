@@ -1,4 +1,4 @@
-"""FastAPI app for @ETHER Control Matrix — host-agent first."""
+"""FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.0")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.1")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -44,7 +44,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.0"
+        data["api_version"] = "0.5.1"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -68,28 +68,22 @@ def _safe_snapshot() -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> FileResponse:
-    """Primary dashboard is host-agent Control Matrix (no legacy Overview)."""
+    """Only UI: host-agent Control Matrix."""
     path = STATIC / "agent.html"
     if not path.exists():
         raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
     return FileResponse(path)
 
 
-@app.get("/agent", response_class=HTMLResponse)
-def agent_page() -> FileResponse:
-    path = STATIC / "agent.html"
-    if not path.exists():
-        raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
-    return FileResponse(path)
+# Old bookmarks → single home (no alternate UIs)
+@app.get("/agent")
+def agent_gone() -> RedirectResponse:
+    return RedirectResponse(url="/", status_code=301)
 
 
-@app.get("/legacy", response_class=HTMLResponse)
-def legacy_page() -> FileResponse:
-    """Archived multipage UI — not primary health."""
-    path = STATIC / "index.html"
-    if not path.exists():
-        raise HTTPException(404, "legacy index missing")
-    return FileResponse(path)
+@app.get("/legacy")
+def legacy_gone() -> RedirectResponse:
+    return RedirectResponse(url="/", status_code=301)
 
 
 @app.get("/api/host-agent")
@@ -139,7 +133,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "service": "ether-dashboard", "version": "0.5.0", "truth": "host_agent"}
+    return {"ok": True, "service": "ether-dashboard", "version": "0.5.1", "truth": "host_agent"}
 
 
 @app.get("/api/health-check")

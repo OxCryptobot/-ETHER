@@ -18,7 +18,11 @@ def _safe(name: str, fn) -> Dict[str, Any]:
     try:
         out = fn()
         if isinstance(out, dict):
-            slim = {k: out[k] for k in list(out)[:12] if k not in ("results_tail", "points", "tags", "strip")}
+            slim = {
+                k: out[k]
+                for k in list(out)[:12]
+                if k not in ("results_tail", "points", "tags", "strip")
+            }
             slim["ok"] = out.get("ok", True)
             return slim
         return {"ok": True}
@@ -48,6 +52,7 @@ def run() -> Dict[str, Any]:
     panels = [
         ("honest_kpi", lambda: __import__("core.honest_kpi", fromlist=["compute"]).compute()),
         ("latency_slo", lambda: __import__("core.latency_slo", fromlist=["compute"]).compute()),
+        ("live_budget", lambda: __import__("core.live_budget", fromlist=["publish"]).publish()),
         ("honest_sparkline", lambda: __import__("core.honest_sparkline", fromlist=["compute"]).compute()),
         ("context_budget", lambda: __import__("core.context_budget", fromlist=["publish_sample"]).publish_sample()),
         ("scoreboard_rollup", lambda: __import__("core.scoreboard_rollup", fromlist=["rollup"]).rollup()),

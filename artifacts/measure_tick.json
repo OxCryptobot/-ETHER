@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T00:26:19.254959+00:00",
+  "timestamp": "2026-08-16T00:27:57.146447+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T00:26:19.081067+00:00",
+      "updated": "2026-08-16T00:27:56.986084+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T00:26:19.093259+00:00",
+      "updated": "2026-08-16T00:27:56.999199+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T00:26:19.094260+00:00",
+      "updated": "2026-08-16T00:27:57.000770+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T00:26:19.099259+00:00",
+      "updated": "2026-08-16T00:27:57.005883+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "re-read failing test; single apply_patch; abort after one stagnant",
@@ -85,7 +85,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T00:26:19.112468+00:00",
+      "updated": "2026-08-16T00:27:57.017993+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T00:26:19.114468+00:00",
+      "updated": "2026-08-16T00:27:57.019995+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -107,7 +107,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T00:26:19.127570+00:00",
+      "updated": "2026-08-16T00:27:57.033111+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -122,14 +122,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T00:26:19.151814+00:00",
+      "updated": "2026-08-16T00:27:57.057327+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T00:26:19.153968+00:00",
+      "updated": "2026-08-16T00:27:57.060326+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -151,12 +151,12 @@
         "grandidierite": 0
       },
       "last_gem": "rose-quartz",
-      "last_job": "ss_honest_live_report_002554_1",
+      "last_job": "ss_honest_live_report_002733_1",
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T00:26:19.166067+00:00",
+      "updated": "2026-08-16T00:27:57.070521+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -169,7 +169,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T00:26:19.194373+00:00",
+      "updated": "2026-08-16T00:27:57.094863+00:00",
       "score": 63.0,
       "grade": "C",
       "reasons": [

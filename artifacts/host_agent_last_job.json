@@ -1,7 +1,12 @@
 {
-  "job_id": "p_gate_visible",
+  "job_id": "p_architecture_go",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:17:36.056896+00:00",
-  "note": "Recompute eligible + gate; ok means publish not targets \u2014 wheels ON"
+  "finished": "2026-08-16T05:21:12.658321+00:00",
+  "note": "Split ARCH_GO (scripted) vs metrics_go (eligible LIVE); wheels ON, adapter OFF",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

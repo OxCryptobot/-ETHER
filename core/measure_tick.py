@@ -21,7 +21,16 @@ def _safe(name: str, fn) -> Dict[str, Any]:
             slim = {
                 k: out[k]
                 for k in list(out)[:12]
-                if k not in ("results_tail", "points", "tags", "strip", "events_tail", "checks")
+                if k not in (
+                    "results_tail",
+                    "points",
+                    "tags",
+                    "strip",
+                    "events_tail",
+                    "checks",
+                    "imports",
+                    "steps",
+                )
             }
             slim["ok"] = out.get("ok", True)
             return slim
@@ -66,6 +75,10 @@ def run() -> Dict[str, Any]:
         ("smoothness", lambda: __import__("core.smoothness", fromlist=["compute"]).compute()),
         ("model_router", lambda: __import__("core.model_router", fromlist=["status"]).status()),
         ("phase1d_status", lambda: __import__("core.phase1d_status", fromlist=["compute"]).compute()),
+        (
+            "pipeline_strangler",
+            lambda: __import__("core.pipeline_strangler", fromlist=["compute"]).compute(),
+        ),
     ]
     for name, fn in panels:
         steps[name] = _safe(name, fn)

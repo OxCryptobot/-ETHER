@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-16T02:32:48.246004+00:00",
+  "timestamp": "2026-08-16T02:33:55.136775+00:00",
   "ok": true,
   "errors": [],
   "steps": {
@@ -11,7 +11,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-16T02:32:47.650993+00:00",
+      "updated": "2026-08-16T02:33:54.529401+00:00",
       "ok": true,
       "honest_tool_pass": 140,
       "tool_attempts": 144,
@@ -24,7 +24,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-16T02:32:47.658993+00:00",
+      "updated": "2026-08-16T02:33:54.538400+00:00",
       "scripted": {
         "n": 124,
         "p50": 2.123,
@@ -64,7 +64,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-16T02:32:47.660993+00:00",
+      "updated": "2026-08-16T02:33:54.539399+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -75,7 +75,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-16T02:32:47.664993+00:00",
+      "updated": "2026-08-16T02:33:54.543401+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "isolate failing step; FAST reverify",
@@ -85,7 +85,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-16T02:32:47.672993+00:00",
+      "updated": "2026-08-16T02:33:54.552400+00:00",
       "n": 50,
       "green_n": 47,
       "sparkline": "GGGGGGG.G..GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
@@ -94,7 +94,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-16T02:32:47.675993+00:00",
+      "updated": "2026-08-16T02:33:54.555402+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -109,7 +109,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-16T02:32:47.684993+00:00",
+      "updated": "2026-08-16T02:33:54.564400+00:00",
       "n_rows": 163,
       "honest_n": 140,
       "honest_rate": 0.8589,
@@ -124,14 +124,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-16T02:32:47.701993+00:00",
+      "updated": "2026-08-16T02:33:54.582400+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-16T02:32:47.704993+00:00",
+      "updated": "2026-08-16T02:33:54.584401+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -144,22 +144,22 @@
       ],
       "counts": {
         "clear-quartz": 0,
-        "rose-quartz": 0,
+        "rose-quartz": 1,
         "citrine": 0,
         "selenite": 0,
-        "amethyst": 1,
+        "amethyst": 0,
         "black-tourmaline": 0,
         "labradorite": 21,
         "grandidierite": 0
       },
-      "last_gem": "amethyst",
-      "last_job": "ss_pref_refresh_023124_7",
+      "last_gem": "rose-quartz",
+      "last_job": "ss_honest_live_report_023331_1",
       "active_n": 2,
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-16T02:32:47.712993+00:00",
+      "updated": "2026-08-16T02:33:54.593399+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -172,7 +172,7 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-16T02:32:47.730992+00:00",
+      "updated": "2026-08-16T02:33:54.610400+00:00",
       "score": 53.0,
       "grade": "C",
       "reasons": [
@@ -188,7 +188,7 @@
       "ok": true
     },
     "model_router": {
-      "updated": "2026-08-16T02:32:47.731993+00:00",
+      "updated": "2026-08-16T02:33:54.612400+00:00",
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
@@ -197,7 +197,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-16T02:32:47.814354+00:00",
+      "updated": "2026-08-16T02:33:54.698818+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -210,7 +210,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-16T02:32:47.819355+00:00",
+      "updated": "2026-08-16T02:33:54.703087+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -224,7 +224,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-16T02:32:48.175989+00:00",
+      "updated": "2026-08-16T02:33:55.066361+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 113,
@@ -234,7 +234,7 @@
       "ok": true
     },
     "strangler_style": {
-      "updated": "2026-08-16T02:32:48.180276+00:00",
+      "updated": "2026-08-16T02:33:55.070622+00:00",
       "ok": true,
       "ok_n": 7,
       "n": 7,

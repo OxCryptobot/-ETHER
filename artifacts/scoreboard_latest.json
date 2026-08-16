@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-16T02:32:47.684993+00:00",
+  "updated": "2026-08-16T02:33:54.564400+00:00",
   "n_rows": 163,
   "honest_n": 140,
   "honest_rate": 0.8589,
@@ -13,13 +13,34 @@
   "disguised_pass_n": 0,
   "results_tail": [
     {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.477,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
+    {
       "fixture": "lru",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.635,
+      "elapsed_s": 0.623,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -55,7 +76,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 0.646,
+      "elapsed_s": 0.65,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -75,7 +96,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.649,
+      "elapsed_s": 0.664,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -93,7 +114,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 0.47,
+      "elapsed_s": 0.477,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -103,27 +124,6 @@
       ],
       "model": "",
       "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.469,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "pipeline",
-      "strategy": "tool_runtime_scripted"
     },
     {
       "fixture": "ledger",

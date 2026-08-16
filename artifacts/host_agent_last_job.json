@@ -1,7 +1,7 @@
 {
-  "job_id": "hygiene_log_truncate_055220",
+  "job_id": "p2a_canary_archgo_055140",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T05:53:50.753202+00:00",
-  "note": "CRITICAL hygiene: truncate artifacts/host_agent_log.txt if > 8MB to prevent GH001 push rejection"
+  "finished": "2026-08-16T05:55:24.940266+00:00",
+  "note": "Phase 2A terminal+score canary + phase1_gate ARCH_GO surface under wheels ON. No soft launch. Adapter stays OFF. Fixed: dropped missing test_eligible_rates."
 }

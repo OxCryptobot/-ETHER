@@ -1,10 +1,10 @@
 {
-  "updated": "2026-08-16T05:53:49.171188+00:00",
+  "updated": "2026-08-16T05:54:27.886159+00:00",
   "phase": "1D",
   "name": "Measured lift",
   "status": "ADVANCING",
-  "checks_ok": 6,
-  "checks_n": 6,
+  "checks_ok": 7,
+  "checks_n": 7,
   "checks": [
     {
       "id": "latency_timeout_split",
@@ -24,12 +24,17 @@
     {
       "id": "moonshot_1d_tiles",
       "ok": true,
-      "detail": "tiles=15"
+      "detail": "tiles=19"
     },
     {
       "id": "timeout_retirement_plan",
       "ok": true,
-      "detail": "rate=0.6154 actions=4"
+      "detail": "rate=0.6154 actions=5"
+    },
+    {
+      "id": "denylist_projected_under_target",
+      "ok": true,
+      "detail": "proj=0.0 rm=16"
     },
     {
       "id": "soft_launch_still_blocked",
@@ -39,5 +44,5 @@
   ],
   "training_wheels": true,
   "soft_launch": false,
-  "note": "1D infrastructure advancing; live honest lift still OPEN under 4B."
+  "note": "1D advancing. Projected timeout under target via denylist is not the same as measured live honest rate. Wheels stay ON."
 }

@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-16T05:53:50.687869+00:00",
-  "next_job": "hygiene_log_truncate_055220",
+  "generated": "2026-08-16T05:55:24.894674+00:00",
+  "next_job": "p2a_canary_archgo_055140",
   "queue_head": [
-    "hygiene_log_truncate_055220",
     "p2a_canary_archgo_055140"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "p2a_diag_terminal_055020",
+  "queue_depth": 1,
+  "host_phase": "running",
+  "last_job": "hygiene_log_truncate_055220",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -30,7 +29,7 @@
       "id": "1D",
       "name": "Measured lift",
       "status": "PARTIAL",
-      "detail": "checks 6/6 status=ADVANCING; live OPEN under 4B"
+      "detail": "checks 7/7 status=ADVANCING; live OPEN under 4B"
     }
   ],
   "blocked": [

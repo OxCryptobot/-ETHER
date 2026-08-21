@@ -1,7 +1,12 @@
 {
-  "job_id": "playbook_mentor_v2_225800",
+  "job_id": "p1_100_recompute_eligible_rates_234803",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-21T22:58:09.118771+00:00",
-  "note": "playbook:024_mentor_coding_method_v2 for p1_94_gate_sample_easy_224901"
+  "finished": "2026-08-21T23:49:41.327784+00:00",
+  "note": "Recompute eligible_rates + phase1_gate + honest_live after controlled eligible LIVE samples land",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

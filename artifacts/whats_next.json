@@ -1,15 +1,15 @@
 {
-  "generated": "2026-08-21T22:47:39.707309+00:00",
-  "next_job": "p1_90_gate_sample_merge_163540",
+  "generated": "2026-08-21T22:48:07.532719+00:00",
+  "next_job": "critique_hyp_p1_90_gate_sample_merge_163540_224750",
   "queue_head": [
-    "p1_90_gate_sample_merge_163540",
+    "critique_hyp_p1_90_gate_sample_merge_163540_224750",
     "p1_91_gate_sample_easy_163541"
   ],
   "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "p1_92_gate_recompute_honest_163542",
-  "last_ok": true,
-  "last_failure_type": null,
+  "host_phase": "idle",
+  "last_job": "p1_90_gate_sample_merge_163540",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

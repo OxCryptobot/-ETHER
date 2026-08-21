@@ -1443,9 +1443,10 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01"
+    "00_mcp_cq_spike_01",
+    "p1_90_gate_sample_merge_163540"
   ],
-  "last_tick": "2026-08-21T22:47:39.699308+00:00",
+  "last_tick": "2026-08-21T22:48:07.526719+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1464,5 +1465,6 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "last_playbook_skipped": "rate_limit:024_mentor_coding_method_v2:step_fail"
 }

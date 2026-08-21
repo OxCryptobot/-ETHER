@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 0,
+      "elapsed_s": 10.395,
+      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
+      "tools": [],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 8,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "merge": {
+      "direct": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "p1_83_agent_state_protect_210253",
+  "note": "1D Path B: AgentState durable + train_gates + tool_runtime + AST still green",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.agent_state import AgentState, latest_state; s=AgentState.load_or_create('breakthrough'); s.objective='Path B wire'; s.hypothesis='durable across gems'; s.save(); print('ok', s.thread_id, bool(latest_state()))"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_train_gates.py", "tests/test_tool_runtime.py", "tests/test_ast_transaction.py", "tests/test_tool_runtime_ast_gate.py", "-q", "--tb=line"],
+      "timeout": 240
+    }
+  ]
+}

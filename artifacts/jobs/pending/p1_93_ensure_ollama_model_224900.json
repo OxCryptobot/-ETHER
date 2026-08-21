@@ -1,0 +1,20 @@
+{
+  "id": "p1_93_ensure_ollama_model_224900",
+  "class": "measure",
+  "note": "ensure Ollama has qwen3.5:4b and quant tag so LIVE gate_sample can succeed (root cause of model-not-found FAILs)",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": ["ollama", "pull", "qwen3.5:4b"],
+      "timeout": 900
+    },
+    {
+      "argv": ["ollama", "pull", "qwen3.5:4b-q4_K_M"],
+      "timeout": 900
+    },
+    {
+      "argv": ["ollama", "list"],
+      "timeout": 30
+    }
+  ]
+}

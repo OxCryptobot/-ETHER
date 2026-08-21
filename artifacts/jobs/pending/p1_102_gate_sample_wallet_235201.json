@@ -1,0 +1,12 @@
+{
+  "id": "p1_102_gate_sample_wallet_235201",
+  "class": "gate_sample",
+  "note": "gate_sample: controlled LIVE wallet only max_steps=10 — eligible fixture, expand honest_rate_eligible under wheels",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "wallet", "--max-steps", "10", "--timeout", "120", "--scoreboard", "artifacts/scoreboard_p1_102_wallet_live.json"],
+      "timeout": 300
+    }
+  ]
+}

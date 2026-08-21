@@ -1,0 +1,12 @@
+{
+  "id": "p1_101_gate_sample_greeter_235200",
+  "class": "gate_sample",
+  "note": "gate_sample: controlled LIVE greeter only max_steps=10 — eligible fixture, expand honest_rate_eligible under wheels",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "greeter", "--max-steps", "10", "--timeout", "120", "--scoreboard", "artifacts/scoreboard_p1_101_greeter_live.json"],
+      "timeout": 300
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-21T21:05:49.798914+00:00",
+  "updated": "2026-08-21T22:43:06.613565+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -11,7 +11,7 @@
     "grandidierite"
   ],
   "counts": {
-    "clear-quartz": 0,
+    "clear-quartz": 1,
     "rose-quartz": 0,
     "citrine": 0,
     "selenite": 0,
@@ -20,14 +20,14 @@
     "labradorite": 25,
     "grandidierite": 0
   },
-  "last_gem": "labradorite",
-  "last_job": "critique_p2a_canary_archgo_054910_055005",
-  "active_n": 1,
+  "last_gem": "clear-quartz",
+  "last_job": "p1_83_agent_state_protect_210253",
+  "active_n": 2,
   "strip": [
     {
       "gem": "clear-quartz",
-      "n": 0,
-      "active": false
+      "n": 1,
+      "active": true
     },
     {
       "gem": "rose-quartz",
@@ -57,7 +57,7 @@
     {
       "gem": "labradorite",
       "n": 25,
-      "active": true
+      "active": false
     },
     {
       "gem": "grandidierite",

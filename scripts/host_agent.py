@@ -3,6 +3,9 @@
 
 Phase 1D: live_budget clamp on live jobs (never lifts training wheels).
 Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
+
+2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note tag)
+may run LIVE while wheels ON. All other LIVE still skipped.
 """
 from __future__ import annotations
 
@@ -215,6 +218,15 @@ def purge_live_pending() -> int:
         for p in list(PENDING.glob(pat)):
             if p.name == ".gitkeep":
                 continue
+            # Never purge explicit gate_sample measurement jobs
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                cls = str(data.get("class") or "").lower()
+                note = str(data.get("note") or "").lower()
+                if cls == "gate_sample" or "gate_sample" in note:
+                    continue
+            except Exception:
+                pass
             dst = ARCH / f"{p.stem}_killed_{stamp}.json"
             try:
                 shutil.move(str(p), str(dst))
@@ -455,6 +467,14 @@ def run_steps(
     return last_rc, failure_type if last_rc else None
 
 
+def _is_gate_sample(job: Dict[str, Any]) -> bool:
+    """Explicit exception: only gate_sample class/note may run LIVE under wheels."""
+    cls = str(job.get("class") or "").strip().lower()
+    note = str(job.get("note") or "").lower()
+    jid = str(job.get("id") or "").lower()
+    return cls == "gate_sample" or "gate_sample" in note or "gate_sample" in jid
+
+
 def process_job(path: Path) -> bool:
     try:
         job = json.loads(path.read_text(encoding="utf-8"))
@@ -483,10 +503,14 @@ def process_job(path: Path) -> bool:
         from core.queue_governor import training_wheels_on
 
         if training_wheels_on() and job_class(job) == LIVE:
-            log(f"TRAINING_WHEELS: skip LIVE job {job_id}")
-            FAILED.mkdir(parents=True, exist_ok=True)
-            path.rename(FAILED / f"{path.stem}_wheels_skip.json")
-            return False
+            # Targeted exception: gate_sample measurement only
+            if _is_gate_sample(job):
+                log(f"GATE_SAMPLE exception: allow LIVE under wheels job={job_id}")
+            else:
+                log(f"TRAINING_WHEELS: skip LIVE job {job_id}")
+                FAILED.mkdir(parents=True, exist_ok=True)
+                path.rename(FAILED / f"{path.stem}_wheels_skip.json")
+                return False
     except Exception:
         pass
 
@@ -558,7 +582,7 @@ def process_job(path: Path) -> bool:
         last_ok=ok,
         last_failure_type=failure_type,
     )
-    light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery")
+    light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery", "gate_sample")
     try:
         git_push_report(job_id, ok, light=light)
     except Exception as e:
@@ -588,7 +612,7 @@ def call_foreman_tick() -> None:
 
 
 def main() -> int:
-    print("ETHER host_agent (no-log-push + 1D + denylist)", flush=True)
+    print("ETHER host_agent (no-log-push + 1D + denylist + gate_sample)", flush=True)
     _rotate_log_if_needed()
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)

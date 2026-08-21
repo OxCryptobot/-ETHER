@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-21T19:22:08.697488+00:00",
+  "generated": "2026-08-21T19:23:38.075392+00:00",
   "next_job": "p1_70_gate_recompute_191700",
   "queue_head": [
     "p1_70_gate_recompute_191700",
     "p1_71_merge_live_tight_191701",
-    "p1_72_easy_live_sample_191702",
-    "p1_73_agent_state_wire_191703"
+    "p1_72_easy_live_sample_191702"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "p1_66_direct_hard_rebaseline_140815",
+  "queue_depth": 3,
+  "host_phase": "running",
+  "last_job": "p1_73_agent_state_wire_191703",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

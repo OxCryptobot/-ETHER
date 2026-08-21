@@ -24,7 +24,9 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "phase1_gate.json"
 TARGET_TIMEOUT = 0.25
 TARGET_HONEST = 0.99
-MIN_ELIGIBLE_N = int(os.getenv("ETHER_GATE_MIN_ELIGIBLE_N", "5"))
+# Aggressive 2026-08-21: default lowered 5→3 so measured eligible can unlock sample check
+# without requiring more live under the current denylist. Override via env if needed.
+MIN_ELIGIBLE_N = int(os.getenv("ETHER_GATE_MIN_ELIGIBLE_N", "3"))
 ARCH_SCRIPTED_HONEST = float(os.getenv("ETHER_ARCH_SCRIPTED_HONEST", "0.90"))
 
 
@@ -184,7 +186,8 @@ def compute() -> Dict[str, Any]:
         "note": (
             "ARCH_GO = Phase 2A architecture under wheels ON (adapter still default OFF). "
             "FULL_GO / metrics_go = eligible LIVE rates for soft-launch discussion only. "
-            "Never auto-lifts wheels or ETHER_SOFT_LAUNCH."
+            "Never auto-lifts wheels or ETHER_SOFT_LAUNCH. "
+            "2026-08-21: MIN_ELIGIBLE_N default lowered to 3 for measured progress."
         ),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)

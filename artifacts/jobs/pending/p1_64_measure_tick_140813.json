@@ -1,0 +1,15 @@
+{
+  "id": "p1_64_measure_tick_140813",
+  "note": "1D one-hyp: measure_tick + honest_live_report under denylist; measurement only",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.honest_live_report"],
+      "timeout": 60
+    }
+  ]
+}

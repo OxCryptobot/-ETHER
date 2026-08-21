@@ -28,10 +28,10 @@ PREFERRED_COUSIN = [
 
 # Owner host (GTX 1650 4GB / 12GB RAM) — Q4_K_M only, never >4B class.
 # ollama library qwen3.5:4b is already file_type=Q4_K_M (3.4GB).
-# Explicit :4b-q4_K_M tag preferred when present for clarity.
+# Prefer SHORT tag first so LIVE never 404s when quant tag is absent from tags.
 PREFERRED_HOST = [
-    "qwen3.5:4b-q4_K_M",
     "qwen3.5:4b",
+    "qwen3.5:4b-q4_K_M",
     "qwen3.5:4b-instruct",
     "qwen3:4b",
     "qwen2.5-coder:3b",
@@ -144,13 +144,22 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
     chosen = None
     reason = "env"
     if current and not auto and not force_refresh:
-        # Respect explicit env but warn if heavy on host
+        # Respect explicit env but only if it is actually available (or heavy-ignored).
         if prof["profile"] != "cousin" and _is_heavy(current):
             reason = "env_heavy_ignored_host"
             current = ""
         else:
-            chosen = current
-            reason = "ETHER_PRIMARY_MODEL"
+            # If the exact env tag is missing from Ollama, fall through to preferred
+            # so LIVE does not hard-fail on a stale quant tag in .env.
+            if available and current not in available and not any(
+                a.lower() == current.lower() or a.lower().startswith(current.lower())
+                for a in available
+            ):
+                reason = "env_tag_missing_fallthrough"
+                current = ""
+            else:
+                chosen = current
+                reason = "ETHER_PRIMARY_MODEL"
 
     if not chosen:
         for pref in preferred:

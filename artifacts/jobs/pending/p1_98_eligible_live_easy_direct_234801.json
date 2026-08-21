@@ -1,0 +1,12 @@
+{
+  "id": "p1_98_eligible_live_easy_direct_234801",
+  "note": "Controlled LIVE measurement: easy eligible fixtures (greeter,wallet) direct tool_runtime — expand honest_rate_eligible denominator with non-denied rows",
+  "continue_on_fail": true,
+  "class": "live",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--tier", "easy", "--max-steps", "10", "--timeout", "120", "--scoreboard", "artifacts/scoreboard_p1_98_easy_live.json"],
+      "timeout": 360
+    }
+  ]
+}

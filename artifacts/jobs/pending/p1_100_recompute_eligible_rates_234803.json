@@ -1,0 +1,20 @@
+{
+  "id": "p1_100_recompute_eligible_rates_234803",
+  "note": "Recompute eligible_rates + phase1_gate + honest_live after controlled eligible LIVE samples land",
+  "continue_on_fail": true,
+  "class": "measure",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.eligible_rates"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.honest_live"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.phase1_gate"],
+      "timeout": 60
+    }
+  ]
+}

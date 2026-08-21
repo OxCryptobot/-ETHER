@@ -1,0 +1,16 @@
+{
+  "id": "p1_97_ensure_ollama_short_234800",
+  "note": "Ensure short tag qwen3.5:4b present (preferred); long quant tag 404 was poisoning live eligible rows",
+  "continue_on_fail": true,
+  "class": "infra",
+  "steps": [
+    {
+      "argv": ["ollama", "list"],
+      "timeout": 30
+    },
+    {
+      "argv": ["ollama", "pull", "qwen3.5:4b"],
+      "timeout": 600
+    }
+  ]
+}

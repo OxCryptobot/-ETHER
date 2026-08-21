@@ -1,7 +1,12 @@
 {
-  "job_id": "p1_70_gate_recompute_191700",
+  "job_id": "p1_82_gate_recompute_after_live_210252",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-21T19:23:38.130231+00:00",
-  "note": "1D aggressive: recompute phase1_gate + eligible_rates after MIN_ELIGIBLE_N=3; wheels ON"
+  "finished": "2026-08-21T21:06:32.755355+00:00",
+  "note": "1D: recompute phase1_gate + measure_tick after gate_sample live runs",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

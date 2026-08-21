@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-21T21:06:32.720809+00:00",
+  "generated": "2026-08-21T21:06:36.050320+00:00",
   "next_job": "p1_80_gate_sample_merge_210250",
   "queue_head": [
     "p1_80_gate_sample_merge_210250",
     "p1_81_gate_sample_easy_210251",
-    "p1_82_gate_recompute_after_live_210252",
     "p1_83_agent_state_protect_210253"
   ],
-  "queue_depth": 4,
-  "host_phase": "running",
-  "last_job": "p1_70_gate_recompute_191700",
+  "queue_depth": 3,
+  "host_phase": "idle",
+  "last_job": "p1_82_gate_recompute_after_live_210252",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

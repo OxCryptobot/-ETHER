@@ -1,8 +1,13 @@
 {
-  "generated": "2026-08-21T22:50:26.861739+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-21T22:51:06.936262+00:00",
+  "next_job": "p1_93_ensure_ollama_model_224900",
+  "queue_head": [
+    "p1_93_ensure_ollama_model_224900",
+    "p1_94_gate_sample_easy_224901",
+    "p1_95_gate_sample_merge_224902",
+    "p1_96_gate_recompute_honest_224903"
+  ],
+  "queue_depth": 4,
   "host_phase": "polling",
   "last_job": "critique_hyp_p1_90_gate_sample_merge_163540_224750",
   "last_ok": true,

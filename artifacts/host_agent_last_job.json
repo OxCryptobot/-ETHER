@@ -1,7 +1,12 @@
 {
-  "job_id": "critique_hyp_p1_90_gate_sample_merge_163540_224750",
+  "job_id": "p1_93_ensure_ollama_model_224900",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-21T22:48:31.519777+00:00",
-  "note": "playbook:labradorite for p1_90_gate_sample_merge_163540 [step_fail] :: isolate failing step; FAST reverify"
+  "finished": "2026-08-21T22:51:08.615780+00:00",
+  "note": "ensure Ollama has qwen3.5:4b and quant tag so LIVE gate_sample can succeed (root cause of model-not-found FAILs)",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

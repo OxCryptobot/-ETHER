@@ -4,8 +4,9 @@
 Phase 1D: live_budget clamp on live jobs (never lifts training wheels).
 Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
 
-2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note tag)
+2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note/id tag)
 may run LIVE while wheels ON. All other LIVE still skipped.
+Broadened tags: gate_sample | eligible_live | controlled live
 """
 from __future__ import annotations
 
@@ -218,12 +219,10 @@ def purge_live_pending() -> int:
         for p in list(PENDING.glob(pat)):
             if p.name == ".gitkeep":
                 continue
-            # Never purge explicit gate_sample measurement jobs
+            # Never purge explicit gate_sample / controlled measurement jobs
             try:
                 data = json.loads(p.read_text(encoding="utf-8"))
-                cls = str(data.get("class") or "").lower()
-                note = str(data.get("note") or "").lower()
-                if cls == "gate_sample" or "gate_sample" in note:
+                if _is_gate_sample(data):
                     continue
             except Exception:
                 pass
@@ -468,11 +467,18 @@ def run_steps(
 
 
 def _is_gate_sample(job: Dict[str, Any]) -> bool:
-    """Explicit exception: only gate_sample class/note may run LIVE under wheels."""
+    """Explicit exception: gate_sample / eligible_live / controlled live may run LIVE under wheels."""
     cls = str(job.get("class") or "").strip().lower()
     note = str(job.get("note") or "").lower()
     jid = str(job.get("id") or "").lower()
-    return cls == "gate_sample" or "gate_sample" in note or "gate_sample" in jid
+    hay = f"{cls} {note} {jid}"
+    return (
+        cls == "gate_sample"
+        or "gate_sample" in hay
+        or "eligible_live" in hay
+        or "controlled live" in hay
+        or "controlled_live" in hay
+    )
 
 
 def process_job(path: Path) -> bool:
@@ -503,7 +509,7 @@ def process_job(path: Path) -> bool:
         from core.queue_governor import training_wheels_on
 
         if training_wheels_on() and job_class(job) == LIVE:
-            # Targeted exception: gate_sample measurement only
+            # Targeted exception: gate_sample / controlled measurement only
             if _is_gate_sample(job):
                 log(f"GATE_SAMPLE exception: allow LIVE under wheels job={job_id}")
             else:

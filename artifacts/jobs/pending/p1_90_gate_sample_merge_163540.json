@@ -1,0 +1,12 @@
+{
+  "id": "p1_90_gate_sample_merge_163540",
+  "class": "gate_sample",
+  "note": "gate_sample: controlled LIVE merge max_steps=8 wall=75s — exception under wheels for honest_rate lift",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "merge", "--max-steps", "8", "--timeout", "75", "--scoreboard", "artifacts/scoreboard_p1_90_merge_live.json"],
+      "timeout": 120
+    }
+  ]
+}

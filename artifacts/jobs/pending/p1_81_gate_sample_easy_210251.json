@@ -1,0 +1,12 @@
+{
+  "id": "p1_81_gate_sample_easy_210251",
+  "class": "gate_sample",
+  "note": "gate_sample: controlled LIVE greeter+wallet max_steps=8 — exception under wheels",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--tier", "easy", "--max-steps", "8", "--timeout", "75", "--scoreboard", "artifacts/scoreboard_p1_81_easy_live.json"],
+      "timeout": 180
+    }
+  ]
+}

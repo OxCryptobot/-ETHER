@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-21T19:14:17.026778+00:00",
+  "updated": "2026-08-21T19:18:33.814270+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -11,23 +11,23 @@
     "grandidierite"
   ],
   "counts": {
-    "clear-quartz": 0,
+    "clear-quartz": 1,
     "rose-quartz": 0,
-    "citrine": 1,
+    "citrine": 0,
     "selenite": 0,
     "amethyst": 0,
     "black-tourmaline": 0,
     "labradorite": 25,
     "grandidierite": 0
   },
-  "last_gem": "citrine",
-  "last_job": "p1_62_train_gates_pep8_193014",
+  "last_gem": "clear-quartz",
+  "last_job": "p1_66_direct_hard_rebaseline_140815",
   "active_n": 2,
   "strip": [
     {
       "gem": "clear-quartz",
-      "n": 0,
-      "active": false
+      "n": 1,
+      "active": true
     },
     {
       "gem": "rose-quartz",
@@ -36,8 +36,8 @@
     },
     {
       "gem": "citrine",
-      "n": 1,
-      "active": true
+      "n": 0,
+      "active": false
     },
     {
       "gem": "selenite",

@@ -1,12 +1,14 @@
 {
-  "job_id": "p1_93_ensure_ollama_model_224900",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-21T22:51:08.615780+00:00",
-  "note": "ensure Ollama has qwen3.5:4b and quant tag so LIVE gate_sample can succeed (root cause of model-not-found FAILs)",
+  "job_id": "p1_96_gate_recompute_honest_224903",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-21T22:57:06.573648+00:00",
+  "note": "recompute eligible rates + phase1_gate after controlled gate_sample LIVE runs (target honest_rate_eligible >=0.99)",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,
     "step_timeout_s": 25
-  }
+  },
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p1_91_easy_live.json"
 }

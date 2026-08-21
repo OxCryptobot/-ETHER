@@ -1,0 +1,24 @@
+{
+  "id": "critique_p1_96_gate_recompute_honest_224903_225706",
+  "job_id": "p1_96_gate_recompute_honest_224903",
+  "created": "2026-08-21T22:57:06.586454+00:00",
+  "failure_type": "step_fail",
+  "note": "recompute eligible rates + phase1_gate after controlled gate_sample LIVE runs (target honest_rate_eligible >=0.99)",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

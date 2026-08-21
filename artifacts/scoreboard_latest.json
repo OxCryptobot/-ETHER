@@ -1,17 +1,56 @@
 {
-  "updated": "2026-08-21T22:46:29.327079+00:00",
-  "n_rows": 175,
+  "updated": "2026-08-21T22:56:06.237874+00:00",
+  "n_rows": 178,
   "honest_n": 152,
-  "honest_rate": 0.8686,
-  "live_n": 26,
+  "honest_rate": 0.8539,
+  "live_n": 29,
   "live_ok_n": 9,
   "live_honest_n": 9,
-  "live_honest_rate": 0.3462,
+  "live_honest_rate": 0.3103,
   "scripted_n": 149,
   "scripted_ok_n": 143,
   "scripted_ok_rate": 0.9597,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 0,
+      "elapsed_s": 8.469,
+      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
+      "tools": [],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 0,
+      "elapsed_s": 7.167,
+      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
+      "tools": [],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 0,
+      "elapsed_s": 10.395,
+      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
+      "tools": [],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
     {
       "fixture": "ledger",
       "tier": "hard",
@@ -332,82 +371,6 @@
       ],
       "model": "",
       "arm": "direct"
-    },
-    {
-      "fixture": "intervals",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.467,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.495,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "arm": "pipeline",
-      "ok": false,
-      "score": 0.0,
-      "strategy": "tool_runtime",
-      "status": "error",
-      "repo_oracle_ok": null,
-      "elapsed_s": 335.118,
-      "mode": "live",
-      "stages": [
-        {
-          "stage": "plan",
-          "success": true,
-          "detail": "5 steps tool=False"
-        },
-        {
-          "stage": "tool_assist",
-          "success": true,
-          "detail": "few_shot=4511c exp=4200c"
-        },
-        {
-          "stage": "tool_runtime",
-          "success": false,
-          "detail": "steps=15 score=0.000 reason=timeout"
-        },
-        {
-          "stage": "tool_runtime",
-          "success": false,
-          "detail": "tool_runtime_failed_terminal"
-        }
-      ],
-      "degraded": [
-        "tool_runtime_failed_terminal"
-      ],
-      "model": "qwen3.5:4b",
-      "honest_tool_path": false
     }
   ],
   "note": "Dashboard should read this single file"

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-21T22:47:34.495463+00:00",
+  "updated": "2026-08-21T22:57:06.039139+00:00",
   "phase_gate": "1_to_2",
   "metrics_go": false,
   "architecture_go": true,
@@ -8,7 +8,7 @@
     {
       "id": "eligible_sample_size",
       "ok": true,
-      "detail": "live_eligible_n=3 min=3"
+      "detail": "live_eligible_n=6 min=3"
     },
     {
       "id": "timeout_rate_eligible",
@@ -18,7 +18,7 @@
     {
       "id": "honest_rate_eligible",
       "ok": false,
-      "detail": "rate=0.6667 target>=0.99"
+      "detail": "rate=0.3333 target>=0.99"
     },
     {
       "id": "scripted_honest_for_architecture",
@@ -44,10 +44,10 @@
   "checks_ok": 6,
   "checks_n": 7,
   "timeout_rate_eligible": 0.0,
-  "honest_rate_eligible": 0.6667,
-  "live_eligible_n": 3,
+  "honest_rate_eligible": 0.3333,
+  "live_eligible_n": 6,
   "scripted_honest_rate": 0.9597,
-  "timeout_rate_raw": 0.6154,
+  "timeout_rate_raw": 0.5517,
   "training_wheels": true,
   "soft_launch_ready": false,
   "note": "ARCH_GO = Phase 2A architecture under wheels ON (adapter still default OFF). FULL_GO / metrics_go = eligible LIVE rates for soft-launch discussion only. Never auto-lifts wheels or ETHER_SOFT_LAUNCH. 2026-08-21: MIN_ELIGIBLE_N default lowered to 3 for measured progress."

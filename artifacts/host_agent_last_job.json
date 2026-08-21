@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_100_recompute_eligible_rates_234803",
+  "job_id": "p1_105_recompute_eligible_235204",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-21T23:49:41.327784+00:00",
-  "note": "Recompute eligible_rates + phase1_gate + honest_live after controlled eligible LIVE samples land",
+  "finished": "2026-08-21T23:55:07.760983+00:00",
+  "note": "Force eligible_rates + phase1_gate recompute after controlled gate_sample LIVE samples",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,

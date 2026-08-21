@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.697,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "mode": "scripted",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 12,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "ledger": {
+      "direct": true
+    }
+  }
+}

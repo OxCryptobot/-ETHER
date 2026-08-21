@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-21T22:58:01.014191+00:00",
-  "next_job": "p1_95_gate_sample_merge_224902",
+  "generated": "2026-08-21T22:58:06.395973+00:00",
+  "next_job": "playbook_mentor_v2_225800",
   "queue_head": [
-    "p1_95_gate_sample_merge_224902",
     "playbook_mentor_v2_225800"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "p1_94_gate_sample_easy_224901",
+  "queue_depth": 1,
+  "host_phase": "polling",
+  "last_job": "p1_95_gate_sample_merge_224902",
   "last_ok": false,
-  "last_failure_type": "timeout",
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

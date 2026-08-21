@@ -1,7 +1,12 @@
 {
-  "job_id": "p1_83_agent_state_protect_210253",
+  "job_id": "p1_92_gate_recompute_honest_163542",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-21T21:06:39.189557+00:00",
-  "note": "1D Path B: AgentState durable + train_gates + tool_runtime + AST still green"
+  "finished": "2026-08-21T22:47:34.668437+00:00",
+  "note": "1D: recompute phase1_gate + eligible_rates + measure after gate_sample live \u2014 attack honest_rate_eligible",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

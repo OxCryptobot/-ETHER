@@ -1,14 +1,7 @@
 {
-  "job_id": "p1_91_gate_sample_easy_163541",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-21T22:48:23.716737+00:00",
-  "note": "gate_sample: controlled LIVE greeter+wallet max_steps=8 \u2014 exception under wheels for honest_rate lift",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  },
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_p1_91_easy_live.json"
+  "job_id": "critique_hyp_p1_90_gate_sample_merge_163540_224750",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-21T22:48:31.519777+00:00",
+  "note": "playbook:labradorite for p1_90_gate_sample_merge_163540 [step_fail] :: isolate failing step; FAST reverify"
 }

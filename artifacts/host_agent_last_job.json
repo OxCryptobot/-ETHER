@@ -1,14 +1,14 @@
 {
-  "job_id": "p1_96_gate_recompute_honest_224903",
+  "job_id": "p1_94_gate_sample_easy_224901",
   "ok": false,
-  "rc": 1,
-  "finished": "2026-08-21T22:57:06.573648+00:00",
-  "note": "recompute eligible rates + phase1_gate after controlled gate_sample LIVE runs (target honest_rate_eligible >=0.99)",
+  "rc": 124,
+  "finished": "2026-08-21T22:57:56.257270+00:00",
+  "note": "gate_sample: controlled LIVE greeter+wallet max_steps=8 \u2014 exception under wheels for honest_rate lift (post-model-pull) [failure_type=timeout]",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,
     "step_timeout_s": 25
   },
-  "failure_type": "step_fail",
+  "failure_type": "timeout",
   "scoreboard": "scoreboard_p1_91_easy_live.json"
 }

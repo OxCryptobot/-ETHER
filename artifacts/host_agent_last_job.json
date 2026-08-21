@@ -1,7 +1,12 @@
 {
-  "job_id": "p1_62_train_gates_pep8_193014",
+  "job_id": "p1_64_measure_tick_140813",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-16T19:35:59.198523+00:00",
-  "note": "1D one-hyp: train_gates + preference + tool_runtime AST surface still green"
+  "finished": "2026-08-21T19:15:18.470571+00:00",
+  "note": "1D one-hyp: measure_tick + honest_live_report under denylist; measurement only",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  }
 }

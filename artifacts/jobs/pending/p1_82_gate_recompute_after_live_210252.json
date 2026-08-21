@@ -1,0 +1,15 @@
+{
+  "id": "p1_82_gate_recompute_after_live_210252",
+  "note": "1D: recompute phase1_gate + measure_tick after gate_sample live runs",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.phase1_gate import compute; import json; print(json.dumps(compute(), indent=2))"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "critique_p1_95_gate_sample_merge_224902_225801",
+  "job_id": "p1_95_gate_sample_merge_224902",
+  "created": "2026-08-21T22:58:01.678453+00:00",
+  "failure_type": "step_fail",
+  "note": "gate_sample: controlled LIVE merge max_steps=8 wall=90s \u2014 exception under wheels for honest_rate lift (post-model-pull)",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

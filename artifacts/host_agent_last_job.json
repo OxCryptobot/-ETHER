@@ -1,14 +1,14 @@
 {
-  "job_id": "p1_94_gate_sample_easy_224901",
+  "job_id": "p1_95_gate_sample_merge_224902",
   "ok": false,
-  "rc": 124,
-  "finished": "2026-08-21T22:57:56.257270+00:00",
-  "note": "gate_sample: controlled LIVE greeter+wallet max_steps=8 \u2014 exception under wheels for honest_rate lift (post-model-pull) [failure_type=timeout]",
+  "rc": 2,
+  "finished": "2026-08-21T22:58:01.662825+00:00",
+  "note": "gate_sample: controlled LIVE merge max_steps=8 wall=90s \u2014 exception under wheels for honest_rate lift (post-model-pull)",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,
     "step_timeout_s": 25
   },
-  "failure_type": "timeout",
+  "failure_type": "step_fail",
   "scoreboard": "scoreboard_p1_91_easy_live.json"
 }

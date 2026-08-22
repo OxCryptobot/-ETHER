@@ -24,10 +24,10 @@ DEFAULT_MAX_WALL_S = int(os.getenv("ETHER_LIVE_MAX_WALL_S", "90"))
 DEFAULT_MAX_STEPS = int(os.getenv("ETHER_LIVE_MAX_STEPS", "12"))
 DEFAULT_STEP_TIMEOUT_S = int(os.getenv("ETHER_LIVE_STEP_TIMEOUT_S", "25"))
 
-# Measurement / gate_sample ceilings — high enough for one fixture to finish
-MEASURE_MAX_WALL_S = int(os.getenv("ETHER_MEASURE_MAX_WALL_S", "240"))
-MEASURE_MAX_STEPS = int(os.getenv("ETHER_MEASURE_MAX_STEPS", "14"))
-MEASURE_STEP_TIMEOUT_S = int(os.getenv("ETHER_MEASURE_STEP_TIMEOUT_S", "40"))
+# Measurement / gate_sample ceilings — room for one easy fixture under 4B
+MEASURE_MAX_WALL_S = int(os.getenv("ETHER_MEASURE_MAX_WALL_S", "300"))
+MEASURE_MAX_STEPS = int(os.getenv("ETHER_MEASURE_MAX_STEPS", "10"))
+MEASURE_STEP_TIMEOUT_S = int(os.getenv("ETHER_MEASURE_STEP_TIMEOUT_S", "50"))
 
 
 def _is_measurement(job: Dict[str, Any]) -> bool:
@@ -95,7 +95,6 @@ def apply_to_job(job: Dict[str, Any]) -> Dict[str, Any]:
     lim = limits(measurement=is_meas)
     out = dict(job)
 
-    # Only clamp jobs that are live / measurement; leave pure FAST alone
     cls = str(out.get("class") or "").lower()
     note = str(out.get("note") or "").lower()
     if cls not in ("live", "gate_sample", "measure") and "live" not in note:

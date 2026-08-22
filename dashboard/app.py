@@ -1,11 +1,12 @@
 """FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
 
-Hardened 2026-08-22 / UX 0.6:
-- Index serves agent.html with no-cache so UI updates land on refresh
-- Operator Surface routes return error dicts (not hard 500) so panels degrade
+Hardened 2026-08-22 / UX 0.6 → 0.7:
+- Chat orchestrator: /api/chat POST runs agent turn (local Ollama + git + escalate)
+- /api/chat/turns lists durable turns
+- Index serves agent.html with no-cache
+- Operator Surface routes return error dicts (not hard 500)
 - /api/health never throws
-- /api/upload soft-registered (python-multipart optional at import time)
-- Tabbed operator surface (Ops / Chat / Rates / Learning / Code)
+- /api/upload soft-registered
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.6.0")
+app = FastAPI(title="@ETHER Control Matrix", version="0.7.0")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -50,6 +51,9 @@ class HealthBody(BaseModel):
 class ChatPostBody(BaseModel):
     message: str
     job_id: Optional[str] = None
+    orchestrate: bool = True
+    allow_write: bool = False
+    force_channel: Optional[str] = None
 
 
 class TestEnqueueBody(BaseModel):
@@ -81,7 +85,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.6.0"
+        data["api_version"] = "0.7.0"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -186,7 +190,6 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    """Never throws — used by ether_host dashboard probe."""
     host: dict = {}
     try:
         from core.host_health import compute as host_compute
@@ -204,9 +207,10 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.6.0",
+        "version": "0.7.0",
         "truth": "host_agent_local",
         "git_required": False,
+        "chat_orchestrator": True,
         "host": {
             "alive": host.get("alive"),
             "age_s": host.get("age_s"),
@@ -273,8 +277,6 @@ def reconcile_tools(body: ReconcileBody) -> dict:
         return {"ok": False, "error": str(e)[:200]}
 
 
-# ── Operator Surface (degrade, never hard-500 the panel) ─────────────────────
-
 @app.get("/api/rates")
 def rates_api() -> dict:
     try:
@@ -319,17 +321,22 @@ def llm_api() -> dict:
 def chat_list(limit: int = 40) -> dict:
     try:
         from core.chat_bus import receive, summary
+        from core.chat_orchestrator import recent_turns, latest_turn
 
         return {
             "summary": summary(),
             "inbox": receive(from_grok=True, limit=limit),
             "outbox": receive(from_grok=False, limit=limit),
+            "turns": recent_turns(limit=min(limit, 30)),
+            "latest_turn": latest_turn(),
+            "orchestrator": True,
         }
     except Exception as e:
         return {
             "summary": {"inbox_n": 0, "outbox_n": 0, "error": str(e)[:120]},
             "inbox": [],
             "outbox": [],
+            "turns": [],
             "error": str(e)[:200],
         }
 
@@ -339,10 +346,33 @@ def chat_post(body: ChatPostBody) -> dict:
     try:
         from core.operator_surface import chat_post as cp
 
-        env = cp(body.message, job_id=body.job_id)
-        return {"ok": True, "envelope": env}
+        result = cp(
+            body.message,
+            job_id=body.job_id,
+            orchestrate=body.orchestrate,
+            allow_write=body.allow_write,
+            force_channel=body.force_channel,
+        )
+        # orchestrator returns turn dict; legacy returns envelope
+        if result.get("schema") == "ether_chat_turn_v1" or "reply" in result:
+            return {"ok": bool(result.get("ok", True)), "turn": result, "orchestrator": True}
+        return {"ok": True, "envelope": result, "orchestrator": False}
     except Exception as e:
         return {"ok": False, "error": str(e)[:200]}
+
+
+@app.get("/api/chat/turns")
+def chat_turns_api(limit: int = 20) -> dict:
+    try:
+        from core.chat_orchestrator import recent_turns, latest_turn
+
+        return {
+            "turns": recent_turns(limit=limit),
+            "latest": latest_turn(),
+            "orchestrator": True,
+        }
+    except Exception as e:
+        return {"turns": [], "error": str(e)[:200]}
 
 
 @app.post("/api/test")
@@ -393,7 +423,6 @@ def speech_api(body: SpeechBody) -> dict:
 
 
 def _register_upload_routes() -> None:
-    """File upload needs python-multipart. Never fail module import if missing."""
     try:
         from fastapi import File, UploadFile
     except Exception:
@@ -437,7 +466,6 @@ def _register_upload_routes() -> None:
             }
 
     except RuntimeError as e:
-        # FastAPI raises at decoration time if multipart missing
         msg = str(e)
 
         @app.post("/api/upload")

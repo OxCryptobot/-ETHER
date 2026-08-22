@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 4,
+      "elapsed_s": 228.821,
+      "reason": "timeout",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "failure_type": "timeout",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 10,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "wallet": {
+      "direct": false
+    }
+  }
+}

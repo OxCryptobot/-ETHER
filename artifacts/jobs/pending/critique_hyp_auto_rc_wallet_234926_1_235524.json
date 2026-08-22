@@ -1,0 +1,23 @@
+{
+  "id": "critique_hyp_auto_rc_wallet_234926_1_235524",
+  "class": "recovery",
+  "source": "labradorite_mandatory",
+  "created": "2026-08-22T23:55:24.993231+00:00",
+  "note": "playbook:labradorite for auto_rc_wallet_234926_1 [step_fail] :: isolate failing step; FAST reverify",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "tests/test_honest_live_critique_context.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

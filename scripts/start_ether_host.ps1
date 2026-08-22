@@ -29,7 +29,6 @@ function Write-Warn { param([string]$msg) Write-Host "  WARN $msg" -ForegroundCo
 function Write-Fail { param([string]$msg) Write-Host "  FAIL $msg" -ForegroundColor Red }
 
 function Clear-GitState {
-    # Nuclear: abort any stuck rebase/merge, then hard reset to origin/main
     try { git rebase --abort 2>$null | Out-Null } catch {}
     try { git merge --abort 2>$null | Out-Null } catch {}
     try { git reset --mixed HEAD 2>$null | Out-Null } catch {}
@@ -44,6 +43,37 @@ function Clear-GitState {
     if (-not $head) { $head = "?" }
     Write-Ok "HEAD=$head (clean slate)"
     return $true
+}
+
+function Clear-Port8787 {
+    # Kill anything LISTENING on 8787 so uvicorn always binds
+    Write-Banner "[port] free 8787" "Cyan"
+    $killed = 0
+    try {
+        $lines = netstat -ano 2>$null
+        foreach ($line in $lines) {
+            if ($line -notmatch ":8787") { continue }
+            if ($line -notmatch "LISTENING") { continue }
+            $parts = ($line -split "\s+") | Where-Object { $_ -ne "" }
+            if ($parts.Count -lt 1) { continue }
+            $pid = $parts[-1]
+            if ($pid -match "^\d+$" -and [int]$pid -gt 0) {
+                try {
+                    Stop-Process -Id ([int]$pid) -Force -ErrorAction Stop
+                    $killed++
+                    Write-Warn "killed pid=$pid on :8787"
+                } catch {
+                    try {
+                        taskkill /F /PID $pid 2>$null | Out-Null
+                        $killed++
+                        Write-Warn "taskkill pid=$pid on :8787"
+                    } catch {}
+                }
+            }
+        }
+    } catch { Write-Warn "Clear-Port8787 non-fatal: $_" }
+    if ($killed -eq 0) { Write-Ok "8787 free" } else { Write-Ok "freed 8787 ($killed)" }
+    Start-Sleep -Milliseconds 600
 }
 
 # --- resolve repo root ---
@@ -82,7 +112,7 @@ try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAc
 
 # --- 1. Kill stale host python ---
 Write-Banner "[1] kill stale host python" "Cyan"
-$patterns = @("ether_host.py", "host_agent.py", "scripts\ether_host", "scripts/ether_host", "scripts\host_agent", "scripts/host_agent", "uvicorn.*dashboard")
+$patterns = @("ether_host.py", "host_agent.py", "scripts\ether_host", "scripts/ether_host", "scripts\host_agent", "scripts/host_agent", "uvicorn.*dashboard", "dashboard.app")
 $killed = 0
 try {
     $procs = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
@@ -115,6 +145,9 @@ if ($Hard) {
 }
 if ($killed -eq 0) { Write-Ok "no stale host python" } else { Write-Ok "killed $killed process(es)" }
 Start-Sleep -Seconds 1
+
+# Explicit port free (fixes ERR_CONNECTION_REFUSED after bad reload)
+Clear-Port8787
 
 # --- 2. Nuclear git clean slate ---
 Write-Banner "[2] git clean slate (abort rebase/merge + hard reset)" "Cyan"
@@ -164,7 +197,7 @@ if (-not (Test-Path -LiteralPath $Py)) {
 }
 
 # --- 4. Forced import probe ---
-Write-Banner "[4] boot probe (import host_agent + foreman)" "Cyan"
+Write-Banner "[4] boot probe (import host_agent + foreman + dashboard)" "Cyan"
 $probeCode = @"
 import sys
 sys.path.insert(0, r'$Root')
@@ -182,6 +215,18 @@ try:
 except Exception as e:
     print('foreman FAIL:', type(e).__name__, e)
     sys.exit(12)
+try:
+    from dashboard.app import app as dash_app
+    print('dashboard.app OK', getattr(dash_app, 'title', ''))
+except Exception as e:
+    print('dashboard.app FAIL:', type(e).__name__, e)
+    sys.exit(13)
+from pathlib import Path
+p = Path(r'$Root') / 'dashboard' / 'static' / 'agent.html'
+if not p.is_file():
+    print('agent.html MISSING', p)
+    sys.exit(14)
+print('agent.html OK', p.stat().st_size, 'bytes')
 print('BOOT_PROBE_OK')
 "@
 $probeOut = & $Py -c $probeCode 2>&1
@@ -196,7 +241,7 @@ Write-Ok "boot probe passed"
 Write-Host ""
 Write-Banner "========================================" "Green"
 Write-Banner " ENTERING SELF-HEALING LOOP" "Green"
-Write-Banner " dashboard  http://127.0.0.1:8787/agent" "DarkGray"
+Write-Banner " dashboard  http://127.0.0.1:8787/" "DarkGray"
 Write-Banner " Ctrl+C     stop permanently" "DarkGray"
 Write-Banner "========================================" "Green"
 Write-Host ""
@@ -205,8 +250,9 @@ $backoff = 3
 $maxBackoff = 30
 
 while ($true) {
-    Write-Banner "[sync] clean slate + start" "Cyan"
+    Write-Banner "[sync] clean slate + free port + start" "Cyan"
     [void](Clear-GitState)
+    Clear-Port8787
 
     Write-Banner "[start] scripts\ether_host.py" "Cyan"
     & $Py "scripts\ether_host.py"

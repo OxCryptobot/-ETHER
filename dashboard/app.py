@@ -1,4 +1,10 @@
-"""FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /."""
+"""FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
+
+Hardened 2026-08-22:
+- Index serves agent.html with no-cache so UI updates land on refresh
+- Operator Surface routes return error dicts (not hard 500) so panels degrade
+- /api/health never throws
+"""
 
 from __future__ import annotations
 
@@ -10,7 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -20,7 +26,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.4")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.5")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -57,6 +63,15 @@ class SpeechBody(BaseModel):
     job_id: Optional[str] = None
 
 
+def json_load_safe(path: Path) -> dict:
+    import json
+
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def _safe_snapshot() -> dict:
     try:
         from dashboard.collector import collect_snapshot
@@ -64,7 +79,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.4"
+        data["api_version"] = "0.5.5"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -86,12 +101,19 @@ def _safe_snapshot() -> dict:
         }
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 def index() -> FileResponse:
     path = STATIC / "agent.html"
     if not path.exists():
         raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
-    return FileResponse(path)
+    return FileResponse(
+        path,
+        media_type="text/html; charset=utf-8",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 @app.get("/agent")
@@ -111,7 +133,13 @@ def host_agent_api() -> dict:
 
         return collect_host_agent()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {
+            "error": str(e)[:200],
+            "agent_alive": False,
+            "status": {},
+            "queue": {"pending": [], "done": [], "failed": [], "counts": {"pending": 0, "done": 0, "failed": 0}},
+            "log_lines": [f"collector error: {e}"],
+        }
 
 
 @app.get("/api/moonshots")
@@ -121,7 +149,7 @@ def moonshots_api() -> dict:
 
         return collect_moonshots()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"error": str(e)[:160], "tiles": []}
 
 
 @app.get("/api/snapshot")
@@ -136,7 +164,7 @@ def infra() -> dict:
 
         return collect_infra()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:160]}
 
 
 @app.get("/api/console")
@@ -151,6 +179,7 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
+    """Never throws — used by ether_host dashboard probe."""
     host: dict = {}
     try:
         from core.host_health import compute as host_compute
@@ -168,7 +197,7 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.5.4",
+        "version": "0.5.5",
         "truth": "host_agent_local",
         "git_required": False,
         "host": {
@@ -186,15 +215,6 @@ def health() -> dict:
     }
 
 
-def json_load_safe(path: Path) -> dict:
-    import json
-
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
 @app.get("/api/health-check")
 def health_check(skip_sandbox: bool = True) -> dict:
     try:
@@ -202,7 +222,7 @@ def health_check(skip_sandbox: bool = True) -> dict:
 
         return run_health_checks(include_sandbox_smoke=not skip_sandbox)
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
 @app.post("/api/health-check")
@@ -212,7 +232,7 @@ def health_check_post(body: HealthBody) -> dict:
 
         return run_health_checks(include_sandbox_smoke=not body.skip_sandbox)
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
 @app.post("/api/promote")
@@ -243,10 +263,10 @@ def reconcile_tools(body: ReconcileBody) -> dict:
 
         return reconcile(promote_threshold=body.threshold, dry_run=body.dry_run)
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
-# ── Operator Surface ─────────────────────────────────────────────────────────
+# ── Operator Surface (degrade, never hard-500 the panel) ─────────────────────
 
 @app.get("/api/rates")
 def rates_api() -> dict:
@@ -255,7 +275,7 @@ def rates_api() -> dict:
 
         return rates()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"error": str(e)[:200], "updated": None}
 
 
 @app.get("/api/operator")
@@ -265,7 +285,11 @@ def operator_api() -> dict:
 
         return {"status": status(), "doctor": doctor()}
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {
+            "status": {},
+            "doctor": {"ok": False, "issues": [f"operator error: {e}"]},
+            "error": str(e)[:200],
+        }
 
 
 @app.get("/api/llm")
@@ -275,7 +299,13 @@ def llm_api() -> dict:
 
         return publish()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {
+            "error": str(e)[:200],
+            "fast": None,
+            "live": None,
+            "latency": {"n": 0},
+            "keep_alive": False,
+        }
 
 
 @app.get("/api/chat")
@@ -289,7 +319,12 @@ def chat_list(limit: int = 20) -> dict:
             "outbox": receive(from_grok=False, limit=limit),
         }
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {
+            "summary": {"inbox_n": 0, "outbox_n": 0, "error": str(e)[:120]},
+            "inbox": [],
+            "outbox": [],
+            "error": str(e)[:200],
+        }
 
 
 @app.post("/api/chat")
@@ -300,7 +335,7 @@ def chat_post(body: ChatPostBody) -> dict:
         env = cp(body.message, job_id=body.job_id)
         return {"ok": True, "envelope": env}
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
 @app.post("/api/test")
@@ -317,7 +352,7 @@ def test_enqueue(body: TestEnqueueBody) -> dict:
         )
         return {"ok": True, "job": path.name}
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
 @app.get("/api/skills")
@@ -327,7 +362,7 @@ def skills_api() -> dict:
 
         return {"skills": skill_list()}
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"skills": [], "error": str(e)[:200]}
 
 
 @app.get("/api/mcp")
@@ -337,7 +372,7 @@ def mcp_api() -> dict:
 
         return mcp_list()
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"error": str(e)[:200], "local_tools": {}, "gems": []}
 
 
 @app.post("/api/speech")
@@ -347,7 +382,7 @@ def speech_api(body: SpeechBody) -> dict:
 
         return speech_to_chat(body.text, job_id=body.job_id)
     except Exception as e:
-        raise HTTPException(500, str(e)) from e
+        return {"ok": False, "error": str(e)[:200]}
 
 
 @app.post("/api/upload")

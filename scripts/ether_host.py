@@ -6,9 +6,8 @@
 
 Dashboard thread + host_agent poll loop. No second terminal.
 
-2026-08-22: After git_sync, if critical source files changed vs boot snapshot,
-exit 42 so start_ether_host.ps1 reloads the new modules (live_budget,
-host_agent, latency_budget, dashboard). Stops the stale-code timeout death spiral.
+Hard rule: dashboard MUST come up. Never silently skip uvicorn because
+the port "looks busy". Probe /api/health; if unhealthy, force-bind.
 """
 from __future__ import annotations
 
@@ -19,6 +18,8 @@ import sys
 import threading
 import time
 import traceback
+import urllib.error
+import urllib.request
 import webbrowser
 from pathlib import Path
 
@@ -67,29 +68,123 @@ def _snapshot() -> dict:
     return {rel: _file_digest(rel) for rel in _WATCHED}
 
 
-def _port_free(port: int) -> bool:
+def _port_listening(port: int) -> bool:
+    """True if something accepts TCP on 127.0.0.1:port."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.3)
-        return s.connect_ex(("127.0.0.1", port)) != 0
+        s.settimeout(0.4)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def _dashboard_healthy(port: int = PORT, timeout: float = 1.5) -> bool:
+    """True only if OUR Control Matrix answers /api/health with ok."""
+    url = f"http://127.0.0.1:{port}/api/health"
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status != 200:
+                return False
+            body = resp.read().decode("utf-8", errors="replace")
+            return '"ok"' in body and "ether-dashboard" in body
+    except Exception:
+        return False
+
+
+def _force_free_port(port: int) -> None:
+    """Best-effort: on Windows, kill whatever holds the port."""
+    if sys.platform != "win32":
+        return
+    try:
+        import subprocess
+
+        out = subprocess.run(
+            ["netstat", "-ano"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            encoding="utf-8",
+            errors="replace",
+        )
+        pids = set()
+        needle = f":{port}"
+        for line in (out.stdout or "").splitlines():
+            if needle not in line:
+                continue
+            if "LISTENING" not in line.upper() and "ESTABLISHED" not in line.upper():
+                continue
+            parts = line.split()
+            if not parts:
+                continue
+            pid = parts[-1]
+            if pid.isdigit() and int(pid) > 0:
+                pids.add(pid)
+        for pid in pids:
+            try:
+                subprocess.run(
+                    ["taskkill", "/F", "/PID", pid],
+                    capture_output=True,
+                    timeout=5,
+                )
+                print(f"dashboard: killed pid={pid} holding :{port}", flush=True)
+            except Exception as e:
+                print(f"dashboard: taskkill pid={pid} failed: {e}", flush=True)
+        if pids:
+            time.sleep(0.8)
+    except Exception as e:
+        print(f"dashboard: force_free non-fatal: {e}", flush=True)
+
+
+def _run_uvicorn(port: int) -> None:
+    import uvicorn
+
+    # SO_REUSEADDR is default in uvicorn; bind 127.0.0.1 only
+    uvicorn.run(
+        "dashboard.app:app",
+        host="127.0.0.1",
+        port=port,
+        log_level="warning",
+        reload=False,
+        access_log=False,
+    )
 
 
 def _start_dashboard() -> None:
-    if not _port_free(PORT):
-        print(f"dashboard: port {PORT} already in use — reusing existing UI", flush=True)
+    """Bring Control Matrix up. Never silently skip."""
+    if _dashboard_healthy(PORT):
+        print(f"dashboard: healthy on :{PORT} — reusing", flush=True)
         return
-    try:
-        import uvicorn
 
-        uvicorn.run(
-            "dashboard.app:app",
-            host="127.0.0.1",
-            port=PORT,
-            log_level="warning",
-            reload=False,
+    if _port_listening(PORT):
+        print(
+            f"dashboard: :{PORT} listening but NOT healthy — force free + rebind",
+            flush=True,
         )
-    except Exception as e:
-        print(f"dashboard error: {e}", flush=True)
-        traceback.print_exc()
+        _force_free_port(PORT)
+
+    for attempt in range(1, 4):
+        try:
+            print(f"dashboard: starting uvicorn on :{PORT} (attempt {attempt})", flush=True)
+            _run_uvicorn(PORT)
+            # uvicorn.run blocks; if it returns, server stopped
+            print("dashboard: uvicorn exited", flush=True)
+            return
+        except OSError as e:
+            print(f"dashboard: bind failed attempt {attempt}: {e}", flush=True)
+            _force_free_port(PORT)
+            time.sleep(0.6 * attempt)
+        except Exception as e:
+            print(f"dashboard error: {e}", flush=True)
+            traceback.print_exc()
+            time.sleep(1.0)
+    print("dashboard: FAILED to bind after retries — UI will be down", flush=True)
+
+
+def _wait_dashboard(timeout_s: float = 8.0) -> bool:
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        if _dashboard_healthy(PORT):
+            return True
+        time.sleep(0.35)
+    return _dashboard_healthy(PORT)
 
 
 def main() -> int:
@@ -106,9 +201,17 @@ def main() -> int:
 
     t = threading.Thread(target=_start_dashboard, name="dashboard", daemon=True)
     t.start()
-    time.sleep(1.2)
 
-    if OPEN_BROWSER:
+    ok = _wait_dashboard(10.0)
+    if ok:
+        print(f"dashboard: HEALTHY {url}", flush=True)
+    else:
+        print(
+            f"dashboard: NOT HEALTHY after 10s — check port {PORT} / uvicorn logs",
+            flush=True,
+        )
+
+    if OPEN_BROWSER and ok:
         try:
             webbrowser.open(url)
         except Exception:
@@ -133,6 +236,7 @@ def main() -> int:
                         "phase": "boot_import_fail",
                         "error": f"{type(e).__name__}: {e}",
                         "root": str(ROOT),
+                        "dashboard_ok": ok,
                     },
                     indent=2,
                 ),
@@ -161,7 +265,14 @@ def main() -> int:
     except Exception as e:
         agent.log(f"startup liveness failed: {e}")
 
-    print(f"BOOT OK — UI {url} — poll loop", flush=True)
+    # Re-check dashboard after git reset (static files may have changed)
+    dash_ok = _dashboard_healthy(PORT)
+    print(
+        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll loop",
+        flush=True,
+    )
+    if not dash_ok:
+        agent.log("WARNING: dashboard not healthy at boot — operator surface unreachable")
 
     while True:
         try:

@@ -1,0 +1,16 @@
+{
+  "id": "p1_144_atomic_recompute_011504",
+  "class": "measure",
+  "note": "Phase C: atomic_rates + measure_tick after A+B gate_sample wave",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.atomic_rates import publish; print(publish())"],
+      "timeout": 90
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    }
+  ]
+}

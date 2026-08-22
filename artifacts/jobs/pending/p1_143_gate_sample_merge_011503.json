@@ -1,0 +1,12 @@
+{
+  "id": "p1_143_gate_sample_merge_011503",
+  "class": "gate_sample",
+  "note": "Phase A: gate_sample LIVE merge under measurement budget 300s — countable row",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "merge", "--max-steps", "10", "--timeout", "260", "--scoreboard", "artifacts/scoreboard_p1_143_merge_live.json"],
+      "timeout": 300
+    }
+  ]
+}

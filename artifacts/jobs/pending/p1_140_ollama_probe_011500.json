@@ -1,0 +1,12 @@
+{
+  "id": "p1_140_ollama_probe_011500",
+  "class": "fast",
+  "note": "Phase A diagnostic: Ollama first-token probe before LIVE measure",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "import time, os;\nfrom core.model_select import ensure_model_env;\nm=ensure_model_env(); os.environ['ETHER_PRIMARY_MODEL']=m; print('MODEL', m, flush=True);\nt0=time.perf_counter();\nfrom core.tool_runtime import make_llm_decide_fn;\nd=make_llm_decide_fn(temperature=0.0, max_tokens=64);\nmsgs=[{'role':'system','content':'Reply with ONE JSON only.'},{'role':'user','content':'Output {\"tool\": \"done\", \"args\": {\"reason\": \"probe\"}} now.'}];\nr=d(msgs); elapsed=time.perf_counter()-t0;\nprint('PROBE_OK', r, f'elapsed={elapsed:.2f}s', flush=True);\nassert isinstance(r, dict) and r.get('tool'), r"],
+      "timeout": 120
+    }
+  ]
+}

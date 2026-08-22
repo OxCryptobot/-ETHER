@@ -1,0 +1,12 @@
+{
+  "id": "p1_141_gate_sample_greeter_011501",
+  "class": "gate_sample",
+  "note": "Phase A+B: gate_sample LIVE greeter tight objective max_steps=8 under measurement budget 300s",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "greeter", "--max-steps", "8", "--timeout", "240", "--scoreboard", "artifacts/scoreboard_p1_141_greeter_live.json"],
+      "timeout": 300
+    }
+  ]
+}

@@ -1,13 +1,7 @@
 {
-  "job_id": "p1_122_gate_sample_merge_004502",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-22T00:49:38.259821+00:00",
-  "note": "gate_sample controlled live merge measurement budget 240s post-reload \u2014 primary honest_rate lift [failure_type=timeout]",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  },
-  "failure_type": "timeout"
+  "job_id": "p1_123_recompute_eligible_004503",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T00:51:27.916381+00:00",
+  "note": "Atomic recompute after post-reload gate_sample wave"
 }

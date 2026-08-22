@@ -1449,9 +1449,10 @@
     "p1_112_gate_sample_merge_002702",
     "p1_113_gate_sample_easy_both_002703",
     "p1_120_gate_sample_greeter_004500",
-    "p1_121_gate_sample_wallet_004501"
+    "p1_121_gate_sample_wallet_004501",
+    "p1_122_gate_sample_merge_004502"
   ],
-  "last_tick": "2026-08-22T00:48:08.222218+00:00",
+  "last_tick": "2026-08-22T00:49:42.237517+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1460,10 +1461,10 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "live_skip_remaining": 35,
-  "last_live_skip_reason": "p1_121_gate_sample_wallet_004501",
+  "last_live_skip_reason": "p1_122_gate_sample_merge_004502",
   "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-22T00:48:08.222819+00:00",
-  "next_job": "p1_122_gate_sample_merge_004502",
+  "generated": "2026-08-22T00:51:02.813697+00:00",
+  "next_job": "p1_123_recompute_eligible_004503",
   "queue_head": [
-    "p1_122_gate_sample_merge_004502",
     "p1_123_recompute_eligible_004503"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "p1_121_gate_sample_wallet_004501",
+  "queue_depth": 1,
+  "host_phase": "running",
+  "last_job": "p1_122_gate_sample_merge_004502",
   "last_ok": false,
   "last_failure_type": "timeout",
   "phase_board": [

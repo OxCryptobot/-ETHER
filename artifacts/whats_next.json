@@ -1,8 +1,14 @@
 {
-  "generated": "2026-08-22T02:55:29.272006+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-22T02:55:59.997424+00:00",
+  "next_job": "os1_01_operator_surface_smoke",
+  "queue_head": [
+    "os1_01_operator_surface_smoke",
+    "os1_02_chat_bus_roundtrip",
+    "p1_160_gate_sample_wallet_025200",
+    "p1_161_gate_sample_greeter_025201",
+    "p1_162_gate_sample_wallet_025202"
+  ],
+  "queue_depth": 5,
   "host_phase": "polling",
   "last_job": "p1_153_gate_sample_greeter_022203",
   "last_ok": true,

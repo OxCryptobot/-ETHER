@@ -1,15 +1,9 @@
 {
-  "job_id": "p1_153_gate_sample_greeter_022203",
+  "job_id": "os1_01_operator_surface_smoke",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T02:37:43.761272+00:00",
-  "note": "gate_sample controlled live greeter under hardened batch_phase_d \u2014 always countable row",
-  "class": "gate_sample",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-22T02:56:13.047343+00:00",
+  "note": "OS-1: import operator_surface + chat_bus + multi_llm + CLI help",
+  "class": "fast",
+  "measurement": false
 }

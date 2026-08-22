@@ -1,15 +1,15 @@
 {
-  "job_id": "p1_144_atomic_recompute_011504",
+  "job_id": "p1_130_ollama_probe_010900",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T01:48:43.594570+00:00",
-  "note": "Phase C: atomic_rates + measure_tick after A+B gate_sample wave",
-  "class": "measure",
+  "finished": "2026-08-22T01:49:05.260647+00:00",
+  "note": "DIAGNOSTIC: Ollama first-token probe \u2014 if this fails, live measurement cannot work",
+  "class": "fast",
   "measurement": true,
   "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
   }
 }

@@ -1,19 +1,18 @@
 {
-  "generated": "2026-08-22T01:48:43.514095+00:00",
+  "generated": "2026-08-22T01:48:47.413713+00:00",
   "next_job": "p1_130_ollama_probe_010900",
   "queue_head": [
     "p1_130_ollama_probe_010900",
     "p1_131_gate_sample_greeter_010901",
     "p1_132_gate_sample_wallet_010902",
     "p1_140_ollama_probe_011500",
-    "p1_144_atomic_recompute_011504",
     "playbook_live_timeout_learn_014651"
   ],
-  "queue_depth": 6,
-  "host_phase": "running",
-  "last_job": "p1_143_gate_sample_merge_011503",
-  "last_ok": false,
-  "last_failure_type": "timeout",
+  "queue_depth": 5,
+  "host_phase": "idle",
+  "last_job": "p1_144_atomic_recompute_011504",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

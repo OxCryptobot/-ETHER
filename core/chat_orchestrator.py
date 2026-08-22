@@ -3,14 +3,7 @@
 Operator message → intent → tools (git / status / jobs) and/or local Ollama
 → durable turn record → optional escalate to Grok via chat_bus.
 
-Doctrine (locked):
-- Training wheels stay ON.
-- One primary hypothesis per measuring turn.
-- Chat never bypasses train_gates or live_budget.
-- Local Ollama is primary reasoner; Grok is escalation channel.
-- Git write ops require explicit allow_write.
-
-This is the alternative control plane to the Grok chat window.
+2026-08-22c: clear_turns for Clear Chat; agent_reply type; session hygiene.
 """
 from __future__ import annotations
 
@@ -26,7 +19,6 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 TURNS = ROOT / "artifacts" / "chat" / "turns"
 LATEST = ROOT / "artifacts" / "chat_turn_latest.json"
 
-# Explicit escalate markers (operator can force Grok path)
 _ESCALATE_RE = re.compile(
     r"\b(ask\s+grok|escalate|hand\s*off\s*to\s*grok|@grok)\b",
     re.I,
@@ -54,7 +46,6 @@ def _ensure() -> None:
 
 
 def classify_intent(text: str) -> str:
-    """Rule-first intent. Deterministic under wheels; LLM refine is optional later."""
     t = (text or "").strip()
     if not t:
         return "empty"
@@ -66,7 +57,6 @@ def classify_intent(text: str) -> str:
         return "status"
     if _JOB_RE.search(t):
         return "job"
-    # short operational commands
     low = t.lower()
     if low in ("status", "rates", "doctor", "queue", "pending"):
         return "status"
@@ -76,7 +66,6 @@ def classify_intent(text: str) -> str:
 
 
 def _context_snapshot() -> Dict[str, Any]:
-    """Compact host context for local LLM system prompt."""
     out: Dict[str, Any] = {}
     for name in (
         "host_agent_status",
@@ -84,12 +73,12 @@ def _context_snapshot() -> Dict[str, Any]:
         "phase1_gate",
         "eligible_rates",
         "agent_state_latest",
+        "gpu_metrics",
     ):
         p = ROOT / "artifacts" / f"{name}.json"
         if p.exists():
             try:
                 data = json.loads(p.read_text(encoding="utf-8"))
-                # bound size
                 raw = json.dumps(data, default=str)
                 out[name] = json.loads(raw[:2500]) if len(raw) > 2500 else data
             except Exception:
@@ -110,7 +99,6 @@ def _run_git_intent(text: str, *, allow_write: bool = False) -> Dict[str, Any]:
     if "show" in low:
         return gt.git_show("HEAD")
     if "commit" in low and allow_write:
-        # extract message after commit
         m = re.search(r"commit\s+['\"]?(.+?)['\"]?$", text, re.I)
         msg = (m.group(1).strip() if m else "chat orchestrator commit")[:200]
         return gt.git_commit(message=msg, allow_write=True)
@@ -136,7 +124,6 @@ def _run_status_intent(text: str) -> Dict[str, Any]:
 
 
 def _run_job_intent(text: str) -> Dict[str, Any]:
-    """Conservative: only enqueue easy gate_sample when explicitly asked under wheels."""
     from core import operator_surface as osurf
 
     low = text.lower()
@@ -149,8 +136,7 @@ def _run_job_intent(text: str) -> Dict[str, Any]:
     if "merge" in low:
         fixtures.append("merge")
     if not fixtures:
-        fixtures = ["greeter", "wallet"]  # easy-only default
-    # refuse merge-only hard path without critique signal — still allow if listed
+        fixtures = ["greeter", "wallet"]
     paths = []
     for fx in fixtures[:3]:
         try:
@@ -175,7 +161,7 @@ def _run_local_llm(text: str, *, lane: str = "fast") -> Dict[str, Any]:
     system = (
         "You are ETHER, a local-first agentic coding OS on the operator host.\n"
         "Training wheels are ON. Be concise, factual, and tool-aware.\n"
-        "You may reference host status, rates, and git state from context.\n"
+        "You may reference host status, rates, GPU, and git state from context.\n"
         "Never claim soft-launch is enabled. Never invent job results.\n"
         "If the operator needs Grok, say so and suggest escalate.\n"
         f"Context JSON (bounded):\n{json.dumps(ctx, default=str)[:3500]}\n"
@@ -196,7 +182,9 @@ def _run_local_llm(text: str, *, lane: str = "fast") -> Dict[str, Any]:
     }
 
 
-def _escalate_to_grok(text: str, *, job_id: Optional[str] = None, parent_id: Optional[str] = None) -> Dict[str, Any]:
+def _escalate_to_grok(
+    text: str, *, job_id: Optional[str] = None, parent_id: Optional[str] = None
+) -> Dict[str, Any]:
     from core.chat_bus import envelope, send
 
     env = envelope(
@@ -240,14 +228,13 @@ def _bind_agent_state(text: str, intent: str, turn_id: str) -> None:
 
 
 def _reply_to_inbox(turn: Dict[str, Any]) -> None:
-    """Write agent reply into chat inbox so dashboard shows bidirectional flow."""
     try:
         from core.chat_bus import envelope, send
 
         content = turn.get("reply") or ""
         env = envelope(
             from_actor="ether",
-            type_="status",
+            type_="agent_reply",
             payload={
                 "text": content,
                 "turn_id": turn.get("id"),
@@ -258,7 +245,6 @@ def _reply_to_inbox(turn: Dict[str, Any]) -> None:
             parent_id=turn.get("id"),
             requires_reply=False,
         )
-        # inbox = Grok/ETHER → operator view
         send(env, to_grok=False)
     except Exception:
         pass
@@ -275,6 +261,39 @@ def _persist(turn: Dict[str, Any]) -> Path:
     return path
 
 
+def clear_turns() -> Dict[str, Any]:
+    """Delete durable turn records + latest pointer (used by Clear Chat)."""
+    _ensure()
+    n = 0
+    for p in list(TURNS.glob("turn_*.json")):
+        try:
+            p.unlink()
+            n += 1
+        except OSError:
+            pass
+    if LATEST.exists():
+        try:
+            LATEST.unlink()
+        except OSError:
+            pass
+    return {"ok": True, "cleared_turns": n, "updated": _now()}
+
+
+def clear_chat(*, keep_archive: bool = True) -> Dict[str, Any]:
+    """Full session clear: bus + turns. Best UX for idle accumulation."""
+    from core.chat_bus import clear_session
+
+    bus = clear_session(keep_archive=keep_archive)
+    turns = clear_turns()
+    return {
+        "ok": True,
+        "bus": bus,
+        "turns": turns,
+        "updated": _now(),
+        "note": "Chat session cleared. Archive retained." if keep_archive else "Hard wipe including archive.",
+    }
+
+
 def turn(
     message: str,
     *,
@@ -283,11 +302,6 @@ def turn(
     force_channel: Optional[str] = None,
     lane: str = "fast",
 ) -> Dict[str, Any]:
-    """Execute one orchestrated chat turn.
-
-    force_channel: 'local' | 'grok' | 'status' | 'git' | 'job' to skip classify.
-    allow_write: required for git_commit.
-    """
     text = (message or "").strip()
     turn_id = f"turn_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
     intent = force_channel or classify_intent(text)
@@ -301,6 +315,7 @@ def turn(
             "reply": "Empty message.",
             "tool_results": [],
             "training_wheels": True,
+            "schema": "ether_chat_turn_v1",
         }
         _persist(out)
         return out
@@ -312,7 +327,6 @@ def turn(
 
     try:
         if intent == "escalate_grok" or force_channel == "grok":
-            # strip escalate markers for cleaner payload
             clean = _ESCALATE_RE.sub("", text).strip() or text
             r = _escalate_to_grok(clean, job_id=job_id, parent_id=turn_id)
             tool_results.append(r)
@@ -325,7 +339,6 @@ def turn(
             tool_results.append(r)
             channel = "git"
             ok = bool(r.get("ok"))
-            # human-readable reply
             if r.get("tool") == "git_status":
                 reply = (
                     f"branch: {r.get('branch_line') or '—'}\n"
@@ -339,7 +352,9 @@ def turn(
             elif r.get("tool") == "git_branch":
                 reply = r.get("branches") or "(no branches)"
             else:
-                reply = json.dumps({k: v for k, v in r.items() if k != "diff"}, indent=2, default=str)[:3000]
+                reply = json.dumps(
+                    {k: v for k, v in r.items() if k != "diff"}, indent=2, default=str
+                )[:3000]
             if not ok:
                 reply = f"git tool failed: {r.get('error') or reply}"
 
@@ -348,7 +363,6 @@ def turn(
             tool_results.append(r)
             channel = "status"
             ok = True
-            # compact status reply
             if r.get("tool") == "doctor":
                 issues = r.get("issues") or []
                 reply = "doctor: " + ("; ".join(issues) if issues else "OK")
@@ -356,7 +370,10 @@ def turn(
                 p1 = r.get("phase1_gate") or {}
                 el = r.get("eligible_rates") or {}
                 rate = p1.get("honest_rate_eligible", el.get("honest_rate_eligible"))
-                reply = f"honest_rate_eligible={rate} · live_n={p1.get('live_eligible_n') or el.get('live_eligible_n')}"
+                reply = (
+                    f"honest_rate_eligible={rate} · "
+                    f"live_n={p1.get('live_eligible_n') or el.get('live_eligible_n')}"
+                )
             else:
                 host = r.get("host") or {}
                 last = r.get("last_job") or {}
@@ -378,15 +395,16 @@ def turn(
             )
 
         else:
-            # local_llm default
             r = _run_local_llm(text, lane=lane)
             tool_results.append(r)
             channel = "local"
             ok = bool(r.get("ok"))
             reply = r.get("content") or r.get("error") or "(empty local reply)"
             if not ok:
-                # soft-fallback: still post to bus so operator sees something
-                reply = f"local LLM unavailable ({r.get('error')}). Say 'ask grok' to escalate."
+                reply = (
+                    f"local LLM unavailable ({r.get('error')}). "
+                    "Say 'ask grok' to escalate."
+                )
 
     except Exception as e:
         ok = False

@@ -52,6 +52,23 @@ def run() -> Dict[str, Any]:
     steps: Dict[str, Any] = {}
     errors: List[str] = []
 
+    # Phase C: atomic rates FIRST so eligible / phase1_gate / honest_live agree
+    try:
+        from core.atomic_rates import publish as atomic_publish
+
+        atomic = atomic_publish()
+        steps["atomic_rates"] = {
+            "ok": bool(atomic.get("ok")),
+            "eligible": atomic.get("eligible"),
+            "phase1_gate": atomic.get("phase1_gate"),
+            "honest_live": atomic.get("honest_live"),
+        }
+        if not atomic.get("ok"):
+            errors.extend(atomic.get("errors") or ["atomic_rates"])
+    except Exception as e:
+        errors.append(f"atomic_rates:{e}")
+        steps["atomic_rates"] = {"ok": False, "error": str(e)[:200]}
+
     try:
         from core.honest_live import publish
 
@@ -113,22 +130,13 @@ def run() -> Dict[str, Any]:
             lambda: __import__("core.push_hygiene", fromlist=["compute"]).compute(),
         ),
         (
-            "eligible_rates",
-            lambda: __import__("core.eligible_rates", fromlist=["compute"]).compute(),
-        ),
-        (
             "host_health",
             lambda: __import__("core.host_health", fromlist=["compute"]).compute(),
-        ),
-        (
-            "phase1_gate",
-            lambda: __import__("core.phase1_gate", fromlist=["compute"]).compute(),
         ),
         (
             "honest_path_progress",
             lambda: __import__("core.honest_path_progress", fromlist=["compute"]).compute(),
         ),
-        # Phase 2A surfaces (ARCH_GO under wheels ON)
         (
             "pipeline_terminal_canary",
             lambda: __import__("core.pipeline_terminal_canary", fromlist=["run_matrix"]).run_matrix(),

@@ -6,7 +6,8 @@
 
 Dashboard thread + host_agent poll loop. No second terminal.
 
-2026-08-22: Idle auto_rate_climb + GPU metrics source watch.
+2026-08-22f: Streamlined boot — minimal source-watch, no forced rate-climb on soft reload,
+aggressive log hygiene. Stops the reload death-spiral.
 """
 from __future__ import annotations
 
@@ -30,24 +31,14 @@ sys.path.insert(0, str(ROOT))
 PORT = int(os.environ.get("ETHER_DASH_PORT") or "8787")
 OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "1").strip() != "0"
 
+# CRITICAL ONLY — do not watch the entire core/ tree. Report pushes and measure ticks
+# must NOT trigger exit 42. Only true code that changes process behavior.
 _WATCHED = (
     "scripts/host_agent.py",
     "scripts/ether_host.py",
     "scripts/foreman.py",
-    "core/auto_rate_climb.py",
-    "core/gpu_metrics.py",
-    "core/live_budget.py",
-    "core/latency_budget.py",
-    "core/job_class.py",
-    "core/eligible_rates.py",
-    "core/phase1_gate.py",
-    "core/multi_llm.py",
-    "core/operator_surface.py",
-    "core/chat_bus.py",
-    "core/chat_orchestrator.py",
     "dashboard/app.py",
     "dashboard/static/agent.html",
-    "dashboard/collector_host_agent.py",
 )
 
 try:
@@ -190,17 +181,32 @@ def _reload_foreman():
     return importlib.reload(foreman_mod)
 
 
+def _hygiene_log() -> None:
+    """Keep host_agent_log small so git/status stay fast."""
+    log_path = ROOT / "artifacts" / "host_agent_log.txt"
+    try:
+        if log_path.exists() and log_path.stat().st_size > 4 * 1024 * 1024:
+            bak = log_path.with_suffix(".txt.prev")
+            if bak.exists():
+                bak.unlink()
+            log_path.rename(bak)
+            print(f"boot: rotated host_agent_log ({log_path.name})", flush=True)
+    except Exception as e:
+        print(f"boot: log hygiene non-fatal: {e}", flush=True)
+
+
 def main() -> int:
     url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — one window + GPU metrics + auto_rate_climb", flush=True)
+    print("  ETHER HOST — streamlined boot + dual-chat ready", flush=True)
     print(f"  UI     {url}", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
     print("=" * 56, flush=True)
 
+    _hygiene_log()
     boot_snap = _snapshot()
-    print(f"boot source snap: {boot_snap}", flush=True)
+    print(f"boot source snap (minimal watch): {boot_snap}", flush=True)
 
     t = threading.Thread(target=_start_dashboard, name="dashboard", daemon=True)
     t.start()
@@ -261,8 +267,10 @@ def main() -> int:
     except Exception as e:
         agent.log(f"foreman boot failed (non-fatal): {e}")
 
+    # Soft boot: do NOT force rate-climb every restart (was causing extra work + churn).
+    # Idle loop will climb when pending is empty and rates lag.
     try:
-        agent.maybe_auto_rate_climb(force=True)
+        agent.maybe_auto_rate_climb(force=False)
     except Exception as e:
         agent.log(f"boot auto_rate_climb: {type(e).__name__}: {e}")
 

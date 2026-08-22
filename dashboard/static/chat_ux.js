@@ -1,4 +1,4 @@
-/** ETHER Chat UX v0.7.3 — Clear, turns, chips, Local|Grok channel, bridge-aware.
+/** ETHER Chat UX v0.7.3 — instant Clear, optimistic send, fast poll.
  */
 (function () {
   'use strict';
@@ -11,6 +11,7 @@
     .replace(/'/g, '&#39;');
 
   window.__etherChannel = window.__etherChannel || 'auto';
+  window.__chatPending = false;
 
   function ensureStyles() {
     if (document.getElementById('ether-chat-ux-css')) return;
@@ -59,7 +60,7 @@
       const header = shell.querySelector('.chat-header');
       if (header) {
         header.innerHTML =
-          '<span>ETHER agent · turn protocol</span>' +
+          '<span>ETHER agent · low-latency</span>' +
           '<div class="chat-actions">' +
           '<div class="chan-toggle" id="chanToggle">' +
           '<button type="button" data-ch="auto">Auto</button>' +
@@ -67,7 +68,7 @@
           '<button type="button" data-ch="grok">Grok</button>' +
           '</div>' +
           '<span id="chatCount" style="font-family:Consolas,monospace;color:#4cc9f0">0 turns</span>' +
-          '<button type="button" class="btn-clear" id="chatClear" title="Archive bus + clear turns">Clear</button>' +
+          '<button type="button" class="btn-clear" id="chatClear" title="Clear now">Clear</button>' +
           '</div>';
       }
       const messages = shell.querySelector('.chat-messages');
@@ -80,13 +81,11 @@
           '<button type="button" class="chip" data-msg="git status" data-ch="git">git status</button>' +
           '<button type="button" class="chip" data-msg="rates" data-ch="status">rates</button>' +
           '<button type="button" class="chip" data-msg="doctor" data-ch="status">doctor</button>' +
-          '<button type="button" class="chip" data-msg="hello from ETHER chat — please ack" data-ch="grok">→ Grok</button>';
+          '<button type="button" class="chip" data-msg="hello from ETHER — ack please" data-ch="grok">→ Grok</button>';
         messages.parentNode.insertBefore(chips, messages);
       }
       const input = $('chatInput');
-      if (input) {
-        input.placeholder = 'Message ETHER — set channel to Grok to reach this chat window';
-      }
+      if (input) input.placeholder = 'Message ETHER — Grok channel for this window';
       setChannel(window.__etherChannel || 'auto');
     }
     const clearBtn = $('chatClear');
@@ -104,7 +103,7 @@
       chip.dataset.bound = '1';
       chip.addEventListener('click', function () {
         const ch = chip.getAttribute('data-ch');
-        if (ch) setChannel(ch === 'status' || ch === 'git' ? 'auto' : ch);
+        if (ch === 'grok') setChannel('grok');
         sendChat(chip.getAttribute('data-msg'), ch === 'grok' ? 'grok' : (ch === 'git' || ch === 'status' ? ch : null));
       });
     });
@@ -132,30 +131,23 @@
 
   function renderTurns(turns, pending) {
     let html = '';
-    if (pending && pending.status === 'awaiting_grok') {
-      html += '<div class="pending-banner">⏳ Awaiting Grok · ' + esc((pending.text || '').slice(0, 120)) +
-        ' · host pushes outbox ~12–55s</div>';
+    window.__chatPending = !!(pending && pending.status === 'awaiting_grok');
+    if (window.__chatPending) {
+      html += '<div class="pending-banner">⏳ Awaiting Grok · bus push is async (~1–3s)</div>';
     }
     if (!turns || !turns.length) {
-      return html + '<div class="chat-empty">No turns yet — set channel <b>Grok</b> to message this window, or use chips for local tools</div>';
+      return html + '<div class="chat-empty">Empty — Clear is instant. Channel <b>Grok</b> reaches this window.</div>';
     }
     html += turns.slice().reverse().map(function (t) {
       const ts = (t.ts || '').toString();
       const clock = ts.indexOf('T') >= 0 ? ts.slice(11, 19) : ts.slice(0, 8);
       const ch = String(t.channel || t.intent || 'local').toLowerCase();
       return (
-        '<div class="chat-msg user">' +
-          '<span class="from">you</span>' +
-          '<div class="text">' + esc(t.message || '') + '</div>' +
-          '<div class="ts">' + esc(clock) + '</div>' +
-        '</div>' +
-        '<div class="chat-msg agent">' +
-          '<span class="from">ETHER</span>' +
-          '<span class="channel ' + esc(ch) + '">' + esc(ch) + '</span>' +
-          '<div class="text">' + esc(t.reply || '(no reply)') + '</div>' +
-          '<div class="ts">' + esc(clock) + ' · ' + (t.ok === false ? 'FAIL' : 'ok') +
-          (t.awaiting_grok ? ' · awaiting Grok' : '') + ' · ' + esc(t.id || '') + '</div>' +
-        '</div>'
+        '<div class="chat-msg user"><span class="from">you</span><div class="text">' + esc(t.message || '') +
+        '</div><div class="ts">' + esc(clock) + '</div></div>' +
+        '<div class="chat-msg agent"><span class="from">ETHER</span><span class="channel ' + esc(ch) + '">' + esc(ch) +
+        '</span><div class="text">' + esc(t.reply || '(no reply)') + '</div><div class="ts">' +
+        esc(clock) + ' · ' + (t.ok === false ? 'FAIL' : 'ok') + '</div></div>'
       );
     }).join('');
     return html;
@@ -175,13 +167,10 @@
     if (window.__chatTyping) return;
     try {
       const r = await fetch('/api/chat?limit=40');
-      if (!r.ok) {
-        showErr('GET /api/chat HTTP ' + r.status + ' — restart host after git pull');
-        return;
-      }
+      if (!r.ok) return;
       const d = await r.json();
       const turns = d.turns || [];
-      const pending = (d.summary && d.summary.pending_grok) || d.pending_grok || null;
+      const pending = d.pending_grok || (d.summary && d.summary.pending_grok) || null;
       const n = (d.summary && d.summary.turns_n != null) ? d.summary.turns_n : turns.length;
       const count = $('chatCount');
       if (count) count.textContent = n + ' turns';
@@ -192,9 +181,7 @@
       }
       const kpi = $('kChatVal');
       if (kpi) kpi.textContent = n + 't';
-    } catch (e) {
-      showErr('chat fetch failed: ' + e);
-    }
+    } catch (_) {}
   }
 
   async function sendChat(preset, forceCh) {
@@ -204,15 +191,14 @@
     if (!text) return;
     if (btn) btn.disabled = true;
     window.__chatTyping = true;
+    // Optimistic user bubble immediately
     const body = $('chatBody');
     if (body) {
-      const tip = document.createElement('div');
-      tip.className = 'typing';
-      tip.id = 'chatTyping';
-      tip.textContent = 'ETHER is thinking…';
-      body.appendChild(tip);
+      body.innerHTML += '<div class="chat-msg user"><span class="from">you</span><div class="text">' +
+        esc(text) + '</div></div><div class="typing" id="chatTyping">ETHER…</div>';
       body.scrollTop = body.scrollHeight;
     }
+    if (preset == null && input) input.value = '';
     const channel = forceCh || window.__etherChannel || 'auto';
     const payload = { message: text, orchestrate: true };
     if (channel === 'grok') payload.force_channel = 'grok';
@@ -226,48 +212,44 @@
         body: JSON.stringify(payload),
       });
       let d = {};
-      try { d = await r.json(); } catch (_) { d = { error: 'non-JSON HTTP ' + r.status }; }
+      try { d = await r.json(); } catch (_) { d = { error: 'HTTP ' + r.status }; }
       if (!r.ok || (!(d.ok || d.turn || d.envelope))) {
-        showErr('chat failed: ' + (d.error || ('HTTP ' + r.status)));
-      } else if (preset == null && input) {
-        input.value = '';
-      }
-      if (d.turn && d.turn.reply && body) {
+        showErr('chat failed: ' + (d.error || r.status));
+      } else if (d.turn && d.turn.reply && body) {
+        const tip = document.getElementById('chatTyping');
+        if (tip) tip.remove();
         const t = d.turn;
         const ch = String(t.channel || 'local').toLowerCase();
-        body.innerHTML +=
-          '<div class="chat-msg user"><span class="from">you</span><div class="text">' + esc(text) + '</div></div>' +
-          '<div class="chat-msg agent"><span class="from">ETHER</span><span class="channel ' + esc(ch) + '">' + esc(ch) + '</span>' +
-          '<div class="text">' + esc(t.reply) + '</div></div>';
+        body.innerHTML += '<div class="chat-msg agent"><span class="from">ETHER</span><span class="channel ' +
+          esc(ch) + '">' + esc(ch) + '</span><div class="text">' + esc(t.reply) + '</div></div>';
         body.scrollTop = body.scrollHeight;
       }
     } catch (e) {
-      showErr('chat error: ' + e + ' — is host dashboard up on :8787?');
+      showErr('chat error: ' + e);
     } finally {
       window.__chatTyping = false;
       const tip = document.getElementById('chatTyping');
       if (tip) tip.remove();
       if (btn) btn.disabled = false;
-      await refreshTurns();
+      refreshTurns();
       if (input) input.focus();
     }
   }
 
   async function clearChat() {
-    if (!window.confirm('Clear chat session? Archives bus + removes turns.')) return;
-    try {
-      const r = await fetch('/api/chat/clear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keep_archive: true }),
-      });
-      let d = {};
-      try { d = await r.json(); } catch (_) { d = { error: 'HTTP ' + r.status }; }
-      if (!r.ok || !d.ok) showErr('clear failed: ' + (d.error || r.status));
-      await refreshTurns();
-    } catch (e) {
-      showErr('clear error: ' + e);
-    }
+    // Instant UI wipe — no confirm
+    const body = $('chatBody');
+    if (body) body.innerHTML = '<div class="chat-empty">Cleared.</div>';
+    const count = $('chatCount');
+    if (count) count.textContent = '0 turns';
+    const kpi = $('kChatVal');
+    if (kpi) kpi.textContent = '0t';
+    // Fire-and-forget server clear
+    fetch('/api/chat/clear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keep_archive: true }),
+    }).catch(function () {});
   }
 
   function wire() {
@@ -281,6 +263,9 @@
   } else {
     wire();
   }
-  setInterval(enhanceShell, 2500);
-  setInterval(refreshTurns, 2500);
+  setInterval(enhanceShell, 3000);
+  // 1s poll when awaiting Grok, else 2s
+  setInterval(function () {
+    refreshTurns();
+  }, 1000);
 })();

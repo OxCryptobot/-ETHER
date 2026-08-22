@@ -1,14 +1,6 @@
-"""Chat bridge — ETHER ↔ Grok bidirectional channel over git-backed bus.
+"""Chat bridge — ETHER ↔ Grok over git-backed bus + immediate dashboard push.
 
-Why this exists:
-  escalate_to_grok only wrote artifacts/chat/outbox locally. Grok never saw it
-  until something pushed those files to origin. This module is the contract:
-
-  ETHER (host) → outbox + pending_grok.json → host_agent pushes artifacts/chat/
-  Grok (this chat) → reads outbox via GitHub → writes inbox reply → host pulls
-  Dashboard → turns + inbox → operator sees the reply
-
-Training wheels stay ON. Chat never bypasses gates.
+2026-08-22e: escalate text promises immediate push via chat_sync, not 55s.
 """
 from __future__ import annotations
 
@@ -31,7 +23,6 @@ def _now() -> str:
 
 
 def mark_dirty() -> None:
-    """Signal host_agent to include artifacts/chat/ on next liveness push."""
     try:
         CHAT.mkdir(parents=True, exist_ok=True)
         DIRTY.write_text(_now(), encoding="utf-8")
@@ -52,7 +43,6 @@ def is_dirty() -> bool:
 
 
 def chat_paths_for_push() -> List[str]:
-    """Paths host_agent should force-add when bus is dirty or always on liveness."""
     paths: List[str] = []
     if not CHAT.exists():
         return paths
@@ -60,13 +50,8 @@ def chat_paths_for_push() -> List[str]:
         d = CHAT / sub
         if d.exists():
             paths.append(f"artifacts/chat/{sub}")
-    for name in ("pending_grok.json", "chat_turn_latest.json"):
-        p = CHAT.parent / name if name.startswith("chat_turn") else CHAT / name
-        # chat_turn_latest lives under artifacts/
-        if name == "chat_turn_latest.json":
-            p = ROOT / "artifacts" / "chat_turn_latest.json"
-        if p.exists():
-            paths.append(str(p.relative_to(ROOT)).replace("\\", "/"))
+    if (CHAT / "pending_grok.json").exists():
+        paths.append("artifacts/chat/pending_grok.json")
     if (ROOT / "artifacts" / "chat_turn_latest.json").exists():
         paths.append("artifacts/chat_turn_latest.json")
     return paths
@@ -122,7 +107,6 @@ def post_grok_reply(
     parent_id: Optional[str] = None,
     turn_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Grok → operator. Writes inbox envelope so dashboard shows the reply."""
     from core.chat_bus import envelope, send
 
     env = envelope(
@@ -137,7 +121,7 @@ def post_grok_reply(
         parent_id=parent_id,
         requires_reply=False,
     )
-    path = send(env, to_grok=False)  # inbox
+    path = send(env, to_grok=False)
     clear_pending_grok()
     mark_dirty()
     return {
@@ -155,7 +139,6 @@ def escalate(
     parent_id: Optional[str] = None,
     turn_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Operator → Grok. Writes outbox + pending_grok + dirty flag."""
     from core.chat_bus import envelope, send
 
     env = envelope(
@@ -165,13 +148,13 @@ def escalate(
             "text": text,
             "routed": "escalate_grok",
             "turn_id": turn_id,
-            "note": "Awaiting Grok reply via chat bridge",
+            "note": "Awaiting Grok — bus pushed immediately by dashboard",
         },
         job_id=job_id,
         requires_reply=True,
         parent_id=parent_id or turn_id,
     )
-    path = send(env, to_grok=True)  # outbox
+    path = send(env, to_grok=True)
     pending = set_pending_grok(env["id"], text, turn_id=turn_id)
     return {
         "tool": "escalate_grok",
@@ -180,9 +163,8 @@ def escalate(
         "path": str(path.relative_to(ROOT)).replace("\\", "/"),
         "pending": pending,
         "content": (
-            "Message queued for Grok (outbox + pending_grok). "
-            "Host will push artifacts/chat/ on next liveness cycle (~55s). "
-            "Reply will appear in Chat when Grok writes inbox."
+            "Queued for Grok. Dashboard pushes the bus immediately (async). "
+            "Stay on channel Grok; reply appears when Grok writes inbox."
         ),
     }
 

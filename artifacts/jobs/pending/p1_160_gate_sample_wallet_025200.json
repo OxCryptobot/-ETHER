@@ -1,0 +1,12 @@
+{
+  "id": "p1_160_gate_sample_wallet_025200",
+  "note": "gate_sample controlled live wallet under operator surface — always countable row",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--mode", "live", "--tier", "easy", "--fixture", "wallet", "--arm", "direct", "--max-steps", "8", "--timeout", "280", "--scoreboard", "artifacts/scoreboard_p1_160_wallet_live.json"],
+      "timeout": 300
+    }
+  ]
+}

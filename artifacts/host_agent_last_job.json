@@ -1,10 +1,10 @@
 {
-  "job_id": "p1_133_recompute_010903",
+  "job_id": "p1_141_gate_sample_greeter_011501",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T01:35:48.697427+00:00",
-  "note": "Recompute after hardened countable gate_sample wave",
-  "class": "measure",
+  "finished": "2026-08-22T01:39:03.195134+00:00",
+  "note": "Phase A+B: gate_sample LIVE greeter tight objective max_steps=8 under measurement budget 300s",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

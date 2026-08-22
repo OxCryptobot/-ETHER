@@ -7,6 +7,7 @@ import re
 import shutil
 import traceback
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
@@ -18,7 +19,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.2")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.3")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -37,6 +38,19 @@ class HealthBody(BaseModel):
     skip_sandbox: bool = True
 
 
+class ChatPostBody(BaseModel):
+    message: str
+    job_id: Optional[str] = None
+
+
+class TestEnqueueBody(BaseModel):
+    fixture: str
+    live: bool = False
+    arm: str = "direct"
+    max_steps: int = 8
+    timeout: int = 280
+
+
 def _safe_snapshot() -> dict:
     try:
         from dashboard.collector import collect_snapshot
@@ -44,7 +58,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.2"
+        data["api_version"] = "0.5.3"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -150,7 +164,7 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.5.2",
+        "version": "0.5.3",
         "truth": "host_agent_local",
         "git_required": False,
         "host": {
@@ -224,6 +238,80 @@ def reconcile_tools(body: ReconcileBody) -> dict:
         from core.tool_reconcile import reconcile
 
         return reconcile(promote_threshold=body.threshold, dry_run=body.dry_run)
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+# ── Operator Surface endpoints (OS-1) ──────────────────────────────────────
+
+@app.get("/api/rates")
+def rates_api() -> dict:
+    try:
+        from core.operator_surface import rates
+
+        return rates()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/operator")
+def operator_api() -> dict:
+    try:
+        from core.operator_surface import status, doctor
+
+        return {"status": status(), "doctor": doctor()}
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/llm")
+def llm_api() -> dict:
+    try:
+        from core.multi_llm import publish
+
+        return publish()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/chat")
+def chat_list(limit: int = 20) -> dict:
+    try:
+        from core.chat_bus import receive, summary
+
+        return {
+            "summary": summary(),
+            "inbox": receive(from_grok=True, limit=limit),
+            "outbox": receive(from_grok=False, limit=limit),
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.post("/api/chat")
+def chat_post(body: ChatPostBody) -> dict:
+    try:
+        from core.operator_surface import chat_post as cp
+
+        env = cp(body.message, job_id=body.job_id)
+        return {"ok": True, "envelope": env}
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.post("/api/test")
+def test_enqueue(body: TestEnqueueBody) -> dict:
+    try:
+        from core.operator_surface import run_test
+
+        path = run_test(
+            body.fixture,
+            live=body.live,
+            arm=body.arm,
+            max_steps=body.max_steps,
+            timeout=body.timeout,
+        )
+        return {"ok": True, "job": path.name}
     except Exception as e:
         raise HTTPException(500, str(e)) from e
 

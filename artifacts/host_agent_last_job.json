@@ -1,9 +1,15 @@
 {
-  "job_id": "os1_02_chat_bus_roundtrip",
+  "job_id": "p1_160_gate_sample_wallet_025200",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T02:56:17.313517+00:00",
-  "note": "OS-1: chat_bus post + receive + archive roundtrip",
-  "class": "fast",
-  "measurement": false
+  "finished": "2026-08-22T02:59:37.776636+00:00",
+  "note": "gate_sample controlled live wallet under operator surface \u2014 always countable row",
+  "class": "gate_sample",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

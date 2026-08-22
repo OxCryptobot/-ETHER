@@ -1,17 +1,9 @@
 {
-  "job_id": "p1_174_gate_sample_merge_042202",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-22T04:46:09.585056+00:00",
-  "note": "gate_sample controlled live merge measurement budget \u2014 post-UX 0.6 rate climb (hard eligible, not denylisted)",
-  "class": "gate_sample",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_p1_174_merge_live.json"
+  "job_id": "critique_hyp_p1_174_gate_sample_merge_042202_044609",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T04:46:17.921691+00:00",
+  "note": "playbook:labradorite for p1_174_gate_sample_merge_042202 [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true
 }

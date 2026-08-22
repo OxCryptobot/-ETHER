@@ -1,9 +1,15 @@
 {
-  "job_id": "chat_e2e_smoke_2148",
+  "job_id": "auto_rc_wallet_204607_1",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T21:59:31.640124+00:00",
-  "note": "chat e2e smoke: status + escalate_grok bridge \u2014 countable",
-  "class": "fast",
-  "measurement": true
+  "finished": "2026-08-22T23:08:04.135317+00:00",
+  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9355<0.99) under wheels \u2014 host autonomy",
+  "class": "gate_sample",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

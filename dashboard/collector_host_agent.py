@@ -1,12 +1,9 @@
-"""Collect host_agent job queue, logs, foreman, apprentice lessons, RLHF, moonshots.
+"""Collect host_agent job queue, logs, foreman, apprentice lessons, RLHF, moonshots, GPU.
 
 Path rule (non-negotiable): read what host_agent writes under artifacts/.
 Never rely on memory/ for remote observability — it is gitignored.
 
-2026-08-15 Control Matrix host-first:
-- job class mix (fast/live/any)
-- moonshot panels (smoothness, honest KPI, latency SLO, …)
-- NO legacy flywheel/guardian/batch as primary health
+2026-08-22: GPU metrics from host_agent_status.gpu + artifacts/gpu_metrics.json
 """
 from __future__ import annotations
 
@@ -32,6 +29,7 @@ PREF_SUMMARY = ROOT / "artifacts" / "preference_summary.json"
 STRATEGY_STATS = ROOT / "artifacts" / "strategy_stats.json"
 WHATS_NEXT = ROOT / "artifacts" / "whats_next.json"
 PERF_BENCH = ROOT / "artifacts" / "performance_benchmark.json"
+GPU_METRICS = ROOT / "artifacts" / "gpu_metrics.json"
 ARTIFACTS = ROOT / "artifacts"
 
 
@@ -358,6 +356,38 @@ def _perf_summary(bench: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _gpu_block(status: Dict[str, Any]) -> Dict[str, Any]:
+    """Prefer live status.gpu; fall back to artifacts/gpu_metrics.json."""
+    gpu = status.get("gpu") if isinstance(status.get("gpu"), dict) else {}
+    if not gpu or not gpu.get("ok"):
+        file_gpu = _read_json(GPU_METRICS)
+        if file_gpu.get("ok"):
+            gpu = {
+                "ok": True,
+                "available": True,
+                "name": file_gpu.get("name"),
+                "util_gpu_pct": file_gpu.get("util_gpu_pct"),
+                "mem_used_mb": file_gpu.get("mem_used_mb"),
+                "mem_total_mb": file_gpu.get("mem_total_mb"),
+                "temp_c": file_gpu.get("temp_c"),
+                "warn": file_gpu.get("warn") or [],
+                "updated": file_gpu.get("updated"),
+                "source": "gpu_metrics.json",
+            }
+        elif file_gpu:
+            gpu = {
+                "ok": False,
+                "available": bool(file_gpu.get("available")),
+                "error": file_gpu.get("error"),
+                "updated": file_gpu.get("updated"),
+                "source": "gpu_metrics.json",
+            }
+    else:
+        gpu = dict(gpu)
+        gpu.setdefault("source", "host_agent_status")
+    return gpu
+
+
 def collect_host_agent() -> Dict[str, Any]:
     pending = _list_jobs(PENDING)
     done = _list_jobs(DONE, limit=60)
@@ -373,6 +403,7 @@ def collect_host_agent() -> Dict[str, Any]:
     critiques = _critique_backlog()
     whats_next = _read_json(WHATS_NEXT)
     perf_bench = _read_json(PERF_BENCH)
+    gpu = _gpu_block(status)
 
     agent_alive = False
     if status.get("heartbeat"):
@@ -406,6 +437,7 @@ def collect_host_agent() -> Dict[str, Any]:
         "status": status,
         "last_job": last,
         "whats_next": whats_next,
+        "gpu": gpu,
         "queue": {
             "pending": pending,
             "done": done,
@@ -429,6 +461,7 @@ def collect_host_agent() -> Dict[str, Any]:
             "last_failure_type": last.get("failure_type")
             or status.get("last_failure_type"),
             "performance": perf,
+            "gpu": gpu,
         },
         "moonshots": moonshots,
         "performance_benchmark": perf_bench
@@ -456,6 +489,7 @@ def collect_host_agent() -> Dict[str, Any]:
             "whats_next": str(WHATS_NEXT.relative_to(ROOT)),
             "pref_summary": str(PREF_SUMMARY.relative_to(ROOT)),
             "performance_benchmark": "artifacts/performance_benchmark.json",
+            "gpu_metrics": "artifacts/gpu_metrics.json",
             "foreman_source": foreman_src,
             "lessons_source": lessons_src,
         },

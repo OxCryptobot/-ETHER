@@ -1,0 +1,12 @@
+{
+  "id": "p1_132_gate_sample_wallet_010902",
+  "class": "gate_sample",
+  "note": "gate_sample controlled live wallet under hardened batch_phase_d — always countable row",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "wallet", "--max-steps", "8", "--timeout", "180", "--scoreboard", "artifacts/scoreboard_p1_132_wallet_live.json"],
+      "timeout": 240
+    }
+  ]
+}

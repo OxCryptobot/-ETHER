@@ -1,0 +1,12 @@
+{
+  "id": "p1_133_recompute_010903",
+  "class": "measure",
+  "note": "Recompute after hardened countable gate_sample wave",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.eligible_rates import compute; from core.phase1_gate import compute as g; from core.honest_live import publish; print(compute()); print(g()); print(publish())"],
+      "timeout": 90
+    }
+  ]
+}

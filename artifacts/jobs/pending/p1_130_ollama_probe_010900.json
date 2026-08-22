@@ -1,0 +1,12 @@
+{
+  "id": "p1_130_ollama_probe_010900",
+  "class": "fast",
+  "note": "DIAGNOSTIC: Ollama first-token probe — if this fails, live measurement cannot work",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "import time, os; t0=time.perf_counter();\nfrom core.tool_runtime import make_llm_decide_fn\nd=make_llm_decide_fn(temperature=0.0, max_tokens=64)\nmsgs=[{'role':'system','content':'Reply with ONE JSON only.'},{'role':'user','content':'Output {\\\"tool\\\": \\\"done\\\", \\\"args\\\": {\\\"reason\\\": \\\"probe\\\"}} now.'}]\nr=d(msgs); elapsed=time.perf_counter()-t0\nprint('PROBE_OK', r, f'elapsed={elapsed:.2f}s', flush=True)\nassert isinstance(r, dict) and r.get('tool'), r"],
+      "timeout": 90
+    }
+  ]
+}

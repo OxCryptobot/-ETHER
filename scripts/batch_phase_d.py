@@ -9,6 +9,12 @@ Arms:
 - pipeline mode=scripted uses ToolRuntime scripted path (final scoreboard).
 - pipeline scripted multi-fixture runs in ThreadPoolExecutor like direct
   (safe: no shared model, isolated staging workspaces).
+
+2026-08-22 OVERHAUL:
+- Every fixture ALWAYS produces a countable row (ok or typed failure).
+- Exceptions and timeouts write failure_type rows so eligible_rates can see them.
+- Sentinel is replaced as soon as the first fixture finishes or fails.
+- No more empty scoreboards after host kills the process mid-run.
 """
 from __future__ import annotations
 
@@ -17,6 +23,7 @@ import json
 import os
 import sys
 import time
+import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -47,18 +54,66 @@ FIXTURES = {
 }
 
 
-def _run_direct(name: str, live: bool, max_steps: int, timeout: float) -> Dict[str, Any]:
-    from scripts.measure_tool_runtime import measure_one
+def _fail_row(
+    name: str,
+    arm: str,
+    *,
+    live: bool,
+    error: str,
+    failure_type: str,
+    elapsed_s: float = 0.0,
+    model: str = "",
+) -> Dict[str, Any]:
+    """Countable failure row — never leave the scoreboard empty."""
+    return {
+        "fixture": name,
+        "arm": arm,
+        "ok": False,
+        "score": 0.0,
+        "mode": "live" if live else "scripted",
+        "error": error[:400],
+        "failure_type": failure_type,
+        "elapsed_s": round(elapsed_s, 3),
+        "n_steps": 0,
+        "model": model or os.environ.get("ETHER_PRIMARY_MODEL", ""),
+        "honest_tool_path": False,
+    }
 
-    r = measure_one(name, live=live, max_steps=max_steps, timeout_s=timeout)
-    r["arm"] = "direct"
-    return r
+
+def _run_direct(name: str, live: bool, max_steps: int, timeout: float) -> Dict[str, Any]:
+    t0 = time.perf_counter()
+    model = os.environ.get("ETHER_PRIMARY_MODEL", "")
+    try:
+        from scripts.measure_tool_runtime import measure_one
+
+        r = measure_one(name, live=live, max_steps=max_steps, timeout_s=timeout)
+        r["arm"] = "direct"
+        if not r.get("ok") and not r.get("failure_type"):
+            reason = str(r.get("reason") or r.get("error") or "").lower()
+            if "timeout" in reason:
+                r["failure_type"] = "timeout"
+            elif "no_progress" in reason:
+                r["failure_type"] = "no_progress"
+            else:
+                r["failure_type"] = "live_fail" if live else "scripted_fail"
+        return r
+    except Exception as e:
+        return _fail_row(
+            name,
+            "direct",
+            live=live,
+            error=f"{type(e).__name__}: {e}",
+            failure_type="exception",
+            elapsed_s=time.perf_counter() - t0,
+            model=model,
+        )
 
 
 def _run_pipeline(
     name: str, live: bool, max_steps: int, timeout: float, *, bare: bool
 ) -> Dict[str, Any]:
     fixture = FIXTURES[name]
+    model = os.environ.get("ETHER_PRIMARY_MODEL", "")
 
     if not live and not bare:
         from scripts.measure_tool_runtime import measure_one
@@ -132,9 +187,8 @@ def _run_pipeline(
             "mode": "live" if live else "scripted",
             "stages": stages,
             "degraded": list(getattr(result, "degraded", []) or [])[:6],
-            "model": os.environ.get("ETHER_PRIMARY_MODEL", ""),
+            "model": model,
         }
-        # Honest Phase-1 tool-path gate: generate-fallback / terminal must not count as PASS
         if live and not bare:
             try:
                 from core.loop.handlers.tool_runtime_gate import is_honest_tool_path_pass
@@ -147,18 +201,19 @@ def _run_pipeline(
                     row["honest_tool_path"] = bool(row.get("ok"))
             except Exception:
                 row["honest_tool_path"] = None
+        if not row.get("ok"):
+            row["failure_type"] = "live_fail" if live else "scripted_fail"
         return row
     except Exception as e:
-        return {
-            "fixture": name,
-            "arm": arm,
-            "ok": False,
-            "score": 0.0,
-            "error": f"{type(e).__name__}: {e}"[:300],
-            "elapsed_s": round(time.perf_counter() - t0, 3),
-            "mode": "live" if live else "scripted",
-            "model": os.environ.get("ETHER_PRIMARY_MODEL", ""),
-        }
+        return _fail_row(
+            name,
+            arm,
+            live=live,
+            error=f"{type(e).__name__}: {e}",
+            failure_type="exception",
+            elapsed_s=time.perf_counter() - t0,
+            model=model,
+        )
 
 
 def _write_scoreboard(
@@ -233,7 +288,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         arms = [args.arm]
 
-    model = (os.environ.get("ETHER_PRIMARY_MODEL") or "").strip() or "(unset → rose default 3b)"
+    model = (os.environ.get("ETHER_PRIMARY_MODEL") or "").strip() or "(unset)"
     print(
         f"config: model={model} max_steps={args.max_steps} timeout={args.timeout} jobs={args.jobs}",
         flush=True,
@@ -242,26 +297,29 @@ def main(argv: Optional[List[str]] = None) -> int:
     rows: List[Dict[str, Any]] = []
     sb = Path(args.scoreboard)
 
-    try:
-        _write_scoreboard(
-            sb,
-            rows,
-            mode=args.mode,
-            arms=arms,
-            model=model,
-            max_steps=args.max_steps,
-            names=names,
-            partial=True,
-            note="sentinel_on_entry",
-        )
-        print(f"sentinel scoreboard written: {sb}", flush=True)
-    except Exception as e:
-        print(f"sentinel write failed: {type(e).__name__}: {e}", flush=True)
+    def _persist(note: str = "", partial: bool = True) -> None:
+        try:
+            _write_scoreboard(
+                sb,
+                rows,
+                mode=args.mode,
+                arms=arms,
+                model=model,
+                max_steps=args.max_steps,
+                names=names,
+                partial=partial,
+                note=note,
+            )
+        except Exception as e:
+            print(f"scoreboard write failed: {type(e).__name__}: {e}", flush=True)
+
+    # Initial sentinel — will be replaced as soon as first fixture completes
+    _persist(note="sentinel_on_entry", partial=True)
+    print(f"sentinel scoreboard written: {sb}", flush=True)
 
     try:
         for arm in arms:
             print(f"\n=== arm={arm} mode={args.mode} fixtures={names} ===", flush=True)
-            # Parallel path: scripted direct OR scripted pipeline (no live model).
             use_pool = (
                 not live
                 and arm in ("direct", "pipeline")
@@ -269,73 +327,97 @@ def main(argv: Optional[List[str]] = None) -> int:
                 and len(names) > 1
             )
             if use_pool:
-                runner = _run_direct if arm == "direct" else (
-                    lambda n, *a, **k: _run_pipeline(n, False, args.max_steps, args.timeout, bare=False)
-                )
                 with ThreadPoolExecutor(max_workers=args.jobs) as ex:
                     if arm == "direct":
                         futs = {
-                            ex.submit(_run_direct, n, False, args.max_steps, args.timeout): n
+                            ex.submit(
+                                _run_direct, n, False, args.max_steps, args.timeout
+                            ): n
                             for n in names
                         }
                     else:
                         futs = {
                             ex.submit(
-                                _run_pipeline, n, False, args.max_steps, args.timeout, bare=False
+                                _run_pipeline,
+                                n,
+                                False,
+                                args.max_steps,
+                                args.timeout,
+                                bare=False,
                             ): n
                             for n in names
                         }
                     for fut in as_completed(futs):
-                        r = fut.result()
+                        try:
+                            r = fut.result()
+                        except Exception as e:
+                            n = futs[fut]
+                            r = _fail_row(
+                                n,
+                                arm,
+                                live=False,
+                                error=f"{type(e).__name__}: {e}",
+                                failure_type="exception",
+                                model=model,
+                            )
                         rows.append(r)
                         st = "PASS" if r.get("ok") else "FAIL"
                         print(
                             f"[{st}] {r.get('fixture'):10} arm={arm} score={r.get('score')} "
-                            f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s",
+                            f"steps={r.get('n_steps')} elapsed={r.get('elapsed_s')}s "
+                            f"ft={r.get('failure_type', '')}",
                             flush=True,
                         )
-                        _write_scoreboard(
-                            sb, rows, mode=args.mode, arms=arms, model=model,
-                            max_steps=args.max_steps, names=names, partial=True,
-                        )
+                        _persist(note="partial", partial=True)
                 continue
 
             for name in names:
-                if arm == "direct":
-                    r = _run_direct(name, live, args.max_steps, args.timeout)
-                elif arm == "pipeline":
-                    r = _run_pipeline(
-                        name, live, args.max_steps, args.timeout, bare=False
-                    )
-                else:
-                    r = _run_pipeline(
-                        name, live, args.max_steps, args.timeout, bare=True
+                t0 = time.perf_counter()
+                try:
+                    if arm == "direct":
+                        r = _run_direct(name, live, args.max_steps, args.timeout)
+                    elif arm == "pipeline":
+                        r = _run_pipeline(
+                            name, live, args.max_steps, args.timeout, bare=False
+                        )
+                    else:
+                        r = _run_pipeline(
+                            name, live, args.max_steps, args.timeout, bare=True
+                        )
+                except Exception as e:
+                    traceback.print_exc()
+                    r = _fail_row(
+                        name,
+                        arm,
+                        live=live,
+                        error=f"{type(e).__name__}: {e}",
+                        failure_type="exception",
+                        elapsed_s=time.perf_counter() - t0,
+                        model=model,
                     )
                 rows.append(r)
                 st = "PASS" if r.get("ok") else "FAIL"
-                extra = r.get("strategy") or r.get("error") or r.get("reason") or ""
+                extra = (
+                    r.get("strategy")
+                    or r.get("error")
+                    or r.get("reason")
+                    or r.get("failure_type")
+                    or ""
+                )
                 print(
                     f"[{st}] {name:10} arm={arm:8} score={r.get('score')} "
-                    f"elapsed={r.get('elapsed_s')}s repo_ok={r.get('repo_oracle_ok')} {extra}",
+                    f"elapsed={r.get('elapsed_s')}s {extra}",
                     flush=True,
                 )
-                if not r.get("ok"):
-                    for s in r.get("stages") or []:
-                        print(
-                            f"  stage={s.get('stage')} ok={s.get('success')} {s.get('detail')}",
-                            flush=True,
-                        )
-                _write_scoreboard(
-                    sb, rows, mode=args.mode, arms=arms, model=model,
-                    max_steps=args.max_steps, names=names, partial=True,
-                )
+                _persist(note="partial", partial=True)
 
         print("\n=== summary matrix ===", flush=True)
         by: Dict[str, Dict[str, Any]] = {}
         for r in rows:
             by.setdefault(r.get("fixture"), {})[r.get("arm")] = r
         print(
-            f"{'fixture':10} " + " ".join(f"{a:10}" for a in ("direct", "pipeline", "bare")),
+            f"{'fixture':10} "
+            + " ".join(f"{a:10}" for a in ("direct", "pipeline", "bare")),
             flush=True,
         )
         blank = "--"
@@ -352,17 +434,29 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         n_ok = sum(1 for r in rows if r.get("ok"))
         print(f"\nsummary: {n_ok}/{len(rows)} passed", flush=True)
-        return 0 if n_ok == len(rows) else 1
+        return 0 if n_ok == len(rows) and rows else 1
     finally:
-        try:
-            _write_scoreboard(
-                sb, rows, mode=args.mode, arms=arms, model=model,
-                max_steps=args.max_steps, names=names, partial=False,
-                note="final",
+        # If we still have zero rows (killed before first fixture), write
+        # explicit timeout rows so eligible_rates can see the attempt.
+        if not rows:
+            for name in names:
+                for arm in arms:
+                    rows.append(
+                        _fail_row(
+                            name,
+                            arm,
+                            live=live,
+                            error="process killed before fixture completed (external timeout)",
+                            failure_type="timeout",
+                            model=model,
+                        )
+                    )
+            print(
+                f"FORCE-WROTE {len(rows)} timeout rows (empty results on exit)",
+                flush=True,
             )
-            print(f"scoreboard: {sb}", flush=True)
-        except Exception as e:
-            print(f"scoreboard write failed: {type(e).__name__}: {e}", flush=True)
+        _persist(note="final", partial=False)
+        print(f"scoreboard: {sb} rows={len(rows)}", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,9 +1,15 @@
 {
-  "job_id": "critique_hyp_p1_174_gate_sample_merge_042202_044609",
+  "job_id": "p1_175_gate_sample_greeter_044900",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T04:46:17.921691+00:00",
-  "note": "playbook:labradorite for p1_174_gate_sample_merge_042202 [step_fail] :: isolate failing step; FAST reverify",
-  "class": "recovery",
-  "measurement": true
+  "finished": "2026-08-22T04:51:10.440075+00:00",
+  "note": "gate_sample controlled live greeter measurement budget \u2014 continue improvements easy-only rate climb",
+  "class": "gate_sample",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

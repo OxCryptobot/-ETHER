@@ -1,0 +1,12 @@
+{
+  "id": "p1_181_gate_sample_wallet_045903",
+  "class": "gate_sample",
+  "note": "gate_sample controlled live wallet measurement budget — easy wave #2 second wallet",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "wallet", "--max-steps", "10", "--timeout", "200", "--scoreboard", "artifacts/scoreboard_p1_181_wallet_live.json"],
+      "timeout": 300
+    }
+  ]
+}

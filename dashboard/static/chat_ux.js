@@ -1,5 +1,4 @@
-/** ETHER Chat UX v0.7.2 — Clear, turn-first, chips, typing. Hardened.
- * Injected by dashboard/app.py on every /. Works even if host was stale.
+/** ETHER Chat UX v0.7.3 — Clear, turns, chips, Local|Grok channel, bridge-aware.
  */
 (function () {
   'use strict';
@@ -11,14 +10,20 @@
     .replace(/"/g, '"')
     .replace(/'/g, '&#39;');
 
+  window.__etherChannel = window.__etherChannel || 'auto';
+
   function ensureStyles() {
     if (document.getElementById('ether-chat-ux-css')) return;
     const st = document.createElement('style');
     st.id = 'ether-chat-ux-css';
     st.textContent = [
-      '.chat-header .chat-actions{display:flex;gap:6px;align-items:center}',
+      '.chat-header .chat-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}',
       '.btn-clear{background:#2a1515;border:1px solid #5a3030;color:#ff5c5c;border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;font-weight:600;text-transform:uppercase}',
       '.btn-clear:hover{background:#3a1a1a}',
+      '.chan-toggle{display:inline-flex;border:1px solid #1c2836;border-radius:5px;overflow:hidden}',
+      '.chan-toggle button{background:#0b1017;border:none;color:#7a8796;padding:4px 8px;font-size:10px;cursor:pointer;text-transform:uppercase;font-weight:600}',
+      '.chan-toggle button.on{background:#16324a;color:#4cc9f0}',
+      '.chan-toggle button.on.grok{background:#2a1a2a;color:#9b8cff}',
       '.chat-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid #1c2836;background:#0a1016;flex-shrink:0}',
       '.chip{background:#0b1017;border:1px solid #1c2836;color:#7a8796;border-radius:999px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:Consolas,monospace}',
       '.chip:hover{border-color:#2a5a7a;color:#4cc9f0}',
@@ -32,9 +37,18 @@
       '.chat-msg .channel.job{background:#2a1a0d;color:#f0b429}',
       '.typing{color:#7a8796;font-size:12px;padding:8px;font-style:italic}',
       '.chat-empty{color:#7a8796;padding:28px 12px;text-align:center;font-size:13px;line-height:1.5}',
-      '.chat-err{color:#ff5c5c;font-size:12px;padding:8px;border:1px solid #5a3030;border-radius:6px;margin:6px 0;background:#1a0f0f}'
+      '.chat-err{color:#ff5c5c;font-size:12px;padding:8px;border:1px solid #5a3030;border-radius:6px;margin:6px 0;background:#1a0f0f}',
+      '.pending-banner{background:#1a1520;border:1px solid #3a2a5a;color:#9b8cff;padding:6px 10px;font-size:11px;margin-bottom:6px;border-radius:6px}'
     ].join('');
     document.head.appendChild(st);
+  }
+
+  function setChannel(ch) {
+    window.__etherChannel = ch;
+    document.querySelectorAll('.chan-toggle button').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.ch === ch);
+      b.classList.toggle('grok', b.dataset.ch === 'grok' && ch === 'grok');
+    });
   }
 
   function enhanceShell() {
@@ -47,6 +61,11 @@
         header.innerHTML =
           '<span>ETHER agent · turn protocol</span>' +
           '<div class="chat-actions">' +
+          '<div class="chan-toggle" id="chanToggle">' +
+          '<button type="button" data-ch="auto">Auto</button>' +
+          '<button type="button" data-ch="local">Local</button>' +
+          '<button type="button" data-ch="grok">Grok</button>' +
+          '</div>' +
           '<span id="chatCount" style="font-family:Consolas,monospace;color:#4cc9f0">0 turns</span>' +
           '<button type="button" class="btn-clear" id="chatClear" title="Archive bus + clear turns">Clear</button>' +
           '</div>';
@@ -57,29 +76,36 @@
         chips.className = 'chat-chips';
         chips.id = 'chatChips';
         chips.innerHTML =
-          '<button type="button" class="chip" data-msg="status">status</button>' +
-          '<button type="button" class="chip" data-msg="git status">git status</button>' +
-          '<button type="button" class="chip" data-msg="rates">rates</button>' +
-          '<button type="button" class="chip" data-msg="doctor">doctor</button>' +
-          '<button type="button" class="chip" data-msg="ask grok: summarize host state">ask grok</button>';
+          '<button type="button" class="chip" data-msg="status" data-ch="status">status</button>' +
+          '<button type="button" class="chip" data-msg="git status" data-ch="git">git status</button>' +
+          '<button type="button" class="chip" data-msg="rates" data-ch="status">rates</button>' +
+          '<button type="button" class="chip" data-msg="doctor" data-ch="status">doctor</button>' +
+          '<button type="button" class="chip" data-msg="hello from ETHER chat — please ack" data-ch="grok">→ Grok</button>';
         messages.parentNode.insertBefore(chips, messages);
       }
       const input = $('chatInput');
       if (input) {
-        input.placeholder = 'Message ETHER (status · git · local LLM · ask grok) — Enter to send';
+        input.placeholder = 'Message ETHER — set channel to Grok to reach this chat window';
       }
+      setChannel(window.__etherChannel || 'auto');
     }
-    // Bind controls every pass (DOM may be replaced)
     const clearBtn = $('chatClear');
     if (clearBtn && !clearBtn.dataset.bound) {
       clearBtn.dataset.bound = '1';
       clearBtn.addEventListener('click', clearChat);
     }
+    document.querySelectorAll('#chanToggle button').forEach(function (b) {
+      if (b.dataset.bound) return;
+      b.dataset.bound = '1';
+      b.addEventListener('click', function () { setChannel(b.dataset.ch); });
+    });
     document.querySelectorAll('#chatChips .chip').forEach(function (chip) {
       if (chip.dataset.bound) return;
       chip.dataset.bound = '1';
       chip.addEventListener('click', function () {
-        sendChat(chip.getAttribute('data-msg'));
+        const ch = chip.getAttribute('data-ch');
+        if (ch) setChannel(ch === 'status' || ch === 'git' ? 'auto' : ch);
+        sendChat(chip.getAttribute('data-msg'), ch === 'grok' ? 'grok' : (ch === 'git' || ch === 'status' ? ch : null));
       });
     });
     const btn = $('chatSend');
@@ -104,11 +130,16 @@
     }
   }
 
-  function renderTurns(turns) {
-    if (!turns || !turns.length) {
-      return '<div class="chat-empty">No turns yet — try a chip or type a hypothesis below</div>';
+  function renderTurns(turns, pending) {
+    let html = '';
+    if (pending && pending.status === 'awaiting_grok') {
+      html += '<div class="pending-banner">⏳ Awaiting Grok · ' + esc((pending.text || '').slice(0, 120)) +
+        ' · host pushes outbox ~12–55s</div>';
     }
-    return turns.slice().reverse().map(function (t) {
+    if (!turns || !turns.length) {
+      return html + '<div class="chat-empty">No turns yet — set channel <b>Grok</b> to message this window, or use chips for local tools</div>';
+    }
+    html += turns.slice().reverse().map(function (t) {
       const ts = (t.ts || '').toString();
       const clock = ts.indexOf('T') >= 0 ? ts.slice(11, 19) : ts.slice(0, 8);
       const ch = String(t.channel || t.intent || 'local').toLowerCase();
@@ -122,10 +153,12 @@
           '<span class="from">ETHER</span>' +
           '<span class="channel ' + esc(ch) + '">' + esc(ch) + '</span>' +
           '<div class="text">' + esc(t.reply || '(no reply)') + '</div>' +
-          '<div class="ts">' + esc(clock) + ' · ' + (t.ok === false ? 'FAIL' : 'ok') + ' · ' + esc(t.id || '') + '</div>' +
+          '<div class="ts">' + esc(clock) + ' · ' + (t.ok === false ? 'FAIL' : 'ok') +
+          (t.awaiting_grok ? ' · awaiting Grok' : '') + ' · ' + esc(t.id || '') + '</div>' +
         '</div>'
       );
     }).join('');
+    return html;
   }
 
   function showErr(msg) {
@@ -143,30 +176,28 @@
     try {
       const r = await fetch('/api/chat?limit=40');
       if (!r.ok) {
-        showErr('GET /api/chat HTTP ' + r.status + ' — dashboard may be on old code. Restart host.');
+        showErr('GET /api/chat HTTP ' + r.status + ' — restart host after git pull');
         return;
       }
       const d = await r.json();
-      if (d.error && !d.turns) {
-        showErr('chat API: ' + d.error);
-      }
       const turns = d.turns || [];
+      const pending = (d.summary && d.summary.pending_grok) || d.pending_grok || null;
       const n = (d.summary && d.summary.turns_n != null) ? d.summary.turns_n : turns.length;
       const count = $('chatCount');
       if (count) count.textContent = n + ' turns';
       const body = $('chatBody');
       if (body) {
-        body.innerHTML = renderTurns(turns);
+        body.innerHTML = renderTurns(turns, pending);
         body.scrollTop = body.scrollHeight;
       }
       const kpi = $('kChatVal');
       if (kpi) kpi.textContent = n + 't';
     } catch (e) {
-      showErr('chat fetch failed: ' + e + ' — is the host dashboard up?');
+      showErr('chat fetch failed: ' + e);
     }
   }
 
-  async function sendChat(preset) {
+  async function sendChat(preset, forceCh) {
     const input = $('chatInput');
     const btn = $('chatSend');
     const text = (preset != null ? String(preset) : (input && input.value) || '').trim();
@@ -182,20 +213,25 @@
       body.appendChild(tip);
       body.scrollTop = body.scrollHeight;
     }
+    const channel = forceCh || window.__etherChannel || 'auto';
+    const payload = { message: text, orchestrate: true };
+    if (channel === 'grok') payload.force_channel = 'grok';
+    else if (channel === 'local') payload.force_channel = 'local';
+    else if (channel === 'git') payload.force_channel = 'git';
+    else if (channel === 'status') payload.force_channel = 'status';
     try {
       const r = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, orchestrate: true }),
+        body: JSON.stringify(payload),
       });
       let d = {};
-      try { d = await r.json(); } catch (_) { d = { error: 'non-JSON response HTTP ' + r.status }; }
+      try { d = await r.json(); } catch (_) { d = { error: 'non-JSON HTTP ' + r.status }; }
       if (!r.ok || (!(d.ok || d.turn || d.envelope))) {
         showErr('chat failed: ' + (d.error || ('HTTP ' + r.status)));
       } else if (preset == null && input) {
         input.value = '';
       }
-      // optimistic: if turn returned, show immediately
       if (d.turn && d.turn.reply && body) {
         const t = d.turn;
         const ch = String(t.channel || 'local').toLowerCase();
@@ -206,7 +242,7 @@
         body.scrollTop = body.scrollHeight;
       }
     } catch (e) {
-      showErr('chat error: ' + e + ' — restart host if dashboard is down');
+      showErr('chat error: ' + e + ' — is host dashboard up on :8787?');
     } finally {
       window.__chatTyping = false;
       const tip = document.getElementById('chatTyping');
@@ -218,7 +254,7 @@
   }
 
   async function clearChat() {
-    if (!window.confirm('Clear chat session? Archives bus messages and removes turns from the UI.')) return;
+    if (!window.confirm('Clear chat session? Archives bus + removes turns.')) return;
     try {
       const r = await fetch('/api/chat/clear', {
         method: 'POST',
@@ -227,9 +263,7 @@
       });
       let d = {};
       try { d = await r.json(); } catch (_) { d = { error: 'HTTP ' + r.status }; }
-      if (!r.ok || !d.ok) {
-        showErr('clear failed: ' + (d.error || ('HTTP ' + r.status)) + ' — pull latest + restart host');
-      }
+      if (!r.ok || !d.ok) showErr('clear failed: ' + (d.error || r.status));
       await refreshTurns();
     } catch (e) {
       showErr('clear error: ' + e);

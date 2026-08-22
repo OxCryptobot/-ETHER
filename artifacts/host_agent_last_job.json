@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_102_gate_sample_wallet_235201",
+  "job_id": "p1_103_gate_sample_merge_235202",
   "ok": false,
   "rc": 124,
-  "finished": "2026-08-22T00:01:06.748329+00:00",
-  "note": "gate_sample: controlled LIVE wallet only max_steps=10 \u2014 eligible fixture, expand honest_rate_eligible under wheels [failure_type=timeout]",
+  "finished": "2026-08-22T00:01:57.033651+00:00",
+  "note": "gate_sample: controlled LIVE merge only max_steps=12 \u2014 eligible hard fixture (not denylisted), primary honest_rate lift [failure_type=timeout]",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,

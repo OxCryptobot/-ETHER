@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -18,8 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = Path(__file__).resolve().parent / "static"
 QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
+UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.3")
+app = FastAPI(title="@ETHER Control Matrix", version="0.5.4")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -51,6 +52,11 @@ class TestEnqueueBody(BaseModel):
     timeout: int = 280
 
 
+class SpeechBody(BaseModel):
+    text: str
+    job_id: Optional[str] = None
+
+
 def _safe_snapshot() -> dict:
     try:
         from dashboard.collector import collect_snapshot
@@ -58,7 +64,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.3"
+        data["api_version"] = "0.5.4"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -82,7 +88,6 @@ def _safe_snapshot() -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> FileResponse:
-    """Only UI: host-agent Control Matrix."""
     path = STATIC / "agent.html"
     if not path.exists():
         raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
@@ -146,7 +151,6 @@ def console() -> dict:
 
 @app.get("/api/health")
 def health() -> dict:
-    """Local truth: dashboard up + host heartbeat from disk (no git)."""
     host: dict = {}
     try:
         from core.host_health import compute as host_compute
@@ -164,7 +168,7 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.5.3",
+        "version": "0.5.4",
         "truth": "host_agent_local",
         "git_required": False,
         "host": {
@@ -242,7 +246,7 @@ def reconcile_tools(body: ReconcileBody) -> dict:
         raise HTTPException(500, str(e)) from e
 
 
-# ── Operator Surface endpoints (OS-1) ──────────────────────────────────────
+# ── Operator Surface ─────────────────────────────────────────────────────────
 
 @app.get("/api/rates")
 def rates_api() -> dict:
@@ -314,6 +318,61 @@ def test_enqueue(body: TestEnqueueBody) -> dict:
         return {"ok": True, "job": path.name}
     except Exception as e:
         raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/skills")
+def skills_api() -> dict:
+    try:
+        from core.operator_surface import skill_list
+
+        return {"skills": skill_list()}
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.get("/api/mcp")
+def mcp_api() -> dict:
+    try:
+        from core.operator_surface import mcp_list
+
+        return mcp_list()
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.post("/api/speech")
+def speech_api(body: SpeechBody) -> dict:
+    try:
+        from core.operator_surface import speech_to_chat
+
+        return speech_to_chat(body.text, job_id=body.job_id)
+    except Exception as e:
+        raise HTTPException(500, str(e)) from e
+
+
+@app.post("/api/upload")
+async def upload_api(
+    file: UploadFile = File(...),
+    dest: str = "uploads",
+) -> dict:
+    """Upload a file into artifacts/uploads or tools/quarantine."""
+    name = Path(file.filename or "upload.bin").name
+    if not re.match(r"^[A-Za-z0-9_\-.]+$", name):
+        raise HTTPException(400, "invalid filename")
+    if dest == "quarantine":
+        target = QUARANTINE
+    else:
+        target = UPLOADS
+    target.mkdir(parents=True, exist_ok=True)
+    path = target / name
+    data = await file.read()
+    path.write_bytes(data)
+    return {
+        "ok": True,
+        "path": str(path.relative_to(ROOT)).replace("\\", "/"),
+        "bytes": len(data),
+        "dest": dest,
+    }
 
 
 @app.websocket("/ws")

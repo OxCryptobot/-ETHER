@@ -1,7 +1,13 @@
 {
-  "job_id": "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-22T00:03:00.800022+00:00",
-  "note": "playbook:labradorite for p1_102_gate_sample_wallet_235201 [timeout] :: shrink wall budget; scripted tool_runtime only; one file"
+  "job_id": "p1_101_gate_sample_greeter_235200",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-08-22T00:03:50.689071+00:00",
+  "note": "gate_sample: controlled LIVE greeter only max_steps=10 \u2014 eligible fixture, expand honest_rate_eligible under wheels [failure_type=timeout]",
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25
+  },
+  "failure_type": "timeout"
 }

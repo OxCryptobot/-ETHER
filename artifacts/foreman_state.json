@@ -1349,7 +1349,9 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "p1_105_recompute_eligible_235204"
+    "p1_105_recompute_eligible_235204",
+    "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
+    "p1_102_gate_sample_wallet_235201"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1443,20 +1445,19 @@
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
     "00_mcp_cq_spike_01",
-    "p1_102_gate_sample_wallet_235201",
     "p1_103_gate_sample_merge_235202",
     "p1_104_gate_sample_easy_both_235203"
   ],
-  "last_tick": "2026-08-22T00:02:56.663998+00:00",
+  "last_tick": "2026-08-22T00:03:05.651843+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
   "last_enqueued": "ss_train_gates_150336_2",
   "last_playbook": "timeout_budget_exhaust",
-  "last_converted": "ss_pipeline_ledger_145102_1",
+  "last_converted": "p1_102_gate_sample_wallet_235201",
   "steady_idx": 883,
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1467,7 +1468,7 @@
     "max_enqueue_this_tick": 2,
     "training_wheels": true
   },
-  "live_skip_remaining": 35,
+  "live_skip_remaining": 33,
   "last_live_skip_reason": "p1_104_gate_sample_easy_both_235203",
   "last_playbook_skipped": "rate_limit:024_mentor_coding_method_v2:timeout"
 }

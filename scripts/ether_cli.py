@@ -1,23 +1,15 @@
-"""ETHER Operator CLI — Control Matrix peer.
+"""ETHER Operator CLI — Control Matrix peer. Best-in-class professional surface.
 
-Usage:
-  python -m scripts.ether_cli status
-  python -m scripts.ether_cli queue
-  python -m scripts.ether_cli phase
-  python -m scripts.ether_cli next
-  python -m scripts.ether_cli doctor
-  python -m scripts.ether_cli job enqueue --file job.json
-  python -m scripts.ether_cli job cancel <id>
-  python -m scripts.ether_cli job list
-  python -m scripts.ether_cli test <fixture> [--live] [--arm direct]
-  python -m scripts.ether_cli rates
-  python -m scripts.ether_cli chat "message"
-  python -m scripts.ether_cli chat inbox
-  python -m scripts.ether_cli git sync
-  python -m scripts.ether_cli tools
-  python -m scripts.ether_cli learn
-  python -m scripts.ether_cli agent
-  python -m scripts.ether_cli llm
+  status queue phase next doctor
+  job enqueue|cancel|list
+  test <fixture> [--live]
+  rates chat git tools learn agent llm
+  skill list|show
+  upload <path> [--dest uploads|quarantine]
+  swarm [--live] [--fixtures wallet,greeter]
+  multifile "objective"
+  speech "transcribed text"
+  mcp
 """
 from __future__ import annotations
 
@@ -25,7 +17,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -56,31 +48,25 @@ def cmd_status(_: argparse.Namespace) -> int:
 def cmd_queue(_: argparse.Namespace) -> int:
     from core.operator_surface import list_jobs
 
-    pending = list_jobs("pending")
-    failed = list_jobs("failed")
-    print(f"pending ({len(pending)}):")
-    for j in pending[:40]:
-        print(f"  - {j}")
-    if len(pending) > 40:
-        print(f"  ... +{len(pending) - 40} more")
-    print(f"failed ({len(failed)}):")
-    for j in failed[:20]:
-        print(f"  - {j}")
+    for kind in ("pending", "failed"):
+        jobs = list_jobs(kind)
+        print(f"{kind} ({len(jobs)}):")
+        for j in jobs[:40]:
+            print(f"  - {j}")
     return 0
 
 
 def cmd_phase(_: argparse.Namespace) -> int:
     from core.operator_surface import rates
 
-    r = rates()
-    p1 = r.get("phase1_gate") or {}
+    p1 = (rates().get("phase1_gate") or {})
     print("Phase board (measured)")
-    print(f"  status              {p1.get('status')}")
-    print(f"  architecture_go     {p1.get('architecture_go')}")
-    print(f"  metrics_go          {p1.get('metrics_go')}")
+    print(f"  status               {p1.get('status')}")
+    print(f"  architecture_go      {p1.get('architecture_go')}")
+    print(f"  metrics_go           {p1.get('metrics_go')}")
     print(f"  honest_rate_eligible {p1.get('honest_rate_eligible')}")
-    print(f"  live_eligible_n     {p1.get('live_eligible_n')}")
-    print(f"  training_wheels     {p1.get('training_wheels')}")
+    print(f"  live_eligible_n      {p1.get('live_eligible_n')}")
+    print(f"  training_wheels      {p1.get('training_wheels')}")
     return 0
 
 
@@ -125,14 +111,10 @@ def cmd_job(args: argparse.Namespace) -> int:
         print("cancelled" if ok else "not found")
         return 0 if ok else 1
     if args.job_cmd == "enqueue":
-        if not args.file:
-            print("--file required")
-            return 2
         data = json.loads(Path(args.file).read_text(encoding="utf-8"))
         path = enqueue_job(data)
         print(f"enqueued {path.name}")
         return 0
-    print("unknown job subcommand")
     return 2
 
 
@@ -160,12 +142,11 @@ def cmd_rates(_: argparse.Namespace) -> int:
 def cmd_chat(args: argparse.Namespace) -> int:
     from core.operator_surface import chat_post, chat_inbox
 
-    if args.chat_cmd == "inbox":
-        items = chat_inbox(limit=int(args.limit or 10))
-        _print_json(items)
+    if getattr(args, "chat_cmd", None) == "inbox" or args.message == "inbox":
+        _print_json(chat_inbox(limit=int(args.limit or 10)))
         return 0
     if not args.message:
-        print("message required")
+        print("message required (or: ether chat inbox)")
         return 2
     env = chat_post(args.message, job_id=args.job_id)
     print(f"posted {env.get('id')}")
@@ -176,10 +157,8 @@ def cmd_git(args: argparse.Namespace) -> int:
     from core.operator_surface import git_sync
 
     if args.git_cmd == "sync":
-        r = git_sync()
-        _print_json(r)
-        return 0 if r.get("ok") else 1
-    print("unknown git subcommand")
+        _print_json(git_sync())
+        return 0
     return 2
 
 
@@ -211,17 +190,75 @@ def cmd_llm(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_skill(args: argparse.Namespace) -> int:
+    from core.operator_surface import skill_list, skill_show
+
+    if args.skill_cmd == "list":
+        items = skill_list()
+        print(f"skills ({len(items)}):")
+        for s in items:
+            print(f"  - {s.get('id')}  [{s.get('craft')}]")
+        return 0
+    if args.skill_cmd == "show":
+        _print_json(skill_show(args.id))
+        return 0
+    return 2
+
+
+def cmd_upload(args: argparse.Namespace) -> int:
+    from core.operator_surface import upload_file
+
+    r = upload_file(args.path, dest=args.dest or "uploads", filename=args.name)
+    _print_json(r)
+    return 0 if r.get("ok") else 1
+
+
+def cmd_swarm(args: argparse.Namespace) -> int:
+    from core.operator_surface import swarm_enqueue
+
+    fixtures = None
+    if args.fixtures:
+        fixtures = [x.strip() for x in args.fixtures.split(",") if x.strip()]
+    paths = swarm_enqueue(live=bool(args.live), fixtures=fixtures)
+    for p in paths:
+        print(f"enqueued {p.name}")
+    return 0
+
+
+def cmd_multifile(args: argparse.Namespace) -> int:
+    from core.operator_surface import multifile_job
+
+    path = multifile_job(args.objective, max_steps=int(args.max_steps or 12))
+    print(f"enqueued {path.name}")
+    return 0
+
+
+def cmd_speech(args: argparse.Namespace) -> int:
+    from core.operator_surface import speech_to_chat
+
+    r = speech_to_chat(args.text, job_id=args.job_id)
+    _print_json(r)
+    return 0 if r.get("ok") else 1
+
+
+def cmd_mcp(_: argparse.Namespace) -> int:
+    from core.operator_surface import mcp_list
+
+    _print_json(mcp_list())
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="ether", description="ETHER Operator CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("status", help="host heartbeat + last job")
-    sub.add_parser("queue", help="pending + failed list")
-    sub.add_parser("phase", help="Phase gate snapshot")
-    sub.add_parser("next", help="what's next from queue")
-    sub.add_parser("doctor", help="health checks")
+    sub.add_parser("status")
+    sub.add_parser("queue")
+    sub.add_parser("phase")
+    sub.add_parser("next")
+    sub.add_parser("doctor")
 
-    p_job = sub.add_parser("job", help="job enqueue / cancel / list")
+    p_job = sub.add_parser("job")
     job_sub = p_job.add_subparsers(dest="job_cmd", required=True)
     je = job_sub.add_parser("enqueue")
     je.add_argument("--file", required=True)
@@ -229,30 +266,55 @@ def main(argv: list[str] | None = None) -> int:
     jc.add_argument("id")
     job_sub.add_parser("list")
 
-    p_test = sub.add_parser("test", help="enqueue fixture test (countable)")
+    p_test = sub.add_parser("test")
     p_test.add_argument("fixture")
     p_test.add_argument("--live", action="store_true")
     p_test.add_argument("--arm", default="direct")
     p_test.add_argument("--max-steps", type=int, default=8)
     p_test.add_argument("--timeout", type=int, default=280)
 
-    sub.add_parser("rates", help="phase1_gate + eligible + multi_llm")
+    sub.add_parser("rates")
 
-    p_chat = sub.add_parser("chat", help="post to Grok or read inbox")
+    p_chat = sub.add_parser("chat")
     chat_sub = p_chat.add_subparsers(dest="chat_cmd")
     chat_sub.add_parser("inbox")
     p_chat.add_argument("message", nargs="?")
     p_chat.add_argument("--job-id")
     p_chat.add_argument("--limit", type=int, default=10)
 
-    p_git = sub.add_parser("git", help="git hygiene")
+    p_git = sub.add_parser("git")
     git_sub = p_git.add_subparsers(dest="git_cmd", required=True)
     git_sub.add_parser("sync")
 
-    sub.add_parser("tools", help="persistent + quarantine tools")
-    sub.add_parser("learn", help="preference + strategy summary")
-    sub.add_parser("agent", help="full agent status JSON")
-    sub.add_parser("llm", help="multi-LLM lane status")
+    sub.add_parser("tools")
+    sub.add_parser("learn")
+    sub.add_parser("agent")
+    sub.add_parser("llm")
+
+    p_skill = sub.add_parser("skill")
+    skill_sub = p_skill.add_subparsers(dest="skill_cmd", required=True)
+    skill_sub.add_parser("list")
+    ss = skill_sub.add_parser("show")
+    ss.add_argument("id")
+
+    p_up = sub.add_parser("upload")
+    p_up.add_argument("path")
+    p_up.add_argument("--dest", default="uploads", choices=["uploads", "quarantine"])
+    p_up.add_argument("--name")
+
+    p_swarm = sub.add_parser("swarm")
+    p_swarm.add_argument("--live", action="store_true")
+    p_swarm.add_argument("--fixtures", default="wallet,greeter")
+
+    p_mf = sub.add_parser("multifile")
+    p_mf.add_argument("objective")
+    p_mf.add_argument("--max-steps", type=int, default=12)
+
+    p_sp = sub.add_parser("speech")
+    p_sp.add_argument("text")
+    p_sp.add_argument("--job-id")
+
+    sub.add_parser("mcp")
 
     args = ap.parse_args(argv)
     dispatch = {
@@ -270,6 +332,12 @@ def main(argv: list[str] | None = None) -> int:
         "learn": cmd_learn,
         "agent": cmd_agent,
         "llm": cmd_llm,
+        "skill": cmd_skill,
+        "upload": cmd_upload,
+        "swarm": cmd_swarm,
+        "multifile": cmd_multifile,
+        "speech": cmd_speech,
+        "mcp": cmd_mcp,
     }
     return dispatch[args.cmd](args)
 

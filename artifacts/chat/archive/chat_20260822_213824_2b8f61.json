@@ -1,0 +1,19 @@
+{
+  "id": "chat_20260822_213824_2b8f61",
+  "ts": "2026-08-22T21:38:24.899188+00:00",
+  "from": "ether",
+  "type": "agent_reply",
+  "payload": {
+    "text": "phase=startup \u00b7 pending=1 \u00b7 last=auto_rc_greeter_204607_0 ok=True",
+    "turn_id": "turn_20260822_213824_9bac64",
+    "intent": "status",
+    "channel": "status",
+    "tools": [
+      "status"
+    ]
+  },
+  "job_id": null,
+  "requires_reply": false,
+  "parent_id": "turn_20260822_213824_9bac64",
+  "schema": "ether_chat_v1"
+}

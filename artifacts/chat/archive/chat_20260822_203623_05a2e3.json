@@ -1,0 +1,19 @@
+{
+  "id": "chat_20260822_203623_05a2e3",
+  "ts": "2026-08-22T20:36:23.786731+00:00",
+  "from": "ether",
+  "type": "status",
+  "payload": {
+    "text": "phase=idle \u00b7 pending=2 \u00b7 last=p1_188_gate_sample_greeter_191102 ok=True",
+    "turn_id": "turn_20260822_203623_b19d90",
+    "intent": "status",
+    "channel": "status",
+    "tools": [
+      "status"
+    ]
+  },
+  "job_id": null,
+  "requires_reply": false,
+  "parent_id": "turn_20260822_203623_b19d90",
+  "schema": "ether_chat_v1"
+}

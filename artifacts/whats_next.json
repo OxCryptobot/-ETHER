@@ -1,8 +1,13 @@
 {
-  "generated": "2026-08-22T00:44:54.897698+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-22T00:45:00.185801+00:00",
+  "next_job": "p1_120_gate_sample_greeter_004500",
+  "queue_head": [
+    "p1_120_gate_sample_greeter_004500",
+    "p1_121_gate_sample_wallet_004501",
+    "p1_122_gate_sample_merge_004502",
+    "p1_123_recompute_eligible_004503"
+  ],
+  "queue_depth": 4,
   "host_phase": "polling",
   "last_job": "p1_114_recompute_eligible_002704",
   "last_ok": true,

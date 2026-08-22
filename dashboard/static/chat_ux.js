@@ -1,113 +1,247 @@
-/** ETHER Chat UX v0.7.3 — instant Clear, optimistic send, fast poll.
+/** ETHER Chat UX v0.8.0 — professional, stable, role-clear conversation panel.
+ *
+ * Design goals:
+ *  - No twitch: only re-render when turn fingerprint changes
+ *  - Clear speakers: YOU (operator) vs ETHER (agent) vs GROK path
+ *  - Turn cards group request + reply
+ *  - Calm poll (4s idle); no scroll-jacking
  */
 (function () {
   'use strict';
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s == null ? '' : s)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
-    .replace(/'/g, '&#39;');
 
-  window.__etherChannel = window.__etherChannel || 'auto';
-  window.__chatPending = false;
+  const $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  var state = {
+    channel: 'auto',
+    fingerprint: '',
+    typing: false,
+    nearBottom: true,
+    lastCount: 0,
+  };
 
   function ensureStyles() {
     if (document.getElementById('ether-chat-ux-css')) return;
-    const st = document.createElement('style');
+    var st = document.createElement('style');
     st.id = 'ether-chat-ux-css';
     st.textContent = [
-      '.chat-header .chat-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}',
-      '.btn-clear{background:#2a1515;border:1px solid #5a3030;color:#ff5c5c;border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;font-weight:600;text-transform:uppercase}',
-      '.btn-clear:hover{background:#3a1a1a}',
-      '.chan-toggle{display:inline-flex;border:1px solid #1c2836;border-radius:5px;overflow:hidden}',
-      '.chan-toggle button{background:#0b1017;border:none;color:#7a8796;padding:4px 8px;font-size:10px;cursor:pointer;text-transform:uppercase;font-weight:600}',
-      '.chan-toggle button.on{background:#16324a;color:#4cc9f0}',
-      '.chan-toggle button.on.grok{background:#2a1a2a;color:#9b8cff}',
-      '.chat-chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid #1c2836;background:#0a1016;flex-shrink:0}',
-      '.chip{background:#0b1017;border:1px solid #1c2836;color:#7a8796;border-radius:999px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:Consolas,monospace}',
-      '.chip:hover{border-color:#2a5a7a;color:#4cc9f0}',
-      '.chat-msg.user{border-left:3px solid #9b8cff}',
-      '.chat-msg.agent{border-left:3px solid #3ddc97}',
-      '.chat-msg .channel{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;margin-left:6px;text-transform:uppercase;background:#1a1a2a;color:#9b8cff}',
-      '.chat-msg .channel.local{background:#0d2a1a;color:#3ddc97}',
-      '.chat-msg .channel.git{background:#1a2a3a;color:#4cc9f0}',
-      '.chat-msg .channel.status{background:#2a2a1a;color:#f0b429}',
-      '.chat-msg .channel.grok{background:#2a1a2a;color:#9b8cff}',
-      '.chat-msg .channel.job{background:#2a1a0d;color:#f0b429}',
-      '.typing{color:#7a8796;font-size:12px;padding:8px;font-style:italic}',
-      '.chat-empty{color:#7a8796;padding:28px 12px;text-align:center;font-size:13px;line-height:1.5}',
-      '.chat-err{color:#ff5c5c;font-size:12px;padding:8px;border:1px solid #5a3030;border-radius:6px;margin:6px 0;background:#1a0f0f}',
-      '.pending-banner{background:#1a1520;border:1px solid #3a2a5a;color:#9b8cff;padding:6px 10px;font-size:11px;margin-bottom:6px;border-radius:6px}'
+      /* shell */
+      '.chat-shell{display:flex;flex-direction:column;height:100%;min-height:0;background:#0b0f14;}',
+      '.chat-shell .chat-header{',
+      'display:flex;align-items:center;justify-content:space-between;gap:12px;',
+      'padding:10px 14px;border-bottom:1px solid #1a2330;background:#0e141c;flex-shrink:0;',
+      '}',
+      '.chat-shell .chat-header .title{font-size:12px;font-weight:600;letter-spacing:0.04em;',
+      'text-transform:uppercase;color:#8b9bb0;}',
+      '.chat-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}',
+
+      /* channel segmented control */
+      '.chan-toggle{display:inline-flex;border:1px solid #243044;border-radius:6px;overflow:hidden;background:#0a1018;}',
+      '.chan-toggle button{',
+      'background:transparent;border:none;color:#6b7a8d;padding:5px 10px;font-size:11px;',
+      'cursor:pointer;font-weight:600;letter-spacing:0.02em;',
+      '}',
+      '.chan-toggle button:hover{color:#a8b8c8;background:#121a24;}',
+      '.chan-toggle button.on{background:#1a2740;color:#5eb8e8;}',
+      '.chan-toggle button.on[data-ch="grok"]{background:#241a30;color:#b794f6;}',
+      '.chan-toggle button.on[data-ch="local"]{background:#14241c;color:#4ade80;}',
+
+      '.chat-meta{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#5eb8e8;}',
+      '.btn-clear{',
+      'background:transparent;border:1px solid #3d2a2a;color:#e07070;border-radius:6px;',
+      'padding:5px 10px;font-size:11px;cursor:pointer;font-weight:600;',
+      '}',
+      '.btn-clear:hover{background:#1a1010;border-color:#5a3030;}',
+
+      /* shortcuts */
+      '.chat-shortcuts{',
+      'display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;',
+      'border-bottom:1px solid #1a2330;background:#0c1219;flex-shrink:0;',
+      '}',
+      '.chat-shortcuts .label{',
+      'font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#4a5568;',
+      'align-self:center;margin-right:4px;',
+      '}',
+      '.chip{',
+      'background:#121a24;border:1px solid #243044;color:#8b9bb0;border-radius:6px;',
+      'padding:4px 10px;font-size:11px;cursor:pointer;font-family:ui-monospace,Consolas,monospace;',
+      '}',
+      '.chip:hover{border-color:#3a6a8a;color:#5eb8e8;background:#152030;}',
+      '.chip.grok{border-color:#3a2a50;color:#b794f6;}',
+      '.chip.grok:hover{background:#1a1428;border-color:#5a3a80;}',
+
+      /* message stream */
+      '.chat-messages{',
+      'flex:1;overflow-y:auto;padding:16px 14px;min-height:0;',
+      'scroll-behavior:auto;',
+      '}',
+      '.chat-empty{',
+      'color:#5a6a7c;padding:48px 20px;text-align:center;font-size:13px;line-height:1.6;',
+      '}',
+      '.chat-empty strong{color:#8b9bb0;}',
+
+      /* turn card — one request + one reply */
+      '.turn-card{',
+      'margin:0 0 14px 0;border:1px solid #1a2330;border-radius:10px;',
+      'background:#0e141c;overflow:hidden;',
+      '}',
+      '.turn-row{padding:12px 14px;}',
+      '.turn-row + .turn-row{border-top:1px solid #151c28;}',
+      '.turn-row.operator{background:#0c1018;}',
+      '.turn-row.agent{background:#0a1210;}',
+      '.turn-row.agent.ch-grok{background:#100e18;}',
+      '.turn-row.agent.ch-status,.turn-row.agent.ch-git{background:#0c1218;}',
+
+      '.turn-meta{',
+      'display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;',
+      '}',
+      '.speaker{',
+      'font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;',
+      '}',
+      '.speaker.you{color:#a78bfa;}',
+      '.speaker.ether{color:#4ade80;}',
+      '.badge{',
+      'font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;',
+      'padding:2px 7px;border-radius:4px;border:1px solid transparent;',
+      '}',
+      '.badge.local{background:#0d2a1a;color:#4ade80;border-color:#1a4a30;}',
+      '.badge.git{background:#0d1e2a;color:#5eb8e8;border-color:#1a3a5a;}',
+      '.badge.status{background:#2a2410;color:#f0b429;border-color:#4a3a10;}',
+      '.badge.grok{background:#1e1430;color:#b794f6;border-color:#3a2a5a;}',
+      '.badge.job{background:#2a1808;color:#f0a050;border-color:#4a3010;}',
+      '.badge.ok{background:#0d2a1a;color:#4ade80;}',
+      '.badge.fail{background:#2a1010;color:#f07070;}',
+      '.turn-time{',
+      'margin-left:auto;font-family:ui-monospace,Consolas,monospace;',
+      'font-size:10px;color:#4a5568;',
+      '}',
+
+      '.turn-body{',
+      'font-size:13px;line-height:1.55;color:#d0d8e0;white-space:pre-wrap;word-break:break-word;',
+      '}',
+      '.turn-row.operator .turn-body{color:#e8e4f8;}',
+
+      '.pending-banner{',
+      'margin:0 0 12px 0;padding:10px 12px;border-radius:8px;',
+      'background:#14101c;border:1px solid #2a2040;color:#b794f6;font-size:12px;',
+      '}',
+      '.typing-row{',
+      'padding:10px 14px;color:#6b7a8d;font-size:12px;font-style:italic;',
+      'border:1px dashed #243044;border-radius:8px;margin-bottom:12px;',
+      '}',
+      '.chat-err{',
+      'color:#f07070;font-size:12px;padding:10px 12px;border:1px solid #4a2020;',
+      'border-radius:8px;margin:0 0 12px 0;background:#1a1010;',
+      '}',
+
+      /* compose */
+      '.chat-compose{',
+      'display:flex;gap:8px;padding:12px 14px;border-top:1px solid #1a2330;',
+      'background:#0e141c;flex-shrink:0;align-items:center;',
+      '}',
+      '.chat-compose input{',
+      'flex:1;background:#0a1018;border:1px solid #243044;border-radius:8px;',
+      'padding:10px 12px;color:#e0e6ec;font-size:13px;outline:none;',
+      '}',
+      '.chat-compose input:focus{border-color:#3a6a8a;}',
+      '.chat-compose input::placeholder{color:#4a5568;}',
+      '.chat-compose button#chatSend{',
+      'background:#1a3a5a;border:1px solid #2a5a8a;color:#8ec8f0;border-radius:8px;',
+      'padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;',
+      '}',
+      '.chat-compose button#chatSend:hover{background:#204868;}',
+      '.chat-compose button#chatSend:disabled{opacity:0.5;cursor:not-allowed;}',
     ].join('');
     document.head.appendChild(st);
   }
 
   function setChannel(ch) {
-    window.__etherChannel = ch;
-    document.querySelectorAll('.chan-toggle button').forEach(function (b) {
-      b.classList.toggle('on', b.dataset.ch === ch);
-      b.classList.toggle('grok', b.dataset.ch === 'grok' && ch === 'grok');
+    state.channel = ch || 'auto';
+    document.querySelectorAll('#chanToggle button').forEach(function (b) {
+      var on = b.getAttribute('data-ch') === state.channel;
+      b.classList.toggle('on', on);
     });
   }
 
   function enhanceShell() {
-    const shell = document.querySelector('.chat-shell');
+    var shell = document.querySelector('.chat-shell');
     if (!shell) return;
-    if (shell.dataset.ux !== '1') {
-      shell.dataset.ux = '1';
-      const header = shell.querySelector('.chat-header');
+
+    if (shell.dataset.ux !== '2') {
+      shell.dataset.ux = '2';
+
+      var header = shell.querySelector('.chat-header');
       if (header) {
         header.innerHTML =
-          '<span>ETHER agent · low-latency</span>' +
+          '<div class="title">Conversation</div>' +
           '<div class="chat-actions">' +
-          '<div class="chan-toggle" id="chanToggle">' +
+          '<div class="chan-toggle" id="chanToggle" title="Where the message is routed">' +
           '<button type="button" data-ch="auto">Auto</button>' +
           '<button type="button" data-ch="local">Local</button>' +
           '<button type="button" data-ch="grok">Grok</button>' +
           '</div>' +
-          '<span id="chatCount" style="font-family:Consolas,monospace;color:#4cc9f0">0 turns</span>' +
-          '<button type="button" class="btn-clear" id="chatClear" title="Clear now">Clear</button>' +
+          '<span class="chat-meta" id="chatCount">0 turns</span>' +
+          '<button type="button" class="btn-clear" id="chatClear">Clear</button>' +
           '</div>';
       }
-      const messages = shell.querySelector('.chat-messages');
-      if (messages && !shell.querySelector('.chat-chips')) {
-        const chips = document.createElement('div');
-        chips.className = 'chat-chips';
-        chips.id = 'chatChips';
-        chips.innerHTML =
-          '<button type="button" class="chip" data-msg="status" data-ch="status">status</button>' +
-          '<button type="button" class="chip" data-msg="git status" data-ch="git">git status</button>' +
-          '<button type="button" class="chip" data-msg="rates" data-ch="status">rates</button>' +
-          '<button type="button" class="chip" data-msg="doctor" data-ch="status">doctor</button>' +
-          '<button type="button" class="chip" data-msg="hello from ETHER — ack please" data-ch="grok">→ Grok</button>';
-        messages.parentNode.insertBefore(chips, messages);
+
+      var messages = shell.querySelector('.chat-messages');
+      if (messages && !shell.querySelector('.chat-shortcuts')) {
+        var bar = document.createElement('div');
+        bar.className = 'chat-shortcuts';
+        bar.id = 'chatChips';
+        bar.innerHTML =
+          '<span class="label">Tools</span>' +
+          '<button type="button" class="chip" data-msg="status" data-ch="status">Status</button>' +
+          '<button type="button" class="chip" data-msg="git status" data-ch="git">Git status</button>' +
+          '<button type="button" class="chip" data-msg="rates" data-ch="status">Rates</button>' +
+          '<button type="button" class="chip" data-msg="doctor" data-ch="status">Doctor</button>' +
+          '<button type="button" class="chip grok" data-msg="Please acknowledge this message from the ETHER dashboard." data-ch="grok">Message Grok</button>';
+        messages.parentNode.insertBefore(bar, messages);
       }
-      const input = $('chatInput');
-      if (input) input.placeholder = 'Message ETHER — Grok channel for this window';
-      setChannel(window.__etherChannel || 'auto');
+
+      var input = $('chatInput');
+      if (input) {
+        input.placeholder = 'Write a message…  Enter to send';
+      }
+      setChannel(state.channel);
     }
-    const clearBtn = $('chatClear');
+
+    bindOnce();
+  }
+
+  function bindOnce() {
+    var clearBtn = $('chatClear');
     if (clearBtn && !clearBtn.dataset.bound) {
       clearBtn.dataset.bound = '1';
       clearBtn.addEventListener('click', clearChat);
     }
+
     document.querySelectorAll('#chanToggle button').forEach(function (b) {
       if (b.dataset.bound) return;
       b.dataset.bound = '1';
-      b.addEventListener('click', function () { setChannel(b.dataset.ch); });
+      b.addEventListener('click', function () {
+        setChannel(b.getAttribute('data-ch'));
+      });
     });
+
     document.querySelectorAll('#chatChips .chip').forEach(function (chip) {
       if (chip.dataset.bound) return;
       chip.dataset.bound = '1';
       chip.addEventListener('click', function () {
-        const ch = chip.getAttribute('data-ch');
+        var ch = chip.getAttribute('data-ch');
         if (ch === 'grok') setChannel('grok');
-        sendChat(chip.getAttribute('data-msg'), ch === 'grok' ? 'grok' : (ch === 'git' || ch === 'status' ? ch : null));
+        var force = (ch === 'grok') ? 'grok' : (ch === 'git' || ch === 'status' ? ch : null);
+        sendChat(chip.getAttribute('data-msg'), force);
       });
     });
-    const btn = $('chatSend');
+
+    var btn = $('chatSend');
     if (btn && !btn.dataset.uxBound) {
       btn.dataset.uxBound = '1';
       btn.addEventListener('click', function (e) {
@@ -116,7 +250,8 @@
         sendChat();
       }, true);
     }
-    const input = $('chatInput');
+
+    var input = $('chatInput');
     if (input && !input.dataset.uxBound) {
       input.dataset.uxBound = '1';
       input.addEventListener('keydown', function (e) {
@@ -127,124 +262,210 @@
         }
       }, true);
     }
+
+    var body = $('chatBody');
+    if (body && !body.dataset.scrollBound) {
+      body.dataset.scrollBound = '1';
+      body.addEventListener('scroll', function () {
+        var gap = body.scrollHeight - body.scrollTop - body.clientHeight;
+        state.nearBottom = gap < 80;
+      });
+    }
+  }
+
+  function clockOf(ts) {
+    ts = (ts || '').toString();
+    if (ts.indexOf('T') >= 0) return ts.slice(11, 19);
+    return ts.slice(0, 8) || '—';
+  }
+
+  function channelLabel(ch) {
+    ch = String(ch || 'local').toLowerCase();
+    if (ch === 'escalate_grok') return 'grok';
+    if (ch === 'local_llm') return 'local';
+    return ch;
+  }
+
+  function fingerprint(turns, pending) {
+    var ids = (turns || []).map(function (t) {
+      return (t.id || '') + ':' + (t.ok === false ? '0' : '1') + ':' + String(t.reply || '').length;
+    }).join('|');
+    var p = pending && pending.status ? pending.status + (pending.envelope_id || '') : '';
+    return ids + '#' + p;
   }
 
   function renderTurns(turns, pending) {
-    let html = '';
-    window.__chatPending = !!(pending && pending.status === 'awaiting_grok');
-    if (window.__chatPending) {
-      html += '<div class="pending-banner">⏳ Awaiting Grok · bus push is async (~1–3s)</div>';
+    var html = '';
+
+    if (pending && pending.status === 'awaiting_grok') {
+      html +=
+        '<div class="pending-banner">Waiting for Grok · message is on the bus' +
+        (pending.text ? ' · “' + esc(String(pending.text).slice(0, 80)) + '”' : '') +
+        '</div>';
     }
+
     if (!turns || !turns.length) {
-      return html + '<div class="chat-empty">Empty — Clear is instant. Channel <b>Grok</b> reaches this window.</div>';
+      html +=
+        '<div class="chat-empty">' +
+        '<strong>No messages yet</strong><br>' +
+        'Use a tool shortcut above, or type below.<br>' +
+        'Channel <strong>Local</strong> = Ollama on this machine.<br>' +
+        'Channel <strong>Grok</strong> = this remote chat window.' +
+        '</div>';
+      return html;
     }
-    html += turns.slice().reverse().map(function (t) {
-      const ts = (t.ts || '').toString();
-      const clock = ts.indexOf('T') >= 0 ? ts.slice(11, 19) : ts.slice(0, 8);
-      const ch = String(t.channel || t.intent || 'local').toLowerCase();
-      return (
-        '<div class="chat-msg user"><span class="from">you</span><div class="text">' + esc(t.message || '') +
-        '</div><div class="ts">' + esc(clock) + '</div></div>' +
-        '<div class="chat-msg agent"><span class="from">ETHER</span><span class="channel ' + esc(ch) + '">' + esc(ch) +
-        '</span><div class="text">' + esc(t.reply || '(no reply)') + '</div><div class="ts">' +
-        esc(clock) + ' · ' + (t.ok === false ? 'FAIL' : 'ok') + '</div></div>'
-      );
-    }).join('');
+
+    // API returns newest-first; show oldest at top (conversation order)
+    var ordered = turns.slice().reverse();
+
+    ordered.forEach(function (t) {
+      var ch = channelLabel(t.channel || t.intent);
+      var okBadge = t.ok === false
+        ? '<span class="badge fail">fail</span>'
+        : '<span class="badge ok">ok</span>';
+      var time = clockOf(t.ts);
+
+      html += '<article class="turn-card" data-turn-id="' + esc(t.id || '') + '">';
+
+      // Operator
+      html +=
+        '<div class="turn-row operator">' +
+        '<div class="turn-meta">' +
+        '<span class="speaker you">You</span>' +
+        '<span class="turn-time">' + esc(time) + '</span>' +
+        '</div>' +
+        '<div class="turn-body">' + esc(t.message || '') + '</div>' +
+        '</div>';
+
+      // Agent
+      html +=
+        '<div class="turn-row agent ch-' + esc(ch) + '">' +
+        '<div class="turn-meta">' +
+        '<span class="speaker ether">ETHER</span>' +
+        '<span class="badge ' + esc(ch) + '">' + esc(ch) + '</span>' +
+        okBadge +
+        '<span class="turn-time">' + esc(time) + '</span>' +
+        '</div>' +
+        '<div class="turn-body">' + esc(t.reply || '(no reply)') + '</div>' +
+        '</div>';
+
+      html += '</article>';
+    });
+
     return html;
   }
 
   function showErr(msg) {
-    const body = $('chatBody');
+    var body = $('chatBody');
     if (!body) return;
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'chat-err';
     div.textContent = msg;
     body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
+    if (state.nearBottom) body.scrollTop = body.scrollHeight;
   }
 
-  async function refreshTurns() {
-    if (window.__chatTyping) return;
+  async function refreshTurns(force) {
+    if (state.typing && !force) return;
     try {
-      const r = await fetch('/api/chat?limit=40');
+      var r = await fetch('/api/chat?limit=40');
       if (!r.ok) return;
-      const d = await r.json();
-      const turns = d.turns || [];
-      const pending = d.pending_grok || (d.summary && d.summary.pending_grok) || null;
-      const n = (d.summary && d.summary.turns_n != null) ? d.summary.turns_n : turns.length;
-      const count = $('chatCount');
-      if (count) count.textContent = n + ' turns';
-      const body = $('chatBody');
+      var d = await r.json();
+      var turns = d.turns || [];
+      var pending = d.pending_grok || (d.summary && d.summary.pending_grok) || null;
+      var fp = fingerprint(turns, pending);
+
+      // Stability: skip DOM rewrite if nothing meaningful changed
+      if (!force && fp === state.fingerprint) return;
+      state.fingerprint = fp;
+
+      var n = (d.summary && d.summary.turns_n != null) ? d.summary.turns_n : turns.length;
+      state.lastCount = n;
+      var count = $('chatCount');
+      if (count) count.textContent = n + (n === 1 ? ' turn' : ' turns');
+
+      var body = $('chatBody');
       if (body) {
+        var wasNear = state.nearBottom;
         body.innerHTML = renderTurns(turns, pending);
-        body.scrollTop = body.scrollHeight;
+        if (wasNear) body.scrollTop = body.scrollHeight;
       }
-      const kpi = $('kChatVal');
+
+      var kpi = $('kChatVal');
       if (kpi) kpi.textContent = n + 't';
     } catch (_) {}
   }
 
   async function sendChat(preset, forceCh) {
-    const input = $('chatInput');
-    const btn = $('chatSend');
-    const text = (preset != null ? String(preset) : (input && input.value) || '').trim();
+    var input = $('chatInput');
+    var btn = $('chatSend');
+    var text = (preset != null ? String(preset) : (input && input.value) || '').trim();
     if (!text) return;
+
     if (btn) btn.disabled = true;
-    window.__chatTyping = true;
-    // Optimistic user bubble immediately
-    const body = $('chatBody');
+    state.typing = true;
+
+    var body = $('chatBody');
     if (body) {
-      body.innerHTML += '<div class="chat-msg user"><span class="from">you</span><div class="text">' +
-        esc(text) + '</div></div><div class="typing" id="chatTyping">ETHER…</div>';
+      // Remove empty state if present
+      var empty = body.querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      var tip = document.createElement('div');
+      tip.className = 'typing-row';
+      tip.id = 'chatTyping';
+      tip.textContent = 'ETHER is working…';
+      body.appendChild(tip);
       body.scrollTop = body.scrollHeight;
+      state.nearBottom = true;
     }
+
     if (preset == null && input) input.value = '';
-    const channel = forceCh || window.__etherChannel || 'auto';
-    const payload = { message: text, orchestrate: true };
+
+    var channel = forceCh || state.channel || 'auto';
+    var payload = { message: text, orchestrate: true };
     if (channel === 'grok') payload.force_channel = 'grok';
     else if (channel === 'local') payload.force_channel = 'local';
     else if (channel === 'git') payload.force_channel = 'git';
     else if (channel === 'status') payload.force_channel = 'status';
+
     try {
-      const r = await fetch('/api/chat', {
+      var r = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      let d = {};
+      var d = {};
       try { d = await r.json(); } catch (_) { d = { error: 'HTTP ' + r.status }; }
       if (!r.ok || (!(d.ok || d.turn || d.envelope))) {
-        showErr('chat failed: ' + (d.error || r.status));
-      } else if (d.turn && d.turn.reply && body) {
-        const tip = document.getElementById('chatTyping');
-        if (tip) tip.remove();
-        const t = d.turn;
-        const ch = String(t.channel || 'local').toLowerCase();
-        body.innerHTML += '<div class="chat-msg agent"><span class="from">ETHER</span><span class="channel ' +
-          esc(ch) + '">' + esc(ch) + '</span><div class="text">' + esc(t.reply) + '</div></div>';
-        body.scrollTop = body.scrollHeight;
+        showErr('Send failed: ' + (d.error || ('HTTP ' + r.status)));
       }
     } catch (e) {
-      showErr('chat error: ' + e);
+      showErr('Send failed: ' + e);
     } finally {
-      window.__chatTyping = false;
-      const tip = document.getElementById('chatTyping');
+      state.typing = false;
+      var tip = document.getElementById('chatTyping');
       if (tip) tip.remove();
       if (btn) btn.disabled = false;
-      refreshTurns();
+      state.fingerprint = ''; // force one clean re-render
+      await refreshTurns(true);
       if (input) input.focus();
     }
   }
 
-  async function clearChat() {
-    // Instant UI wipe — no confirm
-    const body = $('chatBody');
-    if (body) body.innerHTML = '<div class="chat-empty">Cleared.</div>';
-    const count = $('chatCount');
+  function clearChat() {
+    state.fingerprint = 'cleared';
+    var body = $('chatBody');
+    if (body) {
+      body.innerHTML =
+        '<div class="chat-empty"><strong>Conversation cleared</strong><br>Ready for the next message.</div>';
+    }
+    var count = $('chatCount');
     if (count) count.textContent = '0 turns';
-    const kpi = $('kChatVal');
+    var kpi = $('kChatVal');
     if (kpi) kpi.textContent = '0t';
-    // Fire-and-forget server clear
+    state.lastCount = 0;
+
     fetch('/api/chat/clear', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -255,7 +476,7 @@
   function wire() {
     ensureStyles();
     enhanceShell();
-    refreshTurns();
+    refreshTurns(true);
   }
 
   if (document.readyState === 'loading') {
@@ -263,9 +484,10 @@
   } else {
     wire();
   }
-  setInterval(enhanceShell, 3000);
-  // 1s poll when awaiting Grok, else 2s
+
+  // Calm: rebuild shell rarely; poll slowly; skip identical fingerprints
+  setInterval(enhanceShell, 8000);
   setInterval(function () {
-    refreshTurns();
-  }, 1000);
+    refreshTurns(false);
+  }, 4000);
 })();

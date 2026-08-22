@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-22T18:34:50.878384+00:00",
+  "updated": "2026-08-22T19:13:16.390836+00:00",
   "n": 50,
-  "green_n": 43,
-  "sparkline": "GGGGGGG.GGGGGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..",
+  "green_n": 46,
+  "sparkline": "GGGGGGGGGGG.GGGGGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG",
   "points": [
     {
       "honest": true,
@@ -61,6 +61,38 @@
       "mode": "live"
     },
     {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
       "honest": false,
       "ok": false,
       "live": true,
@@ -371,38 +403,6 @@
       "disguised": false,
       "color": "green",
       "mode": "scripted"
-    },
-    {
-      "honest": false,
-      "ok": false,
-      "live": true,
-      "disguised": false,
-      "color": "gray",
-      "mode": "live"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": false,
-      "ok": false,
-      "live": true,
-      "disguised": false,
-      "color": "gray",
-      "mode": "live"
-    },
-    {
-      "honest": false,
-      "ok": false,
-      "live": true,
-      "disguised": false,
-      "color": "gray",
-      "mode": "live"
     }
   ],
   "note": "G=honest pass, R=ok but not honest, .=fail"

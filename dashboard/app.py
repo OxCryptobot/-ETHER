@@ -1,12 +1,8 @@
 """FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
 
-Hardened 2026-08-22 / UX 0.6 → 0.7:
-- Chat orchestrator: /api/chat POST runs agent turn (local Ollama + git + escalate)
-- /api/chat/turns lists durable turns
-- Index serves agent.html with no-cache
-- Operator Surface routes return error dicts (not hard 500)
-- /api/health never throws
-- /api/upload soft-registered
+Hardened 2026-08-22 / UX 0.7 → 0.7.1:
+- Chat orchestrator + Clear Chat (POST /api/chat/clear)
+- Turn-first chat UI
 """
 
 from __future__ import annotations
@@ -29,7 +25,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.7.0")
+app = FastAPI(title="@ETHER Control Matrix", version="0.7.1")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -54,6 +50,10 @@ class ChatPostBody(BaseModel):
     orchestrate: bool = True
     allow_write: bool = False
     force_channel: Optional[str] = None
+
+
+class ChatClearBody(BaseModel):
+    keep_archive: bool = True
 
 
 class TestEnqueueBody(BaseModel):
@@ -85,7 +85,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.7.0"
+        data["api_version"] = "0.7.1"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -207,10 +207,11 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.7.0",
+        "version": "0.7.1",
         "truth": "host_agent_local",
         "git_required": False,
         "chat_orchestrator": True,
+        "chat_clear": True,
         "host": {
             "alive": host.get("alive"),
             "age_s": host.get("age_s"),
@@ -353,10 +354,20 @@ def chat_post(body: ChatPostBody) -> dict:
             allow_write=body.allow_write,
             force_channel=body.force_channel,
         )
-        # orchestrator returns turn dict; legacy returns envelope
         if result.get("schema") == "ether_chat_turn_v1" or "reply" in result:
             return {"ok": bool(result.get("ok", True)), "turn": result, "orchestrator": True}
         return {"ok": True, "envelope": result, "orchestrator": False}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
+@app.post("/api/chat/clear")
+def chat_clear_api(body: ChatClearBody = ChatClearBody()) -> dict:
+    """Clear Chat — archive bus + wipe turns. Default keeps archive history."""
+    try:
+        from core.operator_surface import chat_clear
+
+        return chat_clear(keep_archive=body.keep_archive)
     except Exception as e:
         return {"ok": False, "error": str(e)[:200]}
 

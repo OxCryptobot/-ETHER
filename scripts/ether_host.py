@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 """ETHER Host — ONE window: dashboard + job agent + foreman.
 
-  python -m scripts.ether_host
-  # or:  .\\scripts\\start_ether_host.ps1
-
-Dashboard thread + host_agent poll loop. No second terminal.
-
-2026-08-22g: Boot hang fix — launcher already did nuclear clean.
-Do NOT call git_reset_to_origin on startup (was 120s fetch hang).
-Light dirs + foreman + immediate liveness, then poll loop.
+2026-08-22h: maybe_push_chat_bus each poll so escalate reaches origin fast.
+Fast boot — no double clean_slate. Minimal source-watch.
 """
 from __future__ import annotations
 
@@ -20,7 +14,6 @@ import sys
 import threading
 import time
 import traceback
-import urllib.error
 import urllib.request
 import webbrowser
 from pathlib import Path
@@ -32,8 +25,6 @@ sys.path.insert(0, str(ROOT))
 PORT = int(os.environ.get("ETHER_DASH_PORT") or "8787")
 OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "1").strip() != "0"
 
-# CRITICAL ONLY — do not watch the entire core/ tree. Report pushes and measure ticks
-# must NOT trigger exit 42. Only true code that changes process behavior.
 _WATCHED = (
     "scripts/host_agent.py",
     "scripts/ether_host.py",
@@ -53,8 +44,7 @@ except Exception:
 def _file_digest(rel: str) -> str:
     p = ROOT / rel
     try:
-        data = p.read_bytes()
-        return hashlib.sha256(data).hexdigest()[:16]
+        return hashlib.sha256(p.read_bytes()).hexdigest()[:16]
     except Exception:
         return "missing"
 
@@ -112,9 +102,7 @@ def _force_free_port(port: int) -> None:
         for pid in pids:
             try:
                 subprocess.run(
-                    ["taskkill", "/F", "/PID", pid],
-                    capture_output=True,
-                    timeout=5,
+                    ["taskkill", "/F", "/PID", pid], capture_output=True, timeout=5
                 )
                 print(f"dashboard: killed pid={pid} holding :{port}", flush=True)
             except Exception as e:
@@ -142,14 +130,9 @@ def _start_dashboard() -> None:
     if _dashboard_healthy(PORT):
         print(f"dashboard: healthy on :{PORT} — reusing", flush=True)
         return
-
     if _port_listening(PORT):
-        print(
-            f"dashboard: :{PORT} listening but NOT healthy — force free + rebind",
-            flush=True,
-        )
+        print(f"dashboard: :{PORT} listening but NOT healthy — force free + rebind", flush=True)
         _force_free_port(PORT)
-
     for attempt in range(1, 4):
         try:
             print(f"dashboard: starting uvicorn on :{PORT} (attempt {attempt})", flush=True)
@@ -183,7 +166,6 @@ def _reload_foreman():
 
 
 def _hygiene_log() -> None:
-    """Keep host_agent_log small so git/status stay fast."""
     log_path = ROOT / "artifacts" / "host_agent_log.txt"
     try:
         if log_path.exists() and log_path.stat().st_size > 4 * 1024 * 1024:
@@ -199,7 +181,7 @@ def _hygiene_log() -> None:
 def main() -> int:
     url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — fast boot (no double clean_slate)", flush=True)
+    print("  ETHER HOST — fast boot + chat bus push", flush=True)
     print(f"  UI     {url}", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
@@ -216,10 +198,7 @@ def main() -> int:
     if ok:
         print(f"dashboard: HEALTHY {url}", flush=True)
     else:
-        print(
-            f"dashboard: NOT HEALTHY after 10s — check port {PORT} / uvicorn logs",
-            flush=True,
-        )
+        print(f"dashboard: NOT HEALTHY after 10s — check port {PORT}", flush=True)
 
     if OPEN_BROWSER and ok:
         try:
@@ -232,40 +211,24 @@ def main() -> int:
     except Exception as e:
         print(f"FATAL import: {type(e).__name__}: {e}", flush=True)
         traceback.print_exc()
-        try:
-            status_path = ROOT / "artifacts" / "host_agent_status.json"
-            status_path.parent.mkdir(parents=True, exist_ok=True)
-            import json
-            from datetime import datetime, timezone
-
-            status_path.write_text(
-                json.dumps(
-                    {
-                        "heartbeat": datetime.now(timezone.utc).isoformat(),
-                        "phase": "boot_import_fail",
-                        "error": f"{type(e).__name__}: {e}",
-                        "root": str(ROOT),
-                        "dashboard_ok": ok,
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-        except Exception:
-            pass
         return 1
 
-    # CRITICAL: launcher already did nuclear git clean_slate.
-    # Calling git_reset_to_origin here caused the multi-minute hang (fetch 120s).
     agent.log("startup: skip nuclear clean_slate (launcher already did it)")
     agent.PENDING.mkdir(parents=True, exist_ok=True)
     agent.DONE.mkdir(parents=True, exist_ok=True)
     agent.FAILED.mkdir(parents=True, exist_ok=True)
     boot_snap = _snapshot()
 
-    # Immediate local heartbeat so operator/Grok see life even if push is slow
     try:
         agent.write_status(current_job=None, phase="starting")
+    except Exception:
+        pass
+
+    # Expire any stale pending_grok from prior sessions
+    try:
+        from core.chat_bridge import get_pending_grok
+
+        get_pending_grok()  # side-effect: auto-expire if >15m
     except Exception:
         pass
 
@@ -276,7 +239,6 @@ def main() -> int:
     except Exception as e:
         agent.log(f"foreman boot failed (non-fatal): {e}")
 
-    # Soft boot: do NOT force rate-climb every restart
     try:
         agent.maybe_auto_rate_climb(force=False)
     except Exception as e:
@@ -290,11 +252,9 @@ def main() -> int:
 
     dash_ok = _dashboard_healthy(PORT)
     print(
-        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll + GPU + rate-climb",
+        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll + chat + GPU",
         flush=True,
     )
-    if not dash_ok:
-        agent.log("WARNING: dashboard not healthy at boot — operator surface unreachable")
 
     while True:
         try:
@@ -307,6 +267,12 @@ def main() -> int:
                 agent.log(f"SOURCE UPDATED {changed} — exit 42 for launcher reload")
                 agent.write_status(phase="reload", changed=changed)
                 return 42
+
+            # Fast path: escalate outbox → origin without waiting 55s liveness
+            try:
+                agent.maybe_push_chat_bus()
+            except Exception as e:
+                agent.log(f"chat_bus: {type(e).__name__}: {e}")
 
             try:
                 foreman = _reload_foreman()
@@ -327,6 +293,10 @@ def main() -> int:
             if not jobs:
                 agent.log("idle")
                 try:
+                    agent.maybe_push_chat_bus()
+                except Exception:
+                    pass
+                try:
                     foreman = _reload_foreman()
                     agent.write_status(
                         current_job=None, phase="idle", foreman=foreman.status()
@@ -340,6 +310,10 @@ def main() -> int:
             for job_path in jobs:
                 agent.process_job(job_path)
                 agent.git_sync()
+                try:
+                    agent.maybe_push_chat_bus()
+                except Exception:
+                    pass
                 now_snap = _snapshot()
                 if now_snap != boot_snap:
                     changed = [k for k in _WATCHED if now_snap.get(k) != boot_snap.get(k)]

@@ -1,0 +1,12 @@
+{
+  "id": "rlhf_tick_182704",
+  "class": "measure",
+  "note": "offline RLHF reprocess scoreboards → preference pairs + strategy_boost (self-learning refresh)",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.preference"],
+      "timeout": 180
+    }
+  ]
+}

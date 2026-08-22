@@ -1,0 +1,16 @@
+{
+  "id": "p1_114_recompute_eligible_002704",
+  "class": "measure",
+  "note": "Atomic recompute eligible_rates + phase1_gate + honest_live after hardened gate_sample wave",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.eligible_rates import compute; from core.phase1_gate import compute as g; from core.honest_live import publish; print(compute()); print(g()); print(publish())"],
+      "timeout": 90
+    }
+  ]
+}

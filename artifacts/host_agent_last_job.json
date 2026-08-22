@@ -1,10 +1,10 @@
 {
-  "job_id": "playbook_live_timeout_learn_014651",
+  "job_id": "p1_131_gate_sample_greeter_010901",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T01:49:30.208599+00:00",
-  "note": "playbook:live_tool_path_timeout for p1_143_gate_sample_merge_011503",
-  "class": "fast",
+  "finished": "2026-08-22T01:51:35.897489+00:00",
+  "note": "gate_sample controlled live greeter under hardened batch_phase_d \u2014 always countable row",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

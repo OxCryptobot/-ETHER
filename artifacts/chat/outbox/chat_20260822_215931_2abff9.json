@@ -1,0 +1,16 @@
+{
+  "id": "chat_20260822_215931_2abff9",
+  "ts": "2026-08-22T21:59:31.573460+00:00",
+  "from": "ether_orchestrator",
+  "type": "operator",
+  "payload": {
+    "text": ": E2E bridge ping from host",
+    "routed": "escalate_grok",
+    "turn_id": "turn_20260822_215931_7e4fbc",
+    "note": "Awaiting Grok reply via chat bridge"
+  },
+  "job_id": null,
+  "requires_reply": true,
+  "parent_id": "turn_20260822_215931_7e4fbc",
+  "schema": "ether_chat_v1"
+}

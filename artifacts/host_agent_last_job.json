@@ -1,13 +1,7 @@
 {
-  "job_id": "p1_104_gate_sample_easy_both_235203",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-22T00:02:47.647519+00:00",
-  "note": "gate_sample: controlled LIVE easy tier (greeter+wallet) max_steps=10 \u2014 second wave to grow eligible n [failure_type=timeout]",
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25
-  },
-  "failure_type": "timeout"
+  "job_id": "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T00:03:00.800022+00:00",
+  "note": "playbook:labradorite for p1_102_gate_sample_wallet_235201 [timeout] :: shrink wall budget; scripted tool_runtime only; one file"
 }

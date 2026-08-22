@@ -1,14 +1,13 @@
 {
-  "generated": "2026-08-22T00:02:02.587530+00:00",
+  "generated": "2026-08-22T00:02:56.681731+00:00",
   "next_job": "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
   "queue_head": [
     "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
-    "p1_101_gate_sample_greeter_235200",
-    "p1_104_gate_sample_easy_both_235203"
+    "p1_101_gate_sample_greeter_235200"
   ],
-  "queue_depth": 3,
-  "host_phase": "idle",
-  "last_job": "p1_103_gate_sample_merge_235202",
+  "queue_depth": 2,
+  "host_phase": "polling",
+  "last_job": "p1_104_gate_sample_easy_both_235203",
   "last_ok": false,
   "last_failure_type": "timeout",
   "phase_board": [

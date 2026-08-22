@@ -1358,7 +1358,8 @@
     "p1_177_gate_sample_greeter_044902",
     "p1_178_gate_sample_greeter_045900",
     "p1_179_gate_sample_wallet_045901",
-    "p1_180_gate_sample_greeter_045902"
+    "p1_180_gate_sample_greeter_045902",
+    "p1_181_gate_sample_wallet_045903"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1454,7 +1455,7 @@
     "00_mcp_cq_spike_01",
     "p1_174_gate_sample_merge_042202"
   ],
-  "last_tick": "2026-08-22T05:06:43.319182+00:00",
+  "last_tick": "2026-08-22T05:09:25.497547+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1463,7 +1464,7 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

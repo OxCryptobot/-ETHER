@@ -1444,7 +1444,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-22T23:17:21.527782+00:00",
+  "last_tick": "2026-08-22T23:17:25.227259+00:00",
   "mode": "rate_climb",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1454,7 +1454,7 @@
   "steady_idx": 883,
   "rate_climb_idx": 2,
   "last_rate_climb_ts": "2026-08-22T23:17:21.495783+00:00",
-  "rate_climb_status": "enqueued=['auto_rc_greeter_231721_0', 'auto_rc_wallet_231721_1'] rate=0.9412",
+  "rate_climb_status": "skip_pending_nonempty",
   "governor": {
     "pending": 2,
     "max_pending": 6,

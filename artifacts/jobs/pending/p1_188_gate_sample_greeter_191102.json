@@ -1,0 +1,10 @@
+{
+  "id": "p1_188_gate_sample_greeter_191102",
+  "class": "gate_sample",
+  "note": "gate_sample greeter — close rate gap second",
+  "continue_on_fail": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "greeter", "--max-steps", "10", "--timeout", "200", "--scoreboard", "artifacts/scoreboard_p1_188_greeter_live.json"],
+    "timeout": 300
+  }]
+}

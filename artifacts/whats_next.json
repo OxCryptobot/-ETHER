@@ -1,14 +1,13 @@
 {
-  "generated": "2026-08-22T02:56:21.686085+00:00",
-  "next_job": "p1_160_gate_sample_wallet_025200",
+  "generated": "2026-08-22T02:59:42.813762+00:00",
+  "next_job": "p1_161_gate_sample_greeter_025201",
   "queue_head": [
-    "p1_160_gate_sample_wallet_025200",
     "p1_161_gate_sample_greeter_025201",
     "p1_162_gate_sample_wallet_025202"
   ],
-  "queue_depth": 3,
-  "host_phase": "polling",
-  "last_job": "os1_02_chat_bus_roundtrip",
+  "queue_depth": 2,
+  "host_phase": "idle",
+  "last_job": "p1_160_gate_sample_wallet_025200",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

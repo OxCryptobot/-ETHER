@@ -1,9 +1,18 @@
 {
-  "generated": "2026-08-22T01:05:31.698751+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-22T01:35:13.103468+00:00",
+  "next_job": "p1_130_ollama_probe_010900",
+  "queue_head": [
+    "p1_130_ollama_probe_010900",
+    "p1_131_gate_sample_greeter_010901",
+    "p1_132_gate_sample_wallet_010902",
+    "p1_133_recompute_010903",
+    "p1_140_ollama_probe_011500",
+    "p1_141_gate_sample_greeter_011501",
+    "p1_142_gate_sample_wallet_011502",
+    "p1_143_gate_sample_merge_011503"
+  ],
+  "queue_depth": 9,
+  "host_phase": "idle",
   "last_job": "p1_123_recompute_eligible_004503",
   "last_ok": true,
   "last_failure_type": null,

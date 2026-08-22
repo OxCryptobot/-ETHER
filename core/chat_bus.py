@@ -8,6 +8,8 @@ Doctrine:
 - Training wheels stay ON.
 - Labradorite still mandatory on non-infra FAIL.
 - Chat never bypasses train_gates or live_budget.
+
+2026-08-22: agent_turn / agent_reply types for chat orchestrator.
 """
 from __future__ import annotations
 
@@ -34,6 +36,8 @@ VALID_TYPES = {
     "learn",
     "job_request",
     "ack",
+    "agent_turn",
+    "agent_reply",
 }
 
 
@@ -115,7 +119,7 @@ def archive(env_id: str) -> bool:
 
 
 def post_operator(message: str, *, job_id: Optional[str] = None) -> Dict[str, Any]:
-    """Operator → Grok quick message."""
+    """Operator → Grok quick message (raw bus, no orchestrator)."""
     env = envelope(
         from_actor="operator",
         type_="operator",
@@ -151,12 +155,18 @@ def post_critique_request(
 
 def summary() -> Dict[str, Any]:
     _ensure_dirs()
+    turns_n = 0
+    turns_dir = CHAT / "turns"
+    if turns_dir.exists():
+        turns_n = len([p for p in turns_dir.glob("turn_*.json")])
     return {
         "updated": _now(),
         "inbox_n": len([p for p in INBOX.glob("*.json") if p.name != ".gitkeep"]),
         "outbox_n": len([p for p in OUTBOX.glob("*.json") if p.name != ".gitkeep"]),
         "archive_n": len([p for p in ARCHIVE.glob("*.json") if p.name != ".gitkeep"]),
+        "turns_n": turns_n,
         "path": str(CHAT.relative_to(ROOT)).replace("\\", "/"),
+        "orchestrator": True,
     }
 
 

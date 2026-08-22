@@ -1,17 +1,169 @@
 {
-  "updated": "2026-08-22T23:00:33.840020+00:00",
-  "n_rows": 212,
-  "honest_n": 185,
-  "honest_rate": 0.8726,
-  "live_n": 62,
-  "live_ok_n": 41,
-  "live_honest_n": 41,
-  "live_honest_rate": 0.6613,
+  "updated": "2026-08-22T23:39:52.766705+00:00",
+  "n_rows": 220,
+  "honest_n": 193,
+  "honest_rate": 0.8773,
+  "live_n": 70,
+  "live_ok_n": 49,
+  "live_honest_n": 49,
+  "live_honest_rate": 0.7,
   "scripted_n": 150,
   "scripted_ok_n": 144,
   "scripted_ok_rate": 0.96,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 121.9,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 152.166,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 117.744,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 153.113,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 119.823,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 150.666,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 134.968,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 176.882,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
     {
       "fixture": "greeter",
       "tier": "easy",
@@ -229,164 +381,6 @@
       "score": 1.0,
       "n_steps": 5,
       "elapsed_s": 123.217,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "wallet",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 160.96,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 131.953,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 121.869,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "wallet",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 159.818,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 124.112,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "merge",
-      "tier": "hard",
-      "mode": "live",
-      "ok": false,
-      "score": 0.0,
-      "n_steps": 10,
-      "elapsed_s": 216.793,
-      "reason": "max_steps",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "failure_type": "live_fail",
-      "arm": "direct"
-    },
-    {
-      "fixture": "wallet",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 156.412,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 139.925,
       "reason": "tests passed",
       "tools": [
         "list_files",

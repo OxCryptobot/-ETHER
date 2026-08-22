@@ -1,10 +1,10 @@
 {
-  "job_id": "auto_rc_greeter_233155_0",
+  "job_id": "p1_measure_atomic_1833",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T23:34:01.099696+00:00",
-  "note": "AUTO rate-climb gate_sample greeter (honest_rate=0.9412<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
+  "finished": "2026-08-22T23:41:08.738366+00:00",
+  "note": "measure_tick + atomic rates single truth \u2014 Phase 1",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

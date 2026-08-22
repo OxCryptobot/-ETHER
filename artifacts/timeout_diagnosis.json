@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-22T23:00:37.229391+00:00",
-  "live_n": 62,
+  "updated": "2026-08-22T23:39:53.659157+00:00",
+  "live_n": 70,
   "timeout_n": 17,
-  "timeout_rate": 0.2742,
+  "timeout_rate": 0.2429,
   "timeout_floor_s": 120.0,
   "top_fixtures": [
     {
@@ -161,6 +161,6 @@
     }
   ],
   "target_rate": 0.25,
-  "ok": false,
+  "ok": true,
   "note": "Measurement only. Prefer retiring top timeout fixtures from LIVE enqueue until rate < 0.25. Wheels stay ON."
 }

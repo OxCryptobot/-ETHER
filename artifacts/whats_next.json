@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-22T00:40:20.082447+00:00",
-  "next_job": "p1_113_gate_sample_easy_both_002703",
+  "generated": "2026-08-22T00:43:22.109538+00:00",
+  "next_job": "p1_114_recompute_eligible_002704",
   "queue_head": [
-    "p1_113_gate_sample_easy_both_002703",
     "p1_114_recompute_eligible_002704"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "p1_112_gate_sample_merge_002702",
+  "queue_depth": 1,
+  "host_phase": "running",
+  "last_job": "p1_113_gate_sample_easy_both_002703",
   "last_ok": false,
   "last_failure_type": "timeout",
   "phase_board": [

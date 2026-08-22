@@ -1,9 +1,20 @@
 {
-  "updated": "2026-08-22T00:31:05.899194+00:00",
+  "updated": "2026-08-22T00:41:58.397572+00:00",
   "training_wheels": true,
   "max_wall_s": 90,
   "max_steps": 12,
   "step_timeout_s": 25,
   "live_enqueue_allowed": false,
-  "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement."
+  "budget_class": "production",
+  "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
+  "measurement": {
+    "updated": "2026-08-22T00:41:58.397572+00:00",
+    "training_wheels": true,
+    "max_wall_s": 240,
+    "max_steps": 14,
+    "step_timeout_s": 40,
+    "live_enqueue_allowed": false,
+    "budget_class": "measurement",
+    "note": "Measurement budget for gate_sample / controlled live under wheels. Production LIVE remains at the tighter default."
+  }
 }

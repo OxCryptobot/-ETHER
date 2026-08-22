@@ -1,13 +1,12 @@
 {
-  "job_id": "p1_113_gate_sample_easy_both_002703",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-22T00:41:50.127310+00:00",
-  "note": "gate_sample controlled live easy tier (greeter+wallet) under measurement budget \u2014 second wave grow eligible n [failure_type=timeout]",
+  "job_id": "p1_114_recompute_eligible_002704",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T00:43:53.755076+00:00",
+  "note": "Atomic recompute eligible_rates + phase1_gate + honest_live after hardened gate_sample wave",
   "live_budget": {
     "max_wall_s": 90,
     "max_steps": 12,
     "step_timeout_s": 25
-  },
-  "failure_type": "timeout"
+  }
 }

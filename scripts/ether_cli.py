@@ -1,18 +1,29 @@
-"""ETHER CLI parity — same contracts as dashboard / STATUS.md.
+"""ETHER Operator CLI — Control Matrix peer.
 
 Usage:
   python -m scripts.ether_cli status
   python -m scripts.ether_cli queue
   python -m scripts.ether_cli phase
-  python -m scripts.ether_cli doctor
   python -m scripts.ether_cli next
+  python -m scripts.ether_cli doctor
+  python -m scripts.ether_cli job enqueue --file job.json
+  python -m scripts.ether_cli job cancel <id>
+  python -m scripts.ether_cli job list
+  python -m scripts.ether_cli test <fixture> [--live] [--arm direct]
+  python -m scripts.ether_cli rates
+  python -m scripts.ether_cli chat "message"
+  python -m scripts.ether_cli chat inbox
+  python -m scripts.ether_cli git sync
+  python -m scripts.ether_cli tools
+  python -m scripts.ether_cli learn
+  python -m scripts.ether_cli agent
+  python -m scripts.ether_cli llm
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -20,62 +31,38 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-STATUS = ROOT / "artifacts" / "host_agent_status.json"
-LAST = ROOT / "artifacts" / "host_agent_last_job.json"
-PENDING = ROOT / "artifacts" / "jobs" / "pending"
-DONE = ROOT / "artifacts" / "jobs" / "done"
-FAILED = ROOT / "artifacts" / "jobs" / "failed"
-STATUS_MD = ROOT / "STATUS.md"
 
-
-def _load(path: Path) -> Dict[str, Any]:
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def _list_jobs(folder: Path) -> List[str]:
-    if not folder.exists():
-        return []
-    return sorted(p.stem for p in folder.glob("*.json") if p.name != ".gitkeep")
+def _print_json(data: Any) -> None:
+    print(json.dumps(data, indent=2, default=str))
 
 
 def cmd_status(_: argparse.Namespace) -> int:
-    st = _load(STATUS)
-    last = _load(LAST)
-    hb = st.get("heartbeat") or "(none)"
-    age = "?"
-    try:
-        t = datetime.fromisoformat(str(hb).replace("Z", "+00:00"))
-        age_s = (datetime.now(timezone.utc) - t).total_seconds()
-        age = f"{age_s:.0f}s ago"
-    except Exception:
-        pass
+    from core.operator_surface import status
+
+    s = status()
+    host = s.get("host") or {}
+    last = s.get("last_job") or {}
     print("ETHER host status")
-    print(f"  heartbeat : {hb} ({age})")
-    print(f"  phase     : {st.get('phase')}")
-    print(f"  current   : {st.get('current_job')}")
-    print(f"  last_job  : {st.get('last_job')} ok={st.get('last_ok')}")
-    if last:
-        print(f"  last_note : {last.get('note')}")
-        print(f"  last_rc   : {last.get('rc')}")
-    print(f"  pending   : {len(_list_jobs(PENDING))}")
-    print(f"  done      : {len(_list_jobs(DONE))}")
-    print(f"  failed    : {len(_list_jobs(FAILED))}")
+    print(f"  heartbeat : {host.get('heartbeat')}")
+    print(f"  phase     : {host.get('phase')}")
+    print(f"  current   : {host.get('current_job')}")
+    print(f"  last_job  : {last.get('job_id')} ok={last.get('ok')}")
+    print(f"  pending   : {s.get('pending_n')}")
+    print(f"  done      : {s.get('done_n')}")
+    print(f"  failed    : {s.get('failed_n')}")
     return 0
 
 
 def cmd_queue(_: argparse.Namespace) -> int:
-    pending = _list_jobs(PENDING)
-    failed = _list_jobs(FAILED)
+    from core.operator_surface import list_jobs
+
+    pending = list_jobs("pending")
+    failed = list_jobs("failed")
     print(f"pending ({len(pending)}):")
-    for j in pending[:30]:
+    for j in pending[:40]:
         print(f"  - {j}")
-    if len(pending) > 30:
-        print(f"  ... +{len(pending) - 30} more")
+    if len(pending) > 40:
+        print(f"  ... +{len(pending) - 40} more")
     print(f"failed ({len(failed)}):")
     for j in failed[:20]:
         print(f"  - {j}")
@@ -83,173 +70,208 @@ def cmd_queue(_: argparse.Namespace) -> int:
 
 
 def cmd_phase(_: argparse.Namespace) -> int:
+    from core.operator_surface import rates
+
+    r = rates()
+    p1 = r.get("phase1_gate") or {}
     print("Phase board (measured)")
-    print("  1A Tool-first          COMPLETE")
-    print("  1B AgentState          COMPLETE")
-    print("  1C AST transactional   COMPLETE")
-    p1d = _load(ROOT / "artifacts" / "phase1d_status.json")
-    if p1d:
-        print(
-            f"  1D Measured lift       {p1d.get('status')} "
-            f"checks={p1d.get('checks_ok')}/{p1d.get('checks_n')}"
-        )
-    else:
-        print("  1D Measured lift       PARTIAL (scripted GREEN; live OPEN)")
-    print("Soft launch             BLOCKED until live gap closed or gate policy updated")
-    ps = _load(ROOT / "artifacts" / "pipeline_strangler.json")
-    if ps:
-        print(
-            f"Pipeline strangler       {ps.get('status')} "
-            f"extracts={ps.get('extracted_ok')}/{ps.get('extracted_n')} "
-            f"adapter_off={ps.get('adapter_default_off')}"
-        )
-    retire = _load(ROOT / "artifacts" / "timeout_retirement.json")
-    if retire:
-        print(
-            f"Timeout retirement       rate={retire.get('timeout_rate')} "
-            f"target={retire.get('target_rate')} ok={retire.get('ok')}"
-        )
-    hyg = _load(ROOT / "artifacts" / "push_hygiene.json")
-    if hyg:
-        print(
-            f"Push hygiene             log_mb={hyg.get('log_mb')} "
-            f"gitignore={hyg.get('gitignore_has_log')} ok={hyg.get('ok')}"
-        )
-    if STATUS_MD.exists():
-        print()
-        print("STATUS.md head:")
-        for line in STATUS_MD.read_text(encoding="utf-8").splitlines()[:16]:
-            print(f"  {line}")
+    print(f"  status              {p1.get('status')}")
+    print(f"  architecture_go     {p1.get('architecture_go')}")
+    print(f"  metrics_go          {p1.get('metrics_go')}")
+    print(f"  honest_rate_eligible {p1.get('honest_rate_eligible')}")
+    print(f"  live_eligible_n     {p1.get('live_eligible_n')}")
+    print(f"  training_wheels     {p1.get('training_wheels')}")
     return 0
 
 
 def cmd_next(_: argparse.Namespace) -> int:
-    pending = _list_jobs(PENDING)
+    from core.operator_surface import list_jobs
+
+    pending = list_jobs("pending")
     if pending:
         print(f"next job: {pending[0]}")
         for j in pending[1:6]:
             print(f"  then: {j}")
     else:
         print("next job: (empty — foreman.tick should refill)")
-    try:
-        from scripts.foreman import status as fstatus
-
-        s = fstatus()
-        print(
-            f"foreman mode={s.get('mode')} cursor={s.get('cursor')} "
-            f"live_skip={s.get('live_skip_remaining')}"
-        )
-        if s.get("last_playbook"):
-            print(f"last_playbook={s.get('last_playbook')}")
-    except Exception as e:
-        print(f"foreman status unavailable: {e}")
     return 0
 
 
 def cmd_doctor(_: argparse.Namespace) -> int:
-    issues: List[str] = []
-    st = _load(STATUS)
-    hb = st.get("heartbeat")
-    if not hb:
-        issues.append("CRITICAL: no host heartbeat (host not running?)")
-    else:
-        try:
-            t = datetime.fromisoformat(str(hb).replace("Z", "+00:00"))
-            age_s = (datetime.now(timezone.utc) - t).total_seconds()
-            if age_s > 120:
-                issues.append(f"WARNING: heartbeat stale ({age_s:.0f}s)")
-        except Exception:
-            issues.append("WARNING: heartbeat unparseable")
-    if not (ROOT / ".venv" / "Scripts" / "python.exe").exists() and not (
-        ROOT / ".venv" / "bin" / "python"
-    ).exists():
-        issues.append("WARNING: .venv python not found")
-    n_failed = len(_list_jobs(FAILED))
-    if n_failed > 20:
-        issues.append(f"WARNING: failed queue large ({n_failed}) — run archive")
+    from core.operator_surface import doctor
 
-    try:
-        from core.pipeline_strangler import compute as strangler_compute
-
-        ps = strangler_compute()
-        if ps.get("extracted_ok") != ps.get("extracted_n"):
-            issues.append(
-                f"WARNING: strangler extracts {ps.get('extracted_ok')}/{ps.get('extracted_n')}"
-            )
-        if not ps.get("adapter_default_off", True):
-            issues.append("WARNING: pipeline adapter flag appears ON (expected OFF)")
-        if not ps.get("terminal_contract_ok", True):
-            issues.append("WARNING: terminal contract failed")
-    except Exception as e:
-        issues.append(f"WARNING: strangler check error: {e}")
-
-    try:
-        from core.pipeline_adapter import terminal_adapter_enabled
-
-        if terminal_adapter_enabled():
-            issues.append("INFO: ETHER_PIPELINE_TERMINAL=1 (experimental path active)")
-    except Exception:
-        pass
-
-    try:
-        from core.timeout_retirement import compute as retire_compute
-
-        r = retire_compute()
-        rate = r.get("timeout_rate")
-        if rate is not None and rate >= float(r.get("target_rate") or 0.25):
-            issues.append(
-                f"INFO: live_timeout_rate={rate} (target < {r.get('target_rate')}) — keep wheels ON"
-            )
-    except Exception as e:
-        issues.append(f"INFO: timeout_retirement unavailable: {e}")
-
-    try:
-        from core.push_hygiene import compute as hyg_compute
-
-        h = hyg_compute()
-        if not h.get("gitignore_has_log"):
-            issues.append("WARNING: host_agent_log.txt not in .gitignore")
-        if h.get("over_github"):
-            issues.append(
-                f"CRITICAL: host log {h.get('log_mb')}MB >= 100MB (GH001 risk)"
-            )
-        elif h.get("over_warn"):
-            issues.append(
-                f"WARNING: host log {h.get('log_mb')}MB (rotate before 100MB)"
-            )
-        else:
-            issues.append(
-                f"INFO: push_hygiene log_mb={h.get('log_mb')} ok={h.get('ok')}"
-            )
-    except Exception as e:
-        issues.append(f"INFO: push_hygiene unavailable: {e}")
-
-    if not issues:
+    d = doctor()
+    if d.get("ok") and not d.get("issues"):
         print("doctor: OK")
         return 0
     print("doctor: issues")
-    for i in issues:
+    for i in d.get("issues") or []:
         print(f"  - {i}")
-    hard = [x for x in issues if not x.startswith("INFO:")]
-    return 1 if hard else 0
+    return 0 if d.get("ok") else 1
+
+
+def cmd_job(args: argparse.Namespace) -> int:
+    from core.operator_surface import enqueue_job, cancel_job, list_jobs
+
+    if args.job_cmd == "list":
+        for kind in ("pending", "failed"):
+            jobs = list_jobs(kind)
+            print(f"{kind} ({len(jobs)}):")
+            for j in jobs[:30]:
+                print(f"  - {j}")
+        return 0
+    if args.job_cmd == "cancel":
+        ok = cancel_job(args.id)
+        print("cancelled" if ok else "not found")
+        return 0 if ok else 1
+    if args.job_cmd == "enqueue":
+        if not args.file:
+            print("--file required")
+            return 2
+        data = json.loads(Path(args.file).read_text(encoding="utf-8"))
+        path = enqueue_job(data)
+        print(f"enqueued {path.name}")
+        return 0
+    print("unknown job subcommand")
+    return 2
+
+
+def cmd_test(args: argparse.Namespace) -> int:
+    from core.operator_surface import run_test
+
+    path = run_test(
+        args.fixture,
+        live=bool(args.live),
+        arm=args.arm or "direct",
+        max_steps=int(args.max_steps or 8),
+        timeout=int(args.timeout or 280),
+    )
+    print(f"enqueued test job: {path.name}")
+    return 0
+
+
+def cmd_rates(_: argparse.Namespace) -> int:
+    from core.operator_surface import rates
+
+    _print_json(rates())
+    return 0
+
+
+def cmd_chat(args: argparse.Namespace) -> int:
+    from core.operator_surface import chat_post, chat_inbox
+
+    if args.chat_cmd == "inbox":
+        items = chat_inbox(limit=int(args.limit or 10))
+        _print_json(items)
+        return 0
+    if not args.message:
+        print("message required")
+        return 2
+    env = chat_post(args.message, job_id=args.job_id)
+    print(f"posted {env.get('id')}")
+    return 0
+
+
+def cmd_git(args: argparse.Namespace) -> int:
+    from core.operator_surface import git_sync
+
+    if args.git_cmd == "sync":
+        r = git_sync()
+        _print_json(r)
+        return 0 if r.get("ok") else 1
+    print("unknown git subcommand")
+    return 2
+
+
+def cmd_tools(_: argparse.Namespace) -> int:
+    from core.operator_surface import tools_list
+
+    _print_json(tools_list())
+    return 0
+
+
+def cmd_learn(_: argparse.Namespace) -> int:
+    from core.operator_surface import learn_summary
+
+    _print_json(learn_summary())
+    return 0
+
+
+def cmd_agent(_: argparse.Namespace) -> int:
+    from core.operator_surface import status
+
+    _print_json(status())
+    return 0
+
+
+def cmd_llm(_: argparse.Namespace) -> int:
+    from core.multi_llm import publish
+
+    _print_json(publish())
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="ether", description="ETHER operator CLI")
+    ap = argparse.ArgumentParser(prog="ether", description="ETHER Operator CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
+
     sub.add_parser("status", help="host heartbeat + last job")
     sub.add_parser("queue", help="pending + failed list")
-    sub.add_parser("phase", help="Phase 1–7 board snapshot")
-    sub.add_parser("next", help="what's next from queue + foreman")
-    sub.add_parser("doctor", help="quick health checks")
+    sub.add_parser("phase", help="Phase gate snapshot")
+    sub.add_parser("next", help="what's next from queue")
+    sub.add_parser("doctor", help="health checks")
+
+    p_job = sub.add_parser("job", help="job enqueue / cancel / list")
+    job_sub = p_job.add_subparsers(dest="job_cmd", required=True)
+    je = job_sub.add_parser("enqueue")
+    je.add_argument("--file", required=True)
+    jc = job_sub.add_parser("cancel")
+    jc.add_argument("id")
+    job_sub.add_parser("list")
+
+    p_test = sub.add_parser("test", help="enqueue fixture test (countable)")
+    p_test.add_argument("fixture")
+    p_test.add_argument("--live", action="store_true")
+    p_test.add_argument("--arm", default="direct")
+    p_test.add_argument("--max-steps", type=int, default=8)
+    p_test.add_argument("--timeout", type=int, default=280)
+
+    sub.add_parser("rates", help="phase1_gate + eligible + multi_llm")
+
+    p_chat = sub.add_parser("chat", help="post to Grok or read inbox")
+    chat_sub = p_chat.add_subparsers(dest="chat_cmd")
+    chat_sub.add_parser("inbox")
+    p_chat.add_argument("message", nargs="?")
+    p_chat.add_argument("--job-id")
+    p_chat.add_argument("--limit", type=int, default=10)
+
+    p_git = sub.add_parser("git", help="git hygiene")
+    git_sub = p_git.add_subparsers(dest="git_cmd", required=True)
+    git_sub.add_parser("sync")
+
+    sub.add_parser("tools", help="persistent + quarantine tools")
+    sub.add_parser("learn", help="preference + strategy summary")
+    sub.add_parser("agent", help="full agent status JSON")
+    sub.add_parser("llm", help="multi-LLM lane status")
+
     args = ap.parse_args(argv)
-    return {
+    dispatch = {
         "status": cmd_status,
         "queue": cmd_queue,
         "phase": cmd_phase,
         "next": cmd_next,
         "doctor": cmd_doctor,
-    }[args.cmd](args)
+        "job": cmd_job,
+        "test": cmd_test,
+        "rates": cmd_rates,
+        "chat": cmd_chat,
+        "git": cmd_git,
+        "tools": cmd_tools,
+        "learn": cmd_learn,
+        "agent": cmd_agent,
+        "llm": cmd_llm,
+    }
+    return dispatch[args.cmd](args)
 
 
 if __name__ == "__main__":

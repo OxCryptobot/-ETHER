@@ -1,0 +1,23 @@
+{
+  "id": "critique_hyp_p1_102_gate_sample_wallet_235201_000106",
+  "class": "recovery",
+  "source": "labradorite_mandatory",
+  "created": "2026-08-22T00:01:06.795204+00:00",
+  "note": "playbook:labradorite for p1_102_gate_sample_wallet_235201 [timeout] :: shrink wall budget; scripted tool_runtime only; one file",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "tests/test_honest_live_critique_context.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

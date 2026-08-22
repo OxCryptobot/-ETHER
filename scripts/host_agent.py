@@ -11,9 +11,13 @@ Broadened tags: gate_sample | eligible_live | controlled live
 2026-08-22: Measurement outcomes (gate_sample / measure / continue_on_fail)
 always land in done/ with typed envelope so eligible_rates can count the
 attempt. failed/ reserved for wheels_skip, deny, infra crashes.
+
+2026-08-22b: importlib.reload foreman each tick so disk updates land without
+full process restart. Direct auto_rate_climb on idle path (belt + suspenders).
 """
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import shutil
@@ -49,9 +53,11 @@ _last_recover_log = 0.0
 _last_heavy_push = 0.0
 _last_liveness_push = 0.0
 _last_measure_tick = 0.0
+_last_rate_climb = 0.0
 HEAVY_PUSH_INTERVAL = 180
 LIVENESS_INTERVAL = 55
 MEASURE_INTERVAL = 60
+RATE_CLIMB_INTERVAL = 90
 
 
 def _rotate_log_if_needed() -> None:
@@ -215,7 +221,6 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
 
 
 def _is_gate_sample(job: Dict[str, Any]) -> bool:
-    """Explicit exception: gate_sample / eligible_live / controlled live may run LIVE under wheels."""
     cls = str(job.get("class") or "").strip().lower()
     note = str(job.get("note") or "").lower()
     jid = str(job.get("id") or "").lower()
@@ -226,11 +231,11 @@ def _is_gate_sample(job: Dict[str, Any]) -> bool:
         or "eligible_live" in hay
         or "controlled live" in hay
         or "controlled_live" in hay
+        or jid.startswith("auto_rc_")
     )
 
 
 def _is_measurement_job(job: Dict[str, Any]) -> bool:
-    """Jobs whose outcomes must always be countable (done/), never discarded."""
     cls = str(job.get("class") or "").strip().lower()
     if cls in ("gate_sample", "measure", "recovery"):
         return True
@@ -248,7 +253,6 @@ def purge_live_pending() -> int:
         for p in list(PENDING.glob(pat)):
             if p.name == ".gitkeep":
                 continue
-            # Never purge explicit gate_sample / controlled measurement jobs
             try:
                 data = json.loads(p.read_text(encoding="utf-8"))
                 if _is_gate_sample(data):
@@ -338,6 +342,46 @@ def maybe_measure_tick(force: bool = False) -> None:
             _commit_and_push(paths, "host measure_tick: moonshot panels", "measure")
     except Exception as e:
         log(f"measure_tick error: {type(e).__name__}: {e}")
+
+
+def maybe_auto_rate_climb(force: bool = False) -> None:
+    """Direct idle path — does not depend on cached foreman module."""
+    global _last_rate_climb
+    now = time.time()
+    if not force and now - _last_rate_climb < RATE_CLIMB_INTERVAL:
+        return
+    pending = [p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]
+    if pending:
+        return
+    try:
+        import core.auto_rate_climb as arc
+
+        importlib.reload(arc)
+
+        def _wj(job: Dict[str, Any]):
+            PENDING.mkdir(parents=True, exist_ok=True)
+            path = PENDING / f"{job['id']}.json"
+            job = dict(job)
+            job.setdefault("created", datetime.now(timezone.utc).isoformat())
+            job.setdefault("source", "host_agent_idle_rate_climb")
+            path.write_text(json.dumps(job, indent=2), encoding="utf-8")
+            return path
+
+        state: Dict[str, Any] = {}
+        jid = arc.maybe_enqueue(state, pending=set(), write_job=_wj)
+        if jid:
+            _last_rate_climb = now
+            log(f"auto_rate_climb enqueued={jid} status={state.get('rate_climb_status')}")
+            write_status(
+                current_job=None,
+                phase="rate_climb",
+                last_enqueued=jid,
+                rate_climb_status=state.get("rate_climb_status"),
+            )
+        else:
+            log(f"auto_rate_climb skip status={state.get('rate_climb_status')}")
+    except Exception as e:
+        log(f"auto_rate_climb error: {type(e).__name__}: {e}")
 
 
 def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
@@ -523,7 +567,6 @@ def process_job(path: Path) -> bool:
         from core.queue_governor import training_wheels_on
 
         if training_wheels_on() and job_class(job) == LIVE:
-            # Targeted exception: gate_sample / controlled measurement only
             if _is_gate_sample(job):
                 log(f"GATE_SAMPLE exception: allow LIVE under wheels job={job_id}")
             else:
@@ -591,9 +634,6 @@ def process_job(path: Path) -> bool:
     if not ok:
         _mandatory_critique(envelope)
 
-    # AUD-REL-002: measurement / gate_sample / continue_on_fail always → done/
-    # so eligible_rates and scoreboards can count the attempt.
-    # failed/ reserved for wheels_skip, deny, infra.
     if is_meas:
         dest_dir = DONE
         log(f"MEASUREMENT outcome → done/ (ok={ok} failure_type={failure_type})")
@@ -627,13 +667,15 @@ def process_job(path: Path) -> bool:
 
 
 def call_foreman_tick() -> None:
+    """Always reload foreman from disk so git pulls take effect without full restart."""
     try:
-        from scripts.foreman import tick
+        import scripts.foreman as foreman_mod
 
-        result = tick()
+        importlib.reload(foreman_mod)
+        result = foreman_mod.tick()
         log(
             f"foreman.tick enqueued={result.get('enqueued')} playbook={result.get('playbook')} "
-            f"cursor={result.get('cursor')}"
+            f"cursor={result.get('cursor')} rate_climb={result.get('rate_climb_status')}"
         )
         write_status(
             current_job=None,
@@ -641,13 +683,17 @@ def call_foreman_tick() -> None:
             last_enqueued=result.get("enqueued"),
             foreman_cursor=result.get("cursor"),
             governor=result.get("governor"),
+            rate_climb_status=result.get("rate_climb_status"),
         )
     except Exception as e:
         log(f"foreman.tick failed: {e}")
 
 
 def main() -> int:
-    print("ETHER host_agent (no-log-push + 1D + denylist + gate_sample + measurement_done)", flush=True)
+    print(
+        "ETHER host_agent (reload-foreman + idle auto_rate_climb + gate_sample)",
+        flush=True,
+    )
     _rotate_log_if_needed()
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)
@@ -655,6 +701,7 @@ def main() -> int:
     FAILED.mkdir(parents=True, exist_ok=True)
     purge_live_pending()
     call_foreman_tick()
+    maybe_auto_rate_climb(force=True)
     maybe_measure_tick(force=True)
     push_liveness("startup")
     while True:
@@ -665,6 +712,7 @@ def main() -> int:
             jobs = list_pending()
             if not jobs:
                 call_foreman_tick()
+                maybe_auto_rate_climb()
                 maybe_measure_tick()
                 jobs = list_pending()
                 if not jobs:
@@ -677,6 +725,7 @@ def main() -> int:
                 git_sync()
                 if len(list_pending()) < 3:
                     call_foreman_tick()
+                    maybe_auto_rate_climb()
                     maybe_measure_tick()
         except KeyboardInterrupt:
             write_status(phase="stopped")

@@ -1,10 +1,11 @@
 """FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
 
-Hardened 2026-08-22:
+Hardened 2026-08-22 / UX 0.6:
 - Index serves agent.html with no-cache so UI updates land on refresh
 - Operator Surface routes return error dicts (not hard 500) so panels degrade
 - /api/health never throws
 - /api/upload soft-registered (python-multipart optional at import time)
+- Tabbed operator surface (Ops / Chat / Rates / Learning / Code)
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.5.5")
+app = FastAPI(title="@ETHER Control Matrix", version="0.6.0")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -80,7 +81,7 @@ def _safe_snapshot() -> dict:
 
         data = collect_snapshot()
         data["console"] = build_console()
-        data["api_version"] = "0.5.5"
+        data["api_version"] = "0.6.0"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -203,7 +204,7 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.5.5",
+        "version": "0.6.0",
         "truth": "host_agent_local",
         "git_required": False,
         "host": {
@@ -315,7 +316,7 @@ def llm_api() -> dict:
 
 
 @app.get("/api/chat")
-def chat_list(limit: int = 20) -> dict:
+def chat_list(limit: int = 40) -> dict:
     try:
         from core.chat_bus import receive, summary
 

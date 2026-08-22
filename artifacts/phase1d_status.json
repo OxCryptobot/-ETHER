@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-22T03:25:06.822611+00:00",
+  "updated": "2026-08-22T03:35:54.800104+00:00",
   "phase": "1D",
   "name": "Measured lift",
   "status": "ADVANCING",
@@ -9,7 +9,7 @@
     {
       "id": "latency_timeout_split",
       "ok": true,
-      "detail": "to_rate=0.4 completed_ratio=66.5"
+      "detail": "to_rate=0.3902 completed_ratio=65.42"
     },
     {
       "id": "live_budget",
@@ -29,7 +29,7 @@
     {
       "id": "timeout_retirement_plan",
       "ok": true,
-      "detail": "rate=0.4 actions=5"
+      "detail": "rate=0.3902 actions=5"
     },
     {
       "id": "denylist_projected_under_target",

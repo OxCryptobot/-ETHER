@@ -1,15 +1,15 @@
 {
-  "job_id": "p1_140_ollama_probe_011500",
+  "job_id": "playbook_live_timeout_learn_014651",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T01:49:24.040683+00:00",
-  "note": "Phase A diagnostic: Ollama first-token probe before LIVE measure",
+  "finished": "2026-08-22T01:49:30.208599+00:00",
+  "note": "playbook:live_tool_path_timeout for p1_143_gate_sample_merge_011503",
   "class": "fast",
   "measurement": true,
   "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
   }
 }

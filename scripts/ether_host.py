@@ -6,8 +6,9 @@
 
 Dashboard thread + host_agent poll loop. No second terminal.
 
-2026-08-22f: Streamlined boot — minimal source-watch, no forced rate-climb on soft reload,
-aggressive log hygiene. Stops the reload death-spiral.
+2026-08-22g: Boot hang fix — launcher already did nuclear clean.
+Do NOT call git_reset_to_origin on startup (was 120s fetch hang).
+Light dirs + foreman + immediate liveness, then poll loop.
 """
 from __future__ import annotations
 
@@ -198,7 +199,7 @@ def _hygiene_log() -> None:
 def main() -> int:
     url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — streamlined boot + dual-chat ready", flush=True)
+    print("  ETHER HOST — fast boot (no double clean_slate)", flush=True)
     print(f"  UI     {url}", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
@@ -254,11 +255,19 @@ def main() -> int:
             pass
         return 1
 
-    agent.git_reset_to_origin("startup")
-    boot_snap = _snapshot()
+    # CRITICAL: launcher already did nuclear git clean_slate.
+    # Calling git_reset_to_origin here caused the multi-minute hang (fetch 120s).
+    agent.log("startup: skip nuclear clean_slate (launcher already did it)")
     agent.PENDING.mkdir(parents=True, exist_ok=True)
     agent.DONE.mkdir(parents=True, exist_ok=True)
     agent.FAILED.mkdir(parents=True, exist_ok=True)
+    boot_snap = _snapshot()
+
+    # Immediate local heartbeat so operator/Grok see life even if push is slow
+    try:
+        agent.write_status(current_job=None, phase="starting")
+    except Exception:
+        pass
 
     try:
         foreman = _reload_foreman()
@@ -267,8 +276,7 @@ def main() -> int:
     except Exception as e:
         agent.log(f"foreman boot failed (non-fatal): {e}")
 
-    # Soft boot: do NOT force rate-climb every restart (was causing extra work + churn).
-    # Idle loop will climb when pending is empty and rates lag.
+    # Soft boot: do NOT force rate-climb every restart
     try:
         agent.maybe_auto_rate_climb(force=False)
     except Exception as e:

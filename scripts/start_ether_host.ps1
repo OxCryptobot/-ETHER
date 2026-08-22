@@ -6,11 +6,13 @@
 #
 # Exit codes from ether_host.py:
 #   0  = clean stop (Ctrl+C) -> exit permanently
-#   42 = source updated on origin -> restart in 1s
-#   other = crash -> restart with backoff (never stays dead)
+#   42 = source updated on origin -> restart in 1s (NO nuclear git — already current)
+#   other = crash -> restart with backoff + nuclear clean
 #
 # -Recover / -Hard: kill stale, abort rebase/merge, hard-reset to origin/main,
 # optional venv rebuild, then self-healing loop in THIS process.
+#
+# 2026-08-22g: exit-42 path skips nuclear clean (was causing reload death-spiral).
 
 param(
     [switch]$Recover,
@@ -46,7 +48,6 @@ function Clear-GitState {
 }
 
 function Clear-Port8787 {
-    # Kill anything LISTENING on 8787 so uvicorn always binds
     Write-Banner "[port] free 8787" "Cyan"
     $killed = 0
     try {
@@ -73,7 +74,7 @@ function Clear-Port8787 {
         }
     } catch { Write-Warn "Clear-Port8787 non-fatal: $_" }
     if ($killed -eq 0) { Write-Ok "8787 free" } else { Write-Ok "freed 8787 ($killed)" }
-    Start-Sleep -Milliseconds 600
+    Start-Sleep -Milliseconds 400
 }
 
 # --- resolve repo root ---
@@ -146,10 +147,9 @@ if ($Hard) {
 if ($killed -eq 0) { Write-Ok "no stale host python" } else { Write-Ok "killed $killed process(es)" }
 Start-Sleep -Seconds 1
 
-# Explicit port free (fixes ERR_CONNECTION_REFUSED after bad reload)
 Clear-Port8787
 
-# --- 2. Nuclear git clean slate ---
+# --- 2. Nuclear git clean slate (once at start) ---
 Write-Banner "[2] git clean slate (abort rebase/merge + hard reset)" "Cyan"
 if (-not (Clear-GitState)) { exit 1 }
 
@@ -248,10 +248,15 @@ Write-Host ""
 
 $backoff = 3
 $maxBackoff = 30
+$needNuclear = $true  # first start always nuclear (already done above; loop tracks)
 
 while ($true) {
-    Write-Banner "[sync] clean slate + free port + start" "Cyan"
-    [void](Clear-GitState)
+    if ($needNuclear) {
+        Write-Banner "[sync] clean slate + free port + start" "Cyan"
+        [void](Clear-GitState)
+    } else {
+        Write-Banner "[sync] light reload (skip nuclear) + free port + start" "Cyan"
+    }
     Clear-Port8787
 
     Write-Banner "[start] scripts\ether_host.py" "Cyan"
@@ -264,13 +269,15 @@ while ($true) {
         break
     }
     if ($code -eq 42) {
-        Write-Banner "[reload] source updated (exit 42) -- restart in 1s" "Cyan"
+        Write-Banner "[reload] source updated (exit 42) -- restart in 1s (no nuclear)" "Cyan"
         $backoff = 3
+        $needNuclear = $false
         Start-Sleep -Seconds 1
         continue
     }
 
-    Write-Banner "[crash] exit=$code -- restart in ${backoff}s" "Yellow"
+    Write-Banner "[crash] exit=$code -- nuclear + restart in ${backoff}s" "Yellow"
+    $needNuclear = $true
     Start-Sleep -Seconds $backoff
     $backoff = [Math]::Min($backoff * 2, $maxBackoff)
 }

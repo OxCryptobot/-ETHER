@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """ETHER host agent — moonshots + chat bus push for Grok bridge.
 
-2026-08-22d: when chat_bridge marks dirty, include artifacts/chat/ on liveness push
-so Grok sees outbox escalations on origin within ~55s.
+2026-08-22g: Fast boot — git_clean_slate no longer always rehydrates;
+fetch timeout 45s (was 120); git_sync is light ff-only first.
 """
 from __future__ import annotations
 
@@ -52,6 +52,9 @@ MEASURE_INTERVAL = 60
 RATE_CLIMB_INTERVAL = 90
 GPU_SAMPLE_INTERVAL = 15
 _gpu_cache: Dict[str, Any] = {}
+
+# Fetch timeout: was 120s and caused multi-minute boot hangs on slow/network glitches
+GIT_FETCH_TIMEOUT = int(os.getenv("ETHER_GIT_FETCH_TIMEOUT", "45"))
 
 
 def _rotate_log_if_needed() -> None:
@@ -247,7 +250,7 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
         return True
     err = ((p.stderr or "") + (p.stdout or ""))[:500]
     log(f"{label} push REJECTED rc={p.returncode} err={err}")
-    run(["git", "fetch", "origin"], timeout=120)
+    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
     run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
     run(["git", "add", "-f", "--"] + paths, timeout=45)
     run(["git", "commit", "-m", message], timeout=30)
@@ -348,33 +351,37 @@ def rehydrate_measure() -> None:
         log(f"rehydrate_measure error: {type(e).__name__}: {e}")
 
 
-def git_clean_slate(reason: str) -> bool:
+def git_clean_slate(reason: str, rehydrate: bool = False) -> bool:
+    """Nuclear reset. rehydrate default False — was slow and blocked boot."""
     global _last_recover_log
     now = time.time()
     if now - _last_recover_log > 15:
-        log(f"git clean_slate ({reason})")
+        log(f"git clean_slate ({reason}) rehydrate={rehydrate}")
         _last_recover_log = now
-    run(["git", "rebase", "--abort"], timeout=30)
-    run(["git", "merge", "--abort"], timeout=30)
-    run(["git", "reset", "--mixed", "HEAD"], timeout=30)
-    run(["git", "fetch", "origin"], timeout=120)
-    r = run(["git", "reset", "--hard", "origin/main"], timeout=60)
+    run(["git", "rebase", "--abort"], timeout=15)
+    run(["git", "merge", "--abort"], timeout=15)
+    run(["git", "reset", "--mixed", "HEAD"], timeout=15)
+    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
+    r = run(["git", "reset", "--hard", "origin/main"], timeout=45)
     if r.returncode != 0:
         log(f"clean_slate reset failed rc={r.returncode}")
         return False
-    rehydrate_measure()
+    if rehydrate:
+        rehydrate_measure()
     return True
 
 
 def git_reset_to_origin(reason: str) -> bool:
-    return git_clean_slate(reason)
+    # No rehydrate on startup path — launcher + idle measure_tick cover it
+    return git_clean_slate(reason, rehydrate=False)
 
 
 def git_sync() -> None:
-    run(["git", "fetch", "origin"], timeout=120)
-    r = run(["git", "merge", "--ff-only", "origin/main"], timeout=60)
+    """Light path: fetch + ff-only. Nuclear only on divergence."""
+    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
+    r = run(["git", "merge", "--ff-only", "origin/main"], timeout=30)
     if r.returncode != 0:
-        git_clean_slate("diverged")
+        git_clean_slate("diverged", rehydrate=False)
 
 
 def push_liveness(reason: str = "idle") -> None:
@@ -468,7 +475,7 @@ def git_push_report(job_id: str, ok: bool, light: bool = False) -> None:
         _commit_and_push(paths, f"host agent report: job={job_id} {status} ({mode})", f"report({job_id})")
     except Exception as e:
         log(f"report push error: {e}")
-        git_clean_slate("report_error")
+        git_clean_slate("report_error", rehydrate=False)
 
 
 def _sort_pending_fast_first(paths: List[Path]) -> List[Path]:
@@ -730,7 +737,7 @@ def process_job(path: Path) -> bool:
         git_push_report(job_id, ok, light=light)
     except Exception as e:
         log(f"push error: {e}")
-        git_clean_slate("push_error")
+        git_clean_slate("push_error", rehydrate=False)
     return ok
 
 
@@ -762,7 +769,8 @@ def main() -> int:
         flush=True,
     )
     _rotate_log_if_needed()
-    git_clean_slate("startup")
+    # Standalone main still cleans once; ether_host path skips this
+    git_clean_slate("startup", rehydrate=False)
     PENDING.mkdir(parents=True, exist_ok=True)
     DONE.mkdir(parents=True, exist_ok=True)
     FAILED.mkdir(parents=True, exist_ok=True)
@@ -804,7 +812,7 @@ def main() -> int:
         except Exception as e:
             log(f"loop error: {e}")
             try:
-                git_clean_slate("loop_error")
+                git_clean_slate("loop_error", rehydrate=False)
             except Exception:
                 pass
             time.sleep(max(1, POLL))

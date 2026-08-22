@@ -6,12 +6,7 @@
 
 Dashboard thread + host_agent poll loop. No second terminal.
 
-Hard rule: dashboard MUST come up. Never silently skip uvicorn because
-the port "looks busy". Probe /api/health; if unhealthy, force-bind.
-
-2026-08-22: Idle path now calls host_agent.maybe_auto_rate_climb so
-honest_rate_eligible < 0.99 triggers auto_rc_* gate_sample waves with
-zero chat. Source-watch includes core/auto_rate_climb.py + foreman.
+2026-08-22: Idle auto_rate_climb + GPU metrics source watch.
 """
 from __future__ import annotations
 
@@ -35,12 +30,12 @@ sys.path.insert(0, str(ROOT))
 PORT = int(os.environ.get("ETHER_DASH_PORT") or "8787")
 OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "1").strip() != "0"
 
-# Files whose change must force a full process restart (exit 42)
 _WATCHED = (
     "scripts/host_agent.py",
     "scripts/ether_host.py",
     "scripts/foreman.py",
     "core/auto_rate_climb.py",
+    "core/gpu_metrics.py",
     "core/live_budget.py",
     "core/latency_budget.py",
     "core/job_class.py",
@@ -49,6 +44,7 @@ _WATCHED = (
     "core/multi_llm.py",
     "core/operator_surface.py",
     "core/chat_bus.py",
+    "core/chat_orchestrator.py",
     "dashboard/app.py",
     "dashboard/static/agent.html",
     "dashboard/collector_host_agent.py",
@@ -76,14 +72,12 @@ def _snapshot() -> dict:
 
 
 def _port_listening(port: int) -> bool:
-    """True if something accepts TCP on 127.0.0.1:port."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.4)
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
 def _dashboard_healthy(port: int = PORT, timeout: float = 1.5) -> bool:
-    """True only if OUR Control Matrix answers /api/health with ok."""
     url = f"http://127.0.0.1:{port}/api/health"
     try:
         req = urllib.request.Request(url, method="GET")
@@ -97,7 +91,6 @@ def _dashboard_healthy(port: int = PORT, timeout: float = 1.5) -> bool:
 
 
 def _force_free_port(port: int) -> None:
-    """Best-effort: on Windows, kill whatever holds the port."""
     if sys.platform != "win32":
         return
     try:
@@ -143,7 +136,6 @@ def _force_free_port(port: int) -> None:
 def _run_uvicorn(port: int) -> None:
     import uvicorn
 
-    # SO_REUSEADDR is default in uvicorn; bind 127.0.0.1 only
     uvicorn.run(
         "dashboard.app:app",
         host="127.0.0.1",
@@ -155,7 +147,6 @@ def _run_uvicorn(port: int) -> None:
 
 
 def _start_dashboard() -> None:
-    """Bring Control Matrix up. Never silently skip."""
     if _dashboard_healthy(PORT):
         print(f"dashboard: healthy on :{PORT} — reusing", flush=True)
         return
@@ -171,7 +162,6 @@ def _start_dashboard() -> None:
         try:
             print(f"dashboard: starting uvicorn on :{PORT} (attempt {attempt})", flush=True)
             _run_uvicorn(PORT)
-            # uvicorn.run blocks; if it returns, server stopped
             print("dashboard: uvicorn exited", flush=True)
             return
         except OSError as e:
@@ -195,7 +185,6 @@ def _wait_dashboard(timeout_s: float = 8.0) -> bool:
 
 
 def _reload_foreman():
-    """Always reload foreman from disk so origin updates take effect."""
     import scripts.foreman as foreman_mod
 
     return importlib.reload(foreman_mod)
@@ -204,7 +193,7 @@ def _reload_foreman():
 def main() -> int:
     url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — one window + idle auto_rate_climb", flush=True)
+    print("  ETHER HOST — one window + GPU metrics + auto_rate_climb", flush=True)
     print(f"  UI     {url}", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
@@ -260,7 +249,6 @@ def main() -> int:
         return 1
 
     agent.git_reset_to_origin("startup")
-    # Re-snapshot after hard reset so we only react to *future* changes
     boot_snap = _snapshot()
     agent.PENDING.mkdir(parents=True, exist_ok=True)
     agent.DONE.mkdir(parents=True, exist_ok=True)
@@ -273,7 +261,6 @@ def main() -> int:
     except Exception as e:
         agent.log(f"foreman boot failed (non-fatal): {e}")
 
-    # Force one rate-climb attempt at boot (pending empty or not handled inside)
     try:
         agent.maybe_auto_rate_climb(force=True)
     except Exception as e:
@@ -285,10 +272,9 @@ def main() -> int:
     except Exception as e:
         agent.log(f"startup liveness failed: {e}")
 
-    # Re-check dashboard after git reset (static files may have changed)
     dash_ok = _dashboard_healthy(PORT)
     print(
-        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll loop + rate-climb",
+        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll + GPU + rate-climb",
         flush=True,
     )
     if not dash_ok:
@@ -299,8 +285,6 @@ def main() -> int:
             agent.write_status(current_job=None, phase="polling")
             agent.git_sync()
 
-            # Source-change watch: if critical files moved under us, exit 42
-            # so start_ether_host.ps1 reloads the new modules into a fresh process.
             now_snap = _snapshot()
             if now_snap != boot_snap:
                 changed = [k for k in _WATCHED if now_snap.get(k) != boot_snap.get(k)]
@@ -318,7 +302,6 @@ def main() -> int:
 
             jobs = agent.list_pending()
             if not jobs:
-                # Host autonomy: rate lag → auto_rc_* under wheels (no chat required)
                 try:
                     agent.maybe_auto_rate_climb()
                 except Exception as e:
@@ -341,7 +324,6 @@ def main() -> int:
             for job_path in jobs:
                 agent.process_job(job_path)
                 agent.git_sync()
-                # Re-check after each job in case a push landed mid-run
                 now_snap = _snapshot()
                 if now_snap != boot_snap:
                     changed = [k for k in _WATCHED if now_snap.get(k) != boot_snap.get(k)]
@@ -355,7 +337,6 @@ def main() -> int:
                         agent.log(f"foreman: {fr}")
                 except Exception as e:
                     agent.log(f"foreman.tick error: {e}")
-                # After job, if queue drained, give rate-climb a chance immediately
                 if not agent.list_pending():
                     try:
                         agent.maybe_auto_rate_climb()

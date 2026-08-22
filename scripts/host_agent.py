@@ -6,14 +6,10 @@ Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
 
 2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note/id tag)
 may run LIVE while wheels ON. All other LIVE still skipped.
-Broadened tags: gate_sample | eligible_live | controlled live
 
-2026-08-22: Measurement outcomes (gate_sample / measure / continue_on_fail)
-always land in done/ with typed envelope so eligible_rates can count the
-attempt. failed/ reserved for wheels_skip, deny, infra crashes.
-
-2026-08-22b: importlib.reload foreman each tick so disk updates land without
-full process restart. Direct auto_rate_climb on idle path (belt + suspenders).
+2026-08-22: Measurement outcomes always land in done/ with typed envelope.
+2026-08-22b: importlib.reload foreman + idle auto_rate_climb.
+2026-08-22c: GPU metrics (nvidia-smi) embedded in write_status + gpu_metrics.json.
 """
 from __future__ import annotations
 
@@ -54,10 +50,13 @@ _last_heavy_push = 0.0
 _last_liveness_push = 0.0
 _last_measure_tick = 0.0
 _last_rate_climb = 0.0
+_last_gpu_sample = 0.0
 HEAVY_PUSH_INTERVAL = 180
 LIVENESS_INTERVAL = 55
 MEASURE_INTERVAL = 60
 RATE_CLIMB_INTERVAL = 90
+GPU_SAMPLE_INTERVAL = 15  # seconds — avoid hammering nvidia-smi every 1s poll
+_gpu_cache: Dict[str, Any] = {}
 
 
 def _rotate_log_if_needed() -> None:
@@ -86,12 +85,31 @@ def log(msg: str) -> None:
         pass
 
 
+def _gpu_snapshot(force: bool = False) -> Dict[str, Any]:
+    """Throttled GPU sample for status + artifacts/gpu_metrics.json."""
+    global _last_gpu_sample, _gpu_cache
+    now = time.time()
+    if not force and _gpu_cache and (now - _last_gpu_sample) < GPU_SAMPLE_INTERVAL:
+        return _gpu_cache
+    try:
+        from core.gpu_metrics import snapshot_for_status
+
+        _gpu_cache = snapshot_for_status()
+        _last_gpu_sample = now
+    except Exception as e:
+        _gpu_cache = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+        _last_gpu_sample = now
+    return _gpu_cache
+
+
 def write_status(**extra: Any) -> None:
     STATUS.parent.mkdir(parents=True, exist_ok=True)
+    gpu = _gpu_snapshot()
     payload = {
         "heartbeat": datetime.now(timezone.utc).isoformat(),
         "poll_s": POLL,
         "root": str(ROOT),
+        "gpu": gpu,
         **extra,
     }
     try:
@@ -153,6 +171,7 @@ def _measure_paths() -> List[str]:
         "honest_path_progress.json",
         "pipeline_strangler.json",
         "phase1d_status.json",
+        "gpu_metrics.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -176,6 +195,7 @@ def _light_paths() -> List[str]:
         "preferences_tail.jsonl",
         "whats_next.json",
         "performance_benchmark.json",
+        "gpu_metrics.json",
     ):
         p = ROOT / "artifacts" / name
         if p.exists():
@@ -316,6 +336,7 @@ def push_liveness(reason: str = "idle") -> None:
         return
     _last_liveness_push = now
     try:
+        _gpu_snapshot(force=True)
         write_status(current_job=None, phase=reason)
         _commit_and_push(_light_paths(), f"host agent liveness: {reason}", f"liveness({reason})")
     except Exception as e:
@@ -345,7 +366,6 @@ def maybe_measure_tick(force: bool = False) -> None:
 
 
 def maybe_auto_rate_climb(force: bool = False) -> None:
-    """Direct idle path — does not depend on cached foreman module."""
     global _last_rate_climb
     now = time.time()
     if not force and now - _last_rate_climb < RATE_CLIMB_INTERVAL:
@@ -667,7 +687,6 @@ def process_job(path: Path) -> bool:
 
 
 def call_foreman_tick() -> None:
-    """Always reload foreman from disk so git pulls take effect without full restart."""
     try:
         import scripts.foreman as foreman_mod
 
@@ -691,7 +710,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print(
-        "ETHER host_agent (reload-foreman + idle auto_rate_climb + gate_sample)",
+        "ETHER host_agent (GPU metrics + reload-foreman + idle auto_rate_climb)",
         flush=True,
     )
     _rotate_log_if_needed()
@@ -703,6 +722,7 @@ def main() -> int:
     call_foreman_tick()
     maybe_auto_rate_climb(force=True)
     maybe_measure_tick(force=True)
+    _gpu_snapshot(force=True)
     push_liveness("startup")
     while True:
         try:

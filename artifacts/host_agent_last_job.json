@@ -1,10 +1,10 @@
 {
-  "job_id": "p1_181_gate_sample_wallet_045903",
+  "job_id": "rlhf_tick_182704",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T05:09:20.996097+00:00",
-  "note": "gate_sample controlled live wallet measurement budget \u2014 easy wave #2 second wallet",
-  "class": "gate_sample",
+  "finished": "2026-08-22T18:39:07.981272+00:00",
+  "note": "offline RLHF reprocess scoreboards \u2192 preference pairs + strategy_boost (self-learning refresh)",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

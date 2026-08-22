@@ -1351,7 +1351,8 @@
     "ss_archive_failed_150331_4",
     "auto_rc_wallet_204607_1",
     "auto_rc_greeter_231721_0",
-    "auto_rc_wallet_231721_1"
+    "auto_rc_wallet_231721_1",
+    "auto_rc_greeter_232224_0"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,7 +1447,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-22T23:22:25.021393+00:00",
+  "last_tick": "2026-08-22T23:24:31.341375+00:00",
   "mode": "rate_climb",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1458,7 +1459,7 @@
   "last_rate_climb_ts": "2026-08-22T23:22:24.040869+00:00",
   "rate_climb_status": "skip_pending_nonempty",
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

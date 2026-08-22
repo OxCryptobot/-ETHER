@@ -1,11 +1,7 @@
 """Operator Surface — single facade for CLI, Control Matrix, and host_agent.
 
-All paths read/write the same artifacts/ that host_agent already owns.
-Never lifts training wheels. Never invents a second scoring path.
-
-OS-1: status job test rates chat git tools learn doctor llm
-OS-2/3/4: skill upload swarm multifile speech
-OS-5 2026-08-22: chat routes through chat_orchestrator (local Ollama + git + escalate)
+OS-5: chat routes through chat_orchestrator
+OS-6 2026-08-22: chat_clear — Clear Chat button / session hygiene
 """
 from __future__ import annotations
 
@@ -174,10 +170,6 @@ def chat_post(
     allow_write: bool = False,
     force_channel: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Operator message. Default: full chat orchestrator turn.
-
-    Set orchestrate=False to raw-bus post to Grok only (legacy path).
-    """
     if orchestrate:
         try:
             from core.chat_orchestrator import turn
@@ -201,6 +193,19 @@ def chat_post(
     from core.chat_bus import post_operator
 
     return post_operator(message, job_id=job_id)
+
+
+def chat_clear(*, keep_archive: bool = True) -> Dict[str, Any]:
+    """Clear Chat — archive bus + wipe turns so UI stays clean."""
+    try:
+        from core.chat_orchestrator import clear_chat
+
+        return clear_chat(keep_archive=keep_archive)
+    except Exception as e:
+        from core.chat_bus import clear_session
+
+        bus = clear_session(keep_archive=keep_archive)
+        return {"ok": False, "error": str(e)[:200], "bus": bus}
 
 
 def chat_inbox(limit: int = 10) -> List[Dict[str, Any]]:

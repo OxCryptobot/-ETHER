@@ -1,0 +1,24 @@
+{
+  "id": "critique_p1_104_gate_sample_easy_both_235203_000247",
+  "job_id": "p1_104_gate_sample_easy_both_235203",
+  "created": "2026-08-22T00:02:47.662115+00:00",
+  "failure_type": "timeout",
+  "note": "gate_sample: controlled LIVE easy tier (greeter+wallet) max_steps=10 \u2014 second wave to grow eligible n [failure_type=timeout]",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "shrink wall budget; scripted tool_runtime only; one file",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "timeout",
+    "hypothesis": "shrink wall budget; scripted tool_runtime only; one file",
+    "confidence": 0.25,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

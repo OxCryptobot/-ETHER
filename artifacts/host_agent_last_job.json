@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_173_gate_sample_wallet_042201",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-22T04:42:26.410563+00:00",
-  "note": "gate_sample controlled live wallet measurement budget \u2014 post-UX 0.6 rate climb (eligible fixture)",
+  "job_id": "p1_174_gate_sample_merge_042202",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-22T04:46:09.585056+00:00",
+  "note": "gate_sample controlled live merge measurement budget \u2014 post-UX 0.6 rate climb (hard eligible, not denylisted)",
   "class": "gate_sample",
   "measurement": true,
   "live_budget": {
@@ -11,5 +11,7 @@
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  }
+  },
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p1_174_merge_live.json"
 }

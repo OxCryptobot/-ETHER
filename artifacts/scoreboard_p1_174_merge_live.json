@@ -1,0 +1,46 @@
+{
+  "results": [
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 10,
+      "elapsed_s": 216.793,
+      "reason": "max_steps",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "failure_type": "live_fail",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 10,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "merge": {
+      "direct": false
+    }
+  }
+}

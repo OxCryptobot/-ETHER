@@ -1,0 +1,24 @@
+{
+  "id": "critique_p1_174_gate_sample_merge_042202_044609",
+  "job_id": "p1_174_gate_sample_merge_042202",
+  "created": "2026-08-22T04:46:09.626222+00:00",
+  "failure_type": "step_fail",
+  "note": "gate_sample controlled live merge measurement budget \u2014 post-UX 0.6 rate climb (hard eligible, not denylisted)",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

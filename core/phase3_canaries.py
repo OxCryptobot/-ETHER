@@ -129,6 +129,32 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("flags_default_safe", False, str(e))
 
+    # Multi-LLM latency path (OS-3 perfect efficiency canary)
+    try:
+        from core.multi_llm import warm, chat, latency_stats
+
+        w = warm()
+        r = chat(
+            [{"role": "user", "content": "Reply with exactly: pong"}],
+            lane="fast",
+            max_tokens=8,
+            temperature=0.0,
+        )
+        stats = latency_stats()
+        ok = (
+            bool(w.get("ok"))
+            and bool(r.get("ok"))
+            and r.get("latency_ms") is not None
+            and float(r.get("latency_ms") or 99999) < 120000  # hard ceiling, post-warm should be far lower
+        )
+        add(
+            "multi_llm_latency",
+            ok,
+            f"warm_ms={w.get('warm_ms')} chat_ms={r.get('latency_ms')} p50={stats.get('p50_ms')}",
+        )
+    except Exception as e:
+        add("multi_llm_latency", False, str(e))
+
     wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
     add("wheels_on", wheels, f"wheels={wheels}")
 
@@ -141,7 +167,7 @@ def run_matrix() -> Dict[str, Any]:
         "ok": passed == len(cases),
         "cases": cases,
         "soft_launch_blocked": True,
-        "note": "Phase 3 canaries = measurement + dry evolution only.",
+        "note": "Phase 3 canaries = measurement + dry evolution only. multi_llm_latency included.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

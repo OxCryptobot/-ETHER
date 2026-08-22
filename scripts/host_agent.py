@@ -7,6 +7,10 @@ Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
 2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note/id tag)
 may run LIVE while wheels ON. All other LIVE still skipped.
 Broadened tags: gate_sample | eligible_live | controlled live
+
+2026-08-22: Measurement outcomes (gate_sample / measure / continue_on_fail)
+always land in done/ with typed envelope so eligible_rates can count the
+attempt. failed/ reserved for wheels_skip, deny, infra crashes.
 """
 from __future__ import annotations
 
@@ -208,6 +212,31 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     err2 = ((p2.stderr or "") + (p2.stdout or ""))[:500]
     log(f"{label} push STILL FAILED rc={p2.returncode} err={err2}")
     return False
+
+
+def _is_gate_sample(job: Dict[str, Any]) -> bool:
+    """Explicit exception: gate_sample / eligible_live / controlled live may run LIVE under wheels."""
+    cls = str(job.get("class") or "").strip().lower()
+    note = str(job.get("note") or "").lower()
+    jid = str(job.get("id") or "").lower()
+    hay = f"{cls} {note} {jid}"
+    return (
+        cls == "gate_sample"
+        or "gate_sample" in hay
+        or "eligible_live" in hay
+        or "controlled live" in hay
+        or "controlled_live" in hay
+    )
+
+
+def _is_measurement_job(job: Dict[str, Any]) -> bool:
+    """Jobs whose outcomes must always be countable (done/), never discarded."""
+    cls = str(job.get("class") or "").strip().lower()
+    if cls in ("gate_sample", "measure", "recovery"):
+        return True
+    if bool(job.get("continue_on_fail")):
+        return True
+    return _is_gate_sample(job)
 
 
 def purge_live_pending() -> int:
@@ -466,21 +495,6 @@ def run_steps(
     return last_rc, failure_type if last_rc else None
 
 
-def _is_gate_sample(job: Dict[str, Any]) -> bool:
-    """Explicit exception: gate_sample / eligible_live / controlled live may run LIVE under wheels."""
-    cls = str(job.get("class") or "").strip().lower()
-    note = str(job.get("note") or "").lower()
-    jid = str(job.get("id") or "").lower()
-    hay = f"{cls} {note} {jid}"
-    return (
-        cls == "gate_sample"
-        or "gate_sample" in hay
-        or "eligible_live" in hay
-        or "controlled live" in hay
-        or "controlled_live" in hay
-    )
-
-
 def process_job(path: Path) -> bool:
     try:
         job = json.loads(path.read_text(encoding="utf-8"))
@@ -499,7 +513,7 @@ def process_job(path: Path) -> bool:
         if job.get("live_budget"):
             log(
                 f"live_budget applied max_wall_s={job['live_budget'].get('max_wall_s')} "
-                f"job={job_id}"
+                f"class={job['live_budget'].get('budget_class')} job={job_id}"
             )
     except Exception as e:
         log(f"live_budget skip: {type(e).__name__}: {e}")
@@ -524,7 +538,7 @@ def process_job(path: Path) -> bool:
         from core.job_class import job_class, LIVE
         from core.live_fixture_policy import should_skip_live
 
-        if job_class(job) == LIVE:
+        if job_class(job) == LIVE and not _is_gate_sample(job):
             dec = should_skip_live(job=job)
             if dec.get("skip"):
                 log(f"LIVE_DENYLIST: skip {job_id} reason={dec.get('reason')}")
@@ -540,6 +554,7 @@ def process_job(path: Path) -> bool:
     rc = 1
     failure_type: Optional[str] = None
     cont = bool(job.get("continue_on_fail", False))
+    is_meas = _is_measurement_job(job)
     try:
         if job.get("steps"):
             rc, failure_type = run_steps(list(job["steps"]), continue_on_fail=cont, job=job)
@@ -562,6 +577,8 @@ def process_job(path: Path) -> bool:
         "rc": rc,
         "finished": datetime.now(timezone.utc).isoformat(),
         "note": job.get("note"),
+        "class": job.get("class"),
+        "measurement": is_meas,
     }
     if job.get("live_budget"):
         envelope["live_budget"] = job["live_budget"]
@@ -574,13 +591,20 @@ def process_job(path: Path) -> bool:
     if not ok:
         _mandatory_critique(envelope)
 
-    dest_dir = DONE if ok else FAILED
+    # AUD-REL-002: measurement / gate_sample / continue_on_fail always → done/
+    # so eligible_rates and scoreboards can count the attempt.
+    # failed/ reserved for wheels_skip, deny, infra.
+    if is_meas:
+        dest_dir = DONE
+        log(f"MEASUREMENT outcome → done/ (ok={ok} failure_type={failure_type})")
+    else:
+        dest_dir = DONE if ok else FAILED
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / path.name
     if dest.exists():
         dest = dest_dir / f"{path.stem}_{int(time.time())}.json"
     path.rename(dest)
-    log(f"JOB END {job_id} ok={ok} failure_type={failure_type}")
+    log(f"JOB END {job_id} ok={ok} failure_type={failure_type} dest={dest_dir.name}")
     write_status(
         current_job=None,
         phase="idle",
@@ -588,7 +612,12 @@ def process_job(path: Path) -> bool:
         last_ok=ok,
         last_failure_type=failure_type,
     )
-    light = cont or str(job.get("class") or "").lower() in ("fast", "measure", "recovery", "gate_sample")
+    light = cont or is_meas or str(job.get("class") or "").lower() in (
+        "fast",
+        "measure",
+        "recovery",
+        "gate_sample",
+    )
     try:
         git_push_report(job_id, ok, light=light)
     except Exception as e:
@@ -618,7 +647,7 @@ def call_foreman_tick() -> None:
 
 
 def main() -> int:
-    print("ETHER host_agent (no-log-push + 1D + denylist + gate_sample)", flush=True)
+    print("ETHER host_agent (no-log-push + 1D + denylist + gate_sample + measurement_done)", flush=True)
     _rotate_log_if_needed()
     git_clean_slate("startup")
     PENDING.mkdir(parents=True, exist_ok=True)

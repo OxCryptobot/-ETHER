@@ -2,7 +2,7 @@
 
 Hardened 2026-08-22 / UX 0.7 → 0.7.1:
 - Chat orchestrator + Clear Chat (POST /api/chat/clear)
-- Turn-first chat UI
+- Index injects /static/chat_ux.js for turn-first UX
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -108,13 +108,20 @@ def _safe_snapshot() -> dict:
 
 
 @app.get("/")
-def index() -> FileResponse:
+def index() -> HTMLResponse:
     path = STATIC / "agent.html"
     if not path.exists():
         raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
-    return FileResponse(
-        path,
-        media_type="text/html; charset=utf-8",
+    html = path.read_text(encoding="utf-8", errors="replace")
+    # Inject chat UX module once (Clear + turns + chips)
+    if "chat_ux.js" not in html:
+        html = html.replace(
+            "</body>",
+            '<script src="/static/chat_ux.js" defer></script>\n</body>',
+            1,
+        )
+    return HTMLResponse(
+        content=html,
         headers={
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",

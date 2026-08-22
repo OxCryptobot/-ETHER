@@ -1,6 +1,6 @@
 """FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
 
-UX 0.7.2: chat bridge pending_grok on GET /api/chat
+UX 0.7.3: instant clear + async chat_sync push
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.7.2")
+app = FastAPI(title="@ETHER Control Matrix", version="0.7.3")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -82,7 +82,7 @@ def _safe_snapshot() -> dict:
         from dashboard.live_feed import build_console
 
         data = collect_snapshot()
-        data["api_version"] = "0.7.2"
+        data["api_version"] = "0.7.3"
         data["console"] = build_console()
         try:
             from dashboard.collector_host_agent import collect_host_agent
@@ -211,12 +211,13 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.7.2",
+        "version": "0.7.3",
         "truth": "host_agent_local",
         "git_required": False,
         "chat_orchestrator": True,
         "chat_clear": True,
         "chat_bridge": True,
+        "chat_sync_async": True,
         "host": {
             "alive": host.get("alive"),
             "age_s": host.get("age_s"),
@@ -369,6 +370,12 @@ def chat_post(body: ChatPostBody) -> dict:
             allow_write=body.allow_write,
             force_channel=body.force_channel,
         )
+        try:
+            from core.chat_sync import push_chat_async
+
+            push_chat_async(message="chat bus: post turn")
+        except Exception:
+            pass
         if result.get("schema") == "ether_chat_turn_v1" or "reply" in result:
             return {"ok": bool(result.get("ok", True)), "turn": result, "orchestrator": True}
         return {"ok": True, "envelope": result, "orchestrator": False}
@@ -381,7 +388,14 @@ def chat_clear_api(body: ChatClearBody = ChatClearBody()) -> dict:
     try:
         from core.operator_surface import chat_clear
 
-        return chat_clear(keep_archive=body.keep_archive)
+        out = chat_clear(keep_archive=body.keep_archive)
+        try:
+            from core.chat_sync import push_chat_async
+
+            push_chat_async(message="chat bus: clear session")
+        except Exception:
+            pass
+        return out
     except Exception as e:
         return {"ok": False, "error": str(e)[:200]}
 

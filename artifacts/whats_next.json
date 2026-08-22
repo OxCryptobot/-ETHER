@@ -1,8 +1,12 @@
 {
-  "generated": "2026-08-22T03:08:48.024381+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-22T03:08:53.416293+00:00",
+  "next_job": "os234_01_full_surface_smoke",
+  "queue_head": [
+    "os234_01_full_surface_smoke",
+    "p1_170_gate_sample_wallet_030700",
+    "p1_171_gate_sample_greeter_030701"
+  ],
+  "queue_depth": 3,
   "host_phase": "polling",
   "last_job": "p1_162_gate_sample_wallet_025202",
   "last_ok": true,

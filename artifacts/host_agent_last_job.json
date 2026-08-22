@@ -1,15 +1,9 @@
 {
-  "job_id": "p1_162_gate_sample_wallet_025202",
+  "job_id": "os234_01_full_surface_smoke",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T03:04:58.394320+00:00",
-  "note": "gate_sample controlled live wallet under operator surface \u2014 always countable row",
-  "class": "gate_sample",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-22T03:08:57.976789+00:00",
+  "note": "OS-2/3/4: skill list, mcp, swarm helper, speech, upload dirs, CLI help",
+  "class": "fast",
+  "measurement": false
 }

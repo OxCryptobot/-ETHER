@@ -4,6 +4,7 @@ Hardened 2026-08-22:
 - Index serves agent.html with no-cache so UI updates land on refresh
 - Operator Surface routes return error dicts (not hard 500) so panels degrade
 - /api/health never throws
+- /api/upload soft-registered (python-multipart optional at import time)
 """
 
 from __future__ import annotations
@@ -15,8 +16,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -137,7 +138,12 @@ def host_agent_api() -> dict:
             "error": str(e)[:200],
             "agent_alive": False,
             "status": {},
-            "queue": {"pending": [], "done": [], "failed": [], "counts": {"pending": 0, "done": 0, "failed": 0}},
+            "queue": {
+                "pending": [],
+                "done": [],
+                "failed": [],
+                "counts": {"pending": 0, "done": 0, "failed": 0},
+            },
             "log_lines": [f"collector error: {e}"],
         }
 
@@ -385,29 +391,60 @@ def speech_api(body: SpeechBody) -> dict:
         return {"ok": False, "error": str(e)[:200]}
 
 
-@app.post("/api/upload")
-async def upload_api(
-    file: UploadFile = File(...),
-    dest: str = "uploads",
-) -> dict:
-    """Upload a file into artifacts/uploads or tools/quarantine."""
-    name = Path(file.filename or "upload.bin").name
-    if not re.match(r"^[A-Za-z0-9_\-.]+$", name):
-        raise HTTPException(400, "invalid filename")
-    if dest == "quarantine":
-        target = QUARANTINE
-    else:
-        target = UPLOADS
-    target.mkdir(parents=True, exist_ok=True)
-    path = target / name
-    data = await file.read()
-    path.write_bytes(data)
-    return {
-        "ok": True,
-        "path": str(path.relative_to(ROOT)).replace("\\", "/"),
-        "bytes": len(data),
-        "dest": dest,
-    }
+def _register_upload_routes() -> None:
+    """File upload needs python-multipart. Never fail module import if missing."""
+    try:
+        from fastapi import File, UploadFile
+    except Exception:
+        UploadFile = None  # type: ignore
+        File = None  # type: ignore
+
+    if UploadFile is None or File is None:
+
+        @app.post("/api/upload")
+        async def upload_unavailable() -> dict:
+            return {
+                "ok": False,
+                "error": "python-multipart not installed — pip install python-multipart",
+            }
+
+        return
+
+    try:
+
+        @app.post("/api/upload")
+        async def upload_api(
+            file: UploadFile = File(...),
+            dest: str = "uploads",
+        ) -> dict:
+            name = Path(file.filename or "upload.bin").name
+            if not re.match(r"^[A-Za-z0-9_\-.]+$", name):
+                raise HTTPException(400, "invalid filename")
+            if dest == "quarantine":
+                target = QUARANTINE
+            else:
+                target = UPLOADS
+            target.mkdir(parents=True, exist_ok=True)
+            path = target / name
+            data = await file.read()
+            path.write_bytes(data)
+            return {
+                "ok": True,
+                "path": str(path.relative_to(ROOT)).replace("\\", "/"),
+                "bytes": len(data),
+                "dest": dest,
+            }
+
+    except RuntimeError as e:
+        # FastAPI raises at decoration time if multipart missing
+        msg = str(e)
+
+        @app.post("/api/upload")
+        async def upload_stub() -> dict:
+            return {"ok": False, "error": msg[:200]}
+
+
+_register_upload_routes()
 
 
 @app.websocket("/ws")

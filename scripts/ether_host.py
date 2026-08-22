@@ -8,10 +8,15 @@ Dashboard thread + host_agent poll loop. No second terminal.
 
 Hard rule: dashboard MUST come up. Never silently skip uvicorn because
 the port "looks busy". Probe /api/health; if unhealthy, force-bind.
+
+2026-08-22: Idle path now calls host_agent.maybe_auto_rate_climb so
+honest_rate_eligible < 0.99 triggers auto_rc_* gate_sample waves with
+zero chat. Source-watch includes core/auto_rate_climb.py + foreman.
 """
 from __future__ import annotations
 
 import hashlib
+import importlib
 import os
 import socket
 import sys
@@ -34,6 +39,8 @@ OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "1").strip() != "0"
 _WATCHED = (
     "scripts/host_agent.py",
     "scripts/ether_host.py",
+    "scripts/foreman.py",
+    "core/auto_rate_climb.py",
     "core/live_budget.py",
     "core/latency_budget.py",
     "core/job_class.py",
@@ -187,10 +194,17 @@ def _wait_dashboard(timeout_s: float = 8.0) -> bool:
     return _dashboard_healthy(PORT)
 
 
+def _reload_foreman():
+    """Always reload foreman from disk so origin updates take effect."""
+    import scripts.foreman as foreman_mod
+
+    return importlib.reload(foreman_mod)
+
+
 def main() -> int:
     url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — one window", flush=True)
+    print("  ETHER HOST — one window + idle auto_rate_climb", flush=True)
     print(f"  UI     {url}", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
@@ -218,7 +232,6 @@ def main() -> int:
             pass
 
     try:
-        from scripts import foreman
         import scripts.host_agent as agent
     except Exception as e:
         print(f"FATAL import: {type(e).__name__}: {e}", flush=True)
@@ -254,10 +267,17 @@ def main() -> int:
     agent.FAILED.mkdir(parents=True, exist_ok=True)
 
     try:
+        foreman = _reload_foreman()
         fr = foreman.tick()
         agent.log(f"foreman boot: {fr}")
     except Exception as e:
         agent.log(f"foreman boot failed (non-fatal): {e}")
+
+    # Force one rate-climb attempt at boot (pending empty or not handled inside)
+    try:
+        agent.maybe_auto_rate_climb(force=True)
+    except Exception as e:
+        agent.log(f"boot auto_rate_climb: {type(e).__name__}: {e}")
 
     try:
         agent._last_liveness_push = 0.0  # type: ignore[attr-defined]
@@ -268,7 +288,7 @@ def main() -> int:
     # Re-check dashboard after git reset (static files may have changed)
     dash_ok = _dashboard_healthy(PORT)
     print(
-        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll loop",
+        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll loop + rate-climb",
         flush=True,
     )
     if not dash_ok:
@@ -289,16 +309,26 @@ def main() -> int:
                 return 42
 
             try:
+                foreman = _reload_foreman()
                 fr = foreman.tick()
-                if fr.get("enqueued") or fr.get("playbook"):
+                if fr.get("enqueued") or fr.get("playbook") or fr.get("rate_climb_status"):
                     agent.log(f"foreman: {fr}")
             except Exception as e:
                 agent.log(f"foreman.tick error: {e}")
 
             jobs = agent.list_pending()
             if not jobs:
+                # Host autonomy: rate lag → auto_rc_* under wheels (no chat required)
+                try:
+                    agent.maybe_auto_rate_climb()
+                except Exception as e:
+                    agent.log(f"idle auto_rate_climb: {type(e).__name__}: {e}")
+                jobs = agent.list_pending()
+
+            if not jobs:
                 agent.log("idle")
                 try:
+                    foreman = _reload_foreman()
                     agent.write_status(
                         current_job=None, phase="idle", foreman=foreman.status()
                     )
@@ -319,11 +349,18 @@ def main() -> int:
                     agent.write_status(phase="reload", changed=changed)
                     return 42
                 try:
+                    foreman = _reload_foreman()
                     fr = foreman.tick()
-                    if fr.get("enqueued") or fr.get("playbook"):
+                    if fr.get("enqueued") or fr.get("playbook") or fr.get("rate_climb_status"):
                         agent.log(f"foreman: {fr}")
                 except Exception as e:
                     agent.log(f"foreman.tick error: {e}")
+                # After job, if queue drained, give rate-climb a chance immediately
+                if not agent.list_pending():
+                    try:
+                        agent.maybe_auto_rate_climb()
+                    except Exception as e:
+                        agent.log(f"post-job auto_rate_climb: {type(e).__name__}: {e}")
 
         except KeyboardInterrupt:
             agent.log("stop")

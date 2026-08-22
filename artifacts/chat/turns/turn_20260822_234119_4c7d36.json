@@ -1,0 +1,56 @@
+{
+  "id": "turn_20260822_234119_4c7d36",
+  "ts": "2026-08-22T23:41:19.985043+00:00",
+  "ok": true,
+  "intent": "status",
+  "channel": "status",
+  "message": "status",
+  "reply": "phase=running \u00b7 pending=4 \u00b7 last=p2_rlhf_tick_1833 ok=True",
+  "tool_results": [
+    {
+      "tool": "status",
+      "updated": "2026-08-22T23:41:19.955969+00:00",
+      "host": {
+        "heartbeat": "2026-08-22T23:41:19.563760+00:00",
+        "poll_s": 1,
+        "root": "C:\\Users\\Otcde\\ETHER",
+        "gpu": {
+          "ok": true,
+          "available": true,
+          "name": "GeForce GTX 1650",
+          "util_gpu_pct": 0.0,
+          "mem_used_mb": 2716.0,
+          "mem_total_mb": 4096.0,
+          "temp_c": 64.0,
+          "warn": [],
+          "updated": "2026-08-22T23:41:08.795538+00:00"
+        },
+        "current_job": "p0_chat_e2e_smoke_1833",
+        "phase": "running"
+      },
+      "last_job": {
+        "job_id": "p2_rlhf_tick_1833",
+        "ok": true,
+        "rc": 0,
+        "finished": "2026-08-22T23:41:16.095011+00:00",
+        "note": "RLHF tick + empirical zero-win floor refresh \u2014 Phase 2",
+        "class": "measure",
+        "measurement": true,
+        "live_budget": {
+          "max_wall_s": 300,
+          "max_steps": 10,
+          "step_timeout_s": 50,
+          "budget_class": "measurement"
+        }
+      },
+      "pending_n": 4,
+      "done_n": 5510,
+      "failed_n": 22
+    }
+  ],
+  "job_id": null,
+  "allow_write": false,
+  "training_wheels": true,
+  "awaiting_grok": false,
+  "schema": "ether_chat_turn_v1"
+}

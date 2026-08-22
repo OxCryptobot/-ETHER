@@ -1,15 +1,9 @@
 {
-  "job_id": "p2_rlhf_tick_1833",
+  "job_id": "p0_chat_e2e_smoke_1833",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T23:41:16.095011+00:00",
-  "note": "RLHF tick + empirical zero-win floor refresh \u2014 Phase 2",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-22T23:41:20.066556+00:00",
+  "note": "chat E2E smoke: status + escalate path + bridge summary \u2014 countable",
+  "class": "fast",
+  "measurement": true
 }

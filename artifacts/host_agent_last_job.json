@@ -1,17 +1,9 @@
 {
-  "job_id": "auto_rc_wallet_234926_1",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-22T23:55:24.859066+00:00",
-  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_auto_rc_wallet_234926_1.json"
+  "job_id": "critique_hyp_auto_rc_wallet_234926_1_235524",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T23:55:33.732652+00:00",
+  "note": "playbook:labradorite for auto_rc_wallet_234926_1 [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true
 }

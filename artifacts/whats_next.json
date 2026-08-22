@@ -1,14 +1,14 @@
 {
-  "generated": "2026-08-22T23:51:33.300630+00:00",
-  "next_job": "auto_rc_wallet_234926_1",
+  "generated": "2026-08-22T23:55:30.132829+00:00",
+  "next_job": "critique_hyp_auto_rc_wallet_234926_1_235524",
   "queue_head": [
-    "auto_rc_wallet_234926_1"
+    "critique_hyp_auto_rc_wallet_234926_1_235524"
   ],
   "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "auto_rc_greeter_234926_0",
-  "last_ok": true,
-  "last_failure_type": null,
+  "host_phase": "polling",
+  "last_job": "auto_rc_wallet_234926_1",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

@@ -1,15 +1,10 @@
 """Git-backed chat bus — ETHER ↔ Grok structured envelopes.
 
 One hypothesis per message. Host and Grok both read/write the same
-artifacts/chat/{inbox,outbox}/ paths. No external websocket required for
-the host; Control Matrix and CLI surface the same files.
-
-Doctrine:
-- Training wheels stay ON.
-- Labradorite still mandatory on non-infra FAIL.
-- Chat never bypasses train_gates or live_budget.
+artifacts/chat/{inbox,outbox}/ paths.
 
 2026-08-22: agent_turn / agent_reply types for chat orchestrator.
+2026-08-22b: clear_session archives idle traffic — operator Clear button.
 """
 from __future__ import annotations
 
@@ -62,7 +57,6 @@ def envelope(
     requires_reply: bool = False,
     parent_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Build a typed chat envelope."""
     if type_ not in VALID_TYPES:
         raise ValueError(f"invalid chat type: {type_}")
     return {
@@ -79,7 +73,6 @@ def envelope(
 
 
 def send(env: Dict[str, Any], *, to_grok: bool = True) -> Path:
-    """Write envelope to outbox (ETHER→Grok) or inbox (operator/Grok→ETHER)."""
     _ensure_dirs()
     dest_dir = OUTBOX if to_grok else INBOX
     path = dest_dir / f"{env['id']}.json"
@@ -88,7 +81,6 @@ def send(env: Dict[str, Any], *, to_grok: bool = True) -> Path:
 
 
 def receive(*, from_grok: bool = True, limit: int = 20) -> List[Dict[str, Any]]:
-    """Read pending envelopes. from_grok=True → read inbox (Grok replies)."""
     _ensure_dirs()
     src = INBOX if from_grok else OUTBOX
     items: List[Dict[str, Any]] = []
@@ -105,7 +97,6 @@ def receive(*, from_grok: bool = True, limit: int = 20) -> List[Dict[str, Any]]:
 
 
 def archive(env_id: str) -> bool:
-    """Move an envelope from inbox/outbox into archive."""
     _ensure_dirs()
     for folder in (INBOX, OUTBOX):
         src = folder / f"{env_id}.json"
@@ -118,8 +109,60 @@ def archive(env_id: str) -> bool:
     return False
 
 
+def _archive_folder(folder: Path) -> int:
+    """Move all envelopes in folder to archive. Returns count."""
+    n = 0
+    if not folder.exists():
+        return 0
+    ARCHIVE.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%H%M%S")
+    for p in list(folder.glob("*.json")):
+        if p.name == ".gitkeep":
+            continue
+        dst = ARCHIVE / p.name
+        if dst.exists():
+            dst = ARCHIVE / f"{p.stem}_clr_{stamp}.json"
+        try:
+            p.rename(dst)
+            n += 1
+        except OSError:
+            try:
+                p.unlink()
+                n += 1
+            except OSError:
+                pass
+    return n
+
+
+def clear_session(*, keep_archive: bool = True) -> Dict[str, Any]:
+    """Operator Clear Chat — archive inbox+outbox so UI does not accumulate idle noise.
+
+    Does not delete archive history unless keep_archive=False (hard wipe archive too).
+    Turns are cleared separately via chat_orchestrator.clear_turns.
+    """
+    _ensure_dirs()
+    archived_in = _archive_folder(INBOX)
+    archived_out = _archive_folder(OUTBOX)
+    wiped_archive = 0
+    if not keep_archive:
+        for p in list(ARCHIVE.glob("*.json")):
+            if p.name == ".gitkeep":
+                continue
+            try:
+                p.unlink()
+                wiped_archive += 1
+            except OSError:
+                pass
+    return {
+        "ok": True,
+        "archived_inbox": archived_in,
+        "archived_outbox": archived_out,
+        "wiped_archive": wiped_archive,
+        "updated": _now(),
+    }
+
+
 def post_operator(message: str, *, job_id: Optional[str] = None) -> Dict[str, Any]:
-    """Operator → Grok quick message (raw bus, no orchestrator)."""
     env = envelope(
         from_actor="operator",
         type_="operator",
@@ -137,7 +180,6 @@ def post_critique_request(
     note: str,
     evidence: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """ETHER asks Grok / Labradorite for structured critique."""
     env = envelope(
         from_actor="ether",
         type_="critique_request",

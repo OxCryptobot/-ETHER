@@ -1,6 +1,11 @@
 """Measure Phase C tool-runtime on repo-oracle fixtures.
 
   python -m scripts.measure_tool_runtime --live --fixture ledger
+
+2026-08-22 Phase B:
+- Easy fixtures (greeter/wallet) get tight step-by-step objectives so 4B can finish.
+- LIVE uses lower max_tokens for tool calls (faster first token + less drift).
+- ensure_model_env() prefers short tag before any live decide_fn.
 """
 from __future__ import annotations
 
@@ -57,7 +62,28 @@ _EASY_FIXED = {
     },
 }
 
+# Tight objectives for 4B LIVE — force a short tool sequence
 OBJECTIVES = {
+    "greeter": (
+        "Fix greeter.py so ALL tests pass. Do exactly this sequence:\n"
+        "1) list_files\n"
+        "2) read_file path=tests/test_greeter.py (or tests/test_toy.py if that exists)\n"
+        "3) read_file path=greeter.py\n"
+        "4) write_file path=greeter.py content=def greet(name: str) -> str:\\n    return f\\\"Hello, {name}!\\\"\\n\n"
+        "5) run_tests\n"
+        "6) done with reason tests_passed\n"
+        "One JSON tool call per turn. No prose."
+    ),
+    "wallet": (
+        "Fix wallet.py so ALL tests pass. Do exactly this sequence:\n"
+        "1) list_files\n"
+        "2) read_file path=tests/test_wallet.py\n"
+        "3) read_file path=wallet.py\n"
+        "4) write_file the minimal fix (deposit/withdraw balance math + non-negative checks)\n"
+        "5) run_tests\n"
+        "6) done when tests pass\n"
+        "One JSON tool call per turn. No prose."
+    ),
     "topo": (
         "Fix topo_sort so ALL tests pass. "
         "Read tests/test_topo.py carefully: cycle cases MUST raise ValueError. "
@@ -71,6 +97,11 @@ OBJECTIVES = {
         "Bug1: transfer must a.debit(amount) then b.credit(amount). "
         "Bug2: total must return sum(...) once — never s+s. "
         "If tests still fail, re-read ledger.py and fix remaining bugs until score=1.0."
+    ),
+    "merge": (
+        "Fix the merge package so ALL tests pass. "
+        "list_files, read failing tests, read source, apply_patch or write_file minimal fix, run_tests, done. "
+        "One JSON tool call per turn."
     ),
 }
 
@@ -120,9 +151,23 @@ def measure_one(
         return {"fixture": name, "ok": False, "error": f"missing fixture {fixture}"}
 
     if live:
-        decide = make_llm_decide_fn(temperature=0.1, max_tokens=1536)
+        # Phase B: force short-tag model + tight generation budget for 4B host
+        try:
+            from core.model_select import ensure_model_env
+
+            chosen = ensure_model_env()
+            os.environ["ETHER_PRIMARY_MODEL"] = chosen
+        except Exception:
+            pass
+        # Easy fixtures: fewer steps, lower max_tokens → finish under wall
+        if name in EASY:
+            steps = min(max(max_steps, 6), 8)
+            max_tok = 384
+        else:
+            steps = max(max_steps, 10)
+            max_tok = 768
+        decide = make_llm_decide_fn(temperature=0.0, max_tokens=max_tok)
         mode = "live"
-        steps = max(max_steps, 12)
     else:
         decide = _scripted_decide(name)
         mode = "scripted"
@@ -134,7 +179,7 @@ def measure_one(
         decide_fn=decide,
         max_steps=steps,
         timeout_s=timeout_s,
-        pytest_timeout=45,
+        pytest_timeout=30 if name in EASY else 45,
     )
     obj = OBJECTIVES.get(
         name,
@@ -143,7 +188,7 @@ def measure_one(
     )
     result = rt.run(obj)
     elapsed = time.perf_counter() - t0
-    return {
+    row = {
         "fixture": name,
         "tier": "hard" if name in HARD else "easy",
         "mode": mode,
@@ -155,6 +200,15 @@ def measure_one(
         "tools": [s.tool for s in result.steps],
         "model": os.getenv("ETHER_PRIMARY_MODEL", "") if live else "",
     }
+    if not row["ok"]:
+        reason = str(row.get("reason") or "").lower()
+        if "timeout" in reason:
+            row["failure_type"] = "timeout"
+        elif "no_progress" in reason:
+            row["failure_type"] = "no_progress"
+        else:
+            row["failure_type"] = "live_fail" if live else "scripted_fail"
+    return row
 
 
 def main(argv: Optional[List[str]] = None) -> int:

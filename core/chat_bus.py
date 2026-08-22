@@ -1,10 +1,6 @@
 """Git-backed chat bus — ETHER ↔ Grok structured envelopes.
 
-One hypothesis per message. Host and Grok both read/write the same
-artifacts/chat/{inbox,outbox}/ paths.
-
-2026-08-22: agent_turn / agent_reply types for chat orchestrator.
-2026-08-22b: clear_session archives idle traffic — operator Clear button.
+2026-08-22e: clear_session(fast=True) unlinks for instant Clear button.
 """
 from __future__ import annotations
 
@@ -109,8 +105,23 @@ def archive(env_id: str) -> bool:
     return False
 
 
+def _wipe_folder(folder: Path) -> int:
+    """Unlink envelopes (fast clear). Keeps .gitkeep."""
+    n = 0
+    if not folder.exists():
+        return 0
+    for p in list(folder.glob("*.json")):
+        if p.name == ".gitkeep":
+            continue
+        try:
+            p.unlink()
+            n += 1
+        except OSError:
+            pass
+    return n
+
+
 def _archive_folder(folder: Path) -> int:
-    """Move all envelopes in folder to archive. Returns count."""
     n = 0
     if not folder.exists():
         return 0
@@ -134,27 +145,32 @@ def _archive_folder(folder: Path) -> int:
     return n
 
 
-def clear_session(*, keep_archive: bool = True) -> Dict[str, Any]:
-    """Operator Clear Chat — archive inbox+outbox so UI does not accumulate idle noise.
+def clear_session(*, keep_archive: bool = True, fast: bool = True) -> Dict[str, Any]:
+    """Clear Chat. fast=True (default): unlink inbox/outbox for instant UI.
 
-    Does not delete archive history unless keep_archive=False (hard wipe archive too).
-    Turns are cleared separately via chat_orchestrator.clear_turns.
+    keep_archive only matters when fast=False (rename into archive/).
     """
     _ensure_dirs()
+    if fast:
+        wiped_in = _wipe_folder(INBOX)
+        wiped_out = _wipe_folder(OUTBOX)
+        return {
+            "ok": True,
+            "fast": True,
+            "wiped_inbox": wiped_in,
+            "wiped_outbox": wiped_out,
+            "archived_inbox": 0,
+            "archived_outbox": 0,
+            "updated": _now(),
+        }
     archived_in = _archive_folder(INBOX)
     archived_out = _archive_folder(OUTBOX)
     wiped_archive = 0
     if not keep_archive:
-        for p in list(ARCHIVE.glob("*.json")):
-            if p.name == ".gitkeep":
-                continue
-            try:
-                p.unlink()
-                wiped_archive += 1
-            except OSError:
-                pass
+        wiped_archive = _wipe_folder(ARCHIVE)
     return {
         "ok": True,
+        "fast": False,
         "archived_inbox": archived_in,
         "archived_outbox": archived_out,
         "wiped_archive": wiped_archive,

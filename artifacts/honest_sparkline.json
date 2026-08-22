@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-22T03:46:45.116437+00:00",
+  "updated": "2026-08-22T04:33:47.885690+00:00",
   "n": 50,
   "green_n": 44,
-  "sparkline": "GGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGGG",
+  "sparkline": "GGGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGG",
   "points": [
     {
       "honest": true,
@@ -87,6 +87,14 @@
     {
       "honest": true,
       "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
       "live": false,
       "disguised": false,
       "color": "green",
@@ -315,14 +323,6 @@
       "disguised": false,
       "color": "gray",
       "mode": "live"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
     },
     {
       "honest": true,

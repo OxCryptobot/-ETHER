@@ -1,0 +1,12 @@
+{
+  "id": "p1_121_gate_sample_wallet_004501",
+  "class": "gate_sample",
+  "note": "gate_sample controlled live wallet measurement budget 240s post-reload — countable honest_rate attempt",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "wallet", "--max-steps", "10", "--timeout", "200", "--scoreboard", "artifacts/scoreboard_p1_121_wallet_live.json"],
+      "timeout": 240
+    }
+  ]
+}

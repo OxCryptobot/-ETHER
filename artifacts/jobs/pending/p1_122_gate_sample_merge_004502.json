@@ -1,0 +1,12 @@
+{
+  "id": "p1_122_gate_sample_merge_004502",
+  "class": "gate_sample",
+  "note": "gate_sample controlled live merge measurement budget 240s post-reload — primary honest_rate lift",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "merge", "--max-steps", "12", "--timeout", "220", "--scoreboard", "artifacts/scoreboard_p1_122_merge_live.json"],
+      "timeout": 240
+    }
+  ]
+}

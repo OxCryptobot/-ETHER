@@ -1,0 +1,16 @@
+{
+  "id": "p1_123_recompute_eligible_004503",
+  "class": "measure",
+  "note": "Atomic recompute after post-reload gate_sample wave",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from core.eligible_rates import compute; from core.phase1_gate import compute as g; from core.honest_live import publish; print(compute()); print(g()); print(publish())"],
+      "timeout": 90
+    }
+  ]
+}

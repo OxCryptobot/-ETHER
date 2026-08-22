@@ -1,16 +1,15 @@
 {
-  "job_id": "p1_143_gate_sample_merge_011503",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-22T01:46:47.749737+00:00",
-  "note": "Phase A: gate_sample LIVE merge under measurement budget 300s \u2014 countable row [failure_type=timeout]",
-  "class": "gate_sample",
+  "job_id": "p1_144_atomic_recompute_011504",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-22T01:48:43.594570+00:00",
+  "note": "Phase C: atomic_rates + measure_tick after A+B gate_sample wave",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+  }
 }

@@ -1,0 +1,34 @@
+{
+  "id": "playbook_live_timeout_learn_014651",
+  "note": "playbook:live_tool_path_timeout for p1_143_gate_sample_merge_011503",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "import json; from pathlib import Path; from datetime import datetime, timezone; p=Path('artifacts/critique_live_timeout.json'); p.write_text(json.dumps({'id':'critique_live_timeout','root_cause':'live_tool_timeout_4b','taxonomy':'budget_exhaust','smallest_experiment':'pipeline scripted ledger','evidence':['tool_runtime_failed_terminal'],'created':datetime.now(timezone.utc).isoformat()}, indent=2), encoding='utf-8'); print('critique', p)"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "pipeline",
+        "--mode",
+        "scripted",
+        "--fixture",
+        "ledger",
+        "--scoreboard",
+        "artifacts/scoreboard_playbook_live_timeout_scripted.json"
+      ],
+      "timeout": 180
+    }
+  ],
+  "created": "2026-08-22T01:46:51.803198+00:00",
+  "source": "foreman"
+}

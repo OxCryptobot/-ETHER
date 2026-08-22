@@ -1,14 +1,14 @@
 {
-  "updated": "2026-08-22T01:30:56.053969+00:00",
-  "score": 10.0,
+  "updated": "2026-08-22T01:47:51.045208+00:00",
+  "score": 23.0,
   "grade": "F",
   "reasons": [
-    "queue_over_cap:9",
-    "honest:153/157",
-    "timeout_rate_high:0.5517",
-    "latency_alert:78.33",
-    "latency_all:172.26",
-    "critique_backlog:43",
+    "queue_high:6",
+    "honest:155/159",
+    "timeout_rate_high:0.5161",
+    "latency_alert:76.18",
+    "latency_all:169.78",
+    "critique_backlog:44",
     "steady_frozen"
   ],
   "note": "0-100 machine health; 1D timeout rate scored separately"

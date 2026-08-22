@@ -1357,7 +1357,8 @@
     "os1_01_operator_surface_smoke",
     "os1_02_chat_bus_roundtrip",
     "p1_160_gate_sample_wallet_025200",
-    "p1_161_gate_sample_greeter_025201"
+    "p1_161_gate_sample_greeter_025201",
+    "p1_162_gate_sample_wallet_025202"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1452,7 +1453,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-22T03:02:09.311037+00:00",
+  "last_tick": "2026-08-22T03:05:04.430440+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1461,7 +1462,7 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

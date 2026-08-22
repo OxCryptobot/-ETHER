@@ -1,7 +1,15 @@
 {
-  "job_id": "p1_123_recompute_eligible_004503",
+  "job_id": "p1_133_recompute_010903",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-22T00:51:27.916381+00:00",
-  "note": "Atomic recompute after post-reload gate_sample wave"
+  "finished": "2026-08-22T01:35:48.697427+00:00",
+  "note": "Recompute after hardened countable gate_sample wave",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

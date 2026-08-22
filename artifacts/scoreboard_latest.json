@@ -1,17 +1,213 @@
 {
-  "updated": "2026-08-22T04:33:47.937731+00:00",
-  "n_rows": 192,
-  "honest_n": 166,
-  "honest_rate": 0.8646,
-  "live_n": 42,
-  "live_ok_n": 22,
-  "live_honest_n": 22,
-  "live_honest_rate": 0.5238,
+  "updated": "2026-08-22T18:34:50.954557+00:00",
+  "n_rows": 202,
+  "honest_n": 175,
+  "honest_rate": 0.8663,
+  "live_n": 52,
+  "live_ok_n": 31,
+  "live_honest_n": 31,
+  "live_honest_rate": 0.5962,
   "scripted_n": 150,
   "scripted_ok_n": 144,
   "scripted_ok_rate": 0.96,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 154.959,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 123.217,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 160.96,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 131.953,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 121.869,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 159.818,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 124.112,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 10,
+      "elapsed_s": 216.793,
+      "reason": "max_steps",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file",
+        "read_file"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "failure_type": "live_fail",
+      "arm": "direct"
+    },
+    {
+      "fixture": "wallet",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 156.412,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 139.925,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    },
     {
       "fixture": "greeter",
       "tier": "easy",
@@ -200,181 +396,6 @@
         "run_tests"
       ],
       "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 118.272,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.74,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "pipeline",
-      "strategy": "tool_runtime_scripted"
-    },
-    {
-      "fixture": "wallet",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 210.614,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 5,
-      "elapsed_s": 187.494,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.697,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "greeter",
-      "tier": "easy",
-      "mode": "live",
-      "ok": false,
-      "score": 0.0,
-      "n_steps": 0,
-      "elapsed_s": 8.469,
-      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
-      "tools": [],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "wallet",
-      "tier": "easy",
-      "mode": "live",
-      "ok": false,
-      "score": 0.0,
-      "n_steps": 0,
-      "elapsed_s": 7.167,
-      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
-      "tools": [],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "merge",
-      "tier": "hard",
-      "mode": "live",
-      "ok": false,
-      "score": 0.0,
-      "n_steps": 0,
-      "elapsed_s": 10.395,
-      "reason": "decide_fn: RuntimeError: rose-quartz: Model 'qwen3.5:4b-q4_K_M' not found in Ollama. Pull it or set ETHER_PRIMARY_MODEL.",
-      "tools": [],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.959,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct"
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.968,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
       "arm": "direct"
     }
   ],

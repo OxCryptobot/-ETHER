@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-22T04:33:47.885690+00:00",
+  "updated": "2026-08-22T18:34:50.878384+00:00",
   "n": 50,
-  "green_n": 44,
-  "sparkline": "GGGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGG",
+  "green_n": 43,
+  "sparkline": "GGGGGGG.GGGGGGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..",
   "points": [
     {
       "honest": true,
@@ -61,6 +61,86 @@
       "mode": "live"
     },
     {
+      "honest": false,
+      "ok": false,
+      "live": true,
+      "disguised": false,
+      "color": "gray",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
+      "honest": true,
+      "ok": true,
+      "live": true,
+      "disguised": false,
+      "color": "green",
+      "mode": "live"
+    },
+    {
       "honest": true,
       "ok": true,
       "live": true,
@@ -323,86 +403,6 @@
       "disguised": false,
       "color": "gray",
       "mode": "live"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
-    },
-    {
-      "honest": true,
-      "ok": true,
-      "live": false,
-      "disguised": false,
-      "color": "green",
-      "mode": "scripted"
     }
   ],
   "note": "G=honest pass, R=ok but not honest, .=fail"

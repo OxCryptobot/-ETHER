@@ -1,8 +1,8 @@
 {
-  "updated": "2026-08-22T04:33:50.711279+00:00",
-  "live_n": 42,
-  "timeout_n": 16,
-  "timeout_rate": 0.381,
+  "updated": "2026-08-22T18:34:55.495446+00:00",
+  "live_n": 52,
+  "timeout_n": 17,
+  "timeout_rate": 0.3269,
   "timeout_floor_s": 120.0,
   "top_fixtures": [
     {
@@ -18,6 +18,10 @@
       "n": 2
     },
     {
+      "fixture": "merge",
+      "n": 1
+    },
+    {
       "fixture": "intervals",
       "n": 1
     }
@@ -25,7 +29,7 @@
   "top_strategies": [
     {
       "strategy": "default",
-      "n": 8
+      "n": 9
     },
     {
       "strategy": "tool_runtime",
@@ -45,11 +49,18 @@
     }
   ],
   "by_arm": {
+    "direct": 9,
     "pipeline": 4,
-    "direct": 8,
     "bare": 4
   },
   "samples": [
+    {
+      "fixture": "merge",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 216.793,
+      "failure_type": "live_fail"
+    },
     {
       "fixture": "ledger",
       "strategy": "tool_runtime",
@@ -146,13 +157,6 @@
       "strategy": "no_context",
       "arm": "bare",
       "duration_s": 607.632,
-      "failure_type": null
-    },
-    {
-      "fixture": "lru",
-      "strategy": "multifile",
-      "arm": "bare",
-      "duration_s": 707.579,
       "failure_type": null
     }
   ],

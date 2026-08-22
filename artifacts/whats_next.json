@@ -1,9 +1,15 @@
 {
-  "generated": "2026-08-22T05:15:19.304132+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-22T18:39:00.597651+00:00",
+  "next_job": "p1_182_gate_sample_greeter_182700",
+  "queue_head": [
+    "p1_182_gate_sample_greeter_182700",
+    "p1_183_gate_sample_wallet_182701",
+    "p1_184_gate_sample_greeter_182702",
+    "p1_185_gate_sample_wallet_182703",
+    "rlhf_tick_182704"
+  ],
+  "queue_depth": 5,
+  "host_phase": "idle",
   "last_job": "p1_181_gate_sample_wallet_045903",
   "last_ok": true,
   "last_failure_type": null,
@@ -33,12 +39,12 @@
   "blocked": [
     "soft_launch: blocked until live lift or explicit gate policy",
     "pipeline_god_file: STRANGLER_ACTIVE bytes=75183 extracted=11/11",
-    "live_timeout_rate=0.381 (target < 0.25)"
+    "live_timeout_rate=0.3269 (target < 0.25)"
   ],
   "signals": {
     "context": "context:WARM util=0.754",
     "model_router": "lanes fast=qwen3.5:4b-q4_K_M live=qwen3.5:4b-q4_K_M",
-    "timeout_retirement": "timeout_retire rate=0.381 action=keep_wheels_on",
+    "timeout_retirement": "timeout_retire rate=0.3269 action=keep_wheels_on",
     "adapter_default_off": true
   },
   "resolved": [

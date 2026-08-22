@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-22T04:33:48.485145+00:00",
+  "updated": "2026-08-22T18:34:51.443663+00:00",
   "phase": "1D",
   "name": "Measured lift",
   "status": "ADVANCING",
@@ -9,7 +9,7 @@
     {
       "id": "latency_timeout_split",
       "ok": true,
-      "detail": "to_rate=0.381 completed_ratio=64.86"
+      "detail": "to_rate=0.3269 completed_ratio=59.82"
     },
     {
       "id": "live_budget",
@@ -29,12 +29,12 @@
     {
       "id": "timeout_retirement_plan",
       "ok": true,
-      "detail": "rate=0.381 actions=5"
+      "detail": "rate=0.3269 actions=5"
     },
     {
       "id": "denylist_projected_under_target",
       "ok": true,
-      "detail": "proj=0.0 rm=16"
+      "detail": "proj=0.0 rm=17"
     },
     {
       "id": "soft_launch_still_blocked",

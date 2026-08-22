@@ -1,4 +1,9 @@
-"""ETHER Foreman — critical ops fixes: depth cap, playbook limit, cursor advance."""
+"""ETHER Foreman — curriculum + steady + AUTO rate-climb under wheels.
+
+2026-08-22: When curriculum exhausted and honest_rate_eligible < 0.99,
+call core.auto_rate_climb.maybe_enqueue so the host keeps climbing
+without chat. Skills cannot run on the host — this code does.
+"""
 from __future__ import annotations
 
 import json
@@ -176,6 +181,8 @@ def load_state() -> Dict[str, Any]:
         "teacher": "grok",
         "steady_idx": 0,
         "live_skip_remaining": 0,
+        "last_rate_climb_ts": None,
+        "rate_climb_idx": 0,
     }
 
 
@@ -383,6 +390,17 @@ def enqueue_next(state: Dict[str, Any]) -> Optional[str]:
         return enqueued[-1]
 
     state["cursor"] = len(CURRICULUM)
+
+    # Host autonomy: rate-climb before steady when honest_rate lags
+    try:
+        from core.auto_rate_climb import maybe_enqueue as rate_climb
+
+        rc = rate_climb(state, pending=pending_ids(), write_job=write_job)
+        if rc:
+            return rc
+    except Exception as e:
+        state["rate_climb_status"] = f"error:{type(e).__name__}:{e}"
+
     return enqueue_steady(state)
 
 
@@ -487,6 +505,7 @@ def tick() -> Dict[str, Any]:
         "lessons": len(lessons),
         "batch_size": BATCH_SIZE,
         "mode": state.get("mode"),
+        "rate_climb_status": state.get("rate_climb_status"),
         "live_skip_remaining": state.get("live_skip_remaining", 0),
         "governor": state.get("governor"),
         "state": state,
@@ -495,6 +514,13 @@ def tick() -> Dict[str, Any]:
 
 def status() -> Dict[str, Any]:
     state = load_state()
+    rate = None
+    try:
+        from core.auto_rate_climb import read_honest_rate
+
+        rate = read_honest_rate()
+    except Exception:
+        pass
     return {
         "cursor": state.get("cursor"),
         "completed": state.get("completed") or [],
@@ -511,6 +537,9 @@ def status() -> Dict[str, Any]:
         "last_tick": state.get("last_tick"),
         "steady_idx": state.get("steady_idx"),
         "live_skip_remaining": state.get("live_skip_remaining", 0),
+        "honest_rate_eligible": rate,
+        "last_rate_climb_ts": state.get("last_rate_climb_ts"),
+        "rate_climb_status": state.get("rate_climb_status"),
     }
 
 

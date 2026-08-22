@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
-"""ETHER host agent — moonshots: FAST-first hard gate + zero-click + measure panels.
+"""ETHER host agent — moonshots + chat bus push for Grok bridge.
 
-Phase 1D: live_budget clamp on live jobs (never lifts training wheels).
-Never commits artifacts/host_agent_log.txt (GitHub 100MB limit).
-
-2026-08-21: gate_sample exception — only jobs with class=gate_sample (or note/id tag)
-may run LIVE while wheels ON. All other LIVE still skipped.
-
-2026-08-22: Measurement outcomes always land in done/ with typed envelope.
-2026-08-22b: importlib.reload foreman + idle auto_rate_climb.
-2026-08-22c: GPU metrics (nvidia-smi) embedded in write_status + gpu_metrics.json.
+2026-08-22d: when chat_bridge marks dirty, include artifacts/chat/ on liveness push
+so Grok sees outbox escalations on origin within ~55s.
 """
 from __future__ import annotations
 
@@ -51,11 +44,13 @@ _last_liveness_push = 0.0
 _last_measure_tick = 0.0
 _last_rate_climb = 0.0
 _last_gpu_sample = 0.0
+_last_chat_push = 0.0
 HEAVY_PUSH_INTERVAL = 180
 LIVENESS_INTERVAL = 55
+CHAT_PUSH_INTERVAL = 12  # fast path when bus dirty
 MEASURE_INTERVAL = 60
 RATE_CLIMB_INTERVAL = 90
-GPU_SAMPLE_INTERVAL = 15  # seconds — avoid hammering nvidia-smi every 1s poll
+GPU_SAMPLE_INTERVAL = 15
 _gpu_cache: Dict[str, Any] = {}
 
 
@@ -86,7 +81,6 @@ def log(msg: str) -> None:
 
 
 def _gpu_snapshot(force: bool = False) -> Dict[str, Any]:
-    """Throttled GPU sample for status + artifacts/gpu_metrics.json."""
     global _last_gpu_sample, _gpu_cache
     now = time.time()
     if not force and _gpu_cache and (now - _last_gpu_sample) < GPU_SAMPLE_INTERVAL:
@@ -179,6 +173,25 @@ def _measure_paths() -> List[str]:
     return paths
 
 
+def _chat_paths() -> List[str]:
+    try:
+        from core.chat_bridge import chat_paths_for_push
+
+        return chat_paths_for_push()
+    except Exception:
+        paths: List[str] = []
+        chat = ROOT / "artifacts" / "chat"
+        if chat.exists():
+            for sub in ("inbox", "outbox", "turns", "archive"):
+                if (chat / sub).exists():
+                    paths.append(f"artifacts/chat/{sub}")
+            if (chat / "pending_grok.json").exists():
+                paths.append("artifacts/chat/pending_grok.json")
+        if (ROOT / "artifacts" / "chat_turn_latest.json").exists():
+            paths.append("artifacts/chat_turn_latest.json")
+        return paths
+
+
 def _light_paths() -> List[str]:
     paths = [
         "artifacts/host_agent_status.json",
@@ -189,6 +202,7 @@ def _light_paths() -> List[str]:
         if p.exists():
             paths.append(f"artifacts/jobs/{name}")
     paths.extend(_measure_paths())
+    paths.extend(_chat_paths())
     for name in (
         "strategy_stats.json",
         "preference_summary.json",
@@ -224,6 +238,12 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     p = run(["git", "push", "origin", "main"], timeout=90)
     if p.returncode == 0:
         log(f"{label} push ok")
+        try:
+            from core.chat_bridge import clear_dirty
+
+            clear_dirty()
+        except Exception:
+            pass
         return True
     err = ((p.stderr or "") + (p.stdout or ""))[:500]
     log(f"{label} push REJECTED rc={p.returncode} err={err}")
@@ -234,10 +254,38 @@ def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
     p2 = run(["git", "push", "origin", "main"], timeout=90)
     if p2.returncode == 0:
         log(f"{label} push ok after rebase")
+        try:
+            from core.chat_bridge import clear_dirty
+
+            clear_dirty()
+        except Exception:
+            pass
         return True
     err2 = ((p2.stderr or "") + (p2.stdout or ""))[:500]
     log(f"{label} push STILL FAILED rc={p2.returncode} err={err2}")
     return False
+
+
+def maybe_push_chat_bus() -> None:
+    """Fast push when operator escalated to Grok (dirty flag)."""
+    global _last_chat_push
+    now = time.time()
+    if now - _last_chat_push < CHAT_PUSH_INTERVAL:
+        return
+    try:
+        from core.chat_bridge import is_dirty, chat_paths_for_push
+
+        if not is_dirty():
+            return
+        paths = chat_paths_for_push()
+        if not paths:
+            return
+        _last_chat_push = now
+        write_status(current_job=None, phase="chat_push")
+        ok = _commit_and_push(paths, "chat bus: outbox/turns for Grok bridge", "chat_bus")
+        log(f"chat_bus push ok={ok} paths={len(paths)}")
+    except Exception as e:
+        log(f"chat_bus push error: {type(e).__name__}: {e}")
 
 
 def _is_gate_sample(job: Dict[str, Any]) -> bool:
@@ -710,7 +758,7 @@ def call_foreman_tick() -> None:
 
 def main() -> int:
     print(
-        "ETHER host_agent (GPU metrics + reload-foreman + idle auto_rate_climb)",
+        "ETHER host_agent (GPU + chat_bus push + reload-foreman + idle auto_rate_climb)",
         flush=True,
     )
     _rotate_log_if_needed()
@@ -728,12 +776,14 @@ def main() -> int:
         try:
             write_status(current_job=None, phase="polling")
             git_sync()
+            maybe_push_chat_bus()
             purge_live_pending()
             jobs = list_pending()
             if not jobs:
                 call_foreman_tick()
                 maybe_auto_rate_climb()
                 maybe_measure_tick()
+                maybe_push_chat_bus()
                 jobs = list_pending()
                 if not jobs:
                     write_status(current_job=None, phase="idle")
@@ -743,6 +793,7 @@ def main() -> int:
             for job_path in jobs:
                 process_job(job_path)
                 git_sync()
+                maybe_push_chat_bus()
                 if len(list_pending()) < 3:
                     call_foreman_tick()
                     maybe_auto_rate_climb()

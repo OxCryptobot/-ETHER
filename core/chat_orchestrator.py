@@ -1,9 +1,7 @@
 """Chat Orchestrator — bidirectional agent front door for ETHER.
 
-Operator message → intent → tools (git / status / jobs) and/or local Ollama
-→ durable turn record → optional escalate to Grok via chat_bus.
-
-2026-08-22c: clear_turns for Clear Chat; agent_reply type; session hygiene.
+2026-08-22d: escalate uses chat_bridge (outbox + pending_grok + dirty flag).
+Host pushes artifacts/chat/ so Grok can see messages on origin.
 """
 from __future__ import annotations
 
@@ -20,7 +18,7 @@ TURNS = ROOT / "artifacts" / "chat" / "turns"
 LATEST = ROOT / "artifacts" / "chat_turn_latest.json"
 
 _ESCALATE_RE = re.compile(
-    r"\b(ask\s+grok|escalate|hand\s*off\s*to\s*grok|@grok)\b",
+    r"\b(ask\s+grok|escalate|hand\s*off\s*to\s*grok|@grok|message\s+grok|tell\s+grok)\b",
     re.I,
 )
 _GIT_RE = re.compile(
@@ -183,33 +181,16 @@ def _run_local_llm(text: str, *, lane: str = "fast") -> Dict[str, Any]:
 
 
 def _escalate_to_grok(
-    text: str, *, job_id: Optional[str] = None, parent_id: Optional[str] = None
+    text: str,
+    *,
+    job_id: Optional[str] = None,
+    parent_id: Optional[str] = None,
+    turn_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    from core.chat_bus import envelope, send
+    """Route through chat_bridge so host pushes outbox to origin for Grok."""
+    from core.chat_bridge import escalate
 
-    env = envelope(
-        from_actor="ether_orchestrator",
-        type_="operator",
-        payload={
-            "text": text,
-            "routed": "escalate_grok",
-            "note": "Chat orchestrator handed this turn to Grok",
-        },
-        job_id=job_id,
-        requires_reply=True,
-        parent_id=parent_id,
-    )
-    path = send(env, to_grok=True)
-    return {
-        "tool": "escalate_grok",
-        "ok": True,
-        "envelope_id": env["id"],
-        "path": str(path.relative_to(ROOT)).replace("\\", "/"),
-        "content": (
-            "Escalated to Grok via chat bus outbox. "
-            "Continue in the Grok window or wait for inbox reply."
-        ),
-    }
+    return escalate(text, job_id=job_id, parent_id=parent_id, turn_id=turn_id)
 
 
 def _bind_agent_state(text: str, intent: str, turn_id: str) -> None:
@@ -228,8 +209,12 @@ def _bind_agent_state(text: str, intent: str, turn_id: str) -> None:
 
 
 def _reply_to_inbox(turn: Dict[str, Any]) -> None:
+    # Grok escalations already wrote outbox; don't spam inbox with "queued" noise
+    if turn.get("channel") == "grok":
+        return
     try:
         from core.chat_bus import envelope, send
+        from core.chat_bridge import mark_dirty
 
         content = turn.get("reply") or ""
         env = envelope(
@@ -246,6 +231,7 @@ def _reply_to_inbox(turn: Dict[str, Any]) -> None:
             requires_reply=False,
         )
         send(env, to_grok=False)
+        mark_dirty()
     except Exception:
         pass
 
@@ -258,11 +244,16 @@ def _persist(turn: Dict[str, Any]) -> Path:
         LATEST.write_text(json.dumps(turn, indent=2, default=str), encoding="utf-8")
     except Exception:
         pass
+    try:
+        from core.chat_bridge import mark_dirty
+
+        mark_dirty()
+    except Exception:
+        pass
     return path
 
 
 def clear_turns() -> Dict[str, Any]:
-    """Delete durable turn records + latest pointer (used by Clear Chat)."""
     _ensure()
     n = 0
     for p in list(TURNS.glob("turn_*.json")):
@@ -276,11 +267,16 @@ def clear_turns() -> Dict[str, Any]:
             LATEST.unlink()
         except OSError:
             pass
+    try:
+        from core.chat_bridge import clear_pending_grok
+
+        clear_pending_grok()
+    except Exception:
+        pass
     return {"ok": True, "cleared_turns": n, "updated": _now()}
 
 
 def clear_chat(*, keep_archive: bool = True) -> Dict[str, Any]:
-    """Full session clear: bus + turns. Best UX for idle accumulation."""
     from core.chat_bus import clear_session
 
     bus = clear_session(keep_archive=keep_archive)
@@ -304,7 +300,17 @@ def turn(
 ) -> Dict[str, Any]:
     text = (message or "").strip()
     turn_id = f"turn_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    intent = force_channel or classify_intent(text)
+
+    fc = (force_channel or "").strip().lower()
+    if fc in ("grok", "escalate", "escalate_grok"):
+        intent = "escalate_grok"
+    elif fc in ("local", "local_llm", "ollama"):
+        intent = "local_llm"
+    elif fc in ("git", "status", "job"):
+        intent = fc
+    else:
+        intent = classify_intent(text)
+
     if intent == "empty":
         out = {
             "id": turn_id,
@@ -326,11 +332,11 @@ def turn(
     ok = True
 
     try:
-        if intent == "escalate_grok" or force_channel == "grok":
+        if intent == "escalate_grok":
             clean = _ESCALATE_RE.sub("", text).strip() or text
-            r = _escalate_to_grok(clean, job_id=job_id, parent_id=turn_id)
+            r = _escalate_to_grok(clean, job_id=job_id, parent_id=turn_id, turn_id=turn_id)
             tool_results.append(r)
-            reply = r.get("content") or "Escalated."
+            reply = r.get("content") or "Escalated to Grok."
             channel = "grok"
             ok = bool(r.get("ok"))
 
@@ -403,7 +409,7 @@ def turn(
             if not ok:
                 reply = (
                     f"local LLM unavailable ({r.get('error')}). "
-                    "Say 'ask grok' to escalate."
+                    "Switch channel to Grok or say 'ask grok'."
                 )
 
     except Exception as e:
@@ -423,6 +429,7 @@ def turn(
         "job_id": job_id,
         "allow_write": bool(allow_write),
         "training_wheels": True,
+        "awaiting_grok": channel == "grok",
         "schema": "ether_chat_turn_v1",
     }
     _bind_agent_state(text, intent, turn_id)

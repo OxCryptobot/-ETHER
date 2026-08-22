@@ -1353,7 +1353,8 @@
     "p1_133_recompute_010903",
     "p1_141_gate_sample_greeter_011501",
     "p1_142_gate_sample_wallet_011502",
-    "p1_144_atomic_recompute_011504"
+    "p1_144_atomic_recompute_011504",
+    "p1_130_ollama_probe_010900"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1449,7 +1450,7 @@
     "00_mcp_cq_spike_01",
     "p1_143_gate_sample_merge_011503"
   ],
-  "last_tick": "2026-08-22T01:48:47.397484+00:00",
+  "last_tick": "2026-08-22T01:49:09.097632+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1458,7 +1459,7 @@
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "governor": {
-    "pending": 5,
+    "pending": 4,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1466,9 +1467,9 @@
     "high_hold_s": 120.0,
     "may_enqueue": true,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 1,
+    "max_enqueue_this_tick": 2,
     "training_wheels": true
   },
-  "live_skip_remaining": 34,
+  "live_skip_remaining": 33,
   "last_live_skip_reason": "p1_143_gate_sample_merge_011503"
 }

@@ -1,0 +1,17 @@
+{
+  "id": "chat_e2e_smoke_2148",
+  "note": "chat e2e smoke: status + escalate_grok bridge — countable",
+  "class": "fast",
+  "continue_on_fail": true,
+  "source": "grok_chat_e2e",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.chat_orchestrator import turn, classify_intent; assert classify_intent('status')=='status'; assert classify_intent('ask grok hello')=='escalate_grok'; r=turn('status'); print('status_ok', r.get('ok'), r.get('channel')); r2=turn('ask grok: E2E bridge ping from host', force_channel='grok'); print('escalate_ok', r2.get('ok'), r2.get('channel'), r2.get('awaiting_grok')); from core.chat_bridge import is_dirty, get_pending_grok; print('dirty', is_dirty(), 'pending', bool(get_pending_grok())); assert r2.get('channel')=='grok' and r2.get('ok')"
+      ],
+      "timeout": 120
+    }
+  ]
+}

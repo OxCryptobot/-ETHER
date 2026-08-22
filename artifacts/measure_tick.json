@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-22T02:20:16.897705+00:00",
+  "timestamp": "2026-08-22T02:27:51.545115+00:00",
   "ok": false,
   "errors": [
     "timeout_diagnosis",
@@ -39,7 +39,7 @@
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-22T02:16:55.438708+00:00",
+      "updated": "2026-08-22T02:24:45.698431+00:00",
       "ok": true,
       "honest_tool_pass": 157,
       "tool_attempts": 161,
@@ -52,7 +52,7 @@
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-22T02:16:55.497724+00:00",
+      "updated": "2026-08-22T02:24:45.745315+00:00",
       "scripted": {
         "n": 137,
         "p50": 1.898,
@@ -92,7 +92,7 @@
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-22T02:16:55.497724+00:00",
+      "updated": "2026-08-22T02:24:45.745315+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -101,7 +101,7 @@
       "budget_class": "production",
       "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
       "measurement": {
-        "updated": "2026-08-22T02:16:55.497724+00:00",
+        "updated": "2026-08-22T02:24:45.745315+00:00",
         "training_wheels": true,
         "max_wall_s": 300,
         "max_steps": 10,
@@ -114,7 +114,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-22T02:16:55.505482+00:00",
+      "updated": "2026-08-22T02:24:45.760943+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "shrink wall budget; scripted tool_runtime only; one file",
@@ -124,7 +124,7 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-22T02:16:55.555474+00:00",
+      "updated": "2026-08-22T02:24:45.797705+00:00",
       "n": 50,
       "green_n": 44,
       "sparkline": "GGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGGGGGGGGGGG",
@@ -133,7 +133,7 @@
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-22T02:16:55.572147+00:00",
+      "updated": "2026-08-22T02:24:45.797705+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -148,7 +148,7 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-22T02:16:55.622133+00:00",
+      "updated": "2026-08-22T02:24:45.845159+00:00",
       "n_rows": 183,
       "honest_n": 157,
       "honest_rate": 0.8579,
@@ -163,14 +163,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-22T02:16:55.688827+00:00",
+      "updated": "2026-08-22T02:24:46.102620+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-22T02:16:55.705633+00:00",
+      "updated": "2026-08-22T02:24:46.124093+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -198,7 +198,7 @@
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-22T02:16:55.755524+00:00",
+      "updated": "2026-08-22T02:24:46.167584+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -211,11 +211,11 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-22T02:16:55.877839+00:00",
+      "updated": "2026-08-22T02:24:46.286495+00:00",
       "score": 43.0,
       "grade": "D",
       "reasons": [
-        "queue_ok:0",
+        "queue_ok:4",
         "honest:157/161",
         "timeout_rate:0.4848",
         "latency_alert:74.03",
@@ -228,7 +228,7 @@
       "ok": true
     },
     "model_router": {
-      "updated": "2026-08-22T02:16:55.880956+00:00",
+      "updated": "2026-08-22T02:24:46.286495+00:00",
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
@@ -237,7 +237,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-22T02:16:56.088995+00:00",
+      "updated": "2026-08-22T02:24:46.429158+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -250,7 +250,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-22T02:16:56.088995+00:00",
+      "updated": "2026-08-22T02:24:46.429158+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -264,7 +264,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-22T02:16:57.889719+00:00",
+      "updated": "2026-08-22T02:24:48.697515+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 115,
@@ -274,7 +274,7 @@
       "ok": true
     },
     "strangler_style": {
-      "updated": "2026-08-22T02:16:57.906466+00:00",
+      "updated": "2026-08-22T02:24:48.713715+00:00",
       "ok": true,
       "ok_n": 14,
       "n": 14,
@@ -285,7 +285,7 @@
       "path": "artifacts/strangler_style_gate.json"
     },
     "timeout_diagnosis": {
-      "updated": "2026-08-22T02:16:57.940554+00:00",
+      "updated": "2026-08-22T02:24:48.760602+00:00",
       "live_n": 33,
       "timeout_n": 16,
       "timeout_rate": 0.4848,
@@ -300,7 +300,7 @@
       "note": "Measurement only. Prefer retiring top timeout fixtures from LIVE enqueue until rate < 0.25. Wheels stay ON."
     },
     "live_fixture_policy": {
-      "updated": "2026-08-22T02:16:57.956527+00:00",
+      "updated": "2026-08-22T02:24:48.776228+00:00",
       "seed": [
         "ledger",
         "pipeline_ledger",
@@ -317,7 +317,7 @@
       "ok": true
     },
     "timeout_retirement": {
-      "updated": "2026-08-22T02:16:58.022177+00:00",
+      "updated": "2026-08-22T02:24:48.829181+00:00",
       "timeout_rate": 0.4848,
       "target_rate": 0.25,
       "ok": false,
@@ -335,7 +335,7 @@
       "path": "artifacts/timeout_retirement.json"
     },
     "push_hygiene": {
-      "updated": "2026-08-22T02:16:58.025964+00:00",
+      "updated": "2026-08-22T02:24:48.829181+00:00",
       "log_bytes": 104857505,
       "log_mb": 100.0,
       "github_limit_mb": 100,
@@ -348,11 +348,11 @@
       "path": "artifacts/push_hygiene.json"
     },
     "host_health": {
-      "updated": "2026-08-22T02:16:58.026474+00:00",
+      "updated": "2026-08-22T02:24:48.844804+00:00",
       "ok": false,
       "alive": false,
-      "heartbeat": "2026-08-22T02:14:40.745022+00:00",
-      "age_s": 137.3,
+      "heartbeat": "2026-08-22T02:22:09.197752+00:00",
+      "age_s": 159.6,
       "stale_after_s": 120.0,
       "phase": "idle",
       "current_job": null,
@@ -362,7 +362,7 @@
       "git_required": false
     },
     "honest_path_progress": {
-      "updated": "2026-08-22T02:18:39.897476+00:00",
+      "updated": "2026-08-22T02:26:20.413751+00:00",
       "scripted_n": 150,
       "scripted_ok_n": 144,
       "scripted_honest_n": 144,
@@ -384,7 +384,7 @@
       "ok": true
     },
     "pipeline_terminal_canary": {
-      "updated": "2026-08-22T02:18:39.914238+00:00",
+      "updated": "2026-08-22T02:26:20.413751+00:00",
       "phase": "2A",
       "n": 5,
       "passed": 5,
@@ -396,7 +396,7 @@
       "path": "artifacts/pipeline_terminal_canary.json"
     },
     "pipeline_score_canary": {
-      "updated": "2026-08-22T02:18:39.914238+00:00",
+      "updated": "2026-08-22T02:26:20.413751+00:00",
       "phase": "2A",
       "n": 8,
       "passed": 8,
@@ -406,7 +406,7 @@
       "path": "artifacts/pipeline_score_canary.json"
     },
     "phase2a_status": {
-      "updated": "2026-08-22T02:20:16.765070+00:00",
+      "updated": "2026-08-22T02:27:51.429134+00:00",
       "phase": "2A",
       "name": "Strangler canaries under wheels",
       "status": "PASS",
@@ -433,7 +433,7 @@
       "rate_source": "eligible"
     },
     "governor": {
-      "pending": 0,
+      "pending": 4,
       "max_pending": 6,
       "steady_pause_at": 4,
       "steady_resume_at": 2,

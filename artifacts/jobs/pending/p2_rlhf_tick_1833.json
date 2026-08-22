@@ -1,0 +1,15 @@
+{
+  "id": "p2_rlhf_tick_1833",
+  "class": "measure",
+  "note": "RLHF tick + empirical zero-win floor refresh — Phase 2",
+  "continue_on_fail": true,
+  "measurement": true,
+  "created": "2026-08-22T23:33:00+00:00",
+  "source": "grok_phase_batch",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.preference"],
+      "timeout": 180
+    }
+  ]
+}

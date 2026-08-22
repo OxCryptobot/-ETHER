@@ -1,0 +1,15 @@
+{
+  "id": "p1_measure_atomic_1833",
+  "class": "measure",
+  "note": "measure_tick + atomic rates single truth — Phase 1",
+  "continue_on_fail": true,
+  "measurement": true,
+  "created": "2026-08-22T23:33:00+00:00",
+  "source": "grok_phase_batch",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.measure_tick"],
+      "timeout": 180
+    }
+  ]
+}

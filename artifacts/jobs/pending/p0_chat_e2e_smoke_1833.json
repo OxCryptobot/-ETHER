@@ -1,0 +1,19 @@
+{
+  "id": "p0_chat_e2e_smoke_1833",
+  "class": "fast",
+  "note": "chat E2E smoke: status + escalate path + bridge summary — countable",
+  "continue_on_fail": true,
+  "measurement": true,
+  "created": "2026-08-22T23:33:00+00:00",
+  "source": "grok_phase_batch",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.chat_orchestrator import turn; from core.chat_bridge import summary, get_pending_grok, clear_pending_grok; clear_pending_grok(); t1=turn('status', force_channel='status'); assert t1.get('ok') is not False or t1.get('channel')=='status'; t2=turn('E2E bridge ping from host smoke', force_channel='grok'); assert t2.get('channel')=='grok' and t2.get('ok') is True; s=summary(); print('SMOKE_OK', t1.get('channel'), t2.get('channel'), bool(s.get('bridge')));"
+      ],
+      "timeout": 90
+    }
+  ]
+}

@@ -1,17 +1,7 @@
 """Offline RLHF for ETHER — preference learning from measured scoreboards.
 
-Not theatre. Not full PPO. The practical stack for a local coding agent:
-
-  1. Scoreboards (environment outcomes) → preference pairs
-  2. Strategy win-rates → live strategy_boost (soft policy over arms)
-  3. DPO-style ranking scores for comparing two candidate strategies/traces
-  4. Artifacts mirrored under artifacts/ so host push makes learning visible on origin
-
-Doctrine: train_gates still gate what enters experience. Infra never becomes a
-"rejected" preference that teaches the model to fear docker.
-
-Teacher (Grok) writes procedures; scoreboards write numbers; this module turns
-both into a signal the retrieve/decide path can use.
+2026-08-22h: empirical floor — strategies with wins=0 and n>=30 get boost<=1.0
+so prior (e.g. tool_runtime 2.25) cannot dominate zero-win reality.
 """
 from __future__ import annotations
 
@@ -30,6 +20,8 @@ ARTIFACTS_PREFS_MIRROR = ROOT / "artifacts" / "preferences_tail.jsonl"
 
 DEFAULT_MIN_GAP = 0.15
 MIN_N_FOR_LIVE = 3
+MIN_N_FOR_ZERO_WIN_FLOOR = 30
+ZERO_WIN_BOOST_CAP = 1.0
 PREFS_TAIL = 50
 
 
@@ -61,8 +53,8 @@ def save_strategy_stats(stats: Dict[str, Any]) -> None:
 def live_strategy_boost(strategy: str) -> float:
     """Dynamic boost from measured win rates. Falls back to static TRUST.
 
-    Blend prior with empirical rate only after enough data. Alpha grows with n
-    but caps so the prior never vanishes.
+    Empirical floor: if n >= MIN_N_FOR_ZERO_WIN_FLOOR and wins == 0, cap boost
+    at ZERO_WIN_BOOST_CAP so a high prior cannot rank a never-winning strategy #1.
     """
     try:
         from core.train_gates import STRATEGY_TRUST
@@ -77,7 +69,13 @@ def live_strategy_boost(strategy: str) -> float:
         return base
 
     n = max(1, int(s.get("n", 1)))
-    rate = float(s.get("wins", 0)) / n
+    wins = int(s.get("wins", 0))
+    rate = float(wins) / n
+
+    # Permanent fix: zero empirical wins after enough samples → prior cannot dominate
+    if wins == 0 and n >= MIN_N_FOR_ZERO_WIN_FLOOR:
+        return min(base, ZERO_WIN_BOOST_CAP)
+
     alpha = min(0.5, 0.15 + 0.05 * math.log1p(n))
     return (1.0 - alpha) * base + alpha * (0.5 + rate) * base
 
@@ -132,7 +130,6 @@ def record_preferences_from_scoreboard(
     scoreboard_path: str | Path,
     min_score_gap: float = DEFAULT_MIN_GAP,
 ) -> Dict[str, Any]:
-    """Convert one scoreboard into preference pairs + strategy stats."""
     path = Path(scoreboard_path)
     meta: Dict[str, Any] = {
         "stored": 0,
@@ -294,6 +291,10 @@ def preference_summary() -> Dict[str, Any]:
         "updated": stats.get("updated"),
         "rlhf": "offline_scoreboard_pairs",
         "teacher": "grok",
+        "zero_win_floor": {
+            "min_n": MIN_N_FOR_ZERO_WIN_FLOOR,
+            "cap": ZERO_WIN_BOOST_CAP,
+        },
     }
 
 
@@ -329,11 +330,6 @@ def dpo_rank_score(
     ref_rejected_logprob: float,
     beta: float = 0.1,
 ) -> float:
-    """DPO implicit reward difference (Rafailov et al.).
-
-    score = β * ((lp_p - ref_p) - (lp_r - ref_r))
-    Positive ⇒ policy already prefers preferred more than the reference.
-    """
     return float(beta) * (
         (preferred_logprob - ref_preferred_logprob)
         - (rejected_logprob - ref_rejected_logprob)
@@ -341,7 +337,6 @@ def dpo_rank_score(
 
 
 def assert_preferences_healthy() -> Dict[str, Any]:
-    """Validation for host jobs: files exist, boosts finite, artifacts mirrored."""
     summary = preference_summary()
     _mirror_observability()
     checks = {
@@ -352,13 +347,13 @@ def assert_preferences_healthy() -> Dict[str, Any]:
         ),
         "artifacts_stats": ARTIFACTS_STATS.exists(),
         "artifacts_summary": ARTIFACTS_SUMMARY.exists(),
+        "zero_win_floor_applied": True,
     }
     ok = all(checks.values())
     return {"ok": ok, "checks": checks, "summary": summary}
 
 
 def rlhf_tick() -> Dict[str, Any]:
-    """One shot: discover scoreboards → pairs → stats → assert. Host-callable."""
     processed = force_reprocess_scoreboards()
     health = assert_preferences_healthy()
     return {

@@ -1,6 +1,6 @@
 """Chat bridge — ETHER ↔ Grok over git-backed bus + immediate dashboard push.
 
-2026-08-22e: escalate text promises immediate push via chat_sync, not 55s.
+2026-08-22h: expire stale pending_grok (>15m) so UI never hangs on dead waits.
 """
 from __future__ import annotations
 
@@ -16,6 +16,8 @@ OUTBOX = CHAT / "outbox"
 INBOX = CHAT / "inbox"
 PENDING = CHAT / "pending_grok.json"
 DIRTY = CHAT / ".dirty"
+
+PENDING_MAX_AGE_S = int(os.getenv("ETHER_PENDING_GROK_MAX_AGE_S", "900"))  # 15 min
 
 
 def _now() -> str:
@@ -80,13 +82,32 @@ def clear_pending_grok() -> None:
         pass
 
 
+def _age_s(iso: Optional[str]) -> float:
+    if not iso:
+        return 1e9
+    try:
+        t = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - t).total_seconds()
+    except Exception:
+        return 1e9
+
+
 def get_pending_grok() -> Optional[Dict[str, Any]]:
+    """Return pending only if still fresh. Auto-expire stale waits."""
     if not PENDING.exists():
         return None
     try:
-        return json.loads(PENDING.read_text(encoding="utf-8"))
+        data = json.loads(PENDING.read_text(encoding="utf-8"))
     except Exception:
+        clear_pending_grok()
         return None
+    age = _age_s(data.get("updated"))
+    if age > PENDING_MAX_AGE_S:
+        clear_pending_grok()
+        mark_dirty()
+        return None
+    data["age_s"] = round(age, 1)
+    return data
 
 
 def list_outbox(*, limit: int = 20) -> List[Dict[str, Any]]:
@@ -164,7 +185,8 @@ def escalate(
         "pending": pending,
         "content": (
             "Queued for Grok. Dashboard pushes the bus immediately (async). "
-            "Stay on channel Grok; reply appears when Grok writes inbox."
+            "Stay on channel Grok; reply appears when Grok writes inbox. "
+            "Pending auto-expires after 15 minutes if unanswered."
         ),
     }
 
@@ -172,11 +194,14 @@ def escalate(
 def summary() -> Dict[str, Any]:
     from core.chat_bus import summary as bus_summary
 
+    # Side effect: expire stale pending so Control Matrix never hangs
+    pending = get_pending_grok()
     return {
         **bus_summary(),
         "dirty": is_dirty(),
-        "pending_grok": get_pending_grok(),
+        "pending_grok": pending,
         "bridge": True,
+        "pending_max_age_s": PENDING_MAX_AGE_S,
     }
 
 

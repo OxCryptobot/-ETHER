@@ -5,6 +5,7 @@ Never lifts training wheels. Never invents a second scoring path.
 
 OS-1: status job test rates chat git tools learn doctor llm
 OS-2/3/4: skill upload swarm multifile speech
+OS-5 2026-08-22: chat routes through chat_orchestrator (local Ollama + git + escalate)
 """
 from __future__ import annotations
 
@@ -165,7 +166,38 @@ def git_sync() -> Dict[str, Any]:
     return {"ok": True, "action": "hard_reset", "msg": "diverged — reset to origin/main"}
 
 
-def chat_post(message: str, *, job_id: Optional[str] = None) -> Dict[str, Any]:
+def chat_post(
+    message: str,
+    *,
+    job_id: Optional[str] = None,
+    orchestrate: bool = True,
+    allow_write: bool = False,
+    force_channel: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Operator message. Default: full chat orchestrator turn.
+
+    Set orchestrate=False to raw-bus post to Grok only (legacy path).
+    """
+    if orchestrate:
+        try:
+            from core.chat_orchestrator import turn
+
+            return turn(
+                message,
+                job_id=job_id,
+                allow_write=allow_write,
+                force_channel=force_channel,
+            )
+        except Exception as e:
+            from core.chat_bus import post_operator
+
+            env = post_operator(f"[orchestrator fallback] {message}", job_id=job_id)
+            return {
+                "ok": False,
+                "error": f"orchestrator: {type(e).__name__}: {e}",
+                "envelope": env,
+                "fallback": True,
+            }
     from core.chat_bus import post_operator
 
     return post_operator(message, job_id=job_id)
@@ -175,6 +207,15 @@ def chat_inbox(limit: int = 10) -> List[Dict[str, Any]]:
     from core.chat_bus import receive
 
     return receive(from_grok=True, limit=limit)
+
+
+def chat_turns(limit: int = 20) -> List[Dict[str, Any]]:
+    try:
+        from core.chat_orchestrator import recent_turns
+
+        return recent_turns(limit=limit)
+    except Exception:
+        return []
 
 
 def tools_list() -> Dict[str, Any]:
@@ -226,10 +267,7 @@ def doctor() -> Dict[str, Any]:
     }
 
 
-# ── OS-2/3/4 additions ──────────────────────────────────────────────────────
-
 def skill_list() -> List[Dict[str, Any]]:
-    """List apprentice lessons (skills)."""
     if not LESSONS.exists():
         return []
     out: List[Dict[str, Any]] = []
@@ -262,7 +300,6 @@ def upload_file(
     dest: str = "uploads",
     filename: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Copy a local file into artifacts/uploads or tools/quarantine."""
     src = Path(src_path)
     if not src.is_file():
         return {"ok": False, "error": f"not a file: {src_path}"}
@@ -287,7 +324,6 @@ def swarm_enqueue(
     fixtures: Optional[List[str]] = None,
     live: bool = False,
 ) -> List[Path]:
-    """Enqueue a small swarm of fixture tests (one job per fixture)."""
     fixtures = fixtures or ["wallet", "greeter"]
     paths: List[Path] = []
     for fx in fixtures:
@@ -301,7 +337,6 @@ def multifile_job(
     max_steps: int = 12,
     timeout: int = 300,
 ) -> Path:
-    """Enqueue a multifile / pipeline measurement job."""
     stamp = datetime.now(timezone.utc).strftime("%H%M%S")
     job_id = f"os_multifile_{stamp}"
     job = {
@@ -328,16 +363,14 @@ def multifile_job(
 
 
 def speech_to_chat(text: str, *, job_id: Optional[str] = None) -> Dict[str, Any]:
-    """Browser / local dictation → chat bus (text already transcribed)."""
     cleaned = (text or "").strip()
     if not cleaned:
         return {"ok": False, "error": "empty transcription"}
-    env = chat_post(f"[speech] {cleaned}", job_id=job_id)
-    return {"ok": True, "envelope": env}
+    result = chat_post(f"[speech] {cleaned}", job_id=job_id, orchestrate=True)
+    return {"ok": True, "turn": result}
 
 
 def mcp_list() -> Dict[str, Any]:
-    """Surface available MCP-style / connected capabilities (local inventory)."""
     return {
         "updated": _now(),
         "local_tools": tools_list(),

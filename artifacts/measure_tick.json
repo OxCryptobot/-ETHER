@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-22T02:27:51.545115+00:00",
+  "timestamp": "2026-08-22T03:25:49.554470+00:00",
   "ok": false,
   "errors": [
     "timeout_diagnosis",
@@ -10,49 +10,49 @@
     "atomic_rates": {
       "ok": true,
       "eligible": {
-        "live_eligible_n": 10,
-        "honest_rate_eligible": 0.6,
+        "live_eligible_n": 17,
+        "honest_rate_eligible": 0.7647,
         "timeout_rate_eligible": 0.0,
-        "honest_eligible_n": 6,
+        "honest_eligible_n": 13,
         "metrics_ok": false
       },
       "phase1_gate": {
         "status": "ARCH_GO",
         "metrics_go": false,
         "architecture_go": true,
-        "honest_rate_eligible": 0.6,
-        "live_eligible_n": 10,
+        "honest_rate_eligible": 0.7647,
+        "live_eligible_n": 17,
         "checks_ok": 6,
         "checks_n": 7
       },
       "honest_live": {
-        "live_honest_rate": 0.3939,
-        "live_n": 33,
+        "live_honest_rate": 0.5,
+        "live_n": 40,
         "status": "measuring"
       }
     },
     "honest_live": {
       "ok": true,
       "status": "measuring",
-      "live_n": 33,
-      "live_honest_rate": 0.3939,
+      "live_n": 40,
+      "live_honest_rate": 0.5,
       "soft_launch_blocked": true
     },
     "honest_kpi": {
-      "updated": "2026-08-22T02:24:45.698431+00:00",
+      "updated": "2026-08-22T03:25:06.588236+00:00",
       "ok": true,
-      "honest_tool_pass": 157,
-      "tool_attempts": 161,
-      "honest_rate": 0.9752,
+      "honest_tool_pass": 164,
+      "tool_attempts": 168,
+      "honest_rate": 0.9762,
       "disguised_pass_n": 0,
-      "n_rows": 183,
-      "primary_kpi": "157/161",
+      "n_rows": 190,
+      "primary_kpi": "164/168",
       "gate": "is_honest_tool_path_pass",
       "note": "Primary 1A KPI. Generate-fallback never counts as honest pass.",
       "path": "artifacts/honest_kpi.json"
     },
     "latency_slo": {
-      "updated": "2026-08-22T02:24:45.745315+00:00",
+      "updated": "2026-08-22T03:25:06.588236+00:00",
       "scripted": {
         "n": 137,
         "p50": 1.898,
@@ -60,15 +60,15 @@
         "max": 6.203
       },
       "live": {
-        "n": 33,
-        "p50": 270.282,
-        "p95": 649.782,
+        "n": 40,
+        "p50": 190.419,
+        "p95": 616.067,
         "max": 984.528
       },
       "live_completed": {
-        "n": 13,
-        "p50": 114.098,
-        "p95": 287.533,
+        "n": 20,
+        "p50": 128.774,
+        "p95": 258.277,
         "max": 337.688
       },
       "live_timeout": {
@@ -83,16 +83,16 @@
         "p95": 312.89,
         "max": 984.528
       },
-      "live_over_scripted_p95": 74.03,
-      "live_all_over_scripted_p95": 167.3,
-      "live_timeout_rate": 0.4848,
+      "live_over_scripted_p95": 66.5,
+      "live_all_over_scripted_p95": 158.62,
+      "live_timeout_rate": 0.4,
       "timeout_floor_s": 120.0,
       "alert_ratio_threshold": 10.0,
       "alert": true,
       "ok": true
     },
     "live_budget": {
-      "updated": "2026-08-22T02:24:45.745315+00:00",
+      "updated": "2026-08-22T03:25:06.603820+00:00",
       "training_wheels": true,
       "max_wall_s": 90,
       "max_steps": 12,
@@ -101,7 +101,7 @@
       "budget_class": "production",
       "note": "While wheels ON, live enqueue remains blocked by host policy. These ceilings apply if a live job is forced for measurement.",
       "measurement": {
-        "updated": "2026-08-22T02:24:45.745315+00:00",
+        "updated": "2026-08-22T03:25:06.603820+00:00",
         "training_wheels": true,
         "max_wall_s": 300,
         "max_steps": 10,
@@ -114,7 +114,7 @@
       "ok": true
     },
     "critique_plan_wire": {
-      "updated": "2026-08-22T02:24:45.760943+00:00",
+      "updated": "2026-08-22T03:25:06.603820+00:00",
       "n_critiques": 12,
       "n_replanned": 12,
       "latest_hypothesis": "shrink wall budget; scripted tool_runtime only; one file",
@@ -124,16 +124,16 @@
       "ok": true
     },
     "honest_sparkline": {
-      "updated": "2026-08-22T02:24:45.797705+00:00",
+      "updated": "2026-08-22T03:25:06.619445+00:00",
       "n": 50,
       "green_n": 44,
-      "sparkline": "GGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGGGGGGGGGGG",
+      "sparkline": "GGGGGGGGGGGGG...GGGGGGGGGGGGGGGGGG.G..GGGGGGGGGGGG",
       "note": "G=honest pass, R=ok but not honest, .=fail",
       "path": "artifacts/honest_sparkline.json",
       "ok": true
     },
     "context_budget": {
-      "updated": "2026-08-22T02:24:45.797705+00:00",
+      "updated": "2026-08-22T03:25:06.619445+00:00",
       "raw_chars": 9050,
       "out_chars": 9048,
       "max_chars": 12000,
@@ -148,14 +148,14 @@
       "ok": true
     },
     "scoreboard_rollup": {
-      "updated": "2026-08-22T02:24:45.845159+00:00",
-      "n_rows": 183,
-      "honest_n": 157,
-      "honest_rate": 0.8579,
-      "live_n": 33,
-      "live_ok_n": 13,
-      "live_honest_n": 13,
-      "live_honest_rate": 0.3939,
+      "updated": "2026-08-22T03:25:06.635069+00:00",
+      "n_rows": 190,
+      "honest_n": 164,
+      "honest_rate": 0.8632,
+      "live_n": 40,
+      "live_ok_n": 20,
+      "live_honest_n": 20,
+      "live_honest_rate": 0.5,
       "scripted_n": 150,
       "scripted_ok_n": 144,
       "scripted_ok_rate": 0.96,
@@ -163,14 +163,14 @@
       "ok": true
     },
     "shadow_tag": {
-      "updated": "2026-08-22T02:24:46.102620+00:00",
+      "updated": "2026-08-22T03:25:06.650731+00:00",
       "n_tags": 0,
       "note": "Post-hoc shadow; does not run parallel live GPU jobs",
       "path": "artifacts/shadow_tags.json",
       "ok": true
     },
     "gem_energy": {
-      "updated": "2026-08-22T02:24:46.124093+00:00",
+      "updated": "2026-08-22T03:25:06.650731+00:00",
       "gems": [
         "clear-quartz",
         "rose-quartz",
@@ -183,7 +183,7 @@
       ],
       "counts": {
         "clear-quartz": 0,
-        "rose-quartz": 1,
+        "rose-quartz": 0,
         "citrine": 0,
         "selenite": 0,
         "amethyst": 0,
@@ -191,14 +191,14 @@
         "labradorite": 30,
         "grandidierite": 0
       },
-      "last_gem": "rose-quartz",
-      "last_job": "p1_132_gate_sample_wallet_010902",
-      "active_n": 2,
+      "last_gem": "labradorite",
+      "last_job": "critique_p1_143_gate_sample_merge_011503_014647",
+      "active_n": 1,
       "path": "artifacts/gem_energy.json",
       "ok": true
     },
     "ast_edit_kpi": {
-      "updated": "2026-08-22T02:24:46.167584+00:00",
+      "updated": "2026-08-22T03:25:06.666354+00:00",
       "multifile_ok": 0,
       "multifile_n": 2,
       "multifile_rate": 0.0,
@@ -211,15 +211,15 @@
       "ok": true
     },
     "smoothness": {
-      "updated": "2026-08-22T02:24:46.286495+00:00",
+      "updated": "2026-08-22T03:25:06.697570+00:00",
       "score": 43.0,
       "grade": "D",
       "reasons": [
-        "queue_ok:4",
-        "honest:157/161",
-        "timeout_rate:0.4848",
-        "latency_alert:74.03",
-        "latency_all:167.3",
+        "queue_ok:3",
+        "honest:164/168",
+        "timeout_rate:0.4",
+        "latency_alert:66.5",
+        "latency_all:158.62",
         "critique_backlog:44",
         "steady_frozen"
       ],
@@ -228,7 +228,7 @@
       "ok": true
     },
     "model_router": {
-      "updated": "2026-08-22T02:24:46.286495+00:00",
+      "updated": "2026-08-22T03:25:06.697570+00:00",
       "fast_model": "qwen3.5:4b-q4_K_M",
       "live_model": "qwen3.5:4b-q4_K_M",
       "measure_model": "qwen3.5:4b-q4_K_M",
@@ -237,7 +237,7 @@
       "ok": true
     },
     "phase1d_status": {
-      "updated": "2026-08-22T02:24:46.429158+00:00",
+      "updated": "2026-08-22T03:25:06.822611+00:00",
       "phase": "1D",
       "name": "Measured lift",
       "status": "ADVANCING",
@@ -250,7 +250,7 @@
       "ok": true
     },
     "pipeline_strangler": {
-      "updated": "2026-08-22T02:24:46.429158+00:00",
+      "updated": "2026-08-22T03:25:06.822611+00:00",
       "pipeline_bytes": 75183,
       "pipeline_lines": 1656,
       "warn_bytes": 40000,
@@ -264,7 +264,7 @@
       "ok": true
     },
     "symbol_index": {
-      "updated": "2026-08-22T02:24:48.697515+00:00",
+      "updated": "2026-08-22T03:25:07.453117+00:00",
       "enabled_flag": false,
       "n_files": 120,
       "n_with_symbols": 115,
@@ -274,7 +274,7 @@
       "ok": true
     },
     "strangler_style": {
-      "updated": "2026-08-22T02:24:48.713715+00:00",
+      "updated": "2026-08-22T03:25:07.453117+00:00",
       "ok": true,
       "ok_n": 14,
       "n": 14,
@@ -285,10 +285,10 @@
       "path": "artifacts/strangler_style_gate.json"
     },
     "timeout_diagnosis": {
-      "updated": "2026-08-22T02:24:48.760602+00:00",
-      "live_n": 33,
+      "updated": "2026-08-22T03:25:07.468710+00:00",
+      "live_n": 40,
       "timeout_n": 16,
-      "timeout_rate": 0.4848,
+      "timeout_rate": 0.4,
       "timeout_floor_s": 120.0,
       "by_arm": {
         "pipeline": 4,
@@ -300,7 +300,7 @@
       "note": "Measurement only. Prefer retiring top timeout fixtures from LIVE enqueue until rate < 0.25. Wheels stay ON."
     },
     "live_fixture_policy": {
-      "updated": "2026-08-22T02:24:48.776228+00:00",
+      "updated": "2026-08-22T03:25:07.468710+00:00",
       "seed": [
         "ledger",
         "pipeline_ledger",
@@ -311,20 +311,20 @@
       ],
       "top_n": 8,
       "min_hits": 1,
-      "diag_rate": 0.4848,
+      "diag_rate": 0.4,
       "note": "Advisory denylist for LIVE; wheels/gates still control enqueue",
       "path": "artifacts/live_fixture_policy.json",
       "ok": true
     },
     "timeout_retirement": {
-      "updated": "2026-08-22T02:24:48.829181+00:00",
-      "timeout_rate": 0.4848,
+      "updated": "2026-08-22T03:25:07.499996+00:00",
+      "timeout_rate": 0.4,
       "target_rate": 0.25,
       "ok": false,
-      "live_n": 33,
+      "live_n": 40,
       "timeout_n": 16,
       "projected": {
-        "live_n_adj": 17,
+        "live_n_adj": 24,
         "timeout_n_adj": 0,
         "timeout_removed": 16,
         "projected_timeout_rate": 0.0,
@@ -335,7 +335,7 @@
       "path": "artifacts/timeout_retirement.json"
     },
     "push_hygiene": {
-      "updated": "2026-08-22T02:24:48.829181+00:00",
+      "updated": "2026-08-22T03:25:07.499996+00:00",
       "log_bytes": 104857505,
       "log_mb": 100.0,
       "github_limit_mb": 100,
@@ -348,21 +348,21 @@
       "path": "artifacts/push_hygiene.json"
     },
     "host_health": {
-      "updated": "2026-08-22T02:24:48.844804+00:00",
+      "updated": "2026-08-22T03:25:07.499996+00:00",
       "ok": false,
       "alive": false,
-      "heartbeat": "2026-08-22T02:22:09.197752+00:00",
-      "age_s": 159.6,
+      "heartbeat": "2026-08-22T03:08:57.976789+00:00",
+      "age_s": 969.5,
       "stale_after_s": 120.0,
       "phase": "idle",
       "current_job": null,
-      "last_job": "p1_132_gate_sample_wallet_010902",
+      "last_job": "os234_01_full_surface_smoke",
       "last_ok": true,
       "root": "C:\\Users\\Otcde\\ETHER",
       "git_required": false
     },
     "honest_path_progress": {
-      "updated": "2026-08-22T02:26:20.413751+00:00",
+      "updated": "2026-08-22T03:25:28.393999+00:00",
       "scripted_n": 150,
       "scripted_ok_n": 144,
       "scripted_honest_n": 144,
@@ -372,10 +372,10 @@
       "toolish_honest_n": 144,
       "toolish_honest_rate": 1.0,
       "eligible": {
-        "live_eligible_n": 10,
+        "live_eligible_n": 17,
         "timeout_rate_eligible": 0.0,
-        "honest_rate_eligible": 0.6,
-        "timeout_rate_raw": 0.4848
+        "honest_rate_eligible": 0.7647,
+        "timeout_rate_raw": 0.4
       },
       "phase1_gate": {
         "status": "ARCH_GO",
@@ -384,7 +384,7 @@
       "ok": true
     },
     "pipeline_terminal_canary": {
-      "updated": "2026-08-22T02:26:20.413751+00:00",
+      "updated": "2026-08-22T03:25:28.399029+00:00",
       "phase": "2A",
       "n": 5,
       "passed": 5,
@@ -396,7 +396,7 @@
       "path": "artifacts/pipeline_terminal_canary.json"
     },
     "pipeline_score_canary": {
-      "updated": "2026-08-22T02:26:20.413751+00:00",
+      "updated": "2026-08-22T03:25:28.400998+00:00",
       "phase": "2A",
       "n": 8,
       "passed": 8,
@@ -406,7 +406,7 @@
       "path": "artifacts/pipeline_score_canary.json"
     },
     "phase2a_status": {
-      "updated": "2026-08-22T02:27:51.429134+00:00",
+      "updated": "2026-08-22T03:25:49.445056+00:00",
       "phase": "2A",
       "name": "Strangler canaries under wheels",
       "status": "PASS",
@@ -433,7 +433,7 @@
       "rate_source": "eligible"
     },
     "governor": {
-      "pending": 4,
+      "pending": 3,
       "max_pending": 6,
       "steady_pause_at": 4,
       "steady_resume_at": 2,

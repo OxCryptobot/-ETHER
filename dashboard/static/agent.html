@@ -70,6 +70,10 @@ header h1 span { color: var(--cyan); }
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
   padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
 }
+.operator-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0c1018;
+}
 .moonshot-board {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
   padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1018;
@@ -93,8 +97,8 @@ header h1 span { color: var(--cyan); }
 main {
   display: grid;
   grid-template-columns: 240px 1fr 1fr;
-  grid-template-rows: auto auto 1fr;
-  gap: 8px; padding: 8px; height: calc(100vh - 280px);
+  grid-template-rows: auto auto auto 1fr;
+  gap: 8px; padding: 8px; height: calc(100vh - 340px);
 }
 .panel {
   background: var(--panel); border: 1px solid var(--border);
@@ -177,20 +181,55 @@ main {
   border: 1px solid var(--border); border-radius: 5px; padding: 7px;
   height: 100%; overflow: auto; white-space: pre; color: #c8d2e0; margin: 0;
 }
+/* Operator Surface — chat + llm */
+.chat-compose {
+  display: flex; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--border);
+  background: #0c121a; flex-shrink: 0;
+}
+.chat-compose input {
+  flex: 1; background: #0a0e16; border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text); padding: 6px 8px; font-size: 12px; font-family: inherit;
+}
+.chat-compose button {
+  background: #16324a; border: 1px solid #2a5a7a; color: var(--cyan);
+  border-radius: 5px; padding: 6px 12px; font-size: 11px; cursor: pointer;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.chat-compose button:hover { background: #1c4060; }
+.chat-compose button:disabled { opacity: 0.5; cursor: default; }
+.chat-msg {
+  padding: 5px 7px; margin-bottom: 4px; border-radius: 5px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 11px;
+}
+.chat-msg .from { color: var(--cyan); font-family: var(--mono); font-size: 10px; }
+.chat-msg .type { color: var(--amber); font-size: 9px; margin-left: 6px; text-transform: uppercase; }
+.chat-msg .text { margin-top: 3px; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.chat-msg .ts { color: var(--muted); font-size: 9px; margin-top: 2px; }
+.chat-msg.outbox { border-left: 2px solid var(--violet); }
+.chat-msg.inbox { border-left: 2px solid var(--green); }
+.llm-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 11px; color: var(--muted);
+}
+.llm-grid strong { color: var(--text); font-family: var(--mono); }
+.llm-lane {
+  display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px;
+  background: #0d2a1a; color: var(--green); margin-right: 4px;
+}
 @media (max-width: 1100px) {
   main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
   .span2 { grid-column: span 1; }
-  .phase-board, .matrix-strip, .moonshot-board { grid-template-columns: repeat(2, 1fr); }
+  .phase-board, .matrix-strip, .moonshot-board, .operator-strip { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>@ETHER</span> Control Matrix <span style="color:var(--muted);font-size:11px;font-weight:400">host-first</span></h1>
+  <h1><span>@ETHER</span> Control Matrix <span style="color:var(--muted);font-size:11px;font-weight:400">host-first · operator surface</span></h1>
   <div class="badges">
     <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
     <div class="badge" id="liveCoding">coding: idle</div>
     <div class="badge" id="modelBadge">model: --</div>
+    <div class="badge" id="llmBadge">llm: --</div>
   </div>
 </header>
 
@@ -201,7 +240,7 @@ main {
 git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\recover_host.ps1 -Hard</pre>
+.\scripts\start_ether_host.ps1</pre>
   <div class="note">After restart the dashboard flips green within ~90 s.</div>
 </div>
 
@@ -221,6 +260,14 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
   <div class="m-card" id="mSkip"><div class="label">Live skip left</div><div class="val" id="mSkipVal">--</div><div class="sub">foreman</div></div>
 </div>
 
+<div class="operator-strip" id="operatorStrip">
+  <div class="m-card" id="opEligible"><div class="label">honest_rate_eligible</div><div class="val" id="opEligibleVal">--</div><div class="sub" id="opEligibleSub">target ≥0.99</div></div>
+  <div class="m-card" id="opLlmP50"><div class="label">LLM p50</div><div class="val" id="opLlmP50Val">--</div><div class="sub">multi_llm ms</div></div>
+  <div class="m-card" id="opLlmP95"><div class="label">LLM p95</div><div class="val" id="opLlmP95Val">--</div><div class="sub">multi_llm ms</div></div>
+  <div class="m-card" id="opChat"><div class="label">Chat bus</div><div class="val" id="opChatVal">--</div><div class="sub" id="opChatSub">in / out</div></div>
+  <div class="m-card" id="opSkills"><div class="label">Skills</div><div class="val" id="opSkillsVal">--</div><div class="sub">apprentice lessons</div></div>
+</div>
+
 <div class="moonshot-board" id="moonshotBoard">
   <div class="m-card"><div class="label">Moonshots</div><div class="val">—</div><div class="sub">loading…</div></div>
 </div>
@@ -230,10 +277,11 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
   <div><span class="label">Queue depth</span><br><strong id="wnDepth">--</strong></div>
   <div><span class="label">Blocked</span><br><span id="wnBlocked" style="color:var(--amber)">--</span></div>
   <div><span class="label">Foreman cursor</span><br><strong id="wnCursor">--</strong></div>
+  <div><span class="label">Doctor</span><br><span id="opDoctor">--</span></div>
 </div>
 
 <main>
-  <section class="panel" style="grid-row: span 3;">
+  <section class="panel" style="grid-row: span 4;">
     <h2>Job queue</h2>
     <div class="counts">
       <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
@@ -242,10 +290,26 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
     </div>
     <div class="body" id="queue"></div>
   </section>
+
   <section class="panel span2">
     <h2>Status / Foreman / Last job</h2>
     <div class="body status-grid" id="status">loading...</div>
   </section>
+
+  <section class="panel">
+    <h2>Chat bus · operator ↔ Grok</h2>
+    <div class="body" id="chatBody"><div style="color:var(--muted)">loading chat...</div></div>
+    <div class="chat-compose">
+      <input id="chatInput" type="text" placeholder="operator message (one hypothesis)" maxlength="2000" />
+      <button id="chatSend" type="button">Send</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Multi-LLM · latency</h2>
+    <div class="body" id="llmBody"><div style="color:var(--muted)">loading llm...</div></div>
+  </section>
+
   <section class="panel">
     <h2>RLHF health + ranked boosts</h2>
     <div class="body" id="rlhf"><div style="color:var(--muted)">loading...</div></div>
@@ -281,7 +345,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 <script>
 function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function colorize(line) {
   const e = esc(line);
@@ -341,6 +405,20 @@ function renderMoonshots(moonshots) {
     else if (t.good === false || t.warn) cls += ' bad';
     const val = t.value === true ? 'OK' : t.value === false ? 'NO' : (t.value ?? '—');
     return '<div class="' + cls + '"><div class="label">' + esc(t.label) + '</div><div class="val">' + esc(val) + '</div><div class="sub">' + esc(t.sub || '') + '</div></div>';
+  }).join('');
+}
+function renderChatMsgs(items, kind) {
+  if (!items || !items.length) return '';
+  return items.slice(0, 12).map(m => {
+    const text = (m.payload && (m.payload.text || m.payload.note || JSON.stringify(m.payload).slice(0, 180))) || '';
+    const ts = (m.ts || '').toString();
+    const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+    return `<div class="chat-msg ${kind}">
+      <span class="from">${esc(m.from || '?')}</span>
+      <span class="type">${esc(m.type || '')}</span>
+      <div class="text">${esc(text)}</div>
+      <div class="ts">${esc(clock)} · ${esc(m.id || '')}</div>
+    </div>`;
   }).join('');
 }
 
@@ -411,7 +489,7 @@ async function tickHost() {
     document.getElementById('wnCursor').textContent = fm.cursor ?? '--';
 
     const model = (d.performance_benchmark && d.performance_benchmark.hardware && d.performance_benchmark.hardware.primary_model)
-      || (perf && perf.model) || 'qwen3.5:4b-q4_K_M';
+      || (perf && perf.model) || 'qwen3.5:4b';
     document.getElementById('modelBadge').textContent = 'model: ' + model;
 
     const fsrc = d.foreman_source || ap.source || '';
@@ -479,6 +557,95 @@ async function tickHost() {
   }
 }
 
+async function tickOperator() {
+  try {
+    const [rOp, rRates, rLlm, rChat, rSkills] = await Promise.all([
+      fetch('/api/operator').then(r => r.json()).catch(() => ({})),
+      fetch('/api/rates').then(r => r.json()).catch(() => ({})),
+      fetch('/api/llm').then(r => r.json()).catch(() => ({})),
+      fetch('/api/chat?limit=15').then(r => r.json()).catch(() => ({})),
+      fetch('/api/skills').then(r => r.json()).catch(() => ({})),
+    ]);
+
+    // Eligible / rates
+    const p1 = (rRates.phase1_gate) || (rOp.status && rOp.status.phase1) || {};
+    const elig = p1.honest_rate_eligible != null ? p1.honest_rate_eligible
+      : (rRates.eligible_rates && rRates.eligible_rates.honest_rate_eligible);
+    document.getElementById('opEligibleVal').textContent =
+      elig != null ? Number(elig).toFixed(3) : '--';
+    setCard('opEligible', elig != null && elig >= 0.99 ? true : (elig != null ? false : null));
+    document.getElementById('opEligibleSub').textContent =
+      (p1.live_eligible_n != null ? 'n=' + p1.live_eligible_n + ' · ' : '') + 'target ≥0.99';
+
+    // Doctor
+    const doc = rOp.doctor || {};
+    const issues = doc.issues || [];
+    const docEl = document.getElementById('opDoctor');
+    if (doc.ok && !issues.length) {
+      docEl.textContent = 'OK';
+      docEl.style.color = 'var(--green)';
+    } else if (issues.length) {
+      docEl.textContent = issues[0].slice(0, 48);
+      docEl.style.color = issues[0].startsWith('CRITICAL') ? 'var(--red)' : 'var(--amber)';
+    } else {
+      docEl.textContent = '--';
+      docEl.style.color = 'var(--muted)';
+    }
+
+    // LLM
+    const lat = rLlm.latency || {};
+    const p50 = lat.p50_ms;
+    const p95 = lat.p95_ms;
+    document.getElementById('opLlmP50Val').textContent = p50 != null ? Math.round(p50) : '--';
+    document.getElementById('opLlmP95Val').textContent = p95 != null ? Math.round(p95) : '--';
+    setCard('opLlmP50', p50 != null && p50 < 5000 ? true : (p50 != null ? 'warn' : null));
+    setCard('opLlmP95', p95 != null && p95 < 15000 ? true : (p95 != null ? 'warn' : null));
+    document.getElementById('llmBadge').textContent =
+      'llm: ' + (rLlm.fast || rLlm.live || '--') +
+      (rLlm.burst_enabled ? ' +burst' : '');
+
+    const llmBody = document.getElementById('llmBody');
+    llmBody.innerHTML = `
+      <div class="llm-grid">
+        <div>fast <strong>${esc(rLlm.fast || '--')}</strong></div>
+        <div>live <strong>${esc(rLlm.live || '--')}</strong></div>
+        <div>burst <strong>${esc(rLlm.burst || 'off')}</strong></div>
+        <div>keep_alive <strong>${esc(String(rLlm.keep_alive))}</strong></div>
+        <div>num_ctx <strong>${esc(rLlm.num_ctx ?? '--')}</strong></div>
+        <div>samples <strong>${esc(lat.n ?? 0)}</strong></div>
+        <div>p50_ms <strong>${esc(p50 != null ? Math.round(p50) : '--')}</strong></div>
+        <div>p95_ms <strong>${esc(p95 != null ? Math.round(p95) : '--')}</strong></div>
+        <div>max_ms <strong>${esc(lat.max_ms != null ? Math.round(lat.max_ms) : '--')}</strong></div>
+        <div>base <strong>${esc(rLlm.ollama_base || '--')}</strong></div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted)">${esc(rLlm.note || '')}</div>
+      <div style="margin-top:4px;font-size:10px;color:var(--muted)">tail: ${esc((lat.samples_tail || []).join(', ') || '—')}</div>`;
+
+    // Chat
+    const sum = rChat.summary || {};
+    const inN = sum.inbox_n ?? ((rChat.inbox || []).length);
+    const outN = sum.outbox_n ?? ((rChat.outbox || []).length);
+    document.getElementById('opChatVal').textContent = inN + ' / ' + outN;
+    document.getElementById('opChatSub').textContent = 'inbox / outbox';
+    setCard('opChat', (inN + outN) > 0 ? true : null);
+
+    const chatBody = document.getElementById('chatBody');
+    const inboxHtml = renderChatMsgs(rChat.inbox, 'inbox');
+    const outboxHtml = renderChatMsgs(rChat.outbox, 'outbox');
+    chatBody.innerHTML =
+      (outboxHtml ? '<div style="color:var(--muted);font-size:9px;margin-bottom:3px">OUTBOX (operator → Grok)</div>' + outboxHtml : '') +
+      (inboxHtml ? '<div style="color:var(--muted);font-size:9px;margin:8px 0 3px">INBOX (Grok → operator)</div>' + inboxHtml : '') +
+      (!outboxHtml && !inboxHtml ? '<div style="color:var(--muted)">chat bus empty — post a message</div>' : '');
+
+    // Skills
+    const skills = (rSkills.skills) || [];
+    document.getElementById('opSkillsVal').textContent = skills.length || '--';
+    setCard('opSkills', skills.length > 0 ? true : null);
+  } catch (e) {
+    /* non-fatal — operator APIs may be mid-reload */
+  }
+}
+
 async function tickSnapshot() {
   try {
     const r = await fetch('/api/snapshot');
@@ -506,7 +673,38 @@ async function tickSnapshot() {
   } catch (e) { /* non-fatal */ }
 }
 
-function tick() { tickHost(); tickSnapshot(); }
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSend');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text }),
+    });
+    const d = await r.json();
+    if (d.ok || d.envelope) {
+      input.value = '';
+      await tickOperator();
+    } else {
+      alert('chat post failed: ' + (d.error || r.status));
+    }
+  } catch (e) {
+    alert('chat post error: ' + e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('chatSend').addEventListener('click', sendChat);
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendChat();
+});
+
+function tick() { tickHost(); tickSnapshot(); tickOperator(); }
 tick();
 setInterval(tick, 1500);
 </script>

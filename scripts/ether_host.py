@@ -2,13 +2,13 @@
 """ETHER Host — ONE window: dashboard + job agent + foreman.
 
   python -m scripts.ether_host
-  # or:  .\scripts\start_ether_host.ps1
+  # or:  .\\scripts\\start_ether_host.ps1
 
 Dashboard thread + host_agent poll loop. No second terminal.
 
 2026-08-22: After git_sync, if critical source files changed vs boot snapshot,
 exit 42 so start_ether_host.ps1 reloads the new modules (live_budget,
-host_agent, latency_budget). Stops the stale-code timeout death spiral.
+host_agent, latency_budget, dashboard). Stops the stale-code timeout death spiral.
 """
 from __future__ import annotations
 
@@ -38,6 +38,12 @@ _WATCHED = (
     "core/job_class.py",
     "core/eligible_rates.py",
     "core/phase1_gate.py",
+    "core/multi_llm.py",
+    "core/operator_surface.py",
+    "core/chat_bus.py",
+    "dashboard/app.py",
+    "dashboard/static/agent.html",
+    "dashboard/collector_host_agent.py",
 )
 
 try:

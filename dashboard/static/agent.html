@@ -17,20 +17,31 @@
   --cyan: #4cc9f0;
   --violet: #9b8cff;
   --mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --header-h: 44px;
+  --kpi-h: 52px;
+  --tabs-h: 36px;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; min-height: 100vh; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
 header {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 10px 16px; border-bottom: 1px solid var(--border); background: #0c121a;
-  position: sticky; top: 0; z-index: 30;
+  padding: 0 14px; height: var(--header-h); flex-shrink: 0;
+  border-bottom: 1px solid var(--border); background: #0c121a; z-index: 40;
 }
-header h1 { margin: 0; font-size: 14px; letter-spacing: 0.05em; font-weight: 600; }
-header h1 span { color: var(--cyan); }
-.badges { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+header h1 { margin: 0; font-size: 13px; letter-spacing: 0.04em; font-weight: 600; }
+header h1 span.brand { color: var(--cyan); }
+header h1 span.ver { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 6px; }
+.badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 999px; font-size: 11px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px; border-radius: 999px; font-size: 10px;
   border: 1px solid var(--border); background: var(--panel);
 }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
@@ -38,45 +49,144 @@ header h1 span { color: var(--cyan); }
 .dot.off { background: var(--red); }
 .dot.busy { background: var(--cyan); animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: 0.35; } }
+
+/* ── Recovery ───────────────────────────────────────────── */
 .recovery {
-  display: none; margin: 0; padding: 12px 16px;
+  display: none; margin: 0; padding: 10px 14px; flex-shrink: 0;
   background: #1a0f0f; border-bottom: 1px solid #5a2020; font-size: 12px;
 }
 .recovery.show { display: block; }
-.recovery h3 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--red); }
-.recovery p { margin: 0 0 8px; color: var(--muted); }
+.recovery h3 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--red); }
+.recovery p { margin: 0 0 6px; color: var(--muted); }
 .recovery pre {
-  margin: 0; padding: 10px 12px; background: #0a0e16;
+  margin: 0; padding: 8px 10px; background: #0a0e16;
   border: 1px solid #3a2020; border-radius: 6px;
-  font-family: var(--mono); font-size: 11px; line-height: 1.45;
+  font-family: var(--mono); font-size: 11px; line-height: 1.4;
   color: #e8c4c4; overflow-x: auto; white-space: pre;
 }
-.recovery .note { margin-top: 8px; font-size: 11px; color: var(--amber); }
+.recovery .note { margin-top: 6px; font-size: 11px; color: var(--amber); }
+
+/* ── Compact KPI strip (always visible) ─────────────────── */
+.kpi-strip {
+  display: flex; align-items: stretch; gap: 0; flex-shrink: 0;
+  height: var(--kpi-h); border-bottom: 1px solid var(--border); background: #0b1118;
+  overflow-x: auto;
+}
+.kpi {
+  flex: 1; min-width: 90px; padding: 6px 10px; text-align: center;
+  border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center;
+}
+.kpi:last-child { border-right: none; }
+.kpi .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi .val { font-size: 15px; font-weight: 700; font-family: var(--mono); margin-top: 1px; line-height: 1.2; }
+.kpi .sub { font-size: 9px; color: var(--muted); }
+.kpi.good .val { color: var(--green); }
+.kpi.warn .val { color: var(--amber); }
+.kpi.bad .val { color: var(--red); }
+
+/* ── Tabs ───────────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 0; flex-shrink: 0; height: var(--tabs-h);
+  border-bottom: 1px solid var(--border); background: #0c121a; padding: 0 8px;
+}
+.tab {
+  padding: 0 16px; height: 100%; border: none; background: transparent;
+  color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab .hint { font-size: 9px; opacity: 0.5; margin-left: 4px; font-weight: 400; }
+
+/* ── Tab content shell ──────────────────────────────────── */
+.workspace {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+}
+.tab-pane {
+  display: none; flex: 1; min-height: 0; overflow: hidden; padding: 8px;
+}
+.tab-pane.active { display: flex; flex-direction: column; }
+
+/* ── Shared panel ───────────────────────────────────────── */
+.panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+}
+.panel h2 {
+  margin: 0; padding: 6px 10px; font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--muted);
+  border-bottom: 1px solid var(--border); background: #0c121a; flex-shrink: 0;
+}
+.body { padding: 7px 9px; overflow: auto; flex: 1; min-height: 0; }
+
+/* ── Ops layout ─────────────────────────────────────────── */
+.ops-grid {
+  display: grid; grid-template-columns: 260px 1fr 1fr; grid-template-rows: 1fr 1fr;
+  gap: 8px; flex: 1; min-height: 0;
+}
+.ops-grid .span-row { grid-row: span 2; }
+
+/* ── Chat layout (full height) ──────────────────────────── */
+.chat-shell {
+  display: flex; flex-direction: column; flex: 1; min-height: 0;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.chat-header {
+  padding: 6px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--muted); border-bottom: 1px solid var(--border); background: #0c121a; flex-shrink: 0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.chat-messages {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px;
+}
+.chat-compose {
+  display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border);
+  background: #0c121a; flex-shrink: 0;
+}
+.chat-compose input {
+  flex: 1; background: #0a0e16; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); padding: 10px 12px; font-size: 13px; font-family: inherit;
+}
+.chat-compose input:focus { outline: none; border-color: #2a5a7a; }
+.chat-compose button {
+  background: #16324a; border: 1px solid #2a5a7a; color: var(--cyan);
+  border-radius: 6px; padding: 10px 18px; font-size: 12px; cursor: pointer;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.chat-compose button:hover { background: #1c4060; }
+.chat-compose button:disabled { opacity: 0.5; cursor: default; }
+.chat-msg {
+  padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
+  background: #0b1017; border: 1px solid var(--border); font-size: 12px;
+}
+.chat-msg .from { color: var(--cyan); font-family: var(--mono); font-size: 11px; }
+.chat-msg .type { color: var(--amber); font-size: 9px; margin-left: 6px; text-transform: uppercase; }
+.chat-msg .text { margin-top: 4px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.45; }
+.chat-msg .ts { color: var(--muted); font-size: 10px; margin-top: 3px; }
+.chat-msg.outbox { border-left: 3px solid var(--violet); }
+.chat-msg.inbox { border-left: 3px solid var(--green); }
+
+/* ── Rates layout ───────────────────────────────────────── */
+.rates-grid {
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto 1fr;
+  gap: 8px; flex: 1; min-height: 0;
+}
 .phase-board {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0b1118;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
 }
 .phase-card {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
   padding: 8px 10px; text-align: center;
 }
-.phase-card .pkg { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.phase-card .st { font-size: 14px; font-weight: 700; margin-top: 3px; }
+.phase-card .pkg { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.phase-card .st { font-size: 14px; font-weight: 700; margin-top: 2px; }
 .phase-card.landed .st { color: var(--green); }
 .phase-card.progress .st { color: var(--amber); }
 .phase-card.queued .st { color: var(--cyan); }
 .phase-card.unknown .st { color: var(--muted); }
-.matrix-strip {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1210;
-}
-.operator-strip {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0c1018;
-}
-.moonshot-board {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0a1018;
+.m-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px;
 }
 .m-card {
   background: var(--panel); border: 1px solid var(--border); border-radius: 7px;
@@ -88,34 +198,30 @@ header h1 span { color: var(--cyan); }
 .m-card.good .val { color: var(--green); }
 .m-card.warn .val { color: var(--amber); }
 .m-card.bad .val { color: var(--red); }
-.whats-next {
-  padding: 8px 14px; border-bottom: 1px solid var(--border); background: #0a1016;
-  display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 12px;
+
+/* ── Learning layout ────────────────────────────────────── */
+.learn-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr;
+  gap: 8px; flex: 1; min-height: 0;
 }
-.whats-next .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 9px; }
-.whats-next .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
-main {
-  display: grid;
-  grid-template-columns: 240px 1fr 1fr;
-  grid-template-rows: auto auto auto 1fr;
-  gap: 8px; padding: 8px; height: calc(100vh - 340px);
+
+/* ── Code layout ────────────────────────────────────────── */
+.code-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-height: 0;
 }
-.panel {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: 9px; overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+.codebox {
+  font-family: var(--mono); font-size: 11px; background: #0a0e16;
+  border: none; border-radius: 0; padding: 10px;
+  height: 100%; overflow: auto; white-space: pre; color: #c8d2e0; margin: 0;
 }
-.panel h2 {
-  margin: 0; padding: 7px 10px; font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--muted);
-  border-bottom: 1px solid var(--border); background: #0c121a; flex-shrink: 0;
-}
-.body { padding: 7px 9px; overflow: auto; flex: 1; min-height: 0; }
+
+/* ── Shared components ──────────────────────────────────── */
 .counts { display: flex; gap: 5px; padding: 7px 9px; flex-shrink: 0; }
 .count {
-  flex: 1; text-align: center; padding: 6px 3px;
+  flex: 1; text-align: center; padding: 5px 3px;
   border-radius: 5px; background: #0b1017; border: 1px solid var(--border);
 }
-.count b { display: block; font-size: 18px; font-family: var(--mono); }
+.count b { display: block; font-size: 17px; font-family: var(--mono); }
 .count span { font-size: 9px; color: var(--muted); text-transform: uppercase; }
 .count.pending b { color: var(--amber); }
 .count.done b { color: var(--green); }
@@ -129,7 +235,7 @@ main {
 .job .cls { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 9px; margin-left: 4px; }
 .job .cls.fast { background: #0d2a1a; color: var(--green); }
 .job .cls.live { background: #2a1a0d; color: var(--amber); }
-.job .cls.any { background: #1a1a2a; color: var(--violet); }
+.job .cls.any, .job .cls.gate_sample { background: #1a1a2a; color: var(--violet); }
 .log, .term {
   font-family: var(--mono); font-size: 10.5px; line-height: 1.4;
   white-space: pre-wrap; word-break: break-word; color: #b0bcc8;
@@ -137,9 +243,8 @@ main {
 .log .err, .term .err { color: var(--red); }
 .log .ok, .term .ok { color: var(--green); }
 .log .jobline, .term .live { color: var(--cyan); }
-.span2 { grid-column: span 2; }
 .status-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 6px 12px; font-size: 11px; color: var(--muted);
 }
 .status-grid strong { color: var(--text); }
@@ -176,55 +281,27 @@ main {
 .flow-arrow { color: var(--muted); font-size: 11px; }
 .term-line { display: grid; grid-template-columns: 50px 1fr; gap: 6px; padding: 1px 0; border-bottom: 1px solid rgba(30,42,56,0.35); }
 .term-ts { color: var(--muted); font-size: 9px; }
-.codebox {
-  font-family: var(--mono); font-size: 10.5px; background: #0a0e16;
-  border: 1px solid var(--border); border-radius: 5px; padding: 7px;
-  height: 100%; overflow: auto; white-space: pre; color: #c8d2e0; margin: 0;
-}
-/* Operator Surface — chat + llm */
-.chat-compose {
-  display: flex; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--border);
-  background: #0c121a; flex-shrink: 0;
-}
-.chat-compose input {
-  flex: 1; background: #0a0e16; border: 1px solid var(--border); border-radius: 5px;
-  color: var(--text); padding: 6px 8px; font-size: 12px; font-family: inherit;
-}
-.chat-compose button {
-  background: #16324a; border: 1px solid #2a5a7a; color: var(--cyan);
-  border-radius: 5px; padding: 6px 12px; font-size: 11px; cursor: pointer;
-  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-}
-.chat-compose button:hover { background: #1c4060; }
-.chat-compose button:disabled { opacity: 0.5; cursor: default; }
-.chat-msg {
-  padding: 5px 7px; margin-bottom: 4px; border-radius: 5px;
-  background: #0b1017; border: 1px solid var(--border); font-size: 11px;
-}
-.chat-msg .from { color: var(--cyan); font-family: var(--mono); font-size: 10px; }
-.chat-msg .type { color: var(--amber); font-size: 9px; margin-left: 6px; text-transform: uppercase; }
-.chat-msg .text { margin-top: 3px; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-.chat-msg .ts { color: var(--muted); font-size: 9px; margin-top: 2px; }
-.chat-msg.outbox { border-left: 2px solid var(--violet); }
-.chat-msg.inbox { border-left: 2px solid var(--green); }
 .llm-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 11px; color: var(--muted);
 }
 .llm-grid strong { color: var(--text); font-family: var(--mono); }
-.llm-lane {
-  display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px;
-  background: #0d2a1a; color: var(--green); margin-right: 4px;
+.whats-next-inline {
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 11px;
+  padding: 6px 10px; border-bottom: 1px solid var(--border); background: #0a1016; flex-shrink: 0;
 }
-@media (max-width: 1100px) {
-  main { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
-  .span2 { grid-column: span 1; }
-  .phase-board, .matrix-strip, .moonshot-board, .operator-strip { grid-template-columns: repeat(2, 1fr); }
+.whats-next-inline .label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 9px; }
+.whats-next-inline .next { color: var(--cyan); font-family: var(--mono); font-weight: 600; }
+
+@media (max-width: 1000px) {
+  .ops-grid, .rates-grid, .learn-grid, .code-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .ops-grid .span-row { grid-row: auto; }
+  .phase-board { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
 <header>
-  <h1><span>@ETHER</span> Control Matrix <span style="color:var(--muted);font-size:11px;font-weight:400">host-first · operator surface</span></h1>
+  <h1><span class="brand">@ETHER</span> Control Matrix <span class="ver">v0.6 · host-first</span></h1>
   <div class="badges">
     <div class="badge"><span id="dot" class="dot"></span><span id="alive">checking...</span></div>
     <div class="badge" id="liveCoding">coding: idle</div>
@@ -234,479 +311,561 @@ main {
 </header>
 
 <div class="recovery" id="recoveryBanner">
-  <h3>Host offline -- one-time recovery</h3>
+  <h3>Host offline — one-time recovery</h3>
   <p>Heartbeat stale or process dead. Run this once in PowerShell on the Windows GPU host, then leave the window open.</p>
   <pre>cd C:\Users\Otcde\ETHER
 git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\start_ether_host.ps1</pre>
-  <div class="note">After restart the dashboard flips green within ~90 s.</div>
+  <div class="note">After restart the dashboard flips green within ~90 s. Do not restart again under normal conditions.</div>
 </div>
 
-<div class="phase-board" id="phaseBoard">
-  <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">--</div></div>
-  <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">--</div></div>
-  <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">--</div></div>
-  <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">--</div></div>
+<!-- Always-visible KPI strip -->
+<div class="kpi-strip" id="kpiStrip">
+  <div class="kpi" id="kEligible"><div class="label">honest_rate</div><div class="val" id="kEligibleVal">--</div><div class="sub" id="kEligibleSub">≥0.99</div></div>
+  <div class="kpi" id="kTp"><div class="label">throughput</div><div class="val" id="kTpVal">--</div><div class="sub" id="kTpSub">jobs/h</div></div>
+  <div class="kpi" id="kLast"><div class="label">last job</div><div class="val" id="kLastVal">--</div><div class="sub" id="kLastSub">--</div></div>
+  <div class="kpi" id="kPend"><div class="label">pending</div><div class="val" id="kPendVal">0</div><div class="sub">queue</div></div>
+  <div class="kpi" id="kDone"><div class="label">done</div><div class="val" id="kDoneVal">0</div><div class="sub">recent</div></div>
+  <div class="kpi" id="kFail"><div class="label">failed</div><div class="val" id="kFailVal">0</div><div class="sub">vault</div></div>
+  <div class="kpi" id="kChat"><div class="label">chat bus</div><div class="val" id="kChatVal">--</div><div class="sub">in / out</div></div>
+  <div class="kpi" id="kLlm"><div class="label">llm p50</div><div class="val" id="kLlmVal">--</div><div class="sub">ms</div></div>
 </div>
 
-<div class="matrix-strip" id="matrixStrip">
-  <div class="m-card" id="mThroughput"><div class="label">Throughput</div><div class="val" id="mTpVal">--</div><div class="sub" id="mTpSub">jobs/h est</div></div>
-  <div class="m-card" id="mFast"><div class="label">Pending FAST</div><div class="val" id="mFastVal">0</div><div class="sub">class mix</div></div>
-  <div class="m-card" id="mLive"><div class="label">Pending LIVE</div><div class="val" id="mLiveVal">0</div><div class="sub">quarantine target</div></div>
-  <div class="m-card" id="mRatio"><div class="label">Scripted/Live</div><div class="val" id="mRatioVal">--</div><div class="sub">latency ratio</div></div>
-  <div class="m-card" id="mLast"><div class="label">Last job</div><div class="val" id="mLastVal">--</div><div class="sub" id="mLastSub">--</div></div>
-  <div class="m-card" id="mSkip"><div class="label">Live skip left</div><div class="val" id="mSkipVal">--</div><div class="sub">foreman</div></div>
-</div>
+<nav class="tabs" id="tabBar" role="tablist">
+  <button class="tab active" data-tab="ops" role="tab">Ops <span class="hint">1</span></button>
+  <button class="tab" data-tab="chat" role="tab">Chat <span class="hint">2</span></button>
+  <button class="tab" data-tab="rates" role="tab">Rates <span class="hint">3</span></button>
+  <button class="tab" data-tab="learn" role="tab">Learning <span class="hint">4</span></button>
+  <button class="tab" data-tab="code" role="tab">Code <span class="hint">5</span></button>
+</nav>
 
-<div class="operator-strip" id="operatorStrip">
-  <div class="m-card" id="opEligible"><div class="label">honest_rate_eligible</div><div class="val" id="opEligibleVal">--</div><div class="sub" id="opEligibleSub">target ≥0.99</div></div>
-  <div class="m-card" id="opLlmP50"><div class="label">LLM p50</div><div class="val" id="opLlmP50Val">--</div><div class="sub">multi_llm ms</div></div>
-  <div class="m-card" id="opLlmP95"><div class="label">LLM p95</div><div class="val" id="opLlmP95Val">--</div><div class="sub">multi_llm ms</div></div>
-  <div class="m-card" id="opChat"><div class="label">Chat bus</div><div class="val" id="opChatVal">--</div><div class="sub" id="opChatSub">in / out</div></div>
-  <div class="m-card" id="opSkills"><div class="label">Skills</div><div class="val" id="opSkillsVal">--</div><div class="sub">apprentice lessons</div></div>
-</div>
-
-<div class="moonshot-board" id="moonshotBoard">
-  <div class="m-card"><div class="label">Moonshots</div><div class="val">—</div><div class="sub">loading…</div></div>
-</div>
-
-<div class="whats-next" id="whatsNextBar">
-  <div><span class="label">What's next</span><br><span class="next" id="wnNext">--</span></div>
-  <div><span class="label">Queue depth</span><br><strong id="wnDepth">--</strong></div>
-  <div><span class="label">Blocked</span><br><span id="wnBlocked" style="color:var(--amber)">--</span></div>
-  <div><span class="label">Foreman cursor</span><br><strong id="wnCursor">--</strong></div>
-  <div><span class="label">Doctor</span><br><span id="opDoctor">--</span></div>
-</div>
-
-<main>
-  <section class="panel" style="grid-row: span 4;">
-    <h2>Job queue</h2>
-    <div class="counts">
-      <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
-      <div class="count done"><b id="c-done">0</b><span>done</span></div>
-      <div class="count failed"><b id="c-failed">0</b><span>failed</span></div>
+<div class="workspace">
+  <!-- ═══ OPS ═══ -->
+  <div class="tab-pane active" id="pane-ops" role="tabpanel">
+    <div class="whats-next-inline" id="whatsNextBar">
+      <div><span class="label">What's next</span> · <span class="next" id="wnNext">--</span></div>
+      <div><span class="label">Foreman</span> · <strong id="wnCursor">--</strong></div>
+      <div><span class="label">Blocked</span> · <span id="wnBlocked" style="color:var(--amber)">--</span></div>
+      <div><span class="label">Doctor</span> · <span id="opDoctor">--</span></div>
     </div>
-    <div class="body" id="queue"></div>
-  </section>
-
-  <section class="panel span2">
-    <h2>Status / Foreman / Last job</h2>
-    <div class="body status-grid" id="status">loading...</div>
-  </section>
-
-  <section class="panel">
-    <h2>Chat bus · operator ↔ Grok</h2>
-    <div class="body" id="chatBody"><div style="color:var(--muted)">loading chat...</div></div>
-    <div class="chat-compose">
-      <input id="chatInput" type="text" placeholder="operator message (one hypothesis)" maxlength="2000" />
-      <button id="chatSend" type="button">Send</button>
+    <div class="ops-grid">
+      <section class="panel span-row">
+        <h2>Job queue</h2>
+        <div class="counts">
+          <div class="count pending"><b id="c-pending">0</b><span>pending</span></div>
+          <div class="count done"><b id="c-done">0</b><span>done</span></div>
+          <div class="count failed"><b id="c-failed">0</b><span>failed</span></div>
+        </div>
+        <div class="body" id="queue"></div>
+      </section>
+      <section class="panel">
+        <h2>Status / Foreman / Last job</h2>
+        <div class="body status-grid" id="status">loading...</div>
+      </section>
+      <section class="panel">
+        <h2>Live activity</h2>
+        <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events...</div></div>
+      </section>
+      <section class="panel" style="grid-column: 2 / 4;">
+        <h2>Agent log</h2>
+        <div class="body log" id="log"></div>
+      </section>
     </div>
-  </section>
+  </div>
 
-  <section class="panel">
-    <h2>Multi-LLM · latency</h2>
-    <div class="body" id="llmBody"><div style="color:var(--muted)">loading llm...</div></div>
-  </section>
-
-  <section class="panel">
-    <h2>RLHF health + ranked boosts</h2>
-    <div class="body" id="rlhf"><div style="color:var(--muted)">loading...</div></div>
-  </section>
-  <section class="panel">
-    <h2>Recent scoreboards</h2>
-    <div class="body" id="scoreboards"><div style="color:var(--muted)">loading...</div></div>
-  </section>
-  <section class="panel">
-    <h2>Agent log</h2>
-    <div class="body log" id="log"></div>
-  </section>
-  <section class="panel">
-    <h2>Live coding / activity</h2>
-    <div class="body term" id="term"><div style="color:var(--muted)">waiting for console events...</div></div>
-  </section>
-  <section class="panel">
-    <h2>Critique backlog</h2>
-    <div class="body" id="critiques"><div style="color:var(--muted)">no open critiques</div></div>
-  </section>
-  <section class="panel">
-    <h2>Control flow + GEMS + lessons</h2>
-    <div class="body">
-      <div class="flow" id="flow"></div>
-      <div style="margin-top:6px" id="lessons"></div>
+  <!-- ═══ CHAT (full height) ═══ -->
+  <div class="tab-pane" id="pane-chat" role="tabpanel">
+    <div class="chat-shell">
+      <div class="chat-header">
+        <span>Chat bus · operator ↔ Grok</span>
+        <span id="chatCount" style="font-family:var(--mono);color:var(--cyan)">0 / 0</span>
+      </div>
+      <div class="chat-messages" id="chatBody">
+        <div style="color:var(--muted)">loading chat...</div>
+      </div>
+      <div class="chat-compose">
+        <input id="chatInput" type="text" placeholder="operator message (one hypothesis) — Enter to send" maxlength="2000" autocomplete="off" />
+        <button id="chatSend" type="button">Send</button>
+      </div>
     </div>
-  </section>
-  <section class="panel">
-    <h2>Code preview</h2>
-    <pre class="codebox" id="codepane"># waiting for pipeline / tool-runtime output</pre>
-  </section>
-</main>
+  </div>
+
+  <!-- ═══ RATES ═══ -->
+  <div class="tab-pane" id="pane-rates" role="tabpanel">
+    <div class="rates-grid">
+      <div style="grid-column: 1 / -1;">
+        <div class="phase-board" id="phaseBoard">
+          <div class="phase-card unknown" id="p1a"><div class="pkg">1A Tool-first</div><div class="st">--</div></div>
+          <div class="phase-card unknown" id="p1b"><div class="pkg">1B AgentState</div><div class="st">--</div></div>
+          <div class="phase-card unknown" id="p1c"><div class="pkg">1C AST edits</div><div class="st">--</div></div>
+          <div class="phase-card unknown" id="p1d"><div class="pkg">1D Expand eval</div><div class="st">--</div></div>
+        </div>
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <div class="m-row" id="matrixRow">
+          <div class="m-card" id="mThroughput"><div class="label">Throughput</div><div class="val" id="mTpVal">--</div><div class="sub" id="mTpSub">jobs/h est</div></div>
+          <div class="m-card" id="mFast"><div class="label">Pending FAST</div><div class="val" id="mFastVal">0</div><div class="sub">class mix</div></div>
+          <div class="m-card" id="mLive"><div class="label">Pending LIVE</div><div class="val" id="mLiveVal">0</div><div class="sub">quarantine</div></div>
+          <div class="m-card" id="mRatio"><div class="label">Scripted/Live</div><div class="val" id="mRatioVal">--</div><div class="sub">latency ratio</div></div>
+          <div class="m-card" id="mSkip"><div class="label">Live skip left</div><div class="val" id="mSkipVal">--</div><div class="sub">foreman</div></div>
+          <div class="m-card" id="opSkills"><div class="label">Skills</div><div class="val" id="opSkillsVal">--</div><div class="sub">lessons</div></div>
+        </div>
+      </div>
+      <section class="panel">
+        <h2>Multi-LLM · latency</h2>
+        <div class="body" id="llmBody"><div style="color:var(--muted)">loading llm...</div></div>
+      </section>
+      <section class="panel">
+        <h2>Moonshots</h2>
+        <div class="body" id="moonshotBoard"><div style="color:var(--muted)">loading...</div></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ═══ LEARNING ═══ -->
+  <div class="tab-pane" id="pane-learn" role="tabpanel">
+    <div class="learn-grid">
+      <section class="panel">
+        <h2>RLHF health + ranked boosts</h2>
+        <div class="body" id="rlhf"><div style="color:var(--muted)">loading...</div></div>
+      </section>
+      <section class="panel">
+        <h2>Recent scoreboards</h2>
+        <div class="body" id="scoreboards"><div style="color:var(--muted)">loading...</div></div>
+      </section>
+      <section class="panel">
+        <h2>Critique backlog</h2>
+        <div class="body" id="critiques"><div style="color:var(--muted)">no open critiques</div></div>
+      </section>
+      <section class="panel" style="grid-column: 1 / -1;">
+        <h2>Control flow · GEMS · Apprentice lessons</h2>
+        <div class="body">
+          <div class="flow" id="flow"></div>
+          <div style="margin-top:8px" id="lessons"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ═══ CODE ═══ -->
+  <div class="tab-pane" id="pane-code" role="tabpanel">
+    <div class="code-grid">
+      <section class="panel">
+        <h2>Code preview</h2>
+        <pre class="codebox" id="codepane"># waiting for pipeline / tool-runtime output</pre>
+      </section>
+      <section class="panel">
+        <h2>Live coding / activity</h2>
+        <div class="body term" id="term2"><div style="color:var(--muted)">waiting for console events...</div></div>
+      </section>
+    </div>
+  </div>
+</div>
 
 <script>
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function colorize(line) {
-  const e = esc(line);
-  if (/FAIL|error|EXCEPTION|ABORT/i.test(line)) return '<span class="err">' + e + '</span>';
-  if (/PASS|OK|JOB END.*ok=True/i.test(line)) return '<span class="ok">' + e + '</span>';
-  if (/JOB |foreman|sprint |step /i.test(line)) return '<span class="jobline">' + e + '</span>';
-  return e;
-}
-function clsTag(c) {
-  const v = (c || 'any').toLowerCase();
-  return '<span class="cls ' + v + '">' + esc(v) + '</span>';
-}
-function renderJobs(list, title) {
-  if (!list || !list.length) return '';
-  return '<div style="color:var(--muted);font-size:9px;margin:5px 0 2px">' + title + '</div>' +
-    list.slice(0, 12).map(j => `
-      <div class="job">
-        <div class="id">${esc(j.id)}${clsTag(j.class)}</div>
-        <div class="meta">${esc(j.note || j.sprint || '')} ${esc(j.source || '')}</div>
-      </div>`).join('');
-}
-function setPhase(id, val) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const st = (val || 'unknown').toUpperCase();
-  el.querySelector('.st').textContent = st;
-  el.className = 'phase-card ' +
-    (st === 'LANDED' || st === 'WIRED' || st === 'COMPLETE' ? 'landed' :
-     st === 'NEXT' || st === 'IN PROGRESS' || st === 'PARTIAL' ? 'progress' :
-     st === 'QUEUED' || st === 'BLOCKED' ? 'queued' : 'unknown');
-}
-function setRecovery(show) {
-  const el = document.getElementById('recoveryBanner');
-  if (!el) return;
-  if (show) el.classList.add('show');
-  else el.classList.remove('show');
-}
-function setCard(id, good) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('good', 'warn', 'bad');
-  if (good === true) el.classList.add('good');
-  else if (good === false) el.classList.add('bad');
-  else if (good === 'warn') el.classList.add('warn');
-}
-function renderMoonshots(moonshots) {
-  const el = document.getElementById('moonshotBoard');
-  if (!el) return;
-  const tiles = (moonshots && moonshots.tiles) || [];
-  if (!tiles.length) {
-    el.innerHTML = '<div class="m-card"><div class="label">Moonshots</div><div class="val">—</div><div class="sub">waiting measure_tick</div></div>';
-    return;
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
   }
-  el.innerHTML = tiles.map(t => {
-    let cls = 'm-card';
-    if (t.good === true) cls += ' good';
-    else if (t.good === false || t.warn) cls += ' bad';
-    const val = t.value === true ? 'OK' : t.value === false ? 'NO' : (t.value ?? '—');
-    return '<div class="' + cls + '"><div class="label">' + esc(t.label) + '</div><div class="val">' + esc(val) + '</div><div class="sub">' + esc(t.sub || '') + '</div></div>';
-  }).join('');
-}
-function renderChatMsgs(items, kind) {
-  if (!items || !items.length) return '';
-  return items.slice(0, 12).map(m => {
-    const text = (m.payload && (m.payload.text || m.payload.note || JSON.stringify(m.payload).slice(0, 180))) || '';
-    const ts = (m.ts || '').toString();
-    const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
-    return `<div class="chat-msg ${kind}">
-      <span class="from">${esc(m.from || '?')}</span>
-      <span class="type">${esc(m.type || '')}</span>
-      <div class="text">${esc(text)}</div>
-      <div class="ts">${esc(clock)} · ${esc(m.id || '')}</div>
-    </div>`;
-  }).join('');
-}
-
-async function tickHost() {
-  try {
-    const r = await fetch('/api/host-agent');
-    const d = await r.json();
-    const alive = !!d.agent_alive;
-    const age = (d.status && d.status.heartbeat_age_s != null) ? Number(d.status.heartbeat_age_s) : null;
-    document.getElementById('dot').className = 'dot ' + (alive ? 'on' : 'off');
-    document.getElementById('alive').textContent = alive
-      ? (age != null ? 'host online (' + Math.round(age) + 's)' : 'host online')
-      : 'host offline';
-    setRecovery(!alive || (age != null && age > 120));
-
-    const c = (d.queue && d.queue.counts) || {};
-    document.getElementById('c-pending').textContent = c.pending ?? 0;
-    document.getElementById('c-done').textContent = c.done ?? 0;
-    document.getElementById('c-failed').textContent = c.failed ?? 0;
-
-    const q = d.queue || {};
-    document.getElementById('queue').innerHTML =
-      renderJobs(q.pending, 'PENDING') +
-      renderJobs(q.done, 'RECENT DONE') +
-      renderJobs(q.failed, 'FAILED');
-
-    const cm = d.control_matrix || {};
-    const mix = cm.class_mix_pending || q.class_mix_pending || {};
-    const tp = cm.throughput || {};
-    const perf = cm.performance || {};
-    document.getElementById('mTpVal').textContent = tp.jobs_per_hour_est != null ? tp.jobs_per_hour_est : '--';
-    document.getElementById('mTpSub').textContent = (tp.jobs_finished || 0) + ' in ' + (tp.window_min || 30) + 'm';
-    setCard('mThroughput', (tp.jobs_per_hour_est || 0) > 2 ? true : (tp.jobs_per_hour_est > 0 ? 'warn' : false));
-
-    document.getElementById('mFastVal').textContent = mix.fast ?? 0;
-    document.getElementById('mLiveVal').textContent = mix.live ?? 0;
-    setCard('mFast', (mix.fast || 0) > 0 ? true : null);
-    setCard('mLive', (mix.live || 0) > 0 ? false : true);
-
-    const ratio = perf.scripted_vs_live_ratio;
-    document.getElementById('mRatioVal').textContent = ratio != null ? Number(ratio).toFixed(1) + 'x' : '--';
-    setCard('mRatio', ratio != null && ratio > 10 ? false : (ratio != null ? true : null));
-
-    const lastOk = cm.last_ok;
-    document.getElementById('mLastVal').textContent = lastOk === true ? 'PASS' : lastOk === false ? 'FAIL' : '--';
-    document.getElementById('mLastSub').textContent = cm.last_failure_type || (d.last_job && d.last_job.job_id) || '--';
-    setCard('mLast', lastOk === true ? true : lastOk === false ? false : null);
-
-    const skip = cm.live_skip_remaining;
-    document.getElementById('mSkipVal').textContent = skip != null ? skip : '--';
-    setCard('mSkip', skip === 0 ? true : (skip > 0 ? 'warn' : null));
-
-    const st = d.status || {};
-    const last = d.last_job || {};
-    const fm = d.foreman || {};
-    const ap = d.apprentice || {};
-    const ph = d.phase1 || {};
-    setPhase('p1a', ph['1A']);
-    setPhase('p1b', ph['1B']);
-    setPhase('p1c', ph['1C']);
-    setPhase('p1d', ph['1D']);
-    renderMoonshots(d.moonshots);
-
-    const wn = d.whats_next || {};
-    document.getElementById('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '--';
-    document.getElementById('wnDepth').textContent = wn.queue_depth != null ? wn.queue_depth : (c.pending ?? '--');
-    document.getElementById('wnBlocked').textContent = ((wn.blocked || []).slice(0, 2).join(' | ')) || '--';
-    document.getElementById('wnCursor').textContent = fm.cursor ?? '--';
-
-    const model = (d.performance_benchmark && d.performance_benchmark.hardware && d.performance_benchmark.hardware.primary_model)
-      || (perf && perf.model) || 'qwen3.5:4b';
-    document.getElementById('modelBadge').textContent = 'model: ' + model;
-
-    const fsrc = d.foreman_source || ap.source || '';
-    document.getElementById('status').innerHTML = `
-      <div>heartbeat <strong>${esc(st.heartbeat || '--')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
-      <div>phase <strong>${esc(st.phase || '--')}</strong></div>
-      <div>current <strong>${esc(st.current_job || last.job_id || '--')}</strong></div>
-      <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '--'}</strong> ${esc(last.job_id || '')}</div>
-      <div>foreman <strong>${esc(fm.cursor ?? '--')}</strong> <span style="color:var(--muted)">(${esc(fsrc)})</span></div>
-      <div>completed <strong>${esc((fm.completed || []).length)}</strong></div>
-      <div>lessons <strong>${esc(ap.n ?? 0)}</strong> <span style="color:var(--muted)">(${esc(ap.source || '')})</span></div>
-      <div>teacher <strong>Grok</strong> to apprentice <strong>ETHER</strong></div>`;
-
-    const lines = d.log_lines || [];
-    const logEl = document.getElementById('log');
-    logEl.innerHTML = lines.map(colorize).join('\n');
-    logEl.scrollTop = logEl.scrollHeight;
-
-    const lessons = ap.lessons || [];
-    document.getElementById('lessons').innerHTML = lessons.length
-      ? '<div style="color:var(--muted);font-size:9px;margin-bottom:3px">APPRENTICE LESSONS</div>' +
-        lessons.slice(0, 6).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div style="font-size:10px">${esc(L.rule)}</div></div>`).join('')
-      : '<div style="color:var(--muted);font-size:11px">(no lessons yet)</div>';
-
-    const rl = d.rlhf || {};
-    const boosts = rl.ranked_boosts || [];
-    const healthy = rl.healthy ? 'healthy' : 'missing';
-    const healthyColor = rl.healthy ? 'var(--green)' : 'var(--amber)';
-    document.getElementById('rlhf').innerHTML = `
-      <div style="font-size:11px;margin-bottom:5px">
-        pairs <strong>${esc(rl.n_preferences ?? '--')}</strong> ·
-        episodes <strong>${esc(rl.n_episodes ?? '--')}</strong> ·
-        <span style="color:${healthyColor}">${healthy}</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:3px">
-        ${boosts.length ? boosts.map(b => `
-          <div class="boost">
-            <span class="s">${esc(b.strategy)}</span>
-            <span class="b">${Number(b.boost).toFixed(3)}</span>
-          </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
+  function colorize(line) {
+    const e = esc(line);
+    if (/FAIL|error|EXCEPTION|ABORT/i.test(line)) return '<span class="err">' + e + '</span>';
+    if (/PASS|OK|JOB END.*ok=True/i.test(line)) return '<span class="ok">' + e + '</span>';
+    if (/JOB |foreman|sprint |step /i.test(line)) return '<span class="jobline">' + e + '</span>';
+    return e;
+  }
+  function clsTag(c) {
+    const v = (c || 'any').toLowerCase();
+    return '<span class="cls ' + v + '">' + esc(v) + '</span>';
+  }
+  function setCard(id, good) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.remove('good', 'warn', 'bad');
+    if (good === true) el.classList.add('good');
+    else if (good === false) el.classList.add('bad');
+    else if (good === 'warn') el.classList.add('warn');
+  }
+  function setPhase(id, val) {
+    const el = $(id);
+    if (!el) return;
+    const st = (val || 'unknown').toUpperCase();
+    el.querySelector('.st').textContent = st;
+    el.className = 'phase-card ' +
+      (st === 'LANDED' || st === 'WIRED' || st === 'COMPLETE' ? 'landed' :
+       st === 'NEXT' || st === 'IN PROGRESS' || st === 'PARTIAL' ? 'progress' :
+       st === 'QUEUED' || st === 'BLOCKED' ? 'queued' : 'unknown');
+  }
+  function setRecovery(show) {
+    const el = $('recoveryBanner');
+    if (!el) return;
+    if (show) el.classList.add('show');
+    else el.classList.remove('show');
+  }
+  function renderJobs(list, title) {
+    if (!list || !list.length) return '';
+    return '<div style="color:var(--muted);font-size:9px;margin:5px 0 2px">' + title + '</div>' +
+      list.slice(0, 16).map(j => `
+        <div class="job">
+          <div class="id">${esc(j.id)}${clsTag(j.class)}</div>
+          <div class="meta">${esc(j.note || j.sprint || '')} ${esc(j.source || '')}</div>
+        </div>`).join('');
+  }
+  function renderChatMsgs(items, kind) {
+    if (!items || !items.length) return '';
+    return items.slice(0, 40).map(m => {
+      const text = (m.payload && (m.payload.text || m.payload.note || JSON.stringify(m.payload).slice(0, 240))) || '';
+      const ts = (m.ts || '').toString();
+      const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+      return `<div class="chat-msg ${kind}">
+        <span class="from">${esc(m.from || '?')}</span>
+        <span class="type">${esc(m.type || '')}</span>
+        <div class="text">${esc(text)}</div>
+        <div class="ts">${esc(clock)} · ${esc(m.id || '')}</div>
       </div>`;
-
-    const sbs = d.scoreboards || [];
-    document.getElementById('scoreboards').innerHTML = sbs.length
-      ? sbs.map(s => {
-          const ok = s.passed != null && s.total != null
-            ? `<span class="${s.passed === s.total ? 'ok' : 'fail'}">${esc(s.passed)}/${esc(s.total)}</span>`
-            : '--';
-          return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok}</div>`;
-        }).join('')
-      : '<div style="color:var(--muted)">(no scoreboards)</div>';
-
-    const crits = d.critiques || [];
-    document.getElementById('critiques').innerHTML = crits.length
-      ? crits.map(c => `
-          <div class="crit">
-            <div class="rc">${esc(c.root_cause || c.id)}</div>
-            <div class="meta">${esc(c.job_id || '')}</div>
-          </div>`).join('')
-      : '<div style="color:var(--muted)">(no open critiques)</div>';
-  } catch (e) {
-    document.getElementById('alive').textContent = 'dashboard fetch error';
-    document.getElementById('dot').className = 'dot off';
-    setRecovery(true);
+    }).join('');
   }
-}
-
-async function tickOperator() {
-  try {
-    const [rOp, rRates, rLlm, rChat, rSkills] = await Promise.all([
-      fetch('/api/operator').then(r => r.json()).catch(() => ({})),
-      fetch('/api/rates').then(r => r.json()).catch(() => ({})),
-      fetch('/api/llm').then(r => r.json()).catch(() => ({})),
-      fetch('/api/chat?limit=15').then(r => r.json()).catch(() => ({})),
-      fetch('/api/skills').then(r => r.json()).catch(() => ({})),
-    ]);
-
-    // Eligible / rates
-    const p1 = (rRates.phase1_gate) || (rOp.status && rOp.status.phase1) || {};
-    const elig = p1.honest_rate_eligible != null ? p1.honest_rate_eligible
-      : (rRates.eligible_rates && rRates.eligible_rates.honest_rate_eligible);
-    document.getElementById('opEligibleVal').textContent =
-      elig != null ? Number(elig).toFixed(3) : '--';
-    setCard('opEligible', elig != null && elig >= 0.99 ? true : (elig != null ? false : null));
-    document.getElementById('opEligibleSub').textContent =
-      (p1.live_eligible_n != null ? 'n=' + p1.live_eligible_n + ' · ' : '') + 'target ≥0.99';
-
-    // Doctor
-    const doc = rOp.doctor || {};
-    const issues = doc.issues || [];
-    const docEl = document.getElementById('opDoctor');
-    if (doc.ok && !issues.length) {
-      docEl.textContent = 'OK';
-      docEl.style.color = 'var(--green)';
-    } else if (issues.length) {
-      docEl.textContent = issues[0].slice(0, 48);
-      docEl.style.color = issues[0].startsWith('CRITICAL') ? 'var(--red)' : 'var(--amber)';
-    } else {
-      docEl.textContent = '--';
-      docEl.style.color = 'var(--muted)';
+  function renderMoonshots(moonshots) {
+    const el = $('moonshotBoard');
+    if (!el) return;
+    const tiles = (moonshots && moonshots.tiles) || [];
+    if (!tiles.length) {
+      el.innerHTML = '<div style="color:var(--muted)">waiting measure_tick</div>';
+      return;
     }
-
-    // LLM
-    const lat = rLlm.latency || {};
-    const p50 = lat.p50_ms;
-    const p95 = lat.p95_ms;
-    document.getElementById('opLlmP50Val').textContent = p50 != null ? Math.round(p50) : '--';
-    document.getElementById('opLlmP95Val').textContent = p95 != null ? Math.round(p95) : '--';
-    setCard('opLlmP50', p50 != null && p50 < 5000 ? true : (p50 != null ? 'warn' : null));
-    setCard('opLlmP95', p95 != null && p95 < 15000 ? true : (p95 != null ? 'warn' : null));
-    document.getElementById('llmBadge').textContent =
-      'llm: ' + (rLlm.fast || rLlm.live || '--') +
-      (rLlm.burst_enabled ? ' +burst' : '');
-
-    const llmBody = document.getElementById('llmBody');
-    llmBody.innerHTML = `
-      <div class="llm-grid">
-        <div>fast <strong>${esc(rLlm.fast || '--')}</strong></div>
-        <div>live <strong>${esc(rLlm.live || '--')}</strong></div>
-        <div>burst <strong>${esc(rLlm.burst || 'off')}</strong></div>
-        <div>keep_alive <strong>${esc(String(rLlm.keep_alive))}</strong></div>
-        <div>num_ctx <strong>${esc(rLlm.num_ctx ?? '--')}</strong></div>
-        <div>samples <strong>${esc(lat.n ?? 0)}</strong></div>
-        <div>p50_ms <strong>${esc(p50 != null ? Math.round(p50) : '--')}</strong></div>
-        <div>p95_ms <strong>${esc(p95 != null ? Math.round(p95) : '--')}</strong></div>
-        <div>max_ms <strong>${esc(lat.max_ms != null ? Math.round(lat.max_ms) : '--')}</strong></div>
-        <div>base <strong>${esc(rLlm.ollama_base || '--')}</strong></div>
-      </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--muted)">${esc(rLlm.note || '')}</div>
-      <div style="margin-top:4px;font-size:10px;color:var(--muted)">tail: ${esc((lat.samples_tail || []).join(', ') || '—')}</div>`;
-
-    // Chat
-    const sum = rChat.summary || {};
-    const inN = sum.inbox_n ?? ((rChat.inbox || []).length);
-    const outN = sum.outbox_n ?? ((rChat.outbox || []).length);
-    document.getElementById('opChatVal').textContent = inN + ' / ' + outN;
-    document.getElementById('opChatSub').textContent = 'inbox / outbox';
-    setCard('opChat', (inN + outN) > 0 ? true : null);
-
-    const chatBody = document.getElementById('chatBody');
-    const inboxHtml = renderChatMsgs(rChat.inbox, 'inbox');
-    const outboxHtml = renderChatMsgs(rChat.outbox, 'outbox');
-    chatBody.innerHTML =
-      (outboxHtml ? '<div style="color:var(--muted);font-size:9px;margin-bottom:3px">OUTBOX (operator → Grok)</div>' + outboxHtml : '') +
-      (inboxHtml ? '<div style="color:var(--muted);font-size:9px;margin:8px 0 3px">INBOX (Grok → operator)</div>' + inboxHtml : '') +
-      (!outboxHtml && !inboxHtml ? '<div style="color:var(--muted)">chat bus empty — post a message</div>' : '');
-
-    // Skills
-    const skills = (rSkills.skills) || [];
-    document.getElementById('opSkillsVal').textContent = skills.length || '--';
-    setCard('opSkills', skills.length > 0 ? true : null);
-  } catch (e) {
-    /* non-fatal — operator APIs may be mid-reload */
+    el.innerHTML = '<div class="m-row">' + tiles.map(t => {
+      let cls = 'm-card';
+      if (t.good === true) cls += ' good';
+      else if (t.good === false || t.warn) cls += ' bad';
+      const val = t.value === true ? 'OK' : t.value === false ? 'NO' : (t.value ?? '—');
+      return '<div class="' + cls + '"><div class="label">' + esc(t.label) + '</div><div class="val">' + esc(val) + '</div><div class="sub">' + esc(t.sub || '') + '</div></div>';
+    }).join('') + '</div>';
   }
-}
 
-async function tickSnapshot() {
-  try {
-    const r = await fetch('/api/snapshot');
-    const d = await r.json();
-    const consoleData = d.console || {};
-    const busy = !!consoleData.active;
-    document.getElementById('liveCoding').textContent = busy ? 'coding: LIVE' : 'coding: idle';
-    if (busy) document.getElementById('dot').className = 'dot busy';
-    const term = document.getElementById('term');
-    const lines = consoleData.lines || [];
-    if (lines.length) {
-      term.innerHTML = lines.slice(-40).map(L => {
-        const ts = (L.ts || '').toString();
-        const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
-        return `<div class="term-line"><div class="term-ts">${esc(clock || '--:--')}</div><div>${esc(L.text)}</div></div>`;
-      }).join('');
-      term.scrollTop = term.scrollHeight;
-    }
-    const code = consoleData.code_preview || (d.latest && d.latest.code) || null;
-    if (code) document.getElementById('codepane').textContent = code;
-    const gems = d.gems || [];
-    document.getElementById('flow').innerHTML = gems.length
-      ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b></div>`).join('<span class="flow-arrow">-></span>')
-      : '<span style="color:var(--muted);font-size:11px">Selenite -> Rose Quartz -> Clear Quartz -> Labradorite</span>';
-  } catch (e) { /* non-fatal */ }
-}
-
-async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const btn = document.getElementById('chatSend');
-  const text = (input.value || '').trim();
-  if (!text) return;
-  btn.disabled = true;
-  try {
-    const r = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text }),
-    });
-    const d = await r.json();
-    if (d.ok || d.envelope) {
-      input.value = '';
-      await tickOperator();
-    } else {
-      alert('chat post failed: ' + (d.error || r.status));
-    }
-  } catch (e) {
-    alert('chat post error: ' + e);
-  } finally {
-    btn.disabled = false;
+  /* ── Tabs ─────────────────────────────────────────────── */
+  const TAB_KEY = 'ether_cm_tab';
+  function activateTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+    try { localStorage.setItem(TAB_KEY, name); } catch (_) {}
   }
-}
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      const map = { '1': 'ops', '2': 'chat', '3': 'rates', '4': 'learn', '5': 'code' };
+      if (map[e.key]) { e.preventDefault(); activateTab(map[e.key]); }
+    }
+  });
+  try {
+    const saved = localStorage.getItem(TAB_KEY);
+    if (saved && $('pane-' + saved)) activateTab(saved);
+  } catch (_) {}
 
-document.getElementById('chatSend').addEventListener('click', sendChat);
-document.getElementById('chatInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendChat();
-});
+  /* ── Data ticks ───────────────────────────────────────── */
+  async function tickHost() {
+    try {
+      const r = await fetch('/api/host-agent');
+      const d = await r.json();
+      const alive = !!d.agent_alive;
+      const age = (d.status && d.status.heartbeat_age_s != null) ? Number(d.status.heartbeat_age_s) : null;
+      $('dot').className = 'dot ' + (alive ? 'on' : 'off');
+      $('alive').textContent = alive
+        ? (age != null ? 'host online (' + Math.round(age) + 's)' : 'host online')
+        : 'host offline';
+      setRecovery(!alive || (age != null && age > 120));
 
-function tick() { tickHost(); tickSnapshot(); tickOperator(); }
-tick();
-setInterval(tick, 1500);
+      const c = (d.queue && d.queue.counts) || {};
+      $('c-pending').textContent = c.pending ?? 0;
+      $('c-done').textContent = c.done ?? 0;
+      $('c-failed').textContent = c.failed ?? 0;
+      $('kPendVal').textContent = c.pending ?? 0;
+      $('kDoneVal').textContent = c.done ?? 0;
+      $('kFailVal').textContent = c.failed ?? 0;
+      setCard('kPend', (c.pending || 0) > 0 ? 'warn' : true);
+      setCard('kFail', (c.failed || 0) > 5 ? false : ((c.failed || 0) > 0 ? 'warn' : true));
+
+      const q = d.queue || {};
+      $('queue').innerHTML =
+        renderJobs(q.pending, 'PENDING') +
+        renderJobs(q.done, 'RECENT DONE') +
+        renderJobs(q.failed, 'FAILED');
+
+      const cm = d.control_matrix || {};
+      const mix = cm.class_mix_pending || q.class_mix_pending || {};
+      const tp = cm.throughput || {};
+      const perf = cm.performance || {};
+
+      $('kTpVal').textContent = tp.jobs_per_hour_est != null ? tp.jobs_per_hour_est : '--';
+      $('kTpSub').textContent = (tp.jobs_finished || 0) + ' in ' + (tp.window_min || 30) + 'm';
+      setCard('kTp', (tp.jobs_per_hour_est || 0) > 2 ? true : ((tp.jobs_per_hour_est || 0) > 0 ? 'warn' : false));
+
+      $('mTpVal').textContent = tp.jobs_per_hour_est != null ? tp.jobs_per_hour_est : '--';
+      $('mTpSub').textContent = (tp.jobs_finished || 0) + ' in ' + (tp.window_min || 30) + 'm';
+      setCard('mThroughput', (tp.jobs_per_hour_est || 0) > 2 ? true : ((tp.jobs_per_hour_est || 0) > 0 ? 'warn' : false));
+
+      $('mFastVal').textContent = mix.fast ?? 0;
+      $('mLiveVal').textContent = mix.live ?? 0;
+      setCard('mFast', (mix.fast || 0) > 0 ? true : null);
+      setCard('mLive', (mix.live || 0) > 0 ? false : true);
+
+      const ratio = perf.scripted_vs_live_ratio;
+      $('mRatioVal').textContent = ratio != null ? Number(ratio).toFixed(1) + 'x' : '--';
+      setCard('mRatio', ratio != null && ratio > 10 ? false : (ratio != null ? true : null));
+
+      const lastOk = cm.last_ok;
+      $('kLastVal').textContent = lastOk === true ? 'PASS' : lastOk === false ? 'FAIL' : '--';
+      $('kLastSub').textContent = cm.last_failure_type || (d.last_job && d.last_job.job_id) || '--';
+      setCard('kLast', lastOk === true ? true : lastOk === false ? false : null);
+
+      const skip = cm.live_skip_remaining;
+      $('mSkipVal').textContent = skip != null ? skip : '--';
+      setCard('mSkip', skip === 0 ? true : (skip > 0 ? 'warn' : null));
+
+      const st = d.status || {};
+      const last = d.last_job || {};
+      const fm = d.foreman || {};
+      const ap = d.apprentice || {};
+      const ph = d.phase1 || {};
+      setPhase('p1a', ph['1A']);
+      setPhase('p1b', ph['1B']);
+      setPhase('p1c', ph['1C']);
+      setPhase('p1d', ph['1D']);
+      renderMoonshots(d.moonshots);
+
+      const wn = d.whats_next || {};
+      $('wnNext').textContent = wn.next_job || (q.pending && q.pending[0] && q.pending[0].id) || '--';
+      $('wnCursor').textContent = fm.cursor ?? '--';
+      $('wnBlocked').textContent = ((wn.blocked || []).slice(0, 2).join(' | ')) || '--';
+
+      const model = (d.performance_benchmark && d.performance_benchmark.hardware && d.performance_benchmark.hardware.primary_model)
+        || (perf && perf.model) || 'qwen3.5:4b';
+      $('modelBadge').textContent = 'model: ' + model;
+
+      const fsrc = d.foreman_source || ap.source || '';
+      $('status').innerHTML = `
+        <div>heartbeat <strong>${esc(st.heartbeat || '--')}</strong>${st.heartbeat_age_s != null ? ' (' + st.heartbeat_age_s + 's)' : ''}</div>
+        <div>phase <strong>${esc(st.phase || '--')}</strong></div>
+        <div>current <strong>${esc(st.current_job || last.job_id || '--')}</strong></div>
+        <div>last <strong style="color:${last.ok === true ? 'var(--green)' : last.ok === false ? 'var(--red)' : 'inherit'}">${last.ok === true ? 'PASS' : last.ok === false ? 'FAIL' : '--'}</strong> ${esc(last.job_id || '')}</div>
+        <div>foreman <strong>${esc(fm.cursor ?? '--')}</strong> <span style="color:var(--muted)">(${esc(fsrc)})</span></div>
+        <div>completed <strong>${esc((fm.completed || []).length)}</strong></div>
+        <div>lessons <strong>${esc(ap.n ?? 0)}</strong> <span style="color:var(--muted)">(${esc(ap.source || '')})</span></div>
+        <div>teacher <strong>Grok</strong> → apprentice <strong>ETHER</strong></div>`;
+
+      const lines = d.log_lines || [];
+      const logEl = $('log');
+      logEl.innerHTML = lines.map(colorize).join('\n');
+      logEl.scrollTop = logEl.scrollHeight;
+
+      const lessons = ap.lessons || [];
+      $('lessons').innerHTML = lessons.length
+        ? '<div style="color:var(--muted);font-size:9px;margin-bottom:3px">APPRENTICE LESSONS</div>' +
+          lessons.slice(0, 10).map(L => `<div class="lesson-card"><div class="craft">${esc(L.craft)} · ${esc(L.id)}</div><div style="font-size:10px">${esc(L.rule)}</div></div>`).join('')
+        : '<div style="color:var(--muted);font-size:11px">(no lessons yet)</div>';
+
+      const rl = d.rlhf || {};
+      const boosts = rl.ranked_boosts || [];
+      const healthy = rl.healthy ? 'healthy' : 'missing';
+      const healthyColor = rl.healthy ? 'var(--green)' : 'var(--amber)';
+      $('rlhf').innerHTML = `
+        <div style="font-size:11px;margin-bottom:5px">
+          pairs <strong>${esc(rl.n_preferences ?? '--')}</strong> ·
+          episodes <strong>${esc(rl.n_episodes ?? '--')}</strong> ·
+          <span style="color:${healthyColor}">${healthy}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">
+          ${boosts.length ? boosts.map(b => `
+            <div class="boost">
+              <span class="s">${esc(b.strategy)}</span>
+              <span class="b">${Number(b.boost).toFixed(3)}</span>
+            </div>`).join('') : '<span style="color:var(--muted)">no ranked_boosts</span>'}
+        </div>`;
+
+      const sbs = d.scoreboards || [];
+      $('scoreboards').innerHTML = sbs.length
+        ? sbs.map(s => {
+            const ok = s.passed != null && s.total != null
+              ? `<span class="${s.passed === s.total ? 'ok' : 'fail'}">${esc(s.passed)}/${esc(s.total)}</span>`
+              : '--';
+            return `<div class="sb"><span style="color:var(--cyan);font-family:var(--mono)">${esc(s.id)}</span> ${ok}</div>`;
+          }).join('')
+        : '<div style="color:var(--muted)">(no scoreboards)</div>';
+
+      const crits = d.critiques || [];
+      $('critiques').innerHTML = crits.length
+        ? crits.map(c => `
+            <div class="crit">
+              <div class="rc">${esc(c.root_cause || c.id)}</div>
+              <div class="meta">${esc(c.job_id || '')} · conf ${esc(c.confidence ?? '--')}</div>
+            </div>`).join('')
+        : '<div style="color:var(--muted)">(no open critiques)</div>';
+    } catch (e) {
+      $('alive').textContent = 'dashboard fetch error';
+      $('dot').className = 'dot off';
+      setRecovery(true);
+    }
+  }
+
+  async function tickOperator() {
+    try {
+      const [rOp, rRates, rLlm, rChat, rSkills] = await Promise.all([
+        fetch('/api/operator').then(r => r.json()).catch(() => ({})),
+        fetch('/api/rates').then(r => r.json()).catch(() => ({})),
+        fetch('/api/llm').then(r => r.json()).catch(() => ({})),
+        fetch('/api/chat?limit=40').then(r => r.json()).catch(() => ({})),
+        fetch('/api/skills').then(r => r.json()).catch(() => ({})),
+      ]);
+
+      const p1 = (rRates.phase1_gate) || (rOp.status && rOp.status.phase1) || {};
+      const elig = p1.honest_rate_eligible != null ? p1.honest_rate_eligible
+        : (rRates.eligible_rates && rRates.eligible_rates.honest_rate_eligible);
+      $('kEligibleVal').textContent = elig != null ? Number(elig).toFixed(3) : '--';
+      setCard('kEligible', elig != null && elig >= 0.99 ? true : (elig != null ? false : null));
+      $('kEligibleSub').textContent =
+        (p1.live_eligible_n != null ? 'n=' + p1.live_eligible_n + ' · ' : '') + '≥0.99';
+
+      const doc = rOp.doctor || {};
+      const issues = doc.issues || [];
+      const docEl = $('opDoctor');
+      if (doc.ok && !issues.length) {
+        docEl.textContent = 'OK';
+        docEl.style.color = 'var(--green)';
+      } else if (issues.length) {
+        docEl.textContent = issues[0].slice(0, 48);
+        docEl.style.color = issues[0].startsWith('CRITICAL') ? 'var(--red)' : 'var(--amber)';
+      } else {
+        docEl.textContent = '--';
+        docEl.style.color = 'var(--muted)';
+      }
+
+      const lat = rLlm.latency || {};
+      const p50 = lat.p50_ms;
+      const p95 = lat.p95_ms;
+      $('kLlmVal').textContent = p50 != null ? Math.round(p50) : '--';
+      setCard('kLlm', p50 != null && p50 < 5000 ? true : (p50 != null ? 'warn' : null));
+      $('llmBadge').textContent =
+        'llm: ' + (rLlm.fast || rLlm.live || '--') +
+        (rLlm.burst_enabled ? ' +burst' : '');
+
+      const llmBody = $('llmBody');
+      if (llmBody) {
+        llmBody.innerHTML = `
+          <div class="llm-grid">
+            <div>fast <strong>${esc(rLlm.fast || '--')}</strong></div>
+            <div>live <strong>${esc(rLlm.live || '--')}</strong></div>
+            <div>burst <strong>${esc(rLlm.burst || 'off')}</strong></div>
+            <div>keep_alive <strong>${esc(String(rLlm.keep_alive))}</strong></div>
+            <div>num_ctx <strong>${esc(rLlm.num_ctx ?? '--')}</strong></div>
+            <div>samples <strong>${esc(lat.n ?? 0)}</strong></div>
+            <div>p50_ms <strong>${esc(p50 != null ? Math.round(p50) : '--')}</strong></div>
+            <div>p95_ms <strong>${esc(p95 != null ? Math.round(p95) : '--')}</strong></div>
+            <div>max_ms <strong>${esc(lat.max_ms != null ? Math.round(lat.max_ms) : '--')}</strong></div>
+            <div>base <strong>${esc(rLlm.ollama_base || '--')}</strong></div>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--muted)">${esc(rLlm.note || '')}</div>
+          <div style="margin-top:4px;font-size:10px;color:var(--muted)">tail: ${esc((lat.samples_tail || []).join(', ') || '—')}</div>`;
+      }
+
+      const sum = rChat.summary || {};
+      const inN = sum.inbox_n ?? ((rChat.inbox || []).length);
+      const outN = sum.outbox_n ?? ((rChat.outbox || []).length);
+      $('kChatVal').textContent = inN + ' / ' + outN;
+      setCard('kChat', (inN + outN) > 0 ? true : null);
+      if ($('chatCount')) $('chatCount').textContent = inN + ' / ' + outN;
+
+      const chatBody = $('chatBody');
+      if (chatBody) {
+        const inboxHtml = renderChatMsgs(rChat.inbox, 'inbox');
+        const outboxHtml = renderChatMsgs(rChat.outbox, 'outbox');
+        chatBody.innerHTML =
+          (outboxHtml ? '<div style="color:var(--muted);font-size:9px;margin-bottom:4px">OUTBOX (operator → Grok)</div>' + outboxHtml : '') +
+          (inboxHtml ? '<div style="color:var(--muted);font-size:9px;margin:10px 0 4px">INBOX (Grok → operator)</div>' + inboxHtml : '') +
+          (!outboxHtml && !inboxHtml ? '<div style="color:var(--muted);padding:20px 0;text-align:center">chat bus empty — type a message below</div>' : '');
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      const skills = (rSkills.skills) || [];
+      if ($('opSkillsVal')) {
+        $('opSkillsVal').textContent = skills.length || '--';
+        setCard('opSkills', skills.length > 0 ? true : null);
+      }
+    } catch (e) { /* non-fatal */ }
+  }
+
+  async function tickSnapshot() {
+    try {
+      const r = await fetch('/api/snapshot');
+      const d = await r.json();
+      const consoleData = d.console || {};
+      const busy = !!consoleData.active;
+      $('liveCoding').textContent = busy ? 'coding: LIVE' : 'coding: idle';
+      if (busy) $('dot').className = 'dot busy';
+
+      const lines = consoleData.lines || [];
+      const renderTerm = (el) => {
+        if (!el || !lines.length) return;
+        el.innerHTML = lines.slice(-50).map(L => {
+          const ts = (L.ts || '').toString();
+          const clock = ts.includes('T') ? ts.slice(11, 19) : ts.slice(0, 8);
+          return `<div class="term-line"><div class="term-ts">${esc(clock || '--:--')}</div><div>${esc(L.text)}</div></div>`;
+        }).join('');
+        el.scrollTop = el.scrollHeight;
+      };
+      renderTerm($('term'));
+      renderTerm($('term2'));
+
+      const code = consoleData.code_preview || (d.latest && d.latest.code) || null;
+      if (code) $('codepane').textContent = code;
+
+      const gems = d.gems || [];
+      $('flow').innerHTML = gems.length
+        ? gems.map(g => `<div class="flow-node"><b>${esc(g.id || g.name)}</b></div>`).join('<span class="flow-arrow">→</span>')
+        : '<span style="color:var(--muted);font-size:11px">Selenite → Rose Quartz → Clear Quartz → Labradorite → Amethyst</span>';
+    } catch (e) { /* non-fatal */ }
+  }
+
+  async function sendChat() {
+    const input = $('chatInput');
+    const btn = $('chatSend');
+    const text = (input.value || '').trim();
+    if (!text) return;
+    btn.disabled = true;
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const d = await r.json();
+      if (d.ok || d.envelope) {
+        input.value = '';
+        await tickOperator();
+      } else {
+        alert('chat post failed: ' + (d.error || r.status));
+      }
+    } catch (e) {
+      alert('chat post error: ' + e);
+    } finally {
+      btn.disabled = false;
+      input.focus();
+    }
+  }
+
+  $('chatSend').addEventListener('click', sendChat);
+  $('chatInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  });
+
+  function tick() { tickHost(); tickSnapshot(); tickOperator(); }
+  tick();
+  setInterval(tick, 1500);
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+{
+  "id": "p1_173_gate_sample_wallet_042201",
+  "class": "gate_sample",
+  "note": "gate_sample controlled live wallet measurement budget — post-UX 0.6 rate climb (eligible fixture)",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d", "--arm", "direct", "--mode", "live", "--fixture", "wallet", "--max-steps", "10", "--timeout", "200", "--scoreboard", "artifacts/scoreboard_p1_173_wallet_live.json"],
+      "timeout": 300
+    }
+  ]
+}

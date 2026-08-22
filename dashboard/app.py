@@ -1,8 +1,6 @@
 """FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
 
-Hardened 2026-08-22 / UX 0.7 → 0.7.1:
-- Chat orchestrator + Clear Chat (POST /api/chat/clear)
-- Index injects /static/chat_ux.js for turn-first UX
+UX 0.7.2: chat bridge pending_grok on GET /api/chat
 """
 
 from __future__ import annotations
@@ -25,7 +23,7 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.7.1")
+app = FastAPI(title="@ETHER Control Matrix", version="0.7.2")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
@@ -84,8 +82,8 @@ def _safe_snapshot() -> dict:
         from dashboard.live_feed import build_console
 
         data = collect_snapshot()
+        data["api_version"] = "0.7.2"
         data["console"] = build_console()
-        data["api_version"] = "0.7.1"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -113,7 +111,6 @@ def index() -> HTMLResponse:
     if not path.exists():
         raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
     html = path.read_text(encoding="utf-8", errors="replace")
-    # Inject chat UX module once (Clear + turns + chips)
     if "chat_ux.js" not in html:
         html = html.replace(
             "</body>",
@@ -214,11 +211,12 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.7.1",
+        "version": "0.7.2",
         "truth": "host_agent_local",
         "git_required": False,
         "chat_orchestrator": True,
         "chat_clear": True,
+        "chat_bridge": True,
         "host": {
             "alive": host.get("alive"),
             "age_s": host.get("age_s"),
@@ -328,16 +326,26 @@ def llm_api() -> dict:
 @app.get("/api/chat")
 def chat_list(limit: int = 40) -> dict:
     try:
-        from core.chat_bus import receive, summary
+        from core.chat_bus import receive
         from core.chat_orchestrator import recent_turns, latest_turn
 
+        try:
+            from core.chat_bridge import summary as bridge_summary
+
+            sum_ = bridge_summary()
+        except Exception:
+            from core.chat_bus import summary as bus_summary
+
+            sum_ = bus_summary()
         return {
-            "summary": summary(),
+            "summary": sum_,
+            "pending_grok": sum_.get("pending_grok"),
             "inbox": receive(from_grok=True, limit=limit),
             "outbox": receive(from_grok=False, limit=limit),
             "turns": recent_turns(limit=min(limit, 30)),
             "latest_turn": latest_turn(),
             "orchestrator": True,
+            "bridge": True,
         }
     except Exception as e:
         return {
@@ -370,7 +378,6 @@ def chat_post(body: ChatPostBody) -> dict:
 
 @app.post("/api/chat/clear")
 def chat_clear_api(body: ChatClearBody = ChatClearBody()) -> dict:
-    """Clear Chat — archive bus + wipe turns. Default keeps archive history."""
     try:
         from core.operator_surface import chat_clear
 

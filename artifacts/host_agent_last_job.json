@@ -1,10 +1,10 @@
 {
-  "job_id": "p1_78_rate_refresh_010700",
+  "job_id": "os_test_greeter_live_005411",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T01:10:26.401494+00:00",
-  "note": "force atomic rates recompute after frozen 23:41 + many gate samples \u2014 honest_rate must move",
-  "class": "measure",
+  "finished": "2026-08-23T01:15:45.538437+00:00",
+  "note": "operator_surface test greeter live arm=direct \u2014 countable",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

@@ -1,0 +1,19 @@
+{
+  "id": "chat_20260823_001318_6c2656",
+  "ts": "2026-08-23T00:13:18.969771+00:00",
+  "from": "ether",
+  "type": "agent_reply",
+  "payload": {
+    "text": "local LLM unavailable (timeout after 90.0s). Switch channel to Grok or say 'ask grok'.",
+    "turn_id": "turn_20260823_001146_92b1fe",
+    "intent": "local_llm",
+    "channel": "local",
+    "tools": [
+      "local_llm"
+    ]
+  },
+  "job_id": null,
+  "requires_reply": false,
+  "parent_id": "turn_20260823_001146_92b1fe",
+  "schema": "ether_chat_v1"
+}

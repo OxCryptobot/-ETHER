@@ -1,0 +1,20 @@
+{
+  "results": [],
+  "summary": {
+    "passed": 0,
+    "total": 0,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 10,
+    "partial": true,
+    "note": "sentinel_on_entry"
+  },
+  "matrix": {
+    "greeter": {
+      "direct": false
+    }
+  }
+}

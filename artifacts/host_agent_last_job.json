@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_71_gate_sample_wallet_004101",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-23T00:51:13.475059+00:00",
-  "note": "hermes-harness max swarm wallet live under wheels \u2014 rate climb",
+  "job_id": "p1_72_gate_sample_greeter_004102",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-08-23T00:55:20.483692+00:00",
+  "note": "hermes-harness max swarm greeter live under wheels \u2014 rate climb [failure_type=timeout]",
   "class": "gate_sample",
   "measurement": true,
   "live_budget": {
@@ -11,5 +11,6 @@
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  }
+  },
+  "failure_type": "timeout"
 }

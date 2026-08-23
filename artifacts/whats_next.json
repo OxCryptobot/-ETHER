@@ -1,8 +1,9 @@
 {
-  "generated": "2026-08-23T00:48:02.423579+00:00",
-  "next_job": "p1_71_gate_sample_wallet_004101",
+  "generated": "2026-08-23T00:51:20.362890+00:00",
+  "next_job": "os_test_greeter_live_005110",
   "queue_head": [
-    "p1_71_gate_sample_wallet_004101",
+    "os_test_greeter_live_005110",
+    "os_test_wallet_live_005110",
     "p1_72_gate_sample_greeter_004102",
     "p1_73_gate_sample_wallet_004103",
     "p1_74_gate_sample_greeter_004104",
@@ -10,9 +11,9 @@
     "p1_76_gate_sample_greeter_004106",
     "p1_77_gate_sample_wallet_004107"
   ],
-  "queue_depth": 7,
+  "queue_depth": 8,
   "host_phase": "idle",
-  "last_job": "p1_70_gate_sample_greeter_004100",
+  "last_job": "p1_71_gate_sample_wallet_004101",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

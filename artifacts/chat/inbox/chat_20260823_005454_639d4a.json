@@ -1,0 +1,19 @@
+{
+  "id": "chat_20260823_005454_639d4a",
+  "ts": "2026-08-23T00:54:54.611878+00:00",
+  "from": "ether",
+  "type": "agent_reply",
+  "payload": {
+    "text": "The current **honest rate** is **0.9524**.\n\nThis rate is **below the target of 0.99**, which is why the `honest_rate_eligible` check is currently **false**. Consequently, the system is blocked from proceeding to a soft launch (`soft_launch_ready: false`) until this metric improves.",
+    "turn_id": "turn_20260823_005411_1e2df4",
+    "intent": "local_llm",
+    "channel": "local",
+    "tools": [
+      "local_llm"
+    ]
+  },
+  "job_id": null,
+  "requires_reply": false,
+  "parent_id": "turn_20260823_005411_1e2df4",
+  "schema": "ether_chat_v1"
+}

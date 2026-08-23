@@ -1,15 +1,15 @@
 {
-  "job_id": "playbook_live_timeout_learn_001423",
+  "job_id": "p1_60_gate_sample_greeter_000810",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T00:14:26.914711+00:00",
-  "note": "playbook:live_tool_path_timeout for auto_rc_wallet_000518_1",
-  "class": "fast",
+  "finished": "2026-08-23T00:17:00.916341+00:00",
+  "note": "max swarm gate_sample greeter live under wheels \u2014 rate climb n growth",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
   }
 }

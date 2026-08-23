@@ -1,0 +1,14 @@
+{
+  "id": "p1_77_gate_sample_wallet_004107",
+  "note": "hermes-harness max swarm wallet live under wheels — rate climb",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d",
+      "--arm", "direct", "--mode", "live", "--fixture", "wallet",
+      "--max-steps", "10", "--timeout", "200",
+      "--scoreboard", "artifacts/scoreboard_p1_77_gate_sample_wallet_004107_live.json"],
+    "timeout": 300
+  }]
+}

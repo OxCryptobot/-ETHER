@@ -1,0 +1,28 @@
+{
+  "id": "os_test_greeter_scripted_003836",
+  "note": "operator_surface test greeter scripted arm=direct \u2014 countable",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--mode",
+        "scripted",
+        "--fixture",
+        "greeter",
+        "--arm",
+        "direct",
+        "--max-steps",
+        "8",
+        "--timeout",
+        "280",
+        "--scoreboard",
+        "artifacts/scoreboard_os_test_greeter_scripted_003836.json"
+      ],
+      "timeout": 310
+    }
+  ]
+}

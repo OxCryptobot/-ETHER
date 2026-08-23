@@ -1384,7 +1384,8 @@
     "auto_rc_wallet_022448_1",
     "auto_rc_greeter_022905_0",
     "auto_rc_wallet_022905_1",
-    "auto_rc_greeter_023353_0"
+    "auto_rc_greeter_023353_0",
+    "auto_rc_wallet_023353_1"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1479,16 +1480,16 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-23T02:36:05.382986+00:00",
+  "last_tick": "2026-08-23T02:38:48.599054+00:00",
   "mode": "rate_climb",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "auto_rc_wallet_023353_1",
+  "last_enqueued": "auto_rc_wallet_023847_1",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "governor": {
-    "pending": 1,
+    "pending": 2,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1500,6 +1501,6 @@
     "training_wheels": true
   },
   "rate_climb_status": "skip_pending_nonempty",
-  "rate_climb_idx": 30,
-  "last_rate_climb_ts": "2026-08-23T02:33:53.120069+00:00"
+  "rate_climb_idx": 32,
+  "last_rate_climb_ts": "2026-08-23T02:38:47.436434+00:00"
 }

@@ -1442,14 +1442,15 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01"
+    "00_mcp_cq_spike_01",
+    "auto_rc_wallet_000518_1"
   ],
-  "last_tick": "2026-08-23T00:10:18.404063+00:00",
+  "last_tick": "2026-08-23T00:14:25.213123+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
   "last_enqueued": "ss_train_gates_150336_2",
-  "last_playbook": "timeout_budget_exhaust",
+  "last_playbook": "live_tool_path_timeout",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "rate_climb_status": "skip_pending_nonempty",
@@ -1464,5 +1465,8 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 1,
     "training_wheels": true
-  }
+  },
+  "live_skip_remaining": 35,
+  "last_live_skip_reason": "auto_rc_wallet_000518_1",
+  "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout"
 }

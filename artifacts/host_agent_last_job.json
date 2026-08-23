@@ -1,16 +1,15 @@
 {
-  "job_id": "auto_rc_wallet_000518_1",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-23T00:14:18.444487+00:00",
-  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy [failure_type=timeout]",
-  "class": "gate_sample",
+  "job_id": "playbook_live_timeout_learn_001423",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-23T00:14:26.914711+00:00",
+  "note": "playbook:live_tool_path_timeout for auto_rc_wallet_000518_1",
+  "class": "fast",
   "measurement": true,
   "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  }
 }

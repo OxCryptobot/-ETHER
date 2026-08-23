@@ -1,15 +1,27 @@
 # Operator Surface — Best-in-Class Professional Control Plane
 
-Single facade for CLI + Control Matrix + host_agent. Same `artifacts/` paths. Training wheels ON.
+Single facade for CLI + Harness + Control Matrix + host_agent. Same `artifacts/` paths. Training wheels ON.
 
-## Commands
+## Primary path: Harness (stable terminal)
+
+Prefer the harness when the dashboard feels unstable or chat races appear.
+
+```powershell
+.venv\Scripts\python.exe -m scripts.ether_harness
+# or
+.venv\Scripts\python.exe -m scripts.ether_cli harness
+```
+
+See `docs/HARNESS.md` for full command list, watch mode, and explicit chat channels.
+
+## CLI commands
 
 ```
-ether status | queue | phase | next | doctor
+ether status | queue | phase | next | doctor | harness
 ether job list | enqueue --file <json> | cancel <id>
 ether test <fixture> [--live] [--arm direct]
 ether rates
-ether chat "message" | chat inbox
+ether chat "message" [--channel auto|local|grok|status|git] | chat inbox
 ether git sync
 ether tools | learn | agent | llm
 ether skill list | skill show <id>
@@ -30,6 +42,8 @@ ether mcp
 ## Chat bus
 
 `artifacts/chat/{inbox,outbox,archive}/` — git-backed envelopes. Grok reads outbox, writes inbox. host_agent can poll outbox for critique/recovery.
+
+Use **harness** or `ether chat --channel grok` for reliable escalation (avoids dashboard pending races).
 
 ## Doctrine
 

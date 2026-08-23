@@ -1,0 +1,12 @@
+{
+  "id": "rlhf_tick_002510",
+  "class": "measure",
+  "note": "offline RLHF reprocess scoreboards → preference pairs + strategy boosts after gate wave",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.preference"],
+      "timeout": 180
+    }
+  ]
+}

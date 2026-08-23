@@ -1,9 +1,9 @@
 """ETHER Operator CLI — Control Matrix peer. Best-in-class professional surface.
 
-  status queue phase next doctor
+  status queue phase next doctor harness
   job enqueue|cancel|list
   test <fixture> [--live]
-  rates chat git tools learn agent llm
+  rates chat [--channel local|grok|status|git] git tools learn agent llm
   skill list|show
   upload <path> [--dest uploads|quarantine]
   swarm [--live] [--fixtures wallet,greeter]
@@ -59,7 +59,7 @@ def cmd_queue(_: argparse.Namespace) -> int:
 def cmd_phase(_: argparse.Namespace) -> int:
     from core.operator_surface import rates
 
-    p1 = (rates().get("phase1_gate") or {})
+    p1 = rates().get("phase1_gate") or {}
     print("Phase board (measured)")
     print(f"  status               {p1.get('status')}")
     print(f"  architecture_go      {p1.get('architecture_go')}")
@@ -94,6 +94,13 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     for i in d.get("issues") or []:
         print(f"  - {i}")
     return 0 if d.get("ok") else 1
+
+
+def cmd_harness(_: argparse.Namespace) -> int:
+    """Launch stable terminal harness (no dashboard)."""
+    from scripts.ether_harness import main as harness_main
+
+    return harness_main([])
 
 
 def cmd_job(args: argparse.Namespace) -> int:
@@ -148,8 +155,20 @@ def cmd_chat(args: argparse.Namespace) -> int:
     if not args.message:
         print("message required (or: ether chat inbox)")
         return 2
-    env = chat_post(args.message, job_id=args.job_id)
-    print(f"posted {env.get('id')}")
+    force = getattr(args, "channel", None) or None
+    if force == "auto":
+        force = None
+    result = chat_post(
+        args.message,
+        job_id=args.job_id,
+        orchestrate=True,
+        force_channel=force,
+    )
+    if result.get("schema") == "ether_chat_turn_v1" or "reply" in result:
+        print(f"ok={result.get('ok')} intent={result.get('intent')} channel={result.get('channel')}")
+        print((result.get("reply") or "")[:2000])
+        return 0 if result.get("ok", True) else 1
+    print(f"posted {result.get('id')}")
     return 0
 
 
@@ -257,6 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("phase")
     sub.add_parser("next")
     sub.add_parser("doctor")
+    sub.add_parser("harness", help="stable terminal control plane (no dashboard)")
 
     p_job = sub.add_parser("job")
     job_sub = p_job.add_subparsers(dest="job_cmd", required=True)
@@ -281,6 +301,12 @@ def main(argv: list[str] | None = None) -> int:
     p_chat.add_argument("message", nargs="?")
     p_chat.add_argument("--job-id")
     p_chat.add_argument("--limit", type=int, default=10)
+    p_chat.add_argument(
+        "--channel",
+        choices=["auto", "local", "grok", "status", "git"],
+        default="auto",
+        help="force chat channel (default auto)",
+    )
 
     p_git = sub.add_parser("git")
     git_sub = p_git.add_subparsers(dest="git_cmd", required=True)
@@ -323,6 +349,7 @@ def main(argv: list[str] | None = None) -> int:
         "phase": cmd_phase,
         "next": cmd_next,
         "doctor": cmd_doctor,
+        "harness": cmd_harness,
         "job": cmd_job,
         "test": cmd_test,
         "rates": cmd_rates,

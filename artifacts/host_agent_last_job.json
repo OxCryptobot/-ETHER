@@ -1,10 +1,10 @@
 {
-  "job_id": "rlhf_tick_002510",
+  "job_id": "auto_rc_wallet_002434_1",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T00:29:42.985049+00:00",
-  "note": "offline RLHF reprocess scoreboards \u2192 preference pairs + strategy boosts after gate wave",
-  "class": "measure",
+  "finished": "2026-08-23T00:32:43.705985+00:00",
+  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

@@ -1,10 +1,10 @@
 {
-  "job_id": "auto_rc_greeter_002434_0",
+  "job_id": "rlhf_tick_002510",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T00:26:41.522726+00:00",
-  "note": "AUTO rate-climb gate_sample greeter (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
+  "finished": "2026-08-23T00:29:42.985049+00:00",
+  "note": "offline RLHF reprocess scoreboards \u2192 preference pairs + strategy boosts after gate wave",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

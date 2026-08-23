@@ -1,9 +1,15 @@
 {
-  "job_id": "os_test_wallet_scripted_003836",
+  "job_id": "rlhf_tick_004110",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T00:42:50.741845+00:00",
-  "note": "operator_surface test wallet scripted arm=direct \u2014 countable",
-  "class": "fast",
-  "measurement": true
+  "finished": "2026-08-23T00:45:30.243811+00:00",
+  "note": "offline RLHF after hermes-harness max swarm wave",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

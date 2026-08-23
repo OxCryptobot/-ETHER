@@ -1,0 +1,28 @@
+{
+  "id": "p1_61_gate_sample_wallet_000811",
+  "note": "max swarm gate_sample wallet live under wheels — rate climb n growth",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "wallet",
+        "--max-steps",
+        "10",
+        "--timeout",
+        "200",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_61_gate_sample_wallet_000811_live.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

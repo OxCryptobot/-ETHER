@@ -1,0 +1,28 @@
+{
+  "id": "p1_60_gate_sample_greeter_000810",
+  "note": "max swarm gate_sample greeter live under wheels — rate climb n growth",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "greeter",
+        "--max-steps",
+        "10",
+        "--timeout",
+        "200",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_60_gate_sample_greeter_000810_live.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

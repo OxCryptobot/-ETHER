@@ -1,0 +1,11 @@
+{
+  "id": "p1_82_rate_refresh_011103",
+  "note": "post-wave atomic_rates so 0.956 window updates",
+  "class": "measure",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "core.atomic_rates"],
+    "timeout": 120
+  }]
+}

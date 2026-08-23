@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "fixture": "greeter",
+      "tier": "easy",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 5,
+      "elapsed_s": 107.247,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 10,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "greeter": {
+      "direct": true
+    }
+  }
+}

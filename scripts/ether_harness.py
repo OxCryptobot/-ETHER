@@ -1,68 +1,95 @@
-"""ETHER Harness — stable terminal control plane (peer to dashboard).
+"""ETHER Harness v2 — Hermes-class terminal control plane.
 
-Design rules (2026-08-23):
-  - No FastAPI / browser dependency. Reads the same artifacts host_agent writes.
-  - All actions go through core.operator_surface (single facade).
-  - Training wheels ON. One hypothesis per chat / job message.
-  - Explicit channel control for chat (local | grok | status | git | auto).
-  - Dashboard remains optional; this is the durable operator path.
+Inspired by Hermes Agent (Nous Research) CLI patterns, adapted to ETHER:
+  - Slash commands (/status /phase /swarm …)
+  - Shell mode (!cmd) — zero LLM cost, does not enter chat history
+  - Agent-default: free text → local orchestrated turn (one hypothesis)
+  - Session log at artifacts/harness_session.jsonl
+  - Skills list/show from apprentice lessons
+  - Wave / max-swarm enqueue under training wheels
+  - No FastAPI / browser. Same artifacts + operator_surface truth.
+
+Doctrine (unchanged):
+  Training wheels ON until honest_rate_eligible ≥ 0.99
+  One hypothesis per chat / job
+  Never auto-lift soft launch
 
 Usage:
   .venv\\Scripts\\python.exe -m scripts.ether_harness
-  .venv\\Scripts\\python.exe -m scripts.ether_harness --once status
-  .venv\\Scripts\\python.exe -m scripts.ether_harness --watch 5
+  .venv\\Scripts\\python.exe -m scripts.ether_harness --once /status
+  .venv\\Scripts\\python.exe -m scripts.ether_harness --watch 4
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+SESSION_PATH = ROOT / "artifacts" / "harness_session.jsonl"
+SESSION_MAX_LINES = 500
+
 BANNER = """
-╔══════════════════════════════════════════════════════════╗
-║  ETHER HARNESS  ·  terminal control plane  ·  wheels ON  ║
-║  status · phase · queue · rates · doctor · chat · swarm  ║
-╚══════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════╗
+║  ETHER HARNESS v2  ·  Hermes-class  ·  training wheels ON      ║
+║  /status /phase /swarm /skills   !shell   free-text → agent    ║
+╚════════════════════════════════════════════════════════════════╝
 """.strip()
 
 HELP = """
-Commands (type and Enter):
-  status | st          host heartbeat, phase, last job, queue counts
-  phase  | ph          honest_rate_eligible, metrics_go, wheels
-  queue  | q           pending + failed (top)
-  rates  | r           full rates JSON (compact)
-  doctor | doc         health issues
-  next                 next pending job id
-  learn                preference / strategy summary
-  llm                  multi-llm lanes
+Hermes-class commands
+─────────────────────
+  Slash (type /…):
+    /help /h /?              this help
+    /status /st              host + GPU + queue counts
+    /phase /ph               honest_rate, metrics_go, open checks
+    /queue /q                pending + failed
+    /rates /r                phase1 + eligible rates
+    /doctor /doc             health issues
+    /next                    next pending job
+    /learn                   preference / strategy summary
+    /llm                     multi-llm lanes
+    /tools                   persistent + quarantine tools
+    /mcp                     local tools + gems registry
+    /skills [/list|/show id] apprentice skills
+    /goal                    phase ambition board (from phase1_gate)
+    /inbox                   Grok bus inbox
+    /clear                   clear chat session (archive kept)
+    /session                 last harness session turns
+    /wave [n] [--live]       enqueue n greeter/wallet gate_samples (default n=4 live)
+    /swarm [--live]          alias: wave of wallet+greeter
+    /test <fixture> [--live] single measurement job
+    /job list|cancel <id>
+    /watch [sec]             live status strip (Ctrl+C stop)
+    /quit /exit             leave harness
 
-  chat <msg>           orchestrate (auto channel)
-  chat local <msg>     force local LLM
-  chat grok  <msg>     force escalate to Grok (bus)
-  chat status <msg>    force status intent
-  chat git <msg>       force git intent
-  inbox                recent grok inbox envelopes
-  clear                clear chat session (archive retained)
+  Shell mode (zero LLM cost, not logged to chat):
+    !git status
+    !dir artifacts\\jobs\\pending
+    !pytest tests/test_train_gates.py -q
 
-  test <fixture> [--live]   enqueue gate_sample / scripted test
-  swarm [--live]            enqueue wallet+greeter wave
-  job list | job cancel <id>
+  Agent mode (default):
+    <any free text>          → local orchestrated turn (one hypothesis)
+    chat [local|grok|status|git] <msg>   explicit channel
 
-  watch [N]            live status strip every N seconds (default 4)
-  help | ?             this help
-  quit | exit | q!     leave harness
+Doctrine: wheels ON · one hypothesis · measured rate climb only
 """.strip()
 
 
-def _now() -> str:
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _now_clock() -> str:
     return datetime.now(timezone.utc).strftime("%H:%M:%S")
 
 
@@ -73,8 +100,22 @@ def _print_json(data: Any, *, max_chars: int = 4000) -> None:
     print(text)
 
 
+def _session_append(kind: str, payload: Dict[str, Any]) -> None:
+    try:
+        SESSION_PATH.parent.mkdir(parents=True, exist_ok=True)
+        rec = {"ts": _now_iso(), "kind": kind, **payload}
+        with SESSION_PATH.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, default=str) + "\n")
+        # rotate soft
+        if SESSION_PATH.stat().st_size > 2_000_000:
+            lines = SESSION_PATH.read_text(encoding="utf-8").splitlines()
+            keep = lines[-SESSION_MAX_LINES:]
+            SESSION_PATH.write_text("\n".join(keep) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
 def strip_status() -> str:
-    """One-line status for watch / prompt."""
     try:
         from core.operator_surface import status, rates
 
@@ -87,16 +128,16 @@ def strip_status() -> str:
         ok = last.get("ok")
         ok_s = "PASS" if ok is True else ("FAIL" if ok is False else "—")
         return (
-            f"[{_now()}] phase={host.get('phase')} "
+            f"[{_now_clock()}] phase={host.get('phase')} "
             f"job={host.get('current_job') or last.get('job_id') or '—'} "
-            f"last={ok_s} "
-            f"pending={s.get('pending_n')} "
-            f"rate={rate_s} "
-            f"wheels={'ON' if p1.get('training_wheels') else 'OFF'}"
+            f"last={ok_s} pending={s.get('pending_n')} "
+            f"rate={rate_s} wheels={'ON' if p1.get('training_wheels') else 'OFF'}"
         )
     except Exception as e:
-        return f"[{_now()}] harness status error: {type(e).__name__}: {e}"
+        return f"[{_now_clock()}] harness error: {type(e).__name__}: {e}"
 
+
+# ─── commands ───────────────────────────────────────────────────────────────
 
 def cmd_status() -> int:
     from core.operator_surface import status
@@ -132,8 +173,7 @@ def cmd_phase() -> int:
     print(f"  timeout_rate_elig    {p1.get('timeout_rate_eligible')}")
     print(f"  training_wheels      {p1.get('training_wheels')}")
     print(f"  soft_launch_ready    {p1.get('soft_launch_ready')}")
-    checks = p1.get("checks") or []
-    bad = [c for c in checks if not c.get("ok")]
+    bad = [c for c in (p1.get("checks") or []) if not c.get("ok")]
     if bad:
         print("  open checks:")
         for c in bad:
@@ -147,10 +187,10 @@ def cmd_queue() -> int:
     for kind in ("pending", "failed"):
         jobs = list_jobs(kind)
         print(f"{kind} ({len(jobs)}):")
-        for j in jobs[:25]:
+        for j in jobs[:30]:
             print(f"  - {j}")
-        if len(jobs) > 25:
-            print(f"  … +{len(jobs) - 25} more")
+        if len(jobs) > 30:
+            print(f"  … +{len(jobs) - 30} more")
     return 0
 
 
@@ -158,13 +198,13 @@ def cmd_rates() -> int:
     from core.operator_surface import rates
 
     data = rates()
-    # compact: phase1 + eligible only by default
-    compact = {
-        "updated": data.get("updated"),
-        "phase1_gate": data.get("phase1_gate"),
-        "eligible_rates": data.get("eligible_rates"),
-    }
-    _print_json(compact)
+    _print_json(
+        {
+            "updated": data.get("updated"),
+            "phase1_gate": data.get("phase1_gate"),
+            "eligible_rates": data.get("eligible_rates"),
+        }
+    )
     return 0
 
 
@@ -186,10 +226,10 @@ def cmd_next() -> int:
 
     pending = list_jobs("pending")
     if not pending:
-        print("next: (empty — host idle / foreman may refill)")
+        print("next: (empty)")
         return 0
     print(f"next: {pending[0]}")
-    for j in pending[1:5]:
+    for j in pending[1:6]:
         print(f"  then: {j}")
     return 0
 
@@ -197,7 +237,7 @@ def cmd_next() -> int:
 def cmd_learn() -> int:
     from core.operator_surface import learn_summary
 
-    _print_json(learn_summary(), max_chars=3000)
+    _print_json(learn_summary(), max_chars=3500)
     return 0
 
 
@@ -212,12 +252,60 @@ def cmd_llm() -> int:
     return 0
 
 
-def cmd_chat(parts: List[str]) -> int:
-    """chat [channel] message…"""
+def cmd_tools() -> int:
+    from core.operator_surface import tools_list
+
+    _print_json(tools_list())
+    return 0
+
+
+def cmd_mcp() -> int:
+    from core.operator_surface import mcp_list
+
+    _print_json(mcp_list())
+    return 0
+
+
+def cmd_skills(parts: List[str]) -> int:
+    from core.operator_surface import skill_list, skill_show
+
+    if not parts or parts[0] in ("list", "ls"):
+        items = skill_list()
+        print(f"skills ({len(items)}):")
+        for s in items:
+            print(f"  - {s.get('id')}  [{s.get('craft')}]  {(s.get('rule') or '')[:80]}")
+        return 0
+    if parts[0] == "show" and len(parts) >= 2:
+        _print_json(skill_show(parts[1]))
+        return 0
+    # bare id
+    _print_json(skill_show(parts[0]))
+    return 0
+
+
+def cmd_goal() -> int:
+    """Phase ambition board — measured truth only."""
+    from core.operator_surface import rates
+
+    p1 = rates().get("phase1_gate") or {}
+    print("@ETHER goal board")
+    print(f"  phase_gate        {p1.get('phase_gate')}")
+    print(f"  status            {p1.get('status')}")
+    print(f"  architecture_go   {p1.get('architecture_go')}")
+    print(f"  metrics_go        {p1.get('metrics_go')}  (need honest≥0.99)")
+    print(f"  honest_rate       {p1.get('honest_rate_eligible')}")
+    print(f"  live_eligible_n   {p1.get('live_eligible_n')}")
+    print(f"  training_wheels   {p1.get('training_wheels')}")
+    print(f"  soft_launch       {p1.get('soft_launch_ready')}  (human only)")
+    print("  primary: stack easy gate_sample until rate ≥ 0.99; wheels stay ON")
+    return 0
+
+
+def cmd_chat(parts: List[str], *, default_local: bool = False) -> int:
     from core.operator_surface import chat_post
 
     if not parts:
-        print("usage: chat [local|grok|status|git|auto] <message>")
+        print("usage: chat [local|grok|status|git] <message>  OR free-text for local")
         return 2
 
     channel: Optional[str] = None
@@ -227,34 +315,44 @@ def cmd_chat(parts: List[str]) -> int:
         if channel == "auto":
             channel = None
         msg_parts = parts[1:]
+    elif default_local:
+        channel = "local"
+
     message = " ".join(msg_parts).strip()
     if not message:
         print("empty message")
         return 2
 
-    force = channel  # local | grok | status | git | None
-    result = chat_post(message, orchestrate=True, force_channel=force)
-
-    # normalize display
+    result = chat_post(message, orchestrate=True, force_channel=channel)
     ok = result.get("ok", True)
+    _session_append(
+        "chat",
+        {
+            "channel": result.get("channel") or channel or "auto",
+            "message": message[:500],
+            "ok": ok,
+            "intent": result.get("intent"),
+            "reply_preview": (result.get("reply") or "")[:300],
+        },
+    )
+
     if result.get("schema") == "ether_chat_turn_v1" or "reply" in result:
         print(f"ok={ok}  intent={result.get('intent')}  channel={result.get('channel')}")
-        reply = (result.get("reply") or "")[:2000]
+        reply = (result.get("reply") or "")[:2500]
         print(reply if reply else "(no reply body)")
         if result.get("awaiting_grok"):
-            print("— awaiting Grok on bus (pending set; host will push)")
+            print("— awaiting Grok on bus (host will push)")
         return 0 if ok else 1
 
     if result.get("fallback"):
         print(f"orchestrator fallback: {result.get('error')}")
-        print(f"envelope: {result.get('envelope', {}).get('id')}")
         return 1
 
-    print(f"posted envelope {result.get('id')}")
+    print(f"posted {result.get('id')}")
     return 0
 
 
-def cmd_inbox(limit: int = 8) -> int:
+def cmd_inbox(limit: int = 10) -> int:
     from core.operator_surface import chat_inbox
 
     items = chat_inbox(limit=limit)
@@ -277,27 +375,83 @@ def cmd_clear() -> int:
     return 0 if out.get("ok") else 1
 
 
+def cmd_session(limit: int = 15) -> int:
+    if not SESSION_PATH.exists():
+        print("session: empty")
+        return 0
+    lines = SESSION_PATH.read_text(encoding="utf-8").splitlines()
+    for line in lines[-limit:]:
+        try:
+            rec = json.loads(line)
+        except Exception:
+            continue
+        ts = (rec.get("ts") or "")[:19]
+        kind = rec.get("kind")
+        if kind == "chat":
+            print(
+                f"  [{ts}] chat/{rec.get('channel')} ok={rec.get('ok')} "
+                f"· {(rec.get('message') or '')[:60]}"
+            )
+        elif kind == "shell":
+            print(f"  [{ts}] ! {rec.get('cmd')} rc={rec.get('rc')}")
+        elif kind == "wave":
+            print(f"  [{ts}] wave n={rec.get('n')} jobs={rec.get('jobs')}")
+        else:
+            print(f"  [{ts}] {kind} {json.dumps({k: v for k, v in rec.items() if k not in ('ts', 'kind')}, default=str)[:80]}")
+    return 0
+
+
 def cmd_test(parts: List[str]) -> int:
     from core.operator_surface import run_test
 
     if not parts:
-        print("usage: test <fixture> [--live]")
+        print("usage: /test <fixture> [--live]")
         return 2
     fixture = parts[0]
     live = "--live" in parts or "live" in parts
-    path = run_test(fixture, live=live, arm="direct", max_steps=10 if live else 8, timeout=200)
+    path = run_test(
+        fixture,
+        live=live,
+        arm="direct",
+        max_steps=10 if live else 8,
+        timeout=200,
+    )
     print(f"enqueued {path.name}  live={live}")
+    _session_append("test", {"job": path.name, "fixture": fixture, "live": live})
+    return 0
+
+
+def cmd_wave(parts: List[str]) -> int:
+    """Enqueue n easy gate_sample jobs (greeter/wallet alternating). Under wheels."""
+    from core.operator_surface import run_test
+
+    n = 4
+    live = True
+    for p in parts:
+        if p in ("--scripted", "scripted"):
+            live = False
+        elif p in ("--live", "live"):
+            live = True
+        else:
+            try:
+                n = max(1, min(int(p), 8))
+            except ValueError:
+                pass
+
+    fixtures = ["greeter", "wallet"] * ((n + 1) // 2)
+    fixtures = fixtures[:n]
+    jobs: List[str] = []
+    for fx in fixtures:
+        path = run_test(fx, live=live, arm="direct", max_steps=10 if live else 8, timeout=200)
+        jobs.append(path.name)
+        print(f"enqueued {path.name}")
+    _session_append("wave", {"n": n, "live": live, "jobs": jobs})
+    print(f"wave: {n} jobs live={live} — host drains FIFO under wheels")
     return 0
 
 
 def cmd_swarm(parts: List[str]) -> int:
-    from core.operator_surface import swarm_enqueue
-
-    live = "--live" in parts or "live" in parts
-    paths = swarm_enqueue(live=live, fixtures=["wallet", "greeter"])
-    for p in paths:
-        print(f"enqueued {p.name}")
-    return 0
+    return cmd_wave(["4"] + parts)
 
 
 def cmd_job(parts: List[str]) -> int:
@@ -309,7 +463,7 @@ def cmd_job(parts: List[str]) -> int:
         ok = cancel_job(parts[1])
         print("cancelled" if ok else "not found")
         return 0 if ok else 1
-    print("usage: job list | job cancel <id>")
+    print("usage: /job list | /job cancel <id>")
     return 2
 
 
@@ -324,64 +478,132 @@ def cmd_watch(interval: float = 4.0) -> int:
     return 0
 
 
+def cmd_shell(cmd: str) -> int:
+    """Hermes-style !shell — no LLM, not in chat history."""
+    cmd = (cmd or "").strip()
+    if not cmd:
+        print("usage: !<shell command>")
+        return 2
+    # safety: block destructive root ops in harness
+    low = cmd.lower()
+    blocked = ("format ", "rm -rf /", "del /s /q c:\\", "shutdown", "rd /s /q c:\\")
+    if any(b in low for b in blocked):
+        print("blocked: destructive command refused by harness")
+        return 1
+    try:
+        r = subprocess.run(
+            cmd,
+            shell=True,
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+        )
+        out = (r.stdout or "") + (r.stderr or "")
+        if out.strip():
+            print(out.rstrip()[:8000])
+        print(f"[rc={r.returncode}]")
+        _session_append("shell", {"cmd": cmd[:200], "rc": r.returncode})
+        return 0 if r.returncode == 0 else 1
+    except subprocess.TimeoutExpired:
+        print("shell timeout (120s)")
+        return 1
+    except Exception as e:
+        print(f"shell error: {e}")
+        return 1
+
+
+# ─── dispatch ───────────────────────────────────────────────────────────────
+
+SLASH: Dict[str, Any] = {
+    "help": lambda p: (print(HELP) or 0),
+    "h": lambda p: (print(HELP) or 0),
+    "?": lambda p: (print(HELP) or 0),
+    "status": lambda p: cmd_status(),
+    "st": lambda p: cmd_status(),
+    "phase": lambda p: cmd_phase(),
+    "ph": lambda p: cmd_phase(),
+    "queue": lambda p: cmd_queue(),
+    "q": lambda p: cmd_queue(),
+    "rates": lambda p: cmd_rates(),
+    "r": lambda p: cmd_rates(),
+    "doctor": lambda p: cmd_doctor(),
+    "doc": lambda p: cmd_doctor(),
+    "next": lambda p: cmd_next(),
+    "learn": lambda p: cmd_learn(),
+    "llm": lambda p: cmd_llm(),
+    "tools": lambda p: cmd_tools(),
+    "mcp": lambda p: cmd_mcp(),
+    "skills": lambda p: cmd_skills(p),
+    "skill": lambda p: cmd_skills(p),
+    "goal": lambda p: cmd_goal(),
+    "inbox": lambda p: cmd_inbox(),
+    "clear": lambda p: cmd_clear(),
+    "session": lambda p: cmd_session(),
+    "wave": lambda p: cmd_wave(p),
+    "swarm": lambda p: cmd_swarm(p),
+    "test": lambda p: cmd_test(p),
+    "job": lambda p: cmd_job(p),
+    "watch": lambda p: cmd_watch(float(p[0]) if p else 4.0),
+    "chat": lambda p: cmd_chat(p),
+    "quit": lambda p: -1,
+    "exit": lambda p: -1,
+}
+
+
 def dispatch(line: str) -> int:
     line = (line or "").strip()
     if not line:
         return 0
-    parts = line.split()
-    cmd = parts[0].lower()
-    rest = parts[1:]
 
-    if cmd in ("help", "?", "h"):
+    # Shell mode (Hermes !)
+    if line.startswith("!"):
+        return cmd_shell(line[1:])
+
+    # Slash commands
+    if line.startswith("/"):
+        body = line[1:].strip()
+        if not body:
+            print(HELP)
+            return 0
+        parts = body.split()
+        cmd = parts[0].lower()
+        rest = parts[1:]
+        if cmd in ("quit", "exit"):
+            return -1
+        fn = SLASH.get(cmd)
+        if fn is None:
+            print(f"unknown /{cmd}  — type /help")
+            return 2
+        try:
+            return int(fn(rest))
+        except ValueError:
+            # watch interval parse etc.
+            return int(fn([]))
+
+    # Legacy bare commands (compat with v1)
+    parts = line.split()
+    cmd0 = parts[0].lower()
+    if cmd0 in SLASH and cmd0 not in ("chat",):
+        return int(SLASH[cmd0](parts[1:]))
+    if cmd0 == "chat":
+        return cmd_chat(parts[1:])
+    if cmd0 in ("quit", "exit", "q!"):
+        return -1
+    if cmd0 in ("help", "?"):
         print(HELP)
         return 0
-    if cmd in ("quit", "exit", "q!"):
-        return -1
-    if cmd in ("status", "st"):
-        return cmd_status()
-    if cmd in ("phase", "ph"):
-        return cmd_phase()
-    if cmd in ("queue", "q"):
-        return cmd_queue()
-    if cmd in ("rates", "r"):
-        return cmd_rates()
-    if cmd in ("doctor", "doc"):
-        return cmd_doctor()
-    if cmd == "next":
-        return cmd_next()
-    if cmd == "learn":
-        return cmd_learn()
-    if cmd == "llm":
-        return cmd_llm()
-    if cmd == "chat":
-        return cmd_chat(rest)
-    if cmd == "inbox":
-        return cmd_inbox()
-    if cmd == "clear":
-        return cmd_clear()
-    if cmd == "test":
-        return cmd_test(rest)
-    if cmd == "swarm":
-        return cmd_swarm(rest)
-    if cmd == "job":
-        return cmd_job(rest)
-    if cmd == "watch":
-        interval = 4.0
-        if rest:
-            try:
-                interval = float(rest[0])
-            except ValueError:
-                pass
-        return cmd_watch(interval)
 
-    print(f"unknown: {cmd}  (type help)")
-    return 2
+    # Hermes agent-default: free text → local turn (one hypothesis)
+    return cmd_chat(parts, default_local=True)
 
 
 def repl() -> int:
     print(BANNER)
     print(strip_status())
-    print("type help · quit to exit")
+    print("type /help · !shell · free-text agents · /quit")
     while True:
         try:
             line = input("ether> ").strip()
@@ -397,7 +619,7 @@ def repl() -> int:
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(
         prog="ether-harness",
-        description="ETHER stable terminal harness (no dashboard required)",
+        description="ETHER Hermes-class terminal harness (wheels ON)",
     )
     ap.add_argument("--once", nargs=argparse.REMAINDER, help="run one command then exit")
     ap.add_argument("--watch", type=float, metavar="SEC", help="live status strip")

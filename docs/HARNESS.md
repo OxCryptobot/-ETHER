@@ -1,71 +1,59 @@
-# ETHER Harness — Stable Terminal Control Plane
+# ETHER Harness v2 — Hermes-class Terminal Control Plane
 
-Primary operator surface under training wheels. **Does not depend on the dashboard.**
+Primary operator surface under training wheels. **No dashboard required.**
 
-Same truth as host_agent and Control Matrix: `artifacts/` + `core.operator_surface`.
+Patterns borrowed from Hermes Agent (Nous Research): slash commands, shell mode,
+agent-default free text, session log, skills, wave swarm — adapted to ETHER's
+measured doctrine and `operator_surface` truth.
 
-## Why
-
-The web dashboard is useful for observation but has been a source of chat races, pending hangs, and UI glitchiness. The harness is the durable path for day-to-day control:
-
-- No FastAPI / browser
-- Explicit chat channels (`local` | `grok` | `status` | `git`)
-- One-line status strip + interactive REPL
-- Same job queue, rates, doctor, swarm as the CLI
-
-## Launch (host)
+## Launch
 
 ```powershell
 cd C:\Users\Otcde\ETHER
 .venv\Scripts\python.exe -m scripts.ether_harness
 ```
 
-One-shot:
+One-shot / watch:
 
 ```powershell
-.venv\Scripts\python.exe -m scripts.ether_harness --once status
-.venv\Scripts\python.exe -m scripts.ether_harness --once phase
-.venv\Scripts\python.exe -m scripts.ether_harness --once "chat grok acknowledge harness"
-.venv\Scripts\python.exe -m scripts.ether_harness --watch 5
+.venv\Scripts\python.exe -m scripts.ether_harness --once /status
+.venv\Scripts\python.exe -m scripts.ether_harness --once /phase
+.venv\Scripts\python.exe -m scripts.ether_harness --once /wave 4
+.venv\Scripts\python.exe -m scripts.ether_harness --watch 4
 ```
 
-Also available via existing CLI (once wired):
+CLI peer: `python -m scripts.ether_cli harness`
 
-```text
-ether harness
-```
+## Hermes-class features
 
-## Commands (REPL)
+| Feature | How |
+|---------|-----|
+| Slash commands | `/status` `/phase` `/swarm` `/skills` `/goal` `/wave` … |
+| Shell mode | `!git status` — zero LLM cost, not in chat history |
+| Agent-default | Free text → local orchestrated turn (one hypothesis) |
+| Explicit channels | `chat grok …` / `chat local …` / `chat status …` |
+| Session log | `artifacts/harness_session.jsonl` · `/session` |
+| Skills | `/skills` list · `/skills show <id>` |
+| Wave / max swarm | `/wave 4` or `/swarm --live` (easy fixtures only) |
+| Live strip | `/watch 4` or `--watch 4` |
+| Tools / MCP | `/tools` `/mcp` |
+| Goal board | `/goal` — measured phase1 gate only |
 
-| Command | Action |
-|---------|--------|
-| `status` / `st` | heartbeat, phase, last job, queue |
-| `phase` / `ph` | honest_rate_eligible, metrics_go, wheels |
-| `queue` / `q` | pending + failed |
-| `rates` / `r` | phase1 + eligible rates |
-| `doctor` | health issues |
-| `chat [channel] <msg>` | orchestrate turn; channel = local\|grok\|status\|git |
-| `inbox` | recent Grok inbox |
-| `clear` | clear chat session (archive kept) |
-| `test <fixture> [--live]` | enqueue measurement |
-| `swarm [--live]` | wallet + greeter wave |
-| `watch [N]` | live status strip |
-| `quit` | exit |
+## Doctrine (locked)
 
-## Doctrine (unchanged)
-
-- Training wheels ON until `honest_rate_eligible ≥ 0.99`
+- Training wheels **ON** until `honest_rate_eligible ≥ 0.99`
 - One hypothesis per chat message / job
+- Easy fixtures only for live waves (greeter, wallet)
 - Labradorite on non-infra FAIL
-- Never auto-lift soft launch from the harness
+- Never auto-lift `ETHER_SOFT_LAUNCH` from the harness
 
-## Relation to other surfaces
+## Surfaces
 
 | Surface | Role |
 |---------|------|
-| **Harness** (`scripts/ether_harness.py`) | Primary stable operator path |
-| **CLI** (`scripts/ether_cli.py`) | Scriptable one-shot commands |
-| **Dashboard** (`dashboard/`) | Optional visual matrix |
+| **Harness v2** | Primary stable operator path (Hermes-class) |
+| **CLI** (`ether_cli.py`) | Scriptable one-shots |
+| **Dashboard** | Optional visual matrix |
 | **host_agent** | Executes jobs; writes artifacts |
 
-All four share `artifacts/` and `core.operator_surface`. No divergent state.
+All share `artifacts/` + `core.operator_surface`.

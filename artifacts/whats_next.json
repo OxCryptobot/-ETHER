@@ -1,12 +1,13 @@
 {
-  "generated": "2026-08-23T02:26:42.352180+00:00",
-  "next_job": "auto_rc_wallet_022448_1",
+  "generated": "2026-08-23T02:29:06.352148+00:00",
+  "next_job": "auto_rc_greeter_022905_0",
   "queue_head": [
-    "auto_rc_wallet_022448_1"
+    "auto_rc_greeter_022905_0",
+    "auto_rc_wallet_022905_1"
   ],
-  "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "auto_rc_greeter_022448_0",
+  "queue_depth": 2,
+  "host_phase": "polling",
+  "last_job": "auto_rc_wallet_022448_1",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

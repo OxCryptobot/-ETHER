@@ -1,0 +1,14 @@
+{
+  "id": "p1_80_gate_sample_wallet_011101",
+  "note": "rate climb 0.956	o0.99 wallet live under wheels",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d",
+      "--arm", "direct", "--mode", "live", "--fixture", "wallet",
+      "--max-steps", "10", "--timeout", "200",
+      "--scoreboard", "artifacts/scoreboard_p1_80_gate_sample_wallet_011101_live.json"],
+    "timeout": 300
+  }]
+}

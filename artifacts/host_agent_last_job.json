@@ -1,9 +1,9 @@
 {
-  "job_id": "auto_rc_greeter_000518_0",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-23T00:07:30.678794+00:00",
-  "note": "AUTO rate-climb gate_sample greeter (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy",
+  "job_id": "auto_rc_wallet_000518_1",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-08-23T00:14:18.444487+00:00",
+  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9524<0.99) under wheels \u2014 host autonomy [failure_type=timeout]",
   "class": "gate_sample",
   "measurement": true,
   "live_budget": {
@@ -11,5 +11,6 @@
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  }
+  },
+  "failure_type": "timeout"
 }

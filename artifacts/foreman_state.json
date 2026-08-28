@@ -1351,7 +1351,8 @@
     "ss_archive_failed_150331_4",
     "p1_220_gate_sample_greeter_183200",
     "p1_222_gate_sample_greeter_183202",
-    "p1_223_gate_sample_wallet_183203"
+    "p1_223_gate_sample_wallet_183203",
+    "p1_221_gate_sample_wallet_183201"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,17 +1447,17 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-28T23:45:43.959049+00:00",
-  "mode": "steady",
+  "last_tick": "2026-08-28T23:48:07.556637+00:00",
+  "mode": "rate_climb",
   "teacher": "grok",
   "lessons_loaded": 29,
-  "last_enqueued": "ss_train_gates_150336_2",
+  "last_enqueued": "auto_rc_wallet_234806_1",
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "rate_climb_status": "skip_pending_nonempty",
   "governor": {
-    "pending": 1,
+    "pending": 2,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1466,5 +1467,7 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "rate_climb_idx": 2,
+  "last_rate_climb_ts": "2026-08-28T23:48:06.708784+00:00"
 }

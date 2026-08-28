@@ -1,10 +1,10 @@
 {
-  "job_id": "auto_rc_greeter_223105_0",
+  "job_id": "p1_213_rate_refresh_173503",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-28T22:33:14.542675+00:00",
-  "note": "AUTO rate-climb gate_sample greeter (honest_rate=0.9818<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
+  "finished": "2026-08-28T22:37:31.501468+00:00",
+  "note": "atomic_rates publish after 0.9818 wave",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

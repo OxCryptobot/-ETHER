@@ -38,8 +38,14 @@ def collect_scoreboard_rows(art: Optional[Path] = None) -> List[Dict[str, Any]]:
     if not art.exists():
         return rows
     for p in sorted(art.glob("scoreboard*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
-        rows.extend(_load_rows(p))
-        if len(rows) >= 500:
+        loaded = _load_rows(p)
+        mtime = p.stat().st_mtime
+        for row in loaded:
+            tagged = dict(row)
+            tagged.setdefault("_src", p.name)
+            tagged.setdefault("_mtime", mtime)
+            rows.append(tagged)
+        if len(rows) >= 2500:
             break
     # also memory/bench latest if present
     for rel in (
@@ -50,7 +56,7 @@ def collect_scoreboard_rows(art: Optional[Path] = None) -> List[Dict[str, Any]]:
         p = ROOT / rel
         if p.exists():
             rows.extend(_load_rows(p))
-    return rows[:800]
+    return rows[:2500]
 
 
 def classify_row(row: Dict[str, Any]) -> Dict[str, Any]:

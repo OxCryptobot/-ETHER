@@ -24,8 +24,9 @@ PENDING = ROOT / "artifacts" / "jobs" / "pending"
 PHASE1_GATE = ROOT / "artifacts" / "phase1_gate.json"
 
 TARGET = float(os.getenv("ETHER_RATE_CLIMB_TARGET", "0.99"))
-COOLDOWN_S = int(os.getenv("ETHER_RATE_CLIMB_COOLDOWN_S", "120"))
-WAVE_N = int(os.getenv("ETHER_RATE_CLIMB_WAVE_N", "2"))
+# 2026-08-28: tighter loop — 3 weeks of idle gaps was the real delay, not job wall time.
+COOLDOWN_S = int(os.getenv("ETHER_RATE_CLIMB_COOLDOWN_S", "30"))
+WAVE_N = int(os.getenv("ETHER_RATE_CLIMB_WAVE_N", "4"))
 FIXTURES = ("greeter", "wallet")  # easy only; denylist hard stays out
 
 

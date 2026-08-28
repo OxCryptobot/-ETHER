@@ -1349,7 +1349,8 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "p1_220_gate_sample_greeter_183200"
+    "p1_220_gate_sample_greeter_183200",
+    "p1_222_gate_sample_greeter_183202"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1444,7 +1445,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-28T23:41:21.999717+00:00",
+  "last_tick": "2026-08-28T23:43:19.632109+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1454,7 +1455,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_pending_nonempty",
   "governor": {
-    "pending": 3,
+    "pending": 2,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

@@ -143,7 +143,15 @@ def maybe_enqueue(
                         f"artifacts/scoreboard_{jid}.json",
                     ],
                     "timeout": 300,
-                }
+                },
+                {
+                    "argv": [
+                        ".venv/Scripts/python.exe",
+                        "-m",
+                        "core.atomic_rates",
+                    ],
+                    "timeout": 90,
+                },
             ],
         }
         write_job(job)

@@ -1364,7 +1364,8 @@
     "auto_rc_greeter_230200_0",
     "auto_rc_wallet_230200_1",
     "auto_rc_greeter_230626_0",
-    "auto_rc_wallet_230626_1"
+    "auto_rc_wallet_230626_1",
+    "auto_rc_greeter_231041_0"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1459,7 +1460,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-28T23:10:42.462567+00:00",
+  "last_tick": "2026-08-28T23:12:34.521766+00:00",
   "mode": "rate_climb",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1469,7 +1470,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_pending_nonempty",
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

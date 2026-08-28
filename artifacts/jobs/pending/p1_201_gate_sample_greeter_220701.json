@@ -1,0 +1,14 @@
+{
+  "id": "p1_201_gate_sample_greeter_220701",
+  "note": "rate climb 0.958 to 0.99 greeter live under wheels",
+  "class": "gate_sample",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "scripts.batch_phase_d",
+      "--arm", "direct", "--mode", "live", "--fixture", "greeter",
+      "--max-steps", "10", "--timeout", "200",
+      "--scoreboard", "artifacts/scoreboard_p1_201_gate_sample_greeter_220701_live.json"],
+    "timeout": 300
+  }]
+}

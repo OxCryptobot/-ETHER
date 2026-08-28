@@ -1,0 +1,11 @@
+{
+  "id": "p1_224_rate_refresh_183204",
+  "note": "atomic_rates publish — phase1_gate stale vs live auto_rc",
+  "class": "measure",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "core.atomic_rates"],
+    "timeout": 120
+  }]
+}

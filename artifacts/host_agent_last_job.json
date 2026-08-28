@@ -1,10 +1,10 @@
 {
-  "job_id": "auto_rc_wallet_045030_1",
+  "job_id": "p1_200_rate_refresh_220700",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-23T04:55:58.072872+00:00",
-  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9583<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
+  "finished": "2026-08-28T22:12:02.058793+00:00",
+  "note": "recompute rates after 5-day host stall",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

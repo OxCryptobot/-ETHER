@@ -1,0 +1,11 @@
+{
+  "id": "rlhf_tick_220704",
+  "note": "offline RLHF reprocess scoreboards after stall",
+  "class": "measure",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "core.preference"],
+    "timeout": 180
+  }]
+}

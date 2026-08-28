@@ -1,0 +1,11 @@
+{
+  "id": "p1_200_rate_refresh_220700",
+  "note": "recompute rates after 5-day host stall",
+  "class": "measure",
+  "continue_on_fail": true,
+  "measurement": true,
+  "steps": [{
+    "argv": [".venv/Scripts/python.exe", "-m", "core.atomic_rates"],
+    "timeout": 120
+  }]
+}

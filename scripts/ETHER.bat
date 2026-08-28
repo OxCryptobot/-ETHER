@@ -1,9 +1,8 @@
 @echo off
 setlocal EnableExtensions
-REM @ETHER launcher — MUST be given absolute ETHER_ROOT by desktop wrapper
+REM @ETHER one-click launcher — starts ether_host (dashboard + job drain)
 
 if not defined ETHER_ROOT (
-  REM Fallback only when launched from repo\scripts\
   pushd "%~dp0.." >nul
   set "ETHER_ROOT=%CD%"
   popd >nul
@@ -18,44 +17,23 @@ if errorlevel 1 (
 
 echo Repo root: %CD%
 
-if not exist "%CD%\scripts\desktop_runtime.py" (
-  echo [ERROR] desktop_runtime.py not found.
+if not exist "%CD%\scripts\start_ether_host.ps1" (
+  echo [ERROR] start_ether_host.ps1 not found.
   echo ETHER_ROOT was: %ETHER_ROOT%
   echo Current dir is: %CD%
-  echo.
-  echo Your Desktop is likely under OneDrive. Re-install the shortcut FROM the repo:
+  echo Re-install the shortcut FROM the repo:
   echo   cd C:\Users\Otcde\ETHER
   echo   powershell -ExecutionPolicy Bypass -File .\scripts\install_desktop_shortcut.ps1
-  echo.
   pause
   exit /b 1
 )
 
 set ETHER_GIT_RESET_OK=1
 set ETHER_PULL_SOFT=1
-set ETHER_FLYWHEEL_PUSH=1
 set ETHER_OPEN_BROWSER=1
 set PYTHONIOENCODING=utf-8
 
-set "VENV_PY=%CD%\.venv\Scripts\python.exe"
-
-if not exist "%VENV_PY%" (
-  echo Creating venv in %CD%\.venv ...
-  where python >nul 2>&1
-  if errorlevel 1 (
-    echo [ERROR] python not on PATH
-    pause
-    exit /b 1
-  )
-  python -m venv .venv
-  "%CD%\.venv\Scripts\python.exe" -m pip install -U pip
-  "%CD%\.venv\Scripts\python.exe" -m pip install -e ".[dev]"
-  set "VENV_PY=%CD%\.venv\Scripts\python.exe"
-)
-
-echo Using: %VENV_PY%
-echo.
-"%VENV_PY%" "%CD%\scripts\desktop_runtime.py"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%CD%\scripts\start_ether_host.ps1"
 set EXITCODE=%ERRORLEVEL%
 
 echo.

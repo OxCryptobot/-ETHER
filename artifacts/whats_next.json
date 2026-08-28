@@ -1,16 +1,15 @@
 {
-  "generated": "2026-08-28T22:36:16.690196+00:00",
+  "generated": "2026-08-28T22:37:35.366578+00:00",
   "next_job": "auto_rc_wallet_223105_1",
   "queue_head": [
     "auto_rc_wallet_223105_1",
     "p1_210_gate_sample_wallet_173500",
     "p1_211_gate_sample_greeter_173501",
-    "p1_212_gate_sample_wallet_173502",
-    "p1_213_rate_refresh_173503"
+    "p1_212_gate_sample_wallet_173502"
   ],
-  "queue_depth": 5,
-  "host_phase": "chat_push",
-  "last_job": "auto_rc_greeter_223105_0",
+  "queue_depth": 4,
+  "host_phase": "idle",
+  "last_job": "p1_213_rate_refresh_173503",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

@@ -1,10 +1,10 @@
 {
-  "job_id": "p1_213_rate_refresh_173503",
+  "job_id": "auto_rc_wallet_223105_1",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-28T22:37:31.501468+00:00",
-  "note": "atomic_rates publish after 0.9818 wave",
-  "class": "measure",
+  "finished": "2026-08-28T22:40:10.704949+00:00",
+  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9818<0.99) under wheels \u2014 host autonomy",
+  "class": "gate_sample",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

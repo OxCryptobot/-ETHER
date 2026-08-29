@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-29T03:16:24.698250+00:00",
-  "next_job": "p3_24_queue_hygiene",
+  "generated": "2026-08-29T03:16:31.063602+00:00",
+  "next_job": "p3_25_merge_remainder",
   "queue_head": [
-    "p3_24_queue_hygiene",
     "p3_25_merge_remainder"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "playbook_coding_method_refresh_031214",
-  "last_ok": true,
-  "last_failure_type": null,
+  "queue_depth": 1,
+  "host_phase": "polling",
+  "last_job": "p3_24_queue_hygiene",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

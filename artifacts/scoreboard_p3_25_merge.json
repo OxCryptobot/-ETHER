@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 31.093,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "bug_comments",
+        "replace_once",
+        "replace_once",
+        "replace_once",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 12,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "merge": {
+      "direct": true
+    }
+  }
+}

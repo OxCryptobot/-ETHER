@@ -1,11 +1,15 @@
 {
-  "job_id": "p3_24_queue_hygiene",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T03:16:25.644641+00:00",
-  "note": "Archive failed off origin path. Prune playbook spam from done.",
-  "class": "fast",
+  "job_id": "p3_25_merge_remainder",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T03:17:05.042492+00:00",
+  "note": "HARD merge LIVE after remainder replace_once fix. Denied from eligible. p3_23 was 0.5 with playbook tools.",
+  "class": "measure",
   "measurement": true,
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_p3_23_merge_playbook.json"
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

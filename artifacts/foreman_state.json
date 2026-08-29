@@ -1443,9 +1443,10 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01"
+    "00_mcp_cq_spike_01",
+    "p3_17_hard_tools_convert"
   ],
-  "last_tick": "2026-08-29T02:12:59.390003+00:00",
+  "last_tick": "2026-08-29T02:13:06.712504+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 35,
@@ -1455,7 +1456,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1465,5 +1466,6 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
 }

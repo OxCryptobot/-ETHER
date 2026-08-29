@@ -1,17 +1,11 @@
 {
-  "job_id": "p3_17_hard_tools_convert",
+  "job_id": "p3_18_evolve_no_llm",
   "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T02:13:02.753431+00:00",
-  "note": "CONVERSION of p1_245/p1_250. Force boot + hard tool units. Not LIVE.",
+  "rc": 124,
+  "finished": "2026-08-29T02:15:06.768990+00:00",
+  "note": "CONVERSION of p3_10. Phase 3 units without Ollama canary. [failure_type=timeout]",
   "class": "fast",
   "measurement": false,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  },
-  "failure_type": "step_fail",
+  "failure_type": "timeout",
   "scoreboard": "scoreboard_p1_248_merge_replay.json"
 }

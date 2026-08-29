@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-29T01:52:40.323489+00:00",
+  "updated": "2026-08-29T02:13:14.747734+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -12,16 +12,16 @@
   ],
   "counts": {
     "clear-quartz": 0,
-    "rose-quartz": 0,
+    "rose-quartz": 1,
     "citrine": 0,
     "selenite": 0,
     "amethyst": 0,
     "black-tourmaline": 0,
     "labradorite": 30,
-    "grandidierite": 1
+    "grandidierite": 0
   },
-  "last_gem": "grandidierite",
-  "last_job": "p3_10_evolve_tick",
+  "last_gem": "rose-quartz",
+  "last_job": "p3_17_hard_tools_convert",
   "active_n": 2,
   "strip": [
     {
@@ -31,8 +31,8 @@
     },
     {
       "gem": "rose-quartz",
-      "n": 0,
-      "active": false
+      "n": 1,
+      "active": true
     },
     {
       "gem": "citrine",
@@ -61,8 +61,8 @@
     },
     {
       "gem": "grandidierite",
-      "n": 1,
-      "active": true
+      "n": 0,
+      "active": false
     }
   ]
 }

@@ -1,7 +1,6 @@
 """Phase G tool extensions — mixin for ToolRuntime.
 
-Implementation is in core.tool_runtime_ext_g so this file can stay a short
-shim plus hard-LIVE boot.
+Implementation is in core.tool_runtime_ext_g. Boot attaches hard-LIVE tools.
 """
 from __future__ import annotations
 
@@ -13,5 +12,7 @@ try:
     from core.hard_live_boot import patch_runtime
 
     patch_runtime()
-except Exception:
-    pass
+except Exception as exc:  # pragma: no cover
+    import sys
+
+    print("hard_live_boot skipped:", type(exc).__name__, exc, file=sys.stderr)

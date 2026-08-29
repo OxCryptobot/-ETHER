@@ -1,10 +1,9 @@
 {
-  "job_id": "medic_hb_20260829_064135",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T16:40:00.376413+00:00",
-  "note": "Medic ping from Control Matrix: wake idle git heartbeat with a FAST health check.",
+  "job_id": "p3_31_skip_llm",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T16:40:06.735121+00:00",
+  "note": "FAST: skip Ollama after playbook takeover (I-005)",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "measurement": true
 }

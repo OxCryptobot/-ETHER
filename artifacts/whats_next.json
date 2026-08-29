@@ -1,8 +1,8 @@
 {
-  "generated": "2026-08-29T16:39:49.690382+00:00",
-  "next_job": "medic_hb_20260829_064135",
+  "generated": "2026-08-29T16:40:04.994608+00:00",
+  "next_job": "critique_hyp_medic_hb_20260829_064135_164000",
   "queue_head": [
-    "medic_hb_20260829_064135",
+    "critique_hyp_medic_hb_20260829_064135_164000",
     "p3_31_skip_llm",
     "p3_35_fail_learn",
     "p3_36_ckpt_pipeline",
@@ -10,9 +10,9 @@
   ],
   "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "host_boot_20260829_163102",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "medic_hb_20260829_064135",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

@@ -1,0 +1,20 @@
+{
+  "id": "p3_14_build_progress",
+  "class": "fast",
+  "note": "publish honest product progress bar",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_build_progress.py",
+        "tests/test_phase3_evolve.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 180
+    }
+  ]
+}

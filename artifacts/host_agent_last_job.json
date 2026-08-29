@@ -1,9 +1,15 @@
 {
-  "job_id": "p1_234_core_import_smoke",
+  "job_id": "auto_rc_wallet_004636_1",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T00:57:27.999188+00:00",
-  "note": "growth: import smoke AgentState/pipeline/tool_runtime/eligible",
-  "class": "fast",
-  "measurement": false
+  "finished": "2026-08-29T00:59:53.806279+00:00",
+  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9847<0.99) under wheels \u2014 host autonomy",
+  "class": "gate_sample",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

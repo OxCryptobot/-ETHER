@@ -1443,9 +1443,10 @@
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
     "00_mcp_cq_spike_01",
-    "p1_247_ledger_canary"
+    "p1_247_ledger_canary",
+    "p1_250_hard_tools_retest"
   ],
-  "last_tick": "2026-08-29T02:03:00.688744+00:00",
+  "last_tick": "2026-08-29T02:03:08.035935+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 34,
@@ -1453,9 +1454,9 @@
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
-  "live_skip_remaining": 34,
+  "live_skip_remaining": 33,
   "last_live_skip_reason": "p1_247_ledger_canary",
-  "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
+  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail",
   "governor": {
     "pending": 5,
     "max_pending": 6,

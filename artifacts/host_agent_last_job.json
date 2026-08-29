@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_242_live_merge_canary",
+  "job_id": "p1_249_rlhf_tick",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T01:18:03.540174+00:00",
-  "note": "LIVE merge canary AFTER edit_lines/bug_comments/observe-breaker. Denied from eligible. One hyp: new tools let 4B mutate instead of observe-loop.",
+  "finished": "2026-08-29T01:41:59.973778+00:00",
+  "note": "offline RLHF refresh after hard merge canary scoreboard",
   "class": "measure",
   "measurement": true,
   "live_budget": {

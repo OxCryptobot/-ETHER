@@ -1,0 +1,31 @@
+{
+  "results": [
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 8,
+      "elapsed_s": 39.136,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "bug_comments",
+        "replace_once",
+        "replace_once",
+        "replace_once",
+        "replace_once",
+        "replace_once",
+        "run_tests"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "policy": "teacher_playbook"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "live": true
+  }
+}

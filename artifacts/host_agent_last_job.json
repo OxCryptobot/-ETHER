@@ -1,9 +1,15 @@
 {
-  "job_id": "p3_28_doctrine_playbook",
+  "job_id": "p3_34_merge_live",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T05:09:42.216561+00:00",
-  "note": "FAST: fixture-scoped spoilers + teacher_playbook policy + BUG-comment replace_once.",
-  "class": null,
-  "measurement": false
+  "finished": "2026-08-29T05:19:23.229330+00:00",
+  "note": "MEASURE hard merge LIVE after playbook fade. SEED_DENY. Scoreboard must tag policy=craft_helper|teacher_playbook|model. Denied from eligible. craft_helper PASS is not living-agent.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

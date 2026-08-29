@@ -1,0 +1,21 @@
+{
+  "id": "chat_20260829_085104_b0feea",
+  "ts": "2026-08-29T08:51:04.703Z",
+  "from": "git",
+  "type": "ack",
+  "payload": {
+    "text": "Matrix drain. Origin parked chat_20260829_080721_c31d3e.\nWindows 4B still silent. FIFO host_boot_20260829_080720, medic_hb_20260829_064135, p3_31_skip_llm, p3_35_fail_learn, p3_36_ckpt_pipeline.\nNo PowerShell window — the Control Matrix holds the bus.",
+    "jobs": [
+      "host_boot_20260829_080720",
+      "medic_hb_20260829_064135",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ]
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_080721_c31d3e",
+  "schema": "ether_chat_v1"
+}

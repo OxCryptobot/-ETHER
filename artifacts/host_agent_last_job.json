@@ -1,9 +1,15 @@
 {
-  "job_id": "p1_246_train_gates_unit",
+  "job_id": "p3_11_evolve_publish",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T01:42:14.659492+00:00",
-  "note": "doctrine unit after teacher wave; keep wheels on",
-  "class": "fast",
-  "measurement": false
+  "finished": "2026-08-29T01:50:31.420117+00:00",
+  "note": "Publish phase3_go.json and run one evolution tick. Wheels stay ON.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

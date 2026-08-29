@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-29T00:52:43.646574+00:00",
+  "updated": "2026-08-29T00:57:27.901480+00:00",
   "phase_gate": "1_to_2",
   "metrics_go": true,
   "architecture_go": true,
@@ -23,7 +23,7 @@
     {
       "id": "scripted_honest_for_architecture",
       "ok": true,
-      "detail": "scripted_honest=0.9605 target>=0.9"
+      "detail": "scripted_honest=0.963 target>=0.9"
     },
     {
       "id": "strangler_ready",
@@ -46,7 +46,7 @@
   "timeout_rate_eligible": 0.0,
   "honest_rate_eligible": 1.0,
   "live_eligible_n": 80,
-  "scripted_honest_rate": 0.9605,
+  "scripted_honest_rate": 0.963,
   "timeout_rate_raw": 0.0703,
   "training_wheels": true,
   "soft_launch_ready": false,

@@ -1,0 +1,20 @@
+{
+  "id": "chat_20260829_163944_a3aba2",
+  "ts": "2026-08-29T16:39:44.112Z",
+  "from": "grok",
+  "type": "recovery",
+  "payload": {
+    "text": "Host 4B is DOWN. Heartbeat stale. Actions runner is offline — workflow_dispatch only queues.\nWave A FAST is already on origin pending: host_boot_20260829_163102, p3_31_skip_llm, p3_35_fail_learn, p3_36_ckpt_pipeline, p3_37_chat_bus. last_job none.\nMedic will not storm more autonomy-host runs. Git is the bus. Press Host in the Control Matrix — it writes a hidden boot (no PowerShell window).\nWindows runs scripts/matrix_boot.ps1 hidden once ETHER-Ensure pulls. Wheels ON.",
+    "jobs": [
+      "host_boot_20260829_163102",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ]
+  },
+  "job_id": "host_boot_20260829_163102",
+  "requires_reply": false,
+  "parent_id": "",
+  "schema": "ether_chat_v1"
+}

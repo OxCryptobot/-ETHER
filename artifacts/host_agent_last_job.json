@@ -1,9 +1,17 @@
 {
-  "job_id": "p3_22_install_langchain",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T02:52:35.581555+00:00",
-  "note": "Install optional ether[langchain] into the host venv. Does not lift wheels.",
-  "class": "fast",
-  "measurement": true
+  "job_id": "p3_23_merge_playbook_canary",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T03:01:42.471324+00:00",
+  "note": "HARD merge LIVE after playbook takeover. Denied from eligible.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  },
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p3_23_merge_playbook.json"
 }

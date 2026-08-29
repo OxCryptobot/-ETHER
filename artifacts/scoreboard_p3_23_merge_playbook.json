@@ -1,0 +1,43 @@
+{
+  "results": [
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.5,
+      "n_steps": 7,
+      "elapsed_s": 51.842,
+      "reason": "playbook_merge",
+      "tools": [
+        "list_files",
+        "bug_comments",
+        "replace_once",
+        "replace_once",
+        "anchor_edit",
+        "run_tests",
+        "done"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "failure_type": "live_fail",
+      "arm": "direct"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "mode": "live",
+    "arms": [
+      "direct"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 12,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "merge": {
+      "direct": false
+    }
+  }
+}

@@ -1,10 +1,16 @@
 {
-  "job_id": "p3_12_pillars",
+  "job_id": "p1_247_ledger_canary",
   "ok": false,
   "rc": 124,
-  "finished": "2026-08-29T01:54:39.296939+00:00",
-  "note": "Phase 7 identity pillars + phase3 canaries after BUILD_OPEN [failure_type=timeout]",
-  "class": "fast",
-  "measurement": false,
+  "finished": "2026-08-29T01:58:44.065853+00:00",
+  "note": "HARD ledger canary DENIED from eligible. One hyp: same mutate path as merge p1_242 (observe then write/edit then run_tests). [failure_type=timeout]",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  },
   "failure_type": "timeout"
 }

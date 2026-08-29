@@ -1,15 +1,9 @@
 {
-  "job_id": "playbook_live_timeout_learn_015443",
+  "job_id": "zcr_tool_runtime_scripted_020304",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T02:03:21.678262+00:00",
-  "note": "playbook:live_tool_path_timeout for p3_12_pillars",
-  "class": "fast",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  }
+  "finished": "2026-08-29T02:07:33.111815+00:00",
+  "note": "zero-click: scripted twin after p1_250_hard_tools_retest tool_runtime fail",
+  "class": "recovery",
+  "measurement": true
 }

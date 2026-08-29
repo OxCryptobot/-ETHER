@@ -1,15 +1,10 @@
 {
-  "job_id": "auto_rc_wallet_004636_1",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T00:59:53.806279+00:00",
-  "note": "AUTO rate-climb gate_sample wallet (honest_rate=0.9847<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "job_id": "p1_240_hard_live_tools_unit",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T01:10:01.605789+00:00",
+  "note": "unit test numbered read + edit_lines + bug_comments + scripted merge/ledger green",
+  "class": null,
+  "measurement": false,
+  "failure_type": "step_fail"
 }

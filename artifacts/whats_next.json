@@ -1,9 +1,13 @@
 {
-  "generated": "2026-08-29T01:06:33.075285+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-29T01:09:56.920489+00:00",
+  "next_job": "p1_240_hard_live_tools_unit",
+  "queue_head": [
+    "p1_240_hard_live_tools_unit",
+    "p1_241_scripted_hard_direct",
+    "p1_242_live_merge_canary"
+  ],
+  "queue_depth": 3,
+  "host_phase": "idle",
   "last_job": "auto_rc_wallet_004636_1",
   "last_ok": true,
   "last_failure_type": null,

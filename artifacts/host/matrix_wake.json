@@ -1,0 +1,18 @@
+{
+  "schema": "ether_matrix_wake_v1",
+  "action": "boot",
+  "hidden": true,
+  "status": "issued",
+  "job_id": "host_boot_20260829_080720",
+  "requested_at": "2026-08-29T08:07:20.180Z",
+  "source": "control-matrix",
+  "root": "C:\\Users\\Otcde\\ETHER",
+  "sequence": [
+    "cd C:\\Users\\Otcde\\ETHER",
+    "Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force",
+    "git fetch origin",
+    "git reset --hard origin/main",
+    "start_daemon.ps1 -Background  (WindowStyle Hidden)"
+  ],
+  "start": "powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\\scripts\\start_daemon.ps1 -Background"
+}

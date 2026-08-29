@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_31_skip_llm",
+  "job_id": "p3_35_fail_learn",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T16:40:06.735121+00:00",
-  "note": "FAST: skip Ollama after playbook takeover (I-005)",
+  "finished": "2026-08-29T16:40:11.599398+00:00",
+  "note": "FAST: fail_learn + queue hygiene. Never requeue a graveyard file.",
   "class": "fast",
   "measurement": true
 }

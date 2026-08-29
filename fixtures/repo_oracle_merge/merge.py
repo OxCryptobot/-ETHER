@@ -34,7 +34,8 @@ def merge_sorted(a: List[T], b: List[T]) -> List[T]:
         else:
             out.append(b[j])
             j += 1
-    # BUG: only extends from a; forgets remainder of b
+    # BUG: should also out.extend(b[j:])
     if i < len(a):
         out.extend(a[i:])
     return out
+

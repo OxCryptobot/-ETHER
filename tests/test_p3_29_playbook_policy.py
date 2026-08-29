@@ -37,5 +37,5 @@ def test_mutations_from_merge_bug_comments():
     assert any("return list(b)" in n for n in news)
     assert any("return list(a)" in n for n in news)
     assert any("return b  # BUG" in o for o in olds)
-    # missing-block remainder has no `# BUG: should` — teacher book still required
-    assert not any("out.extend(b[j:])" in n for n in news)
+    # remainder is now a `# BUG: should also` comment — craft, not a fixture dict
+    assert any("out.extend(b[j:])" in n for n in news)

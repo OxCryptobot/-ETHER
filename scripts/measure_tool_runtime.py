@@ -191,9 +191,12 @@ def measure_one(
         except Exception:
             tagged = "model"
         reason = str(row.get("reason") or "")
-        if reason.startswith("playbook_") or tagged == "teacher_playbook":
+        if tagged == "craft_helper" or reason in {"craft_helper"}:
+            tagged = "craft_helper"
+        elif reason.startswith("playbook_") or tagged == "teacher_playbook":
             tagged = "teacher_playbook"
         row["policy"] = tagged
+
     if not row["ok"]:
         reason = str(row.get("reason") or "").lower()
         if "timeout" in reason:

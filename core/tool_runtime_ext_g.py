@@ -102,19 +102,43 @@ class ToolExtMixin:
         return {"ok": True, "path": path, "start_line": s, "end_line": e, "mutated": True, "n_chars": len(updated)}
 
     def _obs_bug_comments(self, path: str = ".") -> Dict[str, Any]:
+        from core.hard_live_playbook import mutations_from_bug_comments, mutations_from_workspace
         from core.hard_live_tools import extract_bug_comments
 
         assert self.workspace is not None
         root = self.workspace
         rel = (path or ".").strip() or "."
+        suggested: List[Dict[str, Any]] = []
         if rel not in (".", ""):
             target, err = self._resolve_path(rel)
             if err:
                 return {"ok": False, "error": err}
             assert target is not None
-            root = target if target.is_dir() else target.parent
+            if target.is_file():
+                try:
+                    body = target.read_text(encoding="utf-8", errors="replace")
+                except Exception as exc:
+                    return {"ok": False, "error": str(exc)[:160]}
+                file_rel = str(target.relative_to(self.workspace)).replace("\\", "/")
+                suggested = mutations_from_bug_comments(file_rel, body)
+                root = target.parent
+            else:
+                root = target
+                suggested = mutations_from_workspace(root)
+        else:
+            suggested = mutations_from_workspace(root)
         hits = extract_bug_comments(root)
-        return {"ok": True, "hits": hits, "n": len(hits)}
+        return {
+            "ok": True,
+            "hits": hits,
+            "n": len(hits),
+            "suggested": suggested,
+            "hint": (
+                "Next: emit each suggested replace_once in order, then run_tests. "
+                "Do not re-read. Do not write_file the whole module."
+            ),
+        }
+
 
     def _obs_rollback(self) -> Dict[str, Any]:
         self._ensure_undo()

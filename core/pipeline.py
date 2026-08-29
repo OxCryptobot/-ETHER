@@ -216,7 +216,33 @@ class Pipeline:
         attempts: List[_Attempt] = [_Attempt(strategy=strategy, context=strategy_ctx)]
         result.strategy = strategy
         result.strategies = [strategy]
+
+        # Shadow write_progress for this run so every stage also lands a checkpoint.
+        # I-010: Pipeline.run was the last unwired caller of checkpoint.py.
+        from core.progress import write_progress as _write_progress
+
+        def write_progress(task_id: str, objective: str, stage: str, detail: str = "", **extra: Any) -> None:
+            _write_progress(task_id, objective, stage, detail, **extra)
+            try:
+                from core.checkpoint import checkpoint_pipeline
+
+                payload = {"strategy": result.strategy}
+                if detail:
+                    payload["detail"] = str(detail)[:120]
+                for key, val in extra.items():
+                    payload[str(key)[:40]] = str(val)[:80]
+                checkpoint_pipeline(
+                    run_id=str(task_id),
+                    stage=stage,
+                    objective=objective,
+                    n_stages=len(result.stages),
+                    extra=payload,
+                )
+            except Exception:
+                pass
+
         write_progress(tid, objective, "start", strategy=strategy)
+
 
         tool_block = ""
         last_err = ""

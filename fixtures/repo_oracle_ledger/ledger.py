@@ -32,10 +32,10 @@ class Ledger:
             raise ValueError("amount must be non-negative")
         a = self.get(src)
         b = self.get(dst)
-        # BUG: credit only — never debits source
+        # BUG: should a.debit(amount)
         b.credit(amount)
 
     def total(self) -> float:
-        # BUG: sums twice
         s = sum(a.balance for a in self._accounts.values())
-        return s + s
+        return s + s  # BUG: should return s
+

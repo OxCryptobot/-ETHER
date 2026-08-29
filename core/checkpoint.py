@@ -1,7 +1,8 @@
 """Checkpoint / resume schema for long agent runs.
 
-Wired into ToolRuntime.run after every step (P3). Pipeline.run still does not
-call this — LoopRunner default-on is the next strangler slice.
+Wired into ToolRuntime.run after every step (P3).
+Wired into Pipeline.run via checkpoint_pipeline at each write_progress.
+LoopRunner default-on is still the next strangler slice.
 """
 from __future__ import annotations
 
@@ -89,3 +90,23 @@ def checkpoint_step(
         )
     except Exception:
         return None
+
+
+def checkpoint_pipeline(
+    *,
+    run_id: str,
+    stage: str,
+    objective: str = "",
+    n_stages: int = 0,
+    extra: Optional[Dict[str, Any]] = None,
+) -> Optional[Path]:
+    """Pipeline.run hook. Same on-disk schema, stage prefixed so runtimes do not collide."""
+    payload = dict(extra or {})
+    payload.setdefault("kind", "pipeline")
+    return checkpoint_step(
+        run_id=f"pipeline-{run_id}",
+        stage=f"pipeline:{stage}"[:80],
+        objective=objective,
+        n_steps=int(n_stages),
+        extra=payload,
+    )

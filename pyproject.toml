@@ -39,6 +39,12 @@ dev = [
 mcp = [
     "mcp[cli]>=1.0",
 ]
+langchain = [
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langchain-community>=0.3",
+    "langchain-text-splitters>=0.3",
+]
 
 [project.scripts]
 ether = "cli.main:main"

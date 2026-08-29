@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-29T05:08:33.771170+00:00",
+  "generated": "2026-08-29T05:09:24.360812+00:00",
   "next_job": "p3_26_unify_model",
   "queue_head": [
     "p3_26_unify_model",
     "p3_27_checkpoint",
-    "p3_28_doctrine_playbook",
-    "p3_30_ledger_live"
+    "p3_28_doctrine_playbook"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "p3_25_merge_remainder",
+  "queue_depth": 3,
+  "host_phase": "idle",
+  "last_job": "p3_30_ledger_live",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

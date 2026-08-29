@@ -1,15 +1,9 @@
 {
-  "job_id": "p3_30_ledger_live",
+  "job_id": "p3_26_unify_model",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T05:09:20.205726+00:00",
-  "note": "MEASURE hard ledger LIVE after P3 wave. SEED_DENY. continue_on_fail. Scoreboard must tag policy=teacher_playbook|model. Denied from eligible.",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-29T05:09:32.510673+00:00",
+  "note": "FAST: Rose+model_select share resolved_primary. No silent 3b. Host fallback not 8b.",
+  "class": null,
+  "measurement": false
 }

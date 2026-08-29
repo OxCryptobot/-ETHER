@@ -1,0 +1,24 @@
+{
+  "id": "critique_medic_hb_20260829_064135_164000",
+  "job_id": "medic_hb_20260829_064135",
+  "created": "2026-08-29T16:40:00.429996+00:00",
+  "failure_type": "step_fail",
+  "note": "Medic ping from Control Matrix: wake idle git heartbeat with a FAST health check.",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

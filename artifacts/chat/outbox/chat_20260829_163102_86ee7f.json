@@ -1,0 +1,16 @@
+{
+  "id": "chat_20260829_163102_86ee7f",
+  "ts": "2026-08-29T16:31:02.658Z",
+  "from": "git",
+  "type": "ack",
+  "payload": {
+    "text": "Host boot parked. wake artifacts/host/matrix_wake.json. pending host_boot_20260829_163102.\nFIFO will not drain on Windows until ether_host is alive. Chat bus is git — not a console window.",
+    "jobs": [
+      "host_boot_20260829_163102"
+    ]
+  },
+  "job_id": "host_boot_20260829_163102",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_163102_2a36b2",
+  "schema": "ether_chat_v1"
+}

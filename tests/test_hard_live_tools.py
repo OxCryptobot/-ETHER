@@ -101,7 +101,6 @@ def _line(path: Path, needle: str) -> int:
 
 
 def test_scripted_edit_lines_fixes_merge():
-    """Prove the new tool can green merge without a full write_file dump."""
     src = MERGE / "merge.py"
     lb = _line(src, "return b  # BUG")
     la = _line(src, "return a  # BUG")
@@ -157,7 +156,6 @@ def test_scripted_edit_lines_fixes_merge():
 
 
 def test_scripted_replace_once_fixes_ledger():
-    """Do not use stacked edit_lines — inserts shift later spans (p1_245)."""
     plan = [
         {"tool": "bug_comments", "args": {}},
         {
@@ -177,7 +175,8 @@ def test_scripted_replace_once_fixes_ledger():
             },
         },
         {"tool": "run_tests", "args": {}},
-    ]n    it = iter(plan)
+    ]
+    it = iter(plan)
 
     def decide(_m):
         try:

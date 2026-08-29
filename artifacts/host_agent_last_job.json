@@ -1,17 +1,9 @@
 {
-  "job_id": "p1_248_merge_replay",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T02:12:13.477488+00:00",
-  "note": "HARD merge replay DENIED from eligible. Confirm p1_242 was not a one-shot. Do not farm greeter.",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "step_fail",
-  "scoreboard": "scoreboard_p1_248_merge_replay.json"
+  "job_id": "critique_hyp_p1_248_merge_replay_021213",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T02:12:22.281186+00:00",
+  "note": "playbook:labradorite for p1_248_merge_replay [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true
 }

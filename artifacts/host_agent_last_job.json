@@ -1,9 +1,15 @@
 {
-  "job_id": "p3_02_train_gates_074800",
+  "job_id": "p1_233_pipeline_scripted_hard",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T00:53:11.018567+00:00",
-  "note": "growth: doctrine + preference unit tests",
-  "class": "fast",
-  "measurement": false
+  "finished": "2026-08-29T00:55:58.056229+00:00",
+  "note": "growth: pipeline scripted hard pack \u2014 not LIVE",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

@@ -1,0 +1,130 @@
+{
+  "results": [
+    {
+      "fixture": "topo",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.73,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 0.732,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
+    {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.742,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.745,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    },
+    {
+      "fixture": "intervals",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 0.494,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "total": 5,
+    "mode": "scripted",
+    "arms": [
+      "pipeline"
+    ],
+    "model": "qwen3.5:4b-q4_K_M",
+    "max_steps": 12,
+    "partial": false,
+    "note": "final"
+  },
+  "matrix": {
+    "lru": {
+      "pipeline": true
+    },
+    "merge": {
+      "pipeline": true
+    },
+    "ledger": {
+      "pipeline": true
+    },
+    "topo": {
+      "pipeline": true
+    },
+    "intervals": {
+      "pipeline": true
+    }
+  }
+}

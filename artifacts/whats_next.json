@@ -1,13 +1,15 @@
 {
-  "generated": "2026-08-29T00:53:09.401208+00:00",
+  "generated": "2026-08-29T00:55:56.458206+00:00",
   "next_job": "auto_rc_wallet_004636_1",
   "queue_head": [
     "auto_rc_wallet_004636_1",
-    "p3_02_train_gates_074800"
+    "p1_232_ast_gate",
+    "p1_233_pipeline_scripted_hard",
+    "p1_234_core_import_smoke"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "rlhf_tick_074800",
+  "queue_depth": 4,
+  "host_phase": "polling",
+  "last_job": "p3_02_train_gates_074800",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

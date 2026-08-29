@@ -1,0 +1,26 @@
+{
+  "id": "chat_20260829_094206_17f020",
+  "ts": "2026-08-29T09:42:06.296Z",
+  "from": "sandbox",
+  "type": "learn",
+  "payload": {
+    "text": "LEARN sbx_055b2ada\nGap: Dual chat looked static because Windows 4B never writes outbox.\nHypothesis: Matrix sandbox 4B should seat on Host press, ack hidden boot, and post one FAST learn so Grok tutors this turn.\nMetric: sandbox outbox envelope within 2s of Host. Do not impersonate from:qwen.\nNext FAST: p3_31_skip_llm. No p3_34 LIVE. Wheels ON.",
+    "proposal_id": "sbx_055b2ada",
+    "gap": "host_silent_outbox",
+    "metric": "sandbox_outbox_envelopes",
+    "hypothesis": "Linux sandbox 4B holds Dual chat until ether_host ticks",
+    "jobs": [
+      "host_boot_20260829_080720",
+      "medic_hb_20260829_064135",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ],
+    "via": "sandbox"
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": true,
+  "parent_id": "chat_20260829_094205_5b2ada",
+  "schema": "ether_chat_v1"
+}

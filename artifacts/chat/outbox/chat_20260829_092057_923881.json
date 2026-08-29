@@ -1,0 +1,22 @@
+{
+  "id": "chat_20260829_092057_923881",
+  "ts": "2026-08-29T09:20:57.655Z",
+  "from": "sandbox",
+  "type": "ack",
+  "payload": {
+    "text": "Sandbox 4B ack. Windows 4B is DOWN.\nHeard: Host pressed. Hidden boot sequence on origin (no PowerShell window): cd C:\\Users\\Otcde\\ETHER Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force g\nGit bus is live here. I write outbox learns so Grok can tutor on the left. Real 4B joins when ether_host ticks.\nFIFO host_boot_20260829_080720, medic_hb_20260829_064135, p3_31_skip_llm, p3_35_fail_learn. Job host_boot_20260829_080720. Wheels ON. Soft launch BLOCKED.",
+    "jobs": [
+      "host_boot_20260829_080720",
+      "medic_hb_20260829_064135",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ],
+    "via": "sandbox"
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_080721_c31d3e",
+  "schema": "ether_chat_v1"
+}

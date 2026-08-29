@@ -1,15 +1,10 @@
 {
-  "job_id": "p3_11_evolve_publish",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T01:50:31.420117+00:00",
-  "note": "Publish phase3_go.json and run one evolution tick. Wheels stay ON.",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "job_id": "p3_10_evolve_tick",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-08-29T01:52:35.340691+00:00",
+  "note": "Phase 3 evolution operator unit + tick after metrics_go [failure_type=timeout]",
+  "class": "fast",
+  "measurement": false,
+  "failure_type": "timeout"
 }

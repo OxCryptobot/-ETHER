@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-22T23:39:52.810028+00:00",
+  "updated": "2026-08-29T01:51:22.242287+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -18,11 +18,11 @@
     "amethyst": 0,
     "black-tourmaline": 0,
     "labradorite": 30,
-    "grandidierite": 0
+    "grandidierite": 1
   },
-  "last_gem": "labradorite",
-  "last_job": "critique_unit_fail_1_044617",
-  "active_n": 1,
+  "last_gem": "grandidierite",
+  "last_job": "p3_11_evolve_publish",
+  "active_n": 2,
   "strip": [
     {
       "gem": "clear-quartz",
@@ -57,12 +57,12 @@
     {
       "gem": "labradorite",
       "n": 30,
-      "active": true
+      "active": false
     },
     {
       "gem": "grandidierite",
-      "n": 0,
-      "active": false
+      "n": 1,
+      "active": true
     }
   ]
 }

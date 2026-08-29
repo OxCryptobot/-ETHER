@@ -1,0 +1,9 @@
+{
+  "id": "031_convert_not_replay",
+  "teacher": "grok",
+  "craft": "evolution",
+  "rule": "Failed queue is a taxonomy. Convert p1_250 (hard tools unit) and p3_10 (LLM canary in FAST pytest). Do not replay greeter/wallet/easy/p1_96/p2a. FAST jobs must set ETHER_LLM_CANARY!=1. p1_248 merge replay stays measure-only.",
+  "match": "",
+  "code": "core.phase3_canaries",
+  "taught_at": "2026-08-29"
+}

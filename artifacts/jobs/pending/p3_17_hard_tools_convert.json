@@ -1,0 +1,23 @@
+{
+  "id": "p3_17_hard_tools_convert",
+  "class": "fast",
+  "note": "CONVERSION of p1_245/p1_250. Force boot + hard tool units. Not LIVE.",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_hard_live_boot_force.py",
+        "tests/test_hard_live_tools.py",
+        "tests/test_hard_live_flex.py",
+        "tests/test_job_class.py",
+        "tests/test_fail_learn.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 180
+    }
+  ]
+}

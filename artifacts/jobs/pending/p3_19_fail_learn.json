@@ -1,0 +1,16 @@
+{
+  "id": "p3_19_fail_learn",
+  "class": "measure",
+  "note": "Publish fail taxonomy after conversion wave. Do not replay greeter.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.fail_learn"],
+      "timeout": 60
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.self_improve"],
+      "timeout": 90
+    }
+  ]
+}

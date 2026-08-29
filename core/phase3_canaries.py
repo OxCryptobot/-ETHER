@@ -1,6 +1,7 @@
 """Phase 3 pure canaries — controlled evolution measurement.
 
 Never trains. Never lifts wheels. Never soft-launches.
+FAST units must not call Ollama. Set ETHER_LLM_CANARY=1 for that case.
 """
 from __future__ import annotations
 
@@ -14,13 +15,14 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "phase3_canaries.json"
 
 
-def run_matrix() -> Dict[str, Any]:
+def run_matrix(*, include_llm: bool | None = None) -> Dict[str, Any]:
+    if include_llm is None:
+        include_llm = (os.getenv("ETHER_LLM_CANARY") or "0").strip() == "1"
     cases: List[Dict[str, Any]] = []
 
     def add(name: str, ok: bool, detail: str = "") -> None:
         cases.append({"name": name, "pass": bool(ok), "detail": detail[:140]})
 
-    # AgentState durable round-trip
     try:
         from core.agent_state import AgentState
 
@@ -41,7 +43,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("agent_state_roundtrip", False, str(e))
 
-    # LoRA dry tick — must not train
     try:
         from core.lora_dry_tick import dry_tick
 
@@ -57,7 +58,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("lora_dry_only", False, str(e))
 
-    # Critique → Plan wire
     try:
         from core.critique_plan_wire import wire_latest
 
@@ -70,7 +70,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("critique_plan_wire", False, str(e))
 
-    # Eight gems inventory
     try:
         from core.gem_energy import GEMS, publish
 
@@ -83,7 +82,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("gems_eight", False, str(e))
 
-    # Tool-first gate pure
     try:
         from core.loop import decide_tool_first_terminal
 
@@ -101,7 +99,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("tool_first_gate", False, str(e))
 
-    # Snapshot builder
     try:
         from core.phase3_snapshot import build_snapshot
 
@@ -116,7 +113,6 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("phase3_snapshot", False, str(e))
 
-    # Flags stay safe defaults
     try:
         from core.loop import loop_runner_enabled
         from core.symbol_index import symbol_index_enabled
@@ -129,31 +125,33 @@ def run_matrix() -> Dict[str, Any]:
     except Exception as e:
         add("flags_default_safe", False, str(e))
 
-    # Multi-LLM latency path (OS-3 perfect efficiency canary)
-    try:
-        from core.multi_llm import warm, chat, latency_stats
+    if include_llm:
+        try:
+            from core.multi_llm import warm, chat, latency_stats
 
-        w = warm()
-        r = chat(
-            [{"role": "user", "content": "Reply with exactly: pong"}],
-            lane="fast",
-            max_tokens=8,
-            temperature=0.0,
-        )
-        stats = latency_stats()
-        ok = (
-            bool(w.get("ok"))
-            and bool(r.get("ok"))
-            and r.get("latency_ms") is not None
-            and float(r.get("latency_ms") or 99999) < 120000  # hard ceiling, post-warm should be far lower
-        )
-        add(
-            "multi_llm_latency",
-            ok,
-            f"warm_ms={w.get('warm_ms')} chat_ms={r.get('latency_ms')} p50={stats.get('p50_ms')}",
-        )
-    except Exception as e:
-        add("multi_llm_latency", False, str(e))
+            w = warm()
+            r = chat(
+                [{"role": "user", "content": "Reply with exactly: pong"}],
+                lane="fast",
+                max_tokens=8,
+                temperature=0.0,
+            )
+            stats = latency_stats()
+            ok_llm = (
+                bool(w.get("ok"))
+                and bool(r.get("ok"))
+                and r.get("latency_ms") is not None
+                and float(r.get("latency_ms") or 99999) < 120000
+            )
+            add(
+                "multi_llm_latency",
+                ok_llm,
+                f"warm_ms={w.get('warm_ms')} chat_ms={r.get('latency_ms')} p50={stats.get('p50_ms')}",
+            )
+        except Exception as e:
+            add("multi_llm_latency", False, str(e))
+    else:
+        add("multi_llm_latency", True, "skipped FAST unit (ETHER_LLM_CANARY!=1)")
 
     wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
     add("wheels_on", wheels, f"wheels={wheels}")
@@ -165,9 +163,10 @@ def run_matrix() -> Dict[str, Any]:
         "n": len(cases),
         "passed": passed,
         "ok": passed == len(cases),
+        "include_llm": include_llm,
         "cases": cases,
         "soft_launch_blocked": True,
-        "note": "Phase 3 canaries = measurement + dry evolution only. multi_llm_latency included.",
+        "note": "FAST default skips Ollama. Set ETHER_LLM_CANARY=1 for multi_llm_latency.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

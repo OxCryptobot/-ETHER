@@ -17,7 +17,7 @@ Write-Host "========================================"
 
 $stopScript = Join-Path $Root "scripts\stop_daemon.ps1"
 if (Test-Path $stopScript) {
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $stopScript
+  & powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $stopScript
 }
 Start-Sleep -Seconds 1
 
@@ -68,13 +68,13 @@ if (-not (Test-Path -LiteralPath $Daemon)) {
 $inst = Join-Path $Root "scripts\install_windows_daemon.ps1"
 if (Test-Path $inst) {
   Write-Host "[autonomy] registering ETHER-Daemon + ETHER-Ensure"
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $inst
+  & powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $inst
 }
 
 if ($Background) {
   Write-Host "[start] background via ensure"
   $ensure = Join-Path $Root "scripts\ensure_daemon.ps1"
-  & powershell -NoProfile -ExecutionPolicy Bypass -File $ensure
+  & powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $ensure
   Start-Sleep -Seconds 6
   $hb = Join-Path $Root "memory\daemon\heartbeat.txt"
   if (Test-Path $hb) {

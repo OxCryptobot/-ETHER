@@ -7,6 +7,8 @@
 $ErrorActionPreference = "Stop"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $Py = Join-Path $Root ".venv\Scripts\python.exe"
+$PyW = Join-Path $Root ".venv\Scripts\pythonw.exe"
+$DaemonExe = if (Test-Path -LiteralPath $PyW) { $PyW } else { $Py }
 $Daemon = Join-Path $Root "scripts\ether_daemon.py"
 $Ensure = Join-Path $Root "scripts\ensure_daemon.ps1"
 $Ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
@@ -45,7 +47,8 @@ function Register-EtherTask {
     -StartWhenAvailable `
     -ExecutionTimeLimit ([TimeSpan]::Zero) `
     -RestartCount 3 `
-    -RestartInterval (New-TimeSpan -Minutes 1)
+    -RestartInterval (New-TimeSpan -Minutes 1) `
+    -Hidden
   $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
   Register-ScheduledTask -TaskName $Name -Action $action -Trigger $Trigger -Settings $settings -Principal $principal -Description $Description -Force | Out-Null
   Write-Host "OK registered $Name"
@@ -53,22 +56,22 @@ function Register-EtherTask {
 
 $tLogon = New-ScheduledTaskTrigger -AtLogOn
 Register-EtherTask -Name "ETHER-Daemon" `
-  -Execute $Py `
+  -Execute $DaemonExe `
   -Argument "`"$Daemon`"" `
   -Trigger $tLogon `
-  -Description "@ETHER autonomous daemon (flywheel+batch+recovery+dashboard)"
+  -Description "@ETHER autonomous daemon (flywheel+batch+recovery+dashboard) — hidden, no console"
 
 $tEnsure = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration $RepeatFor
 Register-EtherTask -Name "ETHER-Ensure" `
   -Execute $Ps `
-  -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$Ensure`"" `
+  -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Ensure`"" `
   -Trigger $tEnsure `
-  -Description "@ETHER ensure daemon alive (heartbeat watchdog)"
+  -Description "@ETHER ensure daemon alive (heartbeat watchdog) — hidden, no console"
 
 try { Start-ScheduledTask -TaskName "ETHER-Daemon" -ErrorAction SilentlyContinue } catch {}
 try { Start-ScheduledTask -TaskName "ETHER-Ensure" -ErrorAction SilentlyContinue } catch {}
 
-& $Ps -NoProfile -ExecutionPolicy Bypass -File $Ensure
+Start-Process -FilePath $Ps -ArgumentList "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$Ensure`"" -WorkingDirectory $Root -WindowStyle Hidden
 
 Write-Host ""
 Write-Host "Autonomy registered. Tasks: ETHER-Daemon + ETHER-Ensure"

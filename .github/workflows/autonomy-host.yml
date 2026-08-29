@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "ensure | selftest | health | cycle"
+        description: "ensure | selftest | health | cycle | boot"
         required: true
         default: "cycle"
         type: choice
@@ -13,6 +13,7 @@ on:
           - selftest
           - health
           - cycle
+          - boot
   schedule:
     - cron: "*/15 * * * *"
   push:
@@ -21,6 +22,7 @@ on:
       - "core/autonomy.py"
       - "scripts/ether_daemon.py"
       - "scripts/ensure_daemon.ps1"
+      - "scripts/matrix_boot.ps1"
       - "dashboard/**"
       - ".github/workflows/autonomy-host.yml"
 
@@ -50,10 +52,16 @@ jobs:
           }
           .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
 
-      - name: Ensure daemon (dashboard + flywheel + batch)
+      - name: Ensure daemon (hidden, no console)
         run: |
           Set-Location $env:ETHER_ROOT
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
+          powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
+
+      - name: Matrix hidden boot
+        if: ${{ inputs.action == 'boot' || inputs.action == 'ensure' }}
+        run: |
+          Set-Location $env:ETHER_ROOT
+          powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\scripts\matrix_boot.ps1 -SkipPull
 
       - name: Offline autonomy self-test
         if: ${{ github.event_name == 'push' || inputs.action == 'selftest' || inputs.action == 'cycle' }}
@@ -83,6 +91,7 @@ jobs:
             C:/Users/Otcde/ETHER/memory/daemon/heartbeat.txt
             C:/Users/Otcde/ETHER/memory/daemon/healthy.json
             C:/Users/Otcde/ETHER/memory/daemon/ensure.log
+            C:/Users/Otcde/ETHER/memory/daemon/matrix_boot.log
             C:/Users/Otcde/ETHER/memory/daemon/autonomy.jsonl
             C:/Users/Otcde/ETHER/memory/flywheel/latest.json
             C:/Users/Otcde/ETHER/SCOREBOARD.md

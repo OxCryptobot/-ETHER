@@ -99,10 +99,22 @@ function Start-EtherDaemon {
       if ($_) { $env:ETHER_PRIMARY_MODEL = "$_".Trim(); Write-Log "model=$env:ETHER_PRIMARY_MODEL" }
     }
   } catch {}
-  Start-Process -FilePath $Py -ArgumentList "`"$Daemon`"" -WorkingDirectory $Root -WindowStyle Hidden
+  $PyW = Join-Path $Root ".venv\Scripts\pythonw.exe"
+  $exe = if (Test-Path -LiteralPath $PyW) { $PyW } else { $Py }
+  Start-Process -FilePath $exe -ArgumentList "`"$Daemon`"" -WorkingDirectory $Root -WindowStyle Hidden
 }
 
 Write-Log "ETHER_ROOT=$Root"
+
+$wake = Join-Path $Root "artifacts\host\matrix_wake.json"
+if (Test-Path -LiteralPath $wake) {
+  try {
+    $raw = Get-Content -LiteralPath $wake -Raw
+    if ($raw -match '"action"\s*:\s*"boot"' -and $raw -notmatch '"status"\s*:\s*"consumed"') {
+      Write-Log "matrix wake present — hidden boot requested by Control Matrix"
+    }
+  } catch {}
+}
 
 if (-not (Test-Path -LiteralPath $Py)) {
   Write-Log "MISSING venv - creating"

@@ -1,8 +1,13 @@
 {
-  "generated": "2026-08-29T05:07:51.971731+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-29T05:08:33.771170+00:00",
+  "next_job": "p3_26_unify_model",
+  "queue_head": [
+    "p3_26_unify_model",
+    "p3_27_checkpoint",
+    "p3_28_doctrine_playbook",
+    "p3_30_ledger_live"
+  ],
+  "queue_depth": 4,
   "host_phase": "polling",
   "last_job": "p3_25_merge_remainder",
   "last_ok": true,

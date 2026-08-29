@@ -1350,7 +1350,8 @@
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
     "critique_hyp_p1_248_merge_replay_021213",
-    "p3_19_fail_learn"
+    "p3_19_fail_learn",
+    "p3_20_memory_stack"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1447,7 +1448,7 @@
     "p3_17_hard_tools_convert",
     "p3_18_evolve_no_llm"
   ],
-  "last_tick": "2026-08-29T02:20:23.672861+00:00",
+  "last_tick": "2026-08-29T02:20:59.740368+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1457,7 +1458,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1469,6 +1470,6 @@
     "training_wheels": true
   },
   "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
-  "live_skip_remaining": 35,
+  "live_skip_remaining": 25,
   "last_live_skip_reason": "p3_18_evolve_no_llm"
 }

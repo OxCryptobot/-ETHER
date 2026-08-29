@@ -1,9 +1,9 @@
 {
-  "job_id": "p1_247_ledger_canary",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-29T01:58:44.065853+00:00",
-  "note": "HARD ledger canary DENIED from eligible. One hyp: same mutate path as merge p1_242 (observe then write/edit then run_tests). [failure_type=timeout]",
+  "job_id": "p3_15_fail_learn",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T02:02:56.654012+00:00",
+  "note": "publish fail_learn.json taxonomy from artifacts/jobs/failed",
   "class": "measure",
   "measurement": true,
   "live_budget": {
@@ -11,6 +11,5 @@
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+  }
 }

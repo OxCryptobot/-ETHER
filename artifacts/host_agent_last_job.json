@@ -1,11 +1,9 @@
 {
-  "job_id": "p3_18_evolve_no_llm",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-08-29T02:15:06.768990+00:00",
-  "note": "CONVERSION of p3_10. Phase 3 units without Ollama canary. [failure_type=timeout]",
+  "job_id": "p3_20_memory_stack",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T02:20:33.576290+00:00",
+  "note": "RAG+graph+LoRA-dry operational facade. No Ollama.",
   "class": "fast",
-  "measurement": false,
-  "failure_type": "timeout",
-  "scoreboard": "scoreboard_p1_248_merge_replay.json"
+  "measurement": false
 }

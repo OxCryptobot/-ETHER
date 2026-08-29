@@ -1,9 +1,11 @@
 {
-  "job_id": "playbook_coding_method_refresh_031214",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T03:12:18.647222+00:00",
-  "note": "playbook:coding_method_v1 for p3_23_merge_playbook_canary",
-  "class": "recovery",
-  "measurement": true
+  "job_id": "p3_24_queue_hygiene",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T03:16:25.644641+00:00",
+  "note": "Archive failed off origin path. Prune playbook spam from done.",
+  "class": "fast",
+  "measurement": true,
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p3_23_merge_playbook.json"
 }

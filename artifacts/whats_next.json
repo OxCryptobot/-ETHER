@@ -1,9 +1,12 @@
 {
-  "generated": "2026-08-29T03:13:57.544016+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-29T03:16:24.698250+00:00",
+  "next_job": "p3_24_queue_hygiene",
+  "queue_head": [
+    "p3_24_queue_hygiene",
+    "p3_25_merge_remainder"
+  ],
+  "queue_depth": 2,
+  "host_phase": "idle",
   "last_job": "playbook_coding_method_refresh_031214",
   "last_ok": true,
   "last_failure_type": null,

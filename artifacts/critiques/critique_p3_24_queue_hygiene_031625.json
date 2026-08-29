@@ -1,0 +1,24 @@
+{
+  "id": "critique_p3_24_queue_hygiene_031625",
+  "job_id": "p3_24_queue_hygiene",
+  "created": "2026-08-29T03:16:25.734419+00:00",
+  "failure_type": "step_fail",
+  "note": "Archive failed off origin path. Prune playbook spam from done.",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-28T23:33:54.552066+00:00",
+  "updated": "2026-08-29T00:52:43.642574+00:00",
   "scripted_n": 152,
   "scripted_ok_n": 146,
   "scripted_honest_n": 146,
@@ -9,14 +9,14 @@
   "toolish_honest_n": 146,
   "toolish_honest_rate": 1.0,
   "eligible": {
-    "live_eligible_n": 196,
-    "timeout_rate_eligible": 0.0051,
-    "honest_rate_eligible": 0.9847,
-    "timeout_rate_raw": 0.0804
+    "live_eligible_n": 80,
+    "timeout_rate_eligible": 0.0,
+    "honest_rate_eligible": 1.0,
+    "timeout_rate_raw": 0.0703
   },
   "phase1_gate": {
-    "status": "ARCH_GO",
-    "metrics_go": false
+    "status": "FULL_GO",
+    "metrics_go": true
   },
   "blockers": [
     "training_wheels_on",

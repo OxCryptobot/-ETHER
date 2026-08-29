@@ -1,13 +1,16 @@
 {
-  "generated": "2026-08-29T00:46:37.602995+00:00",
-  "next_job": "auto_rc_greeter_004636_0",
+  "generated": "2026-08-29T00:51:14.970841+00:00",
+  "next_job": "aa_p1_230_eligible_recompute",
   "queue_head": [
-    "auto_rc_greeter_004636_0",
-    "auto_rc_wallet_004636_1"
+    "aa_p1_230_eligible_recompute",
+    "auto_rc_wallet_004636_1",
+    "p1_231_scripted_hard_direct",
+    "p3_02_train_gates_074800",
+    "rlhf_tick_074800"
   ],
-  "queue_depth": 2,
+  "queue_depth": 5,
   "host_phase": "polling",
-  "last_job": "auto_rc_wallet_004211_1",
+  "last_job": "auto_rc_greeter_004636_0",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

@@ -1,10 +1,10 @@
 {
-  "job_id": "auto_rc_greeter_004636_0",
+  "job_id": "aa_p1_230_eligible_recompute",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T00:48:31.760696+00:00",
-  "note": "AUTO rate-climb gate_sample greeter (honest_rate=0.9847<0.99) under wheels \u2014 host autonomy",
-  "class": "gate_sample",
+  "finished": "2026-08-29T00:52:43.823961+00:00",
+  "note": "recompute eligible allowlist+window then phase1_gate \u2014 stop farm padding",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
     "max_wall_s": 300,

@@ -1349,14 +1349,6 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "p3_25_merge_remainder",
-    "p3_30_ledger_live",
-    "p3_26_unify_model",
-    "p3_27_checkpoint",
-    "p3_28_doctrine_playbook",
-    "p3_34_merge_live",
-    "p3_31_playbook_fade",
-    "p3_32_checkpoint_pipeline",
     "p3_33_bug_suggest"
   ],
   "failed": [
@@ -1452,7 +1444,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-29T06:29:56.543776+00:00",
+  "last_tick": "2026-08-29T16:39:36.034998+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1460,17 +1452,16 @@
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
-  "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 0,
+    "pending": 7,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
     "high_depth": 8,
     "high_hold_s": 120.0,
-    "may_enqueue": true,
+    "may_enqueue": false,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 2,
+    "max_enqueue_this_tick": 0,
     "training_wheels": true
   }
 }

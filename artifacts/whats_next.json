@@ -1,9 +1,17 @@
 {
-  "generated": "2026-08-29T06:29:56.554919+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-08-29T16:39:36.101481+00:00",
+  "next_job": "host_boot_20260829_080720",
+  "queue_head": [
+    "host_boot_20260829_080720",
+    "host_boot_20260829_163102",
+    "medic_hb_20260829_064135",
+    "p3_31_skip_llm",
+    "p3_35_fail_learn",
+    "p3_36_ckpt_pipeline",
+    "p3_37_chat_bus"
+  ],
+  "queue_depth": 7,
+  "host_phase": "starting",
   "last_job": "p3_33_bug_suggest",
   "last_ok": true,
   "last_failure_type": null,

@@ -1,0 +1,19 @@
+{
+  "id": "p3_37_chat_bus",
+  "note": "FAST: Dual-chat git bus drain (inbox -> outbox) without Ollama",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_chat_bus.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

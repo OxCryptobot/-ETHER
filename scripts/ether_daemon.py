@@ -55,6 +55,8 @@ RECOVERY_COOLDOWN = int(os.getenv("ETHER_RECOVERY_COOLDOWN_S", "1800"))
 RUN_DASH = os.getenv("ETHER_DAEMON_DASHBOARD", "1") == "1"
 RUN_FLYWHEEL = os.getenv("ETHER_DAEMON_FLYWHEEL", "1") == "1"
 RUN_BATCH = os.getenv("ETHER_DAEMON_BATCH", "1") == "1"
+RUN_CHAT = os.getenv("ETHER_DAEMON_CHAT", "1") == "1"
+CHAT_INTERVAL = int(os.getenv("ETHER_CHAT_INTERVAL", "20"))
 PORT = int(os.getenv("ETHER_DASH_PORT", "8787"))
 
 PID_PATH = ROOT / "memory" / "daemon" / "daemon.pid"
@@ -64,7 +66,12 @@ HEALTH_FLAG = ROOT / "memory" / "daemon" / "healthy.json"
 _stop = threading.Event()
 _cycle_n = 0
 _last_recovery = 0.0
-_threads: Dict[str, Optional[threading.Thread]] = {"flywheel": None, "batch": None, "dashboard": None}
+_threads: Dict[str, Optional[threading.Thread]] = {
+    "flywheel": None,
+    "batch": None,
+    "dashboard": None,
+    "chat": None,
+}
 
 
 def log(msg: str) -> None:
@@ -296,6 +303,26 @@ def dashboard_loop() -> None:
         log(f"dashboard error: {e}")
 
 
+def chat_loop() -> None:
+    """Drain Dual-chat inbox → outbox. Fail-closed. No Ollama unless ETHER_CHAT_LLM=1."""
+    script = ROOT / "scripts" / "chat_bus_tick.py"
+    log(f"chat bus interval={CHAT_INTERVAL}s script={script.exists()}")
+    while not _stop.is_set():
+        try:
+            heartbeat()
+            if script.exists():
+                code = run_cmd([PY, str(script)], timeout=90)
+                log(f"chat bus tick exit={code}")
+            else:
+                log("chat bus skipped (missing chat_bus_tick.py)")
+        except Exception as e:
+            log(f"chat bus error (will continue): {e}")
+        for _ in range(max(10, CHAT_INTERVAL)):
+            if _stop.is_set():
+                return
+            time.sleep(1)
+
+
 def _start_thread(name: str, target: Callable[[], None]) -> None:
     t = threading.Thread(target=target, name=name, daemon=True)
     t.start()
@@ -313,6 +340,7 @@ def watchdog() -> None:
             "flywheel": (RUN_FLYWHEEL, flywheel_loop),
             "batch": (RUN_BATCH, batch_loop),
             "dashboard": (RUN_DASH, dashboard_loop),
+            "chat": (RUN_CHAT, chat_loop),
         }
         for name, (enabled, fn) in mapping.items():
             if not enabled:
@@ -330,40 +358,5 @@ def main() -> int:
     print("=" * 60, flush=True)
     print("  @ETHER DAEMON — autonomous stand-alone mode", flush=True)
     print(f"  root={ROOT}", flush=True)
-    print("  recovery | curriculum | batch | guardian | watchdog", flush=True)
-    print("=" * 60, flush=True)
-    if not acquire_lock():
-        return 2
-    heartbeat()
-    boot_self_test()
-    write_healthy_flag()
-
-    if RUN_DASH:
-        _start_thread("dashboard", dashboard_loop)
-        time.sleep(1.5)
-    if RUN_FLYWHEEL:
-        _start_thread("flywheel", flywheel_loop)
-    if RUN_BATCH:
-        _start_thread("batch", batch_loop)
-    threading.Thread(target=watchdog, name="watchdog", daemon=True).start()
-
-    def _sig(*_a):
-        _stop.set()
-
-    signal.signal(signal.SIGINT, _sig)
-    try:
-        signal.signal(signal.SIGTERM, _sig)
-    except Exception:
-        pass
-    try:
-        while not _stop.is_set():
-            heartbeat()
-            time.sleep(5)
-    except KeyboardInterrupt:
-        _stop.set()
-    log("exit")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+    print("  recovery | curriculum | batch | chat bus | guardian | watchdog", flush=True)
+    print("=" * 60, flush=Tru

@@ -1349,7 +1349,6 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "playbook_coding_method_refresh_031214",
     "p3_25_merge_remainder"
   ],
   "failed": [
@@ -1443,10 +1442,9 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01",
-    "p3_24_queue_hygiene"
+    "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-29T03:35:46.989275+00:00",
+  "last_tick": "2026-08-29T03:37:37.381084+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1466,6 +1464,5 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  }
 }

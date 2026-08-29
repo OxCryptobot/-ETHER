@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-29T00:57:27.901480+00:00",
+  "updated": "2026-08-29T01:54:32.246285+00:00",
   "phase_gate": "1_to_2",
   "metrics_go": true,
   "architecture_go": true,
@@ -47,7 +47,7 @@
   "honest_rate_eligible": 1.0,
   "live_eligible_n": 80,
   "scripted_honest_rate": 0.963,
-  "timeout_rate_raw": 0.0703,
+  "timeout_rate_raw": 0.0698,
   "training_wheels": true,
   "soft_launch_ready": false,
   "note": "ARCH_GO = Phase 2A architecture under wheels ON (adapter still default OFF). FULL_GO / metrics_go = eligible LIVE rates for soft-launch discussion only. Never auto-lifts wheels or ETHER_SOFT_LAUNCH. 2026-08-21: MIN_ELIGIBLE_N default lowered to 3 for measured progress."

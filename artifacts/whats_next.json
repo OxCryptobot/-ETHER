@@ -1,20 +1,19 @@
 {
-  "generated": "2026-08-29T01:50:35.295818+00:00",
+  "generated": "2026-08-29T01:52:39.264887+00:00",
   "next_job": "p1_247_ledger_canary",
   "queue_head": [
     "p1_247_ledger_canary",
     "p1_248_merge_replay",
     "p1_250_hard_tools_retest",
-    "p3_10_evolve_tick",
     "p3_12_pillars",
     "p3_14_build_progress",
     "p3_15_fail_learn"
   ],
-  "queue_depth": 7,
+  "queue_depth": 6,
   "host_phase": "idle",
-  "last_job": "p3_11_evolve_publish",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "p3_10_evolve_tick",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

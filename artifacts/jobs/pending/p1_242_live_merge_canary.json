@@ -1,0 +1,28 @@
+{
+  "id": "p1_242_live_merge_canary",
+  "class": "measure",
+  "note": "LIVE merge canary AFTER edit_lines/bug_comments/observe-breaker. Denied from eligible. One hyp: new tools let 4B mutate instead of observe-loop.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "merge",
+        "--max-steps",
+        "12",
+        "--timeout",
+        "240",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_242_live_merge_canary.json"
+      ],
+      "timeout": 360
+    }
+  ]
+}

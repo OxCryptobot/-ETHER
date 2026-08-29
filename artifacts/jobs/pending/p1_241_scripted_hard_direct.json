@@ -1,0 +1,21 @@
+{
+  "id": "p1_241_scripted_hard_direct",
+  "note": "scripted hard tier after new tools land — prove batch_phase_d still greens",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "scripted",
+        "--tier",
+        "hard"
+      ],
+      "timeout": 300
+    }
+  ]
+}

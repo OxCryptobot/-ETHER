@@ -11,9 +11,11 @@ from typing import List, Sequence, Tuple
 # Preferred step order for tool-first agents
 STEP_ORDER: Tuple[str, ...] = (
     "list_files",
-    "read_file",  # tests first, then source
+    "bug_comments",
+    "read_file",  # tests first, then source (numbered)
     "grep",
     "glob",
+    "edit_lines",  # preferred for 4B live — line span from numbered read
     "apply_patch",  # preferred over write_file for edits
     "write_file",
     "run_tests",
@@ -25,7 +27,10 @@ STEP_ORDER: Tuple[str, ...] = (
 SYSTEM_RULES: Tuple[str, ...] = (
     "Output ONE JSON tool call per turn: {\"tool\": name, \"args\": {...}}.",
     "Read failing tests before editing source.",
-    "Prefer apply_patch for surgical edits; write_file only for new/full files.",
+    "Call bug_comments once to surface author-marked defects.",
+    "read_file returns numbered lines; use edit_lines(start_line,end_line,new).",
+    "Prefer edit_lines or apply_patch; write_file only for new/full files.",
+    "After two observe tools, mutate. Never re-read the same file.",
     "After every meaningful edit, run_tests.",
     "If run_tests fails 3 times without score gain, done with reason no_progress.",
     "Never emit eval/exec/__import__ dynamic code.",

@@ -1,0 +1,20 @@
+{
+  "id": "p1_240_hard_live_tools_unit",
+  "note": "unit test numbered read + edit_lines + bug_comments + scripted merge/ledger green",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_hard_live_tools.py",
+        "tests/test_tool_runtime.py",
+        "tests/test_coding_method.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 180
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "026_hard_live_must_mutate",
+  "teacher": "grok",
+  "craft": "tool_runtime",
+  "rule": "Hard LIVE (merge/ledger/lru/topo/intervals) fails when the 4B model loops on read_file until max_steps. Teacher fix: give tools the model can call. read_file is numbered. edit_lines replaces a line span. bug_comments surfaces BUG/FIXME markers already in the fixture source. After 3 observe tools the runtime injects STOP observing / MUST mutate. Do not raise max_steps. Do not farm greeter. Do not put hard LIVE into eligible until a scored PASS lands. Sequence: bug_comments -> numbered read tests+source once -> edit_lines/apply_patch -> run_tests.",
+  "match": "",
+  "code": "core.hard_live_tools + core.tool_runtime + core.tool_runtime_ext",
+  "taught_at": "2026-08-29",
+  "example_fix": {
+    "bug": "merge live 10x read_file zero writes max_steps",
+    "observed": "tool_order observe-loop; apply_patch unused; write_file too large for 512 tokens",
+    "hypothesis": "C+D — missing line-edit tool and observe-loop breaker, not budget",
+    "fix": [
+      "core/hard_live_tools.py",
+      "edit_lines + bug_comments tools",
+      "numbered read_file",
+      "observe streak hint",
+      "max_tokens 1024",
+      "keep merge on SEED_DENY until live PASS"
+    ],
+    "next_hypothesis": "live merge canary with new tools; if still observe-loop, force decide wrapper"
+  }
+}

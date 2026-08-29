@@ -1,19 +1,18 @@
 {
-  "generated": "2026-08-29T01:41:46.718978+00:00",
+  "generated": "2026-08-29T01:42:04.041765+00:00",
   "next_job": "p1_245_hard_tools_unit",
   "queue_head": [
     "p1_245_hard_tools_unit",
     "p1_246_train_gates_unit",
     "p1_247_ledger_canary",
     "p1_248_merge_replay",
-    "p1_249_rlhf_tick",
     "p3_10_evolve_tick",
     "p3_11_evolve_publish",
     "p3_12_pillars"
   ],
-  "queue_depth": 8,
-  "host_phase": "chat_push",
-  "last_job": "p1_242_live_merge_canary",
+  "queue_depth": 7,
+  "host_phase": "idle",
+  "last_job": "p1_249_rlhf_tick",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

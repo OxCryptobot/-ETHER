@@ -1,0 +1,23 @@
+{
+  "id": "critique_p1_245_hard_tools_unit_014207",
+  "job_id": "p1_245_hard_tools_unit",
+  "created": "2026-08-29T01:42:07.426462+00:00",
+  "failure_type": "step_fail",
+  "note": "pytest hard tools + runtime after job_class FAST fix; not a LIVE fixture",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

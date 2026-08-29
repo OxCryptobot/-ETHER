@@ -1,14 +1,12 @@
 {
-  "generated": "2026-08-29T03:00:45.968546+00:00",
-  "next_job": "p3_23_merge_playbook_canary",
-  "queue_head": [
-    "p3_23_merge_playbook_canary"
-  ],
-  "queue_depth": 1,
+  "generated": "2026-08-29T03:01:46.934071+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
   "host_phase": "polling",
-  "last_job": "p3_22_install_langchain",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "p3_23_merge_playbook_canary",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

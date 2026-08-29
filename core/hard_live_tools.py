@@ -21,7 +21,14 @@ OBSERVE_TOOLS = frozenset(
     }
 )
 MUTATE_TOOLS = frozenset(
-    {"write_file", "apply_patch", "edit_lines", "replace_once", "rollback"}
+    {
+        "write_file",
+        "apply_patch",
+        "edit_lines",
+        "replace_once",
+        "anchor_edit",
+        "rollback",
+    }
 )
 BUG_RX = re.compile(r"\b(BUG|FIXME|XXX)\b", re.IGNORECASE)
 MAX_OBSERVE_STREAK = 3
@@ -49,6 +56,27 @@ def edit_lines(body: str, start_line: int, end_line: int, new: str) -> str:
     if chunk and not chunk.endswith("\n") and suffix:
         chunk = chunk + "\n"
     return prefix + chunk + suffix
+
+
+def anchor_edit(body: str, contains: str, new: str) -> Tuple[str, int]:
+    """Replace the unique line containing `contains`. 1-based line returned."""
+    needle = (contains or "").strip()
+    if not needle:
+        raise ValueError("contains must be non-empty")
+    lines = (body or "").splitlines(keepends=True)
+    hits = [i for i, line in enumerate(lines) if needle in line]
+    if len(hits) == 0:
+        raise ValueError(f"anchor not found: {needle[:80]}")
+    if len(hits) > 1:
+        raise ValueError(f"anchor matched {len(hits)} lines; must be unique")
+    idx = hits[0]
+    ending = "\n" if lines[idx].endswith("\n") else ""
+    repl = new if new is not None else ""
+    if repl.endswith("\n"):
+        lines[idx] = repl
+    else:
+        lines[idx] = repl + ending
+    return "".join(lines), idx + 1
 
 
 def flex_replace(body: str, old: str, new: str) -> Tuple[str, str]:
@@ -124,7 +152,7 @@ def observe_loop_hint(streak: int, last_paths: Optional[List[str]] = None) -> st
     paths = ", ".join(last_paths or []) or "(already listed)"
     return (
         f"STOP observing (streak={streak}). Files already seen: {paths}. "
-        "Next tool MUST be edit_lines, replace_once, apply_patch, or write_file."
+        "Next tool MUST be edit_lines, replace_once, anchor_edit, apply_patch, or write_file."
     )
 
 

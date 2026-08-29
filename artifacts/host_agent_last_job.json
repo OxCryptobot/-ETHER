@@ -1,15 +1,9 @@
 {
-  "job_id": "p3_34_merge_live",
+  "job_id": "p3_31_playbook_fade",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T05:19:23.229330+00:00",
-  "note": "MEASURE hard merge LIVE after playbook fade. SEED_DENY. Scoreboard must tag policy=craft_helper|teacher_playbook|model. Denied from eligible. craft_helper PASS is not living-agent.",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-29T05:19:28.676795+00:00",
+  "note": "FAST: skip LLM after takeover; craft_helper from bug_comments suggested[]; remainder parseable.",
+  "class": null,
+  "measurement": false
 }

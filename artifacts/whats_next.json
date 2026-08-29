@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-29T05:18:41.314366+00:00",
+  "generated": "2026-08-29T05:19:26.788466+00:00",
   "next_job": "p3_31_playbook_fade",
   "queue_head": [
     "p3_31_playbook_fade",
     "p3_32_checkpoint_pipeline",
-    "p3_33_bug_suggest",
-    "p3_34_merge_live"
+    "p3_33_bug_suggest"
   ],
-  "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "p3_28_doctrine_playbook",
+  "queue_depth": 3,
+  "host_phase": "idle",
+  "last_job": "p3_34_merge_live",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

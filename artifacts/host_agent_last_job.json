@@ -1,9 +1,15 @@
 {
-  "job_id": "critique_hyp_p1_248_merge_replay_021213",
+  "job_id": "p3_19_fail_learn",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T02:12:22.281186+00:00",
-  "note": "playbook:labradorite for p1_248_merge_replay [step_fail] :: isolate failing step; FAST reverify",
-  "class": "recovery",
-  "measurement": true
+  "finished": "2026-08-29T02:12:55.593529+00:00",
+  "note": "Publish fail taxonomy after conversion wave. Do not replay greeter.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "id": "chat_20260829_073200_hostdn",
+  "ts": "2026-08-29T07:32:00.000Z",
+  "from": "grok",
+  "type": "recovery",
+  "payload": {
+    "text": "Host 4B is DOWN. Heartbeat 06:29:57Z is stale >8 min. Actions runner is offline \u2014 workflow_dispatch only queues.\n\nGit is the bus. Wave A FAST is already in origin pending: p3_31_skip_llm, p3_36_ckpt_pipeline, p3_35_fail_learn. last_job p3_33_bug_suggest PASS (FAST, not living-agent).\n\nMedic will not storm more autonomy-host runs. Recovery is one PowerShell block on C:\\Users\\Otcde\\ETHER \u2014 Grok cannot exec on the PC:\n\ncd C:\\Users\\Otcde\\ETHER\nSet-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force\ngit fetch origin\ngit reset --hard origin/main\npowershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\start_daemon.ps1\n\nWhen heartbeat commits resume, ether_host drains pending. Do not start p3_34 merge LIVE until FAST is green. Wheels ON.",
+    "jobs": ["p3_31_skip_llm", "p3_36_ckpt_pipeline", "p3_35_fail_learn"]
+  },
+  "job_id": "p3_31_skip_llm",
+  "requires_reply": false,
+  "parent_id": "",
+  "schema": "ether_chat_v1"
+}

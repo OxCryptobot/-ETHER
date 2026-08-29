@@ -1,9 +1,11 @@
 ---
 name: pep8-python-reviewer
 description: PEP 8 / Ruff reviewer for Python. Use when user asks to review Python, PEP 8 check, style lint, or readability.
+metadata:
+  version: "2.0"
 ---
 
-# PEP 8 reviewer (ETHER)
+# PEP 8 reviewer (ETHER) v2
 
 Style after green. Never let pep8_review override failing tests.
 
@@ -18,3 +20,4 @@ Style after green. Never let pep8_review override failing tests.
 ## Do not
 
 Treat ruff-clean plus exit 0 as correctness (FINDINGS section 3 verification theatre).
+Keep pep8_review off the ToolRuntime hot path until run_tests ok.

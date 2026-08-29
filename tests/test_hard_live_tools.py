@@ -1,9 +1,10 @@
-"""Hard-LIVE tools: numbered read, edit_lines, bug_comments, merge scripted."""
+"""Hard-LIVE tools: numbered read, edit_lines, bug_comments, merge/ledger scripted."""
 from __future__ import annotations
 
 from pathlib import Path
 
 from core.hard_live_tools import (
+    anchor_edit,
     edit_lines,
     extract_bug_comments,
     number_lines,
@@ -36,6 +37,14 @@ def test_edit_lines_bad_span_raises():
     except ValueError:
         return
     raise AssertionError("expected ValueError")
+
+
+def test_anchor_edit_unique_line():
+    body = "    b.credit(amount)\n    return s + s\n"
+    out, line = anchor_edit(body, "return s + s", "    return s")
+    assert line == 2
+    assert "return s\n" in out
+    assert "s + s" not in out
 
 
 def test_bug_comments_find_merge_markers():
@@ -147,36 +156,28 @@ def test_scripted_edit_lines_fixes_merge():
     assert result.score == 1.0
 
 
-def test_scripted_edit_lines_fixes_ledger_total_and_transfer():
-    src = LEDGER / "ledger.py"
-    lt = _line(src, "b.credit(amount)")
-    ls = _line(src, "return s + s")
+def test_scripted_replace_once_fixes_ledger():
+    """Do not use stacked edit_lines — inserts shift later spans (p1_245)."""
     plan = [
         {"tool": "bug_comments", "args": {}},
         {
-            "tool": "edit_lines",
+            "tool": "anchor_edit",
             "args": {
                 "path": "ledger.py",
-                "start_line": lt - 1,
-                "end_line": lt,
-                "new": (
-                    "        a.debit(amount)\n"
-                    "        b.credit(amount)"
-                ),
+                "contains": "b.credit(amount)",
+                "new": "        a.debit(amount)\n        b.credit(amount)",
             },
         },
         {
-            "tool": "edit_lines",
+            "tool": "replace_once",
             "args": {
                 "path": "ledger.py",
-                "start_line": ls - 1,
-                "end_line": ls,
-                "new": "        return sum(a.balance for a in self._accounts.values())",
+                "old": "return s + s",
+                "new": "return s",
             },
         },
         {"tool": "run_tests", "args": {}},
-    ]
-    it = iter(plan)
+    ]n    it = iter(plan)
 
     def decide(_m):
         try:
@@ -185,6 +186,6 @@ def test_scripted_edit_lines_fixes_ledger_total_and_transfer():
             return {"tool": "done", "args": {"reason": "stop"}}
 
     rt = ToolRuntime(fixture_root=LEDGER, decide_fn=decide, max_steps=6, pytest_timeout=30)
-    result = rt.run("fix ledger via edit_lines")
+    result = rt.run("fix ledger via anchor_edit")
     assert result.ok is True, result.error or result.reason
     assert result.score == 1.0

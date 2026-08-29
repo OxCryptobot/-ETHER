@@ -1,0 +1,28 @@
+{
+  "id": "p3_25_merge_remainder",
+  "class": "measure",
+  "note": "HARD merge LIVE after remainder replace_once fix. Denied from eligible. p3_23 was 0.5 with playbook tools.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "merge",
+        "--max-steps",
+        "12",
+        "--timeout",
+        "180",
+        "--scoreboard",
+        "artifacts/scoreboard_p3_25_merge.json"
+      ],
+      "timeout": 240
+    }
+  ]
+}

@@ -1,9 +1,4 @@
-"""Teacher takeover when LIVE observe-loops.
-
-The 4B gets two observe calls. If it has not mutated, this module drives
-bug_comments → replace_once/anchor_edit → run_tests. That is the immediate
-fix for p1_248 (6× read_file). It is still tool-first. It is not eligible.
-"""
+"""Teacher takeover when LIVE observe-loops."""
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, List
@@ -46,11 +41,17 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
             },
         },
         {
-            "tool": "anchor_edit",
+            "tool": "replace_once",
             "args": {
                 "path": "merge.py",
-                "contains": "out.extend(a[i:])",
-                "new": "    if i < len(a):\n        out.extend(a[i:])\n    if j < len(b):\n        out.extend(b[j:])",
+                "old": "    if i < len(a):\n        out.extend(a[i:])\n    return out",
+                "new": (
+                    "    if i < len(a):\n"
+                    "        out.extend(a[i:])\n"
+                    "    if j < len(b):\n"
+                    "        out.extend(b[j:])\n"
+                    "    return out"
+                ),
             },
         },
         {"tool": "run_tests", "args": {}},

@@ -1,9 +1,15 @@
 {
-  "job_id": "p1_241_scripted_hard_direct",
+  "job_id": "critique_hyp_p1_240_hard_live_tools_unit_011001",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T01:10:06.774476+00:00",
-  "note": "scripted hard tier after new tools land \u2014 prove batch_phase_d still greens",
-  "class": null,
-  "measurement": false
+  "finished": "2026-08-29T01:15:41.653508+00:00",
+  "note": "playbook:labradorite for p1_240_hard_live_tools_unit [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  }
 }

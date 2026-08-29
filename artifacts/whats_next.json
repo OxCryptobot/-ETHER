@@ -1,16 +1,16 @@
 {
-  "generated": "2026-08-29T01:10:05.040199+00:00",
+  "generated": "2026-08-29T01:15:39.040699+00:00",
   "next_job": "critique_hyp_p1_240_hard_live_tools_unit_011001",
   "queue_head": [
     "critique_hyp_p1_240_hard_live_tools_unit_011001",
-    "p1_241_scripted_hard_direct",
-    "p1_242_live_merge_canary"
+    "p1_242_live_merge_canary",
+    "p1_243_hard_live_tools_unit"
   ],
   "queue_depth": 3,
   "host_phase": "idle",
-  "last_job": "p1_240_hard_live_tools_unit",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_job": "p1_241_scripted_hard_direct",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

@@ -1,9 +1,15 @@
 {
-  "job_id": "p3_14_build_progress",
+  "job_id": "playbook_live_timeout_learn_015443",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T02:03:16.563996+00:00",
-  "note": "publish honest product progress bar",
+  "finished": "2026-08-29T02:03:21.678262+00:00",
+  "note": "playbook:live_tool_path_timeout for p3_12_pillars",
   "class": "fast",
-  "measurement": false
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  }
 }

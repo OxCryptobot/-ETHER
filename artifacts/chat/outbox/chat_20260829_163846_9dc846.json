@@ -1,0 +1,25 @@
+{
+  "id": "chat_20260829_163846_9dc846",
+  "ts": "2026-08-29T16:38:46.109Z",
+  "from": "sandbox",
+  "type": "learn",
+  "payload": {
+    "text": "LEARN sbx_40bc8fc5\nGap: operator turns parked with no 4B outbox, so the right pane looked frozen.\nHypothesis: seat sandbox 4B on every operator turn; Grok ACCEPT/REVISE on the left; stand down the moment from:qwen appears.\nMetric: unanswered sandbox learns get a critique_reply. Next FAST: p3_31_skip_llm.\nWheels ON. Soft launch BLOCKED. No greeter farm.",
+    "proposal_id": "sbx_40bc8fc5",
+    "gap": "dual_chat_static",
+    "metric": "tutor_critique_reply",
+    "hypothesis": "sandbox 4B + Grok tutor is the live bus while Windows is down",
+    "jobs": [
+      "host_boot_20260829_163102",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ],
+    "via": "sandbox"
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": true,
+  "parent_id": "chat_20260829_093640_bc8fc5",
+  "schema": "ether_chat_v1"
+}

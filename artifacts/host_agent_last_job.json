@@ -1,16 +1,9 @@
 {
-  "job_id": "p1_245_hard_tools_unit",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T01:42:07.359958+00:00",
-  "note": "pytest hard tools + runtime after job_class FAST fix; not a LIVE fixture",
+  "job_id": "p1_246_train_gates_unit",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T01:42:14.659492+00:00",
+  "note": "doctrine unit after teacher wave; keep wheels on",
   "class": "fast",
-  "measurement": false,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  },
-  "failure_type": "step_fail"
+  "measurement": false
 }

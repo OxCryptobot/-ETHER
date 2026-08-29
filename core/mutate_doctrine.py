@@ -12,3 +12,22 @@ DOCTRINE = (
 
 def suffix() -> str:
     return DOCTRINE
+
+
+def apply() -> bool:
+    import sys
+
+    mod = sys.modules.get("core.tool_runtime")
+    if mod is None:
+        return False
+    cls = getattr(mod, "ToolRuntime", None)
+    if cls is None or getattr(cls, "_mutate_doctrine", False):
+        return bool(cls is not None and getattr(cls, "_mutate_doctrine", False))
+    orig = cls._system_prompt
+
+    def wrapped(self, objective: str) -> str:
+        return orig(self, objective) + "\n" + DOCTRINE
+
+    cls._system_prompt = wrapped  # type: ignore[method-assign]
+    cls._mutate_doctrine = True
+    return True

@@ -1,9 +1,9 @@
 {
-  "job_id": "critique_hyp_medic_hb_20260829_064135_164000",
+  "job_id": "p3_36_ckpt_pipeline",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T16:40:31.090493+00:00",
-  "note": "playbook:labradorite for medic_hb_20260829_064135 [step_fail] :: isolate failing step; FAST reverify",
-  "class": "recovery",
+  "finished": "2026-08-29T16:40:35.906374+00:00",
+  "note": "FAST: Pipeline.run checkpoint write (I-010b). New id \u2014 do not requeue p3_32/p3_33 names.",
+  "class": "fast",
   "measurement": true
 }

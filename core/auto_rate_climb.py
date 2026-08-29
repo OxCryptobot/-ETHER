@@ -1,14 +1,9 @@
 """Host-side auto rate-climb under training wheels.
 
-Skills (batchphase / keep-pushing) only guide Grok in chat. They do NOT
-run on the Windows host. This module is what actually enqueues when:
+2026-08-28: STOP easy-farm padding. Once eligible n>=40 the remaining
+gap is not cured by more greeter copies. Foreman must not enqueue
+auto_rc just because rate < 0.99.
 
-  - pending is empty
-  - honest_rate_eligible < target (default 0.99)
-  - training wheels ON
-  - cooldown elapsed
-
-Called from scripts.foreman.enqueue_next after curriculum is exhausted.
 Never lifts wheels. Never enqueues denylisted hard LIVE fixtures.
 """
 from __future__ import annotations
@@ -24,10 +19,10 @@ PENDING = ROOT / "artifacts" / "jobs" / "pending"
 PHASE1_GATE = ROOT / "artifacts" / "phase1_gate.json"
 
 TARGET = float(os.getenv("ETHER_RATE_CLIMB_TARGET", "0.99"))
-# 2026-08-28: tighter loop — 3 weeks of idle gaps was the real delay, not job wall time.
 COOLDOWN_S = int(os.getenv("ETHER_RATE_CLIMB_COOLDOWN_S", "30"))
-WAVE_N = int(os.getenv("ETHER_RATE_CLIMB_WAVE_N", "4"))
-FIXTURES = ("greeter", "wallet")  # easy only; denylist hard stays out
+WAVE_N = int(os.getenv("ETHER_RATE_CLIMB_WAVE_N", "2"))
+FARM_N_CAP = int(os.getenv("ETHER_RATE_CLIMB_MAX_N", "40"))
+FIXTURES = ("greeter", "wallet")
 
 
 def _now() -> str:
@@ -38,12 +33,18 @@ def _wheels_on() -> bool:
     return (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
 
 
-def read_honest_rate() -> Optional[float]:
+def _gate() -> Dict[str, Any]:
     if not PHASE1_GATE.exists():
-        return None
+        return {}
     try:
-        data = json.loads(PHASE1_GATE.read_text(encoding="utf-8"))
-        v = data.get("honest_rate_eligible")
+        return json.loads(PHASE1_GATE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def read_honest_rate() -> Optional[float]:
+    try:
+        v = _gate().get("honest_rate_eligible")
         return float(v) if v is not None else None
     except Exception:
         return None
@@ -66,22 +67,27 @@ def maybe_enqueue(
     pending: Optional[Set[str]] = None,
     write_job=None,
 ) -> Optional[str]:
-    """Enqueue up to WAVE_N easy gate_sample jobs if rate lags.
-
-    write_job: callable(job_dict) -> Path from foreman.write_job
-    Returns last job id or None.
-    """
     if write_job is None:
         return None
     if not _wheels_on():
         state["rate_climb_status"] = "skip_wheels_off"
         return None
-    rate = read_honest_rate()
+    gate = _gate()
+    rate = None
+    try:
+        if gate.get("honest_rate_eligible") is not None:
+            rate = float(gate["honest_rate_eligible"])
+    except Exception:
+        rate = None
     if rate is None:
         state["rate_climb_status"] = "skip_no_rate"
         return None
     if rate >= TARGET:
         state["rate_climb_status"] = f"skip_rate_ok={rate:.4f}"
+        return None
+    n_e = int(gate.get("live_eligible_n") or 0)
+    if n_e >= FARM_N_CAP:
+        state["rate_climb_status"] = f"skip_farm_padding n={n_e} rate={rate:.4f}"
         return None
     if pending is None:
         PENDING.mkdir(parents=True, exist_ok=True)
@@ -118,7 +124,7 @@ def maybe_enqueue(
             "class": "gate_sample",
             "note": (
                 f"AUTO rate-climb gate_sample {fixture} "
-                f"(honest_rate={rate:.4f}<{TARGET}) under wheels — host autonomy"
+                f"(honest_rate={rate:.4f}<{TARGET} n={n_e}) under wheels"
             ),
             "continue_on_fail": True,
             "source": "foreman_rate_climb",

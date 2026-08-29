@@ -15,7 +15,7 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 DIAG = ROOT / "artifacts" / "timeout_diagnosis.json"
 OUT = ROOT / "artifacts" / "live_fixture_policy.json"
 
-# Hard denylist seed — chronic timeout fixtures from diagnosis (1D retirement)
+# Hard denylist seed — chronic timeout + merge (observe-loop, no write)
 SEED_DENY: List[str] = [
     "ledger",
     "pipeline_ledger",
@@ -23,6 +23,7 @@ SEED_DENY: List[str] = [
     "lru",
     "topo",
     "intervals",
+    "merge",
 ]
 
 TOP_N = int(os.getenv("ETHER_LIVE_DENY_TOP_N", "8"))

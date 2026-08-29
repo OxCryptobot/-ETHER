@@ -1,15 +1,17 @@
 {
-  "job_id": "p3_19_fail_learn",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T02:12:55.593529+00:00",
-  "note": "Publish fail taxonomy after conversion wave. Do not replay greeter.",
-  "class": "measure",
-  "measurement": true,
+  "job_id": "p3_17_hard_tools_convert",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T02:13:02.753431+00:00",
+  "note": "CONVERSION of p1_245/p1_250. Force boot + hard tool units. Not LIVE.",
+  "class": "fast",
+  "measurement": false,
   "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  },
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p1_248_merge_replay.json"
 }

@@ -1,0 +1,28 @@
+{
+  "id": "p3_21_langchain_and_unleash",
+  "class": "fast",
+  "note": "LangChain adapter + phase3 complete board + unleash check. No wheels flip.",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_langchain_adapter.py",
+        "tests/test_memory_stack.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.phase3_complete"],
+      "timeout": 30
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.unleash_check"],
+      "timeout": 60
+    }
+  ]
+}

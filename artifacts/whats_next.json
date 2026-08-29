@@ -1,13 +1,12 @@
 {
-  "generated": "2026-08-29T02:07:36.510131+00:00",
+  "generated": "2026-08-29T02:08:13.703380+00:00",
   "next_job": "p1_248_merge_replay",
   "queue_head": [
-    "p1_248_merge_replay",
-    "p3_16_self_improve"
+    "p1_248_merge_replay"
   ],
-  "queue_depth": 2,
-  "host_phase": "idle",
-  "last_job": "zcr_tool_runtime_scripted_020304",
+  "queue_depth": 1,
+  "host_phase": "polling",
+  "last_job": "p3_16_self_improve",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

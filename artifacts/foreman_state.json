@@ -1351,7 +1351,8 @@
     "ss_archive_failed_150331_4",
     "playbook_live_timeout_learn_015443",
     "p3_12_pillars",
-    "zcr_tool_runtime_scripted_020304"
+    "zcr_tool_runtime_scripted_020304",
+    "p3_16_self_improve"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,7 +1447,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-29T02:07:36.494508+00:00",
+  "last_tick": "2026-08-29T02:08:13.692203+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 34,
@@ -1456,7 +1457,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 2,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

@@ -1,9 +1,17 @@
 {
-  "job_id": "p3_16_self_improve",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T02:08:09.518340+00:00",
-  "note": "self-improve dual-window unit + one cycle; no LLM canary",
-  "class": "fast",
-  "measurement": false
+  "job_id": "p1_248_merge_replay",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T02:12:13.477488+00:00",
+  "note": "HARD merge replay DENIED from eligible. Confirm p1_242 was not a one-shot. Do not farm greeter.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  },
+  "failure_type": "step_fail",
+  "scoreboard": "scoreboard_p1_248_merge_replay.json"
 }

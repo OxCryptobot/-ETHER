@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-08-29T02:03:16.231110+00:00",
+  "timestamp": "2026-08-29T02:08:09.359238+00:00",
   "ok": true,
   "dry_run": true,
   "forced_dry": true,
   "trained": false,
   "adapter_written": false,
   "readiness": {
-    "timestamp": "2026-08-29T02:03:16.215484+00:00",
+    "timestamp": "2026-08-29T02:08:09.352673+00:00",
     "training_wheels": true,
     "may_train": false,
     "gate_reason": "training_wheels_require_ETHER_LORA_TRAIN=1",
@@ -23,7 +23,7 @@
     "dry_run": true,
     "forced_dry_run": true,
     "message": "dry-run complete \u2014 structure ready for real train when flags lifted",
-    "report_path": "artifacts\\lora_adapters\\train_report_43b43bc4-26a.json"
+    "report_path": "artifacts\\lora_adapters\\train_report_e765042d-2c0.json"
   },
   "doctrine": "dry_tick_only_phase_2_5",
   "next": "Keep collecting preference pairs. Real train only after ETHER_LORA_TRAIN=1 + ETHER_LORA_PROMOTE=1 + green preference health."

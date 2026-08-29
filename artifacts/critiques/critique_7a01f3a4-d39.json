@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-29T02:07:59.952049+00:00",
+  "task_id": "7a01f3a4-d392-430a-9306-e0ea4ae77bc7",
+  "objective": "close gap wheels_skip",
+  "root_cause": "tool_order",
+  "evidence": [],
+  "confidence": 0.55,
+  "severity": "improve",
+  "critique": "[block] ~0 lines, complexity=0.00. No code to review \u2014 generation stage produced empty artifact; Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "No code to review \u2014 generation stage produced empty artifact",
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "complexity_score": 0.0,
+  "smallest_experiment": {
+    "hyp": "C",
+    "change": "force early high-value tool order (read \u2192 locate \u2192 edit)",
+    "mutation": "wheels_skip"
+  },
+  "train_doctrine": "grok_v1",
+  "training_wheels": true
+}

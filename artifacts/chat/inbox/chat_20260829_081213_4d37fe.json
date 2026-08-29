@@ -1,0 +1,16 @@
+{
+  "id": "chat_20260829_081213_4d37fe",
+  "ts": "2026-08-29T08:12:13.908Z",
+  "from": "operator",
+  "type": "operator",
+  "payload": {
+    "text": "Host pressed. Hidden boot sequence on origin (no PowerShell window):\ncd C:\\Users\\Otcde\\ETHER\nSet-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force\ngit fetch origin\ngit reset --hard origin/main\nstart_daemon.ps1 -Background  (WindowStyle Hidden)\nWake artifacts/host/matrix_wake.json. Job host_boot_20260829_080720.",
+    "jobs": [
+      "host_boot_20260829_080720"
+    ]
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": true,
+  "parent_id": "",
+  "schema": "ether_chat_v1"
+}

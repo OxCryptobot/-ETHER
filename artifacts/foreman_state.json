@@ -1351,7 +1351,8 @@
     "ss_archive_failed_150331_4",
     "auto_rc_greeter_004636_0",
     "aa_p1_230_eligible_recompute",
-    "p1_231_scripted_hard_direct"
+    "p1_231_scripted_hard_direct",
+    "rlhf_tick_074800"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,7 +1447,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-29T00:52:54.383088+00:00",
+  "last_tick": "2026-08-29T00:53:09.384540+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 29,
@@ -1456,7 +1457,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 3,
+    "pending": 2,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

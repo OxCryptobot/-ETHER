@@ -1,15 +1,9 @@
 {
-  "job_id": "rlhf_tick_074800",
+  "job_id": "p3_02_train_gates_074800",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T00:53:05.266493+00:00",
-  "note": "growth: offline RLHF from scoreboards",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-29T00:53:11.018567+00:00",
+  "note": "growth: doctrine + preference unit tests",
+  "class": "fast",
+  "measurement": false
 }

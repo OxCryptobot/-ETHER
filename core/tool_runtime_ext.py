@@ -2,6 +2,9 @@
 
 Includes pep8_review so GEMS agents can request a structured style gate
 mid-loop (ruff-first via core.pep8_reviewer).
+
+2026-08-29: edit_lines + bug_comments so 4B live can mutate hard fixtures
+instead of looping on read_file until max_steps.
 """
 from __future__ import annotations
 
@@ -19,6 +22,20 @@ EXTRA_SPECS = (
         "doc": (
             "PEP8/ruff style review. args: path (optional, default '.') — "
             "relative to workspace. Returns critical/warning counts + top findings."
+        ),
+    },
+    {
+        "name": "edit_lines",
+        "doc": (
+            "Replace a 1-indexed inclusive line span. "
+            "args: path, start_line, end_line, new. Use numbered read_file output."
+        ),
+    },
+    {
+        "name": "bug_comments",
+        "doc": (
+            "Extract BUG/FIXME/XXX comments from workspace source (not tests). "
+            "args: path (optional). Does not invent a fix."
         ),
     },
 )
@@ -74,6 +91,57 @@ class ToolExtMixin:
         self._push_undo(path, target)
         target.write_text(body.replace(old, new, 1), encoding="utf-8")
         return {"ok": True, "path": path, "replaced": 1, "mutated": True}
+
+    def _obs_edit_lines(
+        self, path: str, start_line: Any, end_line: Any, new: str
+    ) -> Dict[str, Any]:
+        from core.hard_live_tools import edit_lines
+        from core.tool_runtime import _ast_reject_py
+
+        target, err = self._resolve_path(path)
+        if err:
+            return {"ok": False, "error": err}
+        assert target is not None
+        if not target.is_file():
+            return {"ok": False, "error": f"not found: {path}"}
+        try:
+            s = int(start_line)
+            e = int(end_line)
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "start_line and end_line must be integers"}
+        body = target.read_text(encoding="utf-8", errors="replace")
+        try:
+            updated = edit_lines(body, s, e, new if new is not None else "")
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        ast_err = _ast_reject_py(path, updated)
+        if ast_err:
+            return {"ok": False, "error": ast_err}
+        self._push_undo(path, target)
+        target.write_text(updated, encoding="utf-8")
+        return {
+            "ok": True,
+            "path": path,
+            "start_line": s,
+            "end_line": e,
+            "mutated": True,
+            "n_chars": len(updated),
+        }
+
+    def _obs_bug_comments(self, path: str = ".") -> Dict[str, Any]:
+        from core.hard_live_tools import extract_bug_comments
+
+        assert self.workspace is not None
+        root = self.workspace
+        rel = (path or ".").strip() or "."
+        if rel not in (".", ""):
+            target, err = self._resolve_path(rel)
+            if err:
+                return {"ok": False, "error": err}
+            assert target is not None
+            root = target if target.is_dir() else target.parent
+        hits = extract_bug_comments(root)
+        return {"ok": True, "hits": hits, "n": len(hits)}
 
     def _obs_rollback(self) -> Dict[str, Any]:
         self._ensure_undo()

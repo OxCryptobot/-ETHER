@@ -1,15 +1,15 @@
 {
-  "job_id": "critique_hyp_p1_240_hard_live_tools_unit_011001",
+  "job_id": "p1_242_live_merge_canary",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T01:15:41.653508+00:00",
-  "note": "playbook:labradorite for p1_240_hard_live_tools_unit [step_fail] :: isolate failing step; FAST reverify",
-  "class": "recovery",
+  "finished": "2026-08-29T01:18:03.540174+00:00",
+  "note": "LIVE merge canary AFTER edit_lines/bug_comments/observe-breaker. Denied from eligible. One hyp: new tools let 4B mutate instead of observe-loop.",
+  "class": "measure",
   "measurement": true,
   "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
   }
 }

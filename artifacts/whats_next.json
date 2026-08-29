@@ -1,14 +1,13 @@
 {
-  "generated": "2026-08-29T01:15:39.040699+00:00",
-  "next_job": "critique_hyp_p1_240_hard_live_tools_unit_011001",
+  "generated": "2026-08-29T01:15:45.750887+00:00",
+  "next_job": "p1_242_live_merge_canary",
   "queue_head": [
-    "critique_hyp_p1_240_hard_live_tools_unit_011001",
     "p1_242_live_merge_canary",
     "p1_243_hard_live_tools_unit"
   ],
-  "queue_depth": 3,
-  "host_phase": "idle",
-  "last_job": "p1_241_scripted_hard_direct",
+  "queue_depth": 2,
+  "host_phase": "polling",
+  "last_job": "critique_hyp_p1_240_hard_live_tools_unit_011001",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

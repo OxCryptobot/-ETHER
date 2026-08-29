@@ -1,0 +1,28 @@
+{
+  "id": "p3_16_self_improve",
+  "class": "fast",
+  "note": "self-improve dual-window unit + one cycle; no LLM canary",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_self_improve.py",
+        "tests/test_fail_learn.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.self_improve"
+      ],
+      "timeout": 120
+    }
+  ]
+}

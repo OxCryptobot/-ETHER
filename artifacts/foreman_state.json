@@ -1351,7 +1351,8 @@
     "ss_archive_failed_150331_4",
     "p1_241_scripted_hard_direct",
     "critique_hyp_p1_240_hard_live_tools_unit_011001",
-    "p1_240_hard_live_tools_unit"
+    "p1_240_hard_live_tools_unit",
+    "p1_242_live_merge_canary"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1446,7 +1447,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-08-29T01:15:45.741885+00:00",
+  "last_tick": "2026-08-29T01:18:10.175937+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 30,
@@ -1456,7 +1457,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 2,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

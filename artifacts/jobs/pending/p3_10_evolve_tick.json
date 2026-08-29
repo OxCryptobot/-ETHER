@@ -1,0 +1,21 @@
+{
+  "id": "p3_10_evolve_tick",
+  "class": "fast",
+  "note": "Phase 3 evolution operator unit + tick after metrics_go",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_phase3_evolve.py",
+        "tests/test_phase3_complete.py",
+        "tests/test_critique_plan_wire.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 180
+    }
+  ]
+}

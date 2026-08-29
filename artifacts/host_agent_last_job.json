@@ -1,15 +1,9 @@
 {
-  "job_id": "p1_233_pipeline_scripted_hard",
+  "job_id": "p1_232_ast_gate",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T00:55:58.056229+00:00",
-  "note": "growth: pipeline scripted hard pack \u2014 not LIVE",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-08-29T00:56:02.410318+00:00",
+  "note": "growth: AST transactional edit + tool_runtime AST gate",
+  "class": "fast",
+  "measurement": false
 }

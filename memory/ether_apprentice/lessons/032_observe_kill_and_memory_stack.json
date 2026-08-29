@@ -1,0 +1,9 @@
+{
+  "id": "032_observe_kill_and_memory_stack",
+  "teacher": "grok",
+  "craft": "tool_runtime",
+  "rule": "p1_248 replay: 6x read_file then timeout. Hints are not enough. After 3 observe calls rewrite to bug_comments; after 5 done observe_loop_kill. Do not raise max_steps. RAG=BM25, graph=failure_graph, LoRA=dry are operational; real LoRA train is not.",
+  "match": "",
+  "code": "core.observe_breaker",
+  "taught_at": "2026-08-29"
+}

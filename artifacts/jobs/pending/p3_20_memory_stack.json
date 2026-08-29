@@ -1,0 +1,23 @@
+{
+  "id": "p3_20_memory_stack",
+  "class": "fast",
+  "note": "RAG+graph+LoRA-dry operational facade. No Ollama.",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_memory_stack.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 90
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.memory_stack"],
+      "timeout": 60
+    }
+  ]
+}

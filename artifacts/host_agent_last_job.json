@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_35_fail_learn",
+  "job_id": "critique_hyp_medic_hb_20260829_064135_164000",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T16:40:11.599398+00:00",
-  "note": "FAST: fail_learn + queue hygiene. Never requeue a graveyard file.",
-  "class": "fast",
+  "finished": "2026-08-29T16:40:31.090493+00:00",
+  "note": "playbook:labradorite for medic_hb_20260829_064135 [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
   "measurement": true
 }

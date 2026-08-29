@@ -1,11 +1,6 @@
 """Measure Phase C tool-runtime on repo-oracle fixtures.
 
   python -m scripts.measure_tool_runtime --live --fixture ledger
-
-2026-08-22 Phase B:
-- Easy fixtures (greeter/wallet) get tight step-by-step objectives so 4B can finish.
-- LIVE uses lower max_tokens for tool calls (faster first token + less drift).
-- ensure_model_env() prefers short tag before any live decide_fn.
 """
 from __future__ import annotations
 
@@ -62,46 +57,28 @@ _EASY_FIXED = {
     },
 }
 
-# Tight objectives for 4B LIVE — force a short tool sequence
 OBJECTIVES = {
     "greeter": (
-        "Fix greeter.py so ALL tests pass. Do exactly this sequence:\n"
-        "1) list_files\n"
-        "2) read_file path=tests/test_greeter.py (or tests/test_toy.py if that exists)\n"
-        "3) read_file path=greeter.py\n"
-        "4) write_file path=greeter.py content=def greet(name: str) -> str:\\n    return f\\\"Hello, {name}!\\\"\\n\n"
-        "5) run_tests\n"
-        "6) done with reason tests_passed\n"
-        "One JSON tool call per turn. No prose."
+        "Fix greeter.py so ALL tests pass. list_files, read tests, read greeter.py, "
+        "write_file the Hello fix, run_tests, done. JSON only."
     ),
     "wallet": (
-        "Fix wallet.py so ALL tests pass. Do exactly this sequence:\n"
-        "1) list_files\n"
-        "2) read_file path=tests/test_wallet.py\n"
-        "3) read_file path=wallet.py\n"
-        "4) write_file the minimal fix (deposit/withdraw balance math + non-negative checks)\n"
-        "5) run_tests\n"
-        "6) done when tests pass\n"
-        "One JSON tool call per turn. No prose."
+        "Fix wallet.py so ALL tests pass. list_files, read tests, read wallet.py, "
+        "write_file deposit/withdraw fix, run_tests, done. JSON only."
     ),
     "topo": (
-        "Fix topo_sort so ALL tests pass. "
-        "Read tests/test_topo.py carefully: cycle cases MUST raise ValueError. "
-        "Implement Kahn indegree algorithm; if len(out) != len(nodes): raise ValueError('cycle detected'). "
+        "Fix topo_sort so ALL tests pass. Cycles MUST raise ValueError. Kahn indegree. "
         "Then run_tests."
     ),
     "ledger": (
-        "Fix ledger.py so ALL tests pass. account.py is CORRECT — never rewrite it. "
-        "REQUIRED tool order first: list_files, read_file tests/test_ledger.py, read_file ledger.py. "
-        "Then write_file ledger.py with BOTH fixes at once, then run_tests. "
-        "Bug1: transfer must a.debit(amount) then b.credit(amount). "
-        "Bug2: total must return sum(...) once — never s+s. "
-        "If tests still fail, re-read ledger.py and fix remaining bugs until score=1.0."
+        "Fix ledger.py. account.py is CORRECT. After at most one list_files and one "
+        "read_file, you MUST mutate: anchor_edit debit+credit, replace_once return s+s "
+        "with return s, then run_tests. No more read_file."
     ),
     "merge": (
-        "Fix the merge package so ALL tests pass. "
-        "list_files, read failing tests, read source, apply_patch or write_file minimal fix, run_tests, done. "
-        "One JSON tool call per turn."
+        "Fix merge.py. After at most one list_files and one read_file you MUST mutate: "
+        "replace_once return list(b), replace_once return list(a), anchor_edit extend b "
+        "remainder, then run_tests. No more read_file."
     ),
 }
 
@@ -151,7 +128,6 @@ def measure_one(
         return {"fixture": name, "ok": False, "error": f"missing fixture {fixture}"}
 
     if live:
-        # Phase B: force short-tag model + tight generation budget for 4B host
         try:
             from core.model_select import ensure_model_env
 
@@ -159,7 +135,6 @@ def measure_one(
             os.environ["ETHER_PRIMARY_MODEL"] = chosen
         except Exception:
             pass
-        # Easy fixtures: fewer steps, lower max_tokens → finish under wall
         if name in EASY:
             steps = min(max(max_steps, 6), 8)
             max_tok = 384
@@ -167,6 +142,12 @@ def measure_one(
             steps = max(max_steps, 10)
             max_tok = 768
         decide = make_llm_decide_fn(temperature=0.0, max_tokens=max_tok)
+        try:
+            from core.hard_live_playbook import wrap_live_decide
+
+            decide = wrap_live_decide(name, decide)
+        except Exception:
+            pass
         mode = "live"
     else:
         decide = _scripted_decide(name)

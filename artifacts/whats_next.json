@@ -1,14 +1,13 @@
 {
-  "generated": "2026-08-29T05:19:26.788466+00:00",
-  "next_job": "p3_31_playbook_fade",
+  "generated": "2026-08-29T05:19:32.039468+00:00",
+  "next_job": "p3_32_checkpoint_pipeline",
   "queue_head": [
-    "p3_31_playbook_fade",
     "p3_32_checkpoint_pipeline",
     "p3_33_bug_suggest"
   ],
-  "queue_depth": 3,
+  "queue_depth": 2,
   "host_phase": "idle",
-  "last_job": "p3_34_merge_live",
+  "last_job": "p3_31_playbook_fade",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

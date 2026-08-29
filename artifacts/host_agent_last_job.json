@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_31_playbook_fade",
+  "job_id": "p3_32_checkpoint_pipeline",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T05:19:28.676795+00:00",
-  "note": "FAST: skip LLM after takeover; craft_helper from bug_comments suggested[]; remainder parseable.",
+  "finished": "2026-08-29T05:19:33.841147+00:00",
+  "note": "FAST: Pipeline.run shadows write_progress onto checkpoint_pipeline.",
   "class": null,
   "measurement": false
 }

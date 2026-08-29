@@ -66,12 +66,7 @@ HEALTH_FLAG = ROOT / "memory" / "daemon" / "healthy.json"
 _stop = threading.Event()
 _cycle_n = 0
 _last_recovery = 0.0
-_threads: Dict[str, Optional[threading.Thread]] = {
-    "flywheel": None,
-    "batch": None,
-    "dashboard": None,
-    "chat": None,
-}
+_threads: Dict[str, Optional[threading.Thread]] = {"flywheel": None, "batch": None, "dashboard": None, "chat": None}
 
 
 def log(msg: str) -> None:
@@ -303,8 +298,9 @@ def dashboard_loop() -> None:
         log(f"dashboard error: {e}")
 
 
+
 def chat_loop() -> None:
-    """Drain Dual-chat inbox → outbox. Fail-closed. No Ollama unless ETHER_CHAT_LLM=1."""
+    """Drain Dual-chat inbox to outbox. Fail-closed. No Ollama unless ETHER_CHAT_LLM=1."""
     script = ROOT / "scripts" / "chat_bus_tick.py"
     log(f"chat bus interval={CHAT_INTERVAL}s script={script.exists()}")
     while not _stop.is_set():
@@ -359,4 +355,41 @@ def main() -> int:
     print("  @ETHER DAEMON — autonomous stand-alone mode", flush=True)
     print(f"  root={ROOT}", flush=True)
     print("  recovery | curriculum | batch | chat bus | guardian | watchdog", flush=True)
-    print("=" * 60, flush=Tru
+    print("=" * 60, flush=True)
+    if not acquire_lock():
+        return 2
+    heartbeat()
+    boot_self_test()
+    write_healthy_flag()
+
+    if RUN_DASH:
+        _start_thread("dashboard", dashboard_loop)
+        time.sleep(1.5)
+    if RUN_FLYWHEEL:
+        _start_thread("flywheel", flywheel_loop)
+    if RUN_BATCH:
+        _start_thread("batch", batch_loop)
+    if RUN_CHAT:
+        _start_thread("chat", chat_loop)
+    threading.Thread(target=watchdog, name="watchdog", daemon=True).start()
+
+    def _sig(*_a):
+        _stop.set()
+
+    signal.signal(signal.SIGINT, _sig)
+    try:
+        signal.signal(signal.SIGTERM, _sig)
+    except Exception:
+        pass
+    try:
+        while not _stop.is_set():
+            heartbeat()
+            time.sleep(5)
+    except KeyboardInterrupt:
+        _stop.set()
+    log("exit")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

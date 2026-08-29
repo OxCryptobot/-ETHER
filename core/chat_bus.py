@@ -1,12 +1,8 @@
-"""ether_chat_v1 git bus — Grok/operator write inbox; 4B/git write outbox.
+"""Git-backed chat bus — ETHER ↔ Grok structured envelopes.
 
-The Control Matrix cannot exec on Windows. This module is the host-side drain:
-read unanswered inbox, write one outbox envelope, optionally commit.
-
-LLM calls are opt-in (ETHER_CHAT_LLM=1). Default tick is a git ack so Dual chat
-moves even when Ollama is down. Style after green (pep8-python-reviewer).
+2026-08-22e: clear_session(fast=True) unlinks for instant Clear button.
+2026-08-29: tick_once drains Control Matrix inbox -> outbox (git ack default).
 """
-
 from __future__ import annotations
 
 import json
@@ -14,98 +10,231 @@ import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
-
-SCHEMA = "ether_chat_v1"
-PENDING_HOST_SCHEMA = "ether_pending_host_v1"
-INBOX_REL = Path("artifacts") / "chat" / "inbox"
-OUTBOX_REL = Path("artifacts") / "chat" / "outbox"
-PENDING_HOST_REL = Path("artifacts") / "chat" / "pending_host.json"
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
+CHAT = ROOT / "artifacts" / "chat"
+INBOX = CHAT / "inbox"
+OUTBOX = CHAT / "outbox"
+ARCHIVE = CHAT / "archive"
+
+VALID_TYPES = {
+    "critique_request",
+    "critique_reply",
+    "plan",
+    "status",
+    "recovery",
+    "operator",
+    "learn",
+    "job_request",
+    "ack",
+    "agent_turn",
+    "agent_reply",
+}
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _stamp(prefix: str = "chat") -> str:
-    d = datetime.now(timezone.utc)
-    rand = uuid.uuid4().hex[:6]
-    return f"{prefix}_{d.strftime('%Y%m%d_%H%M%S')}_{rand}"
+def _ensure_dirs() -> None:
+    for d in (INBOX, OUTBOX, ARCHIVE):
+        d.mkdir(parents=True, exist_ok=True)
+        keep = d / ".gitkeep"
+        if not keep.exists():
+            keep.write_text("", encoding="utf-8")
 
 
-def inbox_dir(root: Optional[Path] = None) -> Path:
-    return (root or ROOT) / INBOX_REL
-
-
-def outbox_dir(root: Optional[Path] = None) -> Path:
-    return (root or ROOT) / OUTBOX_REL
-
-
-def pending_host_path(root: Optional[Path] = None) -> Path:
-    return (root or ROOT) / PENDING_HOST_REL
-
-
-def _read_json(path: Path) -> Optional[Dict[str, Any]]:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return raw if isinstance(raw, dict) else None
-
-
-def load_envelopes(folder: Path, limit: int = 48) -> List[Dict[str, Any]]:
-    if not folder.is_dir():
-        return []
-    files = sorted(
-        [p for p in folder.glob("*.json") if p.name != ".gitkeep"],
-        key=lambda p: p.name,
-        reverse=True,
-    )[:limit]
-    out: List[Dict[str, Any]] = []
-    for path in files:
-        row = _read_json(path)
-        if row and isinstance(row.get("id"), str):
-            out.append(row)
-    out.sort(key=lambda e: str(e.get("ts") or ""))
-    return out
-
-
-def make_envelope(
+def envelope(
     *,
     from_actor: str,
     type_: str,
-    text: str,
-    job_id: str = "",
-    parent_id: str = "",
+    payload: Dict[str, Any],
+    job_id: Optional[str] = None,
     requires_reply: bool = False,
-    extra: Optional[Dict[str, Any]] = None,
+    parent_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {"text": text}
-    if extra:
-        payload.update(extra)
+    if type_ not in VALID_TYPES:
+        raise ValueError(f"invalid chat type: {type_}")
     return {
-        "id": _stamp("chat"),
+        "id": f"chat_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}",
         "ts": _now(),
         "from": from_actor,
         "type": type_,
-        "payload": payload,
+        "payload": payload or {},
         "job_id": job_id,
         "requires_reply": bool(requires_reply),
         "parent_id": parent_id,
-        "schema": SCHEMA,
+        "schema": "ether_chat_v1",
     }
 
 
-def write_envelope(folder: Path, env: Dict[str, Any]) -> Path:
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"{env['id']}.json"
-    path.write_text(json.dumps(env, indent=2) + "\n", encoding="utf-8")
+def send(env: Dict[str, Any], *, to_grok: bool = True) -> Path:
+    _ensure_dirs()
+    dest_dir = OUTBOX if to_grok else INBOX
+    path = dest_dir / f"{env['id']}.json"
+    path.write_text(json.dumps(env, indent=2), encoding="utf-8")
     return path
 
 
-def unanswered_inbox(inbox: Iterable[Dict[str, Any]], outbox: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def receive(*, from_grok: bool = True, limit: int = 20) -> List[Dict[str, Any]]:
+    _ensure_dirs()
+    src = INBOX if from_grok else OUTBOX
+    items: List[Dict[str, Any]] = []
+    for p in sorted(src.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
+        if p.name == ".gitkeep":
+            continue
+        try:
+            items.append(json.loads(p.read_text(encoding="utf-8")))
+        except Exception:
+            continue
+        if len(items) >= limit:
+            break
+    return items
+
+
+def archive(env_id: str) -> bool:
+    _ensure_dirs()
+    for folder in (INBOX, OUTBOX):
+        src = folder / f"{env_id}.json"
+        if src.exists():
+            dst = ARCHIVE / src.name
+            if dst.exists():
+                dst = ARCHIVE / f"{src.stem}_{int(datetime.now().timestamp())}.json"
+            src.rename(dst)
+            return True
+    return False
+
+
+def _wipe_folder(folder: Path) -> int:
+    """Unlink envelopes (fast clear). Keeps .gitkeep."""
+    n = 0
+    if not folder.exists():
+        return 0
+    for p in list(folder.glob("*.json")):
+        if p.name == ".gitkeep":
+            continue
+        try:
+            p.unlink()
+            n += 1
+        except OSError:
+            pass
+    return n
+
+
+def _archive_folder(folder: Path) -> int:
+    n = 0
+    if not folder.exists():
+        return 0
+    ARCHIVE.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%H%M%S")
+    for p in list(folder.glob("*.json")):
+        if p.name == ".gitkeep":
+            continue
+        dst = ARCHIVE / p.name
+        if dst.exists():
+            dst = ARCHIVE / f"{p.stem}_clr_{stamp}.json"
+        try:
+            p.rename(dst)
+            n += 1
+        except OSError:
+            try:
+                p.unlink()
+                n += 1
+            except OSError:
+                pass
+    return n
+
+
+def clear_session(*, keep_archive: bool = True, fast: bool = True) -> Dict[str, Any]:
+    """Clear Chat. fast=True (default): unlink inbox/outbox for instant UI.
+
+    keep_archive only matters when fast=False (rename into archive/).
+    """
+    _ensure_dirs()
+    if fast:
+        wiped_in = _wipe_folder(INBOX)
+        wiped_out = _wipe_folder(OUTBOX)
+        return {
+            "ok": True,
+            "fast": True,
+            "wiped_inbox": wiped_in,
+            "wiped_outbox": wiped_out,
+            "archived_inbox": 0,
+            "archived_outbox": 0,
+            "updated": _now(),
+        }
+    archived_in = _archive_folder(INBOX)
+    archived_out = _archive_folder(OUTBOX)
+    wiped_archive = 0
+    if not keep_archive:
+        wiped_archive = _wipe_folder(ARCHIVE)
+    return {
+        "ok": True,
+        "fast": False,
+        "archived_inbox": archived_in,
+        "archived_outbox": archived_out,
+        "wiped_archive": wiped_archive,
+        "updated": _now(),
+    }
+
+
+def post_operator(message: str, *, job_id: Optional[str] = None) -> Dict[str, Any]:
+    env = envelope(
+        from_actor="operator",
+        type_="operator",
+        payload={"text": message},
+        job_id=job_id,
+        requires_reply=True,
+    )
+    send(env, to_grok=True)
+    return env
+
+
+def post_critique_request(
+    job_id: str,
+    failure_type: str,
+    note: str,
+    evidence: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    env = envelope(
+        from_actor="ether",
+        type_="critique_request",
+        payload={
+            "failure_type": failure_type,
+            "note": note,
+            "evidence": evidence or {},
+        },
+        job_id=job_id,
+        requires_reply=True,
+    )
+    send(env, to_grok=True)
+    return env
+
+
+def summary() -> Dict[str, Any]:
+    _ensure_dirs()
+    turns_n = 0
+    turns_dir = CHAT / "turns"
+    if turns_dir.exists():
+        turns_n = len([p for p in turns_dir.glob("turn_*.json")])
+    return {
+        "updated": _now(),
+        "inbox_n": len([p for p in INBOX.glob("*.json") if p.name != ".gitkeep"]),
+        "outbox_n": len([p for p in OUTBOX.glob("*.json") if p.name != ".gitkeep"]),
+        "archive_n": len([p for p in ARCHIVE.glob("*.json") if p.name != ".gitkeep"]),
+        "turns_n": turns_n,
+        "path": str(CHAT.relative_to(ROOT)).replace("\\", "/"),
+        "orchestrator": True,
+    }
+
+
+
+PENDING_HOST = CHAT / "pending_host.json"
+PENDING_HOST_SCHEMA = "ether_pending_host_v1"
+
+
+def unanswered(inbox: List[Dict[str, Any]], outbox: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     parents = {str(e.get("parent_id") or "") for e in outbox if e.get("parent_id")}
     waiting: List[Dict[str, Any]] = []
     for env in inbox:
@@ -117,18 +246,17 @@ def unanswered_inbox(inbox: Iterable[Dict[str, Any]], outbox: Iterable[Dict[str,
     return waiting
 
 
-def write_pending_host(root: Path, envelope_id: str, text: str, status: str = "acked") -> Path:
-    path = pending_host_path(root)
-    path.parent.mkdir(parents=True, exist_ok=True)
+def write_pending_host(envelope_id: str, text: str, status: str = "acked") -> Path:
+    CHAT.mkdir(parents=True, exist_ok=True)
     body = {
         "updated": _now(),
         "status": status,
         "envelope_id": envelope_id,
-        "text": text[:400],
+        "text": (text or "")[:400],
         "schema": PENDING_HOST_SCHEMA,
     }
-    path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
-    return path
+    PENDING_HOST.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
+    return PENDING_HOST
 
 
 def _ollama_reply(prompt: str) -> Optional[str]:
@@ -169,42 +297,43 @@ def _ollama_reply(prompt: str) -> Optional[str]:
         return None
 
 
-def tick_once(root: Optional[Path] = None) -> Dict[str, Any]:
-    """Drain at most one unanswered inbox envelope into outbox."""
-    base = root or ROOT
-    inbox = load_envelopes(inbox_dir(base))
-    outbox = load_envelopes(outbox_dir(base))
-    waiting = unanswered_inbox(inbox, outbox)
+def tick_once() -> Dict[str, Any]:
+    """Drain one unanswered inbox envelope (Grok -> 4B) into outbox."""
+    inbox = receive(from_grok=True, limit=48)
+    outbox = receive(from_grok=False, limit=48)
+    waiting = unanswered(inbox, outbox)
     if not waiting:
         return {"ok": True, "wrote": False, "reason": "caught up"}
 
     src = waiting[0]
     src_id = str(src.get("id") or "")
     src_text = str((src.get("payload") or {}).get("text") or "")
-    job_id = str(src.get("job_id") or "")
+    job_id = src.get("job_id")
     llm = _ollama_reply(f"from={src.get('from')} type={src.get('type')}\n{src_text}")
     if llm:
-        env = make_envelope(
+        env = envelope(
             from_actor="ether",
             type_="agent_reply",
-            text=llm,
+            payload={"text": llm},
             job_id=job_id,
             parent_id=src_id,
         )
     else:
-        env = make_envelope(
+        env = envelope(
             from_actor="git",
             type_="ack",
-            text=(
-                f"Host tick parked parent {src_id}. 4B LLM skipped "
-                f"(ETHER_CHAT_LLM={os.getenv('ETHER_CHAT_LLM', '0')}). "
-                "FIFO still origin pending. Wheels ON."
-            ),
+            payload={
+                "text": (
+                    f"Host tick parked parent {src_id}. 4B LLM skipped "
+                    f"(ETHER_CHAT_LLM={os.getenv('ETHER_CHAT_LLM', '0')}). "
+                    "FIFO still origin pending. Wheels ON."
+                )
+            },
             job_id=job_id,
             parent_id=src_id,
         )
-    path = write_envelope(outbox_dir(base), env)
-    write_pending_host(base, src_id, src_text, status="acked")
+    path = send(env, to_grok=True)
+    write_pending_host(src_id, src_text, status="acked")
     return {
         "ok": True,
         "wrote": True,
@@ -214,3 +343,7 @@ def tick_once(root: Optional[Path] = None) -> Dict[str, Any]:
         "path": str(path),
         "llm": bool(llm),
     }
+
+
+if __name__ == "__main__":
+    print(json.dumps(summary(), indent=2))

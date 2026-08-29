@@ -1,15 +1,14 @@
 {
-  "generated": "2026-08-29T16:40:09.981328+00:00",
+  "generated": "2026-08-29T16:40:23.807045+00:00",
   "next_job": "critique_hyp_medic_hb_20260829_064135_164000",
   "queue_head": [
     "critique_hyp_medic_hb_20260829_064135_164000",
-    "p3_35_fail_learn",
     "p3_36_ckpt_pipeline",
     "p3_37_chat_bus"
   ],
-  "queue_depth": 4,
-  "host_phase": "idle",
-  "last_job": "p3_31_skip_llm",
+  "queue_depth": 3,
+  "host_phase": "starting",
+  "last_job": "p3_35_fail_learn",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

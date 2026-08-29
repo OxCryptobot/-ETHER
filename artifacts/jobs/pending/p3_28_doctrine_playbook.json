@@ -1,0 +1,21 @@
+{
+  "id": "p3_28_doctrine_playbook",
+  "note": "FAST: fixture-scoped spoilers + teacher_playbook policy + BUG-comment replace_once.",
+  "source": "grok_teacher",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_28_doctrine_scope.py",
+        "tests/test_p3_29_playbook_policy.py",
+        "tests/test_hard_live_playbook.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "p3_27_checkpoint",
+  "note": "FAST: ToolRuntime writes artifacts/checkpoints after each step.",
+  "source": "grok_teacher",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_p3_27_checkpoint_runtime.py", "-q", "--tb=short"],
+      "timeout": 120
+    }
+  ]
+}

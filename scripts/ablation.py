@@ -385,7 +385,7 @@ def model_fingerprint(model: Optional[str] = None, probe: bool = True) -> Dict[s
     recorded as missing rather than raising, because the run is still worth
     having.
     """
-    name = model or os.getenv("ETHER_PRIMARY_MODEL", "qwen2.5-coder:3b")
+    name = model or os.getenv("ETHER_PRIMARY_MODEL", "qwen3.5:4b")
     info: Dict[str, Any] = {
         "model": name,
         "digest": "",

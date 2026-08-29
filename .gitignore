@@ -46,6 +46,7 @@ models/
 # Host runtime logs (can exceed GitHub 100MB limit)
 artifacts/host_agent_log.txt
 artifacts/*.log
+artifacts/checkpoints/
 *.log
 
 # Job queue bodies — local only. Tracking them made `git reset --hard origin/main`

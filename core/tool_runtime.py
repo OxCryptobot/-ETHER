@@ -207,6 +207,7 @@ class ToolRuntime:
         max_steps: int = 8,
         timeout_s: float = 120.0,
         pytest_timeout: int = 30,
+        run_id: str = "",
     ) -> None:
         self.fixture_root = Path(fixture_root)
         self.decide_fn = decide_fn
@@ -214,6 +215,7 @@ class ToolRuntime:
         self.max_steps = max(1, int(max_steps))
         self.timeout_s = float(timeout_s)
         self.pytest_timeout = int(pytest_timeout)
+        self.run_id = (run_id or "").strip() or f"rt-{self.fixture_root.name}"
         self.workspace: Optional[Path] = None
         self.steps: List[StepRecord] = []
 
@@ -354,8 +356,8 @@ class ToolRuntime:
             {
                 "role": "user",
                 "content": (
-                    "Begin. First list_files, then read_file the tests and the "
-                    "broken source, then fix and run_tests."
+                    "Begin. list_files once, then bug_comments on the broken file, "
+                    "then replace_once or anchor_edit. Do not re-read. run_tests after mutate."
                 ),
             },
         ]
@@ -414,6 +416,21 @@ class ToolRuntime:
                     ok=bool(obs.get("ok")),
                 )
                 self.steps.append(rec)
+                try:
+                    from core.checkpoint import checkpoint_step
+
+                    checkpoint_step(
+                        run_id=self.run_id,
+                        stage=tool,
+                        objective=objective,
+                        n_steps=len(self.steps),
+                        best_score=best_score,
+                        messages_tail=messages[-4:],
+                        workspace_hint=str(self.workspace or ""),
+                        extra={"ok": bool(obs.get("ok")), "fixture": self.fixture_root.name},
+                    )
+                except Exception:
+                    pass
                 if tool == "run_tests":
                     sc = float(obs.get("score") or 0.0)
                     best_score = max(best_score, sc)

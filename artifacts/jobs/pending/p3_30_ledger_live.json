@@ -1,0 +1,27 @@
+{
+  "id": "p3_30_ledger_live",
+  "note": "MEASURE hard ledger LIVE after P3 wave. SEED_DENY. continue_on_fail. Scoreboard must tag policy=teacher_playbook|model. Denied from eligible.",
+  "source": "grok_teacher",
+  "continue_on_fail": true,
+  "class": "measure",
+  "measurement": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.measure_tool_runtime",
+        "--live",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "12",
+        "--timeout",
+        "240",
+        "--scoreboard",
+        "artifacts/scoreboard_p3_30_ledger.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

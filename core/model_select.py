@@ -207,3 +207,41 @@ def select_primary_model(force_refresh: bool = False) -> Dict[str, Any]:
 
 def ensure_model_env() -> str:
     return str(select_primary_model().get("model") or "qwen3.5:4b")
+
+
+def resolved_primary(explicit: Optional[str] = None) -> str:
+    """Single source of truth for Rose, multi_llm, and measure scripts.
+
+    Never silently default to qwen2.5-coder:3b. Host cap stays ≤4B.
+    """
+    if explicit and str(explicit).strip():
+        return str(explicit).strip()
+    env = (os.getenv("ETHER_PRIMARY_MODEL") or "").strip()
+    if env:
+        return env
+    return ensure_model_env()
+
+
+def resolved_fallback(explicit: Optional[str] = None) -> str:
+    """Host must not fall through to an 8B (deepseek-r1:8b used to)."""
+    env = (os.getenv("ETHER_FALLBACK_MODEL") or "").strip()
+    cand = (explicit or env or "").strip()
+    prof = load_profile()
+    if cand and prof.get("profile") != "cousin" and _is_heavy(cand):
+        return resolved_primary()
+    if cand:
+        return cand
+    return resolved_primary()
+
+
+def host_num_ctx() -> int:
+    """4GB KV: 4096 is the host default. 32768 was a silent VRAM tax."""
+    raw = (os.getenv("ETHER_NUM_CTX") or "").strip()
+    if raw:
+        try:
+            return max(512, int(raw))
+        except ValueError:
+            pass
+    if load_profile().get("profile") == "cousin":
+        return 8192
+    return 4096

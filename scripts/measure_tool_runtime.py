@@ -142,10 +142,12 @@ def measure_one(
             steps = max(max_steps, 10)
             max_tok = 768
         decide = make_llm_decide_fn(temperature=0.0, max_tokens=max_tok)
+        policy = "model"
         try:
             from core.hard_live_playbook import wrap_live_decide
 
             decide = wrap_live_decide(name, decide)
+            policy = "model"
         except Exception:
             pass
         mode = "live"
@@ -180,7 +182,18 @@ def measure_one(
         "reason": result.reason or result.error or "",
         "tools": [s.tool for s in result.steps],
         "model": os.getenv("ETHER_PRIMARY_MODEL", "") if live else "",
+        "policy": "scripted",
     }
+    if live:
+        tagged = "model"
+        try:
+            tagged = str(decide.policy())  # type: ignore[attr-defined]
+        except Exception:
+            tagged = "model"
+        reason = str(row.get("reason") or "")
+        if reason.startswith("playbook_") or tagged == "teacher_playbook":
+            tagged = "teacher_playbook"
+        row["policy"] = tagged
     if not row["ok"]:
         reason = str(row.get("reason") or "").lower()
         if "timeout" in reason:

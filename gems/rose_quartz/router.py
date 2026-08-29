@@ -70,7 +70,7 @@ def decode_options(
         # The composite prompt has been measured at ~6.9k chars; the Ollama
         # default context is far smaller, so prompts were being silently
         # truncated — from the front, which is where the objective lives.
-        "num_ctx": _envi("ETHER_NUM_CTX", 32768),
+        "num_ctx": _envi("ETHER_NUM_CTX", 4096),
         "seed": _envi("ETHER_SEED", 1) if seed is None else int(seed),
     }
 
@@ -99,11 +99,18 @@ class RoseQuartz:
         self,
         ollama_base_url: str | None = None,
         primary_model: str | None = None,
-        fallback_model: str = "deepseek-r1:8b",
+        fallback_model: str = "",
     ):
         self.ollama_base_url = (ollama_base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/")
-        self.primary_model = primary_model or os.getenv("ETHER_PRIMARY_MODEL", "qwen2.5-coder:3b")
-        self.fallback_model = os.getenv("ETHER_FALLBACK_MODEL", fallback_model)
+        try:
+            from core.model_select import resolved_fallback, resolved_primary
+
+            self.primary_model = resolved_primary(primary_model)
+            self.fallback_model = resolved_fallback(fallback_model or os.getenv("ETHER_FALLBACK_MODEL") or "")
+        except Exception:
+            self.primary_model = primary_model or os.getenv("ETHER_PRIMARY_MODEL", "qwen3.5:4b")
+            fb = os.getenv("ETHER_FALLBACK_MODEL", "").strip()
+            self.fallback_model = fb or self.primary_model
         self.stream = os.getenv("ETHER_ROSE_STREAM", "0") == "1"
         self.client = httpx.Client(timeout=_envf("ETHER_HTTP_TIMEOUT", 600.0))
 

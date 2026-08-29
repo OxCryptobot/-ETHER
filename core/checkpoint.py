@@ -1,7 +1,7 @@
-"""Checkpoint / resume schema for long agent runs (P3 foundation).
+"""Checkpoint / resume schema for long agent runs.
 
-Not fully wired into Pipeline yet — schema + disk helpers only.
-Use when a ToolRuntime or Pipeline run exceeds soft time budgets.
+Wired into ToolRuntime.run after every step (P3). Pipeline.run still does not
+call this — LoopRunner default-on is the next strangler slice.
 """
 from __future__ import annotations
 
@@ -59,3 +59,33 @@ def load_checkpoint(run_id: str) -> Optional[AgentCheckpoint]:
         created=str(data.get("created") or ""),
         extra=dict(data.get("extra") or {}),
     )
+
+
+def checkpoint_step(
+    *,
+    run_id: str,
+    stage: str,
+    objective: str = "",
+    n_steps: int = 0,
+    best_score: float = 0.0,
+    messages_tail: Optional[List[Dict[str, str]]] = None,
+    workspace_hint: str = "",
+    extra: Optional[Dict[str, Any]] = None,
+) -> Optional[Path]:
+    """Best-effort write. Never raise into the agent loop."""
+    try:
+        rid = (run_id or "tool_runtime").replace("/", "_")[:80]
+        return save_checkpoint(
+            AgentCheckpoint(
+                run_id=rid,
+                stage=stage[:80],
+                objective=(objective or "")[:500],
+                n_steps=int(n_steps),
+                best_score=float(best_score),
+                messages_tail=list(messages_tail or [])[-6:],
+                workspace_hint=(workspace_hint or "")[:240],
+                extra=dict(extra or {}),
+            )
+        )
+    except Exception:
+        return None

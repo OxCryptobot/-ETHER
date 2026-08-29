@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_36_ckpt_pipeline",
+  "job_id": "p3_37_chat_bus",
   "ok": true,
   "rc": 0,
-  "finished": "2026-08-29T16:40:35.906374+00:00",
-  "note": "FAST: Pipeline.run checkpoint write (I-010b). New id \u2014 do not requeue p3_32/p3_33 names.",
+  "finished": "2026-08-29T16:40:41.798158+00:00",
+  "note": "FAST: Dual-chat git bus drain (inbox -> outbox) without Ollama",
   "class": "fast",
   "measurement": true
 }

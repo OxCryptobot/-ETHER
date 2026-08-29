@@ -1444,9 +1444,10 @@
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
     "00_mcp_cq_spike_01",
-    "p3_17_hard_tools_convert"
+    "p3_17_hard_tools_convert",
+    "p3_18_evolve_no_llm"
   ],
-  "last_tick": "2026-08-29T02:13:06.712504+00:00",
+  "last_tick": "2026-08-29T02:15:23.229395+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 35,
@@ -1456,7 +1457,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -1467,5 +1468,7 @@
     "max_enqueue_this_tick": 2,
     "training_wheels": true
   },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
+  "live_skip_remaining": 35,
+  "last_live_skip_reason": "p3_18_evolve_no_llm"
 }

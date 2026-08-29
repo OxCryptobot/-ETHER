@@ -1,14 +1,12 @@
 {
-  "generated": "2026-08-29T02:13:06.731942+00:00",
-  "next_job": "p3_18_evolve_no_llm",
-  "queue_head": [
-    "p3_18_evolve_no_llm"
-  ],
-  "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "p3_17_hard_tools_convert",
+  "generated": "2026-08-29T02:15:23.248159+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
+  "host_phase": "polling",
+  "last_job": "p3_18_evolve_no_llm",
   "last_ok": false,
-  "last_failure_type": "step_fail",
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

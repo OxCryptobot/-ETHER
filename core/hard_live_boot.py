@@ -180,12 +180,7 @@ def patch_runtime() -> None:
 
         def guarded(messages):
             try:
-                from core.hard_live_tools import (
-                    MUTATE_TOOLS,
-                    OBSERVE_TOOLS,
-                    observe_loop_hint,
-                    should_break_observe,
-                )
+                from core.hard_live_tools import MUTATE_TOOLS, OBSERVE_TOOLS, observe_loop_hint
             except Exception:
                 MUTATE_TOOLS = {
                     "write_file",
@@ -205,33 +200,29 @@ def patch_runtime() -> None:
                     "_retry",
                 }
 
-                def should_break_observe(n):
-                    return n >= 3
-
                 def observe_loop_hint(n, last_paths=None):
                     return "STOP observing. Next tool MUST mutate."
 
-            if should_break_observe(streak["n"]):
+            if streak["n"] >= 3:
                 messages = list(messages) + [
                     {"role": "user", "content": observe_loop_hint(streak["n"])}
                 ]
             decision = inner(messages)
             if not isinstance(decision, dict):
                 return decision
+            try:
+                from core.observe_breaker import rewrite
+
+                forced = rewrite(str(decision.get("tool") or ""), streak["n"])
+                if forced is not None:
+                    decision = forced
+            except Exception:
+                pass
             tool = str(decision.get("tool") or "")
             if tool in OBSERVE_TOOLS:
                 streak["n"] += 1
             elif tool in MUTATE_TOOLS:
                 streak["n"] = 0
-            state = getattr(self, "_ether_state", None)
-            if state is not None:
-                try:
-                    state.tool_results.append({"tool": tool, "ok": True})
-                    if len(state.tool_results) > 40:
-                        state.tool_results = state.tool_results[-20:]
-                    state.save()
-                except Exception:
-                    pass
             return decision
 
         self.decide_fn = guarded

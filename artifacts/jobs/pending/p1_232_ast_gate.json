@@ -1,0 +1,19 @@
+{
+  "id": "p1_232_ast_gate",
+  "class": "fast",
+  "note": "growth: AST transactional edit + tool_runtime AST gate",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_ast_transaction.py",
+        "tests/test_tool_runtime_ast_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

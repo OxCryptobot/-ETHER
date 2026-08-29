@@ -1,19 +1,11 @@
-"""Self-improving coding agent loop — composed on existing ETHER pillars.
-
-Dual window:
-  Window A = local host agent (qwen 4B + ToolRuntime + GEMS)
-  Window B = Grok tutor (this chat + git bus)
-
-Cycle: reflect → hypothesize → propose → validate → persist → escalate tutor.
-Does not train LoRA. Does not lift wheels. Does not rewrite core/ locally.
-"""
+"""Self-improving coding agent loop composed on existing ETHER pillars."""
 from __future__ import annotations
 
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 OUT = ROOT / "artifacts" / "self_improve" / "cycle.json"
@@ -24,7 +16,6 @@ def _now() -> str:
 
 
 def reflect() -> Dict[str, Any]:
-    """Introspect failures + durable state. No network."""
     gaps: List[Dict[str, Any]] = []
     fail: Dict[str, Any] = {}
     try:
@@ -32,7 +23,11 @@ def reflect() -> Dict[str, Any]:
 
         fail = analyze()
         for lesson in fail.get("lessons") or []:
-            if lesson.get("kind") in {"easy_gate_sample_stale", "rate_recompute_stale", "arch_canary_stale"}:
+            if lesson.get("kind") in {
+                "easy_gate_sample_stale",
+                "rate_recompute_stale",
+                "arch_canary_stale",
+            }:
                 continue
             gaps.append(
                 {
@@ -46,6 +41,25 @@ def reflect() -> Dict[str, Any]:
     except Exception as exc:
         gaps.append({"kind": "fail_learn_error", "lesson": str(exc)[:160]})
 
+    last: Dict[str, Any] = {}
+    last_path = ROOT / "artifacts" / "host_agent_last_job.json"
+    if last_path.exists():
+        try:
+            last = json.loads(last_path.read_text(encoding="utf-8"))
+        except Exception:
+            last = {}
+    if last.get("ok") is False and last.get("job_id"):
+        gaps.insert(
+            0,
+            {
+                "kind": "last_job_fail",
+                "n": 1,
+                "root_cause": last.get("failure_type") or "unknown",
+                "lesson": f"{last.get('job_id')} {last.get('note')}"[:240],
+                "requeue": False,
+            },
+        )
+
     state_meta: Dict[str, Any] = {}
     try:
         from core.agent_state import AgentState
@@ -53,6 +67,8 @@ def reflect() -> Dict[str, Any]:
         st = AgentState.load_or_create("self_improve")
         st.objective = "self-improve cycle"
         st.training_wheels = True
+        if gaps:
+            st.hypothesis = str(gaps[0].get("lesson") or "")[:200]
         st.save()
         state_meta = {"thread_id": st.thread_id, "hypothesis": st.hypothesis}
     except Exception as exc:
@@ -83,26 +99,29 @@ def reflect() -> Dict[str, Any]:
         "evolution_ok": evo.get("ok"),
         "root_cause": evo.get("root_cause"),
         "smallest_experiment": evo.get("smallest_experiment"),
-        "introspection": evo.get("introspection"),
+        "last_job": last.get("job_id"),
+        "last_ok": last.get("ok"),
     }
 
 
-def propose_from_reflection(ref: Dict[str, Any]) -> Dict[str, Any]:
+def propose_from_reflection(ref: Dict[str, Any], research: Dict[str, Any]) -> Dict[str, Any]:
     from core.improvement_proposal import make_proposal, persist
+    from core.self_improve_versions import snapshot
 
     gaps = ref.get("gaps") or []
     top = gaps[0] if gaps else {
         "kind": "hard_live_ledger",
-        "lesson": "Ledger still unproven LIVE. Use anchor_edit + replace_once.",
-        "root_cause": "repair_quality",
+        "lesson": "Ledger LIVE timed out at sentinel. Prompt must name anchor_edit.",
+        "root_cause": "tool_order",
     }
+    cited = [h.get("id") for h in (research.get("lessons") or [])[:3] if h.get("id")]
     proposal = make_proposal(
         gap=str(top.get("kind")),
         hypothesis=str(top.get("lesson") or ref.get("smallest_experiment") or "")[:400],
         metric="hard_live_canary_pass",
         why=(
-            f"root_cause={top.get('root_cause')} n={top.get('n')} "
-            "Optimize mutation reliability on 4B without eligible poison."
+            f"root_cause={top.get('root_cause')} last_job={ref.get('last_job')} "
+            f"cited={cited} Optimize 4B mutation, not eligible rate."
         ),
         files=[
             "artifacts/self_improve/proposals/",
@@ -116,79 +135,52 @@ def propose_from_reflection(ref: Dict[str, Any]) -> Dict[str, Any]:
         source_kind=str(top.get("kind") or "fail_learn"),
     )
     path = persist(proposal, ROOT)
+    snapshot(str(proposal["id"]), path)
     proposal["path"] = str(path.relative_to(ROOT)).replace("\\", "/")
+    proposal["research_n"] = research.get("n")
     return proposal
 
 
-def dual_window_post(proposal: Dict[str, Any]) -> Dict[str, Any]:
-    """Submit proposal to Grok tutor over the existing git chat bus."""
-    from core.chat_bus import envelope, send
-
-    text = (
-        f"IMPROVE {proposal.get('id')} gap={proposal.get('gap')}\n"
-        f"hypothesis: {proposal.get('hypothesis')}\n"
-        f"metric: {proposal.get('metric')}\n"
-        f"why: {proposal.get('why')}\n"
-        "Tutor: annotate or land the core patch. Do not lift wheels."
-    )
-    env = envelope(
-        from_actor="ether",
-        type_="learn",
-        payload={
-            "text": text[:2000],
-            "proposal_id": proposal.get("id"),
-            "gap": proposal.get("gap"),
-            "metric": proposal.get("metric"),
-            "channel": "dual_window",
-        },
-        job_id=str(proposal.get("id")),
-        requires_reply=True,
-    )
-    path = send(env, to_grok=True)
-    return {
-        "ok": True,
-        "envelope_id": env["id"],
-        "path": str(path.relative_to(ROOT)).replace("\\", "/"),
-        "requires_reply": True,
-        "tutor": "grok",
-    }
-
-
 def worked_example() -> Dict[str, Any]:
-    """The loop that already ran this week — recorded as the PoC narrative."""
     return {
-        "title": "p1_242 / p1_245 → mutate tools",
-        "gap": "4B observed merge 10× and never mutated; ledger unit used shifting line spans",
-        "research": "scoreboard tools=read_file×10; merge.py BUG comments; fail_learn unit_hard_tools",
+        "title": "observe-loop to mutate tools to ledger timeout to prompt doctrine",
+        "gap": "4B looped read_file on merge; ledger canary died at empty sentinel",
+        "research": "scoreboards + fail_learn + lessons 028/029",
         "generated": [
-            "core/hard_live_tools.py (edit_lines, numbered read, replace_once, anchor_edit)",
-            "core/hard_live_boot.py (observe-loop breaker, max_tokens=1024)",
-            "tests/test_hard_live_tools.py",
+            "edit_lines / replace_once / anchor_edit",
+            "observe-loop breaker",
+            "self-improve dual window + versions",
         ],
         "validation": {
-            "p1_241_scripted_hard": "PASS",
-            "p1_242_live_merge_canary": "PASS (denied from eligible)",
-            "p1_245_hard_tools_unit": "FAIL → line-shift",
-            "fix": "anchor_edit + replace_once ledger unit; p1_250 retest queued",
+            "p1_242_live_merge_canary": "PASS",
+            "p1_245_hard_tools_unit": "FAIL line-shift then p1_250 retest",
+            "p1_247_ledger_canary": "TIMEOUT sentinel denied from eligible",
         },
-        "metric_optimized": "hard LIVE mutation success without eligible-denominator poison",
-        "why": "A 4B model cannot hold a full file in one write_file; it can replace one unique line.",
-        "rollback": "SEED_DENY kept merge/ledger out of honest_rate_eligible",
+        "metric_optimized": "hard LIVE mutation success without eligible poison",
+        "why": "Tools missing from the system prompt will not be used by 4B.",
+        "rollback": "SEED_DENY + artifacts/self_improve/versions",
     }
 
 
 def cycle(*, escalate: bool = True) -> Dict[str, Any]:
+    from core.self_improve_research import research as research_gap
     from core.self_mod_gate import decide_deploy, validate_proposal
 
     wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
     ref = reflect()
-    proposal = propose_from_reflection(ref)
+    top_kind = (ref.get("gaps") or [{}])[0].get("kind") or "hard_live"
+    researched = research_gap(str(top_kind))
+    proposal = propose_from_reflection(ref, researched)
     gate = validate_proposal(proposal)
     deploy = decide_deploy(tests_ok=True, proposal_ok=bool(gate.get("ok")), wheels=wheels)
     bus: Dict[str, Any] = {}
+    inbox: List[Dict[str, Any]] = []
     if escalate and gate.get("ok"):
         try:
-            bus = dual_window_post(proposal)
+            from core.dual_window import ingest_tutor, submit_proposal
+
+            bus = submit_proposal(proposal)
+            inbox = ingest_tutor(limit=5)
         except Exception as exc:
             bus = {"ok": False, "error": str(exc)[:160]}
     try:
@@ -208,6 +200,13 @@ def cycle(*, escalate: bool = True) -> Dict[str, Any]:
             "n_gaps": len(ref.get("gaps") or []),
             "counts": ref.get("counts"),
             "root_cause": ref.get("root_cause"),
+            "last_job": ref.get("last_job"),
+            "last_ok": ref.get("last_ok"),
+        },
+        "research": {
+            "n": researched.get("n"),
+            "external": researched.get("external"),
+            "fail_learn": researched.get("fail_learn"),
         },
         "proposal": {
             "id": proposal.get("id"),
@@ -220,12 +219,10 @@ def cycle(*, escalate: bool = True) -> Dict[str, Any]:
         "gate": gate,
         "deploy": deploy,
         "dual_window": bus,
+        "tutor_inbox": inbox[:3],
         "lora_dry": {"ok": dry.get("ok"), "trained": dry.get("trained")},
         "worked_example": worked_example(),
-        "note": (
-            "PoC self-improve cycle. Local agent proposes; Grok lands core patches; "
-            "pytest + SEED_DENY validate; AgentState + lessons persist."
-        ),
+        "note": "Local proposes; Grok lands core; pytest+SEED_DENY validate; versions persist.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

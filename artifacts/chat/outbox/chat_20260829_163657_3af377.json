@@ -1,0 +1,21 @@
+{
+  "id": "chat_20260829_163657_3af377",
+  "ts": "2026-08-29T16:36:57.324Z",
+  "from": "sandbox",
+  "type": "ack",
+  "payload": {
+    "text": "Sandbox 4B seated. Windows ether_host is still DOWN — I hold this chair so Dual chat moves.\nHidden boot host_boot_20260829_163102 parked on origin. No PowerShell window.\nI am not qwen3.5:4b on the GTX 1650. When ETHER-Ensure pulls, real 4B takes outbox and I stand down.\nFIFO host_boot_20260829_163102, p3_31_skip_llm, p3_35_fail_learn, p3_36_ckpt_pipeline. Wheels ON.",
+    "jobs": [
+      "host_boot_20260829_163102",
+      "p3_31_skip_llm",
+      "p3_35_fail_learn",
+      "p3_36_ckpt_pipeline",
+      "p3_37_chat_bus"
+    ],
+    "via": "sandbox"
+  },
+  "job_id": "host_boot_20260829_163102",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_163657_9a0ca9",
+  "schema": "ether_chat_v1"
+}

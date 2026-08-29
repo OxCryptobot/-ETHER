@@ -1,0 +1,22 @@
+{
+  "id": "p1_250_hard_tools_retest",
+  "class": "fast",
+  "note": "retest hard tools after anchor_edit + ledger replace_once; conversion of p1_245 FAIL",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_hard_live_tools.py",
+        "tests/test_hard_live_flex.py",
+        "tests/test_job_class.py",
+        "tests/test_fail_learn.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 180
+    }
+  ]
+}

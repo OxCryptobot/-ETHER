@@ -1,0 +1,16 @@
+{
+  "id": "p3_15_fail_learn",
+  "class": "measure",
+  "note": "publish fail_learn.json taxonomy from artifacts/jobs/failed",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.fail_learn"
+      ],
+      "timeout": 60
+    }
+  ]
+}

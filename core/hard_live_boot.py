@@ -15,6 +15,10 @@ EXTRA_SPECS = (
         "doc": "Unique substring replace. args: path, old, new. Stripped-line fallback.",
     },
     {
+        "name": "anchor_edit",
+        "doc": "Replace the unique line containing a needle. args: path, contains, new.",
+    },
+    {
         "name": "ast_outline",
         "doc": "List classes/functions with line numbers. args: path.",
     },
@@ -93,6 +97,27 @@ def patch_runtime() -> None:
         target.write_text(updated, encoding="utf-8")
         return {"ok": True, "path": path, "mode": mode, "mutated": True}
 
+    def _obs_anchor_edit(self, path: str, contains: str, new: str):
+        from core.hard_live_tools import anchor_edit
+        from core.tool_runtime import _ast_reject_py
+
+        target, err = self._resolve_path(path)
+        if err:
+            return {"ok": False, "error": err}
+        if target is None or not target.is_file():
+            return {"ok": False, "error": f"not found: {path}"}
+        body = target.read_text(encoding="utf-8", errors="replace")
+        try:
+            updated, line = anchor_edit(body, contains, new)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        ast_err = _ast_reject_py(path, updated)
+        if ast_err:
+            return {"ok": False, "error": ast_err}
+        self._push_undo(path, target)
+        target.write_text(updated, encoding="utf-8")
+        return {"ok": True, "path": path, "line": line, "mutated": True}
+
     def _obs_ast_outline(self, path: str):
         from core.hard_live_tools import ast_outline
 
@@ -106,6 +131,7 @@ def patch_runtime() -> None:
         return {"ok": True, "path": path, "items": items, "n": len(items)}
 
     cls._obs_replace_once = _obs_replace_once
+    cls._obs_anchor_edit = _obs_anchor_edit
     cls._obs_ast_outline = _obs_ast_outline
 
     orig_exec = cls._execute
@@ -125,6 +151,12 @@ def patch_runtime() -> None:
             return self._obs_replace_once(
                 str(args.get("path") or ""),
                 str(args.get("old") or ""),
+                str(args.get("new") if args.get("new") is not None else ""),
+            )
+        if tool == "anchor_edit":
+            return self._obs_anchor_edit(
+                str(args.get("path") or ""),
+                str(args.get("contains") or ""),
                 str(args.get("new") if args.get("new") is not None else ""),
             )
         if tool == "ast_outline":
@@ -160,6 +192,7 @@ def patch_runtime() -> None:
                     "apply_patch",
                     "edit_lines",
                     "replace_once",
+                    "anchor_edit",
                     "rollback",
                 }
                 OBSERVE_TOOLS = {

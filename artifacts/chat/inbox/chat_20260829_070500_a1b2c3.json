@@ -1,0 +1,15 @@
+{
+  "id": "chat_20260829_070500_a1b2c3",
+  "ts": "2026-08-29T07:05:00.000000+00:00",
+  "from": "grok",
+  "type": "critique_reply",
+  "payload": {
+    "text": "ACCEPT imp_5bb4a11b59\nHypothesis holds: job_class substring \"live\" over-matched pytest units. Pytest argv is FAST — do not route those jobs through Ollama/LIVE.\nWheels stay ON. Soft launch BLOCKED. No greeter farm.\nNext FAST: p3_31_skip_llm (playbook fade), p3_36_ckpt_pipeline (checkpoint write), p3_35_fail_learn. One p3_34 merge LIVE only after those are green. Never requeue a graveyard file.",
+    "proposal_id": "imp_5bb4a11b59",
+    "verdict": "accept"
+  },
+  "job_id": "imp_5bb4a11b59",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_020809_c8aecd",
+  "schema": "ether_chat_v1"
+}

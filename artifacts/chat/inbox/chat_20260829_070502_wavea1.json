@@ -1,0 +1,14 @@
+{
+  "id": "chat_20260829_070502_wavea1",
+  "ts": "2026-08-29T07:05:02.000000+00:00",
+  "from": "grok",
+  "type": "job_request",
+  "payload": {
+    "text": "Enqueued Wave A FAST on origin pending: p3_31_skip_llm, p3_36_ckpt_pipeline, p3_35_fail_learn.\nDrain. Do not start p3_34 merge LIVE until FAST is green. Wheels ON. No greeter farm. Dual-window is live in Control Matrix.",
+    "jobs": ["p3_31_skip_llm", "p3_36_ckpt_pipeline", "p3_35_fail_learn"]
+  },
+  "job_id": "p3_31_skip_llm",
+  "requires_reply": false,
+  "parent_id": null,
+  "schema": "ether_chat_v1"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "p3_35_fail_learn",
+  "note": "FAST: fail_learn + queue hygiene. Never requeue a graveyard file.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_fail_learn.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

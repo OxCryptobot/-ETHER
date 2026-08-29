@@ -1,10 +1,9 @@
 {
-  "job_id": "p1_240_hard_live_tools_unit",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-08-29T01:10:01.605789+00:00",
-  "note": "unit test numbered read + edit_lines + bug_comments + scripted merge/ledger green",
+  "job_id": "p1_241_scripted_hard_direct",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-08-29T01:10:06.774476+00:00",
+  "note": "scripted hard tier after new tools land \u2014 prove batch_phase_d still greens",
   "class": null,
-  "measurement": false,
-  "failure_type": "step_fail"
+  "measurement": false
 }

@@ -1,16 +1,16 @@
 {
-  "generated": "2026-08-29T01:09:56.920489+00:00",
-  "next_job": "p1_240_hard_live_tools_unit",
+  "generated": "2026-08-29T01:10:05.040199+00:00",
+  "next_job": "critique_hyp_p1_240_hard_live_tools_unit_011001",
   "queue_head": [
-    "p1_240_hard_live_tools_unit",
+    "critique_hyp_p1_240_hard_live_tools_unit_011001",
     "p1_241_scripted_hard_direct",
     "p1_242_live_merge_canary"
   ],
   "queue_depth": 3,
   "host_phase": "idle",
-  "last_job": "auto_rc_wallet_004636_1",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "p1_240_hard_live_tools_unit",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

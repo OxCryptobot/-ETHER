@@ -27,7 +27,25 @@ def normalize_class(raw: Any) -> str:
     return ANY
 
 
+def _argv_blob(job: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    for step in job.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        argv = step.get("argv") or []
+        if isinstance(argv, (list, tuple)):
+            parts.extend(str(x) for x in argv)
+        else:
+            parts.append(str(argv))
+    return " ".join(parts).lower()
+
+
 def job_class(job: Dict[str, Any]) -> str:
+    # Pytest / unit jobs are FAST even if the id contains the substring "live"
+    # (p1_243_hard_live_tools_unit was wheels-skipped because "live" matched).
+    blob = _argv_blob(job)
+    if "pytest" in blob or " -m pytest" in blob:
+        return FAST
     if "class" in job:
         cls = normalize_class(job.get("class"))
         if cls != ANY:
@@ -36,13 +54,39 @@ def job_class(job: Dict[str, Any]) -> str:
     jid = str(job.get("id") or "").lower()
     src = str(job.get("source") or "").lower()
     hay = f"{note} {jid} {src}"
-    if any(x in hay for x in ("measure", "honest_live", "soft_launch", "phase3_snapshot", "lora_dry", "honest_kpi")):
+    if any(
+        x in hay
+        for x in (
+            "measure",
+            "honest_live",
+            "soft_launch",
+            "phase3_snapshot",
+            "lora_dry",
+            "honest_kpi",
+        )
+    ):
         return MEASURE
-    if any(x in hay for x in ("playbook:", "critique_hyp", "labradorite", "diag_after")):
+    if any(
+        x in hay for x in ("playbook:", "critique_hyp", "labradorite", "diag_after")
+    ):
         return RECOVERY
-    if any(x in hay for x in ("live", "pipeline_ledger", "ss_pipeline_ledger")) and "scripted" not in hay:
+    if any(
+        x in hay for x in ("live", "pipeline_ledger", "ss_pipeline_ledger")
+    ) and "scripted" not in hay:
         return LIVE
-    if any(x in hay for x in ("scripted", "pytest", "ruff", "pep8", "whats_next", "archive", "train_gates")):
+    if any(
+        x in hay
+        for x in (
+            "scripted",
+            "pytest",
+            "ruff",
+            "pep8",
+            "whats_next",
+            "archive",
+            "train_gates",
+            "_unit",
+        )
+    ):
         return FAST
     return ANY
 

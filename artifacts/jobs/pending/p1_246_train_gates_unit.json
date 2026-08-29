@@ -1,0 +1,20 @@
+{
+  "id": "p1_246_train_gates_unit",
+  "class": "fast",
+  "note": "doctrine unit after teacher wave; keep wheels on",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_train_gates.py",
+        "tests/test_tool_runtime.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

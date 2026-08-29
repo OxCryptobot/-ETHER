@@ -1,0 +1,21 @@
+{
+  "id": "027_hard_live_merge_pass",
+  "teacher": "grok",
+  "craft": "tool_runtime",
+  "rule": "p1_242 LIVE merge PASSed: list_files, 4x read_file, write_file, run_tests, score=1.0, 7 steps, 135s, qwen3.5:4b. Mutation is the gate, not more budget. Do not put merge into eligible after one canary. Replay once. Next hard canary is ledger (cross-file debit+total). Never name a pytest job with a bare live token in the id without class=fast — host classified p1_243/p1_244 as LIVE and wheels-skipped them.",
+  "match": "",
+  "code": "artifacts/scoreboard_p1_242_live_merge_canary.json",
+  "taught_at": "2026-08-29",
+  "example_fix": {
+    "bug": "unit jobs wheels_skip because id contained live",
+    "observed": "p1_243 and p1_244 moved to failed/*_wheels_skip.json; pytest never ran",
+    "hypothesis": "job_class substring live over-match",
+    "fix": [
+      "core/job_class.py pytest argv => FAST",
+      "requeue unit as p1_245/p1_246 class=fast",
+      "p1_247 ledger canary measure continue_on_fail",
+      "p1_248 merge replay measure"
+    ],
+    "next_hypothesis": "ledger live canary using same observe-then-write path"
+  }
+}

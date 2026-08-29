@@ -1,0 +1,28 @@
+{
+  "id": "p1_248_merge_replay",
+  "class": "measure",
+  "note": "HARD merge replay DENIED from eligible. Confirm p1_242 was not a one-shot. Do not farm greeter.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "merge",
+        "--max-steps",
+        "12",
+        "--timeout",
+        "200",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_248_merge_replay.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

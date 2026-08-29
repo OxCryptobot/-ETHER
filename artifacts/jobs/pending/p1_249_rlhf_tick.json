@@ -1,0 +1,16 @@
+{
+  "id": "p1_249_rlhf_tick",
+  "class": "measure",
+  "note": "offline RLHF refresh after hard merge canary scoreboard",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
+      ],
+      "timeout": 180
+    }
+  ]
+}

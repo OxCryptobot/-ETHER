@@ -3,6 +3,14 @@ from __future__ import annotations
 
 EXTRA_SPECS = (
     {
+        "name": "edit_lines",
+        "doc": "Replace a 1-based line span. args: path, start_line, end_line, new.",
+    },
+    {
+        "name": "bug_comments",
+        "doc": "List BUG/FIXME/XXX comments. args: path (optional, default workspace).",
+    },
+    {
         "name": "replace_once",
         "doc": "Unique substring replace. args: path, old, new. Stripped-line fallback.",
     },
@@ -196,4 +204,18 @@ def patch_runtime() -> None:
         self.decide_fn = guarded
 
     cls.__init__ = _init  # type: ignore[method-assign]
+
+    orig_make = getattr(mod, "make_llm_decide_fn", None)
+    if orig_make is not None and not getattr(mod, "_hard_live_max_tokens", False):
+
+        def make_llm_decide_fn(call_fn=None, *, temperature=0.1, max_tokens=1024):
+            return orig_make(
+                call_fn,
+                temperature=temperature,
+                max_tokens=max(int(max_tokens or 1024), 1024),
+            )
+
+        mod.make_llm_decide_fn = make_llm_decide_fn
+        mod._hard_live_max_tokens = True
+
     cls._hard_live_booted = True

@@ -1,0 +1,28 @@
+{
+  "id": "p1_247_ledger_canary",
+  "class": "measure",
+  "note": "HARD ledger canary DENIED from eligible. One hyp: same mutate path as merge p1_242 (observe then write/edit then run_tests).",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.batch_phase_d",
+        "--arm",
+        "direct",
+        "--mode",
+        "live",
+        "--fixture",
+        "ledger",
+        "--max-steps",
+        "12",
+        "--timeout",
+        "200",
+        "--scoreboard",
+        "artifacts/scoreboard_p1_247_ledger_canary.json"
+      ],
+      "timeout": 300
+    }
+  ]
+}

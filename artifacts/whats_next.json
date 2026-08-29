@@ -1,19 +1,18 @@
 {
-  "generated": "2026-08-29T02:02:56.104113+00:00",
+  "generated": "2026-08-29T02:03:00.704370+00:00",
   "next_job": "p1_248_merge_replay",
   "queue_head": [
     "p1_248_merge_replay",
     "p1_250_hard_tools_retest",
     "p3_14_build_progress",
-    "p3_15_fail_learn",
     "p3_16_self_improve",
     "playbook_live_timeout_learn_015443"
   ],
-  "queue_depth": 6,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "p1_247_ledger_canary",
-  "last_ok": false,
-  "last_failure_type": "timeout",
+  "last_job": "p3_15_fail_learn",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

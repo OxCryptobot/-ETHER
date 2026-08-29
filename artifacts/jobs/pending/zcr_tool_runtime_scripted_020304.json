@@ -1,0 +1,22 @@
+{
+  "id": "zcr_tool_runtime_scripted_020304",
+  "class": "recovery",
+  "source": "zero_click_recovery",
+  "created": "2026-08-29T02:03:04.090519+00:00",
+  "note": "zero-click: scripted twin after p1_250_hard_tools_retest tool_runtime fail",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_ast_transaction.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

@@ -1348,7 +1348,8 @@
     "ss_archive_failed_145116_4",
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
-    "ss_archive_failed_150331_4"
+    "ss_archive_failed_150331_4",
+    "p3_15_fail_learn"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1444,7 +1445,7 @@
     "00_mcp_cq_spike_01",
     "p1_247_ledger_canary"
   ],
-  "last_tick": "2026-08-29T02:02:55.900847+00:00",
+  "last_tick": "2026-08-29T02:03:00.688744+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 34,
@@ -1452,19 +1453,20 @@
   "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
-  "live_skip_remaining": 35,
+  "live_skip_remaining": 34,
   "last_live_skip_reason": "p1_247_ledger_canary",
   "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
   "governor": {
-    "pending": 6,
+    "pending": 5,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
     "high_depth": 8,
     "high_hold_s": 120.0,
-    "may_enqueue": false,
+    "may_enqueue": true,
     "may_enqueue_steady": false,
-    "max_enqueue_this_tick": 0,
+    "max_enqueue_this_tick": 1,
     "training_wheels": true
-  }
+  },
+  "rate_climb_status": "skip_rate_ok=1.0000"
 }

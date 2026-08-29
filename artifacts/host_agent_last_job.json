@@ -1,15 +1,10 @@
 {
-  "job_id": "p3_15_fail_learn",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T02:02:56.654012+00:00",
-  "note": "publish fail_learn.json taxonomy from artifacts/jobs/failed",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "job_id": "p1_250_hard_tools_retest",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-29T02:03:03.987773+00:00",
+  "note": "retest hard tools after anchor_edit + ledger replace_once; conversion of p1_245 FAIL",
+  "class": "fast",
+  "measurement": false,
+  "failure_type": "step_fail"
 }

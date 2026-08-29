@@ -1,0 +1,16 @@
+{
+  "id": "chat_20260829_081214_550ec7",
+  "ts": "2026-08-29T08:12:14.730Z",
+  "from": "grok",
+  "type": "status",
+  "payload": {
+    "text": "Wake written. host_boot_20260829_080720 already in origin pending.\nDispatched autonomy-host ensure.\nWindows runs scripts/matrix_boot.ps1 hidden (pythonw / wscript, no console) once ETHER-Ensure or the runner pulls origin.\nHost 4B outbox stays silent until heartbeat resumes. Wave A FAST still waits drain. Wheels ON. Soft launch BLOCKED.",
+    "jobs": [
+      "host_boot_20260829_080720"
+    ]
+  },
+  "job_id": "host_boot_20260829_080720",
+  "requires_reply": false,
+  "parent_id": "chat_20260829_081213_4d37fe",
+  "schema": "ether_chat_v1"
+}

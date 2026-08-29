@@ -1,11 +1,22 @@
-"""Boot hard-LIVE tools onto ToolRuntime after core.tool_runtime imports ext."""
+"""Boot hard-LIVE tools onto ToolRuntime. Import mixin from ext_g only."""
 from __future__ import annotations
+
+EXTRA_SPECS = (
+    {
+        "name": "replace_once",
+        "doc": "Unique substring replace. args: path, old, new. Stripped-line fallback.",
+    },
+    {
+        "name": "ast_outline",
+        "doc": "List classes/functions with line numbers. args: path.",
+    },
+)
 
 
 def patch_runtime() -> None:
     import sys
 
-    from core.tool_runtime_ext import ToolExtMixin
+    from core.tool_runtime_ext_g import ToolExtMixin
 
     mod = sys.modules.get("core.tool_runtime")
     if mod is None or not hasattr(mod, "ToolRuntime"):
@@ -13,9 +24,22 @@ def patch_runtime() -> None:
     cls = mod.ToolRuntime
     if getattr(cls, "_hard_live_booted", False):
         return
-    for name in ("_obs_edit_lines", "_obs_bug_comments"):
+
+    for name in (
+        "_obs_edit_lines",
+        "_obs_bug_comments",
+        "_obs_apply_patch",
+        "_push_undo",
+        "_resolve_path",
+        "_ensure_undo",
+    ):
         if hasattr(ToolExtMixin, name):
             setattr(cls, name, getattr(ToolExtMixin, name))
+
+    names = {s["name"] for s in getattr(mod, "TOOL_SPECS", ())}
+    extra = [s for s in EXTRA_SPECS if s["name"] not in names]
+    if extra:
+        mod.TOOL_SPECS = tuple(list(mod.TOOL_SPECS) + extra)
 
     orig_read = cls._obs_read
 
@@ -24,6 +48,8 @@ def patch_runtime() -> None:
         if not obs.get("ok"):
             return obs
         content = str(obs.get("content") or "")
+        if obs.get("numbered"):
+            return obs
         try:
             from core.hard_live_tools import number_lines
 
@@ -38,6 +64,42 @@ def patch_runtime() -> None:
 
     cls._obs_read = _obs_read_numbered  # type: ignore[method-assign]
 
+    def _obs_replace_once(self, path: str, old: str, new: str):
+        from core.hard_live_tools import flex_replace
+        from core.tool_runtime import _ast_reject_py
+
+        target, err = self._resolve_path(path)
+        if err:
+            return {"ok": False, "error": err}
+        if target is None or not target.is_file():
+            return {"ok": False, "error": f"not found: {path}"}
+        body = target.read_text(encoding="utf-8", errors="replace")
+        try:
+            updated, mode = flex_replace(body, old, new)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        ast_err = _ast_reject_py(path, updated)
+        if ast_err:
+            return {"ok": False, "error": ast_err}
+        self._push_undo(path, target)
+        target.write_text(updated, encoding="utf-8")
+        return {"ok": True, "path": path, "mode": mode, "mutated": True}
+
+    def _obs_ast_outline(self, path: str):
+        from core.hard_live_tools import ast_outline
+
+        target, err = self._resolve_path(path)
+        if err:
+            return {"ok": False, "error": err}
+        if target is None or not target.is_file():
+            return {"ok": False, "error": f"not found: {path}"}
+        text = target.read_text(encoding="utf-8", errors="replace")
+        items = ast_outline(text)
+        return {"ok": True, "path": path, "items": items, "n": len(items)}
+
+    cls._obs_replace_once = _obs_replace_once
+    cls._obs_ast_outline = _obs_ast_outline
+
     orig_exec = cls._execute
 
     def _execute_hard(self, tool, args):
@@ -51,6 +113,14 @@ def patch_runtime() -> None:
             )
         if tool == "bug_comments":
             return self._obs_bug_comments(str(args.get("path") or "."))
+        if tool == "replace_once":
+            return self._obs_replace_once(
+                str(args.get("path") or ""),
+                str(args.get("old") or ""),
+                str(args.get("new") if args.get("new") is not None else ""),
+            )
+        if tool == "ast_outline":
+            return self._obs_ast_outline(str(args.get("path") or ""))
         return orig_exec(self, tool, args)
 
     cls._execute = _execute_hard  # type: ignore[method-assign]
@@ -61,6 +131,12 @@ def patch_runtime() -> None:
         orig_init(self, *a, **kw)
         inner = self.decide_fn
         streak = {"n": 0}
+        try:
+            from core.agent_state import AgentState
+
+            self._ether_state = AgentState.load_or_create("tool_runtime")
+        except Exception:
+            self._ether_state = None
 
         def guarded(messages):
             try:
@@ -71,13 +147,20 @@ def patch_runtime() -> None:
                     should_break_observe,
                 )
             except Exception:
-                MUTATE_TOOLS = {"write_file", "apply_patch", "edit_lines", "rollback"}
+                MUTATE_TOOLS = {
+                    "write_file",
+                    "apply_patch",
+                    "edit_lines",
+                    "replace_once",
+                    "rollback",
+                }
                 OBSERVE_TOOLS = {
                     "list_files",
                     "read_file",
                     "grep",
                     "glob",
                     "bug_comments",
+                    "ast_outline",
                     "_retry",
                 }
 
@@ -99,6 +182,15 @@ def patch_runtime() -> None:
                 streak["n"] += 1
             elif tool in MUTATE_TOOLS:
                 streak["n"] = 0
+            state = getattr(self, "_ether_state", None)
+            if state is not None:
+                try:
+                    state.tool_results.append({"tool": tool, "ok": True})
+                    if len(state.tool_results) > 40:
+                        state.tool_results = state.tool_results[-20:]
+                    state.save()
+                except Exception:
+                    pass
             return decision
 
         self.decide_fn = guarded

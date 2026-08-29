@@ -1,8 +1,10 @@
 {
-  "generated": "2026-08-29T03:12:03.960245+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-08-29T03:12:14.508301+00:00",
+  "next_job": "playbook_coding_method_refresh_031214",
+  "queue_head": [
+    "playbook_coding_method_refresh_031214"
+  ],
+  "queue_depth": 1,
   "host_phase": "polling",
   "last_job": "p3_23_merge_playbook_canary",
   "last_ok": false,

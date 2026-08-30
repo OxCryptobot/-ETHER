@@ -1,0 +1,7 @@
+{
+  "id": "medic_hb_20260830_100445",
+  "class": "fast",
+  "continue_on_fail": true,
+  "note": "medic: wake git heartbeat medic_hb_20260830_100445",
+  "steps": [{"argv": [".venv/Scripts/python.exe", "scripts/health_check.py", "--skip-sandbox"], "timeout": 120}]
+}

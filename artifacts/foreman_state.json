@@ -5,9 +5,10 @@
     "critique_hyp_medic_hb_20260830_002509_002518"
   ],
   "failed": [
-    "medic_hb_20260830_002509"
+    "medic_hb_20260830_002509",
+    "medic_hb_20260830_040917"
   ],
-  "last_tick": "2026-08-30T04:09:26.225717+00:00",
+  "last_tick": "2026-08-30T04:09:43.934870+00:00",
   "mode": "apprentice",
   "teacher": "grok",
   "steady_idx": 0,
@@ -27,5 +28,6 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
 }

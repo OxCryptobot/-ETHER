@@ -14,7 +14,7 @@
     "medic_hb_20260830_100445",
     "medic_hb_20260830_100618"
   ],
-  "last_tick": "2026-08-30T11:05:14.161301+00:00",
+  "last_tick": "2026-08-30T11:05:49.794090+00:00",
   "mode": "apprentice",
   "teacher": "grok",
   "steady_idx": 0,
@@ -24,7 +24,7 @@
   "rate_climb_status": "skip_rate_ok=1.0000",
   "lessons_loaded": 36,
   "governor": {
-    "pending": 0,
+    "pending": 1,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,
@@ -35,5 +35,6 @@
     "max_enqueue_this_tick": 2,
     "training_wheels": true
   },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail",
+  "last_playbook": "coding_method_v1"
 }

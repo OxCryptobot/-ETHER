@@ -1,9 +1,10 @@
 {
-  "job_id": "p3_37_chat_bus",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-08-29T16:40:42.526612+00:00",
-  "note": "FAST: Dual-chat git bus drain (inbox -> outbox) without Ollama",
+  "job_id": "medic_hb_20260830_002509",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-08-30T00:25:18.084507+00:00",
+  "note": null,
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "exception"
 }

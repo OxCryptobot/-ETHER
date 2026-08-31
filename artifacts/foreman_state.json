@@ -1445,12 +1445,12 @@
     "00_mcp_cq_spike_01",
     "medic_hb_20260831_210700"
   ],
-  "last_tick": "2026-08-31T21:14:59.125312+00:00",
+  "last_tick": "2026-08-31T21:15:14.634858+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
   "last_enqueued": "ss_train_gates_150336_2",
-  "last_playbook": "timeout_budget_exhaust",
+  "last_playbook": "coding_method_v1",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
@@ -1465,5 +1465,6 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  }
+  },
+  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
 }

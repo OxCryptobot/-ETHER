@@ -1,0 +1,23 @@
+{
+  "id": "critique_hyp_medic_hb_20260831_101627_101650",
+  "class": "recovery",
+  "source": "labradorite_mandatory",
+  "created": "2026-08-31T10:16:50.465330+00:00",
+  "note": "playbook:labradorite for medic_hb_20260831_101627 [step_fail] :: isolate failing step; FAST reverify",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "tests/test_honest_live_critique_context.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

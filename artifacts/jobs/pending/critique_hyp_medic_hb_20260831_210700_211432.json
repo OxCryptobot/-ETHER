@@ -1,0 +1,23 @@
+{
+  "id": "critique_hyp_medic_hb_20260831_210700_211432",
+  "class": "recovery",
+  "source": "labradorite_mandatory",
+  "created": "2026-08-31T21:14:32.110666+00:00",
+  "note": "playbook:labradorite for medic_hb_20260831_210700 [bad_job] :: smallest experiment: tests-first surgical patch",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_tool_runtime.py",
+        "tests/test_train_gates.py",
+        "tests/test_honest_live_critique_context.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "critique_unit_fail_1_162901",
+  "job_id": "unit_fail_1",
+  "created": "2026-09-01T16:29:01.874764+00:00",
+  "failure_type": "no_progress",
+  "note": "unit test fail",
+  "labradorite_ok": true,
+  "critique": "[improve] ~3 lines, complexity=0.01. Add asserts that prove correctness before user-facing delivery",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery"
+  ],
+  "next_hypothesis": "re-read failing test; single apply_patch; abort after one stagnant",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "no_progress",
+    "hypothesis": "re-read failing test; single apply_patch; abort after one stagnant",
+    "confidence": 0.15,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "mandatory": true
+}

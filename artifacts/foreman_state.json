@@ -1446,9 +1446,10 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01",
     "medic_hb_20260901_210903",
-    "medic_hb_20260901_220554"
+    "medic_hb_20260901_220554",
+    "medic_hb_20260901_230502"
   ],
-  "last_tick": "2026-09-01T23:05:21.271988+00:00",
+  "last_tick": "2026-09-01T23:05:50.714646+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1458,7 +1459,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

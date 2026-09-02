@@ -1,0 +1,12 @@
+{
+  "id": "medic_hb_20260902_181903",
+  "class": "fast",
+  "continue_on_fail": true,
+  "note": "medic heartbeat wake",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/health_check.py", "--skip-sandbox"],
+      "timeout": 120
+    }
+  ]
+}

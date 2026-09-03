@@ -1,9 +1,10 @@
 {
-  "job_id": "host_boot_20260903_223018",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-03T22:30:25.650438+00:00",
-  "note": "Matrix Host: hidden fetch+reset+start_daemon. No console window.",
+  "job_id": "p3_39_chat_tick",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-03T22:44:33.783756+00:00",
+  "note": "FAST: one Dual-chat origin drain. Host/git writes outbox.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

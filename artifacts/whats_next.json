@@ -1,11 +1,12 @@
 {
-  "generated": "2026-09-03T22:43:29.408718+00:00",
+  "generated": "2026-09-03T22:44:33.375055+00:00",
   "next_job": "p3_38_merge_living",
   "queue_head": [
-    "p3_38_merge_living"
+    "p3_38_merge_living",
+    "p3_39_chat_tick"
   ],
-  "queue_depth": 1,
-  "host_phase": "polling",
+  "queue_depth": 2,
+  "host_phase": "idle",
   "last_job": "host_boot_20260903_223018",
   "last_ok": true,
   "last_failure_type": null,

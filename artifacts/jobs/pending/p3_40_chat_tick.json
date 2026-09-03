@@ -1,0 +1,16 @@
+{
+  "id": "p3_40_chat_tick",
+  "note": "FAST: Dual-chat drain after tick_once() fix. Never requeue p3_39.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.chat_bus_tick"
+      ],
+      "timeout": 90
+    }
+  ]
+}

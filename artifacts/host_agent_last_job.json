@@ -1,9 +1,10 @@
 {
-  "job_id": "playbook_coding_method_refresh_212530",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-03T21:25:32.723135+00:00",
-  "note": "playbook:coding_method_v1 for medic_hb_20260903_210521",
-  "class": "recovery",
-  "measurement": true
+  "job_id": "medic_hb_20260903_221200",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-03T22:12:48.490116+00:00",
+  "note": "medic: wake git heartbeat",
+  "class": "fast",
+  "measurement": true,
+  "failure_type": "step_fail"
 }

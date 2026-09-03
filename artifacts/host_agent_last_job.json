@@ -1,10 +1,15 @@
 {
-  "job_id": "p3_39_chat_tick",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-03T22:44:33.783756+00:00",
-  "note": "FAST: one Dual-chat origin drain. Host/git writes outbox.",
+  "job_id": "p3_38_merge_living",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-03T23:08:48.821096+00:00",
+  "note": "MEASURE: unaided merge LIVE policy=model. class fast so wheels-ON host drains it. p3_34 teacher does not count.",
   "class": "fast",
   "measurement": true,
-  "failure_type": "step_fail"
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  }
 }

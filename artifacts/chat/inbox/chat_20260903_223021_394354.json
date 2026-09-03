@@ -1,0 +1,17 @@
+{
+  "id": "chat_20260903_223021_394354",
+  "ts": "2026-09-03T22:30:21.114Z",
+  "from": "operator",
+  "type": "operator",
+  "payload": {
+    "text": "Status of host. Do not enqueue medic.",
+    "jobs": [
+      "host_boot_20260903_223018",
+      "p3_38_merge_living"
+    ]
+  },
+  "job_id": "host_boot_20260903_223018",
+  "requires_reply": true,
+  "parent_id": "",
+  "schema": "ether_chat_v1"
+}

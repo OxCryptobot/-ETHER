@@ -1349,9 +1349,7 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "host_boot_20260903_223018",
-    "p3_38_merge_living",
-    "p3_40_chat_tick"
+    "host_boot_20260903_223018"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1444,10 +1442,9 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01",
-    "p3_39_chat_tick"
+    "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-09-03T23:09:14.558272+00:00",
+  "last_tick": "2026-09-03T23:10:10.273775+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1467,6 +1464,5 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  }
 }

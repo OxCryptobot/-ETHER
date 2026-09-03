@@ -1,9 +1,10 @@
 {
-  "job_id": "critique_hyp_medic_hb_20260903_132221_132230",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-03T13:22:40.248762+00:00",
-  "note": "playbook:labradorite for medic_hb_20260903_132221 [exception] :: smallest experiment: tests-first surgical patch",
-  "class": "recovery",
-  "measurement": true
+  "job_id": "medic_hb_20260903_161215",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-03T16:13:14.020328+00:00",
+  "note": "medic wake git heartbeat",
+  "class": null,
+  "measurement": true,
+  "failure_type": "step_fail"
 }

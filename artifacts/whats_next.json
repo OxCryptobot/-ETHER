@@ -1,15 +1,14 @@
 {
-  "generated": "2026-09-03T23:08:05.797905+00:00",
-  "next_job": "p3_38_merge_living",
+  "generated": "2026-09-03T23:08:58.268132+00:00",
+  "next_job": "p3_40_chat_tick",
   "queue_head": [
-    "p3_38_merge_living",
     "p3_40_chat_tick"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "p3_39_chat_tick",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "p3_38_merge_living",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

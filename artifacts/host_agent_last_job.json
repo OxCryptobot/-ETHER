@@ -1,15 +1,9 @@
 {
-  "job_id": "p3_38_merge_living",
+  "job_id": "p3_40_chat_tick",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-03T23:08:48.821096+00:00",
-  "note": "MEASURE: unaided merge LIVE policy=model. class fast so wheels-ON host drains it. p3_34 teacher does not count.",
+  "finished": "2026-09-03T23:09:01.772480+00:00",
+  "note": "FAST: Dual-chat drain after tick_once() fix. Never requeue p3_39.",
   "class": "fast",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  }
+  "measurement": true
 }

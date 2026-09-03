@@ -1,14 +1,14 @@
 {
-  "generated": "2026-09-03T06:13:15.555753+00:00",
-  "next_job": "medic_hb_20260903_061306",
+  "generated": "2026-09-03T06:13:30.719528+00:00",
+  "next_job": "critique_hyp_medic_hb_20260903_061306_061325",
   "queue_head": [
-    "medic_hb_20260903_061306"
+    "critique_hyp_medic_hb_20260903_061306_061325"
   ],
   "queue_depth": 1,
   "host_phase": "polling",
-  "last_job": "playbook_coding_method_refresh_031254",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "medic_hb_20260903_061306",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

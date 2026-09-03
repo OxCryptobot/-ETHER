@@ -1,9 +1,10 @@
 {
-  "job_id": "host_boot_20260903_223018",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-03T23:10:57.028121+00:00",
-  "note": "Matrix Host: hidden fetch+reset+start_daemon. No console window.",
-  "class": "fast",
-  "measurement": true
+  "job_id": "medic_hb_20260903_231623",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-03T23:16:44.953895+00:00",
+  "note": "medic: wake git heartbeat",
+  "class": null,
+  "measurement": true,
+  "failure_type": "step_fail"
 }

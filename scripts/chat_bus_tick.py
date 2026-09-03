@@ -35,7 +35,7 @@ def _maybe_commit(paths: list[str], message: str) -> None:
 
 
 def main() -> int:
-    result = tick_once(ROOT)
+    result = tick_once()
     print(json.dumps(result, indent=2), flush=True)
     if result.get("wrote"):
         _maybe_commit(

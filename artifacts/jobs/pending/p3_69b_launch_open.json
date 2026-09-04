@@ -1,0 +1,19 @@
+{
+  "id": "p3_69b_launch_open",
+  "note": "FAST: retest launch OPEN after protocol positional status fix.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_69_launch_open.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

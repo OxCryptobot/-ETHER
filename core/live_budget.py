@@ -30,18 +30,35 @@ MEASURE_MAX_STEPS = int(os.getenv("ETHER_MEASURE_MAX_STEPS", "10"))
 MEASURE_STEP_TIMEOUT_S = int(os.getenv("ETHER_MEASURE_STEP_TIMEOUT_S", "50"))
 
 
+def _argv_blob(job: Dict[str, Any]) -> str:
+    parts = []
+    for step in job.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        argv = step.get("argv") or []
+        if isinstance(argv, (list, tuple)):
+            parts.extend(str(x) for x in argv)
+        else:
+            parts.append(str(argv))
+    return " ".join(parts).lower()
+
+
 def _is_measurement(job: Dict[str, Any]) -> bool:
     """True for the approved under-wheels measurement path."""
     cls = str(job.get("class") or "").strip().lower()
     note = str(job.get("note") or "").lower()
     jid = str(job.get("id") or "").lower()
-    hay = f"{cls} {note} {jid}"
+    blob = _argv_blob(job)
+    hay = f"{cls} {note} {jid} {blob}"
     return (
         cls in ("gate_sample", "measure")
         or "gate_sample" in hay
         or "eligible_live" in hay
         or "controlled live" in hay
         or "controlled_live" in hay
+        or "honest_live" in hay
+        or "--policy model" in blob
+        or "unaided" in hay
     )
 
 

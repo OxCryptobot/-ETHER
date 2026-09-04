@@ -633,16 +633,10 @@ def process_job(path: Path) -> bool:
     job_id = job.get("id") or path.stem
 
     if _is_babysit(str(job_id)):
-        try:
-            from core.host_health import compute
-
-            if compute().get("medic_stand_down"):
-                log(f"stand-down skip babysit job={job_id}")
-                DONE.mkdir(parents=True, exist_ok=True)
-                path.rename(DONE / f"{path.stem}_stood_down.json")
-                return True
-        except Exception as e:
-            log(f"stand-down check error: {type(e).__name__}: {e}")
+        log(f"launch: skip babysit job={job_id}")
+        DONE.mkdir(parents=True, exist_ok=True)
+        path.rename(DONE / f"{path.stem}_stood_down.json")
+        return True
 
     try:
         from core.live_budget import apply_to_job

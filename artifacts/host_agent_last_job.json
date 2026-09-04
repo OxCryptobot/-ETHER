@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_58_pipeline_gems",
+  "job_id": "p3_59_plan_walk",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T19:03:04.884899+00:00",
-  "note": "FAST: Pipeline.run annotates STAGE_GEM. Theatre gems still theatre.",
+  "finished": "2026-09-04T19:12:05.047914+00:00",
+  "note": "FAST: walk plan.steps in dep order. Does not yet drive ToolRuntime.",
   "class": "fast",
   "measurement": true
 }

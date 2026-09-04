@@ -244,6 +244,16 @@ class Pipeline:
         write_progress(tid, objective, "start", strategy=strategy)
 
         try:
+            from core.checkpoint import resume_if_any
+
+            prior = resume_if_any(os.getenv("ETHER_RESUME_RUN_ID") or "")
+            if prior is not None:
+                write_progress(tid, objective, "resume", detail=str(getattr(prior, "stage", "loaded")))
+        except Exception as exc:
+            result.degraded.append(f"resume:{type(exc).__name__}")
+
+
+        try:
             from core.loop.gem_step import annotate_all
 
             gem_trace = annotate_all()
@@ -298,11 +308,14 @@ class Pipeline:
                 from core.loop.plan_walk import walk_plan
 
                 walked = walk_plan(result.plan)
+                from core.loop.plan_exec import dispatch_walked
+
+                walked = dispatch_walked(walked)
                 write_progress(
                     tid,
                     objective,
                     "plan_walk",
-                    detail=",".join(f"{r['id']}:{r['action']}:{r['gem'] or r['status']}" for r in walked),
+                    detail=",".join(f"{r['id']}:{r['action']}:{r.get('tool') or r['gem'] or r['status']}" for r in walked),
                 )
             except Exception as exc:
                 result.degraded.append(f"plan_walk:{type(exc).__name__}")

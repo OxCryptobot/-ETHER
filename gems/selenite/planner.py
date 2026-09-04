@@ -178,6 +178,11 @@ class Selenite:
             return None
 
     def _create_plan(self, query: str, max_depth: int, lessons: str = "") -> ExecutionPlan:
+        q = (query or "").lower()
+        if any(k in q for k in ("fix", "bug", "fail", "ledger", "merge", "unaided", "pytest")):
+            from core.loop.fix_dag import fix_plan
+
+            return fix_plan(query[:120])
         try:
             from gems.selenite.graph import _classify_intent, _steps_for_intent
 

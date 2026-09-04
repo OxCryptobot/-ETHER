@@ -243,6 +243,20 @@ class Pipeline:
 
         write_progress(tid, objective, "start", strategy=strategy)
 
+        try:
+            from core.loop.gem_step import annotate_all
+
+            gem_trace = annotate_all()
+            write_progress(
+                tid,
+                objective,
+                "gems",
+                detail=",".join(f"{row['stage']}:{row['gem']}" for row in gem_trace),
+            )
+        except Exception as exc:
+            result.degraded.append(f"gem_protocol:{type(exc).__name__}")
+
+
 
         tool_block = ""
         last_err = ""

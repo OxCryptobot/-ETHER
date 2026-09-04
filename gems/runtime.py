@@ -15,6 +15,8 @@ STAGE_GEM: Dict[str, str] = {
     "prompt_guard": "black_tourmaline",
     "memory_save": "citrine",
     "auto_fabricate": "grandidierite",
+    "evolve": "amethyst",
+    "memory": "citrine",
 }
 
 

@@ -1,0 +1,19 @@
+{
+  "id": "p3_44_live_budget",
+  "note": "FAST: unaided --policy model jobs get measurement wall (>=300s), not 90s production clamp.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_44_live_budget.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

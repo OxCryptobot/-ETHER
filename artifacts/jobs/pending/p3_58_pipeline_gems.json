@@ -1,0 +1,19 @@
+{
+  "id": "p3_58_pipeline_gems",
+  "note": "FAST: Pipeline.run annotates STAGE_GEM. Theatre gems still theatre.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_58_pipeline_gems.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

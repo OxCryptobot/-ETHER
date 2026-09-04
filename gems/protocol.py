@@ -24,7 +24,7 @@ GEMS: Tuple[GemSpec, ...] = (
     GemSpec("labradorite", "Labradorite", "Profiler", "partial", "gems.labradorite"),
     GemSpec("amethyst", "Amethyst", "Evolution", "theatre", "gems.amethyst"),
     GemSpec("black_tourmaline", "Black Tourmaline", "Security", "partial", "gems.black_tourmaline"),
-    GemSpec("grandidierite", "Grandidierite", "Fabricate", "gated", "gems.grandidierite"),
+    GemSpec("grandidierite", "Grandidierite", "Fabricate", "partial", "gems.grandidierite"),
 )
 
 

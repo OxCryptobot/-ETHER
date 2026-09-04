@@ -294,6 +294,18 @@ class Pipeline:
                 )
             result.plan = plan_res.payload.plan
             result.plan_ok = True
+            try:
+                from core.loop.plan_walk import walk_plan
+
+                walked = walk_plan(result.plan)
+                write_progress(
+                    tid,
+                    objective,
+                    "plan_walk",
+                    detail=",".join(f"{r['id']}:{r['action']}:{r['gem'] or r['status']}" for r in walked),
+                )
+            except Exception as exc:
+                result.degraded.append(f"plan_walk:{type(exc).__name__}")
             result.stages.append(
                 StageResult(
                     stage="plan",

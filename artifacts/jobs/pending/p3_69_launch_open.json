@@ -1,0 +1,19 @@
+{
+  "id": "p3_69_launch_open",
+  "note": "FAST: launch OPEN. No GEMS status=gated. Fabricate still NotImplemented.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_69_launch_open.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

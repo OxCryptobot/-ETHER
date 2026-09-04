@@ -1,4 +1,4 @@
-"""Stage → gem dispatch. LoopRunner / Pipeline can import this; they do not yet."""
+"""Stage → gem dispatch. Pipeline.run calls annotate_all() at start (p3_58)."""
 from __future__ import annotations
 
 from typing import Dict, Optional

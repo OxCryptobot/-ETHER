@@ -54,6 +54,10 @@ def topo_sort(plan: ExecutionPlan) -> List[PlanStep]:
 
 
 def walk_plan(plan: ExecutionPlan) -> List[Dict[str, Optional[str]]]:
+    if not plan.steps:
+        from core.loop.fix_dag import walk_fix
+
+        return walk_fix(plan.reasoning or "fix")
     rows: List[Dict[str, Optional[str]]] = []
     for step in topo_sort(plan):
         gid = TARGET_GEM.get(step.target) or TARGET_GEM.get(step.target.replace("-", "_"))

@@ -110,3 +110,9 @@ def checkpoint_pipeline(
         n_steps=int(n_stages),
         extra=payload,
     )
+
+
+def resume_if_any(run_id: str) -> Optional[AgentCheckpoint]:
+    """Public resume API. Pipeline.run does not call this yet."""
+    return load_checkpoint(run_id)
+

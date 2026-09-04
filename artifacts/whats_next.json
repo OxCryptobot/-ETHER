@@ -1,8 +1,11 @@
 {
-  "generated": "2026-09-04T23:42:25.043181+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-04T23:43:23.608912+00:00",
+  "next_job": "chat_tick_0904234308f63f45",
+  "queue_head": [
+    "chat_tick_0904234308f63f45",
+    "matrix_ui_1788565393841"
+  ],
+  "queue_depth": 2,
   "host_phase": "polling",
   "last_job": "p3_75_living_fabricate",
   "last_ok": false,

@@ -1,10 +1,9 @@
 {
-  "job_id": "medic_hb_20260904_070553",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-04T07:06:09.011296+00:00",
-  "note": "medic heartbeat wake",
-  "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "job_id": "critique_hyp_medic_hb_20260904_070553_070609",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-04T07:06:19.250086+00:00",
+  "note": "playbook:labradorite for medic_hb_20260904_070553 [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true
 }

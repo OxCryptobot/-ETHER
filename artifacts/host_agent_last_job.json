@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_48_merge_unaided",
+  "job_id": "p3_49_run_tests_before_done",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T17:34:53.148592+00:00",
-  "note": "Third countable unaided merge. p3_45 and p3_47 are 2/3. Do not requeue p3_46 ledger.",
+  "finished": "2026-09-04T17:52:59.366074+00:00",
+  "note": "FAST: observe kill must not override replace_once; after mutate force run_tests. Unblocks a new ledger id. Do not requeue p3_46.",
   "class": "fast",
   "measurement": true
 }

@@ -1,15 +1,14 @@
 {
-  "generated": "2026-09-04T23:43:23.608912+00:00",
-  "next_job": "chat_tick_0904234308f63f45",
+  "generated": "2026-09-04T23:43:29.750061+00:00",
+  "next_job": "matrix_ui_1788565393841",
   "queue_head": [
-    "chat_tick_0904234308f63f45",
     "matrix_ui_1788565393841"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "p3_75_living_fabricate",
-  "last_ok": false,
-  "last_failure_type": "step_fail",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "chat_tick_0904234308f63f45",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

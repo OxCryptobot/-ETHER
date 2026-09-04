@@ -1,9 +1,10 @@
 {
-  "job_id": "p3_68_host_medic",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-04T19:20:10.262189+00:00",
-  "note": "FAST: host_health.medic_stand_down. Windows drain still must honor it.",
+  "job_id": "p3_69_launch_open",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-04T19:22:15.150739+00:00",
+  "note": "FAST: launch OPEN. No GEMS status=gated. Fabricate still NotImplemented.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

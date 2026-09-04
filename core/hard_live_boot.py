@@ -171,6 +171,7 @@ def patch_runtime() -> None:
         orig_init(self, *a, **kw)
         inner = self.decide_fn
         streak = {"n": 0}
+        mutated = {"n": False}
         try:
             from core.agent_state import AgentState
 
@@ -213,7 +214,11 @@ def patch_runtime() -> None:
             try:
                 from core.observe_breaker import rewrite
 
-                forced = rewrite(str(decision.get("tool") or ""), streak["n"])
+                forced = rewrite(
+                    str(decision.get("tool") or ""),
+                    streak["n"],
+                    mutated=mutated["n"],
+                )
                 if forced is not None:
                     decision = forced
             except Exception:
@@ -222,6 +227,9 @@ def patch_runtime() -> None:
             if tool in OBSERVE_TOOLS:
                 streak["n"] += 1
             elif tool in MUTATE_TOOLS:
+                streak["n"] = 0
+                mutated["n"] = True
+            elif tool == "run_tests":
                 streak["n"] = 0
             return decision
 

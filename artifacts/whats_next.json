@@ -1,8 +1,11 @@
 {
-  "generated": "2026-09-04T14:32:20.341424+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-04T14:33:03.035348+00:00",
+  "next_job": "p3_41_unaided_wrap",
+  "queue_head": [
+    "p3_41_unaided_wrap",
+    "p3_42_merge_unaided"
+  ],
+  "queue_depth": 2,
   "host_phase": "polling",
   "last_job": "playbook_coding_method_refresh_141210",
   "last_ok": true,

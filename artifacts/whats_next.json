@@ -1,9 +1,17 @@
 {
-  "generated": "2026-09-04T23:34:56.325993+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-09-04T23:35:25.275799+00:00",
+  "next_job": "matrix_ui_1788564905945",
+  "queue_head": [
+    "matrix_ui_1788564905945",
+    "matrix_ui_1788564910033",
+    "matrix_ui_1788564914169",
+    "matrix_ui_1788564916441",
+    "matrix_ui_1788564919057",
+    "matrix_ui_1788564921128",
+    "matrix_ui_1788564923209"
+  ],
+  "queue_depth": 7,
+  "host_phase": "idle",
   "last_job": "matrix_ui_1788564889417",
   "last_ok": true,
   "last_failure_type": null,

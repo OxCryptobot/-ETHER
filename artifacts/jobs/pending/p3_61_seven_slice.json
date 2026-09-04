@@ -1,0 +1,19 @@
+{
+  "id": "p3_61_seven_slice",
+  "note": "FAST: plan_exec + resume + policy=model critique skip + git tools + medic stand-down. Not Phase 7 complete.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_61_seven_slice.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

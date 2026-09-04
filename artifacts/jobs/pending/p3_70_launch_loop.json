@@ -1,0 +1,19 @@
+{
+  "id": "p3_70_launch_loop",
+  "note": "FAST: git_status in ToolRuntime. Host skips medic_hb/critique_hyp when standing down.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_70_launch_loop.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

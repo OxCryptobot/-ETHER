@@ -1,0 +1,20 @@
+{
+  "id": "p3_75_living_fabricate",
+  "note": "FAST: living fabricate stub + template no NotImplementedError. Not a living-agent claim.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_75_living_fabricate.py",
+        "tests/test_p3_76_extension_stub.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

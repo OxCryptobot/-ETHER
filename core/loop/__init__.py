@@ -16,4 +16,14 @@ __all__ = [
     "decide_tool_first_terminal",
     "TOOL_FIRST_ORDER",
     "LEGACY_GENERATE_ORDER",
+    "fix_plan",
+    "walk_fix",
 ]
+
+
+def __getattr__(name: str):
+    if name in {"fix_plan", "walk_fix"}:
+        from core.loop.fix_dag import fix_plan, walk_fix
+
+        return fix_plan if name == "fix_plan" else walk_fix
+    raise AttributeError(name)

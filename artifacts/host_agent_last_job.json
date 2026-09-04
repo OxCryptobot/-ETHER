@@ -1,9 +1,15 @@
 {
-  "job_id": "p3_49_run_tests_before_done",
+  "job_id": "p3_50_ledger_unaided",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T17:52:59.366074+00:00",
-  "note": "FAST: observe kill must not override replace_once; after mutate force run_tests. Unblocks a new ledger id. Do not requeue p3_46.",
-  "class": "fast",
-  "measurement": true
+  "finished": "2026-09-04T18:02:52.411111+00:00",
+  "note": "First countable ledger after p3_49 guard. policy=model. Do not requeue p3_46. Hypothesis: kill routes to run_tests after mutate.",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

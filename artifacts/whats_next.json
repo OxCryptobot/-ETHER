@@ -1,9 +1,11 @@
 {
-  "generated": "2026-09-04T22:58:06.545584+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-09-04T22:58:34.261587+00:00",
+  "next_job": "p3_74_fixture_batch",
+  "queue_head": [
+    "p3_74_fixture_batch"
+  ],
+  "queue_depth": 1,
+  "host_phase": "chat_push",
   "last_job": "playbook_coding_method_refresh_212217",
   "last_ok": true,
   "last_failure_type": null,

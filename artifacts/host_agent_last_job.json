@@ -1,9 +1,10 @@
 {
-  "job_id": "p3_73_living_batch",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-04T19:29:27.900918+00:00",
-  "note": "FAST batch: run_tests is real pytest. Audit gem. Lesson JSONL. Living plan.",
+  "job_id": "medic_hb_20260904_200500",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-04T20:06:33.260101+00:00",
+  "note": null,
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

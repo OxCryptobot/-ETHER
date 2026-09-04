@@ -120,6 +120,7 @@ def measure_one(
     live: bool,
     max_steps: int,
     timeout_s: float,
+    policy: str = "",
 ) -> Dict[str, Any]:
     from core.tool_runtime import ToolRuntime, make_llm_decide_fn
 
@@ -142,12 +143,15 @@ def measure_one(
             steps = max(max_steps, 10)
             max_tok = 768
         decide = make_llm_decide_fn(temperature=0.0, max_tokens=max_tok)
-        policy = "model"
+        want = (policy or os.getenv("ETHER_POLICY") or "").strip().lower()
+        unaided = want == "model"
+        if unaided:
+            os.environ["ETHER_POLICY"] = "model"
+            os.environ["ETHER_PLAYBOOK_TAKEOVER"] = "0"
         try:
             from core.hard_live_playbook import wrap_live_decide
 
-            decide = wrap_live_decide(name, decide)
-            policy = "model"
+            decide = wrap_live_decide(name, decide, allow_takeover=not unaided)
         except Exception:
             pass
         mode = "live"
@@ -218,6 +222,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--scoreboard", type=str, default="")
+    ap.add_argument(
+        "--policy",
+        default="",
+        help="model = unaided 4B (no playbook takeover). Empty keeps teacher wrap.",
+    )
     args = ap.parse_args(argv)
 
     if args.fixture and args.fixture != "all":
@@ -231,7 +240,11 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     def _run(name: str) -> Dict[str, Any]:
         return measure_one(
-            name, live=args.live, max_steps=args.max_steps, timeout_s=args.timeout
+            name,
+            live=args.live,
+            max_steps=args.max_steps,
+            timeout_s=args.timeout,
+            policy=args.policy,
         )
 
     rows: List[Dict[str, Any]] = []

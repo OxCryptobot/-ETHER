@@ -7,15 +7,25 @@ LIVE_TOOLS = {
     ("clear_quartz", "test"): "run_tests",
     ("clear_quartz", "validate"): "run_tests",
     ("rose_quartz", "generate"): "git_status",
+    ("rose_quartz", "mutate"): "replace_once",
+    ("selenite", "observe"): "list_files",
+    ("black_tourmaline", "validate"): "run_tests",
 }
 
 
 def tool_for_step(row: Dict[str, Optional[str]]) -> Optional[str]:
     gem = row.get("gem")
     action = row.get("action")
-    status = row.get("status")
-    if gem == "clear_quartz" or status == "live":
-        return LIVE_TOOLS.get((gem or "", action or ""))
+    if action == "observe":
+        return "list_files"
+    if action == "mutate":
+        return "replace_once"
+    if gem == "clear_quartz" or action in {"test", "validate"}:
+        mapped = LIVE_TOOLS.get((gem or "", action or ""))
+        if mapped:
+            return mapped
+        if action == "test":
+            return "run_tests"
     if gem == "rose_quartz" and action == "generate":
         return "git_status"
     return LIVE_TOOLS.get((gem or "", action or ""))
@@ -45,6 +55,8 @@ def execute_tool(tool: Optional[str]) -> Dict[str, Any]:
         out = run_tests()
         out["tool"] = "run_tests"
         return out
+    if tool in {"list_files", "replace_once"}:
+        return {"ok": True, "tool": tool, "mode": "intent"}
     return {"ok": False, "skipped": tool}
 
 

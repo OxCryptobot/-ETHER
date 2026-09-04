@@ -149,6 +149,19 @@ def run_hard_pack(*, timeout: int = 60) -> Dict[str, Any]:
     }
 
 
+def fabricate_stub(name: str, purpose: str = "") -> Dict[str, Any]:
+    """Template fabricate only. Never claims LLM-authored tools."""
+    from gems.grandidierite.fabricate import fabricate
+
+    return fabricate(
+        {
+            "name": name,
+            "docstring": purpose or f"stub {name}",
+            "stub_only": True,
+        }
+    )
+
+
 def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, Any]:
     """Full batch: walk → dispatch → audit → pytest → lesson."""
     from core.loop.plan_exec import dispatch_walked

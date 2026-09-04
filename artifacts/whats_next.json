@@ -1,14 +1,14 @@
 {
-  "generated": "2026-09-04T14:33:08.120133+00:00",
-  "next_job": "p3_42_merge_unaided",
+  "generated": "2026-09-04T14:34:57.204181+00:00",
+  "next_job": "critique_hyp_p3_42_merge_unaided_143439",
   "queue_head": [
-    "p3_42_merge_unaided"
+    "critique_hyp_p3_42_merge_unaided_143439"
   ],
   "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "p3_41_unaided_wrap",
-  "last_ok": true,
-  "last_failure_type": null,
+  "host_phase": "polling",
+  "last_job": "p3_42_merge_unaided",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

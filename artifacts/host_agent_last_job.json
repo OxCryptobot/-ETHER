@@ -1,16 +1,9 @@
 {
-  "job_id": "p3_42_merge_unaided",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-04T14:34:38.981323+00:00",
-  "note": "MEASURE: unaided merge LIVE --policy model. No teacher takeover. p3_34/p3_38 do not count. [failure_type=timeout]",
-  "class": "fast",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  },
-  "failure_type": "timeout"
+  "job_id": "critique_hyp_p3_42_merge_unaided_143439",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-04T14:35:02.513799+00:00",
+  "note": "playbook:labradorite for p3_42_merge_unaided [timeout] :: shrink wall budget; scripted tool_runtime only; one file",
+  "class": "recovery",
+  "measurement": true
 }

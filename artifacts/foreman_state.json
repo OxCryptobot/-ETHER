@@ -1364,7 +1364,8 @@
     "p3_56_loop_gems",
     "p3_57_gem_step",
     "p3_58_pipeline_gems",
-    "p3_59_plan_walk"
+    "p3_59_plan_walk",
+    "p3_60_coord"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1463,7 +1464,7 @@
     "medic_hb_20260904_181202",
     "medic_hb_20260904_191227"
   ],
-  "last_tick": "2026-09-04T19:13:57.546071+00:00",
+  "last_tick": "2026-09-04T19:14:23.770308+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1473,7 +1474,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

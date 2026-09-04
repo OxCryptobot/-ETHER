@@ -1359,7 +1359,8 @@
     "p3_52_ledger_unaided",
     "playbook_coding_method_refresh_181846",
     "p3_53_resume",
-    "p3_54_gem_protocol"
+    "p3_54_gem_protocol",
+    "p3_55_gem_runtime"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1457,7 +1458,7 @@
     "p3_46_ledger_unaided",
     "medic_hb_20260904_181202"
   ],
-  "last_tick": "2026-09-04T18:38:56.183132+00:00",
+  "last_tick": "2026-09-04T18:39:41.279725+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1467,7 +1468,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

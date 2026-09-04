@@ -1,10 +1,9 @@
 {
-  "job_id": "medic_hb_20260904_191227",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-04T19:13:05.600887+00:00",
-  "note": null,
-  "class": null,
-  "measurement": true,
-  "failure_type": "step_fail"
+  "job_id": "p3_60_coord",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-04T19:13:59.726397+00:00",
+  "note": "FAST: lock spawned=False. Coordination is FIFO + sequential gems, not a swarm.",
+  "class": "fast",
+  "measurement": true
 }

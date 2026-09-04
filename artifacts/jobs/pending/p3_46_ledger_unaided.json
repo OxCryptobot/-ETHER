@@ -1,0 +1,27 @@
+{
+  "id": "p3_46_ledger_unaided",
+  "note": "controlled live unaided ledger --policy model. p3_45 merge 1/3. Measurement wall. Never requeue p3_45.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.measure_tool_runtime",
+        "--live",
+        "--fixture",
+        "ledger",
+        "--policy",
+        "model",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "500",
+        "--scoreboard",
+        "artifacts/scoreboard_p3_46_ledger_unaided.json"
+      ],
+      "timeout": 560
+    }
+  ]
+}

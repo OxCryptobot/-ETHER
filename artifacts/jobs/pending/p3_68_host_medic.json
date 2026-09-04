@@ -1,0 +1,19 @@
+{
+  "id": "p3_68_host_medic",
+  "note": "FAST: host_health.medic_stand_down. Windows drain still must honor it.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_68_host_medic.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

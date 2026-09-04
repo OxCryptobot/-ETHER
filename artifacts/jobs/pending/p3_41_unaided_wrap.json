@@ -1,0 +1,19 @@
+{
+  "id": "p3_41_unaided_wrap",
+  "note": "FAST: wrap_live_decide(allow_takeover=False) never emits the merge teacher book.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_41_unaided_wrap.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

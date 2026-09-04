@@ -188,6 +188,11 @@ def critique_fail(
         pass
 
     enqueued_id = None
+    policy = (os.getenv("ETHER_LIVE_POLICY") or "").strip().lower()
+    if enqueue and policy == "model":
+        artifact["enqueued"] = None
+        artifact["enqueue_skipped"] = "policy_model"
+        enqueue = False
     if enqueue:
         try:
             from core.playbook_limiter import allow_playbook, mark_playbook

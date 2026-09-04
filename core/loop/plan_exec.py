@@ -40,7 +40,11 @@ def execute_tool(tool: Optional[str]) -> Dict[str, Any]:
         from core.loop.git_tools import git_diff
         return git_diff()
     if tool == "run_tests":
-        return {"ok": True, "deferred": "sandbox", "tool": "run_tests"}
+        from core.loop.living import run_tests
+
+        out = run_tests()
+        out["tool"] = "run_tests"
+        return out
     return {"ok": False, "skipped": tool}
 
 

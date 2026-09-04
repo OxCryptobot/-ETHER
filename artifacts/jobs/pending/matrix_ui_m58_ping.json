@@ -1,0 +1,16 @@
+{
+  "id": "matrix_ui_m58_ping",
+  "note": "Matrix Queue ping from m58. FAST print.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "print('matrix_ui_ok')"
+      ],
+      "timeout": 30
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-"""Living loop — one batch that actually runs gems.
+"""Living loop — batch that runs gems on real fixtures.
 
-Walk a plan, audit the artifact, run pytest (Clear Quartz / repo_oracle),
-persist a lesson. This is the Phase-3/4 body, not a catalog.
+Walk a plan, PEP8-review, audit, pytest (repo_oracle / ToolRuntime path),
+persist a lesson. Merge/ledger/toy workspaces live here.
 """
 from __future__ import annotations
 
@@ -19,6 +19,16 @@ LESSONS = ROOT / "artifacts" / "lessons.jsonl"
 
 DEFAULT_TEST = "def test_living_ok():\n    assert 1 + 1 == 2\n"
 
+FIXTURES: Dict[str, Path] = {
+    "merge": ROOT / "fixtures" / "repo_oracle_merge",
+    "ledger": ROOT / "fixtures" / "repo_oracle_ledger",
+    "toy": ROOT / "fixtures" / "repo_oracle_toy",
+    "lru": ROOT / "fixtures" / "repo_oracle_lru",
+    "topo": ROOT / "fixtures" / "repo_oracle_topo",
+    "intervals": ROOT / "fixtures" / "repo_oracle_intervals",
+    "wallet": ROOT / "fixtures" / "repo_oracle_wallet",
+}
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -29,15 +39,13 @@ def run_tests(
     code: Optional[str] = None,
     timeout: int = 45,
 ) -> Dict[str, Any]:
-    """Run pytest via repo_oracle (same path ToolRuntime._obs_tests uses).
-
-    If no workspace, write `code` (or DEFAULT_TEST) into a temp dir and grade it.
-    """
+    """Run pytest via repo_oracle (same path ToolRuntime._obs_tests uses)."""
     from core.repo_oracle import run_project_pytest
 
     if workspace is not None:
         result = run_project_pytest(workspace, timeout=timeout)
         result["via"] = "workspace"
+        result["workspace"] = str(workspace)
         return result
 
     body = code if code is not None else DEFAULT_TEST
@@ -47,6 +55,20 @@ def run_tests(
         result = run_project_pytest(tdir, timeout=timeout)
         result["via"] = "temp"
         return result
+
+
+def pep8_workspace(workspace: Path) -> Dict[str, Any]:
+    from core.pep8_reviewer import review_paths
+
+    report = review_paths([workspace])
+    return {
+        "ok": bool(report.ok),
+        "tool": report.tool,
+        "n_critical": report.n_critical,
+        "n_warning": report.n_warning,
+        "via": "pep8_reviewer",
+        "workspace": str(workspace),
+    }
 
 
 def audit_code(artifact: str) -> Dict[str, Any]:
@@ -77,6 +99,54 @@ def save_lesson(text: str, *, kind: str = "living") -> Path:
     with LESSONS.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(row) + "\n")
     return LESSONS
+
+
+def first_py(workspace: Path) -> str:
+    for p in sorted(workspace.rglob("*.py")):
+        if "test" in p.parts:
+            continue
+        return p.read_text(encoding="utf-8", errors="replace")[:4000]
+    return DEFAULT_TEST
+
+
+def run_fixture(name: str, *, timeout: int = 60) -> Dict[str, Any]:
+    """Grade a named repo_oracle fixture: pep8 + pytest + audit + lesson."""
+    if name not in FIXTURES:
+        raise KeyError(f"unknown fixture {name}")
+    ws = FIXTURES[name]
+    if not ws.exists():
+        return {"name": name, "ok": False, "error": "missing workspace", "workspace": str(ws)}
+    pep8 = pep8_workspace(ws)
+    tests = run_tests(workspace=ws, timeout=timeout)
+    audit = audit_code(first_py(ws))
+    lesson = save_lesson(
+        f"fixture={name} pep8={pep8.get('ok')} tests={tests.get('ok')} audit={audit.get('approved')}",
+        kind=f"fixture:{name}",
+    )
+    return {
+        "name": name,
+        "workspace": str(ws),
+        "pep8": pep8,
+        "tests": {"ok": tests.get("ok"), "via": tests.get("via"), "score": tests.get("score")},
+        "audit": audit,
+        "lesson": str(lesson),
+        "ok": True,  # graded without crashing
+        "tests_ok": bool(tests.get("ok")),
+        "pep8_ok": bool(pep8.get("ok")),
+    }
+
+
+def run_hard_pack(*, timeout: int = 60) -> Dict[str, Any]:
+    """Batch: toy (easy) + merge + ledger (living pair)."""
+    names = ("toy", "merge", "ledger")
+    rows = [run_fixture(n, timeout=timeout) for n in names]
+    save_lesson("hard_pack " + ",".join(f"{r['name']}:{r['tests_ok']}" for r in rows), kind="hard_pack")
+    return {
+        "ok": all(r.get("ok") for r in rows),
+        "rows": rows,
+        "toy_green": next(r["tests_ok"] for r in rows if r["name"] == "toy"),
+        "n": len(rows),
+    }
 
 
 def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, Any]:

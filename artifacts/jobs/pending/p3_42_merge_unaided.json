@@ -1,0 +1,27 @@
+{
+  "id": "p3_42_merge_unaided",
+  "note": "MEASURE: unaided merge LIVE --policy model. No teacher takeover. p3_34/p3_38 do not count.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.measure_tool_runtime",
+        "--live",
+        "--fixture",
+        "merge",
+        "--policy",
+        "model",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "500",
+        "--scoreboard",
+        "artifacts/scoreboard_p3_42_merge_unaided.json"
+      ],
+      "timeout": 560
+    }
+  ]
+}

@@ -1352,7 +1352,8 @@
     "critique_hyp_medic_hb_20260904_161805_161844",
     "playbook_coding_method_refresh_171846",
     "p3_47_merge_unaided",
-    "p3_48_merge_unaided"
+    "p3_48_merge_unaided",
+    "p3_49_run_tests_before_done"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1449,7 +1450,7 @@
     "medic_hb_20260904_170631",
     "p3_46_ledger_unaided"
   ],
-  "last_tick": "2026-09-04T17:52:57.747626+00:00",
+  "last_tick": "2026-09-04T17:53:35.316128+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1459,7 +1460,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

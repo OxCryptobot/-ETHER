@@ -1,0 +1,19 @@
+{
+  "id": "p3_55_gem_runtime",
+  "note": "FAST: stage\u2192gem dispatch. Pipeline.run still does not call it.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_55_gem_runtime.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

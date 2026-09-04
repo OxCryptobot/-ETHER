@@ -1,0 +1,19 @@
+{
+  "id": "p3_74b_fixture_batch",
+  "note": "FAST batch: grade broken merge/ledger/toy. Green path is temp pytest. pep8.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_74_fixture_batch.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

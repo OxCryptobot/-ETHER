@@ -44,6 +44,14 @@ TOOL_SPECS: Sequence[Dict[str, str]] = (
         "doc": "List files under the workspace root (relative paths).",
     },
     {
+        "name": "git_status",
+        "doc": "Read-only git status --porcelain.",
+    },
+    {
+        "name": "git_diff",
+        "doc": "Read-only git diff.",
+    },
+    {
         "name": "read_file",
         "doc": "Read a text file. args: path (relative).",
     },
@@ -294,6 +302,12 @@ class ToolRuntime:
     def _execute(self, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if tool == "list_files":
             return self._obs_list()
+        if tool == "git_status":
+            from core.loop.git_tools import git_status
+            return git_status()
+        if tool == "git_diff":
+            from core.loop.git_tools import git_diff
+            return git_diff()
         if tool == "read_file":
             return self._obs_read(str(args.get("path") or ""))
         if tool == "write_file":

@@ -1,15 +1,10 @@
 {
-  "job_id": "p3_45_merge_unaided",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-04T14:40:14.440336+00:00",
-  "note": "controlled live unaided merge --policy model. p3_42 died at 90s production clamp. Measurement wall.",
+  "job_id": "medic_hb_20260904_161805",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-04T16:18:44.721619+00:00",
+  "note": "medic git-heartbeat wake health_check",
   "class": "fast",
   "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "failure_type": "step_fail"
 }

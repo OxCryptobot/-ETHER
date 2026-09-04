@@ -270,7 +270,12 @@ def _old_key(step: Dict[str, Any]) -> str:
     return str(args.get("old") or args.get("contains") or "")
 
 
-def wrap_live_decide(fixture: str, inner: Callable) -> Callable:
+def wrap_live_decide(
+    fixture: str,
+    inner: Callable,
+    *,
+    allow_takeover: bool = True,
+) -> Callable:
     book = list(PLAYBOOKS.get(fixture) or [])
     state: Dict[str, Any] = {
         "observe": 0,
@@ -325,6 +330,12 @@ def wrap_live_decide(fixture: str, inner: Callable) -> Callable:
         return {"tool": "done", "args": {"reason": str(state["policy"])}}
 
     def decide(messages):
+        # Unaided living-agent path: never hand the loop to the fixture book.
+        if not allow_takeover:
+            state["inner_calls"] += 1
+            decision = inner(messages)
+            return decision
+
         # I-005: never call the LLM after takeover. Playbook/craft owns the turn.
         if state["takeover"] and (book or suggested_from_messages(messages)):
             return _next_teacher_or_craft(messages)

@@ -311,6 +311,9 @@ class Pipeline:
                 from core.loop.plan_exec import dispatch_walked
 
                 walked = dispatch_walked(walked)
+                from core.loop.plan_exec import execute_dispatched
+
+                walked = execute_dispatched(walked)
                 write_progress(
                     tid,
                     objective,

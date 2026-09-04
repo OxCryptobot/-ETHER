@@ -1,0 +1,13 @@
+{
+  "id": "medic_hb_20260904_161805",
+  "note": "medic git-heartbeat wake health_check",
+  "class": "fast",
+  "continue_on_fail": true,
+  "created": "2026-09-04T16:18:05Z",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/health_check.py", "--skip-sandbox"],
+      "timeout": 120
+    }
+  ]
+}

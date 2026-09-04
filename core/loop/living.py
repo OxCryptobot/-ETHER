@@ -12,8 +12,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from core.loop.plan_walk import walk_plan
-from core.loop.plan_exec import dispatch_walked, tool_for_step
 from core.schemas import ExecutionPlan
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -83,6 +81,9 @@ def save_lesson(text: str, *, kind: str = "living") -> Path:
 
 def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, Any]:
     """Full batch: walk → dispatch → audit → pytest → lesson."""
+    from core.loop.plan_exec import dispatch_walked
+    from core.loop.plan_walk import walk_plan
+
     walked = dispatch_walked(walk_plan(plan))
     audit = audit_code(code)
     tests = run_tests(code=code)

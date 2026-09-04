@@ -1349,24 +1349,7 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "critique_hyp_medic_hb_20260904_161805_161844",
-    "playbook_coding_method_refresh_171846",
-    "p3_47_merge_unaided",
-    "p3_48_merge_unaided",
-    "p3_49_run_tests_before_done",
-    "p3_50_ledger_unaided",
-    "p3_51_ledger_unaided",
-    "p3_52_ledger_unaided",
-    "playbook_coding_method_refresh_181846",
-    "p3_53_resume",
-    "p3_54_gem_protocol",
-    "p3_55_gem_runtime",
-    "p3_56_loop_gems",
-    "p3_57_gem_step",
-    "p3_58_pipeline_gems",
-    "p3_59_plan_walk",
-    "p3_60_coord",
-    "p3_61_seven_slice"
+    "p3_67_git_observe"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1459,18 +1442,14 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01",
-    "medic_hb_20260904_170631",
-    "p3_46_ledger_unaided",
-    "medic_hb_20260904_181202",
-    "medic_hb_20260904_191227"
+    "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-09-04T19:19:21.822761+00:00",
+  "last_tick": "2026-09-04T19:20:08.714273+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
   "last_enqueued": "ss_train_gates_150336_2",
-  "last_playbook": "coding_method_v1",
+  "last_playbook": "timeout_budget_exhaust",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
@@ -1485,6 +1464,5 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 2,
     "training_wheels": true
-  },
-  "last_playbook_skipped": "rate_limit:coding_method_v1:step_fail"
+  }
 }

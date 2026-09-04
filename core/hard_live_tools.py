@@ -17,6 +17,8 @@ OBSERVE_TOOLS = frozenset(
         "glob",
         "bug_comments",
         "ast_outline",
+        "git_status",
+        "git_diff",
         "_retry",
     }
 )

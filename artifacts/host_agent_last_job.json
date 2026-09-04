@@ -1,9 +1,9 @@
 {
-  "job_id": "critique_hyp_p3_42_merge_unaided_143439",
+  "job_id": "p3_44_live_budget",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T14:35:02.513799+00:00",
-  "note": "playbook:labradorite for p3_42_merge_unaided [timeout] :: shrink wall budget; scripted tool_runtime only; one file",
-  "class": "recovery",
+  "finished": "2026-09-04T14:37:39.234417+00:00",
+  "note": "FAST: unaided --policy model jobs get measurement wall (>=300s), not 90s production clamp.",
+  "class": "fast",
   "measurement": true
 }

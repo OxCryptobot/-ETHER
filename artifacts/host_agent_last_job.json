@@ -1,10 +1,9 @@
 {
-  "job_id": "p3_69_launch_open",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-04T19:22:15.150739+00:00",
-  "note": "FAST: launch OPEN. No GEMS status=gated. Fabricate still NotImplemented.",
-  "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "job_id": "critique_hyp_p3_69_launch_open_192215",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-04T19:22:53.327265+00:00",
+  "note": "playbook:labradorite for p3_69_launch_open [step_fail] :: isolate failing step; FAST reverify",
+  "class": "recovery",
+  "measurement": true
 }

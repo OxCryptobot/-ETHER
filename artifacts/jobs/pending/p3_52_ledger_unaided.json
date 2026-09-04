@@ -1,0 +1,28 @@
+{
+  "id": "p3_52_ledger_unaided",
+  "note": "Third countable ledger after p3_50 and p3_51 PASS. policy=model. Gate is 2/3 going into this run.",
+  "class": "measure",
+  "continue_on_fail": true,
+  "policy": "model",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.measure_tool_runtime",
+        "--live",
+        "--fixture",
+        "ledger",
+        "--policy",
+        "model",
+        "--max-steps",
+        "16",
+        "--timeout",
+        "500",
+        "--scoreboard",
+        "artifacts/scoreboard_p3_52_ledger_unaided.json"
+      ],
+      "timeout": 560
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "p3_56_loop_gems",
+  "note": "FAST: LoopRunner.gem_for + tool_first_gems. Pipeline.run still the strangler.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_56_loop_gems.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}\n

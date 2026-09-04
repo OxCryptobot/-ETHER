@@ -1,0 +1,19 @@
+{
+  "id": "p3_53_resume",
+  "note": "FAST: public resume_if_any. Pipeline.run still unwired. Do not farm ledger.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_53_resume.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

@@ -60,6 +60,24 @@ def build_registry() -> Dict[str, Any]:
             [],
         ),
         _tool(
+            "ether.git_status",
+            "Read-only git status --porcelain",
+            {},
+            [],
+        ),
+        _tool(
+            "ether.git_diff",
+            "Read-only git diff",
+            {},
+            [],
+        ),
+        _tool(
+            "ether.run_tests",
+            "Run the workspace pytest holdout",
+            {"args": {"type": "array", "items": {"type": "string"}}},
+            [],
+        ),
+        _tool(
             "ether.swarm_plan",
             "Plan-only multi-agent task decomposition (no GPU swarm)",
             {

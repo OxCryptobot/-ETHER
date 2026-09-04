@@ -1,9 +1,11 @@
 {
-  "generated": "2026-09-04T17:03:59.516835+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-09-04T17:09:28.276714+00:00",
+  "next_job": "medic_hb_20260904_170631",
+  "queue_head": [
+    "medic_hb_20260904_170631"
+  ],
+  "queue_depth": 1,
+  "host_phase": "idle",
   "last_job": "critique_hyp_medic_hb_20260904_161805_161844",
   "last_ok": true,
   "last_failure_type": null,

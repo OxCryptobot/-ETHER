@@ -1,0 +1,19 @@
+{
+  "id": "p3_49_run_tests_before_done",
+  "note": "FAST: observe kill must not override replace_once; after mutate force run_tests. Unblocks a new ledger id. Do not requeue p3_46.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_49_run_tests_before_done.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

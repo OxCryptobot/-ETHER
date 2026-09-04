@@ -202,6 +202,11 @@ def critique_fail(
         artifact["enqueued"] = None
         artifact["enqueue_skipped"] = "policy_model"
         enqueue = False
+    if enqueue and artifact_trace and artifact_trace != "no trace":
+        artifact["enqueued"] = None
+        artifact["enqueue_skipped"] = "traces_not_playbooks"
+        artifact["source"] = "trace"
+        enqueue = False
     if enqueue:
         try:
             from core.playbook_limiter import allow_playbook, mark_playbook

@@ -1,9 +1,9 @@
 {
-  "job_id": "p3_50_ledger_unaided",
+  "job_id": "p3_51_ledger_unaided",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T18:02:52.411111+00:00",
-  "note": "First countable ledger after p3_49 guard. policy=model. Do not requeue p3_46. Hypothesis: kill routes to run_tests after mutate.",
+  "finished": "2026-09-04T18:05:49.067660+00:00",
+  "note": "Second countable ledger after p3_50 PASS. policy=model. Same path. Need 3/3.",
   "class": "measure",
   "measurement": true,
   "live_budget": {

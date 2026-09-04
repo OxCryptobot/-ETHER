@@ -532,11 +532,13 @@ def _mandatory_critique(envelope: Dict[str, Any]) -> None:
     try:
         from core.critique_on_fail import critique_fail
 
+        klass = str(envelope.get("class") or envelope.get("job_class") or "").lower()
+        enqueue = klass not in ("fast",)
         art = critique_fail(
             job_id=str(envelope.get("job_id") or "unknown"),
             failure_type=str(envelope.get("failure_type") or ""),
             note=str(envelope.get("note") or ""),
-            enqueue=True,
+            enqueue=enqueue,
         )
         if art.get("skipped"):
             log(f"critique skipped: {art.get('reason')}")
@@ -614,6 +616,11 @@ def run_steps(
     return last_rc, failure_type if last_rc else None
 
 
+def _is_babysit(job_id: str) -> bool:
+    j = (job_id or "").lower()
+    return j.startswith(("medic_hb", "critique_hyp", "playbook"))
+
+
 def process_job(path: Path) -> bool:
     try:
         job = json.loads(path.read_text(encoding="utf-8"))
@@ -624,6 +631,18 @@ def process_job(path: Path) -> bool:
         return False
 
     job_id = job.get("id") or path.stem
+
+    if _is_babysit(str(job_id)):
+        try:
+            from core.host_health import compute
+
+            if compute().get("medic_stand_down"):
+                log(f"stand-down skip babysit job={job_id}")
+                DONE.mkdir(parents=True, exist_ok=True)
+                path.rename(DONE / f"{path.stem}_stood_down.json")
+                return True
+        except Exception as e:
+            log(f"stand-down check error: {type(e).__name__}: {e}")
 
     try:
         from core.live_budget import apply_to_job

@@ -156,6 +156,14 @@ def critique_fail(
     except Exception:
         pass
 
+    try:
+        from core.loop.traces import critique_from_trace, last_tool_trace
+
+        tools = last_tool_trace({"tools": lab.get("tools") or [], "steps": lab.get("steps") or []})
+        artifact_trace = critique_from_trace(tools)
+    except Exception:
+        artifact_trace = ""
+
     artifact = {
         "id": f"critique_{job_id}_{datetime.now(timezone.utc).strftime('%H%M%S')}",
         "job_id": job_id,
@@ -168,6 +176,7 @@ def critique_fail(
         "next_hypothesis": hyp,
         "plan": plan_meta,
         "source": "critique_on_fail",
+        "trace": artifact_trace,
         "mandatory": True,
     }
     CRITIQUE_DIR.mkdir(parents=True, exist_ok=True)

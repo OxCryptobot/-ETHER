@@ -7,8 +7,8 @@ from core.loop.tool_first import decide_tool_first_terminal
 
 
 def loop_runner_enabled() -> bool:
-    """Strangler flag: ETHER_LOOP_RUNNER=1 routes extracted stages via LoopRunner."""
-    return os.getenv("ETHER_LOOP_RUNNER", "0") == "1"
+    """Strangler flag: ETHER_LOOP_RUNNER default-on. Set 0 to disable. Routes extracted stages via LoopRunner."""
+    return os.getenv("ETHER_LOOP_RUNNER", "1") == "1"
 
 
 __all__ = [

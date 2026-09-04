@@ -1,9 +1,15 @@
 {
-  "job_id": "p3_44_live_budget",
+  "job_id": "p3_45_merge_unaided",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-04T14:37:39.234417+00:00",
-  "note": "FAST: unaided --policy model jobs get measurement wall (>=300s), not 90s production clamp.",
+  "finished": "2026-09-04T14:40:14.440336+00:00",
+  "note": "controlled live unaided merge --policy model. p3_42 died at 90s production clamp. Measurement wall.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

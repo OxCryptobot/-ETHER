@@ -1,8 +1,4 @@
-"""@ETHER gems package — the 8 specialized modules."""
+"""@ETHER gems package — 8 specialized modules + typed registry."""
+from gems.protocol import GEMS, GemSpec, by_id, live_gems
 
-# Gems will be imported here as they are implemented:
-# from gems.clear_quartz import ClearQuartz
-# from gems.rose_quartz import RoseQuartz
-# etc.
-
-__all__ = []
+__all__ = ["GEMS", "GemSpec", "by_id", "live_gems"]

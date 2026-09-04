@@ -1,0 +1,19 @@
+{
+  "id": "p3_54_gem_protocol",
+  "note": "FAST: typed gem registry. Pipeline still does not dispatch on it.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p3_54_gem_protocol.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 90
+    }
+  ]
+}

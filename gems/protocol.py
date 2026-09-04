@@ -28,6 +28,11 @@ GEMS: Tuple[GemSpec, ...] = (
 )
 
 
+def registry_key(gid: str) -> str:
+    """GemRegistry name. protocol uses underscores; registry uses hyphens."""
+    return gid.replace("_", "-")
+
+
 def by_id(gid: str) -> Optional[GemSpec]:
     for gem in GEMS:
         if gem.id == gid:

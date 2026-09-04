@@ -1,14 +1,12 @@
 {
-  "generated": "2026-09-04T20:06:22.500794+00:00",
-  "next_job": "medic_hb_20260904_200500",
-  "queue_head": [
-    "medic_hb_20260904_200500"
-  ],
-  "queue_depth": 1,
+  "generated": "2026-09-04T20:07:01.686292+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
   "host_phase": "polling",
-  "last_job": "p3_73_living_batch",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "medic_hb_20260904_200500",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

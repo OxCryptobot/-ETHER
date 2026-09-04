@@ -1,18 +1,21 @@
 {
-  "heartbeat": "2026-09-04T17:18:53.650646+00:00",
+  "heartbeat": "2026-09-04T17:21:39.599387+00:00",
   "poll_s": 1,
   "root": "C:\\Users\\Otcde\\ETHER",
   "gpu": {
     "ok": true,
     "available": true,
     "name": "GeForce GTX 1650",
-    "util_gpu_pct": 0.0,
-    "mem_used_mb": 134.0,
+    "util_gpu_pct": 25.0,
+    "mem_used_mb": 2713.0,
     "mem_total_mb": 4096.0,
-    "temp_c": 52.0,
+    "temp_c": 61.0,
     "warn": [],
-    "updated": "2026-09-04T17:18:53.649647+00:00"
+    "updated": "2026-09-04T17:21:39.599387+00:00"
   },
   "current_job": null,
-  "phase": "idle"
+  "phase": "idle",
+  "last_job": "p3_46_ledger_unaided",
+  "last_ok": false,
+  "last_failure_type": "step_fail"
 }

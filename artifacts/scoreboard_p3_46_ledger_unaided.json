@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "live",
+      "ok": false,
+      "score": 0.0,
+      "n_steps": 10,
+      "elapsed_s": 128.085,
+      "reason": "observe_loop_kill streak=5 last=replace_once",
+      "tools": [
+        "list_files",
+        "bug_comments",
+        "replace_once",
+        "replace_once",
+        "read_file",
+        "read_file",
+        "read_file",
+        "bug_comments",
+        "bug_comments",
+        "done"
+      ],
+      "model": "qwen3.5:4b-q4_K_M",
+      "policy": "model",
+      "failure_type": "live_fail"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "live": true
+  }
+}

@@ -1,13 +1,12 @@
 {
-  "generated": "2026-09-04T14:33:03.035348+00:00",
-  "next_job": "p3_41_unaided_wrap",
+  "generated": "2026-09-04T14:33:08.120133+00:00",
+  "next_job": "p3_42_merge_unaided",
   "queue_head": [
-    "p3_41_unaided_wrap",
     "p3_42_merge_unaided"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "playbook_coding_method_refresh_141210",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "p3_41_unaided_wrap",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

@@ -113,6 +113,6 @@ def checkpoint_pipeline(
 
 
 def resume_if_any(run_id: str) -> Optional[AgentCheckpoint]:
-    """Public resume API. Pipeline.run does not call this yet."""
+    """Public resume API. Pipeline.run calls this when ETHER_RESUME_RUN_ID is set."""
     return load_checkpoint(run_id)
 

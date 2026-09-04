@@ -1,14 +1,12 @@
 {
-  "generated": "2026-09-04T23:40:03.689785+00:00",
-  "next_job": "p3_75_living_fabricate",
-  "queue_head": [
-    "p3_75_living_fabricate"
-  ],
-  "queue_depth": 1,
+  "generated": "2026-09-04T23:40:32.159479+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
   "host_phase": "polling",
-  "last_job": "matrix_ui_1788565146584",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "p3_75_living_fabricate",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

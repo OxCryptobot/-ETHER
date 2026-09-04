@@ -39,6 +39,11 @@ def compute() -> Dict[str, Any]:
             age_s = None
 
     alive = age_s is not None and age_s <= STALE_S
+    try:
+        from core.loop.medic import medic_stand_down as _medic_sd
+        stand = _medic_sd(st)
+    except Exception:
+        stand = False
     payload: Dict[str, Any] = {
         "updated": datetime.now(timezone.utc).isoformat(),
         "ok": alive,
@@ -47,6 +52,7 @@ def compute() -> Dict[str, Any]:
         "age_s": age_s,
         "stale_after_s": STALE_S,
         "phase": st.get("phase"),
+        "medic_stand_down": stand,
         "current_job": st.get("current_job"),
         "last_job": st.get("last_job") or last.get("job_id"),
         "last_ok": st.get("last_ok", last.get("ok")),

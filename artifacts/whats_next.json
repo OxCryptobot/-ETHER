@@ -1,8 +1,10 @@
 {
-  "generated": "2026-09-05T17:01:11.308211+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-05T17:01:50.829009+00:00",
+  "next_job": "leftover_goal",
+  "queue_head": [
+    "leftover_goal"
+  ],
+  "queue_depth": 1,
   "host_phase": "polling",
   "last_job": "matrix_ui_1788627405420",
   "last_ok": true,

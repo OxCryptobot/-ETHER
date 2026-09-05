@@ -23,7 +23,8 @@ PROGRESS = {
     "leftover_reverify": "PASS",
     "leftover_plan2": "PASS",
     "leftover_full3": "PASS",
-    "split_pipeline_godfile": "begin_plan_tools_mark_extracted",
+    "leftover_mark": "PASS",
+    "split_pipeline_godfile": "gems_call_extracted",
     "lora_train_12gb": "off_box",
     "operator_outsource_key": "scale_plane_ready",
 }

@@ -560,8 +560,21 @@ def _mandatory_critique(envelope: Dict[str, Any]) -> None:
 
 def list_pending() -> List[Path]:
     PENDING.mkdir(parents=True, exist_ok=True)
-    paths = [p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]
-    return _sort_pending_fast_first(paths)
+    DONE.mkdir(parents=True, exist_ok=True)
+    kept: List[Path] = []
+    for path in PENDING.glob("*.json"):
+        if path.name == ".gitkeep":
+            continue
+        if _is_babysit(path.stem):
+            dest = DONE / f"{path.stem}_stood_down.json"
+            try:
+                path.rename(dest)
+                log(f"medic stand-down: drain babysit {path.name}")
+            except Exception:
+                pass
+            continue
+        kept.append(path)
+    return _sort_pending_fast_first(kept)
 
 
 def run_steps(

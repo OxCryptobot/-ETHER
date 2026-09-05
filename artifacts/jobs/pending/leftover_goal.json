@@ -1,0 +1,21 @@
+{
+  "id": "leftover_goal",
+  "note": "FAST leftover: begin extract + goal. leftover_reverify already PASS.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_begin.py",
+        "tests/test_goal.py",
+        "tests/test_leftover_gate.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

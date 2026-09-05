@@ -242,6 +242,7 @@ class Pipeline:
                 pass
 
         from core.loop.begin import start_resume_gems
+        from core.loop.stage_mark import skip_detail
 
         skip = start_resume_gems(result, tid, objective, strategy, write_progress)
 
@@ -506,7 +507,7 @@ class Pipeline:
                     tid,
                     objective,
                     "sandbox",
-                    detail="skipped_resume" if "sandbox" in skip else "",
+                    detail=skip_detail(skip, "sandbox"),
                 )
                 cq_ok = False
                 detail = "workspace_verify: not_run"
@@ -832,7 +833,7 @@ class Pipeline:
                     tid,
                     objective,
                     "sandbox",
-                    detail="skipped_resume" if "sandbox" in skip else "",
+                    detail=skip_detail(skip, "sandbox"),
                 )
                 sand_req = Envelope(
                     task_id=task_id,
@@ -1062,7 +1063,7 @@ class Pipeline:
                 )
 
         t4 = time.perf_counter()
-        write_progress(tid, objective, "audit")
+        write_progress(tid, objective, "audit", detail=skip_detail(skip, "audit"))
         audit_req = Envelope(
             task_id=task_id,
             target_gem="black-tourmaline",

@@ -25,8 +25,9 @@ PROGRESS = {
     "leftover_full3": "PASS",
     "leftover_mark": "PASS",
     "leftover_wire": "PASS",
+    "leftover_5": "PASS",
     "split_pipeline_godfile": "gems_call_extracted",
-    "lora_train_12gb": "off_box",
+    "lora_train_12gb": "grok_bus_pack",
     "operator_outsource_key": "grok_bus_no_key",
 }
 

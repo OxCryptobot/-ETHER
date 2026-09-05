@@ -1,0 +1,22 @@
+{
+  "id": "leftover_full3",
+  "note": "FAST reverify leftover_full2 FAIL: inspect plan_stage not Pipeline.run.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/deploy_pipeline.py"
+      ],
+      "timeout": 240
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

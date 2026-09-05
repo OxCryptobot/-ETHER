@@ -255,15 +255,9 @@ class Pipeline:
 
         try:
             t0 = time.perf_counter()
-            available = []
-            try:
-                from gems.grandidierite.registry import list_tools
+            from core.loop.tools_avail import available_tools
 
-                available = [n.replace(".py", "") for n in list_tools().get("persistent", [])]
-            except Exception as e:
-                # A-3: was a silent pass — the plan gem then saw an empty tool
-                # list indistinguishable from \"no tools exist\".
-                result.degraded.append(f"grandidierite_list_tools_unavailable:{type(e).__name__}")
+            available = available_tools(result)
 
             from core.loop.plan_stage import apply_plan_skip, walk_current_plan
 

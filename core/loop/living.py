@@ -149,6 +149,19 @@ def run_hard_pack(*, timeout: int = 60) -> Dict[str, Any]:
     }
 
 
+def run_pack_plus(*, timeout: int = 60) -> Dict[str, Any]:
+    """4B product pack: living pair plus lru/topo/intervals when present."""
+    names = ("toy", "merge", "ledger", "lru", "topo", "intervals")
+    rows = []
+    for name in names:
+        if name not in FIXTURES or not FIXTURES[name].exists():
+            rows.append({"name": name, "ok": False, "error": "missing", "tests_ok": False})
+            continue
+        rows.append(run_fixture(name, timeout=timeout))
+    save_lesson("pack_plus " + ",".join(f"{r['name']}:{r.get('tests_ok')}" for r in rows), kind="pack_plus")
+    return {"ok": all(r.get("ok") for r in rows), "rows": rows, "n": len(rows)}
+
+
 def fabricate_stub(name: str, purpose: str = "") -> Dict[str, Any]:
     """Template fabricate only. Never claims LLM-authored tools."""
     from gems.grandidierite.fabricate import fabricate
@@ -163,15 +176,23 @@ def fabricate_stub(name: str, purpose: str = "") -> Dict[str, Any]:
 
 
 def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, Any]:
-    """Full batch: walk → dispatch → audit → pytest → lesson."""
+    """Full batch: fix-task DAG first, then audit → pytest → flywheel lesson."""
+    from core.loop.fix_dag import walk_fix
+    from core.loop.flywheel import lesson_from_trace, prepend_lessons
     from core.loop.plan_exec import dispatch_walked
     from core.loop.plan_walk import walk_plan
 
-    walked = dispatch_walked(walk_plan(plan))
+    _ = prepend_lessons(plan.reasoning or "fix")
+    walked = walk_fix(plan.reasoning or "fix")
+    if plan.steps:
+        walked = dispatch_walked(walk_plan(plan))
     audit = audit_code(code)
     tests = run_tests(code=code)
     lesson = save_lesson(
         f"living audit={audit.get('approved')} tests={tests.get('ok')} steps={len(walked)}"
+    )
+    fly = lesson_from_trace(
+        {"tools": [r.get("tool") for r in walked if r.get("tool")], "ok": tests.get("ok")}
     )
     return {
         "ok": bool(tests.get("ok")) and bool(audit.get("ok")),
@@ -179,5 +200,6 @@ def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, An
         "audit": audit,
         "tests": {"ok": tests.get("ok"), "via": tests.get("via"), "score": tests.get("score")},
         "lesson": str(lesson),
+        "flywheel": fly.get("text"),
         "n_steps": len(walked),
     }

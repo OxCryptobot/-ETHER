@@ -1,11 +1,11 @@
 """Pipeline plan skip + walk. Strangler slice off the 76kB god-file."""
 from __future__ import annotations
 
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Set
 
 
 def apply_plan_skip(
-    skip: set,
+    skip: Set[str],
     objective: str,
     result: Any,
     write_progress: Callable[..., None],
@@ -41,3 +41,21 @@ def walk_current_plan(
         ),
     )
     return walked
+
+
+def run_plan_stage(
+    skip: Set[str],
+    objective: str,
+    result: Any,
+    write_progress: Callable[..., None],
+    tid: str,
+) -> bool:
+    """Named entry: skip→fix_plan, then walk. Does not call Selenite."""
+    skipped = apply_plan_skip(skip, objective, result, write_progress, tid)
+    if result.plan is None:
+        return skipped
+    try:
+        walk_current_plan(result, tid, objective, write_progress)
+    except Exception as exc:
+        result.degraded.append(f"plan_walk:{type(exc).__name__}")
+    return skipped

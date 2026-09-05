@@ -1353,7 +1353,8 @@
     "matrix_ui_1788626249095",
     "matrix_ui_1788626289541",
     "chat_tick_09051638463bf647",
-    "leftover_full"
+    "leftover_full",
+    "matrix_ui_1788626321239"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1448,7 +1449,7 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01"
   ],
-  "last_tick": "2026-09-05T16:40:52.567455+00:00",
+  "last_tick": "2026-09-05T16:40:56.683135+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1458,7 +1459,7 @@
   "steady_idx": 883,
   "rate_climb_status": "skip_rate_ok=1.0000",
   "governor": {
-    "pending": 1,
+    "pending": 0,
     "max_pending": 6,
     "steady_pause_at": 4,
     "steady_resume_at": 2,

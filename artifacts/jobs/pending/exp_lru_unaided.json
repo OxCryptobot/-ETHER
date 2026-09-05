@@ -1,0 +1,17 @@
+{
+  "id": "exp_lru_unaided",
+  "class": "fast",
+  "note": "Expansion unaided lru under wheels. policy=model. Not gate. leftover_2 PASS.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "lru",
+        "--live"
+      ],
+      "timeout": 300
+    }
+  ]
+}

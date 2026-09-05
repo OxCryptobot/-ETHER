@@ -1,0 +1,17 @@
+{
+  "id": "walk_topo",
+  "class": "fast",
+  "note": "4B walk topo under wheels. policy=model. Not gate. leftover_2pct.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "topo",
+        "--live"
+      ],
+      "timeout": 240
+    }
+  ]
+}

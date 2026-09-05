@@ -37,6 +37,11 @@ def outsource_configured() -> bool:
     )
 
 
+def grok_present() -> bool:
+    """Dual chat / git bus is the Grok chair. No API key required."""
+    return os.getenv("ETHER_GROK_PRESENT", "1") != "0"
+
+
 def vram_mb() -> int:
     env = os.getenv("ETHER_VRAM_MB", "").strip()
     if env:
@@ -112,6 +117,17 @@ def select_backend(job_or_class: Any = "fast", vram: Optional[int] = None) -> Di
                 "model": LOCAL_LARGE,
                 "scalable": True,
                 "reason": "local_large_vram",
+                "vram_mb": mem,
+            }
+        )
+        return sel
+    if grok_present() and sel["lane"] in ("live", "measure"):
+        sel.update(
+            {
+                "backend": "grok_bus",
+                "model": "grok",
+                "scalable": True,
+                "reason": "grok_present_no_key",
                 "vram_mb": mem,
             }
         )

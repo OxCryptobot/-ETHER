@@ -33,6 +33,7 @@ GATES = (
     "tests/test_leftover_wire.py",
     "tests/test_generate_retry.py",
     "tests/test_lora_grok.py",
+    "tests/test_live_criteria.py",
 )
 
 

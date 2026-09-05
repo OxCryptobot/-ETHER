@@ -1,8 +1,11 @@
 {
-  "generated": "2026-09-05T00:16:59.175645+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-05T00:17:41.202373+00:00",
+  "next_job": "chat_tick_0905001717481f7e",
+  "queue_head": [
+    "chat_tick_0905001717481f7e",
+    "matrix_ui_1788567432963"
+  ],
+  "queue_depth": 2,
   "host_phase": "polling",
   "last_job": "upgrade_all_10",
   "last_ok": true,

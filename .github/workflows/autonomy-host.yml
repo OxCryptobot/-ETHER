@@ -57,6 +57,17 @@ jobs:
           Set-Location $env:ETHER_ROOT
           powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
 
+      - name: Medic stand-down
+        id: medic
+        run: |
+          Set-Location $env:ETHER_ROOT
+          .\.venv\Scripts\python.exe scripts/stand_down.py
+          if ($LASTEXITCODE -eq 78) {
+            "skip=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            "skip=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+
       - name: Matrix hidden boot
         if: ${{ inputs.action == 'boot' || inputs.action == 'ensure' }}
         run: |
@@ -70,13 +81,13 @@ jobs:
           .\.venv\Scripts\python.exe .\scripts\self_test_autonomy.py
 
       - name: Health check
-        if: ${{ inputs.action == 'health' || inputs.action == 'cycle' || github.event_name == 'schedule' }}
+        if: ${{ steps.medic.outputs.skip != 'true' && (inputs.action == 'health' || inputs.action == 'cycle' || github.event_name == 'schedule') }}
         run: |
           Set-Location $env:ETHER_ROOT
           .\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
 
       - name: Smart cycle (curriculum + learn)
-        if: ${{ inputs.action == 'cycle' || github.event_name == 'schedule' }}
+        if: ${{ steps.medic.outputs.skip != 'true' && (inputs.action == 'cycle' || github.event_name == 'schedule') }}
         run: |
           Set-Location $env:ETHER_ROOT
           .\.venv\Scripts\python.exe .\scripts\run_smart_cycle.py

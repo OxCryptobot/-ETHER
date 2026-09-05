@@ -1,0 +1,20 @@
+{
+  "id": "p1_medic_fifo",
+  "note": "FAST: medic FIFO drain + stand_down CLI. Not living-agent.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_p1_medic_fifo.py",
+        "tests/test_p1_medic_idle.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    }
+  ]
+}

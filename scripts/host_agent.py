@@ -206,6 +206,9 @@ def _light_paths() -> List[str]:
             paths.append(f"artifacts/jobs/{name}")
     paths.extend(_measure_paths())
     paths.extend(_chat_paths())
+    pipe = ROOT / "artifacts" / "pipeline"
+    if pipe.exists():
+        paths.append("artifacts/pipeline")
     for name in (
         "strategy_stats.json",
         "preference_summary.json",

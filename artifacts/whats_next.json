@@ -1,14 +1,12 @@
 {
-  "generated": "2026-09-05T17:12:02.914715+00:00",
-  "next_job": "leftover_plan",
-  "queue_head": [
-    "leftover_plan"
-  ],
-  "queue_depth": 1,
+  "generated": "2026-09-05T17:12:24.571597+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
   "host_phase": "polling",
-  "last_job": "leftover_goal",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "leftover_plan",
+  "last_ok": false,
+  "last_failure_type": "step_fail",
   "phase_board": [
     {
       "id": "1A",

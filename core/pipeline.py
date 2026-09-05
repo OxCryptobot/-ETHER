@@ -243,28 +243,39 @@ class Pipeline:
 
         write_progress(tid, objective, "start", strategy=strategy)
 
+        skip = set()
         try:
             from core.checkpoint import resume_if_any
+            from core.loop.resume import skipped_stages
 
             prior = resume_if_any(os.getenv("ETHER_RESUME_RUN_ID") or "")
             if prior is not None:
-                write_progress(tid, objective, "resume", detail=str(getattr(prior, "stage", "loaded")))
+                skip = set(skipped_stages(prior))
+                write_progress(
+                    tid,
+                    objective,
+                    "resume",
+                    detail=f"{getattr(prior, 'stage', 'loaded')} skip={sorted(skip)}",
+                )
         except Exception as exc:
             result.degraded.append(f"resume:{type(exc).__name__}")
 
 
-        try:
-            from core.loop.gem_step import annotate_all
+        if "gems" in skip:
+            write_progress(tid, objective, "gems", detail="skipped_resume")
+        else:
+            try:
+                from core.loop.gem_step import annotate_all
 
-            gem_trace = annotate_all()
-            write_progress(
-                tid,
-                objective,
-                "gems",
-                detail=",".join(f"{row['stage']}:{row['gem']}" for row in gem_trace),
-            )
-        except Exception as exc:
-            result.degraded.append(f"gem_protocol:{type(exc).__name__}")
+                gem_trace = annotate_all()
+                write_progress(
+                    tid,
+                    objective,
+                    "gems",
+                    detail=",".join(f"{row['stage']}:{row['gem']}" for row in gem_trace),
+                )
+            except Exception as exc:
+                result.degraded.append(f"gem_protocol:{type(exc).__name__}")
 
 
 

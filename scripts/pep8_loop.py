@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PEP8 gate for the living loop + deploy scripts. FAST. Ruff if present."""
+"""PEP8 gate for the living loop + scale/deploy scripts. FAST. Ruff if present."""
 from __future__ import annotations
 
 import json
@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 SCOPE = (
     "core/loop",
+    "core/model_router.py",
     "scripts/deploy_pipeline.py",
     "scripts/stand_down.py",
     "scripts/pep8_loop.py",

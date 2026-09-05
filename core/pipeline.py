@@ -297,24 +297,31 @@ class Pipeline:
                 # list indistinguishable from \"no tools exist\".
                 result.degraded.append(f"grandidierite_list_tools_unavailable:{type(e).__name__}")
 
-            write_progress(tid, objective, "plan")
-            plan_req = Envelope(
-                task_id=task_id,
-                target_gem="selenite",
-                payload=SeleniteRequest(user_query=objective, available_tools=available),
-            )
-            plan_res = self.registry.execute(plan_req)
-            self.orchestrator.process_response(plan_req, plan_res)
-            if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
-                return self._fail(
-                    result,
-                    "plan",
-                    plan_res.error.message if plan_res.error else "plan failed",
-                    t0,
-                    attempts,
+            if "plan" in skip:
+                from core.loop.fix_dag import fix_plan
+
+                result.plan = fix_plan(objective)
+                result.plan_ok = True
+                write_progress(tid, objective, "plan", detail="skipped_resume_fix_dag")
+            else:
+                write_progress(tid, objective, "plan")
+                plan_req = Envelope(
+                    task_id=task_id,
+                    target_gem="selenite",
+                    payload=SeleniteRequest(user_query=objective, available_tools=available),
                 )
-            result.plan = plan_res.payload.plan
-            result.plan_ok = True
+                plan_res = self.registry.execute(plan_req)
+                self.orchestrator.process_response(plan_req, plan_res)
+                if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
+                    return self._fail(
+                        result,
+                        "plan",
+                        plan_res.error.message if plan_res.error else "plan failed",
+                        t0,
+                        attempts,
+                    )
+                result.plan = plan_res.payload.plan
+                result.plan_ok = True
             try:
                 from core.loop.plan_walk import walk_plan
 

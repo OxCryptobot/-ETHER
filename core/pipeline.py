@@ -265,12 +265,11 @@ class Pipeline:
                 # list indistinguishable from \"no tools exist\".
                 result.degraded.append(f"grandidierite_list_tools_unavailable:{type(e).__name__}")
 
-            if "plan" in skip:
-                from core.loop.fix_dag import fix_plan
+            from core.loop.plan_stage import apply_plan_skip, walk_current_plan
 
-                result.plan = fix_plan(objective)
-                result.plan_ok = True
-                write_progress(tid, objective, "plan", detail="skipped_resume_fix_dag")
+            plan_res = None
+            if apply_plan_skip(skip, objective, result, write_progress, tid):
+                pass
             else:
                 write_progress(tid, objective, "plan")
                 plan_req = Envelope(
@@ -291,33 +290,23 @@ class Pipeline:
                 result.plan = plan_res.payload.plan
                 result.plan_ok = True
             try:
-                from core.loop.plan_walk import walk_plan
-
-                walked = walk_plan(result.plan)
-                from core.loop.plan_exec import dispatch_walked
-
-                walked = dispatch_walked(walked)
-                from core.loop.plan_exec import execute_dispatched
-
-                walked = execute_dispatched(walked)
-                write_progress(
-                    tid,
-                    objective,
-                    "plan_walk",
-                    detail=",".join(f"{r['id']}:{r['action']}:{r.get('tool') or r['gem'] or r['status']}" for r in walked),
-                )
+                walk_current_plan(result, tid, objective, write_progress)
             except Exception as exc:
                 result.degraded.append(f"plan_walk:{type(exc).__name__}")
+            needs_tool = bool(
+                plan_res is not None
+                and getattr(plan_res.payload, "needs_tool", False)
+            )
             result.stages.append(
                 StageResult(
                     stage="plan",
                     success=True,
-                    detail=f"{len(result.plan.steps)} steps tool={plan_res.payload.needs_tool}",
+                    detail=f"{len(result.plan.steps)} steps tool={needs_tool}",
                     duration_ms=(time.perf_counter() - t0) * 1000,
                 )
             )
 
-            if plan_res.payload.needs_tool and plan_res.payload.tool_request:
+            if needs_tool and plan_res is not None and plan_res.payload.tool_request:
                 t1 = time.perf_counter()
                 treq = dict(plan_res.payload.tool_request)
                 action = str(treq.get("action") or "generate")

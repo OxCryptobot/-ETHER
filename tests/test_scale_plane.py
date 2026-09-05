@@ -54,3 +54,18 @@ def test_outsource_not_configured() -> None:
 def test_select_model_live_lane() -> None:
     s = select_model({"class": "live", "note": "live attempt"})
     assert s["lane"] == "live"
+
+
+def test_live_uses_grok_bus_without_api_key(monkeypatch) -> None:
+    monkeypatch.delenv("ETHER_OUTSOURCE", raising=False)
+    monkeypatch.delenv("ETHER_BURST", raising=False)
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ETHER_OUTSOURCE_API_KEY", raising=False)
+    monkeypatch.setenv("ETHER_GROK_PRESENT", "1")
+    monkeypatch.setenv("ETHER_VRAM_MB", "4096")
+    import core.model_router as mr
+    monkeypatch.setattr(mr, "VRAM_LARGE_MB", 12000)
+    b = mr.select_backend({"class": "live"}, vram=4096)
+    assert b["backend"] == "grok_bus"
+    assert b["scalable"] is True

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Unaided LIVE runner for a named fixture. FAST default: prove the seed is hard.
+"""Unaided expansion runner. FAST default: prove the seed is hard.
 
---live: policy=model, no teacher wrap, 4B walks the fixture. Host is the judge.
+--live: policy=model, no teacher wrap. 4B walks via Pipeline on the fixture.
+Wheels ON: enqueue as class=fast so the host drains it. Not a living-gate count.
 """
 from __future__ import annotations
 
@@ -22,7 +23,6 @@ def seed_is_hard(name: str) -> dict:
     if not ws.exists():
         return {"ok": False, "error": "missing", "name": name}
     tests = run_tests(workspace=ws, timeout=45)
-    # Hard fixture: oracle is red on the seeded bugs.
     hard = tests.get("ok") is not True
     return {
         "ok": hard,
@@ -42,17 +42,31 @@ def run_live(name: str) -> dict:
 
     ws = FIXTURES[name]
     os.environ["ETHER_TOOL_RUNTIME_FIXTURE"] = str(ws)
-    from core.pipeline import Pipeline
+    try:
+        from core.pipeline import Pipeline
 
-    result = Pipeline().run(f"Fix the intentional bugs in the {name} fixture. Unaided. policy=model.")
-    payload = {
-        "name": name,
-        "ok": bool(getattr(result, "ok", False) or getattr(result, "success", False)),
-        "policy": "model",
-        "workspace": str(ws),
-        "error": getattr(result, "error", None),
-    }
-    print(json.dumps(payload, indent=2), flush=True)
+        result = Pipeline().run(
+            f"Fix the intentional bugs in the {name} fixture. Unaided. policy=model."
+        )
+        success = bool(getattr(result, "success", False) or getattr(result, "plan_ok", False))
+        payload = {
+            "name": name,
+            "ok": success,
+            "policy": "model",
+            "workspace": str(ws),
+            "error": getattr(result, "error", None),
+            "gate_count": False,
+        }
+    except Exception as exc:
+        payload = {
+            "name": name,
+            "ok": False,
+            "policy": "model",
+            "workspace": str(ws),
+            "error": f"{type(exc).__name__}:{exc}",
+            "gate_count": False,
+        }
+    print(json.dumps(payload, indent=2, default=str), flush=True)
     return payload
 
 

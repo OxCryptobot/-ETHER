@@ -621,6 +621,23 @@ def _is_babysit(job_id: str) -> bool:
     return j.startswith(("medic_hb", "critique_hyp", "playbook"))
 
 
+def _foreman_allowed() -> bool:
+    """Phase 1: do not farm medic/playbook while the box is idle with a fresh beat."""
+    try:
+        from core.loop.medic import medic_stand_down
+
+        path = STATUS
+        if not path.exists():
+            return True
+        status = json.loads(path.read_text(encoding="utf-8"))
+        if medic_stand_down(status):
+            log("medic stand-down: skip foreman tick")
+            return False
+    except Exception as e:
+        log(f"medic stand-down check failed: {type(e).__name__}")
+    return True
+
+
 def process_job(path: Path) -> bool:
     try:
         job = json.loads(path.read_text(encoding="utf-8"))
@@ -801,7 +818,8 @@ def main() -> int:
             purge_live_pending()
             jobs = list_pending()
             if not jobs:
-                call_foreman_tick()
+                if _foreman_allowed():
+                    call_foreman_tick()
                 maybe_auto_rate_climb()
                 maybe_measure_tick()
                 maybe_push_chat_bus()
@@ -815,7 +833,7 @@ def main() -> int:
                 process_job(job_path)
                 git_sync()
                 maybe_push_chat_bus()
-                if len(list_pending()) < 3:
+                if len(list_pending()) < 3 and _foreman_allowed():
                     call_foreman_tick()
                     maybe_auto_rate_climb()
                     maybe_measure_tick()

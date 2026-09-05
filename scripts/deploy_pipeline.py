@@ -38,9 +38,15 @@ def _now() -> str:
 
 def run_gates() -> dict:
     argv = [sys.executable, "-m", "pytest", *GATES, "-q", "--tb=line"]
+    stdout = ""
+    stderr = ""
     try:
-        proc = subprocess.run(argv, cwd=str(ROOT), timeout=240)
+        proc = subprocess.run(
+            argv, cwd=str(ROOT), timeout=240, capture_output=True, text=True
+        )
         rc = int(proc.returncode)
+        stdout = proc.stdout or ""
+        stderr = proc.stderr or ""
     except subprocess.TimeoutExpired:
         rc = 124
     payload = {
@@ -48,10 +54,15 @@ def run_gates() -> dict:
         "rc": rc,
         "gates": list(GATES),
         "n_gates": len(GATES),
+        "failed": [ln for ln in stdout.splitlines() if ln.startswith("FAILED")],
+        "tail": (stdout + "\n" + stderr)[-2500:],
         "ts": _now(),
         "schema": "ether_deploy_pipeline_v1",
         "note": "FAST leftover gate. Not a living-agent job. Not LoRA.",
     }
+    print(stdout, end="", flush=True)
+    if stderr:
+        print(stderr, end="", file=sys.stderr, flush=True)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2), flush=True)

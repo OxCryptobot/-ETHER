@@ -30,9 +30,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _lib import emit, read_input
 
+def run_{name}(inp: dict) -> dict:
+    assert isinstance(inp, dict)
+    return {{"ok": False, "error": "stub_only", "tool": "{name}", "input_keys": list(inp.keys())}}
+
 def main() -> None:
     inp = read_input()
-    emit(False, error="not implemented", tool="{name}", input_keys=list(inp.keys()))
+    out = run_{name}(inp)
+    emit(False, error=out.get("error"), tool=out.get("tool"), input_keys=out.get("input_keys"))
 
 if __name__ == "__main__":
     main()

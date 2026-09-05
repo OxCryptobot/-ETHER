@@ -1,0 +1,15 @@
+{
+  "id": "chat_tick_0905163814f575ca",
+  "note": "Dual chat drain. scripts/chat_bus_tick.py. FAST. Not measurement.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/chat_bus_tick.py"
+      ],
+      "timeout": 120
+    }
+  ]
+}

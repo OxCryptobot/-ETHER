@@ -1,13 +1,12 @@
 {
-  "generated": "2026-09-05T00:17:41.202373+00:00",
-  "next_job": "chat_tick_0905001717481f7e",
+  "generated": "2026-09-05T00:17:54.849348+00:00",
+  "next_job": "matrix_ui_1788567432963",
   "queue_head": [
-    "chat_tick_0905001717481f7e",
     "matrix_ui_1788567432963"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "upgrade_all_10",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "chat_tick_0905001717481f7e",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

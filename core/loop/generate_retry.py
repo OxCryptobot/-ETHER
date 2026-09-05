@@ -1,8 +1,7 @@
 """Generate vs repair prompts. Strangler slice off Pipeline.run."""
 from __future__ import annotations
 
-from typing import Optional
-
+from core.loop.lora_pack import apply_adapter
 from core.repair import repair_prompt
 
 
@@ -39,7 +38,7 @@ def first_prompt(
             "module for sandbox, with asserts. Prefer pure functions.\n\n"
         )
     prompt += "Return only executable Python code, no markdown fences."
-    return prompt
+    return apply_adapter(prompt)
 
 
 def retry_prompt(
@@ -65,4 +64,4 @@ def retry_prompt(
             + prompt
             + "\nInclude asserts that prove correctness.\n"
         )
-    return prompt
+    return apply_adapter(prompt)

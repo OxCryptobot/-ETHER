@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""FAST deploy gate. Pytest subset, write artifacts/pipeline/last.json.
-
-Does not farm medic. Does not claim a living agent. Host or GitHub Actions.
-"""
+"""FAST leftover gate. Pytest suite, write artifacts/pipeline/last.json."""
 from __future__ import annotations
 
 import json
@@ -18,9 +15,16 @@ OUT = ROOT / "artifacts" / "pipeline" / "last.json"
 GATES = (
     "tests/test_p1_medic_idle.py",
     "tests/test_p1_medic_fifo.py",
+    "tests/test_p2_pep8_resume_plan.py",
+    "tests/test_p3_75_living_fabricate.py",
     "tests/test_p4_01_fix_dag.py",
     "tests/test_p4_02_labradorite_traces.py",
     "tests/test_p4_03_selenite_fix.py",
+    "tests/test_up_01_flywheel.py",
+    "tests/test_remaining_34.py",
+    "tests/test_scale_plane.py",
+    "tests/test_deploy_pipeline.py",
+    "tests/test_leftover_gate.py",
 )
 
 
@@ -31,7 +35,7 @@ def _now() -> str:
 def run_gates() -> dict:
     argv = [sys.executable, "-m", "pytest", *GATES, "-q", "--tb=line"]
     try:
-        proc = subprocess.run(argv, cwd=str(ROOT), timeout=180)
+        proc = subprocess.run(argv, cwd=str(ROOT), timeout=240)
         rc = int(proc.returncode)
     except subprocess.TimeoutExpired:
         rc = 124
@@ -39,9 +43,10 @@ def run_gates() -> dict:
         "ok": rc == 0,
         "rc": rc,
         "gates": list(GATES),
+        "n_gates": len(GATES),
         "ts": _now(),
         "schema": "ether_deploy_pipeline_v1",
-        "note": "FAST deploy gate. Not a living-agent job.",
+        "note": "FAST leftover gate. Not a living-agent job. Not LoRA.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

@@ -1,9 +1,10 @@
 {
-  "job_id": "leftover_goal",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-05T17:01:52.656315+00:00",
-  "note": "FAST leftover: begin extract + goal. leftover_reverify already PASS.",
+  "job_id": "leftover_plan",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-05T17:12:05.987916+00:00",
+  "note": "FAST leftover: plan_stage extract + pep8. leftover_goal PASS.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

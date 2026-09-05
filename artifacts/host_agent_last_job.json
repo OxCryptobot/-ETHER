@@ -1,10 +1,9 @@
 {
-  "job_id": "leftover_full2",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-05T17:24:49.820568+00:00",
-  "note": "FAST full leftover gate + pep8 after leftover_plan2 PASS.",
+  "job_id": "leftover_full3",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-05T17:30:12.714036+00:00",
+  "note": "FAST reverify leftover_full2 FAIL: inspect plan_stage not Pipeline.run.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "measurement": true
 }

@@ -1,6 +1,6 @@
 {
-  "ok": false,
-  "rc": 1,
+  "ok": true,
+  "rc": 0,
   "gates": [
     "tests/test_p1_medic_idle.py",
     "tests/test_p1_medic_fifo.py",
@@ -20,7 +20,9 @@
     "tests/test_tools_avail.py"
   ],
   "n_gates": 16,
-  "ts": "2026-09-05T17:24:49.361272+00:00",
+  "failed": [],
+  "tail": "..........................................................               [100%]\n\n",
+  "ts": "2026-09-05T17:30:12.178920+00:00",
   "schema": "ether_deploy_pipeline_v1",
   "note": "FAST leftover gate. Not a living-agent job. Not LoRA."
 }

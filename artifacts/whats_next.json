@@ -1,13 +1,14 @@
 {
-  "generated": "2026-09-05T17:49:56.643844+00:00",
-  "next_job": "live_intervals_unaided",
+  "generated": "2026-09-05T17:54:26.147444+00:00",
+  "next_job": "exp_intervals_unaided",
   "queue_head": [
-    "live_intervals_unaided",
-    "live_lru_unaided",
-    "live_topo_unaided"
+    "exp_intervals_unaided",
+    "exp_lru_unaided",
+    "exp_topo_unaided",
+    "leftover_press"
   ],
-  "queue_depth": 3,
-  "host_phase": "polling",
+  "queue_depth": 4,
+  "host_phase": "idle",
   "last_job": "leftover_2",
   "last_ok": true,
   "last_failure_type": null,

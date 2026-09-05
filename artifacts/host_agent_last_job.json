@@ -1,10 +1,9 @@
 {
-  "job_id": "leftover_plan",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-05T17:12:05.987916+00:00",
-  "note": "FAST leftover: plan_stage extract + pep8. leftover_goal PASS.",
+  "job_id": "leftover_plan2",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-05T17:20:01.947895+00:00",
+  "note": "FAST reverify leftover_plan FAIL: real fix_plan assert + pep8. Not living-agent.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "measurement": true
 }

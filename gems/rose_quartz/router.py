@@ -130,6 +130,19 @@ class RoseQuartz:
                 return burst_res
 
         model = self.primary_model if payload.prefer_local else self.fallback_model
+        try:
+            from core.model_router import select_backend
+
+            lane = "fast" if payload.prefer_local else "live"
+            backend = select_backend({"class": lane, "note": lane})
+            if backend.get("backend") == "outsource":
+                burst_res = self._burst(request.task_id, payload)
+                if burst_res is not None:
+                    return burst_res
+            if backend.get("model"):
+                model = str(backend["model"])
+        except Exception:
+            pass
 
         try:
             return self._call(request.task_id, payload, model)

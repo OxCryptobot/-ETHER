@@ -1,0 +1,36 @@
+name: deploy-pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "core/**"
+      - "gems/**"
+      - "scripts/deploy_pipeline.py"
+      - "scripts/stand_down.py"
+      - "scripts/host_agent.py"
+      - "tests/test_p1_*.py"
+      - "tests/test_p4_*.py"
+      - ".github/workflows/deploy-pipeline.yml"
+
+concurrency:
+  group: deploy-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: FAST deps
+        run: pip install -q pytest pydantic pyyaml
+      - name: Deploy gate
+        run: python scripts/deploy_pipeline.py

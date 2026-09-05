@@ -19,6 +19,12 @@ LEFTOVER = (
     "more_unaided_fixtures",
     "operator_outsource_key",
 )
+PROGRESS = {
+    "leftover_reverify": "PASS",
+    "split_pipeline_godfile": "begin_extracted",
+    "lora_train_12gb": "off_box",
+    "operator_outsource_key": "scale_plane_ready",
+}
 
 
 def current() -> Dict[str, Any]:
@@ -27,9 +33,10 @@ def current() -> Dict[str, Any]:
         "pillars": list(PILLARS),
         "living_gate": dict(LIVING_GATE),
         "leftover": list(LEFTOVER),
+        "progress": dict(PROGRESS),
         "max_live_agents": 1,
         "swarm": False,
-        "note": "Gate met. FAST stays local 4B. LIVE can outsource or local-large.",
+        "note": "Gate met. leftover_reverify PASS. FAST stays local 4B. LIVE can outsource or local-large.",
     }
 
 
@@ -39,7 +46,7 @@ def classify_objective(text: str) -> Dict[str, Any]:
         kind = "fix_dag"
     elif any(k in q for k in ("lora", "train", "finetune")):
         kind = "moonshot_off_box"
-    elif any(k in q for k in ("status", "goal", "phase", "roadmap")):
+    elif any(k in q for k in ("status", "goal", "phase", "roadmap", "leftover")):
         kind = "goal"
     else:
         kind = "general"

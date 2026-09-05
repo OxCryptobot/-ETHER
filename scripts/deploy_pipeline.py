@@ -27,6 +27,7 @@ GATES = (
     "tests/test_leftover_gate.py",
     "tests/test_goal.py",
     "tests/test_begin.py",
+    "tests/test_plan_stage.py",
 )
 
 

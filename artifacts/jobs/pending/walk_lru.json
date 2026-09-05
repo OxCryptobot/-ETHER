@@ -1,0 +1,17 @@
+{
+  "id": "walk_lru",
+  "class": "fast",
+  "note": "4B walk lru under wheels. policy=model. Not gate. leftover_2pct.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "lru",
+        "--live"
+      ],
+      "timeout": 240
+    }
+  ]
+}

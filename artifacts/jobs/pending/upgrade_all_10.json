@@ -1,0 +1,22 @@
+{
+  "id": "upgrade_all_10",
+  "note": "FAST: flywheel + canned tools + pack_plus names + MCP fallback. Not living-agent.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_up_01_flywheel.py",
+        "tests/test_p2_01_resume_skip.py",
+        "tests/test_p4_01_fix_dag.py",
+        "tests/test_p6_01_git_worktree.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    }
+  ]
+}

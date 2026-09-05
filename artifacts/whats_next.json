@@ -1,16 +1,15 @@
 {
-  "generated": "2026-09-05T16:38:24.815730+00:00",
-  "next_job": "chat_tick_0905163734120434",
+  "generated": "2026-09-05T16:38:32.013621+00:00",
+  "next_job": "chat_tick_0905163814f575ca",
   "queue_head": [
-    "chat_tick_0905163734120434",
     "chat_tick_0905163814f575ca",
     "leftover_full",
     "matrix_ui_1788626249095",
     "matrix_ui_1788626289541"
   ],
-  "queue_depth": 5,
-  "host_phase": "polling",
-  "last_job": "scale_plane",
+  "queue_depth": 4,
+  "host_phase": "idle",
+  "last_job": "chat_tick_0905163734120434",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

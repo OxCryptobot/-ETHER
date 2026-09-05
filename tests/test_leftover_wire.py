@@ -33,7 +33,8 @@ def test_pack_plus_lists_remaining_fixtures() -> None:
 def test_lora_and_fast_lane_honest() -> None:
     ready = lora_ready()
     assert ready["ok"] is False
-    assert ready["reason"] == "off_box"
+    assert ready.get("trainer") == "grok_bus"
+    assert ready.get("local_train") is False
     b = select_backend("fast")
     assert b["backend"] == "ollama"
     assert b["lane"] == "fast"

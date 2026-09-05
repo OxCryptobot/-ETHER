@@ -1,14 +1,13 @@
 {
-  "generated": "2026-09-05T16:39:47.626274+00:00",
-  "next_job": "chat_tick_09051638463bf647",
+  "generated": "2026-09-05T16:39:54.772456+00:00",
+  "next_job": "leftover_full",
   "queue_head": [
-    "chat_tick_09051638463bf647",
     "leftover_full",
     "matrix_ui_1788626321239"
   ],
-  "queue_depth": 3,
-  "host_phase": "polling",
-  "last_job": "matrix_ui_1788626289541",
+  "queue_depth": 2,
+  "host_phase": "idle",
+  "last_job": "chat_tick_09051638463bf647",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

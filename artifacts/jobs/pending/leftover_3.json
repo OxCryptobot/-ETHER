@@ -1,0 +1,36 @@
+{
+  "id": "leftover_3",
+  "note": "FAST leftover 3%: LoRA via Grok pack + pep8. leftover_5 PASS. No fake adapter.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_lora_grok.py",
+        "tests/test_leftover_wire.py",
+        "tests/test_generate_retry.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.loop.lora_pack import train_via_grok; import json; print(json.dumps(train_via_grok()))"
+      ],
+      "timeout": 30
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

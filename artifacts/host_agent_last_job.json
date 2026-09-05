@@ -1,9 +1,10 @@
 {
-  "job_id": "leftover_plan2",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-05T17:20:01.947895+00:00",
-  "note": "FAST reverify leftover_plan FAIL: real fix_plan assert + pep8. Not living-agent.",
+  "job_id": "leftover_full2",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-05T17:24:49.820568+00:00",
+  "note": "FAST full leftover gate + pep8 after leftover_plan2 PASS.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

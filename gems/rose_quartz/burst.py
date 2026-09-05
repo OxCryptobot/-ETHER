@@ -16,7 +16,17 @@ STATE = ROOT / "memory" / "burst" / "state.json"
 
 
 def burst_enabled() -> bool:
-    return os.getenv("ETHER_BURST", "0") == "1" and bool(os.getenv("ETHER_BURST_API_KEY") or os.getenv("XAI_API_KEY"))
+    keyed = bool(
+        os.getenv("ETHER_OUTSOURCE_API_KEY")
+        or os.getenv("ETHER_BURST_API_KEY")
+        or os.getenv("XAI_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+    )
+    return keyed and (
+        os.getenv("ETHER_BURST", "0") == "1"
+        or os.getenv("ETHER_OUTSOURCE", "0") == "1"
+        or os.getenv("ETHER_FORCE_BURST", "0") == "1"
+    )
 
 
 def _budget_ok() -> bool:
@@ -55,9 +65,19 @@ def chat(messages: List[Dict[str, str]], max_tokens: int = 2048) -> Dict[str, An
     if not _budget_ok():
         return {"ok": False, "error": "burst daily budget exhausted"}
 
-    base = (os.getenv("ETHER_BURST_URL") or "https://api.x.ai/v1").rstrip("/")
-    model = os.getenv("ETHER_BURST_MODEL") or "grok-3"
-    key = os.getenv("ETHER_BURST_API_KEY") or os.getenv("XAI_API_KEY") or ""
+    base = (
+        os.getenv("ETHER_OUTSOURCE_URL")
+        or os.getenv("ETHER_BURST_URL")
+        or "https://api.x.ai/v1"
+    ).rstrip("/")
+    model = os.getenv("ETHER_OUTSOURCE_MODEL") or os.getenv("ETHER_BURST_MODEL") or "grok-3"
+    key = (
+        os.getenv("ETHER_OUTSOURCE_API_KEY")
+        or os.getenv("ETHER_BURST_API_KEY")
+        or os.getenv("XAI_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+        or ""
+    )
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     body = {
         "model": model,

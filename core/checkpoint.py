@@ -113,6 +113,17 @@ def checkpoint_pipeline(
 
 
 def resume_if_any(run_id: str) -> Optional[AgentCheckpoint]:
-    """Public resume API. Pipeline.run calls this when ETHER_RESUME_RUN_ID is set."""
-    return load_checkpoint(run_id)
+    """Public resume API. Pipeline.run calls this when ETHER_RESUME_RUN_ID is set.
+
+    checkpoint_pipeline writes pipeline-{run_id}. Bare ids still resolve.
+    """
+    rid = (run_id or "").strip()
+    if not rid:
+        return None
+    found = load_checkpoint(rid)
+    if found is not None:
+        return found
+    if not rid.startswith("pipeline-"):
+        return load_checkpoint(f"pipeline-{rid}")
+    return None
 

@@ -1,9 +1,12 @@
 {
-  "generated": "2026-09-05T09:04:39.897494+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-09-05T16:03:33.627621+00:00",
+  "next_job": "medic_hb_20260905_090445",
+  "queue_head": [
+    "medic_hb_20260905_090445",
+    "p1_medic_fifo"
+  ],
+  "queue_depth": 2,
+  "host_phase": "chat_push",
   "last_job": "p1_upgrade_wave",
   "last_ok": true,
   "last_failure_type": null,

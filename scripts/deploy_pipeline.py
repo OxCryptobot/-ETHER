@@ -28,6 +28,7 @@ GATES = (
     "tests/test_goal.py",
     "tests/test_begin.py",
     "tests/test_plan_stage.py",
+    "tests/test_tools_avail.py",
 )
 
 

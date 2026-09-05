@@ -179,11 +179,13 @@ def run_living(plan: ExecutionPlan, *, code: str = DEFAULT_TEST) -> Dict[str, An
     """Full batch: fix-task DAG first, then audit → pytest → flywheel lesson."""
     from core.loop.fix_dag import walk_fix
     from core.loop.flywheel import lesson_from_trace, prepend_lessons
+    from core.loop.goal import classify_objective
     from core.loop.plan_exec import dispatch_walked
     from core.loop.plan_walk import walk_plan
 
+    classified = classify_objective(plan.reasoning or "fix")
     _ = prepend_lessons(plan.reasoning or "fix")
-    walked = walk_fix(plan.reasoning or "fix")
+    walked = walk_fix(plan.reasoning or "fix") if classified.get("uses_fix_dag") else walk_fix("fix")
     if plan.steps:
         walked = dispatch_walked(walk_plan(plan))
     audit = audit_code(code)

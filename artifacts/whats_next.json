@@ -1,13 +1,12 @@
 {
-  "generated": "2026-09-05T16:08:20.709178+00:00",
-  "next_job": "deploy_pipeline",
+  "generated": "2026-09-05T16:09:01.594148+00:00",
+  "next_job": "medic_hb_20260905_090445",
   "queue_head": [
-    "deploy_pipeline",
     "medic_hb_20260905_090445"
   ],
-  "queue_depth": 2,
+  "queue_depth": 1,
   "host_phase": "polling",
-  "last_job": "p1_medic_fifo",
+  "last_job": "deploy_pipeline",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

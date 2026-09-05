@@ -1,9 +1,15 @@
 {
-  "job_id": "exp_intervals_unaided",
+  "job_id": "leftover_press",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-05T17:58:51.366199+00:00",
-  "note": "Expansion unaided intervals under wheels. policy=model. Not gate. leftover_2 PASS.",
+  "finished": "2026-09-05T17:58:57.697623+00:00",
+  "note": "FAST poke FIFO: leftover_2 PASS. exp_* still pending --live walks.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

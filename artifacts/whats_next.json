@@ -1,13 +1,12 @@
 {
-  "generated": "2026-09-05T17:57:33.281004+00:00",
-  "next_job": "exp_intervals_unaided",
+  "generated": "2026-09-05T17:58:54.773968+00:00",
+  "next_job": "leftover_press",
   "queue_head": [
-    "exp_intervals_unaided",
     "leftover_press"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "exp_topo_unaided",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "exp_intervals_unaided",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

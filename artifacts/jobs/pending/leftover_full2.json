@@ -1,0 +1,22 @@
+{
+  "id": "leftover_full2",
+  "note": "FAST full leftover gate + pep8 after leftover_plan2 PASS.",
+  "class": "fast",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/deploy_pipeline.py"
+      ],
+      "timeout": 240
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

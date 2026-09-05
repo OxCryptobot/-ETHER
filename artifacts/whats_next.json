@@ -1,10 +1,14 @@
 {
-  "generated": "2026-09-05T16:36:53.956411+00:00",
-  "next_job": "medic_hb_20260905_090445",
+  "generated": "2026-09-05T16:38:24.815730+00:00",
+  "next_job": "chat_tick_0905163734120434",
   "queue_head": [
-    "medic_hb_20260905_090445"
+    "chat_tick_0905163734120434",
+    "chat_tick_0905163814f575ca",
+    "leftover_full",
+    "matrix_ui_1788626249095",
+    "matrix_ui_1788626289541"
   ],
-  "queue_depth": 1,
+  "queue_depth": 5,
   "host_phase": "polling",
   "last_job": "scale_plane",
   "last_ok": true,

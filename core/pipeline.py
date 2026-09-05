@@ -699,46 +699,32 @@ class Pipeline:
 
                 try:
                     if attempt == 1:
-                        prompt = (
-                            f"Write Python code for:\n{objective}\n\n"
-                            f"Strategy: {strategy_hint}\n\n"
-                            f"Plan:\n{result.plan.model_dump_json(indent=2)}\n\n"
+                        from core.loop.generate_retry import first_prompt
+
+                        prompt = first_prompt(
+                            objective,
+                            strategy_hint,
+                            result.plan.model_dump_json(indent=2),
+                            tool_block=tool_block,
+                            exp_txt=exp_txt,
+                            few_shot_txt=few_shot_txt,
+                            repo_map_txt=repo_map_txt,
+                            context_block=context_block,
+                            multifile=_looks_multifile(objective),
                         )
-                        if tool_block:
-                            prompt += f"Tool output:\n{tool_block}\n\n"
-                        if exp_txt:
-                            prompt += f"Experience from prior runs:\n{exp_txt}\n\n"
-                        if few_shot_txt:
-                            prompt += f"Few-shot success patterns:\n{few_shot_txt}\n\n"
-                        if repo_map_txt:
-                            prompt += f"Repo map (symbols):\n{repo_map_txt}\n\n"
-                        if context_block:
-                            prompt += f"Relevant workspace context:\n{context_block}\n\n"
-                        if _looks_multifile(objective):
-                            prompt += (
-                                "If multiple logical units are needed, keep them in one runnable "
-                                "module for sandbox, with asserts. Prefer pure functions.\n\n"
-                            )
-                        prompt += "Return only executable Python code, no markdown fences."
                     else:
+                        from core.loop.generate_retry import retry_prompt as build_retry
+
                         result.retries += 1
-                        prompt = repair_prompt(objective, generated, last_err, strategy_hint)
-                        # The repair prompt is built by core/repair.py and ends
-                        # with its output instruction, so the retry arm's blocks
-                        # go in front of it — otherwise the re-drawn arm would
-                        # once again differ only by one sentence.
-                        preamble = ""
-                        if repo_map_txt:
-                            preamble += f"Repo map (symbols):\n{repo_map_txt}\n\n"
-                        if context_block:
-                            preamble += f"Relevant workspace context:\n{context_block}\n\n"
-                        prompt = preamble + prompt
-                        if force_burst:
-                            prompt = (
-                                "[Elevated model / burst retry]\n"
-                                + prompt
-                                + "\nInclude asserts that prove correctness.\n"
-                            )
+                        prompt = build_retry(
+                            objective,
+                            generated,
+                            last_err,
+                            strategy_hint,
+                            repo_map_txt=repo_map_txt,
+                            context_block=context_block,
+                            burst=force_burst,
+                        )
 
                     if tool_runtime_done and generated:
                         code_res = None

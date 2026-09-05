@@ -54,6 +54,7 @@ from core.loop import loop_runner_enabled
 from core.loop.handlers.finalize import FinalizeContext
 from core.loop.handlers.verify import VerificationContext
 from core.loop.runner import LoopRunner
+from core.loop.gems_call import audit_execute, rose_complete, sandbox_execute
 from core.spine.state_io import write_json
 
 MAX_CODE_CHARS = 50_000
@@ -242,6 +243,7 @@ class Pipeline:
                 pass
 
         from core.loop.begin import start_resume_gems
+        from core.loop.gems_call import audit_execute, rose_complete, sandbox_execute
         from core.loop.stage_mark import skip_detail
 
         skip = start_resume_gems(result, tid, objective, strategy, write_progress)
@@ -536,20 +538,16 @@ class Pipeline:
                         fixture_env = (os.getenv("ETHER_TOOL_RUNTIME_FIXTURE") or "").strip()
                         if fixture_env:
                             fixture_env = str(_Path(fixture_env).resolve())
-                        sand_req = Envelope(
+                        sand_req, sand_res = sandbox_execute(
+                            self.registry,
                             task_id=task_id,
-                            target_gem="clear-quartz",
-                            payload=ClearQuartzRequest(
-                                code=generated or "",
-                                objective=objective,
-                                prepare_code=False,
-                                test_args=["tests"],
-                                files=files,
-                                fixture_root=fixture_env or None,
-                            ),
-                            timeout_seconds=timeout,
+                            generated=generated or "",
+                            objective=objective,
+                            timeout=timeout,
+                            files=files,
+                            prepare_code=False,
+                            fixture_root=fixture_env or None,
                         )
-                        sand_res = self.registry.execute(sand_req)
                         if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
                             cq_ok = False
                             detail = "cq error: %s" % (sand_res.error,)
@@ -760,15 +758,12 @@ class Pipeline:
                     # model was shown, rather than trusting that every leak
                     # channel was closed at its source.
                     sent_prompts.append(prompt)
-                    code_req = Envelope(
+                    code_req, code_res = rose_complete(
+                        self.registry,
                         task_id=task_id,
-                        target_gem="rose-quartz",
-                        payload=RoseQuartzRequest(
-                            messages=[ChatMessage(role="user", content=prompt)],
-                            prefer_local=prefer_local and not force_burst,
-                        ),
+                        prompt=prompt,
+                        prefer_local=prefer_local and not force_burst,
                     )
-                    code_res = self.registry.execute(code_req)
                 except _LoopAlreadyGenerated:
                     # Not an error: the agent loop already produced and selected
                     # the artifact. Swallow the control-flow signal here so the
@@ -835,24 +830,16 @@ class Pipeline:
                     "sandbox",
                     detail=skip_detail(skip, "sandbox"),
                 )
-                sand_req = Envelope(
+                sand_req, sand_res = sandbox_execute(
+                    self.registry,
                     task_id=task_id,
-                    target_gem="clear-quartz",
-                    # The objective is what lets test_synth derive a genuinely
-                    # falsifiable assertion (`name(args) == value`). It was
-                    # hardcoded empty inside the sandbox, so that branch could
-                    # never fire and every synthesized assert was a tautology.
-                    payload=ClearQuartzRequest(
-                        code=generated,
-                        objective=objective,
-                        prepare_code=not bool(tool_runtime_done),
-                        test_args=["tests"],
-                        files=dict(getattr(result, "_tool_files", None) or {}),
-                    ),
-                    timeout_seconds=timeout,
+                    generated=generated,
+                    objective=objective,
+                    timeout=timeout,
+                    files=dict(getattr(result, "_tool_files", None) or {}),
+                    prepare_code=not bool(tool_runtime_done),
+                    orchestrator=self.orchestrator,
                 )
-                sand_res = self.registry.execute(sand_req)
-                self.orchestrator.process_response(sand_req, sand_res)
                 if sand_res.error or not isinstance(sand_res.payload, ClearQuartzResponse):
                     return self._fail(
                         result,
@@ -1064,12 +1051,9 @@ class Pipeline:
 
         t4 = time.perf_counter()
         write_progress(tid, objective, "audit", detail=skip_detail(skip, "audit"))
-        audit_req = Envelope(
-            task_id=task_id,
-            target_gem="black-tourmaline",
-            payload=BlackTourmalineRequest(artifact=generated),
+        audit_req, audit_res = audit_execute(
+            self.registry, task_id=task_id, generated=generated
         )
-        audit_res = self.registry.execute(audit_req)
         if not audit_res.error and isinstance(audit_res.payload, BlackTourmalineResponse):
             result.audit = audit_res.payload
             if not audit_res.payload.approved:
@@ -1424,17 +1408,14 @@ class Pipeline:
         """
 
         def generate(prompt: str, temperature: float = 0.2, seed: int = 1) -> str:
-            req = Envelope(
+            req, res = rose_complete(
+                self.registry,
                 task_id=task_id,
-                target_gem="rose-quartz",
-                payload=RoseQuartzRequest(
-                    messages=[ChatMessage(role="user", content=prompt)],
-                    prefer_local=prefer_local,
-                    temperature=temperature,
-                    seed=seed,
-                ),
+                prompt=prompt,
+                prefer_local=prefer_local,
+                temperature=temperature,
+                seed=seed,
             )
-            res = self.registry.execute(req)
             if res.error or not isinstance(res.payload, RoseQuartzResponse):
                 raise RuntimeError(res.error.message if res.error else "no completion")
             return res.payload.content or ""

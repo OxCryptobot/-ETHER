@@ -508,7 +508,12 @@ class Pipeline:
                 from pathlib import Path as _Path
                 import shutil as _sh
                 t3 = time.perf_counter()
-                write_progress(tid, objective, "sandbox")
+                write_progress(
+                    tid,
+                    objective,
+                    "sandbox",
+                    detail="skipped_resume" if "sandbox" in skip else "",
+                )
                 cq_ok = False
                 detail = "workspace_verify: not_run"
                 kept = workspace_kept
@@ -829,7 +834,12 @@ class Pipeline:
                 )
 
                 t3 = time.perf_counter()
-                write_progress(tid, objective, "sandbox")
+                write_progress(
+                    tid,
+                    objective,
+                    "sandbox",
+                    detail="skipped_resume" if "sandbox" in skip else "",
+                )
                 sand_req = Envelope(
                     task_id=task_id,
                     target_gem="clear-quartz",

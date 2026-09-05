@@ -1,13 +1,12 @@
 {
-  "generated": "2026-09-05T16:03:33.627621+00:00",
+  "generated": "2026-09-05T16:04:21.618831+00:00",
   "next_job": "medic_hb_20260905_090445",
   "queue_head": [
-    "medic_hb_20260905_090445",
-    "p1_medic_fifo"
+    "medic_hb_20260905_090445"
   ],
-  "queue_depth": 2,
-  "host_phase": "chat_push",
-  "last_job": "p1_upgrade_wave",
+  "queue_depth": 1,
+  "host_phase": "polling",
+  "last_job": "p1_medic_fifo",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

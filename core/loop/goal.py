@@ -21,7 +21,8 @@ LEFTOVER = (
 )
 PROGRESS = {
     "leftover_reverify": "PASS",
-    "split_pipeline_godfile": "begin_plan_extracted",
+    "leftover_plan2": "PASS",
+    "split_pipeline_godfile": "begin_plan_tools_extracted",
     "lora_train_12gb": "off_box",
     "operator_outsource_key": "scale_plane_ready",
 }

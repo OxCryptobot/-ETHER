@@ -1,0 +1,28 @@
+{
+  "id": "leftover_next",
+  "class": "fast",
+  "note": "FAST: pipeline_util peel. leftover_walkfix PASS leftover_2pct PASS.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_util.py",
+        "tests/test_walk_fixture.py",
+        "tests/test_lora_grok.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 180
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

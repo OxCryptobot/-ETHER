@@ -1,16 +1,16 @@
 {
-  "generated": "2026-09-06T00:01:41.171512+00:00",
-  "next_job": "leftover_2pct",
+  "generated": "2026-09-06T00:03:28.576573+00:00",
+  "next_job": "leftover_walkfix",
   "queue_head": [
-    "leftover_2pct",
+    "leftover_walkfix",
     "walk_intervals",
     "walk_topo"
   ],
   "queue_depth": 3,
-  "host_phase": "polling",
-  "last_job": "walk_lru",
-  "last_ok": false,
-  "last_failure_type": "timeout",
+  "host_phase": "idle",
+  "last_job": "leftover_2pct",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

@@ -130,28 +130,9 @@ class PipelineResult(BaseModel):
     finished_at: str = ""
 
 
-def _is_burst_model(model_used: str) -> bool:
-    """Did this response come from the cloud burst model?
-
-    Was `\"llama\" in model_used or \"grok\" in ... or \"burst\" in ...`, which
-    marked every run on a local llama-family model as a burst and charged it
-    the -0.05 burst penalty in compute_reward. The burst path in
-    gems/rose_quartz/router.py labels its responses with ETHER_BURST_MODEL
-    (default grok-3) or the literal \"burst\", so match those exactly.
-    """
-    m = (model_used or "").strip().lower()
-    if not m:
-        return False
-    configured = (os.getenv("ETHER_BURST_MODEL") or "grok-3").strip().lower()
-    return m in {configured, "burst"}
-
-
-def _looks_multifile(objective: str) -> bool:
-    o = objective.lower()
-    return bool(
-        re.search(r"\\b(class|module|package|refactor|file|project|codebase|multi[- ]?file)\\b", o)
-        or ".py" in o
-    )
+from core.loop.pipeline_util import is_burst_model as _is_burst_model
+from core.loop.pipeline_util import looks_multifile as _looks_multifile
+from core.loop.pipeline_util import strip_fences
 
 
 # Anchored on the repo root, not the CWD. `Path(\"memory/runs\")` meant that
@@ -1609,13 +1590,7 @@ class Pipeline:
         return result
 
     def _strip(self, text: str) -> str:
-        text = text.strip()
-        if text.startswith("```"):
-            lines = text.split("\n")[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            return "\n".join(lines)
-        return text
+        return strip_fences(text)
 
     def _persist(self, result: PipelineResult) -> None:
         try:

@@ -1,14 +1,13 @@
 {
-  "generated": "2026-09-06T00:03:28.576573+00:00",
+  "generated": "2026-09-06T00:03:35.444872+00:00",
   "next_job": "leftover_walkfix",
   "queue_head": [
     "leftover_walkfix",
-    "walk_intervals",
-    "walk_topo"
+    "walk_intervals"
   ],
-  "queue_depth": 3,
-  "host_phase": "idle",
-  "last_job": "leftover_2pct",
+  "queue_depth": 2,
+  "host_phase": "polling",
+  "last_job": "walk_topo",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [

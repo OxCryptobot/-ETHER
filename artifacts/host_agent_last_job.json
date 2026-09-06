@@ -1,9 +1,15 @@
 {
-  "job_id": "walk_topo",
+  "job_id": "leftover_walkfix",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-06T00:03:31.105516+00:00",
-  "note": "4B walk topo under wheels. policy=model. Not gate. leftover_2pct.",
+  "finished": "2026-09-06T00:03:46.473271+00:00",
+  "note": "FAST: bounded walk replaces Pipeline --live (walk_lru rc=124). leftover_2pct still pending.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

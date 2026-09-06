@@ -1,15 +1,9 @@
 {
-  "job_id": "leftover_walkfix",
+  "job_id": "walk_intervals",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-06T00:03:46.473271+00:00",
-  "note": "FAST: bounded walk replaces Pipeline --live (walk_lru rc=124). leftover_2pct still pending.",
+  "finished": "2026-09-06T00:03:51.931910+00:00",
+  "note": "4B walk intervals under wheels. policy=model. Not gate. leftover_2pct.",
   "class": "fast",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "measurement": true
 }

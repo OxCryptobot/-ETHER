@@ -1,0 +1,54 @@
+{
+  "id": "leftover_walkfix",
+  "class": "fast",
+  "note": "FAST: bounded walk replaces Pipeline --live (walk_lru rc=124). leftover_2pct still pending.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_walk_fixture.py",
+        "tests/test_live_criteria.py",
+        "-q",
+        "--tb=line"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "lru",
+        "--live"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "topo",
+        "--live"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/live_unaided.py",
+        "intervals",
+        "--live"
+      ],
+      "timeout": 60
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

@@ -1,10 +1,9 @@
 {
-  "job_id": "leftover_verify2",
-  "ok": false,
-  "rc": 2,
-  "finished": "2026-09-06T02:53:36.981074+00:00",
-  "note": "FAST reverify leftover_verify rc=2: indent in verify_legacy.py. leftover_next PASS.",
+  "job_id": "leftover_verify3",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-06T17:34:47.835453+00:00",
+  "note": "FAST leftover_verify2 rc=2: ImportError compute_reward. leftover_next PASS.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "measurement": true
 }

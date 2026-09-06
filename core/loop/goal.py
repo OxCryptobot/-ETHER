@@ -31,9 +31,10 @@ PROGRESS = {
     "leftover_next": "PASS",
     "leftover_verify3": "PASS",
     "leftover_finalize": "PASS",
+    "leftover_fail": "PASS",
     "leftover_walkfix": "PASS",
     "walk_lru": "TIMEOUT_pipeline",
-    "split_pipeline_godfile": "fail_retrieve_extracted",
+    "split_pipeline_godfile": "bandit_log_extracted",
     "lora_train_12gb": "grok_bus_pack",
     "operator_outsource_key": "grok_bus_no_key",
 }

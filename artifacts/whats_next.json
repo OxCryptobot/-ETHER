@@ -1,9 +1,14 @@
 {
-  "generated": "2026-09-05T23:58:45.132979+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
+  "generated": "2026-09-05T23:59:35.371747+00:00",
+  "next_job": "leftover_2pct",
+  "queue_head": [
+    "leftover_2pct",
+    "walk_intervals",
+    "walk_lru",
+    "walk_topo"
+  ],
+  "queue_depth": 4,
+  "host_phase": "idle",
   "last_job": "leftover_press",
   "last_ok": true,
   "last_failure_type": null,

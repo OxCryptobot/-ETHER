@@ -1,15 +1,10 @@
 {
-  "job_id": "leftover_press",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-05T17:58:57.697623+00:00",
-  "note": "FAST poke FIFO: leftover_2 PASS. exp_* still pending --live walks.",
+  "job_id": "walk_lru",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-09-06T00:01:35.407508+00:00",
+  "note": "4B walk lru under wheels. policy=model. Not gate. leftover_2pct. [failure_type=timeout]",
   "class": "fast",
   "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "failure_type": "timeout"
 }

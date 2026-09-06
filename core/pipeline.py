@@ -1028,30 +1028,9 @@ class Pipeline:
     # -- retrieval blocks ---------------------------------------------------
 
     def _fetch_repo_map(self, result: PipelineResult) -> str:
-        t = time.perf_counter()
-        text = ""
-        detail = ""
-        try:
-            from gems.grandidierite.registry import run_tool
+        from core.loop.retrieve import fetch_repo_map
 
-            rm = run_tool("repo_map", {"max_files": 40})
-            if rm.get("ok"):
-                files = (rm.get("files") or [])[:15]
-                lines = [f["path"] + ": " + ", ".join(f.get("symbols") or []) for f in files]
-                text = "\n".join(lines)[:2500]
-            else:
-                detail = str(rm.get("error") or "repo_map unavailable")[:120]
-        except Exception as e:
-            detail = str(e)[:120]
-        result.stages.append(
-            StageResult(
-                stage="repo_map",
-                success=bool(text),
-                detail=detail or f"{len(text)} chars",
-                duration_ms=(time.perf_counter() - t) * 1000,
-            )
-        )
-        return text
+        return fetch_repo_map(result)
 
     # Signals that an objective refers to THIS codebase rather than asking for
     # a self-contained function. Deliberately narrow: the failure mode being
@@ -1065,10 +1044,9 @@ class Pipeline:
     )
 
     def _needs_repo_context(self, objective: str) -> bool:
-        """True only when the objective plausibly depends on this repository."""
-        if os.getenv("ETHER_FORCE_CONTEXT", "0") == "1":
-            return True
-        return bool(self._REPO_SIGNALS.search(objective or ""))
+        from core.loop.retrieve import needs_repo_context
+
+        return needs_repo_context(objective)
 
     def _agent_loop_enabled(self) -> bool:
         return os.getenv("ETHER_AGENT_LOOP", "0") == "1"
@@ -1098,53 +1076,9 @@ class Pipeline:
         return generate
 
     def _fetch_context(self, result: PipelineResult, objective: str) -> str:
-        if not context_enabled():
-            return ""
+        from core.loop.retrieve import fetch_context
 
-        # Retrieval is only useful when the task actually depends on this repo.
-        #
-        # Measured on a `merge_sorted` objective: the objective was 168 chars
-        # and the prompt was ~4,485 — the objective was 3.7% of it. The other
-        # 78% was BM25 over ETHER's OWN SOURCE (core/failure_graph.py internals,
-        # for a task about merging two sorted lists), and the 3,500-char budget
-        # is saturated on EVERY task because the assembler fills to the cap
-        # rather than stopping when relevance runs out.
-        #
-        # For a 3B-active MoE that is a haystack with the instruction buried in
-        # it, and it shows: the ether arm scored 0.874 against a bare-model
-        # 0.933 on the same tasks. The scaffold was subtracting.
-        if not self._needs_repo_context(objective):
-            result.stages.append(
-                StageResult(
-                    stage="context",
-                    success=True,
-                    detail="skipped — self-contained objective",
-                )
-            )
-            return ""
-
-        t = time.perf_counter()
-        try:
-            block = gather_workspace_context(Path.cwd(), query=objective)
-            result.stages.append(
-                StageResult(
-                    stage="context",
-                    success=True,
-                    detail=f"{len(block)} chars",
-                    duration_ms=(time.perf_counter() - t) * 1000,
-                )
-            )
-            return block
-        except Exception as e:
-            result.stages.append(
-                StageResult(
-                    stage="context",
-                    success=False,
-                    detail=str(e)[:120],
-                    duration_ms=(time.perf_counter() - t) * 1000,
-                )
-            )
-            return ""
+        return fetch_context(result, objective)
 
     # -- bandit credit ------------------------------------------------------
 
@@ -1228,74 +1162,9 @@ class Pipeline:
         t0: float,
         attempts: Optional[List[_Attempt]] = None,
     ) -> PipelineResult:
-        result.status = "error"
-        result.error = msg
-        result.stages.append(
-            StageResult(
-                stage=stage,
-                success=False,
-                detail=msg,
-                duration_ms=max(0.0, (time.perf_counter() - t0) * 1000),
-            )
-        )
-        result.reward = compute_reward(
-            exit_code=1,
-            confidence=0.0,
-            audit_approved=False,
-            retries=result.retries,
-            plan_ok=result.plan_ok,
-            first_compile_ok=False,
-            used_burst=result.used_burst,
-        )
-        if attempts is None and result.strategy:
-            attempts = [_Attempt(strategy=result.strategy)]
-        self._credit_attempts(attempts or [], result)
-        try:
-            experience_record(
-                objective=result.objective,
-                code=result.generated_code or "",
-                success=False,
-                confidence=0.0,
-                strategy=result.strategy,
-                stderr=msg,
-                fail_kind=stage,
-                task_id=str(result.task_id),
-                verification_score=result.verification_score,
-                total_tests=int(result.sandbox.total_tests) if result.sandbox else 0,
-            )
-        except Exception as e:
-            # A-3: was a silent pass — same seam as the finalize tail.
-            result.degraded.append(f"experience_record_failed:{type(e).__name__}")
-        try:
-            record_outcome(False, error=msg)
-            proposal = maybe_propose_fabricate()
-            if proposal and not is_frozen():
-                # The response envelope used to be discarded and success
-                # hardcoded True, so a fabrication that errored out logged a
-                # green auto_fabricate row. Mirrors the success path above.
-                fab_res = self.registry.execute(
-                    Envelope(
-                        task_id=result.task_id,
-                        target_gem="grandidierite",
-                        payload=GrandidieriteRequest(tool_request=proposal),
-                    )
-                )
-                fab_ok = not bool(fab_res.error)
-                detail = proposal.get("name", "")
-                if not fab_ok and fab_res.error:
-                    detail += f" — {str(fab_res.error.message)[:160]}"
-                result.stages.append(
-                    StageResult(stage="auto_fabricate", success=fab_ok, detail=detail)
-                )
-        except Exception as e:
-            # A-3: was a silent except:pass — a failed fabrication attempt left
-            # no trace on the run at all.
-            result.degraded.append(f"auto_fabricate_failed:{type(e).__name__}")
-        result.finished_at = datetime.now(timezone.utc).isoformat()
-        clear_progress()
-        self._persist(result)
-        self._log(result)
-        return result
+        from core.loop.fail_run import fail_run
+
+        return fail_run(self, result, stage, msg, t0, attempts)
 
     def _strip(self, text: str) -> str:
         return strip_fences(text)

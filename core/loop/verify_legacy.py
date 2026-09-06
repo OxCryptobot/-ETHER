@@ -32,10 +32,10 @@ def verify_legacy(
     the pre-refactor inline block (legacy pipeline.py:649-841). Returns
     (exit_code, total_tests, effective holdout_test); everything else
     mutates `result` exactly as the inline block did."""
-        from core.pipeline import StageResult
+    from core.pipeline import StageResult
 
     skip = skip or set()
-task_id = result.task_id
+    task_id = result.task_id
     tid = str(task_id)
     if tool_assist and generated:
         t_sc = time.perf_counter()

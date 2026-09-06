@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 from typing import Any, List, Optional, Tuple
 
-from core.confidence import compute_reward
+from core.learning import compute_reward
 from core.loop.gems_call import audit_execute
 from core.loop.stage_mark import skip_detail
 from core.progress import write_progress

@@ -1,9 +1,10 @@
 {
-  "job_id": "leftover_next",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-06T00:09:15.141722+00:00",
-  "note": "FAST: pipeline_util peel. leftover_walkfix PASS leftover_2pct PASS.",
+  "job_id": "leftover_verify",
+  "ok": false,
+  "rc": 2,
+  "finished": "2026-09-06T00:11:36.516679+00:00",
+  "note": "FAST: verify_legacy peel. leftover_next PASS. Dual chat locked.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

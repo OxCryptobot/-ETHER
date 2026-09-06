@@ -38,6 +38,7 @@ GATES = (
     "tests/test_pipeline_util.py",
     "tests/test_verify_legacy.py",
     "tests/test_finalize_legacy.py",
+    "tests/test_fail_retrieve.py",
 )
 
 

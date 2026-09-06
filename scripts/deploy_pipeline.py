@@ -36,6 +36,7 @@ GATES = (
     "tests/test_live_criteria.py",
     "tests/test_walk_fixture.py",
     "tests/test_pipeline_util.py",
+    "tests/test_verify_legacy.py",
 )
 
 

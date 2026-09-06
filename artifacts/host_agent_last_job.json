@@ -1,10 +1,9 @@
 {
-  "job_id": "walk_lru",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-06T00:01:35.407508+00:00",
-  "note": "4B walk lru under wheels. policy=model. Not gate. leftover_2pct. [failure_type=timeout]",
+  "job_id": "leftover_2pct",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-06T00:01:55.014166+00:00",
+  "note": "FAST leftover 2%: Grok adapter + seed-hard. leftover_press PASS. Walks next.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "timeout"
+  "measurement": true
 }

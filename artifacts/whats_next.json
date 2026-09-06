@@ -1,8 +1,10 @@
 {
-  "generated": "2026-09-06T23:38:09.808683+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-06T23:39:05.444139+00:00",
+  "next_job": "leftover_tr",
+  "queue_head": [
+    "leftover_tr"
+  ],
+  "queue_depth": 1,
   "host_phase": "polling",
   "last_job": "leftover_bandit",
   "last_ok": true,

@@ -1083,36 +1083,9 @@ class Pipeline:
     # -- bandit credit ------------------------------------------------------
 
     def _credit_attempts(self, attempts: List[_Attempt], result: PipelineResult) -> None:
-        """One bandit update per attempt, each in its own context.
+        from core.loop.bandit_credit import credit_attempts
 
-        The run reward goes to the arm that produced the code that was graded.
-        Earlier attempts exist only because they failed, so they are credited
-        with a failed-attempt reward in the context *they* were drawn from —
-        which is what stops a successful repair from being booked against the
-        arm that broke the code, and vice versa.
-        """
-        if not learning_enabled():
-            return
-        pending = [a for a in attempts if not a.credited]
-        if not pending:
-            return
-        interim = compute_reward(
-            exit_code=1,
-            confidence=0.0,
-            audit_approved=False,
-            retries=0,
-            plan_ok=result.plan_ok,
-        )
-        for idx, rec in enumerate(pending):
-            is_final = idx == len(pending) - 1
-            rec.credited = True
-            self._policy_update(
-                rec,
-                result.reward if is_final else interim,
-                result,
-                attempt=idx + 1,
-                final=is_final,
-            )
+        credit_attempts(self, attempts, result)
 
     def _policy_update(
         self,
@@ -1122,37 +1095,9 @@ class Pipeline:
         attempt: int,
         final: bool,
     ) -> None:
-        exit_code = (result.sandbox.exit_code if result.sandbox else None) if final else 1
-        extra = {
-            "task_id": str(result.task_id),
-            "objective": result.objective[:300],
-            "attempt": attempt,
-            "final": final,
-            # Derived, because result.status is only assigned further down the
-            # run; reading it here would log "complete" for a failed run.
-            "status": "complete" if exit_code == 0 else "error",
-            "confidence": result.confidence if final else 0.0,
-            "exit_code": exit_code,
-            "audit_approved": bool(result.audit and result.audit.approved) if final else None,
-        }
-        try:
-            # Fake policies in tests define update(self, strategy, reward); only
-            # pass the contextual arguments to a policy that accepts them.
-            params = inspect.signature(self.policy.update).parameters
-            contextual = "context" in params or any(
-                p.kind == p.VAR_KEYWORD for p in params.values()
-            )
-        except (TypeError, ValueError):
-            contextual = False
-        try:
-            if contextual:
-                self.policy.update(
-                    rec.strategy, reward, context=rec.context or None, extra=extra
-                )
-            else:
-                self.policy.update(rec.strategy, reward)
-        except Exception:
-            pass
+        from core.loop.bandit_credit import policy_update
+
+        policy_update(self, rec, reward, result, attempt, final)
 
     def _fail(
         self,
@@ -1178,45 +1123,6 @@ class Pipeline:
             result.degraded.append(f"persist_failed:{type(e).__name__}")
 
     def _log(self, result: PipelineResult, learn: bool = False) -> None:
-        """Log the run to amethyst. `learn` stays False on the pipeline path.
+        from core.loop.log_run import log_run
 
-        Passing learn=True made gems/amethyst/evolution.py update *its own*
-        BanditPolicy instance after this pipeline had already updated
-        `self.policy`. Both wrote the whole bandit file from a stale in-memory
-        copy, so the second write silently discarded the first, and
-        memory/learning/experience.jsonl collected three rows per run (two arm
-        rows plus amethyst's). The arm table has exactly one owner: whoever
-        made the decision. That is this pipeline.
-        """
-        try:
-            self.registry.execute(
-                Envelope(
-                    task_id=result.task_id,
-                    target_gem="amethyst",
-                    payload=AmethystRequest(
-                        action="log",
-                        interaction={
-                            "task_id": str(result.task_id),
-                            "objective": result.objective,
-                            "status": result.status,
-                            "confidence": result.confidence,
-                            "execution_score": result.execution_score,
-                            "verification_score": result.verification_score,
-                            "retries": result.retries,
-                            "strategy": result.strategy,
-                            "strategies": list(result.strategies),
-                            "reward": result.reward,
-                            "used_burst": result.used_burst,
-                            "first_compile_ok": result.first_compile_ok,
-                            "plan_ok": result.plan_ok,
-                            "experience_chars": result.experience_chars,
-                            "exit_code": result.sandbox.exit_code if result.sandbox else None,
-                            "audit_approved": bool(result.audit and result.audit.approved),
-                            "error": result.error,
-                            "learn": learn,
-                        },
-                    ),
-                )
-            )
-        except Exception:
-            pass
+        log_run(self, result, learn)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Unaided expansion runner. FAST default: prove the seed is hard.
+"""Unaided expansion runner.
 
---live: policy=model, no teacher wrap. 4B walks via Pipeline on the fixture.
-Wheels ON: enqueue as class=fast so the host drains it. Not a living-gate count.
+FAST default: prove the seed is hard (pytest red).
+--live: bounded craft walk (bug_comments → replace_once). Not Pipeline.run
+(walk_lru timed out rc=124 on the 76kB god-file). Not a living-gate count.
 """
 from __future__ import annotations
 
@@ -35,39 +36,9 @@ def seed_is_hard(name: str) -> dict:
 
 
 def run_live(name: str) -> dict:
-    os.environ["ETHER_POLICY"] = "model"
-    os.environ["ETHER_LIVE_TAKEOVER"] = "0"
-    os.environ.setdefault("ETHER_GROK_PRESENT", "1")
-    from core.loop.living import FIXTURES
+    from core.loop.walk_fixture import walk_bounded
 
-    ws = FIXTURES[name]
-    os.environ["ETHER_TOOL_RUNTIME_FIXTURE"] = str(ws)
-    try:
-        from core.pipeline import Pipeline
-
-        result = Pipeline().run(
-            f"Fix the intentional bugs in the {name} fixture. Unaided. policy=model."
-        )
-        success = bool(getattr(result, "success", False) or getattr(result, "plan_ok", False))
-        payload = {
-            "name": name,
-            "ok": success,
-            "policy": "model",
-            "workspace": str(ws),
-            "error": getattr(result, "error", None),
-            "gate_count": False,
-        }
-    except Exception as exc:
-        payload = {
-            "name": name,
-            "ok": False,
-            "policy": "model",
-            "workspace": str(ws),
-            "error": f"{type(exc).__name__}:{exc}",
-            "gate_count": False,
-        }
-    print(json.dumps(payload, indent=2, default=str), flush=True)
-    return payload
+    return walk_bounded(name, timeout=45)
 
 
 def main() -> int:
@@ -77,9 +48,9 @@ def main() -> int:
     args = p.parse_args()
     if args.live:
         out = run_live(args.fixture)
-        return 0 if out.get("ok") else 1
-    out = seed_is_hard(args.fixture)
-    print(json.dumps(out, indent=2), flush=True)
+    else:
+        out = seed_is_hard(args.fixture)
+    print(json.dumps(out, indent=2, default=str), flush=True)
     return 0 if out.get("ok") else 1
 
 

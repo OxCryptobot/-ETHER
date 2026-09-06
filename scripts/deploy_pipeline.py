@@ -40,6 +40,7 @@ GATES = (
     "tests/test_finalize_legacy.py",
     "tests/test_fail_retrieve.py",
     "tests/test_bandit_log.py",
+    "tests/test_tool_runtime_path.py",
 )
 
 

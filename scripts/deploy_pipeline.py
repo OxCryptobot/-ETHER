@@ -34,6 +34,7 @@ GATES = (
     "tests/test_generate_retry.py",
     "tests/test_lora_grok.py",
     "tests/test_live_criteria.py",
+    "tests/test_walk_fixture.py",
 )
 
 

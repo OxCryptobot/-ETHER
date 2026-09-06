@@ -1,0 +1,27 @@
+{
+  "id": "leftover_verify3",
+  "class": "fast",
+  "note": "FAST leftover_verify2 rc=2: ImportError compute_reward. leftover_next PASS.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_verify_legacy.py",
+        "tests/test_pipeline_util.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

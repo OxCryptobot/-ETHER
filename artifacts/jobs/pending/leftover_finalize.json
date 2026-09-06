@@ -1,0 +1,27 @@
+{
+  "id": "leftover_finalize",
+  "class": "fast",
+  "note": "FAST: finalize_legacy peel. leftover_verify3 PASS. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_finalize_legacy.py",
+        "tests/test_verify_legacy.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

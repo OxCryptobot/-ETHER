@@ -1,0 +1,22 @@
+{
+  "id": "walk_expand",
+  "class": "fast",
+  "note": "F03 bounded topo/intervals. craft_helper. Not LIVE denylist. findings_fast PASS. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        [
+          ".venv/Scripts/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_walk_expand.py",
+          "tests/test_walk_fixture.py",
+          "-q",
+          "--tb=short"
+        ]
+      ],
+      "timeout": 90
+    }
+  ]
+}

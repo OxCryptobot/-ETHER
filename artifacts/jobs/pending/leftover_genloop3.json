@@ -1,0 +1,26 @@
+{
+  "id": "leftover_genloop3",
+  "class": "fast",
+  "note": "FAST leftover_genloop2 rc=2: lazy imports. leftover_loop PASS. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_generate_retry_loop.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 90
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

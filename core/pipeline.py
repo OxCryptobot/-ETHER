@@ -284,110 +284,33 @@ class Pipeline:
                 )
             )
 
-            if needs_tool and plan_res is not None and plan_res.payload.tool_request:
-                t1 = time.perf_counter()
-                treq = dict(plan_res.payload.tool_request)
-                action = str(treq.get("action") or "generate")
-                write_progress(tid, objective, "extend", action)
-                if action == "run":
-                    try:
-                        from gems.grandidierite.registry import run_tool
+            from core.loop.extend_stage import run_extend_if_needed
+            from core.loop.retrieval import load_retrieval, make_lazy_blocks
 
-                        name = str(treq.get("name") or "")
-                        payload = treq.get("payload") or {}
-                        tr = run_tool(name, payload)
-                        tool_block = str(tr)[:2000]
-                        result.tool_output_chars = len(tool_block)
-                        result.stages.append(
-                            StageResult(
-                                stage="tool_run",
-                                success=bool(tr.get("ok")),
-                                detail=name,
-                                duration_ms=(time.perf_counter() - t1) * 1000,
-                            )
-                        )
-                    except Exception as e:
-                        result.stages.append(
-                            StageResult(
-                                stage="tool_run",
-                                success=False,
-                                detail=str(e)[:120],
-                                duration_ms=(time.perf_counter() - t1) * 1000,
-                            )
-                        )
-                else:
-                    if action in ("generate", "fabricate") and is_frozen():
-                        result.stages.append(
-                            StageResult(
-                                stage="extend",
-                                success=False,
-                                detail="blocked_by_bench_guardian",
-                                duration_ms=(time.perf_counter() - t1) * 1000,
-                            )
-                        )
-                    else:
-                        g_req = Envelope(
-                            task_id=task_id,
-                            target_gem="grandidierite",
-                            payload=GrandidieriteRequest(tool_request=treq),
-                        )
-                        g_res = self.registry.execute(g_req)
-                        result.stages.append(
-                            StageResult(
-                                stage="extend",
-                                success=not bool(g_res.error),
-                                detail=action,
-                                duration_ms=(time.perf_counter() - t1) * 1000,
-                            )
-                        )
-
-            # Retrieved blocks. few_shot and experience are cheap local lookups
-            # done once up front; the workspace context and the repo map are
-            # fetched on first use, because whether an arm wants them is part of
-            # what the arm *is* — and the arm can change between attempts.
-            few_shot = ""
-            exp_block = ""
-            if tool_assist:
-                t_ta = time.perf_counter()
-                write_progress(tid, objective, "tool_assist")
-                try:
-                    from gems.grandidierite.registry import run_tool
-
-                    fs = run_tool("few_shot_pack", {"query": objective, "top_k": 2})
-                    if fs.get("ok") and isinstance(fs.get("result"), dict):
-                        few_shot = fs["result"].get("block") or ""
-                    exp = experience_retrieve(objective, k=3)
-                    exp_block = exp.get("block") or ""
-                    result.stages.append(
-                        StageResult(
-                            stage="tool_assist",
-                            success=True,
-                            detail=f"few_shot={len(few_shot)}c exp={len(exp_block)}c",
-                            duration_ms=(time.perf_counter() - t_ta) * 1000,
-                        )
-                    )
-                except Exception as e:
-                    result.stages.append(
-                        StageResult(
-                            stage="tool_assist",
-                            success=False,
-                            detail=str(e)[:120],
-                            duration_ms=(time.perf_counter() - t_ta) * 1000,
-                        )
-                    )
-
-            lazy: Dict[str, str] = {}
-
-            def repo_map_block() -> str:
-                if "repo_map" not in lazy:
-                    lazy["repo_map"] = self._fetch_repo_map(result) if tool_assist else ""
-                return lazy["repo_map"]
-
-            def workspace_block() -> str:
-                if "context" not in lazy:
-                    write_progress(tid, objective, "context")
-                    lazy["context"] = self._fetch_context(result, objective)
-                return lazy["context"]
+            tool_block = run_extend_if_needed(
+                self,
+                result,
+                plan_res=plan_res,
+                needs_tool=needs_tool,
+                task_id=task_id,
+                tid=tid,
+                write_progress=write_progress,
+            )
+            few_shot, exp_block = load_retrieval(
+                result,
+                objective=objective,
+                tool_assist=tool_assist,
+                tid=tid,
+                write_progress=write_progress,
+            )
+            repo_map_block, workspace_block = make_lazy_blocks(
+                self,
+                result,
+                tool_assist=tool_assist,
+                tid=tid,
+                objective=objective,
+                write_progress=write_progress,
+            )
 
             generated = ""
             attempt = 0

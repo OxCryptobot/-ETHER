@@ -1,0 +1,25 @@
+{
+  "id": "critique_leftover_genloop_040951",
+  "job_id": "leftover_genloop",
+  "created": "2026-09-07T04:09:51.702417+00:00",
+  "failure_type": "step_fail",
+  "note": "FAST: generate/repair while-loop peel. leftover_loop PASS. Dual chat locked.",
+  "labradorite_ok": true,
+  "critique": "[improve] ~4 lines, complexity=0.02. Add asserts that prove correctness before user-facing delivery; Prefer a named function entrypoint for reusable verified units",
+  "suggested_improvements": [
+    "Add asserts that prove correctness before user-facing delivery",
+    "Prefer a named function entrypoint for reusable verified units"
+  ],
+  "next_hypothesis": "isolate failing step; FAST reverify",
+  "plan": {
+    "ok": true,
+    "replan": true,
+    "failure_type": "step_fail",
+    "hypothesis": "isolate failing step; FAST reverify",
+    "confidence": 0.35,
+    "cycle": 1
+  },
+  "source": "critique_on_fail",
+  "trace": "no trace",
+  "mandatory": true
+}

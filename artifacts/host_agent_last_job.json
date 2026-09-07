@@ -1,9 +1,10 @@
 {
-  "job_id": "leftover_loop",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-07T04:07:02.928647+00:00",
-  "note": "FAST: agent_loop_path peel. leftover_tr PASS. Dual chat locked.",
+  "job_id": "leftover_genloop",
+  "ok": false,
+  "rc": 2,
+  "finished": "2026-09-07T04:09:51.630029+00:00",
+  "note": "FAST: generate/repair while-loop peel. leftover_loop PASS. Dual chat locked.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "step_fail"
 }

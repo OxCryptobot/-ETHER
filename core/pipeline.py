@@ -710,12 +710,9 @@ class Pipeline:
         return strip_fences(text)
 
     def _persist(self, result: PipelineResult) -> None:
-        try:
-            write_json(self.runs_dir / f"{result.task_id}.json", result.model_dump(mode="json"))
-        except Exception as e:
-            # A-3: was a silent pass — a run that never reached disk was
-            # indistinguishable from one that persisted.
-            result.degraded.append(f"persist_failed:{type(e).__name__}")
+        from core.loop.persist_run import persist_run
+
+        persist_run(self, result)
 
     def _log(self, result: PipelineResult, learn: bool = False) -> None:
         from core.loop.log_run import log_run

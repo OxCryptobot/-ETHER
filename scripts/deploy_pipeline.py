@@ -45,6 +45,7 @@ GATES = (
     "tests/test_generate_retry_loop.py",
     "tests/test_persist_run.py",
     "tests/test_extend_retrieval.py",
+    "tests/test_close_run.py",
 )
 
 

@@ -1,10 +1,9 @@
 {
-  "job_id": "leftover_genloop2",
-  "ok": false,
-  "rc": 2,
-  "finished": "2026-09-07T04:13:35.822379+00:00",
-  "note": "FAST leftover_genloop rc=2: core.strategy ImportError. leftover_loop PASS.",
+  "job_id": "leftover_genloop3",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-07T07:36:26.734069+00:00",
+  "note": "FAST leftover_genloop2 rc=2: lazy imports. leftover_loop PASS. Dual chat locked.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "step_fail"
+  "measurement": true
 }

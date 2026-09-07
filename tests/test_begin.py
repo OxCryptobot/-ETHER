@@ -20,5 +20,5 @@ def test_start_resume_gems_callable() -> None:
 def test_goal_progress_begin_extracted() -> None:
     g = current()
     assert g["progress"]["leftover_reverify"] == "PASS"
-    assert PROGRESS["split_pipeline_godfile"] in {"begin_extracted", "begin_plan_extracted", "begin_plan_tools_extracted", "begin_plan_tools_mark_extracted", "gems_call_extracted", "gems_call_util_extracted", "verify_legacy_extracted", "finalize_legacy_extracted", "fail_retrieve_extracted", "bandit_log_extracted", "tool_runtime_extracted", "agent_loop_extracted", "generate_retry_extracted", "persist_extracted", "extend_retrieval_extracted"}
+    assert PROGRESS["split_pipeline_godfile"] in {"begin_extracted", "begin_plan_extracted", "begin_plan_tools_extracted", "begin_plan_tools_mark_extracted", "gems_call_extracted", "gems_call_util_extracted", "verify_legacy_extracted", "finalize_legacy_extracted", "fail_retrieve_extracted", "bandit_log_extracted", "tool_runtime_extracted", "agent_loop_extracted", "generate_retry_extracted", "persist_extracted", "extend_retrieval_extracted", "close_run_extracted"}
     assert g["living_gate"]["met"] is True

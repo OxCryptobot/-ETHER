@@ -1,9 +1,10 @@
 {
-  "job_id": "leftover_done",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-07T19:22:12.017820+00:00",
-  "note": "FAST: I-010 shadow peel + leftover lock. leftover_close PASS. Dual chat locked.",
+  "job_id": "findings_batch",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-09-07T19:33:06.959762+00:00",
+  "note": "F01-F14 FAST batch. leftover_done PASS. Dual chat locked. No fake unaided. [failure_type=timeout]",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "failure_type": "timeout"
 }

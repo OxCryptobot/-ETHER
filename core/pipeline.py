@@ -416,56 +416,21 @@ class Pipeline:
             if _tr.get("fail") is not None:
                 return _tr["fail"]
 
-            # Agent loop path (ETHER_AGENT_LOOP=1). Draws several candidates at
-            # varied temperature, scores each WITHOUT a holdout, repairs against
-            # what actually ran, and returns the best — never overwriting a
-            # better earlier attempt, which is what the fixed two-shot retry did.
-            loop_result = None
-            if self._agent_loop_enabled():
-                try:
-                    from core.agent_loop import LoopBudget, run_loop
+            from core.loop.agent_loop_path import run_agent_loop_path
 
-                    lt = time.perf_counter()
-                    loop_result = run_loop(
-                        objective,
-                        self._make_generate_fn(task_id, prefer_local),
-                        budget=LoopBudget(
-                            max_attempts=int(os.getenv("ETHER_LOOP_ATTEMPTS", "4")),
-                            wall_clock_s=float(os.getenv("ETHER_LOOP_SECONDS", "300")),
-                        ),
-                        # Scores the selection only. run_loop asserts this never
-                        # reaches a prompt.
-                        holdout_test=holdout_test,
-                    )
-                    generated = loop_result.code or ""
-                    result.generated_code = generated
-                    result.strategy = "agent_loop"
-                    result.stages.append(
-                        StageResult(
-                            stage="agent_loop",
-                            success=bool(generated),
-                            detail=(
-                                f"{len(loop_result.attempts)} candidates, "
-                                f"best score {loop_result.score:.3f}, "
-                                f"{loop_result.selection_reason}"
-                            )[:300],
-                            duration_ms=(time.perf_counter() - lt) * 1000,
-                        )
-                    )
-                    # One pass through the existing loop so the artifact still
-                    # goes through sandbox + audit; the generation half is
-                    # skipped below because loop_result is set.
-                    max_attempts = 1 if generated else 2
-                except Exception as e:
-                    result.stages.append(
-                        StageResult(
-                            stage="agent_loop",
-                            success=False,
-                            detail=f"loop failed, falling back: {str(e)[:180]}",
-                        )
-                    )
-                    result.degraded.append(f"agent_loop_fallback:{type(e).__name__}")
-                    loop_result = None
+            _al = run_agent_loop_path(
+                self,
+                result,
+                objective=objective,
+                task_id=task_id,
+                prefer_local=prefer_local,
+                holdout_test=holdout_test,
+                generated=generated or "",
+            )
+            loop_result = _al.get("loop_result")
+            generated = _al.get("generated") or generated
+            if _al.get("max_attempts") is not None:
+                max_attempts = int(_al["max_attempts"])
 
             while attempt < max_attempts and not _tool_path_complete:
                 attempt += 1
@@ -896,31 +861,14 @@ class Pipeline:
         return needs_repo_context(objective)
 
     def _agent_loop_enabled(self) -> bool:
-        return os.getenv("ETHER_AGENT_LOOP", "0") == "1"
+        from core.loop.generate_fn import agent_loop_enabled
+
+        return agent_loop_enabled()
 
     def _make_generate_fn(self, task_id: UUID, prefer_local: bool):
-        """Adapter so the agent loop can draw candidates at varied sampling.
+        from core.loop.generate_fn import make_generate_fn
 
-        Returns raw completion text; the loop does its own extraction, because
-        the pipeline's `_strip()` only handles a fence at position 0 and 10 of
-        120 samples in a measured run died on unstripped markdown reaching the
-        sandbox as Python.
-        """
-
-        def generate(prompt: str, temperature: float = 0.2, seed: int = 1) -> str:
-            req, res = rose_complete(
-                self.registry,
-                task_id=task_id,
-                prompt=prompt,
-                prefer_local=prefer_local,
-                temperature=temperature,
-                seed=seed,
-            )
-            if res.error or not isinstance(res.payload, RoseQuartzResponse):
-                raise RuntimeError(res.error.message if res.error else "no completion")
-            return res.payload.content or ""
-
-        return generate
+        return make_generate_fn(self, task_id, prefer_local)
 
     def _fetch_context(self, result: PipelineResult, objective: str) -> str:
         from core.loop.retrieve import fetch_context

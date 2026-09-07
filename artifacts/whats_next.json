@@ -1,15 +1,14 @@
 {
-  "generated": "2026-09-07T19:48:01.869712+00:00",
-  "next_job": "p_measure_now",
+  "generated": "2026-09-07T19:52:07.175639+00:00",
+  "next_job": "walk_expand",
   "queue_head": [
-    "p_measure_now",
     "walk_expand"
   ],
-  "queue_depth": 2,
+  "queue_depth": 1,
   "host_phase": "idle",
-  "last_job": "p_latency_slo",
+  "last_job": "p_measure_now",
   "last_ok": false,
-  "last_failure_type": "exception",
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",
@@ -35,12 +34,12 @@
   ],
   "blocked": [
     "soft_launch: blocked until live lift or explicit gate policy",
-    "pipeline_god_file: STRANGLER_ACTIVE bytes=75183 extracted=11/11"
+    "pipeline_god_file: HEALTHY_SLICE bytes=18369 extracted=11/11"
   ],
   "signals": {
-    "context": "context:WARM util=0.754",
+    "context": "context:HOT util=0.9986",
     "model_router": "lanes fast=qwen3.5:4b-q4_K_M live=qwen3.5:4b-q4_K_M",
-    "timeout_retirement": "timeout_retire rate=0.2429 action=timeout_rate_under_target",
+    "timeout_retirement": "timeout_retire rate=0.0738 action=timeout_rate_under_target",
     "adapter_default_off": true
   },
   "resolved": [

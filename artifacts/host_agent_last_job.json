@@ -1,10 +1,16 @@
 {
-  "job_id": "p_measure_now",
+  "job_id": "walk_expand",
   "ok": false,
-  "rc": 124,
-  "finished": "2026-09-07T19:52:02.715931+00:00",
-  "note": "F02 measure_tick alone after findings_fast. Dual chat locked. [failure_type=timeout]",
+  "rc": 1,
+  "finished": "2026-09-07T19:52:07.187947+00:00",
+  "note": "F03 bounded topo/intervals. craft_helper. Not LIVE denylist. findings_fast PASS. Dual chat locked.",
   "class": "fast",
   "measurement": true,
-  "failure_type": "timeout"
+  "live_budget": {
+    "max_wall_s": 90,
+    "max_steps": 12,
+    "step_timeout_s": 25,
+    "budget_class": "production"
+  },
+  "failure_type": "exception"
 }

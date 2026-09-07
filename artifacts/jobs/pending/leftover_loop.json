@@ -1,0 +1,27 @@
+{
+  "id": "leftover_loop",
+  "class": "fast",
+  "note": "FAST: agent_loop_path peel. leftover_tr PASS. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_agent_loop_path.py",
+        "tests/test_tool_runtime_path.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

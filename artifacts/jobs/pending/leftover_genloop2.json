@@ -1,0 +1,27 @@
+{
+  "id": "leftover_genloop2",
+  "class": "fast",
+  "note": "FAST leftover_genloop rc=2: core.strategy ImportError. leftover_loop PASS.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_generate_retry_loop.py",
+        "tests/test_agent_loop_path.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 120
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/pep8_loop.py"
+      ],
+      "timeout": 60
+    }
+  ]
+}

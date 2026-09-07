@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-07T19:49:26.358601+00:00",
+  "updated": "2026-09-07T21:56:08.793789+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -13,57 +13,16 @@
   "counts": {
     "clear-quartz": 1,
     "rose-quartz": 1,
-    "citrine": 2,
+    "citrine": 3,
     "selenite": 0,
     "amethyst": 0,
     "black-tourmaline": 0,
     "labradorite": 60,
     "grandidierite": 0
   },
-  "last_gem": "clear-quartz",
-  "last_job": "p_latency_slo",
+  "last_gem": "citrine",
+  "last_job": "findings_batch",
   "active_n": 4,
   "wired": true,
-  "strip": [
-    {
-      "gem": "clear-quartz",
-      "n": 1,
-      "active": true
-    },
-    {
-      "gem": "rose-quartz",
-      "n": 1,
-      "active": false
-    },
-    {
-      "gem": "citrine",
-      "n": 2,
-      "active": false
-    },
-    {
-      "gem": "selenite",
-      "n": 0,
-      "active": false
-    },
-    {
-      "gem": "amethyst",
-      "n": 0,
-      "active": false
-    },
-    {
-      "gem": "black-tourmaline",
-      "n": 0,
-      "active": false
-    },
-    {
-      "gem": "labradorite",
-      "n": 60,
-      "active": false
-    },
-    {
-      "gem": "grandidierite",
-      "n": 0,
-      "active": false
-    }
-  ]
+  "note": "F05 live bump from gems_call. Not inferred-only."
 }

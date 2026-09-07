@@ -1,16 +1,9 @@
 {
-  "job_id": "walk_expand",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-07T19:52:07.187947+00:00",
-  "note": "F03 bounded topo/intervals. craft_helper. Not LIVE denylist. findings_fast PASS. Dual chat locked.",
+  "job_id": "p_honest_kpi2",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-07T21:56:09.012520+00:00",
+  "note": "F04 honest_kpi via pytest findings, not full measure_tick.",
   "class": "fast",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 90,
-    "max_steps": 12,
-    "step_timeout_s": 25,
-    "budget_class": "production"
-  },
-  "failure_type": "exception"
+  "measurement": true
 }

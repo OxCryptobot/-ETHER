@@ -1,15 +1,14 @@
 {
-  "generated": "2026-09-07T21:56:07.392263+00:00",
-  "next_job": "p_honest_kpi2",
+  "generated": "2026-09-07T21:56:12.483872+00:00",
+  "next_job": "walk_expand2",
   "queue_head": [
-    "p_honest_kpi2",
     "walk_expand2"
   ],
-  "queue_depth": 2,
-  "host_phase": "polling",
-  "last_job": "walk_expand",
-  "last_ok": false,
-  "last_failure_type": "exception",
+  "queue_depth": 1,
+  "host_phase": "idle",
+  "last_job": "p_honest_kpi2",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

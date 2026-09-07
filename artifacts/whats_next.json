@@ -1,15 +1,17 @@
 {
-  "generated": "2026-09-07T19:43:40.582661+00:00",
-  "next_job": "findings_fast",
+  "generated": "2026-09-07T19:47:55.113201+00:00",
+  "next_job": "p_honest_kpi",
   "queue_head": [
-    "findings_fast",
-    "p_measure_now"
+    "p_honest_kpi",
+    "p_latency_slo",
+    "p_measure_now",
+    "walk_expand"
   ],
-  "queue_depth": 2,
+  "queue_depth": 4,
   "host_phase": "polling",
-  "last_job": "findings_batch",
-  "last_ok": false,
-  "last_failure_type": "timeout",
+  "last_job": "findings_fast",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

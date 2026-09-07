@@ -1,8 +1,11 @@
 {
-  "generated": "2026-09-07T19:42:34.781570+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
+  "generated": "2026-09-07T19:43:40.582661+00:00",
+  "next_job": "findings_fast",
+  "queue_head": [
+    "findings_fast",
+    "p_measure_now"
+  ],
+  "queue_depth": 2,
   "host_phase": "polling",
   "last_job": "findings_batch",
   "last_ok": false,

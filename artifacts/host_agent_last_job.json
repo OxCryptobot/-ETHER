@@ -1,10 +1,9 @@
 {
-  "job_id": "findings_batch",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-07T19:33:06.959762+00:00",
-  "note": "F01-F14 FAST batch. leftover_done PASS. Dual chat locked. No fake unaided. [failure_type=timeout]",
+  "job_id": "findings_fast",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-07T19:43:43.225293+00:00",
+  "note": "findings_batch rc=124 measure_tick. Pytest-only. Dual chat locked.",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "timeout"
+  "measurement": true
 }

@@ -1,14 +1,18 @@
 {
-  "updated": "2026-08-22T23:39:53.672161+00:00",
-  "timeout_rate": 0.2429,
+  "updated": "2026-09-07T19:49:27.587437+00:00",
+  "timeout_rate": 0.0738,
   "target_rate": 0.25,
   "ok": true,
-  "live_n": 70,
-  "timeout_n": 17,
+  "live_n": 271,
+  "timeout_n": 20,
   "top_fixtures": [
     {
       "fixture": "ledger",
-      "n": 11
+      "n": 12
+    },
+    {
+      "fixture": "merge",
+      "n": 2
     },
     {
       "fixture": "lru",
@@ -19,7 +23,7 @@
       "n": 2
     },
     {
-      "fixture": "merge",
+      "fixture": "wallet",
       "n": 1
     },
     {
@@ -34,12 +38,13 @@
     "merge",
     "pipeline_ledger",
     "ss_pipeline_ledger",
-    "topo"
+    "topo",
+    "wallet"
   ],
   "projected": {
-    "live_n_adj": 53,
+    "live_n_adj": 251,
     "timeout_n_adj": 0,
-    "timeout_removed": 17,
+    "timeout_removed": 20,
     "projected_timeout_rate": 0.0,
     "under_target": true,
     "sample_n": 15

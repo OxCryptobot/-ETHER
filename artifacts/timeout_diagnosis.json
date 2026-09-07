@@ -1,13 +1,17 @@
 {
-  "updated": "2026-08-22T23:39:53.659157+00:00",
-  "live_n": 70,
-  "timeout_n": 17,
-  "timeout_rate": 0.2429,
+  "updated": "2026-09-07T19:49:27.580242+00:00",
+  "live_n": 271,
+  "timeout_n": 20,
+  "timeout_rate": 0.0738,
   "timeout_floor_s": 120.0,
   "top_fixtures": [
     {
       "fixture": "ledger",
-      "n": 11
+      "n": 12
+    },
+    {
+      "fixture": "merge",
+      "n": 2
     },
     {
       "fixture": "lru",
@@ -18,7 +22,7 @@
       "n": 2
     },
     {
-      "fixture": "merge",
+      "fixture": "wallet",
       "n": 1
     },
     {
@@ -29,7 +33,7 @@
   "top_strategies": [
     {
       "strategy": "default",
-      "n": 9
+      "n": 12
     },
     {
       "strategy": "tool_runtime",
@@ -49,11 +53,33 @@
     }
   ],
   "by_arm": {
-    "direct": 9,
+    "live": 1,
+    "direct": 11,
     "pipeline": 4,
     "bare": 4
   },
   "samples": [
+    {
+      "fixture": "ledger",
+      "strategy": "default",
+      "arm": "live",
+      "duration_s": 128.085,
+      "failure_type": "live_fail"
+    },
+    {
+      "fixture": "merge",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 237.076,
+      "failure_type": "timeout"
+    },
+    {
+      "fixture": "wallet",
+      "strategy": "default",
+      "arm": "direct",
+      "duration_s": 228.821,
+      "failure_type": "timeout"
+    },
     {
       "fixture": "merge",
       "strategy": "default",
@@ -136,27 +162,6 @@
       "strategy": "default",
       "arm": "direct",
       "duration_s": 350.546,
-      "failure_type": null
-    },
-    {
-      "fixture": "topo",
-      "strategy": "default",
-      "arm": "direct",
-      "duration_s": 463.525,
-      "failure_type": null
-    },
-    {
-      "fixture": "ledger",
-      "strategy": "multifile",
-      "arm": "bare",
-      "duration_s": 569.592,
-      "failure_type": null
-    },
-    {
-      "fixture": "ledger",
-      "strategy": "no_context",
-      "arm": "bare",
-      "duration_s": 607.632,
       "failure_type": null
     }
   ],

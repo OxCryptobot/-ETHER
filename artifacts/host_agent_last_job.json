@@ -1,10 +1,10 @@
 {
-  "job_id": "p_latency_slo",
+  "job_id": "p_measure_now",
   "ok": false,
-  "rc": 1,
-  "finished": "2026-09-07T19:47:58.561579+00:00",
-  "note": "F01 latency_slo panel on current tree. findings_fast PASS. Dual chat locked.",
+  "rc": 124,
+  "finished": "2026-09-07T19:52:02.715931+00:00",
+  "note": "F02 measure_tick alone after findings_fast. Dual chat locked. [failure_type=timeout]",
   "class": "fast",
   "measurement": true,
-  "failure_type": "exception"
+  "failure_type": "timeout"
 }

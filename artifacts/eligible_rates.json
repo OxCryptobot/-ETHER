@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-07T19:33:06.585889+00:00",
+  "updated": "2026-09-07T19:52:02.708931+00:00",
   "denied": [
     "intervals",
     "ledger",
@@ -7,7 +7,8 @@
     "merge",
     "pipeline_ledger",
     "ss_pipeline_ledger",
-    "topo"
+    "topo",
+    "wallet"
   ],
   "allowlist": [
     "greeter",
@@ -15,17 +16,17 @@
   ],
   "live_raw_n": 271,
   "live_eligible_n": 80,
-  "live_eligible_all_n": 229,
-  "denied_live_n": 42,
+  "live_eligible_all_n": 115,
+  "denied_live_n": 156,
   "sentinel_skipped_n": 0,
   "timeout_raw_n": 20,
-  "timeout_eligible_n": 1,
+  "timeout_eligible_n": 0,
   "timeout_rate_raw": 0.0738,
   "timeout_rate_eligible": 0.0,
   "honest_eligible_n": 80,
-  "ok_eligible_n": 226,
+  "ok_eligible_n": 114,
   "honest_rate_eligible": 1.0,
-  "honest_rate_allowlist_all": 0.9869,
+  "honest_rate_allowlist_all": 0.9913,
   "window_n": 80,
   "window_honest_rate": 1.0,
   "gate_source": "window_80",

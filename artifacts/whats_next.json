@@ -1,14 +1,13 @@
 {
-  "generated": "2026-09-07T19:47:58.550411+00:00",
-  "next_job": "p_latency_slo",
+  "generated": "2026-09-07T19:48:01.869712+00:00",
+  "next_job": "p_measure_now",
   "queue_head": [
-    "p_latency_slo",
     "p_measure_now",
     "walk_expand"
   ],
-  "queue_depth": 3,
+  "queue_depth": 2,
   "host_phase": "idle",
-  "last_job": "p_honest_kpi",
+  "last_job": "p_latency_slo",
   "last_ok": false,
   "last_failure_type": "exception",
   "phase_board": [

@@ -1,14 +1,12 @@
 {
-  "generated": "2026-09-07T19:52:07.175639+00:00",
-  "next_job": "walk_expand",
-  "queue_head": [
-    "walk_expand"
-  ],
-  "queue_depth": 1,
-  "host_phase": "idle",
-  "last_job": "p_measure_now",
+  "generated": "2026-09-07T19:52:11.388318+00:00",
+  "next_job": null,
+  "queue_head": [],
+  "queue_depth": 0,
+  "host_phase": "polling",
+  "last_job": "walk_expand",
   "last_ok": false,
-  "last_failure_type": "timeout",
+  "last_failure_type": "exception",
   "phase_board": [
     {
       "id": "1A",

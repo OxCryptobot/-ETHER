@@ -1,33 +1,15 @@
 # @ETHER Status
 
-**Updated:** 2026-08-15 22:42Z — **Moonshots 11–25 LANDED**. Soft launch **BLOCKED**.
+**Updated:** 2026-09-07 — source of truth is `artifacts/host_agent_last_job.json` and `artifacts/pipeline/last.json`. This file is not the live scoreboard.
 
 ## Law
-Test after every build. Pipeline body unchanged.
+Host is the judge. Dual chat locked on the published Matrix. One agent.
 
-## Moonshots
-| # | Idea | Module / artifact |
-|---|------|-------------------|
-| 11 | Latency SLO p50/p95 | `core/latency_slo.py` → `latency_slo.json` |
-| 12 | Honest sparkline | `core/honest_sparkline.py` |
-| 13 | FAST-first hard gate | `core/host_schedule.py` + schedule_rank |
-| 14 | Context budget | `core/context_budget.py` |
-| 15 | Scripted shadow tags | `core/shadow_tag.py` |
-| 16 | Time-based queue pause | `core/queue_governor.py` |
-| 17 | Model dual-lane | `core/model_router.py` |
-| 18 | GEM energy strip | `core/gem_energy.py` |
-| 19 | Train-wheels fuse | governor + foreman LIVE skip |
-| 20 | Scoreboard rollup | `core/scoreboard_rollup.py` |
-| 21 | Critique→PlanState | already in critique_on_fail |
-| 22 | AST-edit KPI | `core/ast_edit_kpi.py` |
-| 23 | Zero-click recovery | `core/zero_click_recovery.py` |
-| 24 | Microbench + freeze | `core/microbench.py` |
-| 25 | Smoothness 0–100 | `core/smoothness.py` |
+## Last measured peel
+`leftover_done` FAST PASS. `Pipeline.run` is a walker.
 
-## Tests
-`tests/test_moonshots.py` · job `p3_7_moonshots`
+## Findings batch
+F01 tool-first terminal stays. F02 measure_tick rewrite on host. F03 unaided_pass rejects craft_helper. F05 gem_energy.bump from gems_call. F07 4k-token cap. F08 last.json keeps stdout tail. F09 LoRA is prompt_adapter, peft=false. F10 behavior tests. F12 idle_refill proposes FAST only. F13 argv allowlist.
 
-## Measure tick
-Publishes all panels in one pass.
-
-Training wheels **ON**. Soft launch **blocked**.
+## Soft launch
+Still a measured gate. Refresh `core.measure_tick` before quoting rates. Aug-22 tiles are stale.

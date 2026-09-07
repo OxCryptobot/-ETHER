@@ -1,4 +1,4 @@
-"""Moonshot 14 — Context budget meter."""
+"""Moonshot 14 — Context budget meter. F07: 4k-token cap for 4B."""
 from __future__ import annotations
 
 import json
@@ -9,11 +9,11 @@ from typing import Any, Dict, Optional
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 OUT = ROOT / "artifacts" / "context_budget.json"
-MAX_CHARS = int(os.getenv("ETHER_CONTEXT_MAX_CHARS", "12000"))
+MAX_TOKENS = int(os.getenv("ETHER_CONTEXT_MAX_TOKENS", "4000"))
+MAX_CHARS = int(os.getenv("ETHER_CONTEXT_MAX_CHARS", str(MAX_TOKENS * 4)))
 
 
 def estimate_tokens(text: str) -> int:
-    # rough 4 chars/token
     return max(0, len(text or "") // 4)
 
 
@@ -37,8 +37,7 @@ def measure(text: str = "", *, query: str = "", max_chars: Optional[int] = None)
     try:
         from core.context import compress_text
 
-        if os.getenv("ETHER_CONTEXT_COMPRESS", "1").strip() != "0":
-            compressed = compress_text(text or "", query=query, max_chars=max_chars)
+        compressed = compress_text(text or "", query=query, max_chars=max_chars)
     except Exception:
         compressed = (text or "")[:max_chars]
     out_chars = len(compressed)
@@ -50,6 +49,7 @@ def measure(text: str = "", *, query: str = "", max_chars: Optional[int] = None)
         "raw_chars": raw_chars,
         "out_chars": out_chars,
         "max_chars": max_chars,
+        "max_tokens": MAX_TOKENS,
         "raw_tokens_est": estimate_tokens(text or ""),
         "out_tokens_est": estimate_tokens(compressed),
         "compress_ratio": ratio,
@@ -57,7 +57,7 @@ def measure(text: str = "", *, query: str = "", max_chars: Optional[int] = None)
         "grade": grade,
         "over_budget": out_chars > max_chars,
         "status": grade,
-        "note": "tokens estimated at ~4 chars/token; grade=OK|WARM|HOT|OVER|COMPRESSED",
+        "note": "F07 4k-token cap. tokens ~4 chars. grade=OK|WARM|HOT|OVER|COMPRESSED",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -67,11 +67,11 @@ def measure(text: str = "", *, query: str = "", max_chars: Optional[int] = None)
 
 def publish_sample() -> Dict[str, Any]:
     sample = ""
-    for rel in ("STATUS.md", "core/pipeline.py", "core/context.py"):
+    for rel in ("STATUS.md", "core/pipeline.py", "core/context.py", "core/loop/generate_retry_loop.py"):
         p = ROOT / rel
         if p.exists():
             try:
-                sample += p.read_text(encoding="utf-8")[:4000] + "\n"
+                sample += p.read_text(encoding="utf-8")[:8000] + "\n"
             except Exception:
                 pass
     return measure(sample, query="coding agent context")

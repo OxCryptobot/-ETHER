@@ -48,4 +48,4 @@ def test_apply_plan_skip_installs_fix_plan() -> None:
     assert "skipped_resume_fix_dag" in details
     assert callable(walk_current_plan)
     assert callable(run_plan_stage)
-    assert PROGRESS["split_pipeline_godfile"] in {"begin_extracted", "begin_plan_extracted", "begin_plan_tools_extracted", "begin_plan_tools_mark_extracted", "gems_call_extracted", "gems_call_util_extracted", "verify_legacy_extracted", "finalize_legacy_extracted", "fail_retrieve_extracted", "bandit_log_extracted", "tool_runtime_extracted", "agent_loop_extracted", "generate_retry_extracted", "persist_extracted"}
+    assert PROGRESS["split_pipeline_godfile"] in {"begin_extracted", "begin_plan_extracted", "begin_plan_tools_extracted", "begin_plan_tools_mark_extracted", "gems_call_extracted", "gems_call_util_extracted", "verify_legacy_extracted", "finalize_legacy_extracted", "fail_retrieve_extracted", "bandit_log_extracted", "tool_runtime_extracted", "agent_loop_extracted", "generate_retry_extracted", "persist_extracted", "extend_retrieval_extracted"}

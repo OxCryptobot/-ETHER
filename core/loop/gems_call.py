@@ -13,6 +13,15 @@ from core.schemas import (
 )
 
 
+def _bump(gem: str, job: str = "") -> None:
+    try:
+        from core.gem_energy import bump
+
+        bump(gem, job=job)
+    except Exception:
+        pass
+
+
 def sandbox_execute(
     registry: Any,
     *,
@@ -41,6 +50,7 @@ def sandbox_execute(
     res = registry.execute(req)
     if orchestrator is not None:
         orchestrator.process_response(req, res)
+    _bump("clear-quartz", str(task_id))
     return req, res
 
 
@@ -50,7 +60,9 @@ def audit_execute(registry: Any, *, task_id: UUID, generated: str) -> Tuple[Any,
         target_gem="black-tourmaline",
         payload=BlackTourmalineRequest(artifact=generated),
     )
-    return req, registry.execute(req)
+    res = registry.execute(req)
+    _bump("black-tourmaline", str(task_id))
+    return req, res
 
 
 def rose_complete(
@@ -72,4 +84,6 @@ def rose_complete(
             seed=seed,
         ),
     )
-    return req, registry.execute(req)
+    res = registry.execute(req)
+    _bump("rose-quartz", str(task_id))
+    return req, res

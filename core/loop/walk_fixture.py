@@ -22,9 +22,9 @@ def walk_bounded(name: str, *, timeout: int = 45) -> Dict[str, Any]:
     try:
         dest = tmp / src.name
         shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-        steps = mutations_from_workspace(dest, limit=24)
+        steps = mutations_from_workspace(dest, limit=8)
         applied = _apply(dest, steps)
-        tests = run_tests(workspace=dest, timeout=timeout)
+        tests = run_tests(workspace=dest, timeout=min(20, int(timeout)))
         return {
             "ok": True,
             "name": name,
@@ -35,6 +35,15 @@ def walk_bounded(name: str, *, timeout: int = 45) -> Dict[str, Any]:
             "tests_ok": bool(tests.get("ok")),
             "workspace": str(dest),
             "note": "Bounded craft walk. Unparsed BUG lines need 4B unaided. Not Pipeline.run.",
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "name": name,
+            "policy": "craft_helper",
+            "gate_count": False,
+            "error": f"{type(exc).__name__}:{exc}"[:200],
+            "note": "Bounded craft walk failed closed. Not unaided LIVE.",
         }
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

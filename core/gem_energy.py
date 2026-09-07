@@ -43,10 +43,46 @@ def infer_gem(hay: str) -> Optional[str]:
     return None
 
 
+def bump(gem: str, job: str = "") -> Dict[str, Any]:
+    """F05: increment one gem from a live Pipeline call, then republish."""
+    counts = {g: 0 for g in GEMS}
+    last = gem if gem in GEMS else infer_gem(gem)
+    if OUT.exists():
+        try:
+            prev = json.loads(OUT.read_text(encoding="utf-8"))
+            counts.update({g: int((prev.get("counts") or {}).get(g) or 0) for g in GEMS})
+        except Exception:
+            pass
+    if last in counts:
+        counts[last] += 1
+    payload = {
+        "updated": datetime.now(timezone.utc).isoformat(),
+        "gems": list(GEMS),
+        "counts": counts,
+        "last_gem": last,
+        "last_job": job or None,
+        "active_n": sum(1 for g in GEMS if counts.get(g, 0) > 0),
+        "wired": True,
+        "note": "F05 live bump from gems_call. Not inferred-only.",
+    }
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
 def _scan() -> Dict[str, Any]:
     counts = {g: 0 for g in GEMS}
     last: Optional[str] = None
     last_job = None
+
+    if OUT.exists():
+        try:
+            prev = json.loads(OUT.read_text(encoding="utf-8"))
+            counts.update({g: int((prev.get("counts") or {}).get(g) or 0) for g in GEMS})
+            last = prev.get("last_gem")
+            last_job = prev.get("last_job")
+        except Exception:
+            pass
 
     cdir = ROOT / "artifacts" / "critiques"
     if cdir.exists():
@@ -84,6 +120,7 @@ def publish() -> Dict[str, Any]:
         "last_gem": scan["last_gem"],
         "last_job": scan["last_job"],
         "active_n": active_n,
+        "wired": True,
         "strip": [
             {"gem": g, "n": scan["counts"].get(g, 0), "active": g == scan["last_gem"]}
             for g in GEMS

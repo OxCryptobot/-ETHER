@@ -243,46 +243,24 @@ class Pipeline:
 
             available = available_tools(result)
 
-            from core.loop.plan_stage import apply_plan_skip, walk_current_plan
+            from core.loop.execute_plan import execute_selenite_plan
 
-            plan_res = None
-            if apply_plan_skip(skip, objective, result, write_progress, tid):
-                pass
-            else:
-                write_progress(tid, objective, "plan")
-                plan_req = Envelope(
-                    task_id=task_id,
-                    target_gem="selenite",
-                    payload=SeleniteRequest(user_query=objective, available_tools=available),
-                )
-                plan_res = self.registry.execute(plan_req)
-                self.orchestrator.process_response(plan_req, plan_res)
-                if plan_res.error or not isinstance(plan_res.payload, SeleniteResponse):
-                    return self._fail(
-                        result,
-                        "plan",
-                        plan_res.error.message if plan_res.error else "plan failed",
-                        t0,
-                        attempts,
-                    )
-                result.plan = plan_res.payload.plan
-                result.plan_ok = True
-            try:
-                walk_current_plan(result, tid, objective, write_progress)
-            except Exception as exc:
-                result.degraded.append(f"plan_walk:{type(exc).__name__}")
-            needs_tool = bool(
-                plan_res is not None
-                and getattr(plan_res.payload, "needs_tool", False)
+            _pl = execute_selenite_plan(
+                self,
+                result,
+                skip=skip,
+                objective=objective,
+                tid=tid,
+                task_id=task_id,
+                available=available,
+                write_progress=write_progress,
+                attempts=attempts,
+                t0=t0,
             )
-            result.stages.append(
-                StageResult(
-                    stage="plan",
-                    success=True,
-                    detail=f"{len(result.plan.steps)} steps tool={needs_tool}",
-                    duration_ms=(time.perf_counter() - t0) * 1000,
-                )
-            )
+            if _pl.get("fail") is not None:
+                return _pl["fail"]
+            plan_res = _pl.get("plan_res")
+            needs_tool = bool(_pl.get("needs_tool"))
 
             from core.loop.extend_stage import run_extend_if_needed
             from core.loop.retrieval import load_retrieval, make_lazy_blocks
@@ -399,108 +377,25 @@ class Pipeline:
             sent_prompts = st["sent_prompts"]
             attempts = st["attempts"]
 
-            if _tool_path_complete:
-                exit_code = 0 if result.repo_oracle_ok else 1
-                total_tests = (
-                    int(getattr(result.sandbox, "total_tests", 0) or 0) if result.sandbox else 0
-                )
-            elif loop_runner_enabled():
-                _out = LoopRunner(registry=self.registry).run_verify(
-                    VerificationContext(
-                        task_id=tid,
-                        objective=objective,
-                        generated=generated or "",
-                        tool_assist=tool_assist,
-                        critique=critique,
-                        holdout_test=holdout_test,
-                        sent_prompts=sent_prompts,
-                        has_sandbox=result.sandbox is not None,
-                        sandbox_exit=result.sandbox.exit_code if result.sandbox else None,
-                        sandbox_total_tests=int(result.sandbox.total_tests)
-                        if result.sandbox
-                        else 0,
-                        confidence=result.confidence,
-                        verification_score=result.verification_score,
-                        retries=result.retries,
-                        plan_ok=result.plan_ok,
-                        first_compile_ok=result.first_compile_ok,
-                        used_burst=result.used_burst,
-                    )
-                )
-                for _s in _out.stages:
-                    result.stages.append(StageResult(**_s))
-                result.confidence = _out.confidence
-                if _out.audit is not None:
-                    result.audit = BlackTourmalineResponse.model_validate(_out.audit)
-                if _out.critique is not None:
-                    result.critique = LabradoriteResponse.model_validate(_out.critique)
-                result.holdout_ok = _out.holdout_ok
-                result.reward = _out.reward
-                exit_code, total_tests, holdout_test = (
-                    _out.exit_code,
-                    _out.total_tests,
-                    _out.holdout_test,
-                )
-            else:
-                exit_code, total_tests, holdout_test = self._verify_legacy(
-                    result,
-                    objective=objective,
-                    generated=generated or "",
-                    critique=critique,
-                    holdout_test=holdout_test,
-                    sent_prompts=sent_prompts,
-                    tool_assist=tool_assist,
-                    skip=skip,
-                )
-            self._credit_attempts(attempts, result)
+            from core.loop.close_run import close_run
 
-            if loop_runner_enabled():
-                outcome = LoopRunner(
-                    registry=self.registry,
-                ).run_finalize(
-                    FinalizeContext(
-                        task_id=tid,
-                        objective=objective,
-                        generated=generated or "",
-                        success=(exit_code == 0),
-                        last_err=last_err,
-                        fail_kind=fail_kind,
-                        strategy=strategy,
-                        confidence=result.confidence,
-                        verification_score=result.verification_score,
-                        total_tests=total_tests,
-                        holdout_ok=result.holdout_ok,
-                        holdout_test=holdout_test,
-                        tool_assist=tool_assist,
-                        has_sandbox=result.sandbox is not None,
-                        exit_code=exit_code,
-                        result_error=result.error,
-                    )
-                )
-                for _s in outcome.stages:
-                    result.stages.append(StageResult(**_s))
-                result.degraded.extend(outcome.degraded)
-                result.status = outcome.status
-                if outcome.error is not None:
-                    result.error = outcome.error
-            else:
-                self._finalize_legacy(
-                    result,
-                    objective=objective,
-                    generated=generated or "",
-                    last_err=last_err,
-                    fail_kind=fail_kind,
-                    strategy=strategy,
-                    total_tests=total_tests,
-                    holdout_test=holdout_test,
-                    tool_assist=tool_assist,
-                    exit_code=exit_code,
-                )
-            result.finished_at = datetime.now(timezone.utc).isoformat()
-            clear_progress()
-            self._persist(result)
-            self._log(result)
-            return result
+            return close_run(
+                self,
+                result,
+                tid=tid,
+                objective=objective,
+                generated=generated or "",
+                tool_assist=tool_assist,
+                critique=critique,
+                holdout_test=holdout_test,
+                sent_prompts=sent_prompts,
+                skip=skip,
+                last_err=last_err,
+                fail_kind=fail_kind,
+                strategy=strategy,
+                attempts=attempts,
+                _tool_path_complete=_tool_path_complete,
+            )
         except Exception as e:
             return self._fail(result, "exception", str(e), run_started, attempts)
 

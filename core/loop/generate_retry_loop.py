@@ -6,21 +6,17 @@ import time
 from typing import Any, Callable, Dict
 
 from core.confidence import compute_scores
+from core.learning import arm_behaviour, strategy_prompt_addon
 from core.loop.generate_retry import first_prompt
 from core.loop.gems_call import rose_complete, sandbox_execute
 from core.loop.pipeline_util import is_burst_model as _is_burst_model
 from core.loop.pipeline_util import looks_multifile as _looks_multifile
 from core.loop.stage_mark import skip_detail
-from core.repair import build_retry, classify_stderr
+from core.pipeline_burst import decide_burst
+from core.pipeline_select import current_tier, select_strategy_with_context
+from core.repair import classify_stderr
 from core.repo_oracle import apply_repo_oracle_gate
 from core.schemas import ClearQuartzResponse, RoseQuartzResponse
-from core.strategy import (
-    arm_behaviour,
-    current_tier,
-    decide_burst,
-    select_strategy_with_context,
-    strategy_prompt_addon,
-)
 
 MAX_CODE_CHARS = 50_000
 

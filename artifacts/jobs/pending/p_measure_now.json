@@ -1,0 +1,16 @@
+{
+  "id": "p_measure_now",
+  "class": "fast",
+  "note": "F02 measure_tick alone after findings_fast. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick"
+      ],
+      "timeout": 240
+    }
+  ]
+}

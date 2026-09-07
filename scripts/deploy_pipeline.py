@@ -42,6 +42,7 @@ GATES = (
     "tests/test_bandit_log.py",
     "tests/test_tool_runtime_path.py",
     "tests/test_agent_loop_path.py",
+    "tests/test_generate_retry_loop.py",
 )
 
 

@@ -47,6 +47,7 @@ GATES = (
     "tests/test_extend_retrieval.py",
     "tests/test_close_run.py",
     "tests/test_shadow_progress.py",
+    "tests/test_findings_batch.py",
 )
 
 
@@ -73,6 +74,8 @@ def run_gates() -> dict:
         "gates": list(GATES),
         "n_gates": len(GATES),
         "failed": [ln for ln in stdout.splitlines() if ln.startswith("FAILED")],
+        "stdout": stdout[-2000:],
+        "stderr": stderr[-2000:],
         "tail": (stdout + "\n" + stderr)[-2500:],
         "ts": _now(),
         "schema": "ether_deploy_pipeline_v1",

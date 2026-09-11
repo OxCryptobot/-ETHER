@@ -418,6 +418,11 @@ class ToolRuntime:
                     else {}
                 )
                 obs = self._execute(tool, args)
+                try:
+                    from core.loop.stream_obs import stream_observation
+                    stream_observation(tool, {"ok": bool(obs.get("ok")), "error": obs.get("error", "")}, job_id=self.run_id)
+                except Exception:
+                    pass
                 rec = StepRecord(
                     step=i + 1,
                     tool=tool,

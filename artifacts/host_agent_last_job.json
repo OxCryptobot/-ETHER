@@ -1,9 +1,10 @@
 {
-  "job_id": "walk_expand2",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-07T21:56:16.226152+00:00",
-  "note": "walk_expand exception: 25s host step. 12s walks. findings_fast PASS.",
+  "job_id": "medic_hb_20260909_090224",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-11T21:00:21.354240+00:00",
+  "note": "FAST drain on matrix-worker. Dual chat locked.",
   "class": "fast",
-  "measurement": true
+  "measurement": true,
+  "tail": "ce', 'memory/bench', 'memory/learning']\n  \u2713 flywheel_heartbeat   [low     ] no heartbeat (daemon idle)\n  \u2717 intel_gates          [high    ] unhealthy: bench_missing, quiz_missing, guardian:no_bench_yet \u2014 guardian fails closed until a bench exists\n      tip: Guardian freeze active (regression detected). Re-run weekly_scoreboard after a good bench, or clear memory/bench/guardian.json if intentional.\n"
 }

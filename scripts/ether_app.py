@@ -12,6 +12,7 @@ from scripts.live_host import consume, ollama_up, start_ollama
 ROOT = Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER")
 if not (ROOT / "scripts").is_dir():
     ROOT = Path(__file__).resolve().parents[1]
+os.environ["ETHER_ROOT"] = str(ROOT)
 
 DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "https://etherbot.grok.me/?view=bus")
 GATES = [

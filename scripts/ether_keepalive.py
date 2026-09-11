@@ -1,4 +1,4 @@
-"""Persistent local consumer. No operator PowerShell after first install."""
+"""Persistent local consumer. Matrix Start/Stop LIVE via host_command."""
 from __future__ import annotations
 
 import json
@@ -18,12 +18,16 @@ def tick() -> dict:
             body = json.loads(CMD.read_text(encoding="utf-8"))
         except Exception:
             pass
-    return consume(body)
+    out = consume(body)
+    out["halt"] = str(body.get("cmd") or "") == "stop"
+    return out
 
 
 def main() -> None:
     while True:
-        tick()
+        out = tick()
+        if out.get("halt"):
+            break
         time.sleep(60)
 
 

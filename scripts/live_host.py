@@ -1,8 +1,11 @@
-"""Consume host_command. Standalone — no core/pydantic import."""
+"""Consume host_command. Start Ollama when the binary is on this machine."""
 from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -19,8 +22,30 @@ def ollama_up() -> bool:
         return False
 
 
+def start_ollama() -> bool:
+    if ollama_up():
+        return True
+    bin_ = shutil.which("ollama")
+    if not bin_:
+        return False
+    try:
+        subprocess.Popen(
+            [bin_, "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        return False
+    for _ in range(8):
+        time.sleep(0.5)
+        if ollama_up():
+            return True
+    return ollama_up()
+
+
 def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
-    ollama = ollama_up()
+    ollama = start_ollama()
     live_lane = "ollama_4b" if ollama else "grok_bus"
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
@@ -32,7 +57,7 @@ def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
         "grok_bus": not ollama,
         "cmd": (command or {}).get("cmd") or "attach",
         "consumed": True,
-        "note": "live-host consumed command. 4B only if Ollama answered.",
+        "note": "Starts ollama serve when binary exists. Else grok_bus.",
     }
     root = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
     out = root / "artifacts" / "host_attach.json"

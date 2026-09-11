@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>ETHER keepalive. Polls origin host_command. No operator PowerShell.</Description>
+    <Description>ETHER silent keepalive. No console. Matrix Start/Stop LIVE.</Description>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>
       <Enabled>true</Enabled>
     </LogonTrigger>
+    <BootTrigger>
+      <Enabled>true</Enabled>
+    </BootTrigger>
   </Triggers>
   <Principals>
     <Principal id="Author">
@@ -24,11 +27,15 @@
     <Enabled>true</Enabled>
     <Hidden>true</Hidden>
     <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <RestartOnFailure>
+      <Interval>PT1M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
     <Priority>7</Priority>
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>C:\Users\Otcde\ETHER\.venv\Scripts\python.exe</Command>
+      <Command>C:\Users\Otcde\ETHER\.venv\Scripts\pythonw.exe</Command>
       <Arguments>scripts\ether_keepalive.py</Arguments>
       <WorkingDirectory>C:\Users\Otcde\ETHER</WorkingDirectory>
     </Exec>

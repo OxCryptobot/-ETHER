@@ -155,6 +155,46 @@ def serve_local() -> None:
             if self.path.startswith("/stop"):
                 live_stop()
                 self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}'); return
+
+            if self.path.startswith("/files"):
+                rows = []
+                for sub in ("core", "gems", "scripts", "tests"):
+                    d = ROOT / sub
+                    if d.is_dir():
+                        for p in sorted(d.rglob("*.py"))[:40]:
+                            rows.append(str(p.relative_to(ROOT)).replace("\\", "/"))
+                body = _json.dumps({"files": rows}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path.startswith("/read"):
+                from urllib.parse import urlparse, parse_qs
+                qs = parse_qs(urlparse(self.path).query)
+                rel = (qs.get("path") or [""])[0]
+                target = (ROOT / rel).resolve()
+                try:
+                    target.relative_to(ROOT.resolve())
+                    txt = target.read_text(encoding="utf-8")[:20000]
+                    body = _json.dumps({"path": rel, "text": txt}).encode()
+                except Exception as exc:
+                    body = _json.dumps({"error": type(exc).__name__}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path.startswith("/run"):
+                body = _json.dumps(verify()).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path.startswith("/health"):
                 att = {}
                 p = ROOT / "artifacts" / "host_attach.json"
@@ -184,6 +224,26 @@ def serve_local() -> None:
                 self.wfile.write(page)
                 return
             self.send_error(404)
+
+        def do_POST(self) -> None:  # type: ignore[override]
+            n = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(n) if n else b"{}"
+            try:
+                payload = _json.loads(raw.decode() or "{}")
+            except Exception:
+                payload = {}
+            if self.path.startswith("/ask"):
+                text = str(payload.get("text") or "")
+                proof = verify()
+                reply = "Verified " + ("PASS" if proof.get("ok") else "FAIL") + ". " + text[:200]
+                body = _json.dumps({"reply": reply, "verified": proof.get("ok")}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            self.do_GET()
 
     ThreadingHTTPServer(("127.0.0.1", 7843), H).serve_forever()
 

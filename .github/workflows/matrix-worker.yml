@@ -1,0 +1,24 @@
+name: matrix-worker
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "core/loop/agentic.py"
+      - "core/loop/gem_topo.py"
+      - "tests/test_agentic.py"
+      - "tests/test_gem_topo.py"
+      - ".github/workflows/matrix-worker.yml"
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: FAST deps
+        run: pip install -q pytest pydantic pyyaml httpx
+      - name: Agentic + gem topography
+        run: python -m pytest tests/test_agentic.py tests/test_gem_topo.py tests/test_live_criteria.py -q --tb=short

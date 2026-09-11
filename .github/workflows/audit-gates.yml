@@ -12,7 +12,11 @@ on:
   push:
     branches: [main]
     # Flywheel bot report commits touch only FLYWHEEL.md — don't burn CI on them.
-    paths-ignore: ['FLYWHEEL.md']
+    paths-ignore:
+      - 'FLYWHEEL.md'
+      - 'artifacts/**'
+      - 'artifacts/jobs/**'
+      - 'artifacts/chat/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

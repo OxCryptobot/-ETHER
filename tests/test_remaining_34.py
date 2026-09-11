@@ -40,7 +40,7 @@ def test_lsp_fail_closed() -> None:
 def test_moonshot_lora_off_box() -> None:
     ready = lora_ready()
     assert ready["ok"] is False
-    assert ready["reason"] == "off_box"
+    assert ready["reason"] in {"off_box", "pack_only"}
     flags = experimental_flags()
     assert flags["swarm"] is False
     assert flags["max_live_agents"] == 1

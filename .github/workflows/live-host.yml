@@ -26,3 +26,12 @@ jobs:
           git diff --cached --quiet && echo no-attach-change || git commit -m "live-host: publish attach"
           git pull --rebase origin main || true
           git push origin HEAD:main || true
+  windows:
+    runs-on: self-hosted
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: consume on the 1650
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/live_host.py

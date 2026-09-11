@@ -1,10 +1,10 @@
 {
-  "heartbeat": "2026-09-11T22:54:42.464023+00:00",
-  "phase": "idle",
+  "heartbeat": "2026-09-11T23:54:49.651216+00:00",
+  "phase": "draining",
   "current_job": null,
   "source": "matrix-worker",
-  "ollama": true,
-  "live_lane": "ollama_4b",
   "pending_left": 0,
-  "note": "FAST heartbeat. ollama/lane from 1650 attach."
+  "note": "FAST heartbeat. ollama/lane owned by 1650 attach.",
+  "ollama": false,
+  "live_lane": "grok_bus"
 }

@@ -1,12 +1,12 @@
 {
-  "updated": "2026-09-11T22:02:46.744628+00:00",
+  "updated": "2026-09-11T23:54:45.760908+00:00",
   "ok": true,
   "fast_lane": "matrix-worker",
-  "live_lane": "ollama_4b",
+  "live_lane": "grok_bus",
   "living_ok": true,
-  "ollama": true,
-  "grok_bus": false,
-  "model": "qwen3.5:4b-q4_K_M",
-  "note": "Restored 1650 report. Sandbox must not overwrite.",
-  "source": "1650"
+  "ollama": false,
+  "grok_bus": true,
+  "cmd": "attach",
+  "consumed": true,
+  "note": "Starts ollama serve when binary exists. Else grok_bus."
 }

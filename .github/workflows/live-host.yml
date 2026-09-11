@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [ether-live]
+permissions:
+  contents: write
 jobs:
   live:
     runs-on: ubuntu-latest
@@ -16,3 +18,11 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/live_host.py
+      - name: publish attach to origin
+        run: |
+          git config user.name ether-live-host
+          git config user.email ether@local
+          git add artifacts/host_attach.json
+          git diff --cached --quiet && echo no-attach-change || git commit -m "live-host: publish attach"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true

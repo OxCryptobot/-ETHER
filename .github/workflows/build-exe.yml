@@ -7,6 +7,9 @@ jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: scripts
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,8 +18,8 @@ jobs:
       - name: pyinstaller
         run: |
           pip install -q pyinstaller
-          pyinstaller --noconfirm --clean --onefile --noconsole --name ETHER --paths . --hidden-import scripts.live_host scripts/ether_app.py
+          pyinstaller ether_app.spec --noconfirm --clean
       - uses: actions/upload-artifact@v4
         with:
           name: ETHER-exe
-          path: dist/ETHER.exe
+          path: scripts/dist/ETHER.exe

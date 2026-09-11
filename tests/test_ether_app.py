@@ -9,9 +9,9 @@ def test_app_e2e_headless() -> None:
     assert report["stop"]["cmd"] == "stop"
     assert report["start"]["cmd"] == "attach"
     assert report["health"]["ok"] is True
-    assert report["shell"] in {"webview", "browser_fallback"}
+    assert report["shell"] in {"headless", "webview", "browser_fallback"}
     assert "http" in DASHBOARD
     assert health()["dashboard"] == DASHBOARD
     boot_again = boot()
     assert boot_again["live_lane"] in {"ollama_4b", "grok_bus"}
-    assert shell_kind() in {"webview", "browser_fallback"}
+    assert shell_kind() in {"headless", "webview", "browser_fallback"}

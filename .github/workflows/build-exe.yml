@@ -6,7 +6,7 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: scripts
@@ -17,7 +17,7 @@ jobs:
           python-version: "3.12"
       - name: pyinstaller
         run: |
-          pip install -q pyinstaller
+          pip install -q pyinstaller pywebview pythonnet
           pyinstaller ether_app.spec --noconfirm --clean
       - uses: actions/upload-artifact@v4
         with:

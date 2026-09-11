@@ -1,0 +1,16 @@
+name: live-host
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [ether-live]
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: consume host_command
+        run: python scripts/live_host.py

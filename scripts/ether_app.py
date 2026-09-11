@@ -78,6 +78,9 @@ def _git() -> str:
 
 
 def _push_attach() -> None:
+    # Never publish attach from CI / Grok sandbox.
+    if "Otcde" not in str(ROOT):
+        return
     git = _git()
     try:
         subprocess.run([git, "add", "artifacts/host_attach.json"], cwd=str(ROOT), check=False)

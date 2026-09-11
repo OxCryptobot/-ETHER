@@ -83,17 +83,35 @@ def drain() -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
     files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep")
     reports = [run_job(p) for p in files]
+    prev: Dict[str, Any] = {}
+    if STATUS.is_file():
+        try:
+            prev = json.loads(STATUS.read_text(encoding="utf-8"))
+        except Exception:
+            prev = {}
+    attach: Dict[str, Any] = {}
+    ap = ROOT / "artifacts" / "host_attach.json"
+    if ap.is_file():
+        try:
+            attach = json.loads(ap.read_text(encoding="utf-8"))
+        except Exception:
+            attach = {}
+    ollama = attach.get("ollama")
+    if ollama is None:
+        ollama = prev.get("ollama")
+    lane = attach.get("live_lane") or prev.get("live_lane")
     status = {
         "heartbeat": _now(),
         "phase": "idle" if not files else "draining",
         "current_job": None,
         "source": "matrix-worker",
-        "ollama": False,
-        "live_lane": "grok_bus",
-        "gpu": {"name": "GTX 1650", "note": "not attached this tick"},
-        "pending_left": len(list(PENDING.glob("*.json"))),
-        "note": "FAST heartbeat from Ubuntu. Not 4B LIVE.",
+        "pending_left": len([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]),
+        "note": "FAST heartbeat. ollama/lane owned by 1650 attach.",
     }
+    if ollama is not None:
+        status["ollama"] = bool(ollama)
+    if lane:
+        status["live_lane"] = str(lane)
     STATUS.parent.mkdir(parents=True, exist_ok=True)
     STATUS.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
     return {"ok": all(r.get("ok") or r.get("skipped") for r in reports), "n": len(reports), "jobs": reports}

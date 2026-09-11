@@ -15,7 +15,7 @@ jobs:
       - name: pyinstaller
         run: |
           pip install -q pyinstaller
-          pyinstaller scripts/ether_app.spec --noconfirm --clean
+          pyinstaller --noconfirm --clean --onefile --noconsole --name ETHER --paths . --hidden-import scripts.live_host scripts/ether_app.py
       - uses: actions/upload-artifact@v4
         with:
           name: ETHER-exe

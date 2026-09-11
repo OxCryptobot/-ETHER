@@ -14,7 +14,7 @@ if not (ROOT / "scripts").is_dir():
     ROOT = Path(__file__).resolve().parents[1]
 os.environ["ETHER_ROOT"] = str(ROOT)
 
-DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "https://etherbot.grok.me/?view=bus")
+DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "http://127.0.0.1:7843/")
 GATES = [
     "tests/test_agentic.py",
     "tests/test_gem_topo.py",
@@ -139,6 +139,49 @@ def _host_loop() -> None:
         time.sleep(60)
 
 
+def serve_local() -> None:
+    from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+    from functools import partial
+    import json as _json
+
+    class H(SimpleHTTPRequestHandler):
+        def log_message(self, fmt: str, *args: object) -> None:
+            return
+
+        def do_GET(self) -> None:  # type: ignore[override]
+            if self.path.startswith("/health"):
+                att = {}
+                p = ROOT / "artifacts" / "host_attach.json"
+                if p.is_file():
+                    try:
+                        att = _json.loads(p.read_text(encoding="utf-8"))
+                    except Exception:
+                        att = {}
+                body = _json.dumps({
+                    "ollama": bool(att.get("ollama")),
+                    "live_lane": att.get("live_lane"),
+                    "updated": att.get("updated"),
+                    "ok": True,
+                }).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path in ("/", "/index.html"):
+                page = (Path(__file__).with_name("ether_ui.html")).read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(page)))
+                self.end_headers()
+                self.wfile.write(page)
+                return
+            self.send_error(404)
+
+    ThreadingHTTPServer(("127.0.0.1", 7843), H).serve_forever()
+
+
 def product_window() -> str:
     """Matrix lives inside the app window."""
     import webview  # type: ignore
@@ -152,9 +195,8 @@ def main() -> None:
     import threading
 
     threading.Thread(target=_host_loop, name="ether-host", daemon=True).start()
-    kind = product_window()
-    if kind == "headless":
-        _host_loop()
+    threading.Thread(target=serve_local, name="ether-ui", daemon=True).start()
+    product_window()
 
 
 if __name__ == "__main__":

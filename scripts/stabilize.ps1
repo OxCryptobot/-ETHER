@@ -1,5 +1,5 @@
 # @ETHER STABILIZE - ignition + keep-alive + PROVE learning cycle
-# Host profile only (GTX 1650 4GB / 12GB RAM -> qwen2.5-coder:3b)
+# Host profile only (GTX 1650 4GB / 12GB RAM -> qwen3.5:4b-q4_K_M)
 #
 #   powershell -ExecutionPolicy Bypass -File C:\Users\Otcde\ETHER\scripts\stabilize.ps1
 #
@@ -19,7 +19,7 @@ Set-Location -LiteralPath $Root
 $env:ETHER_ROOT = $Root
 $env:ETHER_HW_PROFILE = "host"
 $env:ETHER_AUTO_MODEL = "1"
-$env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b"
+$env:ETHER_PRIMARY_MODEL = "qwen3.5:4b-q4_K_M"
 $env:ETHER_CURRICULUM = "1"
 $env:ETHER_EXPERIENCE = "1"
 $env:ETHER_AUTO_ENQUEUE = "1"

@@ -101,8 +101,27 @@ def health() -> Dict[str, Any]:
     return {"ollama": ollama_up(), "dashboard": DASHBOARD, "ok": True}
 
 
+def git_status() -> str:
+    git = _git()
+    try:
+        p = subprocess.run([git, "status", "-sb"], cwd=str(ROOT), capture_output=True, text=True, timeout=20)
+        return (p.stdout or p.stderr or "")[:2000]
+    except Exception as exc:
+        return type(exc).__name__
+
+
 def agent_turn(text: str) -> Dict[str, Any]:
     q = (text or "").strip()
+    low = q.lower()
+    actions: List[str] = []
+    if low.startswith("edit ") and "->" in q:
+        try:
+            rest = q[5:]
+            path, pair = rest.split(" ", 1)
+            old, new = pair.split("->", 1)
+            actions.append("edit:" + str(edit_file(path.strip(), old.strip(), new.strip())))
+        except Exception as exc:
+            actions.append("edit_fail:" + type(exc).__name__)
     hits = grep_repo(q.split()[0] if q else "")["hits"][:8]
     preview = ""
     if hits:
@@ -112,8 +131,17 @@ def agent_turn(text: str) -> Dict[str, Any]:
             preview = ""
     prompt = "ETHER repo agent.\nQ: " + q + "\nfiles: " + ", ".join(hits) + "\n" + preview
     reply = ask_model(prompt)
+    if "status" in low:
+        actions.append("git:" + git_status())
     proof = verify()
-    return {"reply": reply, "files": hits, "verified": proof.get("ok"), "ollama": ollama_up()}
+    return {
+        "reply": reply,
+        "files": hits,
+        "actions": actions,
+        "verified": proof.get("ok"),
+        "ollama": ollama_up(),
+        "status": git_status() if "status" in low else None,
+    }
 
 
 def ask_model(text: str) -> str:

@@ -7,11 +7,14 @@ on:
       - "core/**"
       - "tests/test_*.py"
       - "scripts/deploy_pipeline.py"
+      - "scripts/drain_fast_fifo.py"
       - ".github/workflows/matrix-worker.yml"
+permissions:
+  contents: write
 jobs:
   drain:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,3 +26,15 @@ jobs:
         run: |
           python scripts/deploy_pipeline.py
           python -m pytest tests/test_agentic.py tests/test_gem_topo.py -q --tb=short
+      - name: Drain FAST FIFO
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python scripts/drain_fast_fifo.py
+      - name: Publish drain
+        run: |
+          git config user.name ether-matrix-worker
+          git config user.email ether@local
+          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/pipeline || true
+          git diff --cached --quiet && echo no-fifo-change || git commit -m "matrix-worker: drain FAST FIFO"
+          git pull --rebase origin main || true
+          git push origin HEAD:main || true

@@ -14,6 +14,7 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
 LAST = ROOT / "artifacts" / "host_agent_last_job.json"
+STATUS = ROOT / "artifacts" / "host_agent_status.json"
 
 LIVE_MARKERS = ("ollama", "unaided", "qwen", "live_4b", "policy=model")
 
@@ -80,6 +81,19 @@ def drain() -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
     files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep")
     reports = [run_job(p) for p in files]
+    status = {
+        "heartbeat": _now(),
+        "phase": "idle" if not files else "draining",
+        "current_job": None,
+        "source": "matrix-worker",
+        "ollama": False,
+        "live_lane": "grok_bus",
+        "gpu": {"name": "GTX 1650", "note": "not attached this tick"},
+        "pending_left": len(list(PENDING.glob("*.json"))),
+        "note": "FAST heartbeat from Ubuntu. Not 4B LIVE.",
+    }
+    STATUS.parent.mkdir(parents=True, exist_ok=True)
+    STATUS.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
     return {"ok": all(r.get("ok") or r.get("skipped") for r in reports), "n": len(reports), "jobs": reports}
 
 

@@ -54,6 +54,7 @@ GATES = (
     "tests/test_walk_expand.py",
     "tests/test_live_attach.py",
     "tests/test_phase6_intel.py",
+    "tests/test_plan_drive.py",
 )
 
 

@@ -56,6 +56,7 @@ GATES = (
     "tests/test_phase6_intel.py",
     "tests/test_plan_drive.py",
     "tests/test_phase6_stream.py",
+    "tests/test_living_contract.py",
 )
 
 

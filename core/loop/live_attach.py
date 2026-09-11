@@ -32,16 +32,18 @@ def publish() -> Dict[str, Any]:
     ollama = ollama_up()
     grok = grok_present()
     live_lane = "ollama_4b" if ollama else ("grok_bus" if grok else "none")
+    living_ok = live_lane in {"ollama_4b", "grok_bus"}
     payload: Dict[str, Any] = {
         "updated": _now(),
         "ok": True,
         "fast_lane": "matrix-worker",
         "live_lane": live_lane,
+        "living_ok": living_ok,
         "ollama": ollama,
         "grok_bus": grok,
         "model": FAST_MODEL,
         "backend": select_backend("live"),
-        "note": "FAST via GitHub ubuntu. LIVE via 4B when Ollama is up, else Dual-chat grok_bus.",
+        "note": "4B chair if Ollama. Else Grok is the living lane. ollama=false is not dead.",
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2), encoding="utf-8")

@@ -52,6 +52,7 @@ GATES = (
     "tests/test_gem_topo.py",
     "tests/test_measure_tick_fast.py",
     "tests/test_walk_expand.py",
+    "tests/test_live_attach.py",
 )
 
 

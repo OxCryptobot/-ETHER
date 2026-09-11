@@ -15,3 +15,13 @@ def test_app_e2e_headless() -> None:
     assert "http" in DASHBOARD
     assert health()["dashboard"] == DASHBOARD
     assert shell_kind() == "headless"
+
+
+def test_agent_turn_and_edit() -> None:
+    from scripts.ether_app import agent_turn, grep_repo, write_file, edit_file
+    assert grep_repo("live_host")["ok"] is True
+    write_file("artifacts/batch_probe.txt", "one")
+    assert edit_file("artifacts/batch_probe.txt", "one", "two")["ok"] is True
+    out = agent_turn("live_host")
+    assert "reply" in out
+    assert out["verified"] in {True, False}

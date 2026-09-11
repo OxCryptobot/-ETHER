@@ -1,0 +1,27 @@
+{
+  "id": "measure_fast",
+  "class": "fast",
+  "note": "F02 slim tick. walk_expand2 PASS. Dual chat locked.",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "pytest",
+        "tests/test_measure_tick_fast.py",
+        "-q",
+        "--tb=short"
+      ],
+      "timeout": 40
+    },
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "core.measure_tick_fast"
+      ],
+      "timeout": 40
+    }
+  ]
+}

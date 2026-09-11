@@ -103,17 +103,35 @@ def run_e2e() -> Dict[str, Any]:
     }
 
 
-def main() -> None:
+def _host_loop() -> None:
     import time
 
-    state = boot()
-    print(status_line(state))
-    print("dashboard", DASHBOARD)
+    boot()
     while True:
         cmd = live_start()
         if str(cmd.get("cmd") or "") == "stop":
             break
         time.sleep(60)
+
+
+def product_window() -> str:
+    """One ETHER window: Matrix dashboard, host already running."""
+    try:
+        import webview  # type: ignore
+    except Exception:
+        return "headless"
+    webview.create_window("ETHER", DASHBOARD, width=1280, height=800)
+    webview.start()
+    return "webview"
+
+
+def main() -> None:
+    import threading
+
+    threading.Thread(target=_host_loop, name="ether-host", daemon=True).start()
+    kind = product_window()
+    if kind == "headless":
+        _host_loop()
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ a = Analysis(
     ["ether_app.py"],
     pathex=["."],
     binaries=[],
-    datas=[],
+    datas=[("ether_ui.html", ".")],
     hiddenimports=["live_host", "webview"],
     excludes=["tkinter"],
     noarchive=False,

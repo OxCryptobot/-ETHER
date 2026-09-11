@@ -66,13 +66,25 @@ def live_stop() -> Dict[str, Any]:
     return consume({"cmd": "stop"})
 
 
+def _git() -> str:
+    for p in (
+        r"C:\Program Files\Git\cmd\git.exe",
+        r"C:\Program Files (x86)\Git\cmd\git.exe",
+        "git",
+    ):
+        if p == "git" or Path(p).is_file():
+            return p
+    return "git"
+
+
 def _push_attach() -> None:
+    git = _git()
     try:
-        subprocess.run(["git", "add", "artifacts/host_attach.json"], cwd=str(ROOT), check=False)
-        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(ROOT)).returncode == 0:
+        subprocess.run([git, "add", "artifacts/host_attach.json"], cwd=str(ROOT), check=False)
+        if subprocess.run([git, "diff", "--cached", "--quiet"], cwd=str(ROOT)).returncode == 0:
             return
-        subprocess.run(["git", "commit", "-m", "1650 app attach"], cwd=str(ROOT), check=False)
-        subprocess.run(["git", "push", "origin", "main"], cwd=str(ROOT), check=False)
+        subprocess.run([git, "commit", "-m", "1650 app attach"], cwd=str(ROOT), check=False)
+        subprocess.run([git, "push", "origin", "main"], cwd=str(ROOT), check=False)
     except Exception:
         return
 

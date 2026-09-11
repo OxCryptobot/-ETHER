@@ -1,22 +1,12 @@
 {
-  "updated": "2026-09-11T22:46:57.006860+00:00",
+  "updated": "2026-09-11T22:02:46.744628+00:00",
   "ok": true,
   "fast_lane": "matrix-worker",
-  "live_lane": "grok_bus",
+  "live_lane": "ollama_4b",
   "living_ok": true,
-  "ollama": false,
-  "grok_bus": true,
+  "ollama": true,
+  "grok_bus": false,
   "model": "qwen3.5:4b-q4_K_M",
-  "backend": {
-    "model": "grok",
-    "lane": "live",
-    "fast_model": "qwen3.5:4b-q4_K_M",
-    "live_model": "qwen3.5:4b-q4_K_M",
-    "note": "Dual-lane router; wire via ETHER_FAST_MODEL / ETHER_LIVE_MODEL",
-    "backend": "grok_bus",
-    "scalable": true,
-    "reason": "grok_present_no_key",
-    "vram_mb": 0
-  },
-  "note": "4B chair if Ollama. Else Grok is the living lane. ollama=false is not dead."
+  "note": "Restored 1650 report. Sandbox must not overwrite.",
+  "source": "1650"
 }

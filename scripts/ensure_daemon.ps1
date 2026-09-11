@@ -91,7 +91,7 @@ function Start-EtherDaemon {
   $env:ETHER_DAEMON_BATCH = "1"
   if (-not $env:ETHER_DAEMON_INTERVAL) { $env:ETHER_DAEMON_INTERVAL = "300" }
   if (-not $env:ETHER_BATCH_INTERVAL) { $env:ETHER_BATCH_INTERVAL = "300" }
-  if (-not $env:ETHER_PRIMARY_MODEL) { $env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b" }
+  if (-not $env:ETHER_PRIMARY_MODEL) { $env:ETHER_PRIMARY_MODEL = "qwen3.5:4b-q4_K_M" }
   $env:PYTHONIOENCODING = "utf-8"
   $env:ETHER_ROOT = $Root
   try {

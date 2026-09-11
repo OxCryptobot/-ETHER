@@ -48,6 +48,10 @@ GATES = (
     "tests/test_close_run.py",
     "tests/test_shadow_progress.py",
     "tests/test_findings_batch.py",
+    "tests/test_agentic.py",
+    "tests/test_gem_topo.py",
+    "tests/test_measure_tick_fast.py",
+    "tests/test_walk_expand.py",
 )
 
 

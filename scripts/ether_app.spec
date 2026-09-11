@@ -4,8 +4,8 @@ a = Analysis(
     pathex=["."],
     binaries=[],
     datas=[],
-    hiddenimports=["live_host"],
-    excludes=["tkinter", "webview"],
+    hiddenimports=["live_host", "webview"],
+    excludes=["tkinter"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -101,6 +101,13 @@ def health() -> Dict[str, Any]:
     return {"ollama": ollama_up(), "dashboard": DASHBOARD, "ok": True}
 
 
+def log_turn(row: Dict[str, Any]) -> None:
+    path = ROOT / "artifacts" / "app_chat.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(row)[:4000] + "\n")
+
+
 def git_status() -> str:
     git = _git()
     try:
@@ -133,8 +140,12 @@ def agent_turn(text: str) -> Dict[str, Any]:
     reply = ask_model(prompt)
     if "status" in low:
         actions.append("git:" + git_status())
-    proof = verify()
-    return {
+    if low.startswith("test") or "pytest" in low:
+        proof = verify()
+        actions.append("verify:" + str(proof.get("ok")))
+    else:
+        proof = verify()
+    out = {
         "reply": reply,
         "files": hits,
         "actions": actions,
@@ -142,6 +153,8 @@ def agent_turn(text: str) -> Dict[str, Any]:
         "ollama": ollama_up(),
         "status": git_status() if "status" in low else None,
     }
+    log_turn({"q": q, **{k: out[k] for k in ("verified", "ollama", "files")}})
+    return out
 
 
 def ask_model(text: str) -> str:

@@ -13,4 +13,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: consume host_command
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: python scripts/live_host.py

@@ -149,6 +149,12 @@ def serve_local() -> None:
             return
 
         def do_GET(self) -> None:  # type: ignore[override]
+            if self.path.startswith("/start"):
+                live_start()
+                self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}'); return
+            if self.path.startswith("/stop"):
+                live_stop()
+                self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}'); return
             if self.path.startswith("/health"):
                 att = {}
                 p = ROOT / "artifacts" / "host_attach.json"

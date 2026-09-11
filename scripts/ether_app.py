@@ -119,6 +119,37 @@ def ask_model(text: str) -> str:
         return type(exc).__name__
 
 
+def grep_repo(q: str) -> Dict[str, Any]:
+    hits = []
+    needle = (q or "").lower()
+    if not needle:
+        return {"ok": True, "hits": []}
+    for sub in ("core", "gems", "scripts", "tests"):
+        d = ROOT / sub
+        if not d.is_dir():
+            continue
+        for p in d.rglob("*.py"):
+            try:
+                txt = p.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            if needle in txt.lower():
+                hits.append(str(p.relative_to(ROOT)))
+            if len(hits) >= 40:
+                return {"ok": True, "hits": hits}
+    return {"ok": True, "hits": hits}
+
+
+def edit_file(rel: str, old: str, new: str) -> Dict[str, Any]:
+    target = (ROOT / rel).resolve()
+    target.relative_to(ROOT.resolve())
+    txt = target.read_text(encoding="utf-8")
+    if old not in txt:
+        return {"ok": False, "error": "not_found"}
+    target.write_text(txt.replace(old, new, 1), encoding="utf-8")
+    return {"ok": True, "path": rel}
+
+
 def write_file(rel: str, content: str) -> Dict[str, Any]:
     target = (ROOT / rel).resolve()
     target.relative_to(ROOT.resolve())
@@ -261,6 +292,22 @@ def serve_local() -> None:
                 payload = _json.loads(raw.decode() or "{}")
             except Exception:
                 payload = {}
+            if self.path.startswith("/grep"):
+                body = _json.dumps(grep_repo(str(payload.get("q") or ""))).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path.startswith("/edit"):
+                body = _json.dumps(edit_file(str(payload.get("path") or ""), str(payload.get("old") or ""), str(payload.get("new") or ""))).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path.startswith("/write"):
                 body = _json.dumps(write_file(str(payload.get("path") or ""), str(payload.get("text") or ""))).encode()
                 self.send_response(200)

@@ -83,7 +83,11 @@ def _push_attach() -> None:
         subprocess.run([git, "add", "artifacts/host_attach.json"], cwd=str(ROOT), check=False)
         if subprocess.run([git, "diff", "--cached", "--quiet"], cwd=str(ROOT)).returncode == 0:
             return
-        subprocess.run([git, "commit", "-m", "1650 app attach"], cwd=str(ROOT), check=False)
+        subprocess.run(
+            [git, "-c", "user.email=ether@local", "-c", "user.name=ether-app", "commit", "-m", "1650 app attach"],
+            cwd=str(ROOT),
+            check=False,
+        )
         subprocess.run([git, "push", "origin", "main"], cwd=str(ROOT), check=False)
     except Exception:
         return

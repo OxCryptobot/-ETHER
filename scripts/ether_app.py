@@ -1,6 +1,7 @@
 """ETHER host process. No popups. Boots attach + verified gem/agent contract."""
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys

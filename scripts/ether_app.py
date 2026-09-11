@@ -140,12 +140,10 @@ def _host_loop() -> None:
 
 
 def product_window() -> str:
-    """One ETHER window: Matrix dashboard, host already running."""
-    try:
-        import webview  # type: ignore
-    except Exception:
-        return "headless"
-    webview.create_window("ETHER", DASHBOARD, width=1280, height=800)
+    """Matrix lives inside the app window."""
+    import webview  # type: ignore
+
+    webview.create_window("ETHER", DASHBOARD, width=1400, height=900)
     webview.start()
     return "webview"
 

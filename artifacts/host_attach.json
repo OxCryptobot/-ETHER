@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-11T21:04:08.223585+00:00",
+  "updated": "2026-09-11T21:10:12.065362+00:00",
   "ok": true,
   "fast_lane": "matrix-worker",
   "live_lane": "grok_bus",
@@ -8,5 +8,5 @@
   "grok_bus": true,
   "cmd": "attach",
   "consumed": true,
-  "note": "live-host consumed command. 4B only if Ollama answered."
+  "note": "Starts ollama serve when binary exists. Else grok_bus."
 }

@@ -308,6 +308,12 @@ class ToolRuntime:
         if tool == "git_diff":
             from core.loop.git_tools import git_diff
             return git_diff()
+        if tool == "git_log":
+            from core.loop.git_tools import git_log
+            return git_log()
+        if tool == "git_branch":
+            from core.loop.git_tools import git_branch
+            return git_branch()
         if tool == "read_file":
             return self._obs_read(str(args.get("path") or ""))
         if tool == "write_file":

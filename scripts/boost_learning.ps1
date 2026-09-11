@@ -21,13 +21,13 @@ if ($profile -ne "cousin") {
   Write-Host "[boost] HOST mode — capped at 3B class (your GTX 1650 4GB / 12GB RAM)"
   Write-Host "[boost] will NOT pull 7b/14b/32b"
   $listed = (ollama list 2>$null | Out-String)
-  if ($listed -notmatch "qwen2.5-coder:3b") {
-    Write-Host "[boost] pulling qwen2.5-coder:3b (fits this machine)"
-    ollama pull qwen2.5-coder:3b
+  if ($listed -notmatch "qwen3.5:4b-q4_K_M") {
+    Write-Host "[boost] pulling qwen3.5:4b-q4_K_M (fits this machine)"
+    ollama pull qwen3.5:4b-q4_K_M
   } else {
-    Write-Host "[boost] qwen2.5-coder:3b already present — OK"
+    Write-Host "[boost] qwen3.5:4b-q4_K_M already present — OK"
   }
-  $env:ETHER_PRIMARY_MODEL = "qwen2.5-coder:3b"
+  $env:ETHER_PRIMARY_MODEL = "qwen3.5:4b-q4_K_M"
   $env:ETHER_AUTO_MODEL = "1"
   $env:ETHER_HW_PROFILE = "host"
   if (Test-Path "$Root\.venv\Scripts\python.exe") {

@@ -4,35 +4,61 @@
 <meta charset="utf-8"/>
 <title>ETHER</title>
 <style>
-body{margin:0;font:14px/1.4 system-ui;background:#0b0d10;color:#e8eaed}
-header{padding:16px 20px;border-bottom:1px solid #2a2f36}
-h1{margin:0;font-size:18px;letter-spacing:.08em}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
-.card{border:1px solid #2a2f36;border-radius:8px;padding:12px;background:#12161b}
-.k{font-size:10px;letter-spacing:.14em;color:#8b939e}
-.v{font-size:22px;margin-top:6px;font-family:ui-monospace,monospace}
+:root{--bg:#0b0d10;--fg:#e8eaed;--muted:#8b939e;--line:#2a2f36;--ok:#3dd68c;--card:#12161b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui}
+header{display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:16px;letter-spacing:.12em}
+.btn{min-height:36px;padding:0 14px;border:0;border-radius:4px;background:#1c2229;color:var(--fg);cursor:pointer}
+.btn:hover{background:#252c35}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
+.card{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--card)}
+.k{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+.v{font:600 20px ui-monospace,monospace;margin-top:4px}
+.ok{color:var(--ok)}
+.panes{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line);min-height:420px}
+.pane{padding:12px 16px;border-right:1px solid var(--line)}
+.pane:last-child{border-right:0}
+.log{font:12px/1.5 ui-monospace,monospace;color:var(--muted);white-space:pre-wrap}
 </style>
 </head>
 <body>
 <header>
   <h1>ETHER</h1>
-  <p class="k">standalone · local host + live metrics</p>
+  <button class="btn" id="start">Start LIVE</button>
+  <button class="btn" id="stop">Stop LIVE</button>
+  <span class="k" id="note">standalone · no xAI login</span>
 </header>
-<section class="grid">
+<section class="stats">
   <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
   <div class="card"><div class="k">LIVE LANE</div><div class="v" id="lane">—</div></div>
   <div class="card"><div class="k">UPDATED</div><div class="v" id="updated">—</div></div>
+  <div class="card"><div class="k">HOST</div><div class="v" id="host">local</div></div>
+</section>
+<section class="panes">
+  <div class="pane">
+    <div class="k">HOST 4B</div>
+    <p class="log" id="hostlog">engine on this PC</p>
+  </div>
+  <div class="pane">
+    <div class="k">GROK / MATRIX</div>
+    <p class="log" id="viewlog">live view inside this app</p>
+  </div>
 </section>
 <script>
-async function tick(){
-  const r = await fetch("/health");
-  const j = await r.json();
+async function health(){
+  const j = await (await fetch("/health")).json();
   document.getElementById("ollama").textContent = j.ollama ? "UP" : "DOWN";
+  document.getElementById("ollama").className = "v" + (j.ollama ? " ok" : "");
   document.getElementById("lane").textContent = j.live_lane || "—";
-  document.getElementById("updated").textContent = (j.updated || "").slice(11,19) || "—";
+  document.getElementById("updated").textContent = (j.updated||"").slice(11,19)||"—";
+  document.getElementById("hostlog").textContent = JSON.stringify(j,null,2);
 }
-tick();
-setInterval(tick, 5000);
+async function post(p){ await fetch(p,{method:"POST"}); health(); }
+document.getElementById("start").onclick=()=>post("/start");
+document.getElementById("stop").onclick=()=>post("/stop");
+health();
+setInterval(health,4000);
 </script>
 </body>
 </html>

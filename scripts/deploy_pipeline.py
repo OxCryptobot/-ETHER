@@ -61,6 +61,7 @@ GATES = (
     "tests/test_ether_keepalive.py",
     "tests/test_drain_fast_fifo.py",
     "tests/test_ether_protocol.py",
+    "tests/test_ether_app.py",
 )
 
 

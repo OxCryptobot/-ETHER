@@ -47,6 +47,7 @@ def boot() -> Dict[str, Any]:
         "verified_execution": proof["ok"],
         "ollama_4b": bool(att.get("ollama")),
     }
+    _push_attach()
     return att
 
 
@@ -57,6 +58,17 @@ def live_start() -> Dict[str, Any]:
 
 def live_stop() -> Dict[str, Any]:
     return consume({"cmd": "stop"})
+
+
+def _push_attach() -> None:
+    try:
+        subprocess.run(["git", "add", "artifacts/host_attach.json"], cwd=str(ROOT), check=False)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=str(ROOT)).returncode == 0:
+            return
+        subprocess.run(["git", "commit", "-m", "1650 app attach"], cwd=str(ROOT), check=False)
+        subprocess.run(["git", "push", "origin", "main"], cwd=str(ROOT), check=False)
+    except Exception:
+        return
 
 
 def health() -> Dict[str, Any]:
@@ -92,9 +104,16 @@ def run_e2e() -> Dict[str, Any]:
 
 
 def main() -> None:
+    import time
+
     state = boot()
     print(status_line(state))
     print("dashboard", DASHBOARD)
+    while True:
+        cmd = live_start()
+        if str(cmd.get("cmd") or "") == "stop":
+            break
+        time.sleep(60)
 
 
 if __name__ == "__main__":

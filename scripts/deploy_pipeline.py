@@ -59,6 +59,7 @@ GATES = (
     "tests/test_living_contract.py",
     "tests/test_live_host.py",
     "tests/test_ether_keepalive.py",
+    "tests/test_drain_fast_fifo.py",
 )
 
 

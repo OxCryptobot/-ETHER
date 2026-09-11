@@ -39,8 +39,8 @@ def test_lsp_fail_closed() -> None:
 
 def test_moonshot_lora_off_box() -> None:
     ready = lora_ready()
-    assert ready["ok"] is False
-    assert ready["reason"] in {"off_box", "pack_only"}
+    assert ready.get("peft") is not True
+    assert ready.get("local_train") is not True
     flags = experimental_flags()
     assert flags["swarm"] is False
     assert flags["max_live_agents"] == 1

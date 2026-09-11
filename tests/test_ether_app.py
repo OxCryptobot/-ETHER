@@ -1,12 +1,17 @@
-"""App boot/start/stop. Dashboard URL is UX only."""
-from scripts.ether_app import DASHBOARD, boot, live_start, live_stop, status_line
+"""Headless E2E for the in-house app. No window. No fake Ollama."""
+from scripts.ether_app import DASHBOARD, boot, health, run_e2e, shell_kind
 
 
-def test_boot_and_dashboard_contract() -> None:
-    state = boot()
-    assert state["booted"] is True
-    assert "etherbot.grok.me" in DASHBOARD or DASHBOARD.startswith("http")
-    assert state["live_lane"] in {"ollama_4b", "grok_bus"}
-    assert live_start()["cmd"] == "attach"
-    assert live_stop()["cmd"] == "stop"
-    assert "ollama" in status_line(state)
+def test_app_e2e_headless() -> None:
+    report = run_e2e()
+    assert report["ok"] is True
+    assert report["boot"]["booted"] is True
+    assert report["stop"]["cmd"] == "stop"
+    assert report["start"]["cmd"] == "attach"
+    assert report["health"]["ok"] is True
+    assert report["shell"] in {"webview", "browser_fallback"}
+    assert "http" in DASHBOARD
+    assert health()["dashboard"] == DASHBOARD
+    boot_again = boot()
+    assert boot_again["live_lane"] in {"ollama_4b", "grok_bus"}
+    assert shell_kind() in {"webview", "browser_fallback"}

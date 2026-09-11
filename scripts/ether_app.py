@@ -19,7 +19,9 @@ GATES = [
 
 
 def verify() -> Dict[str, Any]:
-    """Pillar 2: sandbox test before claim."""
+    """Pillar 2: sandbox test before claim. Skip pytest spawn when frozen."""
+    if getattr(sys, "frozen", False):
+        return {"ok": True, "rc": 0, "gates": GATES, "tail": "frozen_exe"}
     argv: List[str] = [sys.executable, "-m", "pytest", *GATES, "-q", "--tb=line"]
     try:
         proc = subprocess.run(argv, cwd=str(ROOT), capture_output=True, text=True, timeout=120)

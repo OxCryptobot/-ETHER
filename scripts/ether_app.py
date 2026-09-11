@@ -101,6 +101,21 @@ def health() -> Dict[str, Any]:
     return {"ollama": ollama_up(), "dashboard": DASHBOARD, "ok": True}
 
 
+def agent_turn(text: str) -> Dict[str, Any]:
+    q = (text or "").strip()
+    hits = grep_repo(q.split()[0] if q else "")["hits"][:8]
+    preview = ""
+    if hits:
+        try:
+            preview = (ROOT / hits[0]).read_text(encoding="utf-8", errors="ignore")[:800]
+        except Exception:
+            preview = ""
+    prompt = "ETHER repo agent.\nQ: " + q + "\nfiles: " + ", ".join(hits) + "\n" + preview
+    reply = ask_model(prompt)
+    proof = verify()
+    return {"reply": reply, "files": hits, "verified": proof.get("ok"), "ollama": ollama_up()}
+
+
 def ask_model(text: str) -> str:
     if not ollama_up():
         return "host up. ollama down. FAST verify only."
@@ -318,9 +333,7 @@ def serve_local() -> None:
                 return
             if self.path.startswith("/ask"):
                 text = str(payload.get("text") or "")
-                proof = verify()
-                reply = ask_model(text)
-                body = _json.dumps({"reply": reply, "verified": proof.get("ok"), "ollama": ollama_up()}).encode()
+                body = _json.dumps(agent_turn(text)).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))

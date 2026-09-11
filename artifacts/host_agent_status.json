@@ -1,14 +1,10 @@
 {
-  "heartbeat": "2026-09-11T21:59:04.793808+00:00",
+  "heartbeat": "2026-09-11T22:54:42.464023+00:00",
   "phase": "idle",
   "current_job": null,
   "source": "matrix-worker",
-  "ollama": false,
-  "live_lane": "grok_bus",
-  "gpu": {
-    "name": "GTX 1650",
-    "note": "not attached this tick"
-  },
+  "ollama": true,
+  "live_lane": "ollama_4b",
   "pending_left": 0,
-  "note": "FAST heartbeat from Ubuntu. Not 4B LIVE."
+  "note": "FAST heartbeat. ollama/lane from 1650 attach."
 }

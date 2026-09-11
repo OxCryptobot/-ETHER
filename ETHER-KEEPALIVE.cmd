@@ -1,8 +1,10 @@
 @echo off
-REM Double-click on the 1650. Not an operator PowerShell ritual.
 cd /d C:\Users\Otcde\ETHER
+echo ETHER keepalive starting...
 if exist .venv\Scripts\python.exe (
-  start "" /MIN .venv\Scripts\python.exe scripts\ether_keepalive.py
+  .venv\Scripts\python.exe scripts\ether_keepalive.py
 ) else (
-  start "" /MIN python scripts\ether_keepalive.py
+  python scripts\ether_keepalive.py
 )
+echo keepalive exited %ERRORLEVEL%
+pause

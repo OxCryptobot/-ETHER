@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>ETHER</title>
+<style>
+body{margin:0;font:14px/1.4 system-ui;background:#0b0d10;color:#e8eaed}
+header{padding:16px 20px;border-bottom:1px solid #2a2f36}
+h1{margin:0;font-size:18px;letter-spacing:.08em}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
+.card{border:1px solid #2a2f36;border-radius:8px;padding:12px;background:#12161b}
+.k{font-size:10px;letter-spacing:.14em;color:#8b939e}
+.v{font-size:22px;margin-top:6px;font-family:ui-monospace,monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>ETHER</h1>
+  <p class="k">standalone · local host + live metrics</p>
+</header>
+<section class="grid">
+  <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
+  <div class="card"><div class="k">LIVE LANE</div><div class="v" id="lane">—</div></div>
+  <div class="card"><div class="k">UPDATED</div><div class="v" id="updated">—</div></div>
+</section>
+<script>
+async function tick(){
+  const r = await fetch("/health");
+  const j = await r.json();
+  document.getElementById("ollama").textContent = j.ollama ? "UP" : "DOWN";
+  document.getElementById("lane").textContent = j.live_lane || "—";
+  document.getElementById("updated").textContent = (j.updated || "").slice(11,19) || "—";
+}
+tick();
+setInterval(tick, 5000);
+</script>
+</body>
+</html>

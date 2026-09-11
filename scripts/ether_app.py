@@ -9,7 +9,10 @@ from typing import Any, Dict, List
 
 from scripts.live_host import consume, ollama_up, start_ollama
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER")
+if not (ROOT / "scripts").is_dir():
+    ROOT = Path(__file__).resolve().parents[1]
+
 DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "https://etherbot.grok.me/?view=bus")
 GATES = [
     "tests/test_agentic.py",

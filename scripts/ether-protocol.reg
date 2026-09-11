@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\ether]
+@="URL:ETHER Protocol"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\ether\shell\open\command]
+@="C:\\Users\\Otcde\\ETHER\\.venv\\Scripts\\pythonw.exe C:\\Users\\Otcde\\ETHER\\scripts\\ether_protocol.py \"%1\""

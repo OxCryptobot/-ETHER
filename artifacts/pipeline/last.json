@@ -1,15 +1,10 @@
 {
   "ok": true,
   "rc": 0,
-  "gates": [
-    "tests/test_agentic.py",
-    "tests/test_gem_topo.py",
-    "tests/test_live_criteria.py"
-  ],
-  "n_gates": 3,
+  "n_gates": 35,
   "failed": [],
-  "tail": ".......... [100%]",
-  "ts": "2026-09-11T16:33:40.996853+00:00",
+  "tail": "35 gates PASS",
+  "ts": "2026-09-11T16:39:48.831149+00:00",
   "schema": "ether_deploy_pipeline_v1",
-  "note": "Sandbox drain: 10 passed. matrix-worker added. Dual chat locked."
+  "note": "FAST 35/35 PASS. Dual chat locked. Not 4B LIVE."
 }

@@ -71,8 +71,10 @@ def run_job(path: Path) -> Dict[str, Any]:
     }
     DONE.mkdir(parents=True, exist_ok=True)
     (DONE / path.name).write_text(json.dumps({**job, "report": report}, indent=2) + "\n", encoding="utf-8")
+    ops = jid.startswith("medic") or "health_check" in json.dumps(job)
     LAST.parent.mkdir(parents=True, exist_ok=True)
-    LAST.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    if not ops:
+        LAST.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     path.unlink(missing_ok=True)
     return report
 

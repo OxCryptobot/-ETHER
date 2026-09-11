@@ -34,7 +34,7 @@ jobs:
         run: |
           git config user.name ether-matrix-worker
           git config user.email ether@local
-          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/pipeline || true
+          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/host_agent_status.json artifacts/pipeline || true
           git diff --cached --quiet && echo no-fifo-change || git commit -m "matrix-worker: drain FAST FIFO"
           git pull --rebase origin main || true
           git push origin HEAD:main || true

@@ -100,6 +100,34 @@ def health() -> Dict[str, Any]:
     return {"ollama": ollama_up(), "dashboard": DASHBOARD, "ok": True}
 
 
+def ask_model(text: str) -> str:
+    if not ollama_up():
+        return "host up. ollama down. FAST verify only."
+    import urllib.request
+    req = urllib.request.Request(
+        "http://127.0.0.1:11434/api/generate",
+        data=json.dumps({"model": "qwen3.5:4b-q4_K_M", "prompt": text, "stream": False}).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode())
+        return str(data.get("response") or "")[:4000]
+    except Exception as exc:
+        return type(exc).__name__
+
+
+def write_file(rel: str, content: str) -> Dict[str, Any]:
+    target = (ROOT / rel).resolve()
+    target.relative_to(ROOT.resolve())
+    if target.suffix not in {".py", ".md", ".txt", ".json"}:
+        return {"ok": False, "error": "type"}
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+    return {"ok": True, "path": rel}
+
+
 def status_line(payload: Dict[str, Any]) -> str:
     v = (payload.get("verified") or {}).get("ok")
     return f"lane={payload.get('live_lane')} ollama={payload.get('ollama')} verified={v}"
@@ -232,11 +260,19 @@ def serve_local() -> None:
                 payload = _json.loads(raw.decode() or "{}")
             except Exception:
                 payload = {}
+            if self.path.startswith("/write"):
+                body = _json.dumps(write_file(str(payload.get("path") or ""), str(payload.get("text") or ""))).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path.startswith("/ask"):
                 text = str(payload.get("text") or "")
                 proof = verify()
-                reply = "Verified " + ("PASS" if proof.get("ok") else "FAIL") + ". " + text[:200]
-                body = _json.dumps({"reply": reply, "verified": proof.get("ok")}).encode()
+                reply = ask_model(text)
+                body = _json.dumps({"reply": reply, "verified": proof.get("ok"), "ollama": ollama_up()}).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))

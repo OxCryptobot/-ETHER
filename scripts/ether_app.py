@@ -1,21 +1,52 @@
-"""ETHER desktop app. Host only. No popup windows by default."""
+"""ETHER host process. No popups. Boots attach + verified gem/agent contract."""
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Dict, List
 
 from scripts.live_host import consume, ollama_up, start_ollama
 
+ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "https://etherbot.grok.me/?view=bus")
+GATES = [
+    "tests/test_agentic.py",
+    "tests/test_gem_topo.py",
+    "tests/test_living_contract.py",
+]
+
+
+def verify() -> Dict[str, Any]:
+    """Pillar 2: sandbox test before claim."""
+    argv: List[str] = [sys.executable, "-m", "pytest", *GATES, "-q", "--tb=line"]
+    try:
+        proc = subprocess.run(argv, cwd=str(ROOT), capture_output=True, text=True, timeout=120)
+        return {
+            "ok": proc.returncode == 0,
+            "rc": proc.returncode,
+            "gates": GATES,
+            "tail": ((proc.stdout or "") + (proc.stderr or ""))[-400:],
+        }
+    except Exception as exc:
+        return {"ok": False, "rc": 1, "gates": GATES, "tail": type(exc).__name__}
 
 
 def boot() -> Dict[str, Any]:
     ollama = start_ollama()
     att = consume({"cmd": "attach"})
+    proof = verify()
     att["booted"] = True
     att["ollama_started"] = ollama
     att["dashboard"] = DASHBOARD
+    att["verified"] = proof
     att["health"] = health()
+    att["pillars"] = {
+        "gems": proof["ok"],
+        "verified_execution": proof["ok"],
+        "ollama_4b": bool(att.get("ollama")),
+    }
     return att
 
 
@@ -33,7 +64,8 @@ def health() -> Dict[str, Any]:
 
 
 def status_line(payload: Dict[str, Any]) -> str:
-    return f"lane={payload.get('live_lane')} ollama={payload.get('ollama')}"
+    v = (payload.get("verified") or {}).get("ok")
+    return f"lane={payload.get('live_lane')} ollama={payload.get('ollama')} verified={v}"
 
 
 def shell_kind() -> str:
@@ -41,7 +73,6 @@ def shell_kind() -> str:
 
 
 def open_dashboard() -> str:
-    """Dashboard is the existing Matrix tab. This app does not spawn windows."""
     return "headless"
 
 
@@ -50,7 +81,7 @@ def run_e2e() -> Dict[str, Any]:
     stopped = live_stop()
     restarted = live_start()
     return {
-        "ok": bool(started.get("booted") and restarted.get("consumed")),
+        "ok": bool(started.get("booted") and restarted.get("consumed") and started.get("verified", {}).get("ok")),
         "boot": started,
         "stop": stopped,
         "start": restarted,
@@ -64,7 +95,6 @@ def main() -> None:
     state = boot()
     print(status_line(state))
     print("dashboard", DASHBOARD)
-    print("no popup. Matrix tab is the UX.")
 
 
 if __name__ == "__main__":

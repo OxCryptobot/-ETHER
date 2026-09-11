@@ -1,18 +1,17 @@
 {
-  "heartbeat": "2026-09-09T08:12:36.235726+00:00",
+  "heartbeat": "2026-09-11T21:09:04.472649+00:00",
   "poll_s": 1,
   "root": "C:\\Users\\Otcde\\ETHER",
+  "source": "matrix-worker",
+  "ollama": false,
+  "live_lane": "grok_bus",
   "gpu": {
-    "ok": true,
-    "available": true,
+    "ok": false,
+    "available": false,
     "name": "GeForce GTX 1650",
-    "util_gpu_pct": 0.0,
-    "mem_used_mb": 134.0,
-    "mem_total_mb": 4096.0,
-    "temp_c": 50.0,
-    "warn": [],
-    "updated": "2026-09-09T08:12:36.234536+00:00"
+    "note": "not attached this tick"
   },
   "current_job": null,
-  "phase": "idle"
+  "phase": "idle",
+  "note": "FAST heartbeat. Not 4B LIVE."
 }

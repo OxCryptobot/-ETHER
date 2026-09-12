@@ -8,7 +8,7 @@ async function probe(){
   document.getElementById('src').textContent = s.source || 'local';
   document.getElementById('tn').textContent = String((s.tasks||[]).length);
   document.getElementById('left').textContent = JSON.stringify(s,null,2);
-  document.getElementById('right').textContent = (s.tasks||[]).map(t => (t.status||'') + ' ' + (t.title||t.id)).join('\n') || 'no tasks';
+  const b=document.getElementById('board'); if(b){ b.innerHTML=(s.tasks||[]).slice(-20).map(t=>'<div class=card><div class=k>'+(t.status||'')+'</div><div>'+(t.title||t.id)+'</div></div>').join('')||'<div class=k>no tasks</div>'; }
 }
 async function post(p){ document.getElementById('left').textContent = JSON.stringify(await j(p,{method:'POST'}),null,2); probe(); }
 async function ask(){

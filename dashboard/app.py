@@ -1,6 +1,7 @@
-"""FastAPI app for @ETHER Control Matrix — host-agent first. Single UI at /.
+"""Headless host API only. Local Control Matrix HTML is retired.
 
-UX 0.7.3: instant clear + async chat_sync push
+Face: Grok Control Matrix. Hands: ether_host / ETHER.exe.
+:8787 may stay bound for /api/health. It must not look like a cockpit.
 """
 
 from __future__ import annotations
@@ -10,10 +11,10 @@ import re
 import shutil
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -23,10 +24,40 @@ QUARANTINE = ROOT / "tools" / "quarantine"
 PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
-app = FastAPI(title="@ETHER Control Matrix", version="0.7.3")
+app = FastAPI(title="ETHER headless host API", version="0.8.0-retired-ui")
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
+
+RETIRED_HTML = """<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>8787 retired</title>
+<style>
+:root{color-scheme:dark}
+html,body{height:100%;margin:0;background:#07080a;color:#d7dbe0;
+font:15px/1.45 ui-sans-serif,system-ui}
+main{min-height:100%;display:grid;place-items:center;padding:32px}
+.card{max-width:560px;border:1px solid #2a2f36;border-radius:14px;
+background:#10141a;padding:28px 28px 24px}
+kicker{display:block;letter-spacing:.14em;font-size:11px;color:#ef9f2e;
+margin-bottom:10px}
+h1{font-size:22px;margin:0 0 12px}
+p{margin:0 0 10px;color:#9aa3ad}
+code{color:#e8eaed}
+</style>
+</head><body>
+<main><div class="card">
+<kicker>RETIRED</kicker>
+<h1>Local Control Matrix on :8787 is dead</h1>
+<p>This tab was a second cockpit. It fought the product.</p>
+<p>Face: the Grok Control Matrix (preview / etherbot).</p>
+<p>Hands: <code>ETHER.exe</code> / <code>ether_host</code> — headless writer.</p>
+<p>Close this tab. Do not bookmark <code>127.0.0.1:8787</code>.</p>
+</div></main>
+</body></html>
+"""
 
 
 class PromoteBody(BaseModel):
@@ -82,8 +113,10 @@ def _safe_snapshot() -> dict:
         from dashboard.live_feed import build_console
 
         data = collect_snapshot()
-        data["api_version"] = "0.7.3"
+        data["api_version"] = "0.8.0-retired-ui"
         data["console"] = build_console()
+        data["face"] = "grok_matrix"
+        data["local_ui"] = "retired"
         try:
             from dashboard.collector_host_agent import collect_host_agent
 
@@ -98,6 +131,7 @@ def _safe_snapshot() -> dict:
             "error": str(e),
             "traceback": traceback.format_exc()[-1500:],
             "host_agent": {},
+            "local_ui": "retired",
             "console": {
                 "lines": [{"ts": "", "level": "err", "text": f"snapshot error: {e}"}],
                 "active": False,
@@ -107,33 +141,25 @@ def _safe_snapshot() -> dict:
 
 @app.get("/")
 def index() -> HTMLResponse:
-    path = STATIC / "agent.html"
-    if not path.exists():
-        raise HTTPException(500, "dashboard/static/agent.html missing — pull latest main")
-    html = path.read_text(encoding="utf-8", errors="replace")
-    if "chat_ux.js" not in html:
-        html = html.replace(
-            "</body>",
-            '<script src="/static/chat_ux.js" defer></script>\n</body>',
-            1,
-        )
     return HTMLResponse(
-        content=html,
+        content=RETIRED_HTML,
+        status_code=410,
         headers={
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",
+            "X-Ether-Face": "grok-matrix",
         },
     )
 
 
 @app.get("/agent")
-def agent_gone() -> RedirectResponse:
-    return RedirectResponse(url="/", status_code=301)
+def agent_gone() -> HTMLResponse:
+    return index()
 
 
 @app.get("/legacy")
-def legacy_gone() -> RedirectResponse:
-    return RedirectResponse(url="/", status_code=301)
+def legacy_gone() -> HTMLResponse:
+    return index()
 
 
 @app.get("/api/host-agent")
@@ -211,8 +237,10 @@ def health() -> dict:
     return {
         "ok": True,
         "service": "ether-dashboard",
-        "version": "0.7.3",
+        "version": "0.8.0-retired-ui",
         "truth": "host_agent_local",
+        "local_ui": "retired",
+        "face": "grok_matrix",
         "git_required": False,
         "chat_orchestrator": True,
         "chat_clear": True,
@@ -523,9 +551,11 @@ async def ws_feed(ws: WebSocket) -> None:
             try:
                 from dashboard.collector_host_agent import collect_host_agent
 
-                await ws.send_json(collect_host_agent())
+                row = collect_host_agent()
+                row["local_ui"] = "retired"
+                await ws.send_json(row)
             except Exception as e:
-                await ws.send_json({"error": str(e)[:200]})
+                await ws.send_json({"error": str(e)[:200], "local_ui": "retired"})
             await asyncio.sleep(1.5)
     except WebSocketDisconnect:
         return

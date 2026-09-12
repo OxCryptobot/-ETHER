@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""ETHER Host — ONE window: dashboard + job agent + foreman.
+"""ETHER Host — headless writer: job agent + foreman. No local Control Matrix.
 
-2026-08-22h: maybe_push_chat_bus each poll so escalate reaches origin fast.
-Fast boot — no double clean_slate. Minimal source-watch.
+Face is the Grok Matrix. :8787 is health/API only and must not open a browser.
 """
 from __future__ import annotations
 
@@ -15,7 +14,6 @@ import threading
 import time
 import traceback
 import urllib.request
-import webbrowser
 from pathlib import Path
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
@@ -23,14 +21,15 @@ os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 
 PORT = int(os.environ.get("ETHER_DASH_PORT") or "8787")
-OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "1").strip() != "0"
+# Product face is the Grok Matrix. Never auto-open the retired local UI.
+OPEN_BROWSER = (os.environ.get("ETHER_OPEN_BROWSER") or "0").strip() == "1"
+SERVE_LOCAL_API = (os.environ.get("ETHER_LOCAL_API") or "1").strip() != "0"
 
 _WATCHED = (
     "scripts/host_agent.py",
     "scripts/ether_host.py",
     "scripts/foreman.py",
     "dashboard/app.py",
-    "dashboard/static/agent.html",
 )
 
 try:
@@ -104,13 +103,13 @@ def _force_free_port(port: int) -> None:
                 subprocess.run(
                     ["taskkill", "/F", "/PID", pid], capture_output=True, timeout=5
                 )
-                print(f"dashboard: killed pid={pid} holding :{port}", flush=True)
+                print(f"local-api: killed pid={pid} holding :{port}", flush=True)
             except Exception as e:
-                print(f"dashboard: taskkill pid={pid} failed: {e}", flush=True)
+                print(f"local-api: taskkill pid={pid} failed: {e}", flush=True)
         if pids:
             time.sleep(0.8)
     except Exception as e:
-        print(f"dashboard: force_free non-fatal: {e}", flush=True)
+        print(f"local-api: force_free non-fatal: {e}", flush=True)
 
 
 def _run_uvicorn(port: int) -> None:
@@ -127,30 +126,35 @@ def _run_uvicorn(port: int) -> None:
 
 
 def _start_dashboard() -> None:
+    if not SERVE_LOCAL_API:
+        print("local-api: disabled (ETHER_LOCAL_API=0)", flush=True)
+        return
     if _dashboard_healthy(PORT):
-        print(f"dashboard: healthy on :{PORT} — reusing", flush=True)
+        print(f"local-api: health ok on :{PORT} — reusing (HTML retired)", flush=True)
         return
     if _port_listening(PORT):
-        print(f"dashboard: :{PORT} listening but NOT healthy — force free + rebind", flush=True)
+        print(f"local-api: :{PORT} listening but NOT healthy — force free + rebind", flush=True)
         _force_free_port(PORT)
     for attempt in range(1, 4):
         try:
-            print(f"dashboard: starting uvicorn on :{PORT} (attempt {attempt})", flush=True)
+            print(f"local-api: starting headless uvicorn on :{PORT} (attempt {attempt})", flush=True)
             _run_uvicorn(PORT)
-            print("dashboard: uvicorn exited", flush=True)
+            print("local-api: uvicorn exited", flush=True)
             return
         except OSError as e:
-            print(f"dashboard: bind failed attempt {attempt}: {e}", flush=True)
+            print(f"local-api: bind failed attempt {attempt}: {e}", flush=True)
             _force_free_port(PORT)
             time.sleep(0.6 * attempt)
         except Exception as e:
-            print(f"dashboard error: {e}", flush=True)
+            print(f"local-api error: {e}", flush=True)
             traceback.print_exc()
             time.sleep(1.0)
-    print("dashboard: FAILED to bind after retries — UI will be down", flush=True)
+    print("local-api: FAILED to bind after retries — writer still runs", flush=True)
 
 
 def _wait_dashboard(timeout_s: float = 8.0) -> bool:
+    if not SERVE_LOCAL_API:
+        return True
     deadline = time.time() + timeout_s
     while time.time() < deadline:
         if _dashboard_healthy(PORT):
@@ -179,10 +183,9 @@ def _hygiene_log() -> None:
 
 
 def main() -> int:
-    url = f"http://127.0.0.1:{PORT}/"
     print("=" * 56, flush=True)
-    print("  ETHER HOST — fast boot + chat bus push", flush=True)
-    print(f"  UI     {url}", flush=True)
+    print("  ETHER HOST — headless writer", flush=True)
+    print("  FACE   Grok Control Matrix (not :8787)", flush=True)
     print(f"  root   {ROOT}", flush=True)
     print("  Ctrl+C stop", flush=True)
     print("=" * 56, flush=True)
@@ -191,20 +194,17 @@ def main() -> int:
     boot_snap = _snapshot()
     print(f"boot source snap (minimal watch): {boot_snap}", flush=True)
 
-    t = threading.Thread(target=_start_dashboard, name="dashboard", daemon=True)
+    t = threading.Thread(target=_start_dashboard, name="local-api", daemon=True)
     t.start()
 
     ok = _wait_dashboard(10.0)
     if ok:
-        print(f"dashboard: HEALTHY {url}", flush=True)
+        print("local-api: HEALTHY (HTML retired, do not open browser)", flush=True)
     else:
-        print(f"dashboard: NOT HEALTHY after 10s — check port {PORT}", flush=True)
+        print(f"local-api: NOT HEALTHY after 10s — writer continues", flush=True)
 
-    if OPEN_BROWSER and ok:
-        try:
-            webbrowser.open(url)
-        except Exception:
-            pass
+    if OPEN_BROWSER:
+        print("ETHER_OPEN_BROWSER=1 ignored for retired UI", flush=True)
 
     try:
         import scripts.host_agent as agent
@@ -224,11 +224,10 @@ def main() -> int:
     except Exception:
         pass
 
-    # Expire any stale pending_grok from prior sessions
     try:
         from core.chat_bridge import get_pending_grok
 
-        get_pending_grok()  # side-effect: auto-expire if >15m
+        get_pending_grok()
     except Exception:
         pass
 
@@ -250,9 +249,9 @@ def main() -> int:
     except Exception as e:
         agent.log(f"startup liveness failed: {e}")
 
-    dash_ok = _dashboard_healthy(PORT)
+    dash_ok = _dashboard_healthy(PORT) if SERVE_LOCAL_API else False
     print(
-        f"BOOT OK — UI {url} dash={'UP' if dash_ok else 'DOWN'} — poll + chat + GPU",
+        f"BOOT OK — writer live dash={'API' if dash_ok else 'OFF'} face=grok_matrix",
         flush=True,
     )
 
@@ -268,7 +267,6 @@ def main() -> int:
                 agent.write_status(phase="reload", changed=changed)
                 return 42
 
-            # Fast path: escalate outbox → origin without waiting 55s liveness
             try:
                 agent.maybe_push_chat_bus()
             except Exception as e:

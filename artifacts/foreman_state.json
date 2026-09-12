@@ -1349,7 +1349,8 @@
     "ss_direct_hard_145123_0",
     "ss_kill_live_pending_now",
     "ss_archive_failed_150331_4",
-    "exe_ollama_20260912e"
+    "exe_ollama_20260912e",
+    "ss_tool_runtime_041121_3"
   ],
   "failed": [
     "phaseg_verify_001",
@@ -1447,15 +1448,15 @@
     "ss_microbench_041107_1",
     "exe_writer_tests_20260912e"
   ],
-  "last_tick": "2026-09-12T04:16:25.968872+00:00",
+  "last_tick": "2026-09-12T04:16:36.768137+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
-  "last_enqueued": "ss_train_gates_150336_2",
+  "last_enqueued": "ss_honest_live_report_041636_2",
   "last_playbook": "coding_method_v1",
   "last_converted": "ss_pipeline_ledger_145102_1",
-  "steady_idx": 883,
-  "live_skip_remaining": 33,
+  "steady_idx": 885,
+  "live_skip_remaining": 32,
   "last_live_skip_reason": "ss_microbench_041107_1",
   "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
   "governor": {

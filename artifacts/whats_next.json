@@ -1,15 +1,16 @@
 {
-  "generated": "2026-09-12T04:32:45.428149+00:00",
-  "next_job": "ss_microbench_043011_1",
+  "generated": "2026-09-12T04:34:20.211932+00:00",
+  "next_job": "ss_archive_failed_043420_7",
   "queue_head": [
-    "ss_microbench_043011_1",
+    "ss_archive_failed_043420_7",
+    "ss_direct_hard_043420_6",
     "ss_pipeline_scripted_043040_5",
     "ss_tool_runtime_043025_3",
     "ss_train_gates_043040_4"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "ss_measure_tick_043011_0",
+  "last_job": "ss_microbench_043011_1",
   "last_ok": false,
   "last_failure_type": "timeout",
   "phase_board": [

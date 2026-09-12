@@ -13,7 +13,10 @@ async function probe(){
 async function post(p){ document.getElementById('left').textContent = JSON.stringify(await j(p,{method:'POST'}),null,2); probe(); }
 async function ask(){
   const el=document.getElementById('q'); const t=el.value.trim(); if(!t)return; el.value='';
-  document.getElementById('left').textContent = JSON.stringify(await j('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})}),null,2);
+  document.getElementById('left').textContent = '';
+  const r = await fetch('/ask_stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
+  const txt = await r.text();
+  document.getElementById('left').textContent = txt;
   probe();
 }
 probe(); setInterval(probe, 4000);

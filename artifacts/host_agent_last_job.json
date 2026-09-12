@@ -1,9 +1,10 @@
 {
-  "job_id": "exe_ollama_20260912e",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-12T04:16:16.559618+00:00",
-  "note": "1650: start ollama from known Windows paths, stamp attach+probe",
+  "job_id": "exe_writer_tests_20260912e",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-12T04:16:22.512056+00:00",
+  "note": "unit: ollama path discovery + exe host loop contract",
   "class": "fast",
-  "measurement": true
+  "measurement": false,
+  "failure_type": "step_fail"
 }

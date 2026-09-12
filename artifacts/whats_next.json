@@ -1,18 +1,17 @@
 {
-  "generated": "2026-09-12T04:16:16.253164+00:00",
-  "next_job": "exe_ollama_20260912e",
+  "generated": "2026-09-12T04:16:19.929588+00:00",
+  "next_job": "exe_writer_tests_20260912e",
   "queue_head": [
-    "exe_ollama_20260912e",
     "exe_writer_tests_20260912e",
     "medic_hb_20260912_040530",
     "ss_tool_runtime_041121_3",
     "ss_train_gates_041121_4"
   ],
-  "queue_depth": 5,
+  "queue_depth": 4,
   "host_phase": "idle",
-  "last_job": "ss_microbench_041107_1",
-  "last_ok": false,
-  "last_failure_type": "timeout",
+  "last_job": "exe_ollama_20260912e",
+  "last_ok": true,
+  "last_failure_type": null,
   "phase_board": [
     {
       "id": "1A",

@@ -1,9 +1,9 @@
 {
-  "job_id": "ss_measure_tick_043011_0",
+  "job_id": "ss_microbench_043011_1",
   "ok": false,
   "rc": 124,
-  "finished": "2026-09-12T04:32:40.966376+00:00",
-  "note": "steady: measure_tick (rates+snapshot+soft_launch) [failure_type=timeout]",
+  "finished": "2026-09-12T04:34:15.447565+00:00",
+  "note": "steady: microbench_schedule (skip if fresh <5m) [failure_type=timeout]",
   "class": "measure",
   "measurement": true,
   "live_budget": {

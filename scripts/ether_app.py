@@ -69,10 +69,21 @@ def update_self() -> Dict[str, Any]:
         if proc.returncode == 0 and src.is_file():
             dest = ROOT / "ETHER.exe.new"
             dest.write_bytes(src.read_bytes())
+            scheduled = False
+            try:
+                import ctypes
+                exe = Path(sys.executable) if getattr(sys, "frozen", False) else ROOT / "ETHER.exe"
+                MOVEFILE_DELAY_UNTIL_REBOOT = 4
+                scheduled = bool(
+                    ctypes.windll.kernel32.MoveFileExW(str(dest), str(exe), MOVEFILE_DELAY_UNTIL_REBOOT)
+                )
+            except Exception:
+                scheduled = False
             return {
                 "ok": True,
                 "pending": str(dest),
-                "note": "Close ETHER, rename ETHER.exe.new to ETHER.exe, start from Explorer. Do not launch from cmd.",
+                "scheduled_reboot_swap": scheduled,
+                "note": "Update saved. No cmd relaunch (PyInstaller parent check).",
             }
         return {"ok": False, "tail": ((proc.stdout or "") + (proc.stderr or ""))[-300:]}
     except Exception as exc:

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from scripts.live_host import consume, ollama_up, start_ollama
+from scripts.ether_tools import list_tree, run_allowlisted
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER")
 if not (ROOT / "scripts").is_dir():
@@ -141,6 +142,7 @@ def agent_turn(text: str) -> Dict[str, Any]:
     if "status" in low:
         actions.append("git:" + git_status())
     if low.startswith("test") or "pytest" in low:
+        actions.append("tool:" + str(run_allowlisted("pytest-fast")))
         proof = verify()
         actions.append("verify:" + str(proof.get("ok")))
     else:

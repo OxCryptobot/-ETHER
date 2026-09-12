@@ -1,17 +1,17 @@
 {
-  "generated": "2026-09-12T04:54:40.523666+00:00",
-  "next_job": "ss_archive_failed_045420_7",
+  "generated": "2026-09-12T04:56:44.908821+00:00",
+  "next_job": "critique_hyp_ss_measure_tick_045434_0_045640",
   "queue_head": [
+    "critique_hyp_ss_measure_tick_045434_0_045640",
     "ss_archive_failed_045420_7",
-    "ss_measure_tick_045434_0",
     "ss_microbench_045434_1",
     "ss_pref_refresh_045420_8"
   ],
   "queue_depth": 4,
-  "host_phase": "polling",
-  "last_job": "ss_train_gates_045023_4",
-  "last_ok": true,
-  "last_failure_type": null,
+  "host_phase": "idle",
+  "last_job": "ss_measure_tick_045434_0",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

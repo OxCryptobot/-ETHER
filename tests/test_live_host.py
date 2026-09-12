@@ -24,6 +24,11 @@ def test_start_ollama_fail_closed_without_binary() -> None:
 
 
 def test_ubuntu_does_not_clobber_1650_attach(tmp_path, monkeypatch) -> None:
+    import os
+    import pytest
+
+    if os.name == "nt":
+        pytest.skip("preserve-prior attach is the Ubuntu Actions path")
     art = tmp_path / "artifacts"
     art.mkdir()
     prev = {

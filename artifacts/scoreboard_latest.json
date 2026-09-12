@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-07T19:49:26.256489+00:00",
+  "updated": "2026-09-12T04:19:59.778813+00:00",
   "n_rows": 433,
   "honest_n": 402,
   "honest_rate": 0.9284,
@@ -12,6 +12,137 @@
   "scripted_ok_rate": 0.963,
   "disguised_pass_n": 0,
   "results_tail": [
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 1.794,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "pipeline",
+      "strategy": "tool_runtime_scripted",
+      "_src": "scoreboard_ss_pipeline_scripted.json",
+      "_mtime": 1789185809.5840476
+    },
+    {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 2.881,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789185435.0540004
+    },
+    {
+      "fixture": "merge",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 2.893,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789185435.0540004
+    },
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 2.919,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789185435.0540004
+    },
+    {
+      "fixture": "topo",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 2.969,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789185435.0540004
+    },
+    {
+      "fixture": "intervals",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 1.805,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789185435.0540004
+    },
     {
       "fixture": "ledger",
       "tier": "hard",
@@ -350,134 +481,6 @@
       "arm": "direct",
       "_src": "scoreboard_p1_248_merge_replay.json",
       "_mtime": 1787969533.2572713
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.763,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "pipeline",
-      "strategy": "tool_runtime_scripted",
-      "_src": "scoreboard_playbook_live_timeout_scripted.json",
-      "_mtime": 1787969001.643156
-    },
-    {
-      "fixture": "merge",
-      "tier": "hard",
-      "mode": "live",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 7,
-      "elapsed_s": 135.208,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "read_file",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "qwen3.5:4b-q4_K_M",
-      "arm": "direct",
-      "_src": "scoreboard_p1_242_live_merge_canary.json",
-      "_mtime": 1787966283.340119
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 0.763,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct",
-      "_src": "scoreboard_phase_d.json",
-      "_mtime": 1787965806.7410946
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.781,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct",
-      "_src": "scoreboard_phase_d.json",
-      "_mtime": 1787965806.7410946
-    },
-    {
-      "fixture": "merge",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.781,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct",
-      "_src": "scoreboard_phase_d.json",
-      "_mtime": 1787965806.7410946
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 0.785,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "arm": "direct",
-      "_src": "scoreboard_phase_d.json",
-      "_mtime": 1787965806.7410946
     }
   ],
   "note": "Dashboard should read this single file"

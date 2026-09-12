@@ -446,10 +446,15 @@ def serve_local() -> None:
                 self.end_headers()
                 self.wfile.write(body)
                 return
-            if self.path in ("/", "/index.html"):
-                page = (Path(__file__).with_name("ether_ui.html")).read_bytes()
+            if self.path in ("/", "/index.html", "/matrix.css", "/matrix.js"):
+                name = "index.html" if self.path in ("/", "/index.html") else self.path.lstrip("/")
+                cand = Path(__file__).with_name("matrix-ui") / name
+                if not cand.is_file():
+                    cand = Path(__file__).with_name("ether_ui.html") if name == "index.html" else cand
+                page = cand.read_bytes() if cand.is_file() else b"missing"
                 self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
+                ctype = "text/css" if name.endswith(".css") else "application/javascript" if name.endswith(".js") else "text/html; charset=utf-8"
+                self.send_header("Content-Type", ctype)
                 self.send_header("Content-Length", str(len(page)))
                 self.end_headers()
                 self.wfile.write(page)

@@ -436,6 +436,7 @@ def _host_loop() -> None:
 
     boot()
     while True:
+        _git(["pull", "--ff-only", "origin", "main"])
         cmd = live_start()
         if str(cmd.get("cmd") or "") == "stop":
             break
@@ -449,6 +450,12 @@ def _host_loop() -> None:
 
 
 def _ui_root() -> Path:
+    disk = ROOT / "scripts" / "matrix-ui"
+    if (disk / "index.html").is_file():
+        return disk.parent  # scripts/ so matrix-ui/ lives beside ether_ui.html? serve uses matrix-ui child
+    disk2 = ROOT / "scripts"
+    if (disk2 / "matrix-ui" / "index.html").is_file():
+        return disk2
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS)
     return Path(__file__).resolve().parent

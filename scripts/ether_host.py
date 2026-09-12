@@ -191,6 +191,14 @@ def main() -> int:
     print("=" * 56, flush=True)
 
     _hygiene_log()
+    try:
+        from scripts.live_host import consume, start_ollama
+
+        up = start_ollama()
+        consume({"cmd": "attach"})
+        print(f"ollama boot up={up}", flush=True)
+    except Exception as exc:
+        print(f"ollama boot non-fatal: {type(exc).__name__}: {exc}", flush=True)
     boot_snap = _snapshot()
     print(f"boot source snap (minimal watch): {boot_snap}", flush=True)
 

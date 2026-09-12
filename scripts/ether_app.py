@@ -62,7 +62,14 @@ def mark_alive() -> Dict[str, Any]:
         "ts": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
         "root": str(ROOT),
         "ollama": ollama_up(),
+        "bin": None,
     }
+    try:
+        from scripts.live_host import ollama_bin
+
+        row["bin"] = ollama_bin()
+    except Exception:
+        pass
     path = ROOT / "artifacts" / "app_alive.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
@@ -162,12 +169,9 @@ def live_stop() -> Dict[str, Any]:
 
 
 def shutdown() -> None:
+    """Keep Ollama up for the week loop. Window close is not a GPU stop."""
     try:
         live_stop()
-    except Exception:
-        pass
-    try:
-        stop_ollama()
     except Exception:
         pass
 
@@ -211,6 +215,7 @@ def _push_attach() -> None:
         "artifacts/self_build_role.json",
         "artifacts/self_build_trace.jsonl",
         "artifacts/week_tick.json",
+        "artifacts/ollama_probe.json",
     ]
     try:
         git_run("add", *paths)
@@ -651,10 +656,16 @@ def product_window() -> str:
 
 def main() -> None:
     import threading
-    atexit.register(shutdown)
-    threading.Thread(target=_host_loop, name="ether-host", daemon=True).start()
+
+    # Host loop is the product. UI close must not kill Ollama/git/week tick.
+    host = threading.Thread(target=_host_loop, name="ether-host", daemon=False)
+    host.start()
     threading.Thread(target=serve_local, name="ether-ui", daemon=True).start()
-    product_window()
+    try:
+        product_window()
+    except Exception:
+        pass
+    host.join()
 
 
 if __name__ == "__main__":

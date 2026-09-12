@@ -1,0 +1,16 @@
+{
+  "id": "exe_ollama_20260912e",
+  "class": "fast",
+  "note": "1650: start ollama from known Windows paths, stamp attach+probe",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from scripts.live_host import start_ollama, consume, write_probe, ollama_bin, ensure_model; import json; up=start_ollama(); att=consume({'cmd':'attach'}); probe=write_probe({'job':'exe_ollama_20260912e'}); em=ensure_model(pull=False); print(json.dumps({'up':up,'ollama':att.get('ollama'),'lane':att.get('live_lane'),'bin':ollama_bin(),'has_target':probe.get('has_target'),'models':probe.get('models'),'ensure':em.get('ensure')}))"
+      ],
+      "timeout": 180
+    }
+  ]
+}

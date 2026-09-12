@@ -45,3 +45,21 @@ def test_ubuntu_does_not_clobber_1650_attach(tmp_path, monkeypatch) -> None:
     saved = json.loads((tmp_path / "artifacts" / "host_attach.json").read_text(encoding="utf-8"))
     assert saved["ollama"] is True
     assert Path(tmp_path / "artifacts" / "host_attach.json").is_file()
+
+
+def test_ollama_bin_is_optional() -> None:
+    from scripts.live_host import ollama_bin
+
+    found = ollama_bin()
+    assert found is None or isinstance(found, str)
+
+
+def test_write_probe_lands(tmp_path, monkeypatch) -> None:
+    import scripts.live_host as lh
+
+    monkeypatch.setenv("ETHER_ROOT", str(tmp_path))
+    (tmp_path / "scripts").mkdir()
+    row = lh.write_probe({"reason": "unit"})
+    assert row["up"] in {True, False}
+    assert "target" in row
+    assert (tmp_path / "artifacts" / "ollama_probe.json").is_file()

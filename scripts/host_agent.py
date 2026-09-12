@@ -102,11 +102,19 @@ def _gpu_snapshot(force: bool = False) -> Dict[str, Any]:
 def write_status(**extra: Any) -> None:
     STATUS.parent.mkdir(parents=True, exist_ok=True)
     gpu = _gpu_snapshot()
+    ollama = False
+    try:
+        from scripts.live_host import ollama_up
+
+        ollama = bool(ollama_up())
+    except Exception:
+        ollama = False
     payload = {
         "heartbeat": datetime.now(timezone.utc).isoformat(),
         "poll_s": POLL,
         "root": str(ROOT),
         "gpu": gpu,
+        "ollama": ollama,
         **extra,
     }
     try:
@@ -199,6 +207,9 @@ def _light_paths() -> List[str]:
     paths = [
         "artifacts/host_agent_status.json",
         "artifacts/host_agent_last_job.json",
+        "artifacts/host_attach.json",
+        "artifacts/ollama_probe.json",
+        "artifacts/app_alive.json",
     ]
     for name in ("pending", "failed"):
         p = ROOT / "artifacts" / "jobs" / name
@@ -393,6 +404,13 @@ def push_liveness(reason: str = "idle") -> None:
     if now - _last_liveness_push < LIVENESS_INTERVAL:
         return
     _last_liveness_push = now
+    try:
+        from scripts.live_host import consume, start_ollama
+
+        start_ollama()
+        consume({"cmd": "attach"})
+    except Exception as e:
+        log(f"ollama attach: {type(e).__name__}: {e}")
     try:
         _gpu_snapshot(force=True)
         write_status(current_job=None, phase=reason)

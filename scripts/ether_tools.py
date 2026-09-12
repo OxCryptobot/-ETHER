@@ -1,11 +1,13 @@
 """Allowlisted workspace tools for the ETHER desktop app."""
 from __future__ import annotations
 
+import os
+
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 
 
 def list_tree(limit: int = 80) -> List[str]:

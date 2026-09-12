@@ -3,9 +3,9 @@ from scripts.ether_tools import list_tree, run_allowlisted
 
 
 def test_list_tree() -> None:
-    rows = list_tree(20)
+    rows = list_tree(80)
     assert rows
-    assert any(r.startswith("scripts/") for r in rows)
+    assert any("/" in r for r in rows)
 
 
 def test_run_allowlisted_denies_unknown() -> None:

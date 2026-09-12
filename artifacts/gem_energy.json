@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12T05:00:09.939583+00:00",
+  "updated": "2026-09-12T05:02:31.525255+00:00",
   "gems": [
     "clear-quartz",
     "rose-quartz",
@@ -12,17 +12,58 @@
   ],
   "counts": {
     "clear-quartz": 6,
-    "rose-quartz": 8,
+    "rose-quartz": 9,
     "citrine": 19,
     "selenite": 0,
     "amethyst": 4,
     "black-tourmaline": 0,
-    "labradorite": 720,
+    "labradorite": 750,
     "grandidierite": 0
   },
-  "last_gem": "citrine",
-  "last_job": "week_tick",
+  "last_gem": "rose-quartz",
+  "last_job": "ss_honest_live_report_050106_2",
   "active_n": 5,
   "wired": true,
-  "note": "F05 live bump from gems_call. Not inferred-only."
+  "strip": [
+    {
+      "gem": "clear-quartz",
+      "n": 6,
+      "active": false
+    },
+    {
+      "gem": "rose-quartz",
+      "n": 9,
+      "active": true
+    },
+    {
+      "gem": "citrine",
+      "n": 19,
+      "active": false
+    },
+    {
+      "gem": "selenite",
+      "n": 0,
+      "active": false
+    },
+    {
+      "gem": "amethyst",
+      "n": 4,
+      "active": false
+    },
+    {
+      "gem": "black-tourmaline",
+      "n": 0,
+      "active": false
+    },
+    {
+      "gem": "labradorite",
+      "n": 750,
+      "active": false
+    },
+    {
+      "gem": "grandidierite",
+      "n": 0,
+      "active": false
+    }
+  ]
 }

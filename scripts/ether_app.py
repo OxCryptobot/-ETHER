@@ -139,6 +139,38 @@ def live_start() -> Dict[str, Any]:
     return consume({"cmd": "attach"})
 
 
+def dashboard_status() -> Dict[str, Any]:
+    att = {}
+    p = ROOT / "artifacts" / "host_attach.json"
+    if p.is_file():
+        try:
+            att = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            att = {}
+    role = {}
+    rp = ROOT / "artifacts" / "self_build_role.json"
+    if rp.is_file():
+        try:
+            role = json.loads(rp.read_text(encoding="utf-8"))
+        except Exception:
+            role = {}
+    pending = []
+    qdir = ROOT / "artifacts" / "pending"
+    if qdir.is_dir():
+        pending = sorted(x.name for x in qdir.glob("*.json"))[:20]
+    return {
+        "ollama": ollama_up(),
+        "live_lane": att.get("live_lane"),
+        "updated": att.get("updated"),
+        "tasks": ether_cowork.load(),
+        "queue": pending,
+        "role": role.get("role"),
+        "generation": role.get("generation"),
+        "idea": str(role.get("idea") or "")[:240],
+        "verified": role.get("verified"),
+    }
+
+
 def live_stop() -> Dict[str, Any]:
     return consume({"cmd": "stop"})
 
@@ -500,6 +532,12 @@ def serve_local() -> None:
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers(); self.wfile.write(body); return
+            if self.path.startswith("/status"):
+                body = _json.dumps(dashboard_status()).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers(); self.wfile.write(body); return
             if self.path.startswith("/health"):

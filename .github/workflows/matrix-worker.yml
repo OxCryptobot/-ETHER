@@ -1,6 +1,8 @@
 name: matrix-worker
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 */4 * * *"
   push:
     branches: [main]
     paths:
@@ -8,7 +10,10 @@ on:
       - "tests/test_*.py"
       - "scripts/deploy_pipeline.py"
       - "scripts/drain_fast_fifo.py"
+      - "scripts/ether_week_tick.py"
+      - "scripts/live_host.py"
       - ".github/workflows/matrix-worker.yml"
+      - "artifacts/jobs/pending/**"
 permissions:
   contents: write
 jobs:
@@ -25,7 +30,7 @@ jobs:
       - name: Deploy pipeline + gems
         run: |
           python scripts/deploy_pipeline.py
-          python -m pytest tests/test_agentic.py tests/test_gem_topo.py -q --tb=short
+          python -m pytest tests/test_agentic.py tests/test_gem_topo.py tests/test_ether_week_tick.py tests/test_drain_fast_fifo.py tests/test_live_host.py -q --tb=short
       - name: Drain FAST FIFO
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -34,7 +39,7 @@ jobs:
         run: |
           git config user.name ether-matrix-worker
           git config user.email ether@local
-          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/host_agent_status.json artifacts/pipeline || true
-          git diff --cached --quiet && echo no-fifo-change || git commit -m "matrix-worker: drain FAST FIFO"
+          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/host_agent_status.json artifacts/pipeline artifacts/gem_energy.json artifacts/cowork_board.json artifacts/self_build_role.json artifacts/week_tick.json artifacts/self_build_trace.jsonl || true
+          git diff --cached --quiet && echo no-fifo-change || git commit -m "matrix-worker: drain FAST FIFO + week tick"
           git pull --rebase origin main || true
           git push origin HEAD:main || true

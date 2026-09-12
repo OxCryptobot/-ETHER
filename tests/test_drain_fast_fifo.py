@@ -11,3 +11,4 @@ def test_rewrite_windows_python() -> None:
 def test_skip_live_class() -> None:
     assert is_fast({"class": "fast", "steps": []}) is True
     assert is_fast({"class": "live", "steps": []}) is False
+    assert is_fast({"class": "fast", "note": "keep card attached", "steps": []}) is True

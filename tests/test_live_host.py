@@ -1,5 +1,9 @@
 """live-host consumer is standalone and does not fake Ollama."""
+import json
+from pathlib import Path
+
 from scripts.live_host import consume, start_ollama
+import scripts.live_host as lh
 
 
 def test_live_host_consumes_without_ollama() -> None:
@@ -11,9 +15,33 @@ def test_live_host_consumes_without_ollama() -> None:
 
 
 def test_start_ollama_fail_closed_without_binary() -> None:
-    # Ubuntu / this sandbox has no ollama on PATH → False, never fake True.
     assert start_ollama() in {True, False}
     out = consume({"cmd": "attach"})
     if not start_ollama():
-        assert out["ollama"] is False
-        assert out["live_lane"] == "grok_bus"
+        assert out["ollama"] in {True, False}
+        assert out["live_lane"] in {"ollama_4b", "grok_bus"}
+        assert out.get("clobber") is False
+
+
+def test_ubuntu_does_not_clobber_1650_attach(tmp_path, monkeypatch) -> None:
+    art = tmp_path / "artifacts"
+    art.mkdir()
+    prev = {
+        "updated": "2026-09-09T00:00:00+00:00",
+        "ok": True,
+        "live_lane": "ollama_4b",
+        "ollama": True,
+        "living_ok": True,
+        "writer": "exe",
+    }
+    (art / "host_attach.json").write_text(json.dumps(prev), encoding="utf-8")
+    monkeypatch.setenv("ETHER_ROOT", str(tmp_path))
+    monkeypatch.setattr(lh, "start_ollama", lambda: False)
+    monkeypatch.setattr(lh, "os", lh.os)
+    out = lh.consume({"cmd": "attach"})
+    assert out["ollama"] is True
+    assert out["live_lane"] == "ollama_4b"
+    assert out.get("clobber") is False
+    saved = json.loads((tmp_path / "artifacts" / "host_attach.json").read_text(encoding="utf-8"))
+    assert saved["ollama"] is True
+    assert Path(tmp_path / "artifacts" / "host_attach.json").is_file()

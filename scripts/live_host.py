@@ -24,6 +24,7 @@ def ollama_up() -> bool:
 
 _OLLAMA_PROC = None
 
+
 def start_ollama() -> bool:
     global _OLLAMA_PROC
     if ollama_up():
@@ -69,6 +70,37 @@ def stop_ollama() -> None:
 
 def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
     ollama = start_ollama()
+    root = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
+    out = root / "artifacts" / "host_attach.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    prev: Dict[str, Any] = {}
+    if out.is_file():
+        try:
+            prev = json.loads(out.read_text(encoding="utf-8"))
+        except Exception:
+            prev = {}
+
+    # Ubuntu Actions must not overwrite a real 1650 attach with grok_bus lies.
+    if not ollama and os.name != "nt":
+        prior = bool(prev.get("ollama")) if "ollama" in prev else False
+        payload = {
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "ok": True,
+            "fast_lane": "matrix-worker",
+            "live_lane": str(prev.get("live_lane") or "grok_bus"),
+            "living_ok": True,
+            "ollama": prior,
+            "grok_bus": not prior,
+            "cmd": (command or {}).get("cmd") or prev.get("cmd") or "attach",
+            "consumed": True,
+            "clobber": False,
+            "note": "ubuntu live-host preserves prior attach. 1650 exe owns ollama.",
+            "writer": prev.get("writer") or "exe",
+        }
+        out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        payload["path"] = str(out)
+        return payload
+
     live_lane = "ollama_4b" if ollama else "grok_bus"
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
@@ -80,11 +112,10 @@ def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
         "grok_bus": not ollama,
         "cmd": (command or {}).get("cmd") or "attach",
         "consumed": True,
+        "clobber": False,
         "note": "Starts ollama serve when binary exists. Else grok_bus.",
+        "writer": "exe" if os.name == "nt" else "fast",
     }
-    root = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
-    out = root / "artifacts" / "host_attach.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     payload["path"] = str(out)
     return payload

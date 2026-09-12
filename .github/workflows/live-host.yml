@@ -14,15 +14,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: consume host_command
+      - name: consume host_command (no attach clobber)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: python scripts/live_host.py
-      - name: publish attach to origin
+      - name: publish attach only if exe-owned fields stay honest
         run: |
           git config user.name ether-live-host
           git config user.email ether@local
           git add artifacts/host_attach.json
-          git diff --cached --quiet && echo no-attach-change || git commit -m "live-host: publish attach"
+          git diff --cached --quiet && echo no-attach-change || git commit -m "live-host: publish attach (no ubuntu clobber)"
           git pull --rebase origin main || true
           git push origin HEAD:main || true

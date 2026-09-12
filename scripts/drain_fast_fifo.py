@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -16,7 +15,7 @@ DONE = ROOT / "artifacts" / "jobs" / "done"
 LAST = ROOT / "artifacts" / "host_agent_last_job.json"
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
 
-LIVE_MARKERS = ("ollama", "unaided", "qwen", "live_4b", "policy=model")
+LIVE_MARKERS = ("unaided", "qwen", "live_4b", "policy=model")
 
 
 def _now() -> str:
@@ -31,8 +30,11 @@ def _rewrite_argv(argv: List[str]) -> List[str]:
 
 
 def is_fast(job: Dict[str, Any]) -> bool:
-    if str(job.get("class") or "").lower() == "live":
+    klass = str(job.get("class") or "").lower()
+    if klass == "live":
         return False
+    if klass == "fast":
+        return True
     blob = json.dumps(job).lower()
     if any(m in blob for m in LIVE_MARKERS) and "test_live_" not in blob:
         return False
@@ -79,10 +81,20 @@ def run_job(path: Path) -> Dict[str, Any]:
     return report
 
 
+def _idle_week_tick() -> None:
+    try:
+        from scripts.ether_week_tick import tick
+
+        tick(push=False)
+    except Exception:
+        return
+
+
 def drain() -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
     files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep")
     reports = [run_job(p) for p in files]
+    _idle_week_tick()
     prev: Dict[str, Any] = {}
     if STATUS.is_file():
         try:

@@ -29,11 +29,15 @@ def start_ollama() -> bool:
     if not bin_:
         return False
     try:
+        flags = 0
+        if os.name == "nt":
+            flags = 0x08000000 | 0x00000008  # CREATE_NO_WINDOW | DETACHED_PROCESS
         subprocess.Popen(
             [bin_, "serve"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
+            creationflags=flags,
         )
     except OSError:
         return False

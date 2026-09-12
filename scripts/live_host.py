@@ -33,14 +33,19 @@ def start_ollama() -> bool:
         return False
     try:
         flags = 0
+        si = None
         if os.name == "nt":
-            flags = 0x08000000 | 0x00000008  # CREATE_NO_WINDOW | DETACHED_PROCESS
+            flags = 0x08000000 | 0x00000008
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0
         _OLLAMA_PROC = subprocess.Popen(
             [bin_, "serve"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
             creationflags=flags,
+            startupinfo=si,
         )
     except OSError:
         return False

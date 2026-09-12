@@ -64,6 +64,7 @@ GATES = (
     "tests/test_ether_app.py",
     "tests/test_ether_tools.py",
     "tests/test_ether_cowork.py",
+    "tests/test_ether_role.py",
 )
 
 

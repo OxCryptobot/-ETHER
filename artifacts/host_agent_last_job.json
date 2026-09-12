@@ -1,10 +1,10 @@
 {
-  "job_id": "medic_hb_20260909_090224",
-  "ok": false,
-  "rc": 1,
-  "finished": "2026-09-11T21:00:21.354240+00:00",
+  "job_id": "week_tick_20260912a",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-12T03:45:19.588466+00:00",
   "note": "FAST drain on matrix-worker. Dual chat locked.",
   "class": "fast",
   "measurement": true,
-  "tail": "ce', 'memory/bench', 'memory/learning']\n  \u2713 flywheel_heartbeat   [low     ] no heartbeat (daemon idle)\n  \u2717 intel_gates          [high    ] unhealthy: bench_missing, quiz_missing, guardian:no_bench_yet \u2014 guardian fails closed until a bench exists\n      tip: Guardian freeze active (regression detected). Re-run weekly_scoreboard after a good bench, or clear memory/bench/guardian.json if intentional.\n"
+  "tail": "{\n  \"ok\": true,\n  \"ts\": \"2026-09-12T03:45:19.566745+00:00\",\n  \"ollama\": false,\n  \"last_gem\": \"citrine\",\n  \"generation\": 3,\n  \"board_n\": 5\n}\n"
 }

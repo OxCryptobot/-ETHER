@@ -1,9 +1,16 @@
 {
-  "job_id": "ss_train_gates_045023_4",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-12T04:54:36.317511+00:00",
-  "note": "steady: doctrine + preference integrity",
-  "class": "fast",
-  "measurement": false
+  "job_id": "ss_measure_tick_045434_0",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-09-12T04:56:40.556923+00:00",
+  "note": "steady: measure_tick (rates+snapshot+soft_launch) [failure_type=timeout]",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  },
+  "failure_type": "timeout"
 }

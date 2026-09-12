@@ -9,6 +9,9 @@
 <header>
   <h1>ETHER CONTROL MATRIX</h1>
   <span class="pill" id="stamp">SPA · local origin</span>
+  <button data-view="bus" onclick="view('bus')">BUS</button>
+  <button data-view="gems" onclick="view('gems')">GEMS</button>
+  <button data-view="role" onclick="view('role')">ROLE</button>
   <button onclick="post('/start')">Start LIVE</button>
   <button onclick="post('/stop')">Stop LIVE</button>
   <button onclick="post('/update')">Update exe</button>

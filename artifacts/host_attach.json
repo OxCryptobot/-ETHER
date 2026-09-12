@@ -1,14 +1,12 @@
 {
-  "updated": "2026-09-12T04:22:52.764333+00:00",
+  "updated": "2026-09-12T04:26:25.944566+00:00",
   "ok": true,
   "fast_lane": "matrix-worker",
-  "live_lane": "grok_bus",
+  "live_lane": "ollama_4b",
   "living_ok": true,
-  "ollama": false,
-  "grok_bus": true,
+  "ollama": true,
+  "grok_bus": false,
   "cmd": "attach",
   "consumed": true,
-  "clobber": false,
-  "note": "ubuntu live-host preserves prior attach. 1650 exe owns ollama.",
-  "writer": "exe"
+  "note": "Starts ollama serve when binary exists. Else grok_bus."
 }

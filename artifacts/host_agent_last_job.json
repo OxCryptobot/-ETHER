@@ -1,15 +1,9 @@
 {
-  "job_id": "ss_honest_live_report_042436_2",
+  "job_id": "ss_tool_runtime_042438_3",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T04:24:39.267362+00:00",
-  "note": "steady: publish honest live tool-path rates",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "finished": "2026-09-12T04:26:25.960653+00:00",
+  "note": "steady: tool_runtime + AST gate",
+  "class": "fast",
+  "measurement": false
 }

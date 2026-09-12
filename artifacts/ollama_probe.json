@@ -1,0 +1,17 @@
+{
+  "ts": "2026-09-12T04:14:38.865586+00:00",
+  "up": true,
+  "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE",
+  "models": [
+    "qwen3.5:4b-q4_K_M",
+    "qwen3.5:4b",
+    "qwen2.5-coder:3b",
+    "phi3:mini",
+    "nomic-embed-text:latest"
+  ],
+  "target": "qwen3.5:4b-q4_K_M",
+  "has_target": true,
+  "writer": "exe",
+  "attach": "write",
+  "ollama": true
+}

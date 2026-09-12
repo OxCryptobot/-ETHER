@@ -1,18 +1,19 @@
 {
-  "generated": "2026-09-12T04:11:21.380249+00:00",
-  "next_job": "medic_hb_20260912_040530",
+  "generated": "2026-09-12T04:14:38.816517+00:00",
+  "next_job": "exe_ollama_20260912e",
   "queue_head": [
+    "exe_ollama_20260912e",
+    "exe_writer_tests_20260912e",
     "medic_hb_20260912_040530",
-    "ss_microbench_040333_1",
     "ss_microbench_041107_1",
     "ss_tool_runtime_041121_3",
     "ss_train_gates_041121_4"
   ],
-  "queue_depth": 5,
-  "host_phase": "idle",
-  "last_job": "ss_honest_live_report_041107_2",
-  "last_ok": true,
-  "last_failure_type": null,
+  "queue_depth": 6,
+  "host_phase": "starting",
+  "last_job": "ss_microbench_040333_1",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

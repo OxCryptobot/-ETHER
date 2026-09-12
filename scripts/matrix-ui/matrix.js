@@ -1,29 +1,27 @@
 
 async function j(u,o){const r=await fetch(u,o);return r.json()}
-function list(el, items, fn){
-  el.innerHTML = items.length ? items.map(fn).join("") : "<div class=item>Nothing yet</div>";
-}
 async function probe(){
   let s={};
-  try { s = await j("/status"); } catch(e) { try { s = await j("/api/origin"); } catch(e2) { s={}; } }
+  try{s=await j("/status")}catch(e){try{s=await j("/api/origin")}catch(e2){s={}}}
   const up=!!s.ollama;
-  document.getElementById("dot").className="dot"+(up?" on":"");
-  document.getElementById("stat").textContent =
-    (up?"Model up":"Model down")+" · "+(s.live_lane||"")+" · gen "+(s.generation||0)+" · "+(s.progress||0)+"%";
-  document.getElementById("meta").textContent = (s.role||"idle")+" · "+(s.idea||"no last idea");
-  list(document.getElementById("board"), (s.tasks||[]).slice(-20), t =>
-    "<div class=item>"+(t.status||"")+" — "+(t.title||t.id)+"</div>");
-  list(document.getElementById("queue"), s.queue||[], n => "<div class=item>"+n+"</div>");
+  document.getElementById("ollama").textContent=up?"UP":"DOWN";
+  document.getElementById("ollama").className="v "+(up?"ok":"bad");
+  document.getElementById("lane").textContent=s.live_lane||"—";
+  document.getElementById("gen").textContent=s.generation==null?"—":String(s.generation);
+  document.getElementById("prog").textContent=(s.progress||0)+"%";
+  document.getElementById("tn").textContent=String((s.tasks||[]).length);
+  document.getElementById("qn").textContent=String((s.queue||[]).length);
+  document.getElementById("left").textContent=
+    "HOST 4B\nmoving="+s.moving+"\n"+(s.idea||"")+"\n"+(s.updated||"");
+  document.getElementById("board").innerHTML=(s.tasks||[]).slice(-12).map(t=>
+    "<div class=item>"+(t.status||"")+" "+(t.title||t.id)+"</div>").join("")||"<div class=item>no tasks</div>";
+  document.getElementById("queue").innerHTML=(s.queue||[]).map(n=>"<div class=item>"+n+"</div>").join("")||"<div class=item>queue empty</div>";
 }
-async function post(p){ try{await j(p,{method:"POST"});}catch(e){} probe(); }
+async function post(p){try{await j(p,{method:"POST"})}catch(e){} probe()}
 async function ask(){
   const el=document.getElementById("q"); const t=el.value.trim(); if(!t)return; el.value="";
-  const chat=document.getElementById("chat");
-  chat.insertAdjacentHTML("beforeend","<div class=msg><div class=who>You</div><div class=bubble>"+t.replace(/</g,"")+"</div></div>");
   const r=await fetch("/ask_stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
-  const txt=await r.text();
-  chat.insertAdjacentHTML("beforeend","<div class=msg><div class=who>ETHER</div><div class=bubble>"+(txt||"").replace(/</g,"")+"</div></div>");
-  chat.scrollTop=chat.scrollHeight;
+  document.getElementById("left").textContent=await r.text();
   probe();
 }
-probe(); setInterval(probe, 3000);
+probe(); setInterval(probe,3000);

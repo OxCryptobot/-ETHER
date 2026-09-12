@@ -49,16 +49,26 @@ def update_self() -> Dict[str, Any]:
     if not Path(gh).is_file():
         gh = "gh"
     try:
+        tmp = ROOT / "artifacts"
+        tmp.mkdir(parents=True, exist_ok=True)
         proc = subprocess.run(
-            [gh, "release", "download", "desktop", "-p", "ETHER.exe", "-D", str(ROOT), "--clobber"],
+            [gh, "release", "download", "desktop", "-p", "ETHER.exe", "-D", str(tmp), "--clobber"],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
             timeout=180,
         )
-        downloaded = ROOT / "ETHER.exe"
-        # download overwrites name ETHER.exe which is locked; use -O
-        return {"ok": proc.returncode == 0, "tail": ((proc.stdout or "") + (proc.stderr or ""))[-300:]}
+        src = tmp / "ETHER.exe"
+        if proc.returncode == 0 and src.is_file():
+            dest = ROOT / "ETHER.exe.new"
+            dest.write_bytes(src.read_bytes())
+            bat = ROOT / "artifacts" / "swap_ether.cmd"
+            bat.write_text(
+                "@echo off\ntimeout /t 2 /nobreak >nul\nmove /y ETHER.exe.new ETHER.exe\nstart \"\" ETHER.exe\n",
+                encoding="utf-8",
+            )
+            return {"ok": True, "pending": str(dest)}
+        return {"ok": False, "tail": ((proc.stdout or "") + (proc.stderr or ""))[-300:]}
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__}
 

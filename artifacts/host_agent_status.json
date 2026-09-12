@@ -1,5 +1,5 @@
 {
-  "heartbeat": "2026-09-12T04:39:55.026742+00:00",
+  "heartbeat": "2026-09-12T04:42:00.280706+00:00",
   "poll_s": 1,
   "root": "C:\\Users\\Otcde\\ETHER",
   "gpu": {
@@ -9,14 +9,14 @@
     "util_gpu_pct": 0.0,
     "mem_used_mb": 134.0,
     "mem_total_mb": 4096.0,
-    "temp_c": 64.0,
+    "temp_c": 60.0,
     "warn": [],
-    "updated": "2026-09-12T04:39:49.717493+00:00"
+    "updated": "2026-09-12T04:42:00.276293+00:00"
   },
   "ollama": true,
   "current_job": null,
   "phase": "idle",
-  "last_job": "ss_train_gates_043459_4",
-  "last_ok": true,
-  "last_failure_type": null
+  "last_job": "ss_measure_tick_043953_0",
+  "last_ok": false,
+  "last_failure_type": "timeout"
 }

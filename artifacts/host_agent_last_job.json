@@ -1,9 +1,10 @@
 {
-  "job_id": "ss_train_gates_045822_4",
+  "job_id": "ss_pref_refresh_045853_8",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T04:58:55.195363+00:00",
-  "note": "steady: doctrine + preference integrity",
+  "finished": "2026-09-12T05:00:09.834748+00:00",
+  "note": "FAST drain on matrix-worker. Dual chat locked.",
   "class": "fast",
-  "measurement": false
+  "measurement": true,
+  "tail": "\": 1,\n          \"wins\": 0,\n          \"win_rate\": 0.0,\n          \"boost\": 0.9\n        }\n      ],\n      \"updated\": \"2026-09-12T05:00:09.819891+00:00\",\n      \"rlhf\": \"offline_scoreboard_pairs\",\n      \"teacher\": \"grok\",\n      \"zero_win_floor\": {\n        \"min_n\": 30,\n        \"cap\": 1.0\n      }\n    }\n  },\n  \"doctrine\": \"offline_rlhf_scoreboard_pairs\",\n  \"timestamp\": \"2026-09-12T05:00:09.821639+00:00\"\n}\n"
 }

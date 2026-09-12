@@ -72,3 +72,23 @@ def run_task(title: str) -> Dict[str, Any]:
     out = deliver(title, body)
     close(out["task"]["id"])
     return {"ok": True, "files": files, "deliverable": out["path"]}
+
+
+SCHED = ROOT / "artifacts" / "cowork_schedule.json"
+
+
+def schedule(title: str, every_min: int = 60) -> Dict[str, Any]:
+    row = {"title": title, "every_min": int(every_min), "updated": _now()}
+    SCHED.parent.mkdir(parents=True, exist_ok=True)
+    SCHED.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
+
+
+def due() -> bool:
+    if not SCHED.is_file():
+        return False
+    try:
+        json.loads(SCHED.read_text(encoding="utf-8"))
+        return True
+    except Exception:
+        return False

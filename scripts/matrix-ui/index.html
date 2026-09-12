@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8"/>
+<title>ETHER Control Matrix</title>
+<link rel="stylesheet" href="/matrix.css"/>
+</head>
+<body>
+<div id="app">
+<header>
+  <h1>ETHER CONTROL MATRIX</h1>
+  <span class="pill" id="stamp">SPA · local origin</span>
+  <button onclick="post('/start')">Start LIVE</button>
+  <button onclick="post('/stop')">Stop LIVE</button>
+  <button onclick="post('/update')">Update exe</button>
+</header>
+<section class="rail">
+  <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
+  <div class="card"><div class="k">LANE</div><div class="v" id="lane">—</div></div>
+  <div class="card"><div class="k">ORIGIN</div><div class="v" id="src">—</div></div>
+  <div class="card"><div class="k">TASKS</div><div class="v" id="tn">—</div></div>
+  <div class="card"><div class="k">VIEW</div><div class="v">BUS</div></div>
+</section>
+<div id="mid">
+  <div class="pane"><div class="k">HOST 4B</div><pre id="left">probing local origin…</pre></div>
+  <div class="pane"><div class="k">GROK / MATRIX</div><pre id="right">tasks</pre></div>
+</div>
+<footer>
+  <input id="q" placeholder="Compose…" onkeydown="if(event.key==='Enter')ask()"/>
+  <button onclick="ask()">Send</button>
+</footer>
+</div>
+<script src="/matrix.js"></script>
+</body></html>

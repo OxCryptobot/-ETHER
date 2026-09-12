@@ -1,13 +1,34 @@
 {
   "results": [
     {
-      "fixture": "merge",
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 1.703,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct"
+    },
+    {
+      "fixture": "topo",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.814,
+      "elapsed_s": 1.711,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -26,7 +47,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.829,
+      "elapsed_s": 1.726,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -39,38 +60,17 @@
       "arm": "direct"
     },
     {
-      "fixture": "topo",
+      "fixture": "merge",
       "tier": "hard",
       "mode": "scripted",
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.832,
+      "elapsed_s": 1.737,
       "reason": "tests passed",
       "tools": [
         "list_files",
         "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "policy": "scripted",
-      "arm": "direct"
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 1.862,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
         "write_file",
         "run_tests"
       ],
@@ -85,7 +85,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.46,
+      "elapsed_s": 1.316,
       "reason": "tests passed",
       "tools": [
         "list_files",

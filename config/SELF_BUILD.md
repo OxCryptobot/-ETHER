@@ -11,3 +11,9 @@ Do one small step per turn:
 4. Do not touch secrets, .git, or files outside the repo root.
 
 North star: when the host is up, ETHER keeps writing Cowork slices without Grok.
+
+Tool lines the host will execute:
+GREP: term
+DELIVER: title
+FOLDER: C:\\path
+PATH:/OLD:/NEW: under artifacts/

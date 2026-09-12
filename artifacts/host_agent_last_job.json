@@ -1,16 +1,10 @@
 {
-  "job_id": "ss_measure_tick_043953_0",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-12T04:41:59.419260+00:00",
-  "note": "steady: measure_tick (rates+snapshot+soft_launch) [failure_type=timeout]",
-  "class": "measure",
+  "job_id": "ss_pref_refresh_043900_8",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-12T04:43:34.513035+00:00",
+  "note": "FAST drain on matrix-worker. Dual chat locked.",
+  "class": "fast",
   "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+  "tail": "\": 1,\n          \"wins\": 0,\n          \"win_rate\": 0.0,\n          \"boost\": 0.9\n        }\n      ],\n      \"updated\": \"2026-09-12T04:43:34.492183+00:00\",\n      \"rlhf\": \"offline_scoreboard_pairs\",\n      \"teacher\": \"grok\",\n      \"zero_win_floor\": {\n        \"min_n\": 30,\n        \"cap\": 1.0\n      }\n    }\n  },\n  \"doctrine\": \"offline_rlhf_scoreboard_pairs\",\n  \"timestamp\": \"2026-09-12T04:43:34.493922+00:00\"\n}\n"
 }

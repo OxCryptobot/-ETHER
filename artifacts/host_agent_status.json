@@ -1,22 +1,10 @@
 {
-  "heartbeat": "2026-09-12T04:42:00.280706+00:00",
-  "poll_s": 1,
-  "root": "C:\\Users\\Otcde\\ETHER",
-  "gpu": {
-    "ok": true,
-    "available": true,
-    "name": "GeForce GTX 1650",
-    "util_gpu_pct": 0.0,
-    "mem_used_mb": 134.0,
-    "mem_total_mb": 4096.0,
-    "temp_c": 60.0,
-    "warn": [],
-    "updated": "2026-09-12T04:42:00.276293+00:00"
-  },
-  "ollama": true,
+  "heartbeat": "2026-09-12T04:43:34.657966+00:00",
+  "phase": "draining",
   "current_job": null,
-  "phase": "idle",
-  "last_job": "ss_measure_tick_043953_0",
-  "last_ok": false,
-  "last_failure_type": "timeout"
+  "source": "matrix-worker",
+  "pending_left": 0,
+  "note": "FAST heartbeat. ollama/lane owned by 1650 attach.",
+  "ollama": false,
+  "live_lane": "grok_bus"
 }

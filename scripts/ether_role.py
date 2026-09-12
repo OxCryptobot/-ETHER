@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from scripts.ether_cowork import deliver, run_task, schedule
+from scripts.ether_evolve import record, generation
 
 
 def _root() -> Path:
@@ -75,7 +76,9 @@ def tick() -> Dict[str, Any]:
         "plan": doc.get("path"),
         "task": out,
         "ts": datetime.now(timezone.utc).isoformat(),
+        "generation": generation() + 1,
     }
+    record({"verified": row["verified"], "applied": applied, "generation": row["generation"]})
     stamp = _root() / "artifacts" / "self_build_role.json"
     stamp.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row

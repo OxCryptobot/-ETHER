@@ -46,3 +46,13 @@ def close(tid: str) -> bool:
             ok = True
     save(tasks)
     return ok
+
+
+def deliver(title: str, body: str) -> Dict[str, Any]:
+    out = ROOT / "artifacts" / "cowork_out"
+    out.mkdir(parents=True, exist_ok=True)
+    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in title)[:40] or "note"
+    path = out / f"{safe}.md"
+    path.write_text("# " + title + "\n\n" + body + "\n", encoding="utf-8")
+    row = add("deliverable:" + title)
+    return {"ok": True, "path": str(path.relative_to(ROOT)), "task": row}

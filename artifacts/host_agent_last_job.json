@@ -1,10 +1,15 @@
 {
-  "job_id": "ss_pref_refresh_042211_8",
+  "job_id": "ss_honest_live_report_042436_2",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T04:22:59.090947+00:00",
-  "note": "FAST drain on matrix-worker. Dual chat locked.",
-  "class": "fast",
+  "finished": "2026-09-12T04:24:39.267362+00:00",
+  "note": "steady: publish honest live tool-path rates",
+  "class": "measure",
   "measurement": true,
-  "tail": "\": 1,\n          \"wins\": 0,\n          \"win_rate\": 0.0,\n          \"boost\": 0.9\n        }\n      ],\n      \"updated\": \"2026-09-12T04:22:59.060929+00:00\",\n      \"rlhf\": \"offline_scoreboard_pairs\",\n      \"teacher\": \"grok\",\n      \"zero_win_floor\": {\n        \"min_n\": 30,\n        \"cap\": 1.0\n      }\n    }\n  },\n  \"doctrine\": \"offline_rlhf_scoreboard_pairs\",\n  \"timestamp\": \"2026-09-12T04:22:59.064392+00:00\"\n}\n"
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

@@ -71,6 +71,10 @@ def boot() -> Dict[str, Any]:
         "verified_execution": proof["ok"],
         "ollama_4b": bool(att.get("ollama")),
     }
+    try:
+        att["cowork"] = ether_cowork.run_task("boot")
+    except Exception as exc:
+        att["cowork"] = {"ok": False, "error": type(exc).__name__}
     _push_attach()
     return att
 

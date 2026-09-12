@@ -158,6 +158,16 @@ def dashboard_status() -> Dict[str, Any]:
     qdir = ROOT / "artifacts" / "pending"
     if qdir.is_dir():
         pending = sorted(x.name for x in qdir.glob("*.json"))[:20]
+    trace = []
+    tp = ROOT / "artifacts" / "self_build_trace.jsonl"
+    if tp.is_file():
+        lines = tp.read_text(encoding="utf-8").splitlines()[-8:]
+        for line in lines:
+            try:
+                trace.append(json.loads(line))
+            except Exception:
+                continue
+    moving = bool(role) or bool(pending) or ollama_up()
     return {
         "ollama": ollama_up(),
         "live_lane": att.get("live_lane"),
@@ -168,6 +178,9 @@ def dashboard_status() -> Dict[str, Any]:
         "generation": role.get("generation"),
         "idea": str(role.get("idea") or "")[:240],
         "verified": role.get("verified"),
+        "activity": trace,
+        "moving": moving,
+        "progress": min(99, int(role.get("generation") or 0) * 3),
     }
 
 

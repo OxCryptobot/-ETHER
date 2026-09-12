@@ -63,6 +63,7 @@ GATES = (
     "tests/test_ether_protocol.py",
     "tests/test_ether_app.py",
     "tests/test_ether_tools.py",
+    "tests/test_ether_cowork.py",
 )
 
 

@@ -1,13 +1,13 @@
 
 async function j(u,o){const r=await fetch(u,o); return r.json();}
 async function probe(){
-  const s = await j('/api/origin');
+  const s = await j('/status');
   document.getElementById('ollama').textContent = s.ollama ? 'UP' : 'DOWN';
   document.getElementById('ollama').className = 'v ' + (s.ollama ? 'ok' : 'bad');
   document.getElementById('lane').textContent = s.live_lane || '—';
   document.getElementById('src').textContent = s.source || 'local';
   document.getElementById('tn').textContent = String((s.tasks||[]).length);
-  document.getElementById('left').textContent = JSON.stringify(s,null,2);
+  document.getElementById('left').textContent = 'STATUS\nollama='+s.ollama+'\nlane='+(s.live_lane||'')+'\ngen='+(s.generation||0)+'\nrole='+(s.role||'')+'\nidea='+(s.idea||'')+'\nqueue\n'+(s.queue||[]).join('\n');
   const b=document.getElementById('board'); if(b){ b.innerHTML=(s.tasks||[]).slice(-20).map(t=>'<div class=card><div class=k>'+(t.status||'')+'</div><div>'+(t.title||t.id)+'</div></div>').join('')||'<div class=k>no tasks</div>'; }
 }
 async function post(p){ document.getElementById('left').textContent = JSON.stringify(await j(p,{method:'POST'}),null,2); probe(); }

@@ -1,16 +1,9 @@
 {
-  "job_id": "ss_microbench_042620_1",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-12T04:29:46.228303+00:00",
-  "note": "steady: microbench_schedule (skip if fresh <5m) [failure_type=timeout]",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+  "job_id": "ss_tool_runtime_042635_3",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-12T04:29:57.991679+00:00",
+  "note": "steady: tool_runtime + AST gate",
+  "class": "fast",
+  "measurement": false
 }

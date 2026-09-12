@@ -14,7 +14,7 @@ if not (ROOT / "scripts").is_dir():
     ROOT = Path(__file__).resolve().parents[1]
 os.environ["ETHER_ROOT"] = str(ROOT)
 
-from scripts.live_host import consume, ollama_up, start_ollama
+from scripts.live_host import consume, ollama_up, start_ollama, stop_ollama
 from scripts.ether_tools import list_tree, run_allowlisted
 from scripts import ether_cowork
 from scripts import ether_role
@@ -146,6 +146,10 @@ def live_stop() -> Dict[str, Any]:
 def shutdown() -> None:
     try:
         live_stop()
+    except Exception:
+        pass
+    try:
+        stop_ollama()
     except Exception:
         pass
 

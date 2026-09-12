@@ -1,0 +1,12 @@
+{
+  "id": "gem_energy_20260912",
+  "class": "fast",
+  "note": "core.gem_energy publish — updated older than 24h",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "core.gem_energy"],
+      "timeout": 60
+    }
+  ]
+}

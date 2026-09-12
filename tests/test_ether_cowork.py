@@ -27,3 +27,11 @@ def test_schedule() -> None:
     row = schedule("daily brief", 60)
     assert row["every_min"] == 60
     assert due() is True
+
+
+def test_due_now() -> None:
+    from scripts.ether_cowork import schedule, due_now, mark_ran
+    schedule("brief", 60)
+    assert due_now() is True
+    mark_ran()
+    assert due_now() is False

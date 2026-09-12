@@ -1,9 +1,29 @@
 {
   "tasks": [
-    {"id": "week_ollama", "title": "Keep Ollama 4B attached on the 1650", "status": "open"},
-    {"id": "week_git", "title": "Exe pulls origin and pushes attach/energy/role", "status": "open"},
-    {"id": "week_matrix", "title": "Matrix stays READ-ONLY and polls origin", "status": "live"},
-    {"id": "week_energy", "title": "gem_energy.json stamped every tick", "status": "live"},
-    {"id": "week_loop", "title": "Idle FAST week_tick while Grok is dark", "status": "live"}
+    {
+      "id": "week_ollama",
+      "title": "Keep Ollama 4B attached on the 1650",
+      "status": "open"
+    },
+    {
+      "id": "week_git",
+      "title": "Exe pulls origin and pushes attach/energy/role",
+      "status": "open"
+    },
+    {
+      "id": "week_matrix",
+      "title": "Matrix stays READ-ONLY and polls origin",
+      "status": "live"
+    },
+    {
+      "id": "week_energy",
+      "title": "gem_energy.json stamped every tick",
+      "status": "live"
+    },
+    {
+      "id": "week_loop",
+      "title": "Idle FAST week_tick while Grok is dark",
+      "status": "live"
+    }
   ]
 }

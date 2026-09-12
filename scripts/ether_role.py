@@ -42,14 +42,9 @@ def tick() -> Dict[str, Any]:
     from scripts.ether_app import ask_model, edit_file, verify
     from scripts.ether_tools import preview_replace
 
-    prompt = (
-        "You are ETHER on this PC. Propose ONE safe file edit.\n"
-        "Reply with exactly three lines:\n"
-        "PATH: artifacts/self_build_note.txt\n"
-        "OLD: x\n"
-        "NEW: y\n"
-        "Only artifacts/ paths."
-    )
+    brief_path = _root() / "config" / "SELF_BUILD.md"
+    brief = brief_path.read_text(encoding="utf-8") if brief_path.is_file() else "local cowork builder"
+    prompt = brief + "\n\nReply with PATH:/OLD:/NEW: for artifacts/ or a short note."
     idea = ask_model(prompt)
     patch = _parse_patch(idea)
     applied = {"ok": False, "reason": "no_parse_or_ollama_down"}

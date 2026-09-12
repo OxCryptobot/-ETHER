@@ -22,7 +22,10 @@ def ollama_up() -> bool:
         return False
 
 
+_OLLAMA_PROC = None
+
 def start_ollama() -> bool:
+    global _OLLAMA_PROC
     if ollama_up():
         return True
     bin_ = shutil.which("ollama")
@@ -32,7 +35,7 @@ def start_ollama() -> bool:
         flags = 0
         if os.name == "nt":
             flags = 0x08000000 | 0x00000008  # CREATE_NO_WINDOW | DETACHED_PROCESS
-        subprocess.Popen(
+        _OLLAMA_PROC = subprocess.Popen(
             [bin_, "serve"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -46,6 +49,17 @@ def start_ollama() -> bool:
         if ollama_up():
             return True
     return ollama_up()
+
+
+def stop_ollama() -> None:
+    global _OLLAMA_PROC
+    proc = _OLLAMA_PROC
+    _OLLAMA_PROC = None
+    if proc and proc.poll() is None:
+        try:
+            proc.terminate()
+        except Exception:
+            pass
 
 
 def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:

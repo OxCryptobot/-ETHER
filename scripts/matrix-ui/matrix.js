@@ -16,7 +16,7 @@ async function probe(){
   const queue = s.queue || [];
   document.getElementById("tn").textContent = String(tasks.length);
   document.getElementById("qn").textContent = String(queue.length);
-  document.getElementById("left").textContent =
+  document.getElementById("left").textContent = "progress "+(s.progress||0)+"% moving="+s.moving+"\n" + 
     "ollama " + up + "\nlane " + (s.live_lane||"") + "\nupdated " + (s.updated||"") +
     "\nrole " + (s.role||"") + "\ngen " + (s.generation||0) + "\n" + (s.idea||"");
   rows(document.getElementById("board"), tasks.slice(-16), t =>
@@ -27,7 +27,7 @@ async function post(p){ await j(p,{method:"POST"}); probe(); }
 async function ask(){
   const el=document.getElementById("q"); const t=el.value.trim(); if(!t)return; el.value="";
   const r=await fetch("/ask_stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
-  document.getElementById("left").textContent = await r.text();
+  document.getElementById("left").textContent = "progress "+(s.progress||0)+"% moving="+s.moving+"\n" +  await r.text();
   probe();
 }
 probe(); setInterval(probe, 3000);

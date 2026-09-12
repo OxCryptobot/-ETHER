@@ -1444,17 +1444,18 @@
     "ctx_compress_v0",
     "00_mcp_cq_spike_01",
     "ss_microbench_040333_1",
-    "ss_microbench_041107_1"
+    "ss_microbench_041107_1",
+    "exe_writer_tests_20260912e"
   ],
-  "last_tick": "2026-09-12T04:16:19.920264+00:00",
+  "last_tick": "2026-09-12T04:16:25.968872+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
   "last_enqueued": "ss_train_gates_150336_2",
-  "last_playbook": "timeout_budget_exhaust",
+  "last_playbook": "coding_method_v1",
   "last_converted": "ss_pipeline_ledger_145102_1",
   "steady_idx": 883,
-  "live_skip_remaining": 34,
+  "live_skip_remaining": 33,
   "last_live_skip_reason": "ss_microbench_041107_1",
   "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout",
   "governor": {

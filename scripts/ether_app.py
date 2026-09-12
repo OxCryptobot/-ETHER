@@ -42,11 +42,26 @@ def verify() -> Dict[str, Any]:
         return {"ok": False, "rc": 1, "gates": GATES, "tail": type(exc).__name__}
 
 
+def mark_alive() -> Dict[str, Any]:
+    row = {
+        "alive": True,
+        "ts": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "root": str(ROOT),
+        "ollama": ollama_up(),
+    }
+    path = ROOT / "artifacts" / "app_alive.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
+
+
 def boot() -> Dict[str, Any]:
+    alive = mark_alive()
     ollama = start_ollama()
     att = consume({"cmd": "attach"})
     proof = verify()
     att["booted"] = True
+    att["alive"] = alive
     att["ollama_started"] = ollama
     att["dashboard"] = DASHBOARD
     att["verified"] = proof

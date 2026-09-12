@@ -6,3 +6,10 @@ def test_cowork_board() -> None:
     assert row["status"] == "open"
     assert any(t["id"] == row["id"] for t in load())
     assert close(row["id"]) is True
+
+
+def test_deliver() -> None:
+    from scripts.ether_cowork import deliver
+    out = deliver("brief", "local llm cowork")
+    assert out["ok"] is True
+    assert out["path"].endswith(".md")

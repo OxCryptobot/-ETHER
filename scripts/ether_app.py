@@ -46,9 +46,15 @@ def verify() -> Dict[str, Any]:
 def update_self() -> Dict[str, Any]:
     """Pull latest desktop release next to this exe. Swap on next start."""
     dest = ROOT / "ETHER.exe.new"
-    gh = r"C:\Program Files\GitHub CLI\gh.exe"
-    if not Path(gh).is_file():
-        gh = "gh"
+    gh = "gh"
+    for p in (
+        r"C:\Program Files\GitHub CLI\gh.exe",
+        r"C:\Program Files (x86)\GitHub CLI\gh.exe",
+        str(Path.home() / "AppData" / "Local" / "GitHub CLI" / "gh.exe"),
+    ):
+        if Path(p).is_file():
+            gh = p
+            break
     try:
         tmp = ROOT / "artifacts"
         tmp.mkdir(parents=True, exist_ok=True)

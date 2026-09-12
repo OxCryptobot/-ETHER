@@ -230,6 +230,31 @@ def agent_turn(text: str) -> Dict[str, Any]:
     return out
 
 
+def ask_model_stream(text: str):
+    if not ollama_up():
+        yield "host up. ollama down."
+        return
+    import urllib.request
+    req = urllib.request.Request(
+        "http://127.0.0.1:11434/api/generate",
+        data=json.dumps({"model": "qwen3.5:4b-q4_K_M", "prompt": text, "stream": True}).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as resp:
+            for raw in resp:
+                try:
+                    chunk = json.loads(raw.decode())
+                except Exception:
+                    continue
+                piece = str(chunk.get("response") or "")
+                if piece:
+                    yield piece
+    except Exception as exc:
+        yield type(exc).__name__
+
+
 def ask_model(text: str) -> str:
     if not ollama_up():
         return "host up. ollama down. FAST verify only."
@@ -491,6 +516,15 @@ def serve_local() -> None:
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+                return
+            if self.path.startswith("/ask_stream"):
+                text = str(payload.get("text") or "")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                for piece in ask_model_stream(text):
+                    self.wfile.write(piece.encode())
+                    self.wfile.flush()
                 return
             if self.path.startswith("/ask"):
                 text = str(payload.get("text") or "")

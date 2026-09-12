@@ -13,3 +13,10 @@ def test_deliver() -> None:
     out = deliver("brief", "local llm cowork")
     assert out["ok"] is True
     assert out["path"].endswith(".md")
+
+
+def test_run_task() -> None:
+    from scripts.ether_cowork import run_task
+    out = run_task("live_host")
+    assert out["ok"] is True
+    assert out["deliverable"].endswith(".md")

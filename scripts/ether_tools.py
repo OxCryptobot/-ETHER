@@ -72,3 +72,10 @@ def search(q: str, limit: int = 30, root: Path | None = None) -> List[str]:
         if len(hits) >= limit:
             break
     return hits
+
+
+def preview_replace(rel: str, old: str, new: str, root: Path | None = None) -> Dict[str, Any]:
+    base = root or ROOT
+    target = (base / rel).resolve()
+    txt = target.read_text(encoding="utf-8")
+    return {"ok": old in txt, "path": rel, "diff": f"- {old}\n+ {new}"}

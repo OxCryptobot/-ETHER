@@ -23,20 +23,64 @@ def _root() -> Path:
 ROLE = "self_build_cowork"
 
 
+def _parse_patch(text: str) -> Dict[str, str] | None:
+    path = old = new = ""
+    for line in (text or "").splitlines():
+        if line.startswith("PATH:"):
+            path = line[5:].strip()
+        elif line.startswith("OLD:"):
+            old = line[4:].strip()
+        elif line.startswith("NEW:"):
+            new = line[4:].strip()
+    if path.startswith("artifacts/") and old and new:
+        return {"path": path, "old": old, "new": new}
+    return None
+
+
 def tick() -> Dict[str, Any]:
-    """One self-build turn: inspect tree, write a plan deliverable, keep a schedule."""
-    out = run_task("self-build cowork local LLM")
-    plan = (
-        "Role: " + ROLE + "\n"
-        "Goal: local Cowork clone (folder + tasks + 4B).\n"
-        "Last files: " + ", ".join(out.get("files") or [])[:500] + "\n"
-        "Deliverable: " + str(out.get("deliverable")) + "\n"
-        "ts: " + datetime.now(timezone.utc).isoformat() + "\n"
+    """Local-LLM self-build turn. Grok is not called."""
+    from scripts.ether_app import ask_model, edit_file, verify
+    from scripts.ether_tools import preview_replace
+
+    prompt = (
+        "You are ETHER on this PC. Propose ONE safe file edit.\n"
+        "Reply with exactly three lines:\n"
+        "PATH: artifacts/self_build_note.txt\n"
+        "OLD: x\n"
+        "NEW: y\n"
+        "Only artifacts/ paths."
     )
-    doc = deliver("self_build_plan", plan)
+    idea = ask_model(prompt)
+    patch = _parse_patch(idea)
+    applied = {"ok": False, "reason": "no_parse_or_ollama_down"}
+    note = _root() / "artifacts" / "self_build_note.txt"
+    note.parent.mkdir(parents=True, exist_ok=True)
+    if not note.is_file():
+        note.write_text("seed\n", encoding="utf-8")
+    if patch:
+        preview = preview_replace(patch["path"], patch["old"], patch["new"])
+        if preview.get("ok"):
+            applied = edit_file(patch["path"], patch["old"], patch["new"])
+        else:
+            applied = {"ok": False, "preview": preview}
+    elif "ollama down" not in idea.lower() and idea.strip():
+        note.write_text(idea[:2000], encoding="utf-8")
+        applied = {"ok": True, "path": "artifacts/self_build_note.txt", "mode": "write_idea"}
+    proof = verify()
+    out = run_task("self-build cowork local LLM")
+    doc = deliver("self_build_plan", "local model:\n" + idea[:1500])
     schedule("self-build cowork local LLM", 60)
+    row = {
+        "role": ROLE,
+        "ok": bool(applied.get("ok") or proof.get("ok")),
+        "backend": "ollama_local",
+        "idea": idea[:500],
+        "applied": applied,
+        "verified": proof.get("ok"),
+        "plan": doc.get("path"),
+        "task": out,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
     stamp = _root() / "artifacts" / "self_build_role.json"
-    stamp.parent.mkdir(parents=True, exist_ok=True)
-    row = {"role": ROLE, "ok": True, "plan": doc.get("path"), "task": out, "ts": datetime.now(timezone.utc).isoformat()}
     stamp.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row

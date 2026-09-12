@@ -32,3 +32,10 @@ def test_mark_alive() -> None:
     row = mark_alive()
     assert row["alive"] is True
     assert (ROOT / "artifacts" / "app_alive.json").is_file()
+
+
+def test_ensure_keepalive_offbox() -> None:
+    from scripts.ether_app import ensure_keepalive
+    row = ensure_keepalive()
+    assert row["ok"] is True
+    assert "armed" in row

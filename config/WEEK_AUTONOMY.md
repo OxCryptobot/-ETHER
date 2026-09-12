@@ -1,14 +1,15 @@
-# Week autonomy (2026-09-12c)
+# Week autonomy (2026-09-12d)
 
-One face. One writer.
+Two seats only: ETHER app (writer) and Control Matrix (face).
 
-- Face: Grok Control Matrix (this preview / etherbot). READ-ONLY.
-- Writer: ETHER.exe / ether_host on the 1650. Headless.
-- `:8787` local Control Matrix HTML is RETIRED. Do not open it.
-- FAST matrix-worker stamps energy/board/role when pending is empty.
+## Operator surface
+- Open the existing ETHER app. That process pulls origin, starts Ollama when present, ticks energy/role, and arms hidden logon keepalive.
+- Matrix is READ-ONLY. Pull origin. Dual chat. Gem map. No shell. No second installer.
 
-Do not:
-- Build a new installer this week
-- Lift training wheels / ETHER_SOFT_LAUNCH
-- Write GitHub from the Matrix
-- Ask the operator to run another PowerShell block while the host is alive
+## Live now
+- FAST matrix-worker publishes gem_energy / board / role every drain + every 4h.
+- App boot registers ETHER-keepalive itself. No PowerShell paste.
+
+## Still blocked until the app is open on the 1650
+- Ollama 4B lane
+- Soft launch (wheels stay ON)

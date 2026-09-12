@@ -16,6 +16,7 @@ os.environ["ETHER_ROOT"] = str(ROOT)
 from scripts.live_host import consume, ollama_up, start_ollama
 from scripts.ether_tools import list_tree, run_allowlisted
 from scripts import ether_cowork
+from scripts import ether_role
 
 DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "http://127.0.0.1:7843/")
 GATES = [
@@ -109,6 +110,7 @@ def boot() -> Dict[str, Any]:
     }
     try:
         att["cowork"] = ether_cowork.run_task("boot")
+        att["role"] = ether_role.tick()
     except Exception as exc:
         att["cowork"] = {"ok": False, "error": type(exc).__name__}
     _push_attach()

@@ -38,6 +38,25 @@ def _parse_patch(text: str) -> Dict[str, str] | None:
     return None
 
 
+
+def run_tools(text: str) -> Dict[str, Any]:
+    from scripts.ether_tools import search
+    from scripts.ether_app import edit_file
+    actions = []
+    for line in (text or "").splitlines():
+        if line.startswith("GREP:"):
+            actions.append({"grep": search(line[5:].strip())[:10]})
+        elif line.startswith("DELIVER:"):
+            actions.append({"deliver": deliver(line[8:].strip()[:40], text[:800])})
+        elif line.startswith("FOLDER:"):
+            from scripts.ether_cowork import set_folder
+            actions.append({"folder": set_folder(line[7:].strip())})
+    patch = _parse_patch(text)
+    if patch:
+        actions.append({"edit": edit_file(patch["path"], patch["old"], patch["new"])})
+    return {"n": len(actions), "actions": actions}
+
+
 def tick() -> Dict[str, Any]:
     """Local-LLM self-build turn. Grok is not called."""
     from scripts.ether_app import ask_model, edit_file, verify
@@ -47,6 +66,7 @@ def tick() -> Dict[str, Any]:
     brief = brief_path.read_text(encoding="utf-8") if brief_path.is_file() else "local cowork builder"
     prompt = brief + "\n\nReply with PATH:/OLD:/NEW: for artifacts/ or a short note."
     idea = ask_model(prompt)
+    tools = run_tools(idea)
     patch = _parse_patch(idea)
     applied = {"ok": False, "reason": "no_parse_or_ollama_down"}
     note = _root() / "artifacts" / "self_build_note.txt"
@@ -71,6 +91,7 @@ def tick() -> Dict[str, Any]:
         "ok": bool(applied.get("ok") or proof.get("ok")),
         "backend": "ollama_local",
         "idea": idea[:500],
+        "tools": tools,
         "applied": applied,
         "verified": proof.get("ok"),
         "plan": doc.get("path"),

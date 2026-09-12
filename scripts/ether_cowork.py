@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 def _root() -> Path:
-    return Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER").resolve()
+    env = os.environ.get("ETHER_ROOT")
+    if env:
+        p = Path(env)
+        if (p / "scripts").is_dir():
+            return p.resolve()
+    win = Path(r"C:\Users\Otcde\ETHER")
+    if (win / "scripts").is_dir():
+        return win.resolve()
+    return Path(__file__).resolve().parents[1]
 
 
 ROOT = _root()

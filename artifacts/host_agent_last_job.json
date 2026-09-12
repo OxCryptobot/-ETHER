@@ -1,10 +1,9 @@
 {
-  "job_id": "exe_boot_20260912d",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-12T04:11:03.306205+00:00",
-  "note": "1650 exe boot: start ollama, stamp attach, week tick [failure_type=timeout]",
+  "job_id": "ss_tool_runtime_040351_3",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-12T04:11:13.307696+00:00",
+  "note": "steady: tool_runtime + AST gate",
   "class": "fast",
-  "measurement": true,
-  "failure_type": "timeout"
+  "measurement": false
 }

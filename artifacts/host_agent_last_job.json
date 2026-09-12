@@ -1,9 +1,15 @@
 {
-  "job_id": "ss_train_gates_035753_4",
+  "job_id": "ss_honest_live_report_040333_2",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T04:03:47.265332+00:00",
-  "note": "steady: doctrine + preference integrity",
-  "class": "fast",
-  "measurement": false
+  "finished": "2026-09-12T04:03:52.719004+00:00",
+  "note": "steady: publish honest live tool-path rates",
+  "class": "measure",
+  "measurement": true,
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

@@ -1,30 +1,30 @@
 <!doctype html>
-<html><head><meta charset="utf-8"/><title>ETHER Control Matrix</title>
+<html><head><meta charset="utf-8"/><title>ETHER</title>
 <link rel="stylesheet" href="/matrix.css"/></head>
 <body>
 <div id="app">
 <header>
-  <h1>ETHER CONTROL MATRIX</h1>
-  <span class="k" id="stamp">local cockpit</span>
-  <button onclick="post('/start')">Start LIVE</button>
-  <button onclick="post('/stop')">Stop LIVE</button>
-  <button onclick="post('/update')">Update</button>
+  <h1>ETHER</h1>
+  <span class="dot" id="dot"></span>
+  <span class="stat" id="stat">starting…</span>
+  <button onclick="post('/start')">Start</button>
+  <button onclick="post('/stop')" style="background:#3a3834;color:#f5f2eb">Stop</button>
 </header>
-<section class="rail">
-  <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
-  <div class="card"><div class="k">LANE</div><div class="v" id="lane">—</div></div>
-  <div class="card"><div class="k">ROLE</div><div class="v" id="role">—</div></div>
-  <div class="card"><div class="k">GEN</div><div class="v" id="gen">—</div></div>
-  <div class="card"><div class="k">TASKS</div><div class="v" id="tn">—</div></div>
-  <div class="card"><div class="k">QUEUE</div><div class="v" id="qn">—</div></div>
+<aside>
+  <h2>Tasks</h2>
+  <div id="board"></div>
+</aside>
+<section id="chat">
+  <div class="msg"><div class="who">System</div><div class="bubble" id="left">Local Cowork. 4B on this machine. Ask in the box below.</div></div>
 </section>
-<div id="mid">
-  <div class="pane"><h2>HOST 4B / STATUS</h2><pre id="left">waiting for /status</pre></div>
-  <div class="pane"><h2>TASKS</h2><div id="board"></div></div>
-  <div class="pane"><h2>QUEUE</h2><div id="queue"></div><h2>GROK</h2><pre id="groklog">optional</pre></div>
-</div>
+<aside id="right">
+  <h2>Queue</h2>
+  <div id="queue"></div>
+  <h2>Status</h2>
+  <div class="item" id="meta">—</div>
+</aside>
 <footer>
-  <input id="q" placeholder="Ask local 4B…" onkeydown="if(event.key==='Enter')ask()"/>
+  <input id="q" placeholder="What should ETHER do?" onkeydown="if(event.key==='Enter')ask()"/>
   <button onclick="ask()">Send</button>
 </footer>
 </div>

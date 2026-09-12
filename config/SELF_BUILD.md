@@ -17,3 +17,5 @@ GREP: term
 DELIVER: title
 FOLDER: C:\\path
 PATH:/OLD:/NEW: under artifacts/
+
+R4: PATH may be scripts/ether_*.py. Host runs verify() after the edit.

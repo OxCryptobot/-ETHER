@@ -1,12 +1,14 @@
 """Local Cowork board — tasks the desktop agent works."""
 from __future__ import annotations
 
+import os
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 BOARD = ROOT / "artifacts" / "cowork_board.json"
 
 

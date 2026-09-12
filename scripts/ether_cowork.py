@@ -109,3 +109,35 @@ def due() -> bool:
         return True
     except Exception:
         return False
+
+
+def due_now() -> bool:
+    p = _root() / "artifacts" / "cowork_schedule.json"
+    if not p.is_file():
+        return False
+    try:
+        row = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    every = int(row.get("every_min") or 60)
+    last = str(row.get("last_run") or "")
+    if not last:
+        return True
+    try:
+        from datetime import datetime, timezone
+        ts = datetime.fromisoformat(last.replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - ts).total_seconds() >= every * 60
+    except Exception:
+        return True
+
+
+def mark_ran() -> None:
+    p = _root() / "artifacts" / "cowork_schedule.json"
+    if not p.is_file():
+        return
+    try:
+        row = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    row["last_run"] = _now()
+    p.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")

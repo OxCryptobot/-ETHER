@@ -20,3 +20,10 @@ def test_run_task() -> None:
     out = run_task("live_host")
     assert out["ok"] is True
     assert out["deliverable"].endswith(".md")
+
+
+def test_schedule() -> None:
+    from scripts.ether_cowork import schedule, due
+    row = schedule("daily brief", 60)
+    assert row["every_min"] == 60
+    assert due() is True

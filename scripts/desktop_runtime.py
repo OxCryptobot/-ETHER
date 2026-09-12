@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@ETHER single-window desktop runtime (OneDrive-safe)."""
+"""@ETHER single-window desktop runtime (OneDrive-safe). Local UI retired."""
 
 from __future__ import annotations
 
@@ -9,11 +9,9 @@ import subprocess
 import sys
 import threading
 import time
-import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-# Prefer ETHER_ROOT from launcher; else this file's repo parent
 _env_root = os.environ.get("ETHER_ROOT", "").strip().strip('"')
 if _env_root and (Path(_env_root) / "scripts" / "desktop_runtime.py").exists():
     ROOT = Path(_env_root).resolve()
@@ -34,25 +32,20 @@ except Exception:
         return None
 
 
-# .env must load BEFORE these setdefault() calls — the loader never overrides
-# an already-set variable, so doing it the other way round silently ignored an
-# operator's ETHER_FLYWHEEL_PUSH=0 and force-enabled ETHER_GIT_RESET_OK.
 load_dotenv(ROOT / ".env")
 
 os.environ.setdefault("ETHER_GIT_RESET_OK", "1")
 os.environ.setdefault("ETHER_PULL_SOFT", "1")
-# MEAS-005: report pushes are operator opt-in (ETHER_FLYWHEEL_PUSH=1 in .env); default off
 os.environ.setdefault("ETHER_FLYWHEEL_PUSH", "0")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["PYTHONPATH"] = str(ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")
-
 
 load_dotenv(ROOT / ".env")
 
 PY = sys.executable
 PORT = int(os.getenv("ETHER_DASH_PORT", "8787"))
 INTERVAL = int(os.getenv("ETHER_FLYWHEEL_INTERVAL", "900"))
-OPEN_BROWSER = os.getenv("ETHER_OPEN_BROWSER", "1") == "1"
+OPEN_BROWSER = os.getenv("ETHER_OPEN_BROWSER", "0") == "1"
 SKIP_GIT = os.getenv("ETHER_DESKTOP_SKIP_GIT", "0") == "1"
 
 _stop = threading.Event()
@@ -102,7 +95,7 @@ def git_update() -> None:
 
 
 def run_dashboard(port: int) -> None:
-    log(f"dashboard: http://127.0.0.1:{port}")
+    log(f"local-api: http://127.0.0.1:{port}/api/health (HTML retired)")
     try:
         import uvicorn
 
@@ -114,7 +107,7 @@ def run_dashboard(port: int) -> None:
             log_level="warning",
         )
     except Exception as e:
-        log(f"dashboard error: {e}")
+        log(f"local-api error: {e}")
 
 
 def run_flywheel_loop() -> None:
@@ -146,7 +139,8 @@ def run_flywheel_loop() -> None:
 
 def main() -> int:
     print("=" * 60, flush=True)
-    print("  @ETHER DESKTOP RUNTIME", flush=True)
+    print("  @ETHER DESKTOP RUNTIME — headless writer", flush=True)
+    print("  FACE: Grok Control Matrix (not :8787)", flush=True)
     print(f"  root: {ROOT}", flush=True)
     print(f"  python: {PY}", flush=True)
     print("  Ctrl+C to stop", flush=True)
@@ -166,25 +160,19 @@ def main() -> int:
     port = pick_port(PORT)
     os.environ["ETHER_DASH_PORT"] = str(port)
 
-    t_dash = threading.Thread(target=run_dashboard, args=(port,), name="dashboard", daemon=True)
+    t_dash = threading.Thread(target=run_dashboard, args=(port,), name="local-api", daemon=True)
     t_fw = threading.Thread(target=run_flywheel_loop, name="flywheel", daemon=True)
     t_dash.start()
     t_fw.start()
 
     if OPEN_BROWSER:
-        time.sleep(2.0)
-        url = f"http://127.0.0.1:{port}"
-        log(f"opening {url}")
-        try:
-            webbrowser.open(url)
-        except Exception as e:
-            log(f"browser: {e}")
+        log("ETHER_OPEN_BROWSER=1 ignored — local Control Matrix HTML is retired")
 
-    log("running — leave this window open")
+    log("running — leave this window open. Face is the Grok Matrix.")
     try:
         while t_dash.is_alive():
             time.sleep(1)
-        log("dashboard exited")
+        log("local-api exited")
         return 1
     except KeyboardInterrupt:
         log("stopping…")

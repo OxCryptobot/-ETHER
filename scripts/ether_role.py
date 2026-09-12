@@ -33,7 +33,10 @@ def _parse_patch(text: str) -> Dict[str, str] | None:
             old = line[4:].strip()
         elif line.startswith("NEW:"):
             new = line[4:].strip()
-    if path.startswith("artifacts/") and old and new:
+    allowed = path.startswith("artifacts/") or path.startswith("config/") or (
+        path.startswith("scripts/ether_") and path.endswith(".py")
+    )
+    if allowed and old and new:
         return {"path": path, "old": old, "new": new}
     return None
 

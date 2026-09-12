@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 
 from scripts.live_host import consume, ollama_up, start_ollama
 from scripts.ether_tools import list_tree, run_allowlisted
+from scripts import ether_cowork
 
 ROOT = Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER")
 if not (ROOT / "scripts").is_dir():
@@ -122,6 +123,8 @@ def agent_turn(text: str) -> Dict[str, Any]:
     q = (text or "").strip()
     low = q.lower()
     actions: List[str] = []
+    if low.startswith('task '):
+        actions.append('task:' + str(ether_cowork.add(q[5:].strip())))
     if low.startswith("edit ") and "->" in q:
         try:
             rest = q[5:]

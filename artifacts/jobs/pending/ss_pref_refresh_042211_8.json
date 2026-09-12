@@ -1,0 +1,18 @@
+{
+  "id": "ss_pref_refresh_042211_8",
+  "note": "steady: preference + strategy_stats refresh",
+  "source": "foreman_steady",
+  "created": "2026-09-12T04:22:11.644024+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from core.preference import rlhf_tick; import json; print(json.dumps(rlhf_tick(), indent=2))"
+      ],
+      "timeout": 180
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

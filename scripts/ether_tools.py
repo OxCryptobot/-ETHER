@@ -40,3 +40,33 @@ def run_allowlisted(kind: str, cwd: Path | None = None) -> Dict[str, Any]:
         }
     except Exception as exc:
         return {"ok": False, "kind": kind, "error": type(exc).__name__}
+
+
+def apply_replace(rel: str, old: str, new: str, root: Path | None = None) -> Dict[str, Any]:
+    base = root or ROOT
+    target = (base / rel).resolve()
+    target.relative_to(base.resolve())
+    txt = target.read_text(encoding="utf-8")
+    if old not in txt:
+        return {"ok": False, "error": "not_found", "path": rel}
+    target.write_text(txt.replace(old, new, 1), encoding="utf-8")
+    return {"ok": True, "path": rel}
+
+
+def search(q: str, limit: int = 30, root: Path | None = None) -> List[str]:
+    base = root or ROOT
+    needle = (q or "").lower()
+    hits: List[str] = []
+    if not needle:
+        return hits
+    for p in base.rglob("*.py"):
+        if any(part.startswith(".") for part in p.parts):
+            continue
+        try:
+            if needle in p.read_text(encoding="utf-8", errors="ignore").lower():
+                hits.append(str(p.relative_to(base)))
+        except Exception:
+            continue
+        if len(hits) >= limit:
+            break
+    return hits

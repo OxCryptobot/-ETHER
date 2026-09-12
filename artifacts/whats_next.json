@@ -1,10 +1,13 @@
 {
-  "generated": "2026-09-09T08:12:35.386958+00:00",
-  "next_job": null,
-  "queue_head": [],
-  "queue_depth": 0,
-  "host_phase": "polling",
-  "last_job": "walk_expand2",
+  "generated": "2026-09-12T03:54:59.289125+00:00",
+  "next_job": "ss_honest_live_report_035459_2",
+  "queue_head": [
+    "ss_honest_live_report_035459_2",
+    "ss_microbench_035459_1"
+  ],
+  "queue_depth": 2,
+  "host_phase": "starting",
+  "last_job": "gem_energy_20260912",
   "last_ok": true,
   "last_failure_type": null,
   "phase_board": [
@@ -36,7 +39,7 @@
   ],
   "signals": {
     "context": "context:HOT util=0.9986",
-    "model_router": "lanes fast=qwen3.5:4b-q4_K_M live=qwen3.5:4b-q4_K_M",
+    "model_router": "lanes: default",
     "timeout_retirement": "timeout_retire rate=0.0738 action=timeout_rate_under_target",
     "adapter_default_off": true
   },

@@ -272,6 +272,29 @@ def ask_model_stream(text: str):
         yield type(exc).__name__
 
 
+def ask_grok(text: str) -> str:
+    key = os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY") or ""
+    if not key:
+        return "Grok pane: set XAI_API_KEY on this PC. 4B stays local."
+    import urllib.request
+    body = json.dumps({
+        "model": "grok-4",
+        "messages": [{"role": "user", "content": text}],
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.x.ai/v1/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode())
+        return str(data["choices"][0]["message"]["content"])[:4000]
+    except Exception as exc:
+        return type(exc).__name__
+
+
 def ask_model(text: str) -> str:
     if not ollama_up():
         return "host up. ollama down. FAST verify only."
@@ -550,6 +573,13 @@ def serve_local() -> None:
                     self.wfile.write(piece.encode())
                     self.wfile.flush()
                 return
+            if self.path.startswith("/ask_grok"):
+                text = str(payload.get("text") or "")
+                body = _json.dumps({"reply": ask_grok(text)}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers(); self.wfile.write(body); return
             if self.path.startswith("/ask"):
                 text = str(payload.get("text") or "")
                 body = _json.dumps(agent_turn(text)).encode()

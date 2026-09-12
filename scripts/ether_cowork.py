@@ -56,3 +56,19 @@ def deliver(title: str, body: str) -> Dict[str, Any]:
     path.write_text("# " + title + "\n\n" + body + "\n", encoding="utf-8")
     row = add("deliverable:" + title)
     return {"ok": True, "path": str(path.relative_to(ROOT)), "task": row}
+
+
+def run_task(title: str) -> Dict[str, Any]:
+    from scripts.ether_tools import search, list_tree
+    files = search(title.split()[0] if title else "ether")[:8] or list_tree(8)
+    notes = []
+    for rel in files[:3]:
+        p = ROOT / rel
+        try:
+            notes.append(rel + "\n" + p.read_text(encoding="utf-8", errors="ignore")[:400])
+        except Exception:
+            continue
+    body = "Task: " + title + "\n\n" + "\n\n".join(notes)
+    out = deliver(title, body)
+    close(out["task"]["id"])
+    return {"ok": True, "files": files, "deliverable": out["path"]}

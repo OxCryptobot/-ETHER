@@ -69,13 +69,11 @@ def update_self() -> Dict[str, Any]:
         if proc.returncode == 0 and src.is_file():
             dest = ROOT / "ETHER.exe.new"
             dest.write_bytes(src.read_bytes())
-            bat = ROOT / "artifacts" / "swap_ether.cmd"
-            bat.write_text(
-                "@echo off\r\ncd /d " + str(ROOT) + "\r\ntimeout /t 3 /nobreak >nul\r\nmove /y ETHER.exe.new ETHER.exe\r\nstart \"\" ETHER.exe\r\n",
-                encoding="utf-8",
-            )
-            subprocess.Popen(["cmd", "/c", str(bat)], cwd=str(ROOT), close_fds=True)
-            return {"ok": True, "pending": str(dest), "swap": str(bat)}
+            return {
+                "ok": True,
+                "pending": str(dest),
+                "note": "Close ETHER, rename ETHER.exe.new to ETHER.exe, start from Explorer. Do not launch from cmd.",
+            }
         return {"ok": False, "tail": ((proc.stdout or "") + (proc.stderr or ""))[-300:]}
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__}

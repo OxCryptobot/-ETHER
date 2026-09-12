@@ -1,10 +1,15 @@
 {
-  "job_id": "gem_energy_20260912",
+  "job_id": "ss_honest_live_report_035459_2",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T03:52:03.982061+00:00",
-  "note": "FAST drain on matrix-worker. Dual chat locked.",
-  "class": "fast",
+  "finished": "2026-09-12T03:55:05.315987+00:00",
+  "note": "steady: publish honest live tool-path rates",
+  "class": "measure",
   "measurement": true,
-  "tail": "     \"n\": 0,\n      \"active\": false\n    },\n    {\n      \"gem\": \"amethyst\",\n      \"n\": 0,\n      \"active\": false\n    },\n    {\n      \"gem\": \"black-tourmaline\",\n      \"n\": 0,\n      \"active\": false\n    },\n    {\n      \"gem\": \"labradorite\",\n      \"n\": 150,\n      \"active\": false\n    },\n    {\n      \"gem\": \"grandidierite\",\n      \"n\": 0,\n      \"active\": false\n    }\n  ],\n  \"path\": \"artifacts/gem_energy.json\"\n}\n"
+  "live_budget": {
+    "max_wall_s": 300,
+    "max_steps": 10,
+    "step_timeout_s": 50,
+    "budget_class": "measurement"
+  }
 }

@@ -1,12 +1,14 @@
 {
-  "generated": "2026-09-12T03:54:59.289125+00:00",
+  "generated": "2026-09-12T03:55:03.169768+00:00",
   "next_job": "ss_honest_live_report_035459_2",
   "queue_head": [
     "ss_honest_live_report_035459_2",
-    "ss_microbench_035459_1"
+    "ss_microbench_035459_1",
+    "ss_tool_runtime_035503_3",
+    "ss_train_gates_035503_4"
   ],
-  "queue_depth": 2,
-  "host_phase": "starting",
+  "queue_depth": 4,
+  "host_phase": "polling",
   "last_job": "gem_energy_20260912",
   "last_ok": true,
   "last_failure_type": null,

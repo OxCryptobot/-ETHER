@@ -35,3 +35,9 @@ def test_due_now() -> None:
     assert due_now() is True
     mark_ran()
     assert due_now() is False
+
+
+def test_set_folder(tmp_path) -> None:
+    from scripts.ether_cowork import set_folder
+    out = set_folder(str(tmp_path))
+    assert out["ok"] is True

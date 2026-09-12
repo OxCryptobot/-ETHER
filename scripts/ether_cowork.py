@@ -141,3 +141,14 @@ def mark_ran() -> None:
         return
     row["last_run"] = _now()
     p.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+
+
+def set_folder(path: str) -> Dict[str, Any]:
+    p = Path(path)
+    if not p.is_dir():
+        return {"ok": False, "error": "not_dir"}
+    marker = p / ".ether_folder"
+    marker.write_text("cowork\n", encoding="utf-8")
+    cfg = _root() / "artifacts" / "cowork_folder.json"
+    cfg.write_text(json.dumps({"folder": str(p.resolve()), "ts": _now()}, indent=2) + "\n", encoding="utf-8")
+    return {"ok": True, "folder": str(p.resolve())}

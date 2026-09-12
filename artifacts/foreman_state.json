@@ -1443,9 +1443,10 @@
     "p1_53_live_tool_path_honest",
     "swarm_parallel_gems_smoke",
     "ctx_compress_v0",
-    "00_mcp_cq_spike_01"
+    "00_mcp_cq_spike_01",
+    "ss_microbench_035459_1"
   ],
-  "last_tick": "2026-09-12T03:55:08.770637+00:00",
+  "last_tick": "2026-09-12T03:56:43.945309+00:00",
   "mode": "steady",
   "teacher": "grok",
   "lessons_loaded": 36,
@@ -1465,5 +1466,8 @@
     "may_enqueue_steady": false,
     "max_enqueue_this_tick": 1,
     "training_wheels": true
-  }
+  },
+  "live_skip_remaining": 35,
+  "last_live_skip_reason": "ss_microbench_035459_1",
+  "last_playbook_skipped": "rate_limit:live_tool_path_timeout:timeout"
 }

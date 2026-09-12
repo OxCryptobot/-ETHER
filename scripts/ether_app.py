@@ -125,6 +125,8 @@ def agent_turn(text: str) -> Dict[str, Any]:
     actions: List[str] = []
     if low.startswith('task '):
         actions.append('task:' + str(ether_cowork.add(q[5:].strip())))
+    if low.startswith('deliver '):
+        actions.append('deliver:' + str(ether_cowork.deliver(q[8:].strip()[:40], ask_model(q))))
     if low.startswith("edit ") and "->" in q:
         try:
             rest = q[5:]

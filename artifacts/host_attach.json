@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12T04:14:38.850687+00:00",
+  "updated": "2026-09-12T04:15:51.597251+00:00",
   "ok": true,
   "fast_lane": "matrix-worker",
   "live_lane": "ollama_4b",
@@ -8,8 +8,5 @@
   "grok_bus": false,
   "cmd": "attach",
   "consumed": true,
-  "clobber": false,
-  "note": "Starts ollama serve when binary exists. Else grok_bus.",
-  "writer": "exe",
-  "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
+  "note": "Starts ollama serve when binary exists. Else grok_bus."
 }

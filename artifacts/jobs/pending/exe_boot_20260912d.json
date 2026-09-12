@@ -1,0 +1,16 @@
+{
+  "id": "exe_boot_20260912d",
+  "class": "fast",
+  "note": "1650 exe boot: start ollama, stamp attach, week tick",
+  "continue_on_fail": true,
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-c",
+        "from scripts.ether_app import boot, live_start; import json; b=boot(); s=live_start(); print(json.dumps({'booted':b.get('booted'),'ollama':b.get('ollama'),'lane':b.get('live_lane'),'started':b.get('ollama_started'),'cmd':s.get('cmd')}))"
+      ],
+      "timeout": 180
+    }
+  ]
+}

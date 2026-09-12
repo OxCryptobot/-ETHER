@@ -1,69 +1,74 @@
 <!doctype html>
-<html><head><meta charset="utf-8"/><title>ETHER</title>
+<html><head><meta charset="utf-8"/><title>ETHER Control Matrix</title>
 <style>
-:root{--bg:#0e1116;--fg:#e6edf3;--muted:#8b949e;--line:#30363d;--acc:#3fb950;--card:#161b22}
+:root{--bg:#07080a;--fg:#e8eaed;--muted:#8b939e;--line:#2a2f36;--acc:#3dd68c;--card:#10141a}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 ui-sans-serif,system-ui}
-#app{display:grid;grid-template-rows:48px 1fr 44px;height:100%}
-header{display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid var(--line)}
-h1{font-size:13px;letter-spacing:.16em;margin:0}
-.btn{background:#21262d;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
-#mid{display:grid;grid-template-columns:220px 1fr 1fr;min-height:0}
-aside,main,section{border-right:1px solid var(--line);overflow:auto;padding:10px}
-section{border-right:0}
-.k{color:var(--muted);font-size:10px;letter-spacing:.12em}
-.file{display:block;padding:3px 0;color:#79c0ff;cursor:pointer;font-family:ui-monospace,monospace;font-size:12px}
-pre{white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace;margin:8px 0}
-#chatlog{min-height:200px}
-footer{display:flex;gap:8px;padding:6px 10px;border-top:1px solid var(--line)}
+#app{display:grid;grid-template-rows:52px 72px 1fr 48px;height:100%}
+header{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line);letter-spacing:.12em}
+h1{font-size:13px;margin:0;font-weight:650}
+.btn{min-height:36px;padding:0 12px;border:0;border-radius:4px;background:#1c2229;color:var(--fg);cursor:pointer}
+.rail{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.card{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card)}
+.k{font-size:9px;letter-spacing:.14em;color:var(--muted)}
+.v{font:600 16px ui-monospace,monospace;margin-top:2px}
+.ok{color:var(--acc)}
+#mid{display:grid;grid-template-columns:1fr 1fr;min-height:0}
+.pane{border-right:1px solid var(--line);padding:12px;overflow:auto}
+.pane:last-child{border-right:0}
+pre{white-space:pre-wrap;font:12px/1.45 ui-monospace,monospace;color:var(--muted)}
+footer{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line)}
 footer input{flex:1;background:#0d1117;border:1px solid var(--line);color:var(--fg);border-radius:6px;padding:8px}
-.pill{margin-left:auto;font-family:ui-monospace,monospace;font-size:11px;color:var(--acc)}
 </style></head>
 <body>
 <div id="app">
 <header>
-  <h1>ETHER</h1>
+  <h1>ETHER CONTROL MATRIX</h1>
   <button class="btn" onclick="post('/start')">Start LIVE</button>
   <button class="btn" onclick="post('/stop')">Stop LIVE</button>
   <button class="btn" onclick="post('/run')">Run tests</button>
   <button class="btn" onclick="post('/update')">Update exe</button>
-  <span class="pill" id="stat">…</span>
+  <span class="k" id="stamp">local · no xAI</span>
 </header>
-<div id="mid">
-<aside><div class="k">FILES</div><div id="files"></div></aside>
-<main><div class="k">EDITOR</div><pre id="ed">select a file</pre></main>
-<section>
-  <div class="k">AGENT</div>
-  <div id="chatlog"></div>
+<section class="rail">
+  <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
+  <div class="card"><div class="k">LIVE LANE</div><div class="v" id="lane">—</div></div>
+  <div class="card"><div class="k">UPDATED</div><div class="v" id="updated">—</div></div>
+  <div class="card"><div class="k">TASKS</div><div class="v" id="tn">—</div></div>
+  <div class="card"><div class="k">HOST</div><div class="v">1650</div></div>
 </section>
+<div id="mid">
+  <div class="pane"><div class="k">HOST 4B</div><pre id="hostlog">local model + tools</pre></div>
+  <div class="pane"><div class="k">GROK / MATRIX</div><pre id="tasks">task board</pre></div>
 </div>
 <footer>
-  <input id="q" placeholder="Ask ETHER to work in this repo…" onkeydown="if(event.key==='Enter')ask()"/>
+  <input id="q" placeholder="Ask the local agent…" onkeydown="if(event.key==='Enter')ask()"/>
   <button class="btn" onclick="ask()">Send</button>
 </footer>
 </div>
 <script>
-async function j(u,opt){const r=await fetch(u,opt);return r.json()}
+async function j(u,o){const r=await fetch(u,o);return r.json()}
 async function health(){
   const h=await j('/health');
-  document.getElementById('stat').textContent=(h.ollama?'OLLAMA UP':'OLLAMA DOWN')+' · '+(h.live_lane||'—');
+  document.getElementById('ollama').textContent=h.ollama?'UP':'DOWN';
+  document.getElementById('ollama').className='v'+(h.ollama?' ok':'');
+  document.getElementById('lane').textContent=h.live_lane||'—';
+  document.getElementById('updated').textContent=(h.updated||'').slice(11,19)||'—';
+  document.getElementById('hostlog').textContent=JSON.stringify(h,null,2);
+  try{
+    const t=await j('/tasks');
+    const list=t.tasks||[];
+    document.getElementById('tn').textContent=String(list.length);
+    document.getElementById('tasks').textContent=list.slice(-12).map(x=> (x.status||'')+'  '+(x.title||x.id)).join('\\n')||'no tasks';
+  }catch(e){}
 }
-async function files(){
-  const d=await j('/files');
-  document.getElementById('files').innerHTML=(d.files||[]).map(f=>`<span class="file" onclick="openf('${f}')">${f}</span>`).join('');
-}
-async function openf(p){
-  const d=await j('/read?path='+encodeURIComponent(p));
-  document.getElementById('ed').textContent=d.text||d.error||'';
-}
-async function post(p){const d=await j(p,{method:'POST'}); note(JSON.stringify(d)); health()}
+async function post(p){const d=await j(p,{method:'POST'}); document.getElementById('hostlog').textContent=JSON.stringify(d,null,2); health()}
 async function ask(){
   const q=document.getElementById('q'); const t=q.value.trim(); if(!t)return; q.value='';
-  note('you: '+t);
   const d=await j('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
-  note('ether: '+(d.reply||d.tail||JSON.stringify(d)));
+  document.getElementById('hostlog').textContent=JSON.stringify(d,null,2);
+  health();
 }
-function note(s){const el=document.getElementById('chatlog'); el.textContent += s+'\n\n'}
-health(); files(); setInterval(health,5000);
+health(); setInterval(health,4000);
 </script>
 </body></html>

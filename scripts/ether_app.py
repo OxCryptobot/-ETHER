@@ -283,10 +283,10 @@ def _host_loop() -> None:
         cmd = live_start()
         if str(cmd.get("cmd") or "") == "stop":
             break
-        if ether_cowork.due():
+        if ether_cowork.due_now():
             try:
                 row = json.loads((ROOT / "artifacts" / "cowork_schedule.json").read_text(encoding="utf-8"))
-                ether_cowork.run_task(str(row.get("title") or "scheduled"))
+                ether_cowork.run_task(str(row.get("title") or "scheduled")); ether_cowork.mark_ran()
             except Exception:
                 pass
         time.sleep(60)

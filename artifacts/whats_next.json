@@ -1,18 +1,17 @@
 {
-  "generated": "2026-09-12T04:50:23.755952+00:00",
-  "next_job": "ss_measure_tick_045001_0",
+  "generated": "2026-09-12T04:52:28.061984+00:00",
+  "next_job": "ss_microbench_045013_1",
   "queue_head": [
-    "ss_measure_tick_045001_0",
     "ss_microbench_045013_1",
     "ss_pref_refresh_045001_8",
     "ss_tool_runtime_045023_3",
     "ss_train_gates_045023_4"
   ],
-  "queue_depth": 5,
+  "queue_depth": 4,
   "host_phase": "idle",
-  "last_job": "ss_honest_live_report_045013_2",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "ss_measure_tick_045001_0",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",

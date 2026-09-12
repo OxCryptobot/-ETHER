@@ -1,0 +1,18 @@
+{
+  "id": "ss_archive_failed_035657_7",
+  "note": "steady: archive old failed jobs",
+  "source": "foreman_steady",
+  "created": "2026-09-12T03:56:57.235732+00:00",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "-m",
+        "scripts.archive_failed"
+      ],
+      "timeout": 60
+    }
+  ],
+  "class": "fast",
+  "continue_on_fail": true
+}

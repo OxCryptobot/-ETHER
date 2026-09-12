@@ -1,9 +1,10 @@
 {
-  "job_id": "ss_train_gates_040351_4",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-12T04:07:22.436031+00:00",
-  "note": "steady: doctrine + preference integrity",
+  "job_id": "exe_boot_20260912d",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-09-12T04:11:03.306205+00:00",
+  "note": "1650 exe boot: start ollama, stamp attach, week tick [failure_type=timeout]",
   "class": "fast",
-  "measurement": false
+  "measurement": true,
+  "failure_type": "timeout"
 }

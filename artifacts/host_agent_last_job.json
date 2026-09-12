@@ -1,9 +1,9 @@
 {
-  "job_id": "ss_honest_live_report_041107_2",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-12T04:11:18.061681+00:00",
-  "note": "steady: publish honest live tool-path rates",
+  "job_id": "ss_microbench_040333_1",
+  "ok": false,
+  "rc": 124,
+  "finished": "2026-09-12T04:12:51.473218+00:00",
+  "note": "steady: microbench_schedule (skip if fresh <5m) [failure_type=timeout]",
   "class": "measure",
   "measurement": true,
   "live_budget": {
@@ -11,5 +11,6 @@
     "max_steps": 10,
     "step_timeout_s": 50,
     "budget_class": "measurement"
-  }
+  },
+  "failure_type": "timeout"
 }

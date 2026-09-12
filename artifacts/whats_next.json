@@ -1,17 +1,18 @@
 {
-  "generated": "2026-09-12T04:03:56.799272+00:00",
-  "next_job": "ss_microbench_035709_1",
+  "generated": "2026-09-12T04:07:20.553901+00:00",
+  "next_job": "exe_boot_20260912d",
   "queue_head": [
-    "ss_microbench_035709_1",
+    "exe_boot_20260912d",
+    "medic_hb_20260912_040530",
     "ss_microbench_040333_1",
     "ss_tool_runtime_040351_3",
     "ss_train_gates_040351_4"
   ],
-  "queue_depth": 4,
+  "queue_depth": 5,
   "host_phase": "idle",
-  "last_job": "ss_honest_live_report_040333_2",
-  "last_ok": true,
-  "last_failure_type": null,
+  "last_job": "ss_microbench_035709_1",
+  "last_ok": false,
+  "last_failure_type": "timeout",
   "phase_board": [
     {
       "id": "1A",
@@ -41,7 +42,7 @@
   ],
   "signals": {
     "context": "context:HOT util=0.9986",
-    "model_router": "lanes: default",
+    "model_router": "lanes fast=qwen3.5:4b-q4_K_M live=qwen3.5:4b-q4_K_M",
     "timeout_retirement": "timeout_retire rate=0.0738 action=timeout_rate_under_target",
     "adapter_default_off": true
   },

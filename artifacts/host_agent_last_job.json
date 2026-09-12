@@ -1,16 +1,9 @@
 {
-  "job_id": "ss_microbench_035709_1",
-  "ok": false,
-  "rc": 124,
-  "finished": "2026-09-12T04:05:26.873665+00:00",
-  "note": "steady: microbench_schedule (skip if fresh <5m) [failure_type=timeout]",
-  "class": "measure",
-  "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  },
-  "failure_type": "timeout"
+  "job_id": "ss_train_gates_040351_4",
+  "ok": true,
+  "rc": 0,
+  "finished": "2026-09-12T04:07:22.436031+00:00",
+  "note": "steady: doctrine + preference integrity",
+  "class": "fast",
+  "measurement": false
 }

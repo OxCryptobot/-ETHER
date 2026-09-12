@@ -402,6 +402,30 @@ def serve_local() -> None:
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers(); self.wfile.write(body); return
+            if self.path.startswith("/api/origin") or self.path.startswith("/origin"):
+                att = {}
+                p = ROOT / "artifacts" / "host_attach.json"
+                if p.is_file():
+                    try:
+                        att = _json.loads(p.read_text(encoding="utf-8"))
+                    except Exception:
+                        att = {}
+                snap = {
+                    "ok": True,
+                    "ollama": bool(att.get("ollama")),
+                    "live_lane": att.get("live_lane"),
+                    "updated": att.get("updated"),
+                    "source": "local-exe",
+                    "dashboard": DASHBOARD,
+                    "tasks": ether_cowork.load(),
+                    "view": "bus",
+                }
+                body = _json.dumps(snap).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers(); self.wfile.write(body); return
             if self.path.startswith("/health"):
                 att = {}
                 p = ROOT / "artifacts" / "host_attach.json"

@@ -1,15 +1,10 @@
 {
-  "job_id": "ss_honest_live_report_050927_2",
+  "job_id": "ss_tool_runtime_050927_3",
   "ok": true,
   "rc": 0,
-  "finished": "2026-09-12T05:09:39.990067+00:00",
-  "note": "steady: publish honest live tool-path rates",
-  "class": "measure",
+  "finished": "2026-09-12T05:12:54.781438+00:00",
+  "note": "FAST drain on matrix-worker. Dual chat locked.",
+  "class": "fast",
   "measurement": true,
-  "live_budget": {
-    "max_wall_s": 300,
-    "max_steps": 10,
-    "step_timeout_s": 50,
-    "budget_class": "measurement"
-  }
+  "tail": ".........................                                                [100%]\n"
 }

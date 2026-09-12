@@ -8,14 +8,14 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-from scripts.live_host import consume, ollama_up, start_ollama
-from scripts.ether_tools import list_tree, run_allowlisted
-from scripts import ether_cowork
-
 ROOT = Path(os.environ.get("ETHER_ROOT") or r"C:\Users\Otcde\ETHER")
 if not (ROOT / "scripts").is_dir():
     ROOT = Path(__file__).resolve().parents[1]
 os.environ["ETHER_ROOT"] = str(ROOT)
+
+from scripts.live_host import consume, ollama_up, start_ollama
+from scripts.ether_tools import list_tree, run_allowlisted
+from scripts import ether_cowork
 
 DASHBOARD = os.getenv("ETHER_DASHBOARD_URL", "http://127.0.0.1:7843/")
 GATES = [
@@ -52,6 +52,9 @@ def mark_alive() -> Dict[str, Any]:
     path = ROOT / "artifacts" / "app_alive.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    out = ROOT / "artifacts" / "cowork_out"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "boot.md").write_text("# boot\n\nalive\n", encoding="utf-8")
     return row
 
 

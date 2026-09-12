@@ -15,8 +15,11 @@ async function ask(){
   const el=document.getElementById('q'); const t=el.value.trim(); if(!t)return; el.value='';
   document.getElementById('left').textContent = '';
   const r = await fetch('/ask_stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
-  const txt = await r.text();
-  document.getElementById('left').textContent = txt;
+  document.getElementById('left').textContent = await r.text();
+  try {
+    const g = await j('/ask_grok',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
+    const box=document.getElementById('groklog'); if(box) box.textContent = g.reply || JSON.stringify(g);
+  } catch(e) {}
   probe();
 }
 probe(); setInterval(probe, 4000);

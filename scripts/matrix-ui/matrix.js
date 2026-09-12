@@ -23,3 +23,10 @@ async function ask(){
   probe();
 }
 probe(); setInterval(probe, 4000);
+
+function view(id){
+  const left=document.getElementById('left');
+  if(id==='gems'){ left.textContent='GEMS\nrose quartz / jade / sapphire / amethyst / citrine / emerald / opal / onyx'; return; }
+  if(id==='role'){ fetch('/api/origin').then(r=>r.json()).then(s=>{left.textContent='ROLE self_build_cowork\n'+JSON.stringify(s,null,2)}); return; }
+  probe();
+}

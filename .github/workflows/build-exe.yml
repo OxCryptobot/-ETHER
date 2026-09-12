@@ -2,7 +2,7 @@ name: build-exe
 on:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   windows:
     runs-on: windows-latest
@@ -23,3 +23,10 @@ jobs:
         with:
           name: ETHER-exe
           path: scripts/dist/ETHER.exe
+      - name: publish desktop release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete desktop --yes --cleanup-tag 2>$null
+          gh release create desktop scripts/dist/ETHER.exe --title "ETHER desktop" --notes "auto-update target" --latest

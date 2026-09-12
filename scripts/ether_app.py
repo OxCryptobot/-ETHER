@@ -1,6 +1,7 @@
 """ETHER host process. No popups. Boots attach + verified gem/agent contract."""
 from __future__ import annotations
 
+import atexit
 import json
 import os
 import subprocess
@@ -140,6 +141,13 @@ def live_start() -> Dict[str, Any]:
 
 def live_stop() -> Dict[str, Any]:
     return consume({"cmd": "stop"})
+
+
+def shutdown() -> None:
+    try:
+        live_stop()
+    except Exception:
+        pass
 
 
 def _git() -> str:
@@ -560,6 +568,7 @@ def product_window() -> str:
 
 def main() -> None:
     import threading
+    atexit.register(shutdown)
 
     threading.Thread(target=_host_loop, name="ether-host", daemon=True).start()
     threading.Thread(target=serve_local, name="ether-ui", daemon=True).start()

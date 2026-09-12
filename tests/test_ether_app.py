@@ -25,3 +25,10 @@ def test_agent_turn_and_edit() -> None:
     out = agent_turn("live_host")
     assert "reply" in out
     assert out["verified"] in {True, False}
+
+
+def test_mark_alive() -> None:
+    from scripts.ether_app import ROOT, mark_alive
+    row = mark_alive()
+    assert row["alive"] is True
+    assert (ROOT / "artifacts" / "app_alive.json").is_file()

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12T04:34:15.197444+00:00",
+  "updated": "2026-09-12T04:36:25.980512+00:00",
   "n_rows": 433,
   "honest_n": 402,
   "honest_rate": 0.9284,
@@ -19,7 +19,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 6,
-      "elapsed_s": 1.174,
+      "elapsed_s": 1.238,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -34,72 +34,7 @@
       "arm": "pipeline",
       "strategy": "tool_runtime_scripted",
       "_src": "scoreboard_ss_pipeline_scripted.json",
-      "_mtime": 1789187421.664788
-    },
-    {
-      "fixture": "ledger",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 6,
-      "elapsed_s": 1.703,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "read_file",
-        "write_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "policy": "scripted",
-      "arm": "direct",
-      "_src": "scoreboard_ss_direct.json",
-      "_mtime": 1789187415.2950485
-    },
-    {
-      "fixture": "topo",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.711,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "policy": "scripted",
-      "arm": "direct",
-      "_src": "scoreboard_ss_direct.json",
-      "_mtime": 1789187415.2950485
-    },
-    {
-      "fixture": "lru",
-      "tier": "hard",
-      "mode": "scripted",
-      "ok": true,
-      "score": 1.0,
-      "n_steps": 4,
-      "elapsed_s": 1.726,
-      "reason": "tests passed",
-      "tools": [
-        "list_files",
-        "read_file",
-        "write_file",
-        "run_tests"
-      ],
-      "model": "",
-      "policy": "scripted",
-      "arm": "direct",
-      "_src": "scoreboard_ss_direct.json",
-      "_mtime": 1789187415.2950485
+      "_mtime": 1789187684.9086926
     },
     {
       "fixture": "merge",
@@ -108,7 +43,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.737,
+      "elapsed_s": 1.78,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -120,7 +55,72 @@
       "policy": "scripted",
       "arm": "direct",
       "_src": "scoreboard_ss_direct.json",
-      "_mtime": 1789187415.2950485
+      "_mtime": 1789187678.9563982
+    },
+    {
+      "fixture": "lru",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 1.79,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789187678.9563982
+    },
+    {
+      "fixture": "topo",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 4,
+      "elapsed_s": 1.811,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789187678.9563982
+    },
+    {
+      "fixture": "ledger",
+      "tier": "hard",
+      "mode": "scripted",
+      "ok": true,
+      "score": 1.0,
+      "n_steps": 6,
+      "elapsed_s": 1.823,
+      "reason": "tests passed",
+      "tools": [
+        "list_files",
+        "read_file",
+        "read_file",
+        "write_file",
+        "write_file",
+        "run_tests"
+      ],
+      "model": "",
+      "policy": "scripted",
+      "arm": "direct",
+      "_src": "scoreboard_ss_direct.json",
+      "_mtime": 1789187678.9563982
     },
     {
       "fixture": "intervals",
@@ -129,7 +129,7 @@
       "ok": true,
       "score": 1.0,
       "n_steps": 4,
-      "elapsed_s": 1.316,
+      "elapsed_s": 1.205,
       "reason": "tests passed",
       "tools": [
         "list_files",
@@ -141,7 +141,7 @@
       "policy": "scripted",
       "arm": "direct",
       "_src": "scoreboard_ss_direct.json",
-      "_mtime": 1789187415.2950485
+      "_mtime": 1789187678.9563982
     },
     {
       "fixture": "ledger",

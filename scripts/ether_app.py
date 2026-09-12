@@ -376,7 +376,14 @@ def _host_loop() -> None:
         time.sleep(60)
 
 
+def _ui_root() -> Path:
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent
+
+
 def serve_local() -> None:
+
     from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
     from functools import partial
     import json as _json
@@ -490,9 +497,9 @@ def serve_local() -> None:
                 return
             if self.path in ("/", "/index.html", "/matrix.css", "/matrix.js"):
                 name = "index.html" if self.path in ("/", "/index.html") else self.path.lstrip("/")
-                cand = Path(__file__).with_name("matrix-ui") / name
+                cand = (_ui_root() / "matrix-ui") / name
                 if not cand.is_file():
-                    cand = Path(__file__).with_name("ether_ui.html") if name == "index.html" else cand
+                    cand = (_ui_root() / "ether_ui.html") if name == "index.html" else cand
                 page = cand.read_bytes() if cand.is_file() else b"missing"
                 self.send_response(200)
                 ctype = "text/css" if name.endswith(".css") else "application/javascript" if name.endswith(".js") else "text/html; charset=utf-8"

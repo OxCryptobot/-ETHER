@@ -1,32 +1,33 @@
 
-async function j(u,o){const r=await fetch(u,o); return r.json();}
+async function j(u,o){const r=await fetch(u,o);return r.json()}
+function rows(el, items, fmt){
+  el.innerHTML = items.length ? items.map(fmt).join("") : "<div class=k>empty</div>";
+}
 async function probe(){
-  const s = await j('/status');
-  document.getElementById('ollama').textContent = s.ollama ? 'UP' : 'DOWN';
-  document.getElementById('ollama').className = 'v ' + (s.ollama ? 'ok' : 'bad');
-  document.getElementById('lane').textContent = s.live_lane || '—';
-  document.getElementById('src').textContent = s.source || 'local';
-  document.getElementById('tn').textContent = String((s.tasks||[]).length);
-  document.getElementById('left').textContent = 'STATUS\nollama='+s.ollama+'\nlane='+(s.live_lane||'')+'\ngen='+(s.generation||0)+'\nrole='+(s.role||'')+'\nidea='+(s.idea||'')+'\nqueue\n'+(s.queue||[]).join('\n');
-  const b=document.getElementById('board'); if(b){ b.innerHTML=(s.tasks||[]).slice(-20).map(t=>'<div class=card><div class=k>'+(t.status||'')+'</div><div>'+(t.title||t.id)+'</div></div>').join('')||'<div class=k>no tasks</div>'; }
+  let s;
+  try { s = await j("/status"); } catch(e) { s = await j("/api/origin"); }
+  const up = !!s.ollama;
+  document.getElementById("ollama").textContent = up ? "UP" : "DOWN";
+  document.getElementById("ollama").className = "v " + (up ? "ok" : "bad");
+  document.getElementById("lane").textContent = s.live_lane || "—";
+  document.getElementById("role").textContent = s.role || "—";
+  document.getElementById("gen").textContent = s.generation == null ? "—" : String(s.generation);
+  const tasks = s.tasks || [];
+  const queue = s.queue || [];
+  document.getElementById("tn").textContent = String(tasks.length);
+  document.getElementById("qn").textContent = String(queue.length);
+  document.getElementById("left").textContent =
+    "ollama " + up + "\nlane " + (s.live_lane||"") + "\nupdated " + (s.updated||"") +
+    "\nrole " + (s.role||"") + "\ngen " + (s.generation||0) + "\n" + (s.idea||"");
+  rows(document.getElementById("board"), tasks.slice(-16), t =>
+    "<div class=row><div class=k>"+(t.status||"")+"</div><div>"+(t.title||t.id)+"</div></div>");
+  rows(document.getElementById("queue"), queue, n => "<div class=row>"+n+"</div>");
 }
-async function post(p){ document.getElementById('left').textContent = JSON.stringify(await j(p,{method:'POST'}),null,2); probe(); }
+async function post(p){ await j(p,{method:"POST"}); probe(); }
 async function ask(){
-  const el=document.getElementById('q'); const t=el.value.trim(); if(!t)return; el.value='';
-  document.getElementById('left').textContent = '';
-  const r = await fetch('/ask_stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
-  document.getElementById('left').textContent = await r.text();
-  try {
-    const g = await j('/ask_grok',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
-    const box=document.getElementById('groklog'); if(box) box.textContent = g.reply || JSON.stringify(g);
-  } catch(e) {}
+  const el=document.getElementById("q"); const t=el.value.trim(); if(!t)return; el.value="";
+  const r=await fetch("/ask_stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
+  document.getElementById("left").textContent = await r.text();
   probe();
 }
-probe(); setInterval(probe, 4000);
-
-function view(id){
-  const left=document.getElementById('left');
-  if(id==='gems'){ left.textContent='GEMS\nrose quartz / jade / sapphire / amethyst / citrine / emerald / opal / onyx'; return; }
-  if(id==='role'){ fetch('/api/origin').then(r=>r.json()).then(s=>{left.textContent='ROLE self_build_cowork\n'+JSON.stringify(s,null,2)}); return; }
-  probe();
-}
+probe(); setInterval(probe, 3000);

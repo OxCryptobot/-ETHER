@@ -383,6 +383,12 @@ def serve_local() -> None:
                 self.end_headers()
                 self.wfile.write(body)
                 return
+            if self.path.startswith("/tasks"):
+                body = _json.dumps({"tasks": ether_cowork.load()}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers(); self.wfile.write(body); return
             if self.path.startswith("/health"):
                 att = {}
                 p = ROOT / "artifacts" / "host_attach.json"

@@ -42,6 +42,27 @@ def verify() -> Dict[str, Any]:
         return {"ok": False, "rc": 1, "gates": GATES, "tail": type(exc).__name__}
 
 
+def update_self() -> Dict[str, Any]:
+    """Pull latest desktop release next to this exe. Swap on next start."""
+    dest = ROOT / "ETHER.exe.new"
+    gh = r"C:\Program Files\GitHub CLI\gh.exe"
+    if not Path(gh).is_file():
+        gh = "gh"
+    try:
+        proc = subprocess.run(
+            [gh, "release", "download", "desktop", "-p", "ETHER.exe", "-D", str(ROOT), "--clobber"],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        downloaded = ROOT / "ETHER.exe"
+        # download overwrites name ETHER.exe which is locked; use -O
+        return {"ok": proc.returncode == 0, "tail": ((proc.stdout or "") + (proc.stderr or ""))[-300:]}
+    except Exception as exc:
+        return {"ok": False, "error": type(exc).__name__}
+
+
 def mark_alive() -> Dict[str, Any]:
     row = {
         "alive": True,
@@ -59,12 +80,14 @@ def mark_alive() -> Dict[str, Any]:
 
 
 def boot() -> Dict[str, Any]:
+    upd = update_self()
     alive = mark_alive()
     ollama = start_ollama()
     att = consume({"cmd": "attach"})
     proof = verify()
     att["booted"] = True
     att["alive"] = alive
+    att["update"] = upd
     att["ollama_started"] = ollama
     att["dashboard"] = DASHBOARD
     att["verified"] = proof

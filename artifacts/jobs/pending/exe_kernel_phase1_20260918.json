@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase1_20260918",
+  "class": "fast",
+  "note": "kernel contracts: honest pass, writer, plan, edit tx",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase1.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

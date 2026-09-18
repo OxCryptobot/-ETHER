@@ -1,15 +1,5 @@
-# Week autonomy (2026-09-12d)
+# Week autonomy
 
-Two seats only: ETHER app (writer) and Control Matrix (face).
-
-## Operator surface
-- Open the existing ETHER app. That process pulls origin, starts Ollama when present, ticks energy/role, and arms hidden logon keepalive.
-- Matrix is READ-ONLY. Pull origin. Dual chat. Gem map. No shell. No second installer.
-
-## Live now
-- FAST matrix-worker publishes gem_energy / board / role every drain + every 4h.
-- App boot registers ETHER-keepalive itself. No PowerShell paste.
-
-## Still blocked until the app is open on the 1650
-- Ollama 4B lane
-- Soft launch (wheels stay ON)
+Two seats: ETHER.exe writer. Control Matrix read-only face.
+Kernel phase 1 is on origin (core/kernel). Soft launch BLOCKED. Wheels ON.
+Open the existing ETHER app to drain FIFO.

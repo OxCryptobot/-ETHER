@@ -25,7 +25,6 @@ def _now() -> str:
 def _ollama() -> bool:
     try:
         from scripts.live_host import ollama_up
-
         return bool(ollama_up())
     except Exception:
         return False
@@ -35,13 +34,17 @@ def tick(push: bool = False) -> Dict[str, Any]:
     root = _root()
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
+    try:
+        from scripts.drain_live_fifo import drain as drain_live
+        drain_live()
+    except Exception:
+        pass
 
     ollama = _ollama()
     gem = "rose-quartz" if ollama else "citrine"
     energy: Dict[str, Any] = {}
     try:
         from core.gem_energy import bump
-
         energy = bump(gem, job="week_tick")
     except Exception as exc:
         energy = {"ok": False, "error": type(exc).__name__}
@@ -60,7 +63,6 @@ def tick(push: bool = False) -> Dict[str, Any]:
     if ollama:
         try:
             from scripts.ether_role import tick as role_tick
-
             role = role_tick()
         except Exception as exc:
             role = {"role": "self_build_cowork", "ok": False, "error": type(exc).__name__, "idea": idea}
@@ -86,28 +88,9 @@ def tick(push: bool = False) -> Dict[str, Any]:
 
     trace = art / "self_build_trace.jsonl"
     with trace.open("a", encoding="utf-8") as fh:
-        fh.write(
-            json.dumps(
-                {
-                    "ts": _now(),
-                    "idea": idea,
-                    "generation": role.get("generation"),
-                    "verified": bool(role.get("verified")),
-                    "ollama": ollama,
-                    "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem,
-                }
-            )[:800]
-            + "\n"
-        )
+        fh.write(json.dumps({"ts": _now(), "idea": idea, "generation": role.get("generation"), "verified": bool(role.get("verified")), "ollama": ollama, "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem})[:800] + "\n")
 
-    row = {
-        "ok": True,
-        "ts": _now(),
-        "ollama": ollama,
-        "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem,
-        "generation": role.get("generation"),
-        "board_n": len(board),
-    }
+    row = {"ok": True, "ts": _now(), "ollama": ollama, "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem, "generation": role.get("generation"), "board_n": len(board)}
     (art / "week_tick.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     if push:
         _push(root)
@@ -118,21 +101,13 @@ def _push(root: Path) -> None:
     if "Otcde" not in str(root):
         return
     import subprocess
-
     git = "git"
-    for p in (r"C:\Program Files\Git\cmd\git.exe", r"C:\Program Files (x86)\Git\cmd\git.exe"):
+    for p in (r"C:\\Program Files\\Git\\cmd\\git.exe", r"C:\\Program Files (x86)\\Git\\cmd\\git.exe"):
         if Path(p).is_file():
             git = p
             break
     flags = 0x08000000 if os.name == "nt" else 0
-    paths = [
-        "artifacts/gem_energy.json",
-        "artifacts/cowork_board.json",
-        "artifacts/self_build_role.json",
-        "artifacts/self_build_trace.jsonl",
-        "artifacts/week_tick.json",
-        "artifacts/host_attach.json",
-    ]
+    paths = ["artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/host_attach.json"]
     try:
         kw: Dict[str, Any] = {"cwd": str(root), "timeout": 90}
         if flags:
@@ -140,10 +115,7 @@ def _push(root: Path) -> None:
         subprocess.run([git, "add", *paths], **kw)
         if subprocess.run([git, "diff", "--cached", "--quiet"], **kw).returncode == 0:
             return
-        subprocess.run(
-            [git, "-c", "user.email=ether@local", "-c", "user.name=ether-week", "commit", "-m", "week tick: energy + role"],
-            **kw,
-        )
+        subprocess.run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-week", "commit", "-m", "week tick: energy + role"], **kw)
         subprocess.run([git, "push", "origin", "main"], **kw)
     except Exception:
         return

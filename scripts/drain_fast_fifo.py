@@ -11,6 +11,16 @@ DONE = ROOT / "artifacts" / "jobs" / "done"
 FAILED = ROOT / "artifacts" / "jobs" / "failed"
 LAST = ROOT / "artifacts" / "host_agent_last_job.json"
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
+
+def _normalize_step(step):
+    if isinstance(step, dict):
+        return step
+    if isinstance(step, list):
+        return {"argv": [str(x) for x in step]}
+    if isinstance(step, str) and step.strip():
+        return {"argv": [step]}
+    return {}
+
 LIVE_MARKERS = ("unaided", "qwen", "live_4b", "policy=model")
 
 def _now() -> str:
@@ -52,6 +62,7 @@ def run_job(path: Path) -> Dict[str, Any]:
     ok = True
     tails: List[str] = []
     for step in job.get("steps") or []:
+        step = _normalize_step(step)
         argv = _rewrite_argv(list(step.get("argv") or []))
         if not argv:
             continue
@@ -107,7 +118,7 @@ def drain() -> Dict[str, Any]:
             attach = {}
     ollama = attach.get("ollama") if attach.get("ollama") is not None else prev.get("ollama")
     lane = attach.get("live_lane") or prev.get("live_lane")
-    status = {"heartbeat": _now(), "phase": "idle" if not files else "draining", "current_job": None, "source": "matrix-worker", "pending_left": len([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]), "note": "FAST heartbeat. ollama/lane owned by 1650 attach.", "kernel": "phase2"}
+    status = {"heartbeat": _now(), "phase": "idle" if not files else "draining", "current_job": None, "source": "matrix-worker", "pending_left": len([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]), "note": "FAST heartbeat. ollama/lane owned by 1650 attach.", "kernel": "phase3"}
     if ollama is not None:
         status["ollama"] = bool(ollama)
     if lane:

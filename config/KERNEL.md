@@ -2,14 +2,7 @@
 
 Wheels ON. Soft launch BLOCKED. Matrix RO. Exe writes.
 
-## Phase 1 landed
-writer policy, honest PASS, job schema, events, plan DAG, edit tx, loop guard, ETHER.md
-
-## Phase 2 landed
-critique gate, permissions, briefing compiler, score_write, drain validates schema and fails invalid jobs
-
-## Phase 3 next
-host poll when pending>0, no boot pytest on frozen, targeted tests
-
-## Still exe-only
-LIVE 4B, Ollama attach truth, soft launch
+Phase 1: writer, honest PASS, schema, events, plan, edit tx, loop guard.
+Phase 2: critique, permissions, briefing, score_write, drain schema.
+Phase 3: poll 12s when pending else 60s. LIVE drain on exe only. FAST drain coerces string steps.
+Phase 4 next: ToolRuntime constitution + loop_guard in the generate path.

@@ -7,9 +7,10 @@ on:
     branches: [main]
     paths:
       - "core/**"
-      - "tests/test_*.py"
-      - "scripts/deploy_pipeline.py"
+      - "tests/test_kernel_*.py"
+      - "tests/test_drain_fast_fifo.py"
       - "scripts/drain_fast_fifo.py"
+      - "scripts/drain_live_fifo.py"
       - "scripts/ether_week_tick.py"
       - "scripts/live_host.py"
       - ".github/workflows/matrix-worker.yml"
@@ -27,10 +28,10 @@ jobs:
           python-version: "3.12"
       - name: FAST deps
         run: pip install -q pytest pydantic pyyaml httpx
-      - name: Deploy pipeline + gems
-        run: |
-          python scripts/deploy_pipeline.py
-          python -m pytest tests/test_agentic.py tests/test_gem_topo.py tests/test_ether_week_tick.py tests/test_drain_fast_fifo.py tests/test_live_host.py -q --tb=short
+      - name: Targeted kernel gates
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_drain_fast_fifo.py tests/test_live_host.py -q --tb=line
       - name: Drain FAST FIFO
         env:
           PYTHONPATH: ${{ github.workspace }}

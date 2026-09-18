@@ -10,6 +10,10 @@ from core.kernel.loop_guard import LoopGuard
 from core.kernel.queue import PENDING_DIR
 from core.kernel.edit_tx import EditTx
 from core.kernel.context_budget import context_char_budget
+from core.kernel.critique import may_second_hypothesis, valid_critique
+from core.kernel.permissions import allow as allow_tool
+from core.kernel.briefing import compile_briefing
+from core.kernel.score_write import write_result
 
 __all__ = [
     "TOOL_CONSTITUTION",
@@ -26,4 +30,9 @@ __all__ = [
     "PENDING_DIR",
     "EditTx",
     "context_char_budget",
+    "may_second_hypothesis",
+    "valid_critique",
+    "allow_tool",
+    "compile_briefing",
+    "write_result",
 ]

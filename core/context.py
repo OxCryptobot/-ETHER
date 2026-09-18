@@ -1,11 +1,4 @@
-"""Workspace context + offline BM25 RAG + extractive compress v0.
-
-Citrine-lite without Qdrant. Compress ranks paragraphs by query term
-overlap and fits a hard char budget (poisoning defense + token discipline).
-
-Phase 2.4: optional symbol index block only when ETHER_SYMBOL_INDEX=1.
-Default path is unchanged.
-"""
+"""Workspace context + BM25 + symbol index + token budget."""
 from __future__ import annotations
 
 import os
@@ -22,27 +15,15 @@ def _tokenize(text: str) -> List[str]:
     return re.findall(r"[a-zA-Z_][a-zA-Z0-9_]{2,}", (text or "").lower())
 
 
-def compress_text(
-    text: str,
-    *,
-    query: str = "",
-    max_chars: int = 3500,
-) -> str:
-    """Extractive compress v0: keep highest-overlap paragraphs under budget.
-
-    If no query, prefers head + tail slices (common in coding prompts).
-    Never exceeds max_chars.
-    """
+def compress_text(text: str, *, query: str = "", max_chars: int = 3500) -> str:
     text = (text or "").strip()
     if not text:
         return ""
     if len(text) <= max_chars:
         return text
-
     paras = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
     if len(paras) <= 1:
         paras = [text[i : i + 400] for i in range(0, len(text), 400)]
-
     q_terms = set(_tokenize(query))
     scored: List[Tuple[float, int, str]] = []
     for i, p in enumerate(paras):
@@ -50,10 +31,8 @@ def compress_text(
             score = 2.0 if i < 2 or i >= len(paras) - 2 else 1.0
         else:
             toks = set(_tokenize(p))
-            overlap = len(q_terms & toks)
-            score = float(overlap) + (0.15 if i < 3 else 0.0)
+            score = float(len(q_terms & toks)) + (0.15 if i < 3 else 0.0)
         scored.append((score, i, p))
-
     scored.sort(key=lambda x: (-x[0], x[1]))
     chosen: List[Tuple[int, str]] = []
     used = 0
@@ -64,45 +43,41 @@ def compress_text(
             remain = max_chars - used - 2
             if remain > 80:
                 chosen.append((i, chunk[:remain]))
-                used += remain + 2
             break
         chosen.append((i, chunk))
         used += cost
         if used >= max_chars:
             break
-
     chosen.sort(key=lambda x: x[0])
-    out = "\n\n".join(c for _, c in chosen)
-    return out[:max_chars]
+    return "\n\n".join(c for _, c in chosen)[:max_chars]
 
 
-def gather_workspace_context(root: Path, query: str = "", max_chars: int = 3500) -> str:
+def gather_workspace_context(root: Path, query: str = "", max_chars: int | None = None) -> str:
+    if max_chars is None:
+        try:
+            from core.kernel.context_budget import context_char_budget
+            max_chars = context_char_budget()
+        except Exception:
+            max_chars = 3500
     if not context_enabled():
         return ""
     parts: list[str] = []
-    # BM25 offline RAG first — strongest signal vs Cursor gap
     if os.getenv("ETHER_RAG_BM25", "1") == "1" and query:
         try:
             from core.rag_bm25 import format_block
-
             block = format_block(query, k=4)
             if block:
                 parts.append("### Repo BM25 hits\n" + block)
         except Exception:
             pass
-
-    # Phase 2.4: symbol/file index — opt-in only (ETHER_SYMBOL_INDEX=1)
-    if os.getenv("ETHER_SYMBOL_INDEX", "0") == "1" and query:
+    if os.getenv("ETHER_SYMBOL_INDEX", "1") == "1" and query:
         try:
             from core.symbol_index import format_block as symbol_format
-
             sym = symbol_format(query, root=root, k=8, max_chars=min(1800, max_chars))
             if sym:
                 parts.append("### Symbol index\n" + sym)
         except Exception:
             pass
-
-    # light path: list key package files
     try:
         for rel in ("core", "gems", "scripts", "cli"):
             d = root / rel
@@ -114,7 +89,6 @@ def gather_workspace_context(root: Path, query: str = "", max_chars: int = 3500)
                 parts.append(f"### {rel}/\n{listing}")
     except Exception:
         pass
-
     text = "\n\n".join(parts)
     if os.getenv("ETHER_CONTEXT_COMPRESS", "1") == "1":
         return compress_text(text, query=query, max_chars=max_chars)

@@ -1,10 +1,6 @@
 """Drain FAST FIFO on Ubuntu. LIVE jobs stay pending for the 1650."""
 from __future__ import annotations
-
-import json
-import os
-import subprocess
-import sys
+import json, os, subprocess, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
@@ -12,22 +8,19 @@ from typing import Any, Dict, List
 ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1]).resolve()
 PENDING = ROOT / "artifacts" / "jobs" / "pending"
 DONE = ROOT / "artifacts" / "jobs" / "done"
+FAILED = ROOT / "artifacts" / "jobs" / "failed"
 LAST = ROOT / "artifacts" / "host_agent_last_job.json"
 STATUS = ROOT / "artifacts" / "host_agent_status.json"
-
 LIVE_MARKERS = ("unaided", "qwen", "live_4b", "policy=model")
-
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
 
 def _rewrite_argv(argv: List[str]) -> List[str]:
     out = list(argv)
     if out and out[0].replace("\\", "/").endswith("python.exe"):
         out[0] = sys.executable
     return out
-
 
 def is_fast(job: Dict[str, Any]) -> bool:
     klass = str(job.get("class") or "").lower()
@@ -40,10 +33,20 @@ def is_fast(job: Dict[str, Any]) -> bool:
         return False
     return True
 
-
 def run_job(path: Path) -> Dict[str, Any]:
     job = json.loads(path.read_text(encoding="utf-8"))
     jid = str(job.get("id") or path.stem)
+    try:
+        from core.kernel.job_schema import validate_job
+        ok_schema, errors = validate_job(job)
+    except Exception:
+        ok_schema, errors = True, []
+    if not ok_schema:
+        FAILED.mkdir(parents=True, exist_ok=True)
+        report = {"job_id": jid, "ok": False, "rc": 2, "finished": _now(), "note": "invalid job schema", "errors": errors, "class": str(job.get("class") or "fast")}
+        (FAILED / path.name).write_text(json.dumps({**job, "report": report}, indent=2) + "\n", encoding="utf-8")
+        path.unlink(missing_ok=True)
+        return report
     if not is_fast(job):
         return {"id": jid, "ok": False, "skipped": True, "note": "LIVE stays on 1650"}
     ok = True
@@ -61,34 +64,28 @@ def run_job(path: Path) -> Dict[str, Any]:
         except Exception as exc:
             ok = False
             tails.append(type(exc).__name__)
-    report = {
-        "job_id": jid,
-        "ok": ok,
-        "rc": 0 if ok else 1,
-        "finished": _now(),
-        "note": "FAST drain on matrix-worker. Dual chat locked.",
-        "class": "fast",
-        "measurement": True,
-        "tail": "\n".join(tails)[-800:],
-    }
-    DONE.mkdir(parents=True, exist_ok=True)
-    (DONE / path.name).write_text(json.dumps({**job, "report": report}, indent=2) + "\n", encoding="utf-8")
+    report = {"job_id": jid, "ok": ok, "rc": 0 if ok else 1, "finished": _now(), "note": "FAST drain on matrix-worker.", "class": "fast", "measurement": True, "tail": "\n".join(tails)[-800:]}
+    dest = DONE if ok else FAILED
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / path.name).write_text(json.dumps({**job, "report": report}, indent=2) + "\n", encoding="utf-8")
     ops = jid.startswith("medic") or "health_check" in json.dumps(job)
     LAST.parent.mkdir(parents=True, exist_ok=True)
     if not ops:
         LAST.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     path.unlink(missing_ok=True)
+    try:
+        from core.kernel.events import emit
+        emit("TestsPassed" if ok else "TestsFailed", job_id=jid, force=True)
+    except Exception:
+        pass
     return report
-
 
 def _idle_week_tick() -> None:
     try:
         from scripts.ether_week_tick import tick
-
         tick(push=False)
     except Exception:
         return
-
 
 def drain() -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
@@ -108,18 +105,9 @@ def drain() -> Dict[str, Any]:
             attach = json.loads(ap.read_text(encoding="utf-8"))
         except Exception:
             attach = {}
-    ollama = attach.get("ollama")
-    if ollama is None:
-        ollama = prev.get("ollama")
+    ollama = attach.get("ollama") if attach.get("ollama") is not None else prev.get("ollama")
     lane = attach.get("live_lane") or prev.get("live_lane")
-    status = {
-        "heartbeat": _now(),
-        "phase": "idle" if not files else "draining",
-        "current_job": None,
-        "source": "matrix-worker",
-        "pending_left": len([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]),
-        "note": "FAST heartbeat. ollama/lane owned by 1650 attach.",
-    }
+    status = {"heartbeat": _now(), "phase": "idle" if not files else "draining", "current_job": None, "source": "matrix-worker", "pending_left": len([p for p in PENDING.glob("*.json") if p.name != ".gitkeep"]), "note": "FAST heartbeat. ollama/lane owned by 1650 attach.", "kernel": "phase2"}
     if ollama is not None:
         status["ollama"] = bool(ollama)
     if lane:
@@ -127,7 +115,6 @@ def drain() -> Dict[str, Any]:
     STATUS.parent.mkdir(parents=True, exist_ok=True)
     STATUS.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
     return {"ok": all(r.get("ok") or r.get("skipped") for r in reports), "n": len(reports), "jobs": reports}
-
 
 if __name__ == "__main__":
     print(json.dumps(drain(), indent=2))

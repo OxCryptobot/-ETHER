@@ -4,6 +4,11 @@ from typing import Any, Dict
 
 def tick_after_attach() -> int:
     try:
+        from core.kernel.ops import tick
+        return int(tick().get("sleep") or 60)
+    except Exception:
+        pass
+    try:
         from scripts.drain_live_fifo import drain
         drain()
     except Exception:
@@ -16,8 +21,7 @@ def tick_after_attach() -> int:
 
 def snapshot() -> Dict[str, Any]:
     try:
-        from core.kernel.poll import pending_count, poll_seconds
-        n = pending_count()
-        return {"pending": n, "sleep": poll_seconds(n)}
+        from core.kernel.ops import tick
+        return tick()
     except Exception:
         return {"pending": 0, "sleep": 60}

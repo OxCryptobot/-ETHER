@@ -1,19 +1,14 @@
-"""Workspace context + BM25 + symbol index + token budget."""
+"""Workspace context + BM25 + symbol index + token budget + ETHER.md."""
 from __future__ import annotations
-
-import os
-import re
+import os, re
 from pathlib import Path
 from typing import List, Tuple
-
 
 def context_enabled() -> bool:
     return os.getenv("ETHER_CONTEXT", "1") == "1"
 
-
 def _tokenize(text: str) -> List[str]:
     return re.findall(r"[a-zA-Z_][a-zA-Z0-9_]{2,}", (text or "").lower())
-
 
 def compress_text(text: str, *, query: str = "", max_chars: int = 3500) -> str:
     text = (text or "").strip()
@@ -51,7 +46,6 @@ def compress_text(text: str, *, query: str = "", max_chars: int = 3500) -> str:
     chosen.sort(key=lambda x: x[0])
     return "\n\n".join(c for _, c in chosen)[:max_chars]
 
-
 def gather_workspace_context(root: Path, query: str = "", max_chars: int | None = None) -> str:
     if max_chars is None:
         try:
@@ -62,6 +56,13 @@ def gather_workspace_context(root: Path, query: str = "", max_chars: int | None 
     if not context_enabled():
         return ""
     parts: list[str] = []
+    try:
+        from core.kernel.contract import inject
+        block = inject(root)
+        if block:
+            parts.append("### Contract\n" + block[:800])
+    except Exception:
+        pass
     if os.getenv("ETHER_RAG_BM25", "1") == "1" and query:
         try:
             from core.rag_bm25 import format_block
@@ -77,7 +78,14 @@ def gather_workspace_context(root: Path, query: str = "", max_chars: int | None 
             if sym:
                 parts.append("### Symbol index\n" + sym)
         except Exception:
-            pass
+            try:
+                from core.kernel.index import build_index, format_hits, query_index
+                hits = query_index(build_index(root), query, k=8)
+                sym = format_hits(hits)
+                if sym:
+                    parts.append("### Symbol index\n" + sym)
+            except Exception:
+                pass
     try:
         for rel in ("core", "gems", "scripts", "cli"):
             d = root / rel

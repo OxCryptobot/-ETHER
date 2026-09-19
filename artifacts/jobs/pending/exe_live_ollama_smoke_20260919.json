@@ -1,0 +1,16 @@
+{
+  "id": "exe_live_ollama_smoke_20260919",
+  "class": "live",
+  "note": "1650 only: ollama must be up and target model listed",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-c", "from scripts.live_host import list_models, ollama_up, write_probe; assert ollama_up(), 'ollama_down'; p=write_probe({'job':'live_smoke'}); assert p.get('has_target') or any('qwen3.5:4b' in m for m in (p.get('models') or [])); print(p)"],
+      "timeout": 90
+    },
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/exe_pulse.py"],
+      "timeout": 90
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase6b_20260919",
+  "class": "fast",
+  "note": "phase6b kernel + pulse import",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase5.py", "tests/test_kernel_phase6.py", "-q", "--tb=line"],
+      "timeout": 120
+    }
+  ]
+}

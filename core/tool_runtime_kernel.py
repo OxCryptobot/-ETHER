@@ -1,4 +1,4 @@
-"""Phase-4 ToolRuntime wiring: constitution, permissions, loop guard."""
+"""ToolRuntime wiring: constitution, permissions, loop guard, jail, redact."""
 from __future__ import annotations
 from typing import Any, Dict
 from core.kernel.constitution import TOOL_CONSTITUTION
@@ -16,6 +16,32 @@ def check_tool(tool: str, *, writes_enabled: bool = True, shell_enabled: bool = 
         return None
     return {"ok": False, "error": f"tool_denied:{tool}", "reason": "permissions"}
 
+def _jail_args(self: Any, tool: str, args: Dict[str, Any]) -> Dict[str, Any] | None:
+    path = args.get("path") if isinstance(args, dict) else None
+    if not path or tool in {"done", "run_tests", "list_files", "git_status", "git_diff"}:
+        return None
+    workspace = getattr(self, "workspace", None)
+    if workspace is None:
+        return None
+    try:
+        from core.kernel.sandbox import allowed
+        if not allowed(workspace, str(path)):
+            return {"ok": False, "error": "path_jail", "path": str(path)}
+    except Exception:
+        return None
+    return None
+
+def _redact_obs(obs: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        from core.kernel.redact import redact
+    except Exception:
+        return obs
+    out = dict(obs)
+    for key in ("content", "stdout", "stderr", "text"):
+        if key in out and out[key] is not None:
+            out[key] = redact(str(out[key]))
+    return out
+
 def install(cls: type) -> type:
     orig_prompt = cls._system_prompt
     orig_execute = cls._execute
@@ -28,11 +54,17 @@ def install(cls: type) -> type:
         denied = check_tool(str(tool or ""))
         if denied:
             return denied
+        jailed = _jail_args(self, str(tool or ""), args if isinstance(args, dict) else {})
+        if jailed:
+            return jailed
         guard = getattr(self, "_loop_guard", None)
         if guard is None:
             guard = LoopGuard(max_repeat=2)
             self._loop_guard = guard
         obs = orig_execute(self, tool, args)
+        if not isinstance(obs, dict):
+            obs = {"ok": False, "error": "bad_obs"}
+        obs = _redact_obs(obs)
         stop, reason = guard.record(str(tool or ""), args if isinstance(args, dict) else {}, ok=bool(obs.get("ok")))
         if stop and str(tool or "") not in {"done", "run_tests"}:
             obs = dict(obs)

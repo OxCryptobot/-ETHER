@@ -31,7 +31,7 @@ jobs:
       - name: Targeted kernel gates
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_drain_fast_fifo.py tests/test_live_host.py -q --tb=line
+        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_kernel_phase4.py tests/test_drain_fast_fifo.py tests/test_live_host.py -q --tb=line
       - name: Drain FAST FIFO
         env:
           PYTHONPATH: ${{ github.workspace }}

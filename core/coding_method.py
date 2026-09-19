@@ -1,27 +1,11 @@
-"""Coding method schema — mentor doctrine in machine form for GEMS / ToolRuntime.
-
-Agents import SYSTEM_RULES or CodingMethod.as_prompt_block() instead of
-inventing process each run.
-"""
+"""Coding method schema — mentor doctrine in machine form for GEMS / ToolRuntime."""
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import List, Sequence, Tuple
 
-# Preferred step order for tool-first agents
 STEP_ORDER: Tuple[str, ...] = (
-    "list_files",
-    "bug_comments",
-    "read_file",  # tests first, then source (numbered)
-    "grep",
-    "glob",
-    "edit_lines",  # preferred for 4B live — line span from numbered read
-    "apply_patch",  # preferred over write_file for edits
-    "write_file",
-    "run_tests",
-    "pep8_review",
-    "rollback",
-    "done",
+    "list_files", "bug_comments", "read_file", "grep", "glob",
+    "edit_lines", "apply_patch", "write_file", "run_tests", "pep8_review", "rollback", "done",
 )
 
 SYSTEM_RULES: Tuple[str, ...] = (
@@ -38,13 +22,12 @@ SYSTEM_RULES: Tuple[str, ...] = (
     "pep8_review after tests pass; style does not override failing tests.",
     "One hypothesis per cycle; smallest change that could green the tests.",
     "done only when tests pass or honest give-up with typed reason.",
+    "Never claim PASS without run_tests ok. Generate-fallback is not success.",
+    "Matrix is a dashboard, not a tool.",
 )
-
 
 @dataclass
 class CodingMethod:
-    """Structured coding contract for an agent run."""
-
     name: str = "ether_tool_first_v1"
     step_order: Sequence[str] = field(default_factory=lambda: STEP_ORDER)
     rules: Sequence[str] = field(default_factory=lambda: SYSTEM_RULES)
@@ -56,28 +39,17 @@ class CodingMethod:
     def as_prompt_block(self) -> str:
         rules = "\n".join(f"- {r}" for r in self.rules)
         order = ", ".join(self.step_order)
-        return (
-            f"Coding method: {self.name}\n"
-            f"Preferred tool order: {order}\n"
-            f"Rules:\n{rules}\n"
-        )
+        return f"Coding method: {self.name}\nPreferred tool order: {order}\nRules:\n{rules}\n"
 
     def checklist(self) -> List[str]:
-        return [
-            "read tests",
-            "read source",
-            "one hypothesis",
-            "surgical edit",
-            "run_tests",
-            "pep8_review if green",
-            "done",
-        ]
-
+        return ["read tests", "read source", "one hypothesis", "surgical edit", "run_tests", "pep8_review if green", "done"]
 
 def default_method() -> CodingMethod:
     return CodingMethod()
 
-
 def prompt_suffix() -> str:
-    """Short block to append to ToolRuntime system prompts."""
-    return default_method().as_prompt_block()
+    try:
+        from core.tool_runtime_kernel import wrap_system_prompt
+        return wrap_system_prompt(default_method().as_prompt_block())
+    except Exception:
+        return default_method().as_prompt_block()

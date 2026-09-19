@@ -1,27 +1,15 @@
 """Consume host_command. Start Ollama when the binary is on this machine."""
 from __future__ import annotations
-
-import json
-import os
-import shutil
-import subprocess
-import time
-import urllib.error
-import urllib.request
+import json, os, shutil, subprocess, time, urllib.error, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 TARGET_MODEL = os.getenv("ETHER_OLLAMA_MODEL", "qwen3.5:4b-q4_K_M")
-
 
 def _root() -> Path:
     env = os.environ.get("ETHER_ROOT")
-    if env:
-        return Path(env)
-    return Path(__file__).resolve().parents[1]
-
+    return Path(env) if env else Path(__file__).resolve().parents[1]
 
 def ollama_up() -> bool:
     url = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/") + "/api/tags"
@@ -31,9 +19,7 @@ def ollama_up() -> bool:
     except (urllib.error.URLError, TimeoutError, OSError):
         return False
 
-
 def ollama_bin() -> Optional[str]:
-    """Find ollama even when PATH is empty (frozen ETHER.exe / Task Scheduler)."""
     env = (os.getenv("OLLAMA_BIN") or os.getenv("ETHER_OLLAMA_BIN") or "").strip()
     if env and Path(env).is_file():
         return env
@@ -42,16 +28,14 @@ def ollama_bin() -> Optional[str]:
         return which
     home = Path.home()
     local = os.getenv("LOCALAPPDATA") or str(home / "AppData" / "Local")
-    cands = [
+    for p in (
         Path(local) / "Programs" / "Ollama" / "ollama.exe",
         home / "AppData" / "Local" / "Programs" / "Ollama" / "ollama.exe",
         Path(r"C:\Users\Otcde\AppData\Local\Programs\Ollama\ollama.exe"),
         Path(r"C:\Program Files\Ollama\ollama.exe"),
-        Path(r"C:\Program Files\Ollama\ollama\ollama.exe"),
         Path("/usr/local/bin/ollama"),
         Path("/usr/bin/ollama"),
-    ]
-    for p in cands:
+    ):
         try:
             if p.is_file():
                 return str(p)
@@ -59,21 +43,14 @@ def ollama_bin() -> Optional[str]:
             continue
     return None
 
-
 def list_models() -> List[str]:
     url = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/") + "/api/tags"
     try:
         with urllib.request.urlopen(url, timeout=3) as res:
             data = json.loads(res.read().decode("utf-8", errors="replace") or "{}")
-        names: List[str] = []
-        for row in data.get("models") or []:
-            name = str((row or {}).get("name") or "")
-            if name:
-                names.append(name)
-        return names
+        return [str((row or {}).get("name") or "") for row in (data.get("models") or []) if (row or {}).get("name")]
     except (urllib.error.URLError, TimeoutError, OSError, ValueError):
         return []
-
 
 def write_probe(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     models = list_models() if ollama_up() else []
@@ -84,7 +61,7 @@ def write_probe(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "models": models[:20],
         "target": TARGET_MODEL,
         "has_target": any(TARGET_MODEL in m or m.startswith(TARGET_MODEL.split(":")[0]) for m in models),
-        "writer": "exe" if os.name == "nt" else "fast",
+        "writer": "exe" if os.name == "nt" else "observe",
     }
     if extra:
         row.update(extra)
@@ -96,9 +73,7 @@ def write_probe(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         pass
     return row
 
-
 _OLLAMA_PROC = None
-
 
 def start_ollama() -> bool:
     global _OLLAMA_PROC
@@ -110,24 +85,13 @@ def start_ollama() -> bool:
         write_probe({"started": False, "reason": "bin_missing"})
         return False
     try:
-        flags = 0
-        si = None
+        kwargs: Dict[str, Any] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL, "env": os.environ.copy(), "cwd": str(Path(bin_).parent)}
+        kwargs["env"]["PATH"] = str(Path(bin_).parent) + os.pathsep + kwargs["env"].get("PATH", "")
         if os.name == "nt":
-            flags = 0x08000000  # CREATE_NO_WINDOW only — DETACHED_PROCESS drops serve
+            kwargs["creationflags"] = 0x08000000
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             si.wShowWindow = 0
-        env = os.environ.copy()
-        bin_dir = str(Path(bin_).parent)
-        env["PATH"] = bin_dir + os.pathsep + env.get("PATH", "")
-        kwargs = {
-            "stdout": subprocess.DEVNULL,
-            "stderr": subprocess.DEVNULL,
-            "env": env,
-            "cwd": bin_dir,
-        }
-        if os.name == "nt":
-            kwargs["creationflags"] = flags
             kwargs["startupinfo"] = si
         _OLLAMA_PROC = subprocess.Popen([bin_, "serve"], **kwargs)
     except OSError as exc:
@@ -141,9 +105,7 @@ def start_ollama() -> bool:
     write_probe({"started": False, "reason": "timeout_api"})
     return ollama_up()
 
-
 def stop_ollama() -> None:
-    """Do not kill a user/service Ollama. Only terminate the child we spawned."""
     global _OLLAMA_PROC
     proc = _OLLAMA_PROC
     _OLLAMA_PROC = None
@@ -152,7 +114,6 @@ def stop_ollama() -> None:
             proc.terminate()
         except Exception:
             pass
-
 
 def ensure_model(pull: bool = False) -> Dict[str, Any]:
     if not ollama_up() and not start_ollama():
@@ -172,7 +133,7 @@ def ensure_model(pull: bool = False) -> Dict[str, Any]:
         row["ok"] = False
         return row
     try:
-        kw = {"timeout": 1800, "capture_output": True, "text": True}
+        kw: Dict[str, Any] = {"timeout": 1800, "capture_output": True, "text": True}
         if os.name == "nt":
             kw["creationflags"] = 0x08000000
         subprocess.run([bin_, "pull", TARGET_MODEL], **kw)
@@ -183,7 +144,6 @@ def ensure_model(pull: bool = False) -> Dict[str, Any]:
     row = write_probe({"ensure": "pulled"})
     row["ok"] = bool(row.get("has_target") or ollama_up())
     return row
-
 
 def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
     ollama = start_ollama()
@@ -196,35 +156,25 @@ def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
             prev = json.loads(out.read_text(encoding="utf-8"))
         except Exception:
             prev = {}
-
-    # Ubuntu Actions must not overwrite a real 1650 attach with grok_bus lies.
-    if not ollama and os.name != "nt":
-        prior = bool(prev.get("ollama")) if "ollama" in prev else False
-        payload = {
-            "updated": datetime.now(timezone.utc).isoformat(),
-            "ok": True,
-            "fast_lane": "matrix-worker",
-            "live_lane": str(prev.get("live_lane") or "grok_bus"),
-            "living_ok": True,
-            "ollama": prior,
-            "grok_bus": not prior,
-            "cmd": (command or {}).get("cmd") or prev.get("cmd") or "attach",
-            "consumed": True,
-            "clobber": False,
-            "note": "ubuntu live-host preserves prior attach. 1650 exe owns ollama.",
-            "writer": prev.get("writer") or "exe",
-        }
-        out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        payload["path"] = str(out)
-        write_probe({"attach": "preserve"})
-        return payload
-
-    live_lane = "ollama_4b" if ollama else "grok_bus"
+    try:
+        from core.kernel.attach import attach_payload
+        may, observed = attach_payload(ollama_up=bool(ollama), prev=prev, cmd=str((command or {}).get("cmd") or prev.get("cmd") or "attach"))
+        if not may:
+            write_probe({"attach": "observe"})
+            observed = dict(observed)
+            observed["path"] = str(out)
+            return observed
+    except Exception:
+        if os.name != "nt":
+            write_probe({"attach": "observe_fallback"})
+            row = dict(prev)
+            row.update({"consumed": False, "clobber": False, "note": "observe only. exe owns attach.", "writer": prev.get("writer") or "exe", "path": str(out)})
+            return row
     payload = {
         "updated": datetime.now(timezone.utc).isoformat(),
         "ok": True,
         "fast_lane": "matrix-worker",
-        "live_lane": live_lane,
+        "live_lane": "ollama_4b" if ollama else "grok_bus",
         "living_ok": True,
         "ollama": ollama,
         "grok_bus": not ollama,
@@ -232,14 +182,13 @@ def consume(command: Dict[str, Any] | None = None) -> Dict[str, Any]:
         "consumed": True,
         "clobber": False,
         "note": "Starts ollama serve when binary exists. Else grok_bus.",
-        "writer": "exe" if os.name == "nt" else "fast",
+        "writer": "exe",
         "bin": ollama_bin(),
     }
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     payload["path"] = str(out)
     write_probe({"attach": "write", "ollama": ollama})
     return payload
-
 
 if __name__ == "__main__":
     root = Path(__file__).resolve().parents[1]

@@ -1,4 +1,4 @@
-"""ToolRuntime wiring: constitution, permissions, loop guard, jail, redact."""
+"""ToolRuntime wiring: constitution, permissions, extra tools, jail, redact."""
 from __future__ import annotations
 from typing import Any, Dict
 from core.kernel.constitution import TOOL_CONSTITUTION
@@ -18,7 +18,7 @@ def check_tool(tool: str, *, writes_enabled: bool = True, shell_enabled: bool = 
 
 def _jail_args(self: Any, tool: str, args: Dict[str, Any]) -> Dict[str, Any] | None:
     path = args.get("path") if isinstance(args, dict) else None
-    if not path or tool in {"done", "run_tests", "list_files", "git_status", "git_diff"}:
+    if not path or tool in {"done", "run_tests", "list_files", "git_status", "git_diff", "grep", "glob"}:
         return None
     workspace = getattr(self, "workspace", None)
     if workspace is None:
@@ -51,22 +51,36 @@ def install(cls: type) -> type:
         return wrap_system_prompt(orig_prompt(self, objective))
 
     def _execute(self, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
-        denied = check_tool(str(tool or ""))
+        name = str(tool or "")
+        payload = args if isinstance(args, dict) else {}
+        try:
+            from core.kernel.extra_tools import dispatch
+            early = dispatch(self, name, payload) if name in {"_retry", "parse_fail"} else None
+        except Exception:
+            early = None
+        if early is not None:
+            return early
+        denied = check_tool(name)
         if denied:
             return denied
-        jailed = _jail_args(self, str(tool or ""), args if isinstance(args, dict) else {})
+        jailed = _jail_args(self, name, payload)
         if jailed:
             return jailed
+        try:
+            from core.kernel.extra_tools import dispatch
+            extra = dispatch(self, name, payload)
+        except Exception:
+            extra = None
         guard = getattr(self, "_loop_guard", None)
         if guard is None:
             guard = LoopGuard(max_repeat=2)
             self._loop_guard = guard
-        obs = orig_execute(self, tool, args)
+        obs = extra if extra is not None else orig_execute(self, tool, args)
         if not isinstance(obs, dict):
             obs = {"ok": False, "error": "bad_obs"}
         obs = _redact_obs(obs)
-        stop, reason = guard.record(str(tool or ""), args if isinstance(args, dict) else {}, ok=bool(obs.get("ok")))
-        if stop and str(tool or "") not in {"done", "run_tests"}:
+        stop, reason = guard.record(name, payload, ok=bool(obs.get("ok")))
+        if stop and name not in {"done", "run_tests"}:
             obs = dict(obs)
             obs["ok"] = False
             obs["error"] = reason

@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase8_20260920",
+  "class": "fast",
+  "note": "phase8 extra tools + honest hook",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase7.py", "tests/test_kernel_phase8.py", "-q", "--tb=line"],
+      "timeout": 180
+    }
+  ]
+}

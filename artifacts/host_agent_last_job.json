@@ -1,10 +1,10 @@
 {
-  "job_id": "exe_kernel_phase7_20260920",
-  "ok": true,
-  "rc": 0,
-  "finished": "2026-09-20T14:19:17.810716+00:00",
+  "job_id": "exe_kernel_phase8_20260920",
+  "ok": false,
+  "rc": 1,
+  "finished": "2026-09-20T22:41:21.652429+00:00",
   "note": "FAST drain on matrix-worker.",
   "class": "fast",
   "measurement": true,
-  "tail": ".............                                                            [100%]\n"
+  "tail": "                                   [100%]\n=================================== FAILURES ===================================\nE   assert True is False\n/home/runner/work/-ETHER/-ETHER/tests/test_kernel_phase8.py:22: assert True is False\n=========================== short test summary info ============================\nFAILED tests/test_kernel_phase8.py::test_grep_and_unique_patch - assert True is False\n"
 }

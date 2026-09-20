@@ -1,10 +1,10 @@
 """Pending job schema. Invalid envelopes never enter the FIFO."""
 from __future__ import annotations
 from typing import Any, Dict, List, Tuple
+from core.kernel.argv_allow import argv_allowed
 
 ALLOWED_CLASS = frozenset({"fast", "live", "measure", "gate_sample", "ops"})
 REQUIRED = ("id", "steps")
-
 
 def validate_job(job: Dict[str, Any]) -> Tuple[bool, List[str]]:
     errors: List[str] = []
@@ -30,6 +30,8 @@ def validate_job(job: Dict[str, Any]) -> Tuple[bool, List[str]]:
             argv = step.get("argv")
             if not isinstance(argv, list) or not argv:
                 errors.append(f"step_{i}_argv")
+            elif not argv_allowed([str(x) for x in argv]):
+                errors.append(f"step_{i}_argv_denied")
             timeout = step.get("timeout", 120)
             try:
                 if int(timeout) <= 0 or int(timeout) > 3600:

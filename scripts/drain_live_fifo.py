@@ -54,6 +54,14 @@ def run_job(path: Path) -> Dict[str, Any]:
         if not argv:
             continue
         try:
+            from core.kernel.argv_allow import argv_allowed
+            if not argv_allowed(argv):
+                ok = False
+                tails.append("argv_denied")
+                continue
+        except Exception:
+            pass
+        try:
             proc = subprocess.run(argv, cwd=str(ROOT), capture_output=True, text=True, timeout=int(step.get("timeout") or 180))
             tails.append((proc.stdout or "")[-300:] + (proc.stderr or "")[-200:])
             if proc.returncode != 0:

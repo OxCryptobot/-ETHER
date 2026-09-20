@@ -11,15 +11,14 @@ class _RT:
 
 def test_grep_and_unique_patch(tmp_path: Path) -> None:
     src = tmp_path / "mod.py"
-    src.write_text("def add(a, b):\n    return a - b\n", encoding="utf-8")
+    src.write_text("x = 1\nx = 1\ndef add(a, b):\n    return a - b\n", encoding="utf-8")
     rt = _RT(tmp_path)
-    hits = grep(rt, "return a")
-    assert hits["n"] >= 1
+    assert grep(rt, "return a")["n"] >= 1
     out = apply_patch(rt, "mod.py", "return a - b", "return a + b")
     assert out["ok"] is True
     assert "return a + b" in src.read_text(encoding="utf-8")
-    dup = apply_patch(rt, "mod.py", "return", "x")
-    assert dup["ok"] is False
+    dup = apply_patch(rt, "mod.py", "x = 1", "x = 2")
+    assert dup["ok"] is False and dup.get("error") == "old_not_unique"
 
 def test_retry_is_parse_fail() -> None:
     row = dispatch(object(), "_retry", {"reason": "garbage"})

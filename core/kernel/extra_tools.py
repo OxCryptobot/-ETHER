@@ -1,4 +1,4 @@
-"""grep, glob, surgical patch, rollback — live in the kernel wrap."""
+"""grep, glob, surgical patch, rollback, rename, delete — kernel wrap."""
 from __future__ import annotations
 import re
 from pathlib import Path
@@ -45,6 +45,10 @@ def apply_patch(rt: Any, path: str, old: str, new: str) -> Dict[str, Any]:
     ws = _ws(rt)
     if ws is None:
         return {"ok": False, "error": "no_workspace"}
+    from core.kernel.secret_scan import secret_hit
+    hit = secret_hit(new)
+    if hit:
+        return {"ok": False, "error": hit}
     target = (ws / path).resolve()
     try:
         target.relative_to(ws.resolve())
@@ -74,6 +78,43 @@ def rollback(rt: Any) -> Dict[str, Any]:
     (ws / path).write_text(text, encoding="utf-8")
     return {"ok": True, "path": path, "restored": True}
 
+def rename(rt: Any, src: str, dest: str) -> Dict[str, Any]:
+    ws = _ws(rt)
+    if ws is None:
+        return {"ok": False, "error": "no_workspace"}
+    a, b = (ws / src).resolve(), (ws / dest).resolve()
+    try:
+        a.relative_to(ws.resolve())
+        b.relative_to(ws.resolve())
+    except ValueError:
+        return {"ok": False, "error": "path_escape"}
+    if not a.is_file():
+        return {"ok": False, "error": "not found"}
+    if b.exists():
+        return {"ok": False, "error": "dest_exists"}
+    b.parent.mkdir(parents=True, exist_ok=True)
+    a.replace(b)
+    return {"ok": True, "src": src, "dest": dest}
+
+def delete(rt: Any, path: str) -> Dict[str, Any]:
+    ws = _ws(rt)
+    if ws is None:
+        return {"ok": False, "error": "no_workspace"}
+    target = (ws / path).resolve()
+    try:
+        target.relative_to(ws.resolve())
+    except ValueError:
+        return {"ok": False, "error": "path_escape"}
+    if not target.is_file():
+        return {"ok": False, "error": "not found"}
+    stack = getattr(rt, "_edit_stack", None)
+    if stack is None:
+        rt._edit_stack = []
+        stack = rt._edit_stack
+    stack.append((path, target.read_text(encoding="utf-8", errors="replace")))
+    target.unlink()
+    return {"ok": True, "path": path, "deleted": True}
+
 def dispatch(rt: Any, tool: str, args: Dict[str, Any]) -> Dict[str, Any] | None:
     if tool in {"_retry", "parse_fail"}:
         from core.kernel.parse_fail import parse_fail
@@ -86,4 +127,8 @@ def dispatch(rt: Any, tool: str, args: Dict[str, Any]) -> Dict[str, Any] | None:
         return apply_patch(rt, str((args or {}).get("path") or ""), str((args or {}).get("old") or ""), str((args or {}).get("new") or ""))
     if tool == "rollback":
         return rollback(rt)
+    if tool == "rename":
+        return rename(rt, str((args or {}).get("src") or ""), str((args or {}).get("dest") or ""))
+    if tool == "delete":
+        return delete(rt, str((args or {}).get("path") or ""))
     return None

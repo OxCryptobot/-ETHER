@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase12_20260921",
+  "class": "fast",
+  "note": "phase12 autonomy grok optional",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase11.py", "tests/test_kernel_phase12.py", "-q", "--tb=line"],
+      "timeout": 180
+    }
+  ]
+}

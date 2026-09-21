@@ -1,4 +1,4 @@
-"""Week autonomy tick — gem_energy + role stamp + board + exe pulse."""
+"""Week autonomy tick — gem_energy + role + exe pulse + autonomy controller."""
 from __future__ import annotations
 import json, os
 from datetime import datetime, timezone
@@ -28,6 +28,11 @@ def tick(push: bool = False) -> Dict[str, Any]:
     root = _root()
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
+    try:
+        from core.kernel.autonomy import tick as auto_tick
+        auto_tick()
+    except Exception:
+        pass
     if os.name == "nt":
         try:
             from scripts.exe_pulse import pulse
@@ -76,7 +81,7 @@ def tick(push: bool = False) -> Dict[str, Any]:
     trace = art / "self_build_trace.jsonl"
     with trace.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps({"ts": _now(), "idea": idea, "generation": role.get("generation"), "verified": bool(role.get("verified")), "ollama": ollama, "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem})[:800] + "\n")
-    row = {"ok": True, "ts": _now(), "ollama": ollama, "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem, "generation": role.get("generation"), "board_n": len(board)}
+    row = {"ok": True, "ts": _now(), "ollama": ollama, "last_gem": energy.get("last_gem") if isinstance(energy, dict) else gem, "generation": role.get("generation"), "board_n": len(board), "grok_required": False}
     (art / "week_tick.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     if push or os.name == "nt":
         _push(root)
@@ -92,7 +97,7 @@ def _push(root: Path) -> None:
             git = p
             break
     flags = 0x08000000 if os.name == "nt" else 0
-    paths = ["artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json"]
+    paths = ["artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json", "artifacts/autonomy_tick.json"]
     try:
         kw: Dict[str, Any] = {"cwd": str(root), "timeout": 90}
         if flags:
@@ -100,7 +105,7 @@ def _push(root: Path) -> None:
         subprocess.run([git, "add", *paths], **kw)
         if subprocess.run([git, "diff", "--cached", "--quiet"], **kw).returncode == 0:
             return
-        subprocess.run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-week", "commit", "-m", "week tick: energy + pulse"], **kw)
+        subprocess.run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-week", "commit", "-m", "week tick: energy + autonomy"], **kw)
         subprocess.run([git, "push", "origin", "main"], **kw)
     except Exception:
         return

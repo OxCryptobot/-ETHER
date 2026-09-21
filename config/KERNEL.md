@@ -1,20 +1,26 @@
-# Kernel roadmap — full + competitive + multitask
+# Kernel roadmap — executed status
 
 Wheels ON. Soft launch BLOCKED. Matrix RO. Exe writes.
 
-## Phase status
-1 Critical — LANDED (contracts)
-2 Architecture — LANDED (ToolRuntime kernel + edit tx modules)
-3 Performance — LANDED (poll, targeted FAST)
-4 Reasoning — LANDED (constitution, loop guard)
-5 Autonomy topology — LANDED contracts; exe pulse not on origin yet
-6 Advanced retrieve — LANDED (index, sandbox, deadline, contract)
-7 Safety + strangle — THIS BATCH (argv allowlist, ownership, crash journal, honest finalize)
+## Contracts landed (FAST-tested)
+1 Critical writer/honest/schema
+2 ToolRuntime kernel + edit tx modules
+3 Poll + targeted FAST
+4 Constitution + loop guard
+5 Autonomy topology (pulse code; origin attach still stale)
+6 Index, sandbox, deadline, ETHER.md
+7 Argv allowlist, ownership, crash journal
+8 Extra tools + parse_fail + queue collapse
+9 Secret scan, hook timeout, rename/delete
+10 Ignore, dirty-tree, memory schema
+11 Plan persist/replan, provider timeout vs empty, lang detect, jsonl GC
 
 ## Multitask ops (exe)
-attach, pulse, drain LIVE, plan node, retrieve, tool step, jail+redact, edit tx, tests, critique, honest score, briefing, crash journal.
-FAST: kernel pytest + FIFO only. Never attach.
+attach, pulse, drain LIVE, plan node, retrieve, tool, jail+redact, edit tx, tests, critique, honest score, crash journal, GC.
 
-## Exit
-Product writer is still the hole: origin attach is stale, LIVE smoke waits on 1650.
-Moonshots stay Phase 7+ human flag after honest hard LIVE.
+## Still open (product)
+1650 exe pulse / ollama=true on origin
+hard LIVE repeatable
+pipeline.py extract
+isolated gem workers
+LSP / browser / PR agent

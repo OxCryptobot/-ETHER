@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase11_20260921",
+  "class": "fast",
+  "note": "phase11 plan persist provider lang gc",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase10.py", "tests/test_kernel_phase11.py", "-q", "--tb=line"],
+      "timeout": 180
+    }
+  ]
+}

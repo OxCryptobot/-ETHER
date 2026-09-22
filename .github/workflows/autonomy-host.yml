@@ -14,23 +14,12 @@ on:
           - health
           - cycle
           - boot
-  schedule:
-    - cron: "*/15 * * * *"
-  push:
-    branches: [main]
-    paths:
-      - "core/autonomy.py"
-      - "scripts/ether_daemon.py"
-      - "scripts/ensure_daemon.ps1"
-      - "scripts/matrix_boot.ps1"
-      - "dashboard/**"
-      - ".github/workflows/autonomy-host.yml"
 
 jobs:
   host:
     runs-on: [self-hosted, Windows, ETHER]
     env:
-      ETHER_ROOT: C:\Users\Otcde\ETHER
+      ETHER_ROOT: C:\\Users\\Otcde\\ETHER
     defaults:
       run:
         shell: pwsh
@@ -46,64 +35,13 @@ jobs:
           Set-Location $root
           git fetch origin
           git reset --hard origin/main
-          if (-not (Test-Path .\.venv\Scripts\python.exe)) {
+          if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
-            .\.venv\Scripts\python.exe -m pip install -U pip
+            .\\.venv\\Scripts\\python.exe -m pip install -U pip
           }
-          .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
+          .\\.venv\\Scripts\\python.exe -m pip install -e ".[dev]" -q
 
-      - name: Ensure daemon (hidden, no console)
+      - name: Disk LIVE tick (no Matrix UI)
         run: |
           Set-Location $env:ETHER_ROOT
-          powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\scripts\ensure_daemon.ps1
-
-      - name: Medic stand-down
-        id: medic
-        run: |
-          Set-Location $env:ETHER_ROOT
-          .\.venv\Scripts\python.exe scripts/stand_down.py
-          if ($LASTEXITCODE -eq 78) {
-            "skip=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          } else {
-            "skip=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          }
-
-      - name: Matrix hidden boot
-        if: ${{ inputs.action == 'boot' || inputs.action == 'ensure' }}
-        run: |
-          Set-Location $env:ETHER_ROOT
-          powershell -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File .\scripts\matrix_boot.ps1 -SkipPull
-
-      - name: Offline autonomy self-test
-        if: ${{ github.event_name == 'push' || inputs.action == 'selftest' || inputs.action == 'cycle' }}
-        run: |
-          Set-Location $env:ETHER_ROOT
-          .\.venv\Scripts\python.exe .\scripts\self_test_autonomy.py
-
-      - name: Health check
-        if: ${{ steps.medic.outputs.skip != 'true' && (inputs.action == 'health' || inputs.action == 'cycle' || github.event_name == 'schedule') }}
-        run: |
-          Set-Location $env:ETHER_ROOT
-          .\.venv\Scripts\python.exe .\scripts\health_check.py --skip-sandbox
-
-      - name: Smart cycle (curriculum + learn)
-        if: ${{ steps.medic.outputs.skip != 'true' && (inputs.action == 'cycle' || github.event_name == 'schedule') }}
-        run: |
-          Set-Location $env:ETHER_ROOT
-          .\.venv\Scripts\python.exe .\scripts\run_smart_cycle.py
-        timeout-minutes: 40
-
-      - name: Upload host state
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ether-host-state
-          path: |
-            C:/Users/Otcde/ETHER/memory/daemon/heartbeat.txt
-            C:/Users/Otcde/ETHER/memory/daemon/healthy.json
-            C:/Users/Otcde/ETHER/memory/daemon/ensure.log
-            C:/Users/Otcde/ETHER/memory/daemon/matrix_boot.log
-            C:/Users/Otcde/ETHER/memory/daemon/autonomy.jsonl
-            C:/Users/Otcde/ETHER/memory/flywheel/latest.json
-            C:/Users/Otcde/ETHER/SCOREBOARD.md
-          if-no-files-found: ignore
+          .\\.venv\\Scripts\\python.exe scripts/host_main.py

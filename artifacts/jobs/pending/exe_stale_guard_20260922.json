@@ -1,0 +1,12 @@
+{
+  "id": "exe_stale_guard_20260922",
+  "class": "fast",
+  "note": "stale alive is FAIL",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_live_status.py", "-q", "--tb=line"],
+      "timeout": 60
+    }
+  ]
+}

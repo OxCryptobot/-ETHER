@@ -1,4 +1,6 @@
-"""Honest LIVE status. Ubuntu may write this. Never host_attach."""
+"""Honest LIVE status. Ubuntu may write this. Never host_attach.
+Stale if app_alive older than 6h — an open window is not LIVE.
+"""
 from __future__ import annotations
 import json
 from datetime import datetime, timezone
@@ -6,6 +8,18 @@ from pathlib import Path
 from typing import Any, Dict
 
 ROOT = Path(__file__).resolve().parents[1]
+MAX_AGE_H = 6.0
+
+def _age_hours(ts: str) -> float | None:
+    if not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - dt).total_seconds() / 3600.0
+    except Exception:
+        return None
 
 def write() -> Dict[str, Any]:
     alive: Dict[str, Any] = {}
@@ -23,10 +37,14 @@ def write() -> Dict[str, Any]:
         except Exception:
             attach = {}
     ts = str(alive.get("ts") or "")
-    today = datetime.now(timezone.utc).date().isoformat()
-    live = ts.startswith(today) and bool(attach.get("ollama"))
+    age = _age_hours(ts)
+    stale = age is None or age > MAX_AGE_H
+    live = (not stale) and bool(attach.get("ollama"))
     row = {
         "live": live,
+        "stale": stale,
+        "age_hours": None if age is None else round(age, 2),
+        "max_age_hours": MAX_AGE_H,
         "require": "scripts.host_main.tick on 1650",
         "github_runner": "optional",
         "app_alive_ts": ts,
@@ -34,6 +52,7 @@ def write() -> Dict[str, Any]:
         "attach_ollama": attach.get("ollama"),
         "writer": attach.get("writer"),
         "checked_at": datetime.now(timezone.utc).isoformat(),
+        "note": "open exe is not LIVE. stale app_alive is FAIL.",
     }
     out = ROOT / "artifacts" / "live_status.json"
     out.parent.mkdir(parents=True, exist_ok=True)

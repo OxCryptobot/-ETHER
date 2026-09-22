@@ -1,5 +1,6 @@
-"""1650 exe pulse. Publish attach/alive/probe. Ubuntu does not write attach."""
+"""1650 exe pulse. Always exec disk host_main, never a frozen copy."""
 from __future__ import annotations
+import importlib.util
 import json, os, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,24 @@ def _root() -> Path:
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+def _disk_tick() -> Dict[str, Any] | None:
+    path = _root() / "scripts" / "host_main.py"
+    if not path.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("_ether_disk_host_main", path)
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.tick()
+
 def pulse(push: bool = True) -> Dict[str, Any]:
+    try:
+        row = _disk_tick()
+        if isinstance(row, dict):
+            return row
+    except Exception:
+        pass
     root = _root()
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
@@ -52,7 +70,7 @@ def _push(root: Path) -> None:
             git = p
             break
     kw: Dict[str, Any] = {"cwd": str(root), "timeout": 90, "creationflags": 0x08000000, "capture_output": True}
-    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json", "artifacts/week_tick.json", "artifacts/gem_energy.json", "artifacts/jobs"]
+    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json", "artifacts/week_tick.json", "artifacts/gem_energy.json", "artifacts/jobs", "artifacts/self_heal.json", "artifacts/git_push.json"]
     try:
         subprocess.run([git, "add", *paths], **kw)
         if subprocess.run([git, "diff", "--cached", "--quiet"], **kw).returncode == 0:

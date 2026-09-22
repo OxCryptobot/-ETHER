@@ -88,11 +88,6 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["keepalive_error"] = type(exc).__name__
         try:
-            from scripts.exe_pulse import pulse
-            row["pulse"] = pulse(push=True)
-        except Exception as exc:
-            row["pulse_error"] = type(exc).__name__
-        try:
             from scripts.origin_publish import publish
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
@@ -103,3 +98,6 @@ def tick() -> Dict[str, Any]:
     art.mkdir(parents=True, exist_ok=True)
     (art / "host_main.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+if __name__ == "__main__":
+    print(json.dumps(tick(), default=str))

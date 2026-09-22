@@ -1,4 +1,4 @@
-"""Disk writer kernel. Restores daemon host without 8787 Matrix UI."""
+"""Disk writer kernel. Self-heal first, then host."""
 from __future__ import annotations
 import json, os, subprocess
 from datetime import datetime, timezone
@@ -71,6 +71,11 @@ def tick() -> Dict[str, Any]:
     row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name}
     if os.name == "nt":
         _pull(root)
+        try:
+            from scripts.self_heal import arm
+            row["heal"] = arm()
+        except Exception as exc:
+            row["heal_error"] = type(exc).__name__
         try:
             from scripts.start_runner import start_runner
             row["runner"] = start_runner()

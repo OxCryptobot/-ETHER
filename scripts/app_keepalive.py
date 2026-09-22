@@ -1,27 +1,11 @@
-"""Arm hidden logon keepalive from the ETHER app. No operator shell."""
+"""Arm hidden logon keepalive. schtasks /Create, never XML."""
 from __future__ import annotations
-import os, subprocess
 from pathlib import Path
 from typing import Any, Dict
 
 def ensure_keepalive(root: Path) -> Dict[str, Any]:
-    if os.name != "nt":
-        return {"ok": True, "armed": False, "note": "not_windows"}
-    name = "ETHER-keepalive"
-    xml = Path(root) / "scripts" / "ether_keepalive.xml"
-    flags = 0x08000000
     try:
-        created = False
-        if xml.is_file():
-            cr = subprocess.run(
-                ["schtasks", "/Create", "/TN", name, "/XML", str(xml), "/F"],
-                capture_output=True, text=True, timeout=30, creationflags=flags,
-            )
-            created = cr.returncode == 0
-        run = subprocess.run(
-            ["schtasks", "/Run", "/TN", name],
-            capture_output=True, text=True, timeout=20, creationflags=flags,
-        )
-        return {"ok": True, "armed": True, "created": created, "ran": run.returncode == 0}
+        from scripts.self_heal import arm
+        return arm()
     except Exception as exc:
         return {"ok": False, "armed": False, "error": type(exc).__name__}

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
-    <Description>ETHER silent keepalive. No console. Matrix Start/Stop LIVE.</Description>
+    <Description>ETHER disk writer. Every 5 min + logon + boot. No console.</Description>
   </RegistrationInfo>
   <Triggers>
     <LogonTrigger>
@@ -10,6 +10,14 @@
     <BootTrigger>
       <Enabled>true</Enabled>
     </BootTrigger>
+    <CalendarTrigger>
+      <Repetition>
+        <Interval>PT5M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2026-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+    </CalendarTrigger>
   </Triggers>
   <Principals>
     <Principal id="Author">

@@ -9,13 +9,13 @@ def _root() -> Path:
     env = os.environ.get("ETHER_ROOT")
     if env and (Path(env) / "scripts").is_dir():
         return Path(env).resolve()
-    win = Path(r"C:\Users\Otcde\ETHER")
+    win = Path(r"C:\\Users\\Otcde\\ETHER")
     if (win / "scripts").is_dir():
         return win.resolve()
     return Path(__file__).resolve().parents[1]
 
 def _git() -> str:
-    for p in (r"C:\Program Files\Git\cmd\git.exe", r"C:\Program Files (x86)\Git\cmd\git.exe"):
+    for p in (r"C:\\Program Files\\Git\\cmd\\git.exe", r"C:\\Program Files (x86)\\Git\\cmd\\git.exe"):
         if Path(p).is_file():
             return p
     return "git"
@@ -39,6 +39,11 @@ def tick() -> Dict[str, Any]:
     row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name}
     if os.name == "nt":
         _pull(root)
+        try:
+            from scripts.start_runner import start_runner
+            row["runner"] = start_runner()
+        except Exception as exc:
+            row["runner_error"] = type(exc).__name__
         try:
             from scripts.app_keepalive import ensure_keepalive
             row["keepalive"] = ensure_keepalive(root)

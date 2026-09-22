@@ -127,6 +127,12 @@ def git_run(*args: str, timeout: int = 90) -> subprocess.CompletedProcess:
 
 
 def _push_attach() -> None:
+    try:
+        from scripts.origin_publish import publish
+        publish(ROOT, message="1650 app attach")
+        return
+    except Exception:
+        pass
     if "Otcde" not in str(ROOT):
         return
     paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json"]
@@ -253,17 +259,30 @@ def _host_loop() -> None:
                 git_run("reset", "--hard", "origin/main")
         except Exception:
             pass
-        cmd = live_start()
         try:
-            from scripts.ether_week_tick import tick as week_tick
-            week_tick(push=False)
+            from scripts.exe_pulse import pulse
+            pulse(push=True)
         except Exception:
-            pass
-        if str(cmd.get("cmd") or "") == "stop":
-            break
-        mark_alive()
-        _push_attach()
-        time.sleep(60)
+            live_start()
+            try:
+                from scripts.ether_week_tick import tick as week_tick
+                week_tick(push=True)
+            except Exception:
+                pass
+            mark_alive()
+            _push_attach()
+        if os.path.isfile(str(ROOT / "artifacts" / "host_command.json")):
+            try:
+                body = json.loads((ROOT / "artifacts" / "host_command.json").read_text(encoding="utf-8"))
+                if str(body.get("cmd") or "") == "stop":
+                    break
+            except Exception:
+                pass
+        try:
+            from core.kernel.poll import pending_count, poll_seconds
+            time.sleep(float(poll_seconds(pending_count())))
+        except Exception:
+            time.sleep(20)
 
 
 def serve_local() -> None:
@@ -273,10 +292,6 @@ def serve_local() -> None:
         def log_message(self, fmt: str, *args: object) -> None:
             return
         def do_GET(self) -> None:
-            if self.path.startswith("/start"):
-                live_start(); self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}'); return
-            if self.path.startswith("/stop"):
-                live_stop(); self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}'); return
             if self.path.startswith("/status"):
                 body = _json.dumps(dashboard_status()).encode(); self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
             self.send_error(404)

@@ -1,6 +1,6 @@
-"""Publish 1650 artifacts to origin. Never silent. Ubuntu no-ops."""
+"""Publish 1650 artifacts to origin. Never silent. gh token fallback."""
 from __future__ import annotations
-import json, os, subprocess
+import json, os, shutil, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
@@ -11,6 +11,7 @@ PATHS = [
     "artifacts/ollama_probe.json",
     "artifacts/exe_pulse.json",
     "artifacts/git_push.json",
+    "artifacts/host_main.json",
     "artifacts/week_tick.json",
     "artifacts/autonomy_tick.json",
     "artifacts/self_state.json",
@@ -23,6 +24,15 @@ def _git() -> str:
         if Path(p).is_file():
             return p
     return "git"
+
+def _gh() -> str | None:
+    which = shutil.which("gh")
+    if which:
+        return which
+    for p in (r"C:\Program Files\GitHub CLI\gh.exe", r"C:\Program Files (x86)\GitHub CLI\gh.exe"):
+        if Path(p).is_file():
+            return p
+    return None
 
 def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     root = Path(root)
@@ -37,8 +47,13 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     env = os.environ.copy()
     env["GIT_TERMINAL_PROMPT"] = "0"
     kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "env": env, "creationflags": 0x08000000}
-    def run(argv: List[str]) -> subprocess.CompletedProcess:
-        return subprocess.run(argv, **kw)
+    def run(argv: List[str], extra_env: Dict[str, str] | None = None) -> subprocess.CompletedProcess:
+        use = dict(kw)
+        if extra_env:
+            e = dict(env)
+            e.update(extra_env)
+            use["env"] = e
+        return subprocess.run(argv, **use)
     try:
         run([git, "add", *PATHS])
         diff = run([git, "diff", "--cached", "--quiet"])
@@ -47,12 +62,20 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
         else:
             c = run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-exe", "commit", "-m", message])
             p = run([git, "push", "origin", "main"])
-            row.update({
-                "ok": p.returncode == 0,
-                "commit_rc": c.returncode,
-                "push_rc": p.returncode,
-                "stderr": ((p.stderr or "") + (c.stderr or ""))[-400:],
-            })
+            row.update({"commit_rc": c.returncode, "push_rc": p.returncode, "stderr": ((p.stderr or "") + (c.stderr or ""))[-300:]})
+            if p.returncode == 0:
+                row["ok"] = True
+            else:
+                gh = _gh()
+                if gh:
+                    tok = run([gh, "auth", "token"])
+                    token = (tok.stdout or "").strip()
+                    if token:
+                        p2 = run([git, "push", "origin", "main"], extra_env={"GH_TOKEN": token, "GITHUB_TOKEN": token})
+                        row["push_rc"] = p2.returncode
+                        row["via"] = "gh_token"
+                        row["ok"] = p2.returncode == 0
+                        row["stderr"] = (p2.stderr or "")[-300:]
     except Exception as exc:
         row["error"] = type(exc).__name__
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")

@@ -1,4 +1,4 @@
-"""ETHER host process. Disk tick via venv, never frozen pulse."""
+"""ETHER host process. One writer: detached venv keepalive spawned by the exe."""
 from __future__ import annotations
 
 import json
@@ -27,6 +27,7 @@ GATES = [
     "tests/test_gem_topo.py",
     "tests/test_living_contract.py",
 ]
+DETACH = 0x08000000 | 0x00000008 | 0x00000200
 
 
 def ensure_keepalive() -> Dict[str, Any]:
@@ -43,8 +44,36 @@ def _venv_python() -> Path:
     return Path(sys.executable)
 
 
+def spawn_writer() -> Dict[str, Any]:
+    """Single handler: exe starts detached keepalive. Survives window close."""
+    if os.name != "nt":
+        return {"ok": True, "note": "observe_only"}
+    keep = ROOT / "scripts" / "ether_keepalive.py"
+    if not keep.is_file():
+        return {"ok": False, "error": "no_keepalive"}
+    env = os.environ.copy()
+    env["ETHER_ROOT"] = str(ROOT)
+    env["PYTHONPATH"] = str(ROOT)
+    try:
+        subprocess.Popen(
+            [str(_venv_python()), str(keep)],
+            cwd=str(ROOT),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=DETACH,
+            close_fds=True,
+        )
+        row = {"ok": True, "spawned": True}
+    except Exception as exc:
+        row = {"ok": False, "error": type(exc).__name__}
+    path = ROOT / "artifacts" / "exe_writer.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
+
+
 def disk_tick() -> Dict[str, Any]:
-    """Run disk host_main in venv. Frozen exe cannot import disk modules."""
     if os.name != "nt":
         return {"ok": True, "note": "observe_only"}
     script = ROOT / "scripts" / "host_main.py"
@@ -68,8 +97,8 @@ def disk_tick() -> Dict[str, Any]:
             "rc": r.returncode,
             "tail": ((r.stdout or "") + (r.stderr or ""))[-800:],
         }
-    except Exception as exc:
-        row = {"ok": False, "error": type(exc).__name__}
+    except Exception as exec_exc:
+        row = {"ok": False, "error": type(exec_exc).__name__}
     path = ROOT / "artifacts" / "exe_loop.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
@@ -115,6 +144,7 @@ def boot() -> Dict[str, Any]:
             git_run("pull", "--ff-only", "origin", "main")
         except Exception:
             pass
+    writer = spawn_writer()
     tick = disk_tick()
     alive = mark_alive()
     keep = ensure_keepalive()
@@ -122,6 +152,7 @@ def boot() -> Dict[str, Any]:
     att = consume({"cmd": "attach"})
     proof = verify()
     att["booted"] = True
+    att["writer"] = writer
     att["disk_tick"] = tick
     att["alive"] = alive
     att["keepalive"] = keep
@@ -180,7 +211,7 @@ def _push_attach() -> None:
         pass
     if "Otcde" not in str(ROOT):
         return
-    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json", "artifacts/exe_loop.json", "artifacts/self_heal.json", "artifacts/git_push.json"]
+    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json", "artifacts/exe_loop.json", "artifacts/self_heal.json", "artifacts/git_push.json", "artifacts/exe_writer.json"]
     try:
         git_run("add", *paths)
         if git_run("diff", "--cached", "--quiet").returncode == 0:
@@ -305,6 +336,7 @@ def _host_loop() -> None:
         except Exception:
             pass
         try:
+            spawn_writer()
             disk_tick()
         except Exception as exc:
             (ROOT / "artifacts").mkdir(parents=True, exist_ok=True)
@@ -356,6 +388,8 @@ def product_window() -> str:
 def main() -> None:
     import threading
     import time
+    spawn_writer()
+    ensure_keepalive()
 
     def spawn() -> threading.Thread:
         t = threading.Thread(target=_host_loop, name="ether-host", daemon=False)

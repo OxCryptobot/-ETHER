@@ -10,7 +10,7 @@ def _root() -> Path:
     env = os.environ.get("ETHER_ROOT")
     if env and (Path(env) / "scripts").is_dir():
         return Path(env).resolve()
-    win = Path(r"C:\Users\Otcde\ETHER")
+    win = Path(r"C:\\Users\\Otcde\\ETHER")
     if (win / "scripts").is_dir():
         return win.resolve()
     return Path(__file__).resolve().parents[1]
@@ -64,8 +64,14 @@ def pulse(push: bool = True) -> Dict[str, Any]:
     return row
 
 def _push(root: Path) -> None:
+    try:
+        from scripts.origin_publish import publish
+        publish(root, message="1650 exe pulse")
+        return
+    except Exception:
+        pass
     git = "git"
-    for p in (r"C:\Program Files\Git\cmd\git.exe", r"C:\Program Files (x86)\Git\cmd\git.exe"):
+    for p in (r"C:\\Program Files\\Git\\cmd\\git.exe", r"C:\\Program Files (x86)\\Git\\cmd\\git.exe"):
         if Path(p).is_file():
             git = p
             break

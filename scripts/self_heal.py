@@ -11,7 +11,7 @@ def _root() -> Path:
     env = os.environ.get("ETHER_ROOT")
     if env and (Path(env) / "scripts").is_dir():
         return Path(env).resolve()
-    win = Path(r"C:\Users\Otcde\ETHER")
+    win = Path(r"C:\\Users\\Otcde\\ETHER")
     if (win / "scripts").is_dir():
         return win.resolve()
     return Path(__file__).resolve().parents[1]
@@ -24,7 +24,7 @@ def _run(argv: List[str], timeout: int = 30) -> int:
         return 1
 
 def arm() -> Dict[str, Any]:
-    row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "os": os.name, "ok": False}
+    row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "os": os.name, "ok": False, "armed": False}
     if os.name != "nt":
         row["note"] = "observe_only"
         row["ok"] = True
@@ -35,7 +35,7 @@ def arm() -> Dict[str, Any]:
         pyw = root / ".venv" / "Scripts" / "python.exe"
     keep = root / "scripts" / "ether_keepalive.py"
     tr = f'"{pyw}" "{keep}"'
-    runner_dir = Path(os.environ.get("ETHER_RUNNER_DIR") or r"C:\actions-runner")
+    runner_dir = Path(os.environ.get("ETHER_RUNNER_DIR") or r"C:\\actions-runner")
     run_cmd = runner_dir / "run.cmd"
     runner_tr = f'cmd.exe /c cd /d "{runner_dir}" && run.cmd'
     tasks = [
@@ -52,13 +52,13 @@ def arm() -> Dict[str, Any]:
     for argv, key in tasks:
         armed[key] = _run(argv)
     row["tasks"] = armed
-    _run(["reg", "add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run", "/v", "ETHER-host", "/t", "REG_SZ", "/d", f"{pyw} {keep}", "/f"])
+    _run(["reg", "add", r"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "ETHER-host", "/t", "REG_SZ", "/d", f"{pyw} {keep}", "/f"])
     try:
-        startup = Path(os.environ.get("APPDATA") or "") / r"Microsoft\Windows\Start Menu\Programs\Startup"
+        startup = Path(os.environ.get("APPDATA") or "") / r"Microsoft\\Windows\\Start Menu\\Programs\\Startup"
         if startup.is_dir():
             vbs = startup / "ETHER-host.vbs"
             vbs.write_text(
-                f'Set s=CreateObject("WScript.Shell")\ns.Run """{pyw}"" ""{keep}""", 0, False\n',
+                f'Set s=CreateObject("WScript.Shell")\\ns.Run """{pyw}"" ""{keep}""", 0, False\\n',
                 encoding="ascii",
                 errors="replace",
             )
@@ -84,6 +84,7 @@ def arm() -> Dict[str, Any]:
     _run(["schtasks", "/Run", "/TN", "ETHER-keepalive"])
     _run(["schtasks", "/Run", "/TN", "ETHER-Runner"])
     row["ok"] = True
+    row["armed"] = True
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
     (art / "self_heal.json").write_text(__import__("json").dumps(row, indent=2) + "\n", encoding="utf-8")

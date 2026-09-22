@@ -1,4 +1,4 @@
-"""ETHER host process. No popups. Boots attach + verified gem/agent contract."""
+"""ETHER host process. Disk tick via venv, never frozen pulse."""
 from __future__ import annotations
 
 import json
@@ -31,6 +31,49 @@ GATES = [
 
 def ensure_keepalive() -> Dict[str, Any]:
     return _ensure_keepalive(ROOT)
+
+
+def _venv_python() -> Path:
+    w = ROOT / ".venv" / "Scripts" / "pythonw.exe"
+    e = ROOT / ".venv" / "Scripts" / "python.exe"
+    if w.is_file():
+        return w
+    if e.is_file():
+        return e
+    return Path(sys.executable)
+
+
+def disk_tick() -> Dict[str, Any]:
+    """Run disk host_main in venv. Frozen exe cannot import disk modules."""
+    if os.name != "nt":
+        return {"ok": True, "note": "observe_only"}
+    script = ROOT / "scripts" / "host_main.py"
+    if not script.is_file():
+        return {"ok": False, "error": "no_host_main"}
+    env = os.environ.copy()
+    env["ETHER_ROOT"] = str(ROOT)
+    env["PYTHONPATH"] = str(ROOT)
+    kw: Dict[str, Any] = {
+        "cwd": str(ROOT),
+        "env": env,
+        "capture_output": True,
+        "text": True,
+        "timeout": 180,
+        "creationflags": 0x08000000,
+    }
+    try:
+        r = subprocess.run([str(_venv_python()), str(script)], **kw)
+        row: Dict[str, Any] = {
+            "ok": r.returncode == 0,
+            "rc": r.returncode,
+            "tail": ((r.stdout or "") + (r.stderr or ""))[-800:],
+        }
+    except Exception as exc:
+        row = {"ok": False, "error": type(exc).__name__}
+    path = ROOT / "artifacts" / "exe_loop.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
 
 
 def verify() -> Dict[str, Any]:
@@ -72,12 +115,14 @@ def boot() -> Dict[str, Any]:
             git_run("pull", "--ff-only", "origin", "main")
         except Exception:
             pass
+    tick = disk_tick()
     alive = mark_alive()
     keep = ensure_keepalive()
     ollama = start_ollama()
     att = consume({"cmd": "attach"})
     proof = verify()
     att["booted"] = True
+    att["disk_tick"] = tick
     att["alive"] = alive
     att["keepalive"] = keep
     att["update"] = upd
@@ -135,7 +180,7 @@ def _push_attach() -> None:
         pass
     if "Otcde" not in str(ROOT):
         return
-    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json"]
+    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json", "artifacts/exe_loop.json", "artifacts/self_heal.json", "artifacts/git_push.json"]
     try:
         git_run("add", *paths)
         if git_run("diff", "--cached", "--quiet").returncode == 0:
@@ -260,17 +305,18 @@ def _host_loop() -> None:
         except Exception:
             pass
         try:
-            from scripts.exe_pulse import pulse
-            pulse(push=True)
-        except Exception:
-            live_start()
+            disk_tick()
+        except Exception as exc:
+            (ROOT / "artifacts").mkdir(parents=True, exist_ok=True)
+            (ROOT / "artifacts" / "exe_loop.json").write_text(
+                json.dumps({"ok": False, "error": type(exc).__name__}, indent=2) + "\n", encoding="utf-8"
+            )
             try:
-                from scripts.ether_week_tick import tick as week_tick
-                week_tick(push=True)
+                live_start()
+                mark_alive()
+                _push_attach()
             except Exception:
                 pass
-            mark_alive()
-            _push_attach()
         if os.path.isfile(str(ROOT / "artifacts" / "host_command.json")):
             try:
                 body = json.loads((ROOT / "artifacts" / "host_command.json").read_text(encoding="utf-8"))
@@ -309,8 +355,23 @@ def product_window() -> str:
 
 def main() -> None:
     import threading
-    host = threading.Thread(target=_host_loop, name="ether-host", daemon=False)
-    host.start()
+    import time
+
+    def spawn() -> threading.Thread:
+        t = threading.Thread(target=_host_loop, name="ether-host", daemon=False)
+        t.start()
+        return t
+
+    host = spawn()
+
+    def watch() -> None:
+        nonlocal host
+        while True:
+            time.sleep(30)
+            if not host.is_alive():
+                host = spawn()
+
+    threading.Thread(target=watch, name="ether-host-watch", daemon=True).start()
     threading.Thread(target=serve_local, name="ether-ui", daemon=True).start()
     try:
         product_window()

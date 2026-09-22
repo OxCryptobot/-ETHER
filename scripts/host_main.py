@@ -1,4 +1,4 @@
-"""Disk writer kernel. Self-heal first, then host."""
+"""Disk writer kernel. Self-heal, LIVE attach, evolve, publish."""
 from __future__ import annotations
 import json, os, subprocess
 from datetime import datetime, timezone
@@ -88,15 +88,53 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["keepalive_error"] = type(exc).__name__
         try:
+            from scripts.live_host import start_ollama, consume, ollama_up
+            row["ollama_start"] = start_ollama()
+            row["attach"] = consume({"cmd": "attach"})
+            row["ollama"] = ollama_up()
+        except Exception as exc:
+            row["attach_error"] = type(exc).__name__
+        try:
+            from scripts.ether_app import mark_alive
+            row["alive"] = mark_alive()
+        except Exception as exc:
+            row["alive_error"] = type(exc).__name__
+        try:
+            from scripts.drain_live_fifo import drain as drain_live
+            row["live"] = drain_live()
+        except Exception as exc:
+            row["live_error"] = type(exc).__name__
+        try:
+            from scripts.ether_evolve import cycle
+            row["evolve"] = cycle()
+        except Exception as exc:
+            row["evolve_error"] = type(exc).__name__
+        if row.get("ollama"):
+            try:
+                from scripts.ether_role import tick as role_tick
+                row["role"] = role_tick()
+            except Exception as exc:
+                row["role_error"] = type(exc).__name__
+        try:
+            from scripts.live_status import write as live_status
+            row["live_status"] = live_status()
+        except Exception as exc:
+            row["live_status_error"] = type(exc).__name__
+        try:
             from scripts.origin_publish import publish
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
             row["publish_error"] = type(exc).__name__
     else:
+        try:
+            from scripts.ether_evolve import cycle
+            row["evolve"] = cycle()
+        except Exception as exc:
+            row["evolve_error"] = type(exc).__name__
         row["note"] = "observe_only"
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
-    (art / "host_main.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    (art / "host_main.json").write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
     return row
 
 if __name__ == "__main__":

@@ -1,0 +1,12 @@
+{
+  "id": "exe_evolve_20260922",
+  "class": "fast",
+  "note": "8 gems evolve cycle",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_evolve.py", "tests/test_gem_topo.py", "-q", "--tb=line"],
+      "timeout": 90
+    }
+  ]
+}

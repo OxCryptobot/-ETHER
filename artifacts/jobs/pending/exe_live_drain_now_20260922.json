@@ -1,0 +1,12 @@
+{
+  "id": "exe_live_drain_now_20260922",
+  "class": "live",
+  "note": "1650: pulse + ollama probe + autonomy tick",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/exe_pulse.py"],
+      "timeout": 120
+    }
+  ]
+}

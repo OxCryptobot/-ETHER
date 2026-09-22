@@ -97,6 +97,11 @@ def _idle_week_tick() -> None:
         tick(push=False)
     except Exception:
         return
+    try:
+        from scripts.live_status import write as live_status
+        live_status()
+    except Exception:
+        return
 
 def drain() -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)

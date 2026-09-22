@@ -56,19 +56,36 @@ def tick() -> Dict[str, Any]:
     if pending.is_dir():
         for p in pending.glob("*.json"):
             try:
-                row = json.loads(p.read_text(encoding="utf-8"))
+                raw = json.loads(p.read_text(encoding="utf-8"))
             except Exception:
                 continue
-            if str(row.get("class") or "").lower() == "live":
+            if str(raw.get("class") or "").lower() == "live":
                 live_n += 1
+    last_row: Dict[str, Any] | None = None
     last_ok = None
     last = art / "host_agent_last_job.json"
     if last.is_file():
         try:
-            last_ok = bool(json.loads(last.read_text(encoding="utf-8")).get("ok"))
+            last_row = json.loads(last.read_text(encoding="utf-8"))
+            last_ok = bool(last_row.get("ok"))
         except Exception:
             last_ok = None
     row = decide(ollama=ollama, pending_live=live_n, last_ok=last_ok, writer_nt=os.name == "nt")
+    try:
+        from core.kernel.self_state import snapshot, write
+        write(root, snapshot(ollama=ollama, pending_live=live_n, last=last_row))
+    except Exception:
+        pass
+    if last_ok is False:
+        try:
+            from core.kernel.self_learn import lesson_from_fail
+            lesson = lesson_from_fail(last_row)
+            if lesson:
+                lp = art / "last_lesson.json"
+                lp.write_text(json.dumps(lesson, indent=2) + "\n", encoding="utf-8")
+                row["lesson"] = lesson.get("root_cause")
+        except Exception:
+            pass
     if os.name == "nt":
         try:
             from scripts.exe_pulse import pulse

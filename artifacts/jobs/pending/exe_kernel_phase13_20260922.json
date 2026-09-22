@@ -1,0 +1,12 @@
+{
+  "id": "exe_kernel_phase13_20260922",
+  "class": "fast",
+  "note": "phase13 self-learn self-state",
+  "continue_on_fail": false,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase12.py", "tests/test_kernel_phase13.py", "-q", "--tb=line"],
+      "timeout": 180
+    }
+  ]
+}

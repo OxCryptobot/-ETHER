@@ -1,8 +1,14 @@
-"""Keepalive tick uses live-host consume. Operator path is Matrix Start LIVE."""
+"""Keepalive is one host_main pass. Off the 1650 it must not fake alive."""
 from scripts.ether_keepalive import tick
 
 
-def test_keepalive_tick() -> None:
+def test_keepalive_tick_does_not_fake_live() -> None:
     out = tick()
-    assert out.get("consumed") is True
-    assert out.get("live_lane") in {"ollama_4b", "grok_bus"}
+    assert isinstance(out, dict)
+    assert out.get("os") in {"posix", "nt"}
+    if out.get("os") != "nt":
+        assert out.get("note") == "observe_only"
+        assert out.get("alive") is None
+        pillars = (out.get("evolve") or {}).get("pillars") or {}
+        assert pillars.get("modular_intelligence") is True
+        assert pillars.get("verified_execution") is True

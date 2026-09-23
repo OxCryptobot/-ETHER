@@ -12,7 +12,14 @@ on:
       - "tests/test_live_host.py"
       - "tests/test_live_status.py"
       - "tests/test_evolve.py"
+      - "tests/test_ether_keepalive.py"
+      - "tests/test_daemon_publish.py"
+      - "tests/test_host_pid.py"
+      - "tests/test_citrine_health.py"
       - "scripts/drain_fast_fifo.py"
+      - "scripts/ether_keepalive.py"
+      - "scripts/ether_daemon.py"
+      - "scripts/host_main.py"
       - "scripts/drain_live_fifo.py"
       - "scripts/ether_week_tick.py"
       - "scripts/ether_evolve.py"
@@ -36,7 +43,7 @@ jobs:
       - name: Targeted kernel gates
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_kernel_phase4.py tests/test_kernel_phase5.py tests/test_kernel_phase6.py tests/test_drain_fast_fifo.py tests/test_live_host.py tests/test_live_status.py tests/test_evolve.py tests/test_gem_topo.py -q --tb=line
+        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_kernel_phase4.py tests/test_kernel_phase5.py tests/test_kernel_phase6.py tests/test_drain_fast_fifo.py tests/test_live_host.py tests/test_live_status.py tests/test_evolve.py tests/test_gem_topo.py tests/test_ether_keepalive.py tests/test_daemon_publish.py tests/test_host_pid.py tests/test_citrine_health.py -q --tb=line
       - name: Drain FAST FIFO
         env:
           PYTHONPATH: ${{ github.workspace }}

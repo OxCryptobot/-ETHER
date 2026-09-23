@@ -190,6 +190,20 @@ def maybe_recover(h: dict) -> None:
         log(f"RECOVERY error: {e}")
 
 
+
+def publish_host() -> dict:
+    """Pull, attach, and publish. Runs even when the health gate would skip a cycle."""
+    os.environ["ETHER_IN_DAEMON"] = "1"
+    try:
+        from scripts.host_main import tick as host_tick
+        row = host_tick()
+        log("host tick " + str(row.get("note") or row.get("publish") or "ok")[:200])
+        return row
+    except Exception as e:
+        log(f"host tick error: {e}")
+        return {"ok": False, "error": type(e).__name__}
+
+
 def flywheel_loop() -> None:
     global _cycle_n
     log(f"smart flywheel interval={INTERVAL}s")
@@ -203,6 +217,7 @@ def flywheel_loop() -> None:
     while not _stop.is_set():
         try:
             heartbeat()
+            publish_host()
             _cycle_n += 1
             h = write_healthy_flag()
             if not h.get("healthy"):
@@ -359,6 +374,7 @@ def main() -> int:
     if not acquire_lock():
         return 2
     heartbeat()
+    publish_host()
     boot_self_test()
     write_healthy_flag()
 

@@ -32,8 +32,14 @@ def _lock(root: Path) -> bool:
     path.write_text(str(os.getpid()), encoding="utf-8")
     return True
 
+
+def tick():
+    """One writer pass. Same function the exe and the daemon call."""
+    from scripts.host_main import tick as host_tick
+    return host_tick()
+
 def main() -> None:
-    from scripts.host_main import tick, _root
+    from scripts.host_main import _root
     root = _root()
     if not _lock(root):
         print(json.dumps({"ok": True, "note": "keepalive_already"}))

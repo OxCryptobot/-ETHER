@@ -1,4 +1,4 @@
-"""Controlled evolution: 8 gems walk, score, template-fabricate once per FAIL."""
+"""Controlled evolution: 8 gems walk, score, template-fabricate once per real FAIL."""
 from __future__ import annotations
 
 import json
@@ -43,9 +43,12 @@ def _last_fail_id() -> Optional[str]:
     if not failed.is_dir():
         return None
     files = sorted(failed.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not files:
-        return None
-    return files[0].stem[:40]
+    for path in files:
+        stem = path.stem
+        if stem.startswith("medic"):
+            continue
+        return stem[:40]
+    return None
 
 
 def _prev_evolve() -> Dict[str, Any]:
@@ -98,7 +101,7 @@ def cycle() -> Dict[str, Any]:
             fab = {"ok": False, "error": type(exc).__name__}
     energy = _bump_energy(walk)
     row: Dict[str, Any] = {
-        "ok": bool(walk.get("n") == 8),
+        "ok": bool(walk.get("n") == 8 and walk.get("ok")),
         "pillars": {
             "modular_intelligence": len(GEMS) == 8,
             "verified_execution": bool(walk.get("ok")),

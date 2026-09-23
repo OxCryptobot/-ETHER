@@ -15,6 +15,10 @@ on:
           - cycle
           - boot
 
+concurrency:
+  group: autonomy-host
+  cancel-in-progress: false
+
 jobs:
   host:
     runs-on: [self-hosted, Windows, ETHER]

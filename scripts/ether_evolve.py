@@ -1,4 +1,4 @@
-"""Controlled evolution: 8 gems walk, score, template-fabricate on FAIL."""
+"""Controlled evolution: 8 gems walk, score, template-fabricate once per FAIL."""
 from __future__ import annotations
 
 import json
@@ -48,6 +48,16 @@ def _last_fail_id() -> Optional[str]:
     return files[0].stem[:40]
 
 
+def _prev_evolve() -> Dict[str, Any]:
+    p = _root() / "artifacts" / "evolve.json"
+    if not p.is_file():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def _bump_energy(walk: Dict[str, Any]) -> Dict[str, Any]:
     path = _root() / "artifacts" / "gem_energy.json"
     prev: Dict[str, Any] = {}
@@ -58,9 +68,9 @@ def _bump_energy(walk: Dict[str, Any]) -> Dict[str, Any]:
             prev = {}
     n_ok = sum(1 for r in (walk.get("rows") or []) if r.get("ok"))
     row = {
-        "ts": datetime.now(timezone.utc).isoformat(),
-        "ok": n_ok,
-        "n": int(walk.get("n") or 0),
+        "evolve_ts": datetime.now(timezone.utc).isoformat(),
+        "evolve_ok": n_ok,
+        "evolve_n": int(walk.get("n") or 0),
         "generation": generation() + 1,
         "source": "ether_evolve.cycle",
     }
@@ -76,8 +86,9 @@ def cycle() -> Dict[str, Any]:
 
     walk = walk_gems("evolve ping")
     fail_id = _last_fail_id()
+    prev = _prev_evolve()
     fab: Dict[str, Any] | None = None
-    if fail_id:
+    if fail_id and fail_id != prev.get("fail_id"):
         try:
             import os
             os.environ["ETHER_FABRICATE_STUB_ONLY"] = "1"

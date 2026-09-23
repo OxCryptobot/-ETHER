@@ -1,6 +1,7 @@
 """Gem topography. ETHER is the gems. They walk the agentic cycle in order."""
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List
 from uuid import uuid4
 
@@ -29,7 +30,7 @@ TOPO: List[str] = [
 ]
 
 
-def _one(registry: Any, name: str, payload: Any, timeout: int = 20) -> Dict[str, Any]:
+def _one(registry: Any, name: str, payload: Any, timeout: int = 8) -> Dict[str, Any]:
     env = Envelope(task_id=uuid4(), target_gem=name, payload=payload, timeout_seconds=timeout)
     try:
         res = registry.execute(env)
@@ -40,7 +41,8 @@ def _one(registry: Any, name: str, payload: Any, timeout: int = 20) -> Dict[str,
 
 
 def walk_gems(objective: str = "agentic ping") -> Dict[str, Any]:
-    """Walk every gem once. Rose is listed; LLM call is skipped in FAST walk."""
+    """Walk every gem once. Rose skips the LLM. Sandbox is local. No tool files."""
+    os.environ.setdefault("ETHER_SANDBOX_BACKEND", "local")
     registry = build_default_registry()
     present = set(registry.list_gems())
     rows: List[Dict[str, Any]] = []
@@ -52,19 +54,21 @@ def walk_gems(objective: str = "agentic ping") -> Dict[str, Any]:
         "black-tourmaline": BlackTourmalineRequest(artifact=tiny),
         "labradorite": LabradoriteRequest(code=tiny),
         "amethyst": AmethystRequest(action="log", interaction={"objective": objective}),
-        "grandidierite": GrandidieriteRequest(tool_request={"name": "ping", "stub_only": True}),
+        "grandidierite": GrandidieriteRequest(tool_request={"action": "list", "name": "ping"}),
     }
     for name in TOPO:
         if name == "rose-quartz":
-            rows.append({"gem": name, "ok": name in present, "error": None, "note": "registered; no FAST LLM call"})
+            rows.append({"gem": name, "ok": name in present, "error": None if name in present else "unregistered", "note": "registered; no FAST LLM call"})
             continue
         if name not in present:
             rows.append({"gem": name, "ok": False, "error": "unregistered"})
             continue
-        rows.append(_one(registry, name, payloads[name]))
+        rows.append(_one(registry, name, payloads[name], timeout=8 if name != "clear-quartz" else 12))
+    weak = [r for r in rows if not r.get("ok")]
     return {
-        "ok": all(r.get("ok") for r in rows if r.get("gem") != "clear-quartz"),
+        "ok": not weak,
         "n": len(rows),
+        "weak": [{"gem": r.get("gem"), "error": r.get("error")} for r in weak],
         "present": sorted(present),
         "rows": rows,
         "cycle": "observe-tool-sandbox-critique-memory",

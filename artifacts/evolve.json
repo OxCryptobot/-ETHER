@@ -9,15 +9,64 @@
   "walk_n": 8,
   "walk_ok": true,
   "weak": [],
-  "fabricate": null,
-  "fail_id": null,
+  "fabricate": {
+    "name": "heal_medic_hb_20260923_161930",
+    "quarantine_path": "tools/quarantine/heal_medic_hb_20260923_161930_20260923_182015.py",
+    "stages": [
+      {
+        "stage": "implement",
+        "ok": true,
+        "mode": "stub"
+      },
+      {
+        "stage": "ast_validate",
+        "ok": true,
+        "has_main": true
+      },
+      {
+        "stage": "static_safety",
+        "ok": true,
+        "findings": []
+      },
+      {
+        "stage": "sandbox_selftest",
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "compile_ok\n",
+        "stderr": ""
+      },
+      {
+        "stage": "audit",
+        "ok": true,
+        "approved": true,
+        "risk_score": 0.0
+      },
+      {
+        "stage": "critique",
+        "ok": true,
+        "soft": true,
+        "complexity": 0.1,
+        "critique": "[clean] ~20 lines, complexity=0.10. No structural issues flagged.",
+        "suggestions": []
+      },
+      {
+        "stage": "promote",
+        "ok": false,
+        "note": "ETHER_AUTO_PROMOTE=0"
+      }
+    ],
+    "validation_status": "pending_promote",
+    "promoted": false,
+    "promote_path": null
+  },
+  "fail_id": "medic_hb_20260923_161930",
   "energy": {
-    "evolve_ts": "2026-09-23T16:21:58.879054+00:00",
+    "evolve_ts": "2026-09-23T18:20:15.576159+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 343,
+    "generation": 347,
     "source": "ether_evolve.cycle"
   },
-  "generation": 343,
-  "ts": "2026-09-23T16:21:58.879920+00:00"
+  "generation": 347,
+  "ts": "2026-09-23T18:20:15.576898+00:00"
 }

@@ -11,9 +11,11 @@ on:
       - "tests/test_drain_fast_fifo.py"
       - "tests/test_live_host.py"
       - "tests/test_live_status.py"
+      - "tests/test_evolve.py"
       - "scripts/drain_fast_fifo.py"
       - "scripts/drain_live_fifo.py"
       - "scripts/ether_week_tick.py"
+      - "scripts/ether_evolve.py"
       - "scripts/live_host.py"
       - "scripts/live_status.py"
       - ".github/workflows/matrix-worker.yml"
@@ -34,7 +36,7 @@ jobs:
       - name: Targeted kernel gates
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_kernel_phase4.py tests/test_kernel_phase5.py tests/test_kernel_phase6.py tests/test_drain_fast_fifo.py tests/test_live_host.py tests/test_live_status.py -q --tb=line
+        run: python -m pytest tests/test_kernel_phase1.py tests/test_kernel_phase2.py tests/test_kernel_phase3.py tests/test_kernel_phase4.py tests/test_kernel_phase5.py tests/test_kernel_phase6.py tests/test_drain_fast_fifo.py tests/test_live_host.py tests/test_live_status.py tests/test_evolve.py tests/test_gem_topo.py -q --tb=line
       - name: Drain FAST FIFO
         env:
           PYTHONPATH: ${{ github.workspace }}
@@ -43,7 +45,7 @@ jobs:
         run: |
           git config user.name ether-matrix-worker
           git config user.email ether@local
-          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/host_agent_status.json artifacts/pipeline artifacts/gem_energy.json artifacts/cowork_board.json artifacts/self_build_role.json artifacts/week_tick.json artifacts/self_build_trace.jsonl artifacts/kernel_progress.json artifacts/live_status.json || true
+          git add artifacts/jobs artifacts/host_agent_last_job.json artifacts/host_agent_status.json artifacts/pipeline artifacts/gem_energy.json artifacts/cowork_board.json artifacts/self_build_role.json artifacts/week_tick.json artifacts/self_build_trace.jsonl artifacts/kernel_progress.json artifacts/live_status.json artifacts/evolve.json || true
           git diff --cached --quiet && echo no-fifo-change || git commit -m "matrix-worker: drain FAST FIFO + week tick"
           git pull --rebase origin main || true
           git push origin HEAD:main || true

@@ -20,6 +20,25 @@ def _git() -> str:
             return p
     return "git"
 
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        try:
+            import ctypes
+            handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+            if handle:
+                ctypes.windll.kernel32.CloseHandle(handle)
+                return True
+        except Exception:
+            return False
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except Exception:
+        return False
+
 def _pull(root: Path) -> None:
     if os.name != "nt":
         return
@@ -29,23 +48,29 @@ def _pull(root: Path) -> None:
         subprocess.run([git, "fetch", "origin"], **kw)
         pull = subprocess.run([git, "pull", "--ff-only", "origin", "main"], **kw)
         if pull.returncode != 0:
-            subprocess.run([git, "reset", "--hard", "origin/main"], **kw)
+            subprocess.run([git, "reset", "--hard", "origin", "main"], **kw)
     except Exception:
         return
 
 def _ensure_daemon(root: Path) -> Dict[str, Any]:
+    if os.environ.get("ETHER_IN_DAEMON") == "1":
+        return {"ok": True, "note": "already_inside_daemon"}
     pid_path = root / "memory" / "daemon" / "daemon.pid"
     if pid_path.is_file():
         try:
             pid = int(pid_path.read_text(encoding="utf-8").strip())
-            if pid > 0:
+            if _pid_alive(pid):
                 return {"ok": True, "already": pid}
+        except Exception:
+            pass
+        try:
+            pid_path.unlink(missing_ok=True)
         except Exception:
             pass
     pyw = root / ".venv" / "Scripts" / "pythonw.exe"
     py = pyw if pyw.is_file() else Path(root / ".venv" / "Scripts" / "python.exe")
     script = root / "scripts" / "ether_daemon.py"
-    if not script.is_file():
+    if not script.is_file() or not py.is_file():
         return {"ok": False, "error": "no_daemon"}
     env = os.environ.copy()
     env["ETHER_ROOT"] = str(root)

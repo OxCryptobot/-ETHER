@@ -11,7 +11,7 @@ def lesson_from_fail(last: Dict[str, Any] | None) -> Dict[str, Any] | None:
         return None
     tail = str(last.get("tail") or last.get("error") or last.get("note") or "")
     err = str(last.get("error") or "")
-    if err in INFRA or "Timeout" in tail:
+    if err in INFRA or "path_jail" in err or err.startswith("refused:") or "Timeout" in tail:
         return None
     row = {
         "root_cause": "unknown",

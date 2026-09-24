@@ -41,8 +41,9 @@ def evaluate(
     rates: Optional[Dict[str, Any]] = None,
     threshold: float = DEFAULT_THRESHOLD,
 ) -> Dict[str, Any]:
-    rates = rates if rates is not None else _load(RATES)
-    elig = _load(ELIG)
+    explicit_rates = rates is not None
+    rates = rates if explicit_rates else _load(RATES)
+    elig = {} if explicit_rates else _load(ELIG)
     snap = _load(SNAPSHOT)
     explicit = (os.getenv("ETHER_SOFT_LAUNCH") or "0").strip() == "1"
     wheels = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"

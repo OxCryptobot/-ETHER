@@ -26,7 +26,7 @@ def _jail_args(self: Any, tool: str, args: Dict[str, Any]) -> Dict[str, Any] | N
     try:
         from core.kernel.sandbox import allowed
         if not allowed(workspace, str(path)):
-            return {"ok": False, "error": "path_jail", "path": str(path)}
+            return {"ok": False, "error": "refused: path_jail", "path": str(path)}
     except Exception:
         return None
     return None

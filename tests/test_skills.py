@@ -21,3 +21,21 @@ def test_skills_name_the_alive_gap() -> None:
     assert "token" not in json.dumps(row)
     if alive.is_file():
         assert alive.read_text(encoding="utf-8") == before
+    assert row["learn"]["stored"] is False
+    assert row["learn"]["kind"] == "infra"
+
+
+def test_outage_is_not_a_code_lesson() -> None:
+    from core.train_gates import may_record_fail
+
+    ok, reason = may_record_fail(success=False, stderr="app_alive stale no_github_runner")
+    assert ok is False
+    assert reason == "infra_stderr"
+
+
+def test_tools_stay_on_when_wheels_off(monkeypatch) -> None:
+    monkeypatch.delenv("ETHER_TOOL_RUNTIME", raising=False)
+    monkeypatch.setenv("ETHER_TRAINING_WHEELS", "0")
+    from core.tool_runtime import tool_runtime_enabled
+
+    assert tool_runtime_enabled() is True

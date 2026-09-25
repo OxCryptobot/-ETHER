@@ -79,6 +79,10 @@ def may_record_fail(
         "name or service not known",
         "no such host",
         "read timed out",
+        "app_alive stale",
+        "no_github_runner",
+        "github runner",
+        "runner offline",
     )
     if any(s in low for s in infra_sigs):
         return False, "infra_stderr"

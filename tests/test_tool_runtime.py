@@ -60,8 +60,8 @@ def test_parse_action_fail_closed():
     assert a["tool"] == "_retry"
 
 
-def test_runtime_default_on_under_wheels(monkeypatch):
-    """Package 1A: tool-first is the required default under training wheels."""
+def test_runtime_stays_on_when_wheels_off(monkeypatch):
+    """Wheels off must not disable the tool loop. Explicit 0 still does."""
     monkeypatch.delenv("ETHER_TOOL_RUNTIME", raising=False)
     monkeypatch.setenv("ETHER_TRAINING_WHEELS", "1")
     assert tool_runtime_enabled() is True
@@ -74,7 +74,7 @@ def test_runtime_default_on_under_wheels(monkeypatch):
 
     monkeypatch.delenv("ETHER_TOOL_RUNTIME", raising=False)
     monkeypatch.setenv("ETHER_TRAINING_WHEELS", "0")
-    assert tool_runtime_enabled() is False
+    assert tool_runtime_enabled() is True
 
 
 def test_scripted_fix_greeter():

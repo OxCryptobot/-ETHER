@@ -90,8 +90,9 @@ def tool_runtime_enabled() -> bool:
     raw = (os.getenv("ETHER_TOOL_RUNTIME") or "").strip()
     if raw:
         return raw == "1"
-    wheels_on = (os.getenv("ETHER_TRAINING_WHEELS") or "1").strip() != "0"
-    return wheels_on
+    # Hands stay on when training wheels come off.
+    # ETHER_TOOL_RUNTIME=0 is the only off switch.
+    return True
 
 
 @dataclass

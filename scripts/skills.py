@@ -94,6 +94,25 @@ def super_auditor(parts: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": not gaps, "gaps": gaps}
 
 
+def learn(audit: Dict[str, Any]) -> Dict[str, Any]:
+    """Outage gaps are infra. Do not store them as code lessons."""
+    from core.train_gates import may_record_fail
+
+    gaps = list(audit.get("gaps") or [])
+    infra = [g for g in gaps if g in {"app_alive_stale", "no_github_runner"}]
+    code = [g for g in gaps if g not in set(infra)]
+    if infra and not code:
+        _ok, reason = may_record_fail(
+            success=False,
+            stderr="app_alive stale no_github_runner",
+            fail_kind="infra",
+        )
+        return {"stored": False, "reason": reason, "kind": "infra"}
+    if code:
+        return {"stored": False, "reason": "code_gap", "kind": "code"}
+    return {"stored": False, "reason": "no_gap", "kind": "none"}
+
+
 def run_skills(walk: Dict[str, Any] | None = None) -> Dict[str, Any]:
     parts = {
         "batchphase": batchphase(),
@@ -103,4 +122,5 @@ def run_skills(walk: Dict[str, Any] | None = None) -> Dict[str, Any]:
         "pep8-python-reviewer": pep8_review(),
     }
     parts["super-auditor"] = super_auditor(parts)
+    parts["learn"] = learn(parts["super-auditor"])
     return parts

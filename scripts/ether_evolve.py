@@ -82,6 +82,36 @@ def _bump_energy(walk: Dict[str, Any]) -> Dict[str, Any]:
     return row
 
 
+def _goal(walk: Dict[str, Any]) -> Dict[str, Any]:
+    """One next action. Stale 1650 writer outranks gem polish."""
+    alive = _root() / "artifacts" / "app_alive.json"
+    ts = ""
+    if alive.is_file():
+        try:
+            ts = str(json.loads(alive.read_text(encoding="utf-8")).get("ts") or "")
+        except Exception:
+            ts = ""
+    stale = True
+    if ts:
+        try:
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            stale = (datetime.now(timezone.utc) - dt).total_seconds() > 6 * 3600
+        except Exception:
+            stale = True
+    if stale:
+        return {
+            "id": "restore_1650_writer",
+            "do": "runner_register then host_main.tick",
+            "why": "app_alive older than 6h and GitHub has no runner until the 1650 registers",
+        }
+    weak = walk.get("weak") or []
+    if weak:
+        return {"id": "heal_weak", "gems": [w.get("gem") for w in weak if isinstance(w, dict)]}
+    return {"id": "drain_and_learn", "do": "next FAST job"}
+
+
 def cycle() -> Dict[str, Any]:
     """One evolution turn. FAST-safe. Does not write host_attach."""
     from gems.protocol import GEMS
@@ -113,6 +143,7 @@ def cycle() -> Dict[str, Any]:
         "weak": walk.get("weak") or [],
         "fabricate": fab,
         "fail_id": fail_id,
+        "goal": _goal(walk),
         "energy": energy,
         "generation": generation() + 1,
         "ts": datetime.now(timezone.utc).isoformat(),

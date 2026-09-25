@@ -29,6 +29,11 @@ def arm() -> Dict[str, Any]:
         row["note"] = "observe_only"
         row["ok"] = True
         return row
+    try:
+        from scripts.runner_register import register as register_runner
+        row["register"] = register_runner()
+    except Exception as exc:
+        row["register_error"] = type(exc).__name__
     root = _root()
     pyw = root / ".venv" / "Scripts" / "pythonw.exe"
     if not pyw.is_file():

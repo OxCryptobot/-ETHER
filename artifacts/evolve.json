@@ -16,13 +16,48 @@
     "do": "runner_register then host_main.tick",
     "why": "app_alive older than 6h and GitHub has no runner until the 1650 registers"
   },
+  "skills": {
+    "batchphase": {
+      "ok": true,
+      "fast_pending": 0,
+      "live_pending": 2,
+      "ran": false
+    },
+    "goal": {
+      "id": "restore_1650_writer",
+      "do": "runner_register then host_main.tick",
+      "why": "app_alive older than 6h and GitHub has no runner until the 1650 registers"
+    },
+    "host-agent-live": {
+      "ok": false,
+      "stale": true,
+      "runners": null,
+      "app_alive_ts": "2026-09-12T04:09:05.671630+00:00",
+      "note": "observe_only"
+    },
+    "keep-pushing": {
+      "ok": true,
+      "pushed": false,
+      "note": "observe_only"
+    },
+    "pep8-python-reviewer": {
+      "ok": true,
+      "errors": []
+    },
+    "super-auditor": {
+      "ok": false,
+      "gaps": [
+        "app_alive_stale"
+      ]
+    }
+  },
   "energy": {
-    "evolve_ts": "2026-09-25T18:13:28.693021+00:00",
+    "evolve_ts": "2026-09-25T18:16:13.594669+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 573,
+    "generation": 579,
     "source": "ether_evolve.cycle"
   },
-  "generation": 573,
-  "ts": "2026-09-25T18:13:28.694015+00:00"
+  "generation": 579,
+  "ts": "2026-09-25T18:16:13.649176+00:00"
 }

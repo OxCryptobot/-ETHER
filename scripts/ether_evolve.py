@@ -144,6 +144,7 @@ def cycle() -> Dict[str, Any]:
         "fabricate": fab,
         "fail_id": fail_id,
         "goal": _goal(walk),
+        "skills": __import__("scripts.skills", fromlist=["run_skills"]).run_skills(walk),
         "energy": energy,
         "generation": generation() + 1,
         "ts": datetime.now(timezone.utc).isoformat(),

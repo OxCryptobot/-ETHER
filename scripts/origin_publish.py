@@ -6,17 +6,15 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 PATHS = [
-    "artifacts/host_attach.json",
     "artifacts/app_alive.json",
+    "artifacts/host_attach.json",
     "artifacts/ollama_probe.json",
     "artifacts/exe_pulse.json",
     "artifacts/git_push.json",
     "artifacts/host_main.json",
-    "artifacts/week_tick.json",
-    "artifacts/autonomy_tick.json",
-    "artifacts/self_state.json",
-    "artifacts/gem_energy.json",
-    "artifacts/jobs",
+    "artifacts/exe_loop.json",
+    "artifacts/self_heal.json",
+    "artifacts/exe_writer.json",
 ]
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]
@@ -63,34 +61,43 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     dirty = bool((runner([git, "status", "--porcelain"]).stdout or "").strip())
     row["ahead"] = ahead
     row["dirty"] = dirty
-    if dirty and ahead == 0:
-        runner([git, "stash", "push", "-u", "-m", "ether-writer"])
+    stashed = False
+    if dirty:
+        stash = runner([git, "stash", "push", "-u", "-m", "ether-writer"])
+        stashed = stash.returncode == 0
+        if not stashed:
+            row["note"] = "stash_failed"
+            return row
+    if ahead:
+        rebase = runner([git, "rebase", "origin/main"])
+        if rebase.returncode != 0:
+            runner([git, "rebase", "--abort"])
+            if stashed:
+                runner([git, "stash", "pop"])
+            row["note"] = "rebase_abort"
+            return row
+        note = "rebase"
+    else:
         pull = runner([git, "pull", "--ff-only", "origin", "main"])
+        if pull.returncode != 0:
+            rebase = runner([git, "rebase", "origin/main"])
+            if rebase.returncode != 0:
+                runner([git, "rebase", "--abort"])
+                if stashed:
+                    runner([git, "stash", "pop"])
+                row["note"] = "rebase_abort"
+                return row
+            note = "rebase"
+        else:
+            note = "ff"
+    if stashed:
         pop = runner([git, "stash", "pop"])
-        row["ok"] = pull.returncode == 0 and pop.returncode == 0
-        row["note"] = "stash_pull"
-        return row
-    if ahead or not hard_reset_allowed(local_ahead=ahead, dirty=dirty):
-        rebase = runner([git, "rebase", "origin/main"])
-        if rebase.returncode != 0:
-            runner([git, "rebase", "--abort"])
-            row["note"] = "rebase_abort"
+        if pop.returncode != 0:
+            row["note"] = "stash_pop_conflict"
             return row
-        row["ok"] = True
-        row["note"] = "rebase"
-        return row
-    pull = runner([git, "pull", "--ff-only", "origin", "main"])
-    if pull.returncode != 0:
-        rebase = runner([git, "rebase", "origin/main"])
-        if rebase.returncode != 0:
-            runner([git, "rebase", "--abort"])
-            row["note"] = "rebase_abort"
-            return row
-        row["ok"] = True
-        row["note"] = "rebase"
-        return row
+        note = "stash_" + note
     row["ok"] = True
-    row["note"] = "ff"
+    row["note"] = note
     return row
 
 

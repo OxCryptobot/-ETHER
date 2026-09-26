@@ -115,7 +115,12 @@ def test_writer_paths_do_not_include_the_job_queue() -> None:
     assert "artifacts/app_alive.json" in PATHS
 
 
-def test_writer_sources_do_not_hard_reset() -> None:
+def test_one_publisher() -> None:
+    for rel in ("scripts/ether_app.py", "scripts/exe_pulse.py", "scripts/ether_week_tick.py"):
+        text = Path(rel).read_text(encoding="utf-8")
+        assert "artifacts/jobs" not in text
+        assert "git add" not in text
+        assert "origin_publish" in text
     for rel in ("scripts/origin_publish.py", "scripts/host_main.py", "scripts/ether_app.py"):
         text = Path(rel).read_text(encoding="utf-8")
         assert 'reset", "--hard"' not in text

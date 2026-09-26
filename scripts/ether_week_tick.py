@@ -88,27 +88,10 @@ def tick(push: bool = False) -> Dict[str, Any]:
     return row
 
 def _push(root: Path) -> None:
-    if "Otcde" not in str(root):
+    if os.name != "nt" or "Otcde" not in str(root):
         return
-    import subprocess
-    git = "git"
-    for p in (r"C:\Program Files\Git\cmd\git.exe", r"C:\Program Files (x86)\Git\cmd\git.exe"):
-        if Path(p).is_file():
-            git = p
-            break
-    flags = 0x08000000 if os.name == "nt" else 0
-    paths = ["artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json", "artifacts/autonomy_tick.json"]
-    try:
-        kw: Dict[str, Any] = {"cwd": str(root), "timeout": 90}
-        if flags:
-            kw["creationflags"] = flags
-        subprocess.run([git, "add", *paths], **kw)
-        if subprocess.run([git, "diff", "--cached", "--quiet"], **kw).returncode == 0:
-            return
-        subprocess.run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-week", "commit", "-m", "week tick: energy + autonomy"], **kw)
-        subprocess.run([git, "push", "origin", "main"], **kw)
-    except Exception:
-        return
+    from scripts.origin_publish import publish
+    publish(root, message="1650 week tick")
 
 if __name__ == "__main__":
     print(json.dumps(tick(), indent=2))

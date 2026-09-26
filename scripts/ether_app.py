@@ -203,23 +203,10 @@ def git_run(*args: str, timeout: int = 90) -> subprocess.CompletedProcess:
 
 
 def _push_attach() -> None:
-    try:
-        from scripts.origin_publish import publish
-        publish(ROOT, message="1650 app attach")
+    if os.name != "nt" or "Otcde" not in str(ROOT):
         return
-    except Exception:
-        pass
-    if "Otcde" not in str(ROOT):
-        return
-    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/gem_energy.json", "artifacts/cowork_board.json", "artifacts/self_build_role.json", "artifacts/self_build_trace.jsonl", "artifacts/week_tick.json", "artifacts/ollama_probe.json", "artifacts/exe_loop.json", "artifacts/self_heal.json", "artifacts/git_push.json", "artifacts/exe_writer.json"]
-    try:
-        git_run("add", *paths)
-        if git_run("diff", "--cached", "--quiet").returncode == 0:
-            return
-        git_run("-c", "user.email=ether@local", "-c", "user.name=ether-app", "commit", "-m", "1650 app attach")
-        git_run("push", "origin", "main")
-    except Exception:
-        return
+    from scripts.origin_publish import publish
+    publish(ROOT, message="1650 app attach")
 
 
 def dashboard_status() -> Dict[str, Any]:

@@ -64,27 +64,10 @@ def pulse(push: bool = True) -> Dict[str, Any]:
     return row
 
 def _push(root: Path) -> None:
-    try:
-        from scripts.origin_publish import publish
-        publish(root, message="1650 exe pulse")
+    if os.name != "nt" or "Otcde" not in str(root):
         return
-    except Exception:
-        pass
-    git = "git"
-    for p in (r"C:\\Program Files\\Git\\cmd\\git.exe", r"C:\\Program Files (x86)\\Git\\cmd\\git.exe"):
-        if Path(p).is_file():
-            git = p
-            break
-    kw: Dict[str, Any] = {"cwd": str(root), "timeout": 90, "creationflags": 0x08000000, "capture_output": True}
-    paths = ["artifacts/host_attach.json", "artifacts/app_alive.json", "artifacts/ollama_probe.json", "artifacts/exe_pulse.json", "artifacts/week_tick.json", "artifacts/gem_energy.json", "artifacts/jobs", "artifacts/self_heal.json", "artifacts/git_push.json"]
-    try:
-        subprocess.run([git, "add", *paths], **kw)
-        if subprocess.run([git, "diff", "--cached", "--quiet"], **kw).returncode == 0:
-            return
-        subprocess.run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-exe", "commit", "-m", "1650 exe pulse"], **kw)
-        subprocess.run([git, "push", "origin", "main"], **kw)
-    except Exception:
-        return
+    from scripts.origin_publish import publish
+    publish(root, message="1650 exe pulse")
 
 if __name__ == "__main__":
     print(json.dumps(pulse(), indent=2))

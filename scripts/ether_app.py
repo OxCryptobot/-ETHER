@@ -329,10 +329,8 @@ def _host_loop() -> None:
     boot()
     while True:
         try:
-            git_run("fetch", "origin")
-            pull = git_run("pull", "--ff-only", "origin", "main")
-            if pull.returncode != 0:
-                git_run("reset", "--hard", "origin/main")
+            from scripts.origin_publish import sync_writer
+            sync_writer(ROOT, _git(), lambda argv: subprocess.run(argv, **_git_kw(timeout=90)))
         except Exception:
             pass
         try:

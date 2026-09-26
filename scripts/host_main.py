@@ -42,13 +42,12 @@ def _pid_alive(pid: int) -> bool:
 def _pull(root: Path) -> None:
     if os.name != "nt":
         return
-    kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "creationflags": 0x08000000}
-    git = _git()
+    from scripts.origin_publish import sync_writer
+    def runner(argv: list) -> subprocess.CompletedProcess:
+        kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "creationflags": 0x08000000}
+        return subprocess.run(argv, **kw)
     try:
-        subprocess.run([git, "fetch", "origin"], **kw)
-        pull = subprocess.run([git, "pull", "--ff-only", "origin", "main"], **kw)
-        if pull.returncode != 0:
-            subprocess.run([git, "reset", "--hard", "origin/main"], **kw)
+        sync_writer(root, _git(), runner)
     except Exception:
         return
 

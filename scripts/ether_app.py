@@ -210,6 +210,7 @@ def _push_attach() -> None:
 
 
 def dashboard_status() -> Dict[str, Any]:
+    from scripts.unison import snapshot
     att = {}
     p = ROOT / "artifacts" / "host_attach.json"
     if p.is_file():
@@ -228,7 +229,18 @@ def dashboard_status() -> Dict[str, Any]:
     qdir = ROOT / "artifacts" / "jobs" / "pending"
     if qdir.is_dir():
         pending = sorted(x.name for x in qdir.glob("*.json") if x.name != ".gitkeep")[:20]
-    return {"ollama": ollama_up(), "live_lane": att.get("live_lane"), "updated": att.get("updated"), "tasks": ether_cowork.load(), "queue": pending, "role": role.get("role"), "generation": role.get("generation"), "idea": str(role.get("idea") or "")[:240], "verified": role.get("verified"), "moving": bool(role) or bool(pending) or ollama_up(), "progress": min(99, int(role.get("generation") or 0) * 3)}
+    row = snapshot()
+    row.update({
+        "live_lane": att.get("live_lane"),
+        "updated": att.get("updated"),
+        "queue": pending,
+        "role": role.get("role"),
+        "idea": str(role.get("idea") or "")[:240],
+        "verified": role.get("verified"),
+    })
+    if row.get("generation") is None:
+        row["generation"] = role.get("generation")
+    return row
 
 
 def git_status() -> str:
@@ -355,8 +367,23 @@ def serve_local() -> None:
         def log_message(self, fmt: str, *args: object) -> None:
             return
         def do_GET(self) -> None:
+            if self.path.split("?", 1)[0] in {"/", "/index.html"}:
+                from scripts.unison import WATCH_HTML
+                body = WATCH_HTML.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path.startswith("/status"):
-                body = _json.dumps(dashboard_status()).encode(); self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
+                body = _json.dumps(dashboard_status()).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             self.send_error(404)
         def do_POST(self) -> None:
             self.do_GET()

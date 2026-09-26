@@ -139,6 +139,12 @@ def _safe_snapshot() -> dict:
         }
 
 
+@app.get("/api/unison")
+def unison_api() -> dict:
+    from scripts.unison import snapshot
+    return snapshot()
+
+
 @app.get("/")
 def index() -> HTMLResponse:
     return HTMLResponse(

@@ -31,6 +31,26 @@ def test_snapshot_is_read_only(tmp_path, monkeypatch) -> None:
     assert (art / "app_alive.json").read_text(encoding="utf-8") == before
 
 
+def test_observer_copy_does_not_touch_alive(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ETHER_ROOT", str(tmp_path))
+    art = tmp_path / "artifacts"
+    art.mkdir()
+    (art / "app_alive.json").write_text(
+        '{"ts":"2026-09-12T04:09:05+00:00","ollama":true}\n',
+        encoding="utf-8",
+    )
+    before = (art / "app_alive.json").read_text(encoding="utf-8")
+    from scripts.unison import publish_observer
+    row = publish_observer()
+    saved = json.loads((art / "unison.json").read_text(encoding="utf-8"))
+    assert saved["writer"] == "exe"
+    assert saved["face"] == "matrix"
+    assert saved["mutates"] is False
+    assert saved == row
+    assert (art / "app_alive.json").read_text(encoding="utf-8") == before
+    assert "artifacts/unison.json" not in Path("scripts/origin_publish.py").read_text(encoding="utf-8")
+
+
 def test_exe_status_uses_the_same_contract(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ETHER_ROOT", str(tmp_path))
     (tmp_path / "artifacts").mkdir()

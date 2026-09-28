@@ -17,7 +17,7 @@ OWNERS: Dict[str, str] = {
     "artifacts/jobs/done/": "exe_or_fast",
     "artifacts/jobs/failed/": "exe_or_fast",
     "artifacts/host_agent_status.json": "fast_or_exe",
-    "artifacts/gem_energy.json": "fast_or_exe",
+    "artifacts/unison.json": "fast_or_exe",
 }
 
 def owner_of(rel: str) -> str:

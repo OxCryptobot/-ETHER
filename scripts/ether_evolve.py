@@ -153,4 +153,9 @@ def cycle() -> Dict[str, Any]:
     out = _root() / "artifacts" / "evolve.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
+    try:
+        from scripts.unison import publish_observer
+        publish_observer()
+    except Exception:
+        pass
     return row

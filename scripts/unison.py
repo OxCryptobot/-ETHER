@@ -70,6 +70,15 @@ def snapshot() -> Dict[str, Any]:
     }
 
 
+def publish_observer() -> Dict[str, Any]:
+    """Worker copy of the shared snapshot. Does not write app_alive."""
+    row = snapshot()
+    path = _root() / "artifacts" / "unison.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
+
+
 WATCH_HTML = """<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"/>

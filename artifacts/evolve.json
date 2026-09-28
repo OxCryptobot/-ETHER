@@ -47,7 +47,8 @@
     "super-auditor": {
       "ok": false,
       "gaps": [
-        "app_alive_stale"
+        "app_alive_stale",
+        "runner_count_unknown"
       ]
     },
     "learn": {
@@ -57,12 +58,12 @@
     }
   },
   "energy": {
-    "evolve_ts": "2026-09-28T15:51:42.356168+00:00",
+    "evolve_ts": "2026-09-28T15:53:39.887056+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 1101,
+    "generation": 1107,
     "source": "ether_evolve.cycle"
   },
-  "generation": 1101,
-  "ts": "2026-09-28T15:51:42.423384+00:00"
+  "generation": 1107,
+  "ts": "2026-09-28T15:53:39.953942+00:00"
 }

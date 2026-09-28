@@ -11,10 +11,11 @@
   "ollama": true,
   "stale": true,
   "goal": "restore_1650_writer",
-  "generation": 1101,
+  "generation": 1107,
   "walk_ok": true,
   "gaps": [
-    "app_alive_stale"
+    "app_alive_stale",
+    "runner_count_unknown"
   ],
   "learn": "infra"
 }

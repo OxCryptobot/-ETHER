@@ -1,0 +1,20 @@
+{
+  "face": "matrix",
+  "hands": "exe",
+  "writer": "exe",
+  "mutates": false,
+  "ports": {
+    "watch": 7843,
+    "retired": 8787
+  },
+  "app_alive_ts": "2026-09-12T04:09:05.671630+00:00",
+  "ollama": true,
+  "stale": true,
+  "goal": "restore_1650_writer",
+  "generation": 1101,
+  "walk_ok": true,
+  "gaps": [
+    "app_alive_stale"
+  ],
+  "learn": "infra"
+}

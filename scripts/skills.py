@@ -89,6 +89,8 @@ def super_auditor(parts: Dict[str, Any]) -> Dict[str, Any]:
         gaps.append("app_alive_stale")
     if host.get("runners") == 0:
         gaps.append("no_github_runner")
+    elif host.get("runners") is None:
+        gaps.append("runner_count_unknown")
     if not (parts.get("pep8-python-reviewer") or {}).get("ok", True):
         gaps.append("syntax")
     return {"ok": not gaps, "gaps": gaps}
@@ -99,7 +101,7 @@ def learn(audit: Dict[str, Any]) -> Dict[str, Any]:
     from core.train_gates import may_record_fail
 
     gaps = list(audit.get("gaps") or [])
-    infra = [g for g in gaps if g in {"app_alive_stale", "no_github_runner"}]
+    infra = [g for g in gaps if g in {"app_alive_stale", "no_github_runner", "runner_count_unknown"}]
     code = [g for g in gaps if g not in set(infra)]
     if infra and not code:
         _ok, reason = may_record_fail(

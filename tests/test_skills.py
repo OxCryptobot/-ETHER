@@ -25,7 +25,11 @@ def test_skills_name_the_alive_gap() -> None:
     assert row["learn"]["kind"] == "infra"
 
 
-def test_outage_is_not_a_code_lesson() -> None:
+def test_unknown_runner_is_infra() -> None:
+    from scripts.skills import learn, super_auditor
+    audit = super_auditor({"host-agent-live": {"stale": True, "runners": None}, "pep8-python-reviewer": {"ok": True}})
+    assert "runner_count_unknown" in audit["gaps"]
+    assert learn(audit)["kind"] == "infra"
     from core.train_gates import may_record_fail
 
     ok, reason = may_record_fail(success=False, stderr="app_alive stale no_github_runner")

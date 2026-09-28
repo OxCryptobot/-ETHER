@@ -39,6 +39,7 @@ on:
       - "artifacts/jobs/pending/**"
 permissions:
   contents: write
+  actions: read
 jobs:
   drain:
     runs-on: ubuntu-latest

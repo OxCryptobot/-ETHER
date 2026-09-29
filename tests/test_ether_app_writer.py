@@ -19,6 +19,9 @@ def test_frozen_swap_uses_desktop_release() -> None:
     spec = Path("scripts/ether_app.spec").read_text(encoding="utf-8")
     assert "scripts.host_main" in spec
     assert "upx=False" in spec
+    boot = text.split("def boot(", 1)[1].split("def live_start(", 1)[0]
+    assert boot.index("mark_alive") < boot.index("disk_tick")
+    assert boot.index("_push_attach") < boot.index("disk_tick")
     row = update_self()
     assert row["ok"] is True
     assert row.get("pending") in {None, ""}

@@ -199,9 +199,13 @@ def boot() -> Dict[str, Any]:
             git_run("pull", "--ff-only", "origin", "main")
         except Exception:
             pass
+    alive = mark_alive()
+    try:
+        _push_attach()
+    except Exception:
+        pass
     writer = spawn_writer()
     tick = disk_tick()
-    alive = mark_alive()
     keep = ensure_keepalive()
     ollama = start_ollama()
     att = consume({"cmd": "attach"})
@@ -389,6 +393,11 @@ def _host_loop() -> None:
         try:
             from scripts.origin_publish import sync_writer
             sync_writer(ROOT, _git(), lambda argv: subprocess.run(argv, **_git_kw(timeout=90)))
+        except Exception:
+            pass
+        try:
+            mark_alive()
+            _push_attach()
         except Exception:
             pass
         try:

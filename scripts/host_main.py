@@ -96,6 +96,16 @@ def tick() -> Dict[str, Any]:
     if os.name == "nt":
         _pull(root)
         try:
+            from scripts.ether_app import mark_alive
+            row["alive"] = mark_alive()
+        except Exception as exc:
+            row["alive_error"] = type(exc).__name__
+        try:
+            from scripts.origin_publish import publish
+            row["publish"] = publish(root, message="1650 host_main")
+        except Exception as exc:
+            row["publish_error"] = type(exc).__name__
+        try:
             from scripts.self_heal import arm
             row["heal"] = arm()
         except Exception as exc:

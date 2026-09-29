@@ -115,7 +115,13 @@ def test_writer_paths_do_not_include_the_job_queue() -> None:
     assert "artifacts/app_alive.json" in PATHS
 
 
-def test_one_publisher() -> None:
+def test_heartbeat_publishes_before_slow_work() -> None:
+    body = Path("scripts/host_main.py").read_text(encoding="utf-8").split('if os.name == "nt":', 1)[1].split("else:", 1)[0]
+    assert body.index("mark_alive") < body.index("self_heal")
+    assert body.index("origin_publish") < body.index("ether_evolve")
+    app = Path("scripts/ether_app.py").read_text(encoding="utf-8")
+    assert '"timeout": 600' in app
+    assert "frozen_exe_not_verified" in app
     for rel in ("scripts/ether_app.py", "scripts/exe_pulse.py", "scripts/ether_week_tick.py"):
         text = Path(rel).read_text(encoding="utf-8")
         assert "artifacts/jobs" not in text

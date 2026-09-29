@@ -87,7 +87,7 @@ def disk_tick() -> Dict[str, Any]:
         "env": env,
         "capture_output": True,
         "text": True,
-        "timeout": 180,
+        "timeout": 600,
         "creationflags": 0x08000000,
     }
     try:
@@ -107,7 +107,7 @@ def disk_tick() -> Dict[str, Any]:
 
 def verify() -> Dict[str, Any]:
     if getattr(sys, "frozen", False):
-        return {"ok": True, "rc": 0, "gates": GATES, "tail": "frozen_exe"}
+        return {"ok": False, "rc": 0, "gates": GATES, "tail": "frozen_exe_not_verified"}
     argv: List[str] = [sys.executable, "-m", "pytest", *GATES, "-q", "--tb=line"]
     try:
         proc = subprocess.run(argv, cwd=str(ROOT), capture_output=True, text=True, timeout=120)

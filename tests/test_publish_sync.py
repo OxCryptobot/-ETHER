@@ -131,3 +131,13 @@ def test_heartbeat_publishes_before_slow_work() -> None:
         text = Path(rel).read_text(encoding="utf-8")
         assert 'reset", "--hard"' not in text
         assert "reset --hard origin" not in text
+
+
+def test_git_push_uses_token_url_not_env() -> None:
+    from scripts.origin_publish import push_url, redact
+    url = push_url("secret-token")
+    assert url == "https://x-access-token:secret-token@github.com/OxCryptobot/-ETHER.git"
+    assert "secret-token" not in redact(url, "secret-token")
+    src = Path("scripts/origin_publish.py").read_text(encoding="utf-8")
+    assert "push_url(token)" in src
+    assert 'extra_env={"GH_TOKEN"' not in src

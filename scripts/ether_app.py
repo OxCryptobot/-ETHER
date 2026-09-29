@@ -180,6 +180,10 @@ def live_stop() -> Dict[str, Any]:
     return consume({"cmd": "stop"})
 
 
+def shutdown() -> Dict[str, Any]:
+    return {"ok": True, "note": "leave ollama up"}
+
+
 def health() -> Dict[str, Any]:
     return {"ollama": ollama_up(), "dashboard": DASHBOARD, "ok": True}
 

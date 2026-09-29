@@ -5,6 +5,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
+ORIGIN_URL = "https://github.com/OxCryptobot/-ETHER.git"
+
+
+def push_url(token: str) -> str:
+    """Git does not read GH_TOKEN. Put it on the push URL only."""
+    return f"https://x-access-token:{token}@github.com/OxCryptobot/-ETHER.git"
+
+
+def redact(text: str, token: str) -> str:
+    if not token:
+        return text
+    return text.replace(token, "***")
+
+
 PATHS = [
     "artifacts/app_alive.json",
     "artifacts/host_attach.json",
@@ -148,15 +162,15 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
                 if gh:
                     tok = run([gh, "auth", "token"])
                     token = (tok.stdout or "").strip()
-                extra = {"GH_TOKEN": token, "GITHUB_TOKEN": token} if token else None
-                retry = run([git, "push", "origin", "main"], extra_env=extra)
-                row["push_rc"] = retry.returncode
-                row["via"] = "gh_token" if token else "retry"
-                row["ok"] = retry.returncode == 0
-                err = (retry.stderr or "")[-300:]
                 if token:
-                    err = err.replace(token, "***")
-                row["stderr"] = err
+                    retry = run([git, "push", push_url(token), "HEAD:main"])
+                    row["via"] = "gh_token_url"
+                else:
+                    retry = run([git, "push", "origin", "main"])
+                    row["via"] = "retry"
+                row["push_rc"] = retry.returncode
+                row["ok"] = retry.returncode == 0
+                row["stderr"] = redact(((retry.stderr or "") + (retry.stdout or ""))[-300:], token)
     except Exception as exc:
         row["error"] = type(exc).__name__
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")

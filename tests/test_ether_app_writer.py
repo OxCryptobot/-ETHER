@@ -10,7 +10,15 @@ def test_git_run_exists() -> None:
     assert callable(git_run)
 
 
-def test_update_self_does_not_download_exe() -> None:
+def test_frozen_swap_uses_desktop_release() -> None:
+    from pathlib import Path
+    text = Path("scripts/ether_app.py").read_text(encoding="utf-8")
+    assert "ETHER.exe.new" in text
+    assert 'release", "download", "desktop"' in text
+    assert "no_venv_python" in text
+    spec = Path("scripts/ether_app.spec").read_text(encoding="utf-8")
+    assert "scripts.host_main" in spec
+    assert "upx=False" in spec
     row = update_self()
     assert row["ok"] is True
     assert row.get("pending") in {None, ""}

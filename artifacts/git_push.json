@@ -1,15 +1,15 @@
 {
-  "ts": "2026-09-29T15:23:58.848444+00:00",
+  "ts": "2026-09-29T15:24:13.387379+00:00",
   "os": "nt",
   "ok": true,
   "commit_rc": 0,
   "sync": {
-    "ok": true,
+    "ok": false,
     "hard_reset": false,
-    "ahead": 1,
+    "ahead": 2,
     "dirty": true,
-    "note": "stash_rebase"
+    "note": "stash_pop_conflict"
   },
   "push_rc": 0,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   237abe857..940e9f9e0  main -> main\n"
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   1181ca126..c66f4e31c  main -> main\n"
 }

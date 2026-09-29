@@ -40,7 +40,6 @@ on:
 permissions:
   contents: write
   actions: read
-  administration: read
 jobs:
   drain:
     runs-on: ubuntu-latest

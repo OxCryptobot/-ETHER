@@ -25,6 +25,6 @@ def test_count_body_parses_zero() -> None:
 
 def test_worker_can_read_runners_and_rebase() -> None:
     text = Path(".github/workflows/matrix-worker.yml").read_text(encoding="utf-8")
-    assert "administration: read" in text
+    assert "administration:" not in text
     assert "git stash push -u -m worker-leftovers" in text
     assert "app_alive.json" not in text

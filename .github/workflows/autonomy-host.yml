@@ -26,7 +26,7 @@ jobs:
       ETHER_ROOT: C:\\Users\\Otcde\\ETHER
     defaults:
       run:
-        shell: pwsh
+        shell: powershell
 
     steps:
       - name: Checkout (control scripts)

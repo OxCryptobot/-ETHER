@@ -47,8 +47,14 @@ def main() -> None:
     while True:
         try:
             tick()
-        except Exception:
-            pass
+        except Exception as exc:
+            try:
+                (root / "artifacts" / "keepalive_error.json").write_text(
+                    json.dumps({"ok": False, "error": type(exc).__name__}) + "\n",
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
         try:
             from core.kernel.poll import pending_count, poll_seconds
             time.sleep(float(poll_seconds(pending_count())))

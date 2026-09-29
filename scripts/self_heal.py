@@ -7,6 +7,14 @@ from typing import Any, Dict, List
 
 FLAGS = 0x08000000
 
+def keepalive_vbs(pyw: Path, keep: Path) -> str:
+    """Two real lines. A literal backslash-n is not valid VBScript."""
+    return (
+        'Set s=CreateObject("WScript.Shell")\n'
+        f's.Run """{pyw}"" ""{keep}""", 0, False\n'
+    )
+
+
 def _root() -> Path:
     env = os.environ.get("ETHER_ROOT")
     if env and (Path(env) / "scripts").is_dir():
@@ -39,7 +47,12 @@ def arm() -> Dict[str, Any]:
     if not pyw.is_file():
         pyw = root / ".venv" / "Scripts" / "python.exe"
     keep = root / "scripts" / "ether_keepalive.py"
-    tr = f'"{pyw}" "{keep}"'
+    vbs_path = root / "scripts" / "ETHER-host.vbs"
+    try:
+        vbs_path.write_text(keepalive_vbs(pyw, keep), encoding="ascii", errors="replace")
+    except Exception as exc:
+        row["vbs_error"] = type(exc).__name__
+    tr = f'wscript.exe //B "{vbs_path}"'
     runner_dir = Path(os.environ.get("ETHER_RUNNER_DIR") or r"C:\\actions-runner")
     run_cmd = runner_dir / "run.cmd"
     runner_tr = f'cmd.exe /c cd /d "{runner_dir}" && run.cmd'
@@ -57,16 +70,11 @@ def arm() -> Dict[str, Any]:
     for argv, key in tasks:
         armed[key] = _run(argv)
     row["tasks"] = armed
-    _run(["reg", "add", r"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "ETHER-host", "/t", "REG_SZ", "/d", f"{pyw} {keep}", "/f"])
+    _run(["reg", "add", r"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "/v", "ETHER-host", "/t", "REG_SZ", "/d", tr, "/f"])
     try:
         startup = Path(os.environ.get("APPDATA") or "") / r"Microsoft\\Windows\\Start Menu\\Programs\\Startup"
         if startup.is_dir():
-            vbs = startup / "ETHER-host.vbs"
-            vbs.write_text(
-                f'Set s=CreateObject("WScript.Shell")\\ns.Run """{pyw}"" ""{keep}""", 0, False\\n',
-                encoding="ascii",
-                errors="replace",
-            )
+            (startup / "ETHER-host.vbs").write_text(keepalive_vbs(pyw, keep), encoding="ascii", errors="replace")
             row["startup"] = True
     except Exception as exc:
         row["startup_error"] = type(exc).__name__

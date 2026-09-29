@@ -125,53 +125,11 @@ def verify() -> Dict[str, Any]:
 
 
 def update_self() -> Dict[str, Any]:
-    """Source installs pull git. A frozen exe swaps from the desktop release on reboot."""
-    base: Dict[str, Any] = {
+    return {
         "ok": True,
         "pending": None,
         "scheduled_reboot_swap": False,
         "note": "no second installer. git pull on disk updates the writer.",
-    }
-    if not getattr(sys, "frozen", False) or os.name != "nt":
-        return base
-    gh = None
-    for cand in (r"C:\Program Files\GitHub CLI\gh.exe", r"C:\Program Files (x86)\GitHub CLI\gh.exe"):
-        if Path(cand).is_file():
-            gh = cand
-            break
-    if gh is None:
-        return {**base, "ok": False, "note": "no gh"}
-    dest = Path(sys.executable).resolve().with_name("ETHER.exe.new")
-    try:
-        proc = subprocess.run(
-            [gh, "release", "download", "desktop", "-p", "ETHER.exe", "-O", str(dest), "--clobber"],
-            cwd=str(ROOT),
-            capture_output=True,
-            text=True,
-            timeout=180,
-            creationflags=0x08000000,
-        )
-    except Exception as exc:
-        return {**base, "ok": False, "note": type(exc).__name__}
-    if proc.returncode != 0 or not dest.is_file():
-        return {**base, "ok": False, "note": "release_download_failed"}
-    swapped = False
-    try:
-        import ctypes
-        swapped = bool(
-            ctypes.windll.kernel32.MoveFileExW(
-                str(dest),
-                str(Path(sys.executable).resolve()),
-                0x1 | 0x4,
-            )
-        )
-    except Exception:
-        swapped = False
-    return {
-        "ok": True,
-        "pending": str(dest),
-        "scheduled_reboot_swap": swapped,
-        "note": "Update saved. No cmd relaunch (PyInstaller parent check).",
     }
 
 

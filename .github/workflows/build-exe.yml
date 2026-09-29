@@ -2,31 +2,10 @@ name: build-exe
 on:
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   windows:
-    runs-on: windows-latest
-    timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: scripts
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: pyinstaller
-        run: |
-          pip install -q pyinstaller pywebview pythonnet
-          pyinstaller ether_app.spec --noconfirm --clean
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ETHER-exe
-          path: scripts/dist/ETHER.exe
-      - name: publish desktop release
-        working-directory: .
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete desktop --yes --cleanup-tag 2>$null
-          gh release create desktop scripts/dist/ETHER.exe --title "ETHER desktop" --notes "auto-update target" --latest
+      - name: packed exe disabled
+        run: echo "PyInstaller exe is not built or published. Antivirus flags that packer."

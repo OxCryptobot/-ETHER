@@ -10,15 +10,14 @@ def test_git_run_exists() -> None:
     assert callable(git_run)
 
 
-def test_frozen_swap_uses_desktop_release() -> None:
+def test_no_packed_self_update() -> None:
     from pathlib import Path
     text = Path("scripts/ether_app.py").read_text(encoding="utf-8")
-    assert "ETHER.exe.new" in text
-    assert 'release", "download", "desktop"' in text
-    assert "no_venv_python" in text
-    spec = Path("scripts/ether_app.spec").read_text(encoding="utf-8")
-    assert "scripts.host_main" in spec
-    assert "upx=False" in spec
+    assert "ETHER.exe.new" not in text
+    assert "MoveFileExW" not in text
+    heal = Path("scripts/self_heal.py").read_text(encoding="utf-8")
+    assert "schtasks" not in heal
+    assert "CurrentVersion\\Run" not in heal
     boot = text.split("def boot(", 1)[1].split("def live_start(", 1)[0]
     assert boot.index("mark_alive") < boot.index("disk_tick")
     assert boot.index("_push_attach") < boot.index("disk_tick")

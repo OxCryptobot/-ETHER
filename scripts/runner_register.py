@@ -5,9 +5,11 @@ Off Windows this is observe-only.
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
+import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -25,7 +27,37 @@ def _gh() -> Optional[str]:
     return None
 
 
+def count_from_body(text: str) -> Optional[int]:
+    try:
+        n = json.loads(text).get("total_count")
+        return int(n)
+    except Exception:
+        return None
+
+
+def _count_via_api() -> Optional[int]:
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not token:
+        return None
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{REPO}/actions/runners",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "ether-observer",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return count_from_body(resp.read().decode())
+    except Exception:
+        return None
+
+
 def _count() -> Optional[int]:
+    api = _count_via_api()
+    if api is not None:
+        return api
     gh = _gh()
     if not gh:
         return None

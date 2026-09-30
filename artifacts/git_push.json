@@ -1,14 +1,23 @@
 {
-  "ts": "2026-09-30T16:09:07.913262+00:00",
+  "ts": "2026-09-30T20:23:15.107115+00:00",
   "os": "nt",
-  "ok": false,
-  "commit_rc": 0,
+  "ok": true,
+  "commit_rc": 128,
   "sync": {
     "ok": true,
     "hard_reset": false,
-    "ahead": 1,
-    "dirty": true,
-    "note": "stash_rebase"
+    "ahead": 0,
+    "dirty": false,
+    "note": "rebase"
   },
-  "error": "TimeoutExpired"
+  "push_rc": 0,
+  "stderr": "Everything up-to-date\n",
+  "sync_retry": {
+    "ok": true,
+    "hard_reset": false,
+    "ahead": 0,
+    "dirty": true,
+    "note": "stash_ff"
+  },
+  "via": "gh_token_url"
 }

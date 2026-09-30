@@ -1,4 +1,4 @@
-"""Permanent self-heal. No XML. No operator. Arms logon+boot+5m+HKCU Run+Startup."""
+"""Stop leftover 5-minute git tasks. Do not create new ones."""
 from __future__ import annotations
 import os, subprocess
 from datetime import datetime, timezone
@@ -41,6 +41,10 @@ def arm() -> Dict[str, Any]:
         "note": "observe_only" if os.name != "nt" else "no hidden startup",
     }
     if os.name == "nt":
+        stopped = {}
+        for name in ("ETHER-Ensure", "ETHER-keepalive", "ETHER-keepalive-5m", "ETHER-keepalive-boot"):
+            stopped[name] = _run(["schtasks", "/Delete", "/TN", name, "/F"])
+        row["stopped"] = stopped
         try:
             from scripts.runner_register import register as register_runner
             row["register"] = register_runner()

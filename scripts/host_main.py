@@ -44,7 +44,17 @@ def _pull(root: Path) -> None:
         return
     from scripts.origin_publish import sync_writer
     def runner(argv: list) -> subprocess.CompletedProcess:
-        kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "creationflags": 0x08000000}
+        env = os.environ.copy()
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        env["GCM_INTERACTIVE"] = "Never"
+        kw: Dict[str, Any] = {
+            "cwd": str(root),
+            "timeout": 120,
+            "capture_output": True,
+            "text": True,
+            "env": env,
+            "creationflags": 0x08000000,
+        }
         return subprocess.run(argv, **kw)
     try:
         sync_writer(root, _git(), runner)

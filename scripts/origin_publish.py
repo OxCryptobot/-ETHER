@@ -128,6 +128,7 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     git = _git()
     env = os.environ.copy()
     env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GCM_INTERACTIVE"] = "Never"
     kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "env": env, "creationflags": 0x08000000}
     def run(argv: List[str], extra_env: Dict[str, str] | None = None) -> subprocess.CompletedProcess:
         use = dict(kw)

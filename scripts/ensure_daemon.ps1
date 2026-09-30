@@ -18,6 +18,8 @@ function Resolve-EtherRoot {
 $Root = Resolve-EtherRoot
 Set-Location -LiteralPath $Root
 $env:ETHER_ROOT = $Root
+$env:GIT_TERMINAL_PROMPT = "0"
+$env:GCM_INTERACTIVE = "Never"
 
 $Py = Join-Path $Root ".venv\Scripts\python.exe"
 $Daemon = Join-Path $Root "scripts\ether_daemon.py"

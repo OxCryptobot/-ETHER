@@ -1,15 +1,14 @@
 {
-  "ts": "2026-09-30T15:47:30.224007+00:00",
+  "ts": "2026-09-30T16:09:07.913262+00:00",
   "os": "nt",
-  "ok": true,
+  "ok": false,
   "commit_rc": 0,
   "sync": {
     "ok": true,
     "hard_reset": false,
-    "ahead": 3,
+    "ahead": 1,
     "dirty": true,
     "note": "stash_rebase"
   },
-  "push_rc": 0,
-  "stderr": "Everything up-to-date\n"
+  "error": "TimeoutExpired"
 }

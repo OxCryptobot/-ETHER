@@ -1,30 +1,31 @@
 {
-  "ts": "2026-09-30T15:47:25.239732+00:00",
+  "ts": "2026-09-30T20:23:13.844356+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-09-30T15:47:39.273258+00:00",
+    "ts": "2026-09-30T20:23:50.607911+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-09-30T15:50:25.678789+00:00",
+    "ts": "2026-09-30T20:26:41.772409+00:00",
     "os": "nt",
-    "ok": false,
+    "ok": true,
     "commit_rc": 0,
     "sync": {
       "ok": true,
       "hard_reset": false,
-      "ahead": 1,
+      "ahead": 3,
       "dirty": true,
       "note": "stash_rebase"
     },
-    "error": "TimeoutExpired"
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   43b84288a..ef0c4fc4f  main -> main\n"
   },
   "heal": {
-    "ts": "2026-09-30T15:47:37.511619+00:00",
+    "ts": "2026-09-30T20:23:49.036349+00:00",
     "os": "nt",
     "ok": true,
     "armed": false,
@@ -45,7 +46,7 @@
     "note": "already_inside_daemon"
   },
   "keepalive": {
-    "ts": "2026-09-30T15:47:38.271116+00:00",
+    "ts": "2026-09-30T20:23:49.770645+00:00",
     "os": "nt",
     "ok": true,
     "armed": false,
@@ -58,7 +59,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-09-30T15:47:39.232834+00:00",
+    "updated": "2026-09-30T20:23:50.574950+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -76,13 +77,13 @@
   "ollama": true,
   "live": {
     "ok": false,
-    "n": 2,
+    "n": 3,
     "jobs": [
       {
         "job_id": "exe_live_drain_now_20260922",
         "ok": false,
         "rc": 1,
-        "finished": "2026-09-30T15:47:39.275285+00:00",
+        "finished": "2026-09-30T20:23:50.624926+00:00",
         "class": "live",
         "tail": "argv_denied"
       },
@@ -90,9 +91,15 @@
         "job_id": "exe_live_ollama_smoke_20260919",
         "ok": false,
         "rc": 1,
-        "finished": "2026-09-30T15:47:39.290922+00:00",
+        "finished": "2026-09-30T20:23:50.632109+00:00",
         "class": "live",
         "tail": "argv_denied\nargv_denied"
+      },
+      {
+        "id": "medic_hb_20260930_160830",
+        "skipped": true,
+        "ok": true,
+        "note": "FAST stays on matrix-worker"
       }
     ]
   },
@@ -109,7 +116,7 @@
     "weak": [],
     "fabricate": {
       "name": "heal_exe_live_ollama_smoke_20",
-      "quarantine_path": "tools/quarantine/heal_exe_live_ollama_smoke_20_20260930_154750.py",
+      "quarantine_path": "tools/quarantine/heal_exe_live_ollama_smoke_20_20260930_202400.py",
       "stages": [
         {
           "stage": "implement",
@@ -165,7 +172,7 @@
     "skills": {
       "batchphase": {
         "ok": true,
-        "fast_pending": 0,
+        "fast_pending": 1,
         "live_pending": 0,
         "ran": false
       },
@@ -177,7 +184,7 @@
         "ok": true,
         "stale": false,
         "runners": 1,
-        "app_alive_ts": "2026-09-30T15:47:44.364430+00:00",
+        "app_alive_ts": "2026-09-30T20:23:54.956397+00:00",
         "note": "1650"
       },
       "keep-pushing": {
@@ -200,14 +207,14 @@
       }
     },
     "energy": {
-      "evolve_ts": "2026-09-30T15:48:04.554455+00:00",
+      "evolve_ts": "2026-09-30T20:24:15.334003+00:00",
       "evolve_ok": 8,
       "evolve_n": 8,
       "generation": 1384,
       "source": "ether_evolve.cycle"
     },
     "generation": 1384,
-    "ts": "2026-09-30T15:48:05.376528+00:00"
+    "ts": "2026-09-30T20:24:16.099194+00:00"
   },
   "role": {
     "role": "self_build_cowork",
@@ -232,21 +239,21 @@
       ],
       "deliverable": "artifacts\\cowork_out\\self-build_cowork_local_LLM.md"
     },
-    "ts": "2026-09-30T15:50:25.653989+00:00",
+    "ts": "2026-09-30T20:26:41.739181+00:00",
     "generation": 1387
   },
   "live_status": {
     "live": true,
     "stale": false,
-    "age_hours": 0.04,
+    "age_hours": 0.05,
     "max_age_hours": 6.0,
     "require": "scripts.host_main.tick on 1650",
     "github_runner": "optional",
-    "app_alive_ts": "2026-09-30T15:47:44.364430+00:00",
-    "attach_updated": "2026-09-30T15:50:17.466263+00:00",
+    "app_alive_ts": "2026-09-30T20:23:54.956397+00:00",
+    "attach_updated": "2026-09-30T20:26:38.358531+00:00",
     "attach_ollama": true,
-    "writer": null,
-    "checked_at": "2026-09-30T15:50:25.669613+00:00",
+    "writer": "exe",
+    "checked_at": "2026-09-30T20:26:41.755672+00:00",
     "note": "open exe is not LIVE. stale app_alive is FAIL."
   }
 }

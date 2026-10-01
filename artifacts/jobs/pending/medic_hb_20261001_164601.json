@@ -1,0 +1,12 @@
+{
+  "id": "medic_hb_20261001_164601",
+  "class": "fast",
+  "continue_on_fail": true,
+  "timeout": 120,
+  "steps": [
+    {
+      "cmd": ".venv/Scripts/python.exe scripts/health_check.py --skip-sandbox",
+      "timeout": 120
+    }
+  ]
+}

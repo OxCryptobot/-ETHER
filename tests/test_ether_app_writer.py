@@ -16,7 +16,7 @@ def test_no_packed_self_update() -> None:
     assert "ETHER.exe.new" not in text
     assert "MoveFileExW" not in text
     heal = Path("scripts/self_heal.py").read_text(encoding="utf-8")
-    assert "schtasks" not in heal
+    assert "/Create" not in heal
     assert "CurrentVersion\\Run" not in heal
     boot = text.split("def boot(", 1)[1].split("def live_start(", 1)[0]
     assert boot.index("mark_alive") < boot.index("disk_tick")

@@ -146,6 +146,7 @@ def test_git_push_uses_token_url_not_env() -> None:
 def test_git_does_not_open_a_credential_window() -> None:
     text = Path("scripts/origin_publish.py").read_text(encoding="utf-8")
     assert 'env["GCM_INTERACTIVE"] = "Never"' in text
+    assert "credential.interactive" in text
     heal = Path("scripts/self_heal.py").read_text(encoding="utf-8")
     assert "ETHER-Ensure" in heal
     assert '"/Delete"' in heal

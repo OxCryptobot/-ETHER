@@ -104,6 +104,11 @@ def tick() -> Dict[str, Any]:
     os.environ["ETHER_ROOT"] = str(root)
     row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name}
     if os.name == "nt":
+        try:
+            from scripts.origin_publish import silence_git
+            silence_git(root)
+        except Exception:
+            pass
         _pull(root)
         try:
             from scripts.ether_app import mark_alive

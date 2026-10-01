@@ -213,7 +213,10 @@ def _git() -> str:
 
 
 def _git_kw(timeout: int = 90) -> Dict[str, Any]:
-    kw: Dict[str, Any] = {"cwd": str(ROOT), "timeout": timeout, "capture_output": True, "text": True, "check": False}
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GCM_INTERACTIVE"] = "Never"
+    kw: Dict[str, Any] = {"cwd": str(ROOT), "timeout": timeout, "capture_output": True, "text": True, "check": False, "env": env}
     if os.name == "nt":
         kw["creationflags"] = 0x08000000
     return kw

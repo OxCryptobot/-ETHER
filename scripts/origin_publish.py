@@ -116,6 +116,30 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     return row
 
 
+def quiet_env(base: Dict[str, str] | None = None) -> Dict[str, str]:
+    env = dict(base or os.environ)
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GCM_INTERACTIVE"] = "Never"
+    return env
+
+
+def silence_git(root: Path) -> None:
+    """Never open Git Credential Manager. Applies to every later git, not just this process."""
+    if os.name != "nt":
+        return
+    git = _git()
+    env = quiet_env()
+    flags = 0x08000000
+    for args in (
+        ["config", "--global", "credential.interactive", "never"],
+        ["config", "--global", "credential.modalPrompt", "false"],
+    ):
+        try:
+            subprocess.run([git, *args], cwd=str(root), env=env, capture_output=True, text=True, timeout=20, creationflags=flags)
+        except Exception:
+            return
+
+
 def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     root = Path(root)
     art = root / "artifacts"
@@ -126,9 +150,8 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
         (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
         return row
     git = _git()
-    env = os.environ.copy()
-    env["GIT_TERMINAL_PROMPT"] = "0"
-    env["GCM_INTERACTIVE"] = "Never"
+    silence_git(root)
+    env = quiet_env()
     kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "env": env, "creationflags": 0x08000000}
     def run(argv: List[str], extra_env: Dict[str, str] | None = None) -> subprocess.CompletedProcess:
         use = dict(kw)

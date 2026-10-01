@@ -42,7 +42,13 @@ def arm() -> Dict[str, Any]:
     }
     if os.name == "nt":
         stopped = {}
-        for name in ("ETHER-Ensure", "ETHER-keepalive", "ETHER-keepalive-5m", "ETHER-keepalive-boot"):
+        for name in (
+            "ETHER-Ensure",
+            "ETHER-keepalive",
+            "ETHER-keepalive-5m",
+            "ETHER-keepalive-boot",
+            "ETHER-Daemon",
+        ):
             stopped[name] = _run(["schtasks", "/Delete", "/TN", name, "/F"])
         row["stopped"] = stopped
         try:

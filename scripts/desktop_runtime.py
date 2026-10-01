@@ -77,14 +77,17 @@ def git_update() -> None:
         log("git: skipped")
         return
     log("git: fetch origin…")
-    r = subprocess.run(["git", "fetch", "origin"], cwd=str(ROOT), capture_output=True, text=True)
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GCM_INTERACTIVE"] = "Never"
+    r = subprocess.run(["git", "fetch", "origin"], cwd=str(ROOT), capture_output=True, text=True, env=env)
     if r.returncode != 0:
         log(f"git fetch warning: {(r.stderr or r.stdout or '')[:200]}")
     if (ROOT / ".git" / "MERGE_HEAD").exists():
-        subprocess.run(["git", "merge", "--abort"], cwd=str(ROOT), capture_output=True)
+        subprocess.run(["git", "merge", "--abort"], cwd=str(ROOT), capture_output=True, env=env)
     if os.getenv("ETHER_GIT_RESET_OK", "0") == "1":
         log("git: reset --hard origin/main")
-        subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(ROOT), capture_output=True)
+        subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(ROOT), capture_output=True, env=env)
     log("pip: editable install…")
     subprocess.run(
         [PY, "-m", "pip", "install", "-e", ".[dev]", "-q"],

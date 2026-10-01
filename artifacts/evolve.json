@@ -9,8 +9,57 @@
   "walk_n": 8,
   "walk_ok": true,
   "weak": [],
-  "fabricate": null,
-  "fail_id": null,
+  "fabricate": {
+    "name": "heal_exe_live_ollama_smoke_20",
+    "quarantine_path": "tools/quarantine/heal_exe_live_ollama_smoke_20_20261001_033503.py",
+    "stages": [
+      {
+        "stage": "implement",
+        "ok": true,
+        "mode": "stub"
+      },
+      {
+        "stage": "ast_validate",
+        "ok": true,
+        "has_main": true
+      },
+      {
+        "stage": "static_safety",
+        "ok": true,
+        "findings": []
+      },
+      {
+        "stage": "sandbox_selftest",
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "compile_ok\n",
+        "stderr": ""
+      },
+      {
+        "stage": "audit",
+        "ok": true,
+        "approved": true,
+        "risk_score": 0.0
+      },
+      {
+        "stage": "critique",
+        "ok": true,
+        "soft": true,
+        "complexity": 0.1,
+        "critique": "[clean] ~20 lines, complexity=0.10. No structural issues flagged.",
+        "suggestions": []
+      },
+      {
+        "stage": "promote",
+        "ok": false,
+        "note": "ETHER_AUTO_PROMOTE=0"
+      }
+    ],
+    "validation_status": "pending_promote",
+    "promoted": false,
+    "promote_path": null
+  },
+  "fail_id": "exe_live_ollama_smoke_20260919",
   "goal": {
     "id": "restore_1650_writer",
     "do": "runner_register then host_main.tick",
@@ -20,7 +69,7 @@
     "batchphase": {
       "ok": true,
       "fast_pending": 0,
-      "live_pending": 2,
+      "live_pending": 0,
       "ran": false
     },
     "goal": {
@@ -32,7 +81,7 @@
       "ok": false,
       "stale": true,
       "runners": null,
-      "app_alive_ts": "2026-09-29T15:26:21.960775+00:00",
+      "app_alive_ts": "2026-09-30T20:27:25.459719+00:00",
       "note": "observe_only"
     },
     "keep-pushing": {
@@ -58,12 +107,12 @@
     }
   },
   "energy": {
-    "evolve_ts": "2026-09-30T14:09:48.148792+00:00",
+    "evolve_ts": "2026-10-01T03:35:03.922463+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 1383,
+    "generation": 1391,
     "source": "ether_evolve.cycle"
   },
-  "generation": 1383,
-  "ts": "2026-09-30T14:09:48.195571+00:00"
+  "generation": 1391,
+  "ts": "2026-10-01T03:35:03.992764+00:00"
 }

@@ -147,14 +147,16 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["live_error"] = type(exc).__name__
         try:
+            from core.kernel.hooks import run_hook
             from scripts.ether_evolve import cycle
-            row["evolve"] = cycle()
+            row["evolve"] = run_hook(cycle, timeout_s=20)
         except Exception as exc:
             row["evolve_error"] = type(exc).__name__
         if row.get("ollama"):
             try:
+                from core.kernel.hooks import run_hook
                 from scripts.ether_role import tick as role_tick
-                row["role"] = role_tick()
+                row["role"] = run_hook(role_tick, timeout_s=25)
             except Exception as exc:
                 row["role_error"] = type(exc).__name__
         try:

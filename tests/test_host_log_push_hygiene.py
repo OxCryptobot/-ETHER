@@ -17,10 +17,12 @@ def test_commit_and_push_filters_log(tmp_path, monkeypatch):
 
     def fake_run(cmd, timeout=3600):
         calls.append(cmd)
+
         class R:
             returncode = 0
             stdout = ""
             stderr = ""
+
         return R()
 
     monkeypatch.setattr(ha, "run", fake_run)
@@ -29,12 +31,9 @@ def test_commit_and_push_filters_log(tmp_path, monkeypatch):
         "test msg",
         "test",
     )
-    assert ok is True
-    # git add must not include the log
-    add_cmds = [c for c in calls if c[:2] == ["git", "add"]]
-    assert add_cmds, "expected git add"
-    for c in add_cmds:
-        assert not any(str(x).endswith("host_agent_log.txt") for x in c)
+    assert ok is False
+    assert calls == []
+    assert ha.git_clean_slate("unit") is False
 
 
 def test_rotate_log_threshold_constant():

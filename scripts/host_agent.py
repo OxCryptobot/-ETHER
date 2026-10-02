@@ -238,48 +238,9 @@ def _light_paths() -> List[str]:
 
 
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
-    if not paths:
-        return True
-    paths = [p for p in paths if not p.replace("\\", "/").endswith("host_agent_log.txt")]
-    if not paths:
-        return True
-    run(["git", "add", "-f", "--"] + paths, timeout=45)
-    c = run(["git", "commit", "-m", message], timeout=30)
-    combined = ((c.stdout or "") + (c.stderr or "")).lower()
-    if c.returncode != 0 and "nothing to commit" in combined:
-        log(f"{label} nothing to commit")
-        return True
-    if c.returncode != 0:
-        log(f"{label} commit rc={c.returncode} err={(c.stderr or '')[:300]}")
-        return False
-    p = run(["git", "push", "origin", "main"], timeout=90)
-    if p.returncode == 0:
-        log(f"{label} push ok")
-        try:
-            from core.chat_bridge import clear_dirty
-
-            clear_dirty()
-        except Exception:
-            pass
-        return True
-    err = ((p.stderr or "") + (p.stdout or ""))[:500]
-    log(f"{label} push REJECTED rc={p.returncode} err={err}")
-    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
-    run(["git", "pull", "--rebase", "origin", "main"], timeout=90)
-    run(["git", "add", "-f", "--"] + paths, timeout=45)
-    run(["git", "commit", "-m", message], timeout=30)
-    p2 = run(["git", "push", "origin", "main"], timeout=90)
-    if p2.returncode == 0:
-        log(f"{label} push ok after rebase")
-        try:
-            from core.chat_bridge import clear_dirty
-
-            clear_dirty()
-        except Exception:
-            pass
-        return True
-    err2 = ((p2.stderr or "") + (p2.stdout or ""))[:500]
-    log(f"{label} push STILL FAILED rc={p2.returncode} err={err2}")
+    """The exe is the only writer. This process must not git commit or push."""
+    del paths, message
+    log(f"{label} refused: single writer is host_main")
     return False
 
 
@@ -366,23 +327,10 @@ def rehydrate_measure() -> None:
 
 
 def git_clean_slate(reason: str, rehydrate: bool = False) -> bool:
-    """Nuclear reset. rehydrate default False — was slow and blocked boot."""
-    global _last_recover_log
-    now = time.time()
-    if now - _last_recover_log > 15:
-        log(f"git clean_slate ({reason}) rehydrate={rehydrate}")
-        _last_recover_log = now
-    run(["git", "rebase", "--abort"], timeout=15)
-    run(["git", "merge", "--abort"], timeout=15)
-    run(["git", "reset", "--mixed", "HEAD"], timeout=15)
-    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
-    r = run(["git", "reset", "--hard", "origin/main"], timeout=45)
-    if r.returncode != 0:
-        log(f"clean_slate reset failed rc={r.returncode}")
-        return False
-    if rehydrate:
-        rehydrate_measure()
-    return True
+    """The exe owns the worktree. A second process must not reset --hard."""
+    del rehydrate
+    log(f"clean_slate refused ({reason}): single writer is host_main")
+    return False
 
 
 def git_reset_to_origin(reason: str) -> bool:
@@ -391,11 +339,8 @@ def git_reset_to_origin(reason: str) -> bool:
 
 
 def git_sync() -> None:
-    """Light path: fetch + ff-only. Nuclear only on divergence."""
-    run(["git", "fetch", "origin"], timeout=GIT_FETCH_TIMEOUT)
-    r = run(["git", "merge", "--ff-only", "origin/main"], timeout=30)
-    if r.returncode != 0:
-        git_clean_slate("diverged", rehydrate=False)
+    """The exe syncs the worktree. This process must not fetch or reset."""
+    log("git_sync refused: single writer is host_main")
 
 
 def push_liveness(reason: str = "idle") -> None:

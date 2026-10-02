@@ -1,9 +1,16 @@
 {
-  "ts": "2026-09-30T20:27:24.333512+00:00",
+  "ts": "2026-10-02T18:31:51.625583+00:00",
   "os": "nt",
   "ok": true,
   "armed": false,
   "note": "no hidden startup",
+  "stopped": {
+    "ETHER-Ensure": 1,
+    "ETHER-keepalive": 1,
+    "ETHER-keepalive-5m": 1,
+    "ETHER-keepalive-boot": 1,
+    "ETHER-Daemon": 1
+  },
   "register": {
     "ok": true,
     "note": "already_registered",

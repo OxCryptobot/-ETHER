@@ -1,32 +1,39 @@
 {
-  "ts": "2026-10-02T19:35:13.609508+00:00",
+  "ts": "2026-10-02T20:14:42.756510+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-02T19:35:21.057783+00:00",
+    "ts": "2026-10-02T20:14:50.954880+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-02T19:37:38.631656+00:00",
+    "ts": "2026-10-02T20:17:10.905784+00:00",
     "os": "nt",
-    "ok": true,
-    "commit_rc": 0,
+    "ok": false,
+    "commit_rc": 128,
     "sync": {
-      "ok": true,
+      "ok": false,
       "hard_reset": false,
-      "ahead": 4,
+      "ahead": 0,
       "dirty": true,
-      "note": "stash_rebase"
+      "note": "stash_failed"
     },
     "via": "gh_token_url",
-    "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   7126ce960..5937e3574  HEAD -> main\n"
+    "push_rc": 1,
+    "stderr": "b.com/OxCryptobot/-ETHER.git'\nhint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. If you want to integrate the remote changes,\nhint: use 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
+    "sync_retry": {
+      "ok": false,
+      "hard_reset": false,
+      "ahead": 0,
+      "dirty": true,
+      "note": "stash_failed"
+    }
   },
   "heal": {
-    "ts": "2026-10-02T19:35:19.862038+00:00",
+    "ts": "2026-10-02T20:14:49.699147+00:00",
     "os": "nt",
     "ok": true,
     "armed": false,
@@ -58,7 +65,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-10-02T19:35:21.012558+00:00",
+    "updated": "2026-10-02T20:14:50.887070+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -98,7 +105,7 @@
     "walk_ok": true,
     "weak": [],
     "fabricate": null,
-    "fail_id": "exe_live_drain_now_20260922",
+    "fail_id": "live_generate_probe_20261002",
     "goal": {
       "id": "drain_and_learn",
       "do": "next FAST job"
@@ -119,7 +126,7 @@
         "stale": false,
         "runners": 1,
         "online": 1,
-        "app_alive_ts": "2026-10-02T19:35:21.057783+00:00",
+        "app_alive_ts": "2026-10-02T20:14:50.954880+00:00",
         "note": "1650"
       },
       "keep-pushing": {
@@ -142,14 +149,14 @@
       }
     },
     "energy": {
-      "evolve_ts": "2026-10-02T19:35:29.104265+00:00",
+      "evolve_ts": "2026-10-02T20:14:59.552596+00:00",
       "evolve_ok": 8,
       "evolve_n": 8,
-      "generation": 1620,
+      "generation": 1630,
       "source": "ether_evolve.cycle"
     },
-    "generation": 1620,
-    "ts": "2026-10-02T19:35:29.836781+00:00"
+    "generation": 1630,
+    "ts": "2026-10-02T20:15:00.251223+00:00"
   },
   "role": {
     "role": "self_build_cowork",
@@ -174,8 +181,8 @@
       ],
       "deliverable": "artifacts\\cowork_out\\self-build_cowork_local_LLM.md"
     },
-    "ts": "2026-10-02T19:37:38.612369+00:00",
-    "generation": 1621
+    "ts": "2026-10-02T20:17:10.873110+00:00",
+    "generation": 1631
   },
   "live_status": {
     "live": true,
@@ -184,11 +191,11 @@
     "max_age_hours": 6.0,
     "require": "scripts.host_main.tick on 1650",
     "github_runner": "optional",
-    "app_alive_ts": "2026-10-02T19:35:21.057783+00:00",
-    "attach_updated": "2026-10-02T19:37:37.282352+00:00",
+    "app_alive_ts": "2026-10-02T20:14:50.954880+00:00",
+    "attach_updated": "2026-10-02T20:17:08.585472+00:00",
     "attach_ollama": true,
     "writer": null,
-    "checked_at": "2026-10-02T19:37:38.630346+00:00",
+    "checked_at": "2026-10-02T20:17:10.889735+00:00",
     "note": "open exe is not LIVE. stale app_alive is FAIL."
   }
 }

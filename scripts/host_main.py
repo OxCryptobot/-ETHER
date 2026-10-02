@@ -151,6 +151,11 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["proactive_error"] = type(exc).__name__
         try:
+            from core.kernel.day_learn import learn
+            row["day_learn"] = learn(root)
+        except Exception as exc:
+            row["day_learn_error"] = type(exc).__name__
+        try:
             from core.kernel.hooks import run_hook
             from scripts.ether_evolve import cycle
             row["evolve"] = run_hook(cycle, timeout_s=20)

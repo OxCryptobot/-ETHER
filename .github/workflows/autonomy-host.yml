@@ -81,25 +81,16 @@ jobs:
           }
           $still = @(git diff --name-only --diff-filter=U)
           if ($still.Count -gt 0) { throw "unmerged outside job queue: $($still -join ', ')" }
-          Invoke-Git fetch, origin
-          git pull --ff-only origin main
-          if ($LASTEXITCODE -ne 0) {
-            git stash push -u -m "autonomy-host"
-            Invoke-Git pull, --rebase, origin, main
-            if ($LASTEXITCODE -ne 0) { git rebase --abort }
-            git stash pop
+          Write-Host "gh_token_len=$($tok.Length)"
+          # pull --ff-only is not used here. It asks for a password and holds index.lock.
+          if ($tok.Length -gt 0) {
+            & git -c "credential.helper=" -c "credential.helper=" -c "http.extraheader=AUTHORIZATION: bearer $tok" fetch origin main
           }
-          Invoke-GitAuth fetch, origin, main
+          Write-Host "fetch_rc=$LASTEXITCODE"
           if ($LASTEXITCODE -eq 0) {
-            for ($n = 0; $n -lt 4; $n++) {
-              Get-CimInstance Win32_Process -Filter "Name='git.exe'" -ErrorAction SilentlyContinue |
-                Where-Object { $_.CommandLine -match 'Otcde\\ETHER' } |
-                ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-              Start-Sleep -Seconds 1
-              Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
-              Invoke-GitAuth checkout, FETCH_HEAD, "--", scripts, core
-              if ($LASTEXITCODE -eq 0) { break }
-            }
+            Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
+            & git checkout origin/main -- scripts core
+            Write-Host "checkout_rc=$LASTEXITCODE"
           }
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv

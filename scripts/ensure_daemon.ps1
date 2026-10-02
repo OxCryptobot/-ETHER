@@ -129,7 +129,7 @@ if (-not (Test-Path -LiteralPath $Py)) {
 
 if (-not (Test-Path -LiteralPath $Daemon)) {
   git fetch origin 2>&1 | Out-Null
-  git reset --hard origin/main 2>&1 | Out-Null
+  git pull --ff-only origin main 2>&1 | Out-Null
 }
 
 $alive = Test-DaemonAlive
@@ -144,7 +144,7 @@ if ($alive -and $fresh -and $dash) {
 
 try {
   git fetch origin 2>&1 | Out-Null
-  git reset --hard origin/main 2>&1 | Out-Null
+  git pull --ff-only origin main 2>&1 | Out-Null
   & $Py -m pip install -e ".[dev]" -q 2>&1 | Out-Null
 } catch {}
 

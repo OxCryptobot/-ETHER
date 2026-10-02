@@ -131,6 +131,9 @@ def test_heartbeat_publishes_before_slow_work() -> None:
         text = Path(rel).read_text(encoding="utf-8")
         assert 'reset", "--hard"' not in text
         assert "reset --hard origin" not in text
+    host = Path(".github/workflows/autonomy-host.yml").read_text(encoding="utf-8")
+    assert "reset --hard" not in host
+    assert "pull --ff-only" in host
 
 
 def test_network_git_uses_the_token_before_origin() -> None:

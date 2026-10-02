@@ -40,7 +40,17 @@ jobs:
           if (-not (Test-Path $root)) { throw "ETHER_ROOT missing: $root" }
           Set-Location $root
           git fetch origin
-          git reset --hard origin/main
+          git pull --ff-only origin main
+          if ($LASTEXITCODE -ne 0) {
+            git stash push -u -m "autonomy-host"
+            git pull --rebase origin main
+            if ($LASTEXITCODE -ne 0) {
+              git rebase --abort
+              throw "rebase failed; worktree was not reset"
+            }
+            git stash pop
+            if ($LASTEXITCODE -ne 0) { throw "stash pop conflict; worktree was not reset" }
+          }
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
             .\\.venv\\Scripts\\python.exe -m pip install -U pip

@@ -68,10 +68,32 @@ def _int_stdout(proc: subprocess.CompletedProcess) -> int:
         return 0
 
 
+def clear_queue_conflicts(git: str, runner: Runner) -> List[str]:
+    """Unmerged job files must not freeze the writer. Source files stay untouched."""
+    runner([git, "merge", "--abort"])
+    runner([git, "rebase", "--abort"])
+    unmerged = runner([git, "diff", "--name-only", "--diff-filter=U"])
+    names = [n.strip().replace("\\", "/") for n in (unmerged.stdout or "").splitlines() if n.strip()]
+    if any(not n.startswith("artifacts/jobs/") for n in names):
+        return names
+    for name in names:
+        ours = runner([git, "checkout", "--ours", "--", name])
+        if ours.returncode != 0:
+            runner([git, "rm", "-f", "--", name])
+        else:
+            runner([git, "add", "--", name])
+    return []
+
+
 def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     """Fetch and rebase onto origin/main. Never reset --hard."""
     del root
     row: Dict[str, Any] = {"ok": False, "hard_reset": False}
+    blocked = clear_queue_conflicts(git, runner)
+    if blocked:
+        row["note"] = "unmerged_source"
+        row["unmerged"] = blocked
+        return row
     runner([git, "fetch", "origin"])
     ahead = _int_stdout(runner([git, "rev-list", "--count", "origin/main..HEAD"]))
     dirty = bool((runner([git, "status", "--porcelain"]).stdout or "").strip())

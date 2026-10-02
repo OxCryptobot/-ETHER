@@ -135,6 +135,7 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     assert "reset --hard" not in host
     assert "pull --ff-only" in host
     assert "while ($true)" in host
+    assert "artifacts/jobs/*" in host
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
 

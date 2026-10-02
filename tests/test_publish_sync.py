@@ -116,7 +116,7 @@ def test_writer_paths_do_not_include_the_job_queue() -> None:
 
 
 def test_heartbeat_publishes_before_slow_work() -> None:
-    body = Path("scripts/host_main.py").read_text(encoding="utf-8").split('if os.name == "nt":', 1)[1].split("else:", 1)[0]
+    body = Path("scripts/host_main.py").read_text(encoding="utf-8").split("def tick", 1)[1]
     assert body.index("mark_alive") < body.index("self_heal")
     assert body.index("origin_publish") < body.index("ether_evolve")
     app = Path("scripts/ether_app.py").read_text(encoding="utf-8")
@@ -134,6 +134,9 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     host = Path(".github/workflows/autonomy-host.yml").read_text(encoding="utf-8")
     assert "reset --hard" not in host
     assert "pull --ff-only" in host
+    assert "while ($true)" in host
+    tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
+    assert "already_actions_runner" in tick
 
 
 def test_network_git_uses_the_token_before_origin() -> None:

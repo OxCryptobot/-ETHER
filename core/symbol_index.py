@@ -37,11 +37,13 @@ def symbol_index_enabled() -> bool:
 
 
 def _tokenize(text: str) -> Set[str]:
-    return {
-        t
-        for t in re.findall(r"[a-zA-Z_][a-zA-Z0-9_]{2,}", (text or "").lower())
-        if len(t) > 2
-    }
+    raw = re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", (text or "").lower())
+    out: Set[str] = set()
+    for token in raw:
+        if len(token) > 2:
+            out.add(token)
+        out.update(part for part in token.split("_") if len(part) > 2)
+    return out
 
 
 @dataclass

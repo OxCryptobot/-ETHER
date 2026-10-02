@@ -113,17 +113,22 @@ def tick() -> Dict[str, Any]:
             row["heal"] = arm()
         except Exception as exc:
             row["heal_error"] = type(exc).__name__
-        try:
-            from scripts.start_runner import start_runner
-            row["runner"] = start_runner()
-        except Exception as exc:
-            row["runner_error"] = type(exc).__name__
-        row["daemon"] = _ensure_daemon(root)
-        try:
-            from scripts.app_keepalive import ensure_keepalive
-            row["keepalive"] = ensure_keepalive(root)
-        except Exception as exc:
-            row["keepalive_error"] = type(exc).__name__
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            row["runner"] = {"ok": True, "note": "already_actions_runner"}
+            row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
+            row["keepalive"] = {"ok": True, "note": "skipped_in_actions"}
+        else:
+            try:
+                from scripts.start_runner import start_runner
+                row["runner"] = start_runner()
+            except Exception as exc:
+                row["runner_error"] = type(exc).__name__
+            row["daemon"] = _ensure_daemon(root)
+            try:
+                from scripts.app_keepalive import ensure_keepalive
+                row["keepalive"] = ensure_keepalive(root)
+            except Exception as exc:
+                row["keepalive_error"] = type(exc).__name__
         try:
             from scripts.live_host import start_ollama, consume, ollama_up
             row["ollama_start"] = start_ollama()

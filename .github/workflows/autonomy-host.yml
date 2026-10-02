@@ -22,6 +22,7 @@ concurrency:
 jobs:
   host:
     runs-on: [self-hosted, Windows, ETHER]
+    timeout-minutes: 360
     env:
       ETHER_ROOT: C:\\Users\\Otcde\\ETHER
       GIT_TERMINAL_PROMPT: "0"
@@ -60,4 +61,10 @@ jobs:
       - name: Disk LIVE tick (no Matrix UI)
         run: |
           Set-Location $env:ETHER_ROOT
-          .\\.venv\\Scripts\\python.exe scripts/host_main.py
+          $py = ".\.venv\Scripts\python.exe"
+          & $py scripts/host_main.py
+          if ($LASTEXITCODE -ne 0) { throw "host_main failed" }
+          while ($true) {
+            Start-Sleep -Seconds 300
+            & $py scripts/host_main.py
+          }

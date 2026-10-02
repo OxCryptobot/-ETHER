@@ -12,8 +12,10 @@ def test_rejects_imports() -> None:
     assert function_ok("import os\ndef add(a, b):\n    return a + b\n") is False
 
 
-def test_probe_source_never_sets_honest_true() -> None:
+def test_probe_uses_chat_with_thinking_off() -> None:
     from pathlib import Path
     text = Path("scripts/live_generate_probe.py").read_text(encoding="utf-8")
+    assert "/api/chat" in text
+    assert '"think": False' in text
+    assert "/api/generate" not in text
     assert '"honest": False' in text
-    assert "honest tool-path PASS" in text

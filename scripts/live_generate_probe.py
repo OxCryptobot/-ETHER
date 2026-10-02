@@ -37,6 +37,10 @@ def extract_code(text: str) -> str:
         raw = parts[1] if len(parts) > 1 else raw
         if raw.startswith("python"):
             raw = raw[len("python"):]
+    raw = raw.strip()
+    idx = raw.find("def add")
+    if idx > 0:
+        raw = raw[idx:]
     return raw.strip()
 
 
@@ -74,23 +78,26 @@ def main() -> int:
     row["model"] = model
     body = json.dumps({
         "model": model,
-        "prompt": PROMPT,
+        "messages": [{"role": "user", "content": PROMPT}],
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_predict": 200},
+        "options": {"temperature": 0, "num_predict": 120},
     }).encode()
     req = urllib.request.Request(
-        "http://127.0.0.1:11434/api/generate",
+        "http://127.0.0.1:11434/api/chat",
         data=body,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=240) as resp:
+        with urllib.request.urlopen(req, timeout=90) as resp:
             payload = json.loads(resp.read().decode())
-        text = str(payload.get("response") or "")
+        message = payload.get("message") or {}
+        text = str(message.get("content") or "")
+        row["field"] = "content"
         if not text.strip():
-            text = str(payload.get("thinking") or "")
+            text = str(message.get("thinking") or payload.get("thinking") or "")
+            row["field"] = "thinking"
         code = extract_code(text)
         row["response_tail"] = text[-240:]
         row["ok"] = function_ok(code)

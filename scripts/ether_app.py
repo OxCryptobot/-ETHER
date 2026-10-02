@@ -320,11 +320,22 @@ def ask_model(text: str) -> str:
     if not ollama_up():
         return "host up. ollama down. FAST verify only."
     import urllib.request
-    req = urllib.request.Request("http://127.0.0.1:11434/api/generate", data=json.dumps({"model": "qwen3.5:4b-q4_K_M", "prompt": text, "stream": False}).encode(), headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(
+        "http://127.0.0.1:11434/api/chat",
+        data=json.dumps({
+            "model": "qwen3.5:4b-q4_K_M",
+            "messages": [{"role": "user", "content": text}],
+            "stream": False,
+            "think": False,
+        }).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode())
-        return str(data.get("response") or "")[:4000]
+        message = data.get("message") or {}
+        return str(message.get("content") or message.get("thinking") or "")[:4000]
     except Exception as exc:
         return type(exc).__name__
 

@@ -1,8 +1,8 @@
 {
-  "id": "live_generate_probe_20261002",
+  "id": "live_generate_probe_20261002b",
   "class": "live",
   "lane": "ollama_4b",
-  "note": "4B generate smoke. Not an honest PASS.",
+  "note": "4B generate smoke retry with thinking off. Not an honest PASS.",
   "steps": [
     {
       "argv": [".venv/Scripts/python.exe", "-m", "scripts.live_generate_probe"],

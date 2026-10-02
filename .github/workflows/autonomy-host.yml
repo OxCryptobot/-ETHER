@@ -116,7 +116,9 @@ jobs:
 
       - name: One heartbeat
         run: |
-          Set-Location $env:ETHER_ROOT
+          $ErrorActionPreference = "Continue"
+          $env:PYTHONPATH = $env:GITHUB_WORKSPACE
+          Set-Location $env:GITHUB_WORKSPACE
           $py = Join-Path $env:ETHER_ROOT ".venv\Scripts\python.exe"
           & $py -u scripts/host_main.py
           Write-Host "EXIT $LASTEXITCODE"
@@ -127,13 +129,14 @@ jobs:
 
       - name: Keep ticking
         run: |
-          Set-Location $env:ETHER_ROOT
+          $ErrorActionPreference = "Continue"
+          $env:PYTHONPATH = $env:GITHUB_WORKSPACE
           $root = $env:ETHER_ROOT
           $py = Join-Path $root ".venv\Scripts\python.exe"
           function Invoke-Tick {
             $log = Join-Path $root "artifacts\tick_log.txt"
             $err = Join-Path $root "artifacts\tick_err.txt"
-            $proc = Start-Process -FilePath $py -ArgumentList "-u","scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+            $proc = Start-Process -FilePath $py -ArgumentList "-u","scripts/host_main.py" -WorkingDirectory $env:GITHUB_WORKSPACE -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
             if (-not $proc.WaitForExit(120000)) {
               Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
               Set-Content -Path (Join-Path $root "artifacts\tick_timeout.json") -Value '{"ok":false,"error":"tick_timeout"}'

@@ -96,8 +96,10 @@ jobs:
           $py = Join-Path $root ".venv\Scripts\pythonw.exe"
           if (-not (Test-Path $py)) { $py = Join-Path $root ".venv\Scripts\python.exe" }
           function Invoke-Tick {
+            $pull = Start-Process -FilePath "git" -ArgumentList "pull","--ff-only","origin","main" -WorkingDirectory $root -WindowStyle Hidden -PassThru
+            if (-not $pull.WaitForExit(20000)) { Stop-Process -Id $pull.Id -Force -ErrorAction SilentlyContinue }
             $proc = Start-Process -FilePath $py -ArgumentList "scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -PassThru
-            if (-not $proc.WaitForExit(180000)) {
+            if (-not $proc.WaitForExit(240000)) {
               Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
               Set-Content -Path (Join-Path $root "artifacts\tick_timeout.json") -Value '{"ok":false,"error":"tick_timeout"}'
             }

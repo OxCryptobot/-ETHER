@@ -11,7 +11,7 @@ def test_windows_tick_stops_before_the_model() -> None:
     assert "ether_evolve" not in nt
     assert "ether_role" not in body
     assert "drain_live_fifo" in nt
-    assert "origin_publish" in nt
+    assert body.index("mark_alive") < body.index("_pull(")
 
 
 def test_generate_loop_is_not_an_honest_pass() -> None:

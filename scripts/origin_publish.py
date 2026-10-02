@@ -202,7 +202,7 @@ def make_runner(root: Path) -> tuple:
             use_env.update(extra_env)
         kw: Dict[str, Any] = {
             "cwd": str(root),
-            "timeout": 120,
+            "timeout": 20,
             "capture_output": True,
             "text": True,
             "env": use_env,

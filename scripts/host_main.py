@@ -91,7 +91,6 @@ def tick() -> Dict[str, Any]:
             silence_git(root)
         except Exception:
             pass
-        _pull(root)
         try:
             from scripts.ether_app import mark_alive
             row["alive"] = mark_alive()
@@ -102,6 +101,7 @@ def tick() -> Dict[str, Any]:
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
             row["publish_error"] = type(exc).__name__
+        _pull(root)
         try:
             from scripts.self_heal import arm
             row["heal"] = arm()
@@ -142,7 +142,7 @@ def tick() -> Dict[str, Any]:
             row["alive_error"] = type(exc).__name__
         try:
             from scripts.drain_live_fifo import drain as drain_live
-            row["live"] = drain_live()
+            row["live"] = drain_live(max_jobs=1)
         except Exception as exc:
             row["live_error"] = type(exc).__name__
         try:

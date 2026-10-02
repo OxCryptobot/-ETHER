@@ -79,9 +79,11 @@ def run_job(path: Path) -> Dict[str, Any]:
     path.unlink(missing_ok=True)
     return report
 
-def drain() -> Dict[str, Any]:
+def drain(max_jobs: int = 0) -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
     files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep")
+    if max_jobs > 0:
+        files = files[:max_jobs]
     reports = [run_job(p) for p in files]
     return {"ok": all(r.get("ok") or r.get("skipped") for r in reports), "n": len(reports), "jobs": reports}
 

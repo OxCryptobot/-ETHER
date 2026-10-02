@@ -136,6 +136,8 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     assert "pull --ff-only" in host
     assert "while ($true)" in host
     assert "artifacts/jobs/*" in host
+    assert "index.lock" in host
+    assert "rebase failed; worktree was not reset" not in host
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
 

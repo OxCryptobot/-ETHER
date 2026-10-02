@@ -25,7 +25,11 @@ def test_skills_name_the_alive_gap() -> None:
     assert row["learn"]["kind"] == "infra"
 
 
-def test_unknown_runner_is_infra() -> None:
+def test_offline_runner_is_infra() -> None:
+    from scripts.skills import learn, super_auditor
+    audit = super_auditor({"host-agent-live": {"stale": True, "runners": 1, "online": 0}, "pep8-python-reviewer": {"ok": True}})
+    assert "runner_offline" in audit["gaps"]
+    assert learn(audit)["kind"] == "infra"
     from scripts.skills import learn, super_auditor
     audit = super_auditor({"host-agent-live": {"stale": True, "runners": None}, "pep8-python-reviewer": {"ok": True}})
     assert "runner_count_unknown" in audit["gaps"]

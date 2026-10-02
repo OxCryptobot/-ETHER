@@ -133,7 +133,14 @@ def test_heartbeat_publishes_before_slow_work() -> None:
         assert "reset --hard origin" not in text
 
 
-def test_git_push_uses_token_url_not_env() -> None:
+def test_network_git_uses_the_token_before_origin() -> None:
+    from scripts.origin_publish import remote_argv
+    fetched = remote_argv(["git", "fetch", "origin"], "sek")
+    assert fetched == ["git", "fetch", "https://x-access-token:sek@github.com/OxCryptobot/-ETHER.git", "+main:refs/remotes/origin/main"]
+    pushed = remote_argv(["git", "push", "origin", "main"], "sek")
+    assert pushed[-2].startswith("https://x-access-token:sek@")
+    assert pushed[-1] == "HEAD:main"
+    assert remote_argv(["git", "status"], "sek") == ["git", "status"]
     from scripts.origin_publish import push_url, redact
     url = push_url("secret-token")
     assert url == "https://x-access-token:secret-token@github.com/OxCryptobot/-ETHER.git"

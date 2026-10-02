@@ -42,22 +42,10 @@ def _pid_alive(pid: int) -> bool:
 def _pull(root: Path) -> None:
     if os.name != "nt":
         return
-    from scripts.origin_publish import sync_writer
-    def runner(argv: list) -> subprocess.CompletedProcess:
-        env = os.environ.copy()
-        env["GIT_TERMINAL_PROMPT"] = "0"
-        env["GCM_INTERACTIVE"] = "Never"
-        kw: Dict[str, Any] = {
-            "cwd": str(root),
-            "timeout": 120,
-            "capture_output": True,
-            "text": True,
-            "env": env,
-            "creationflags": 0x08000000,
-        }
-        return subprocess.run(argv, **kw)
+    from scripts.origin_publish import make_runner, sync_writer
     try:
-        sync_writer(root, _git(), runner)
+        git, runner, _token = make_runner(root)
+        sync_writer(root, git, runner)
     except Exception:
         return
 

@@ -140,6 +140,61 @@ def silence_git(root: Path) -> None:
             return
 
 
+def remote_argv(argv: List[str], token: str) -> List[str]:
+    """Fetch and push with the gh token. Never ask Credential Manager."""
+    if not token or len(argv) < 3:
+        return list(argv)
+    cmd = argv[1]
+    if cmd not in {"fetch", "pull", "push"} or "origin" not in argv[2:]:
+        return list(argv)
+    url = push_url(token)
+    if cmd == "fetch":
+        return [argv[0], "fetch", url, "+main:refs/remotes/origin/main"]
+    if cmd == "push":
+        return [argv[0], "push", url, "HEAD:main"]
+    out: List[str] = []
+    for part in argv:
+        out.append(url if part == "origin" else part)
+    return out
+
+
+def _token(run: Callable[..., subprocess.CompletedProcess]) -> str:
+    gh = _gh()
+    if not gh:
+        return ""
+    tok = run([gh, "auth", "token"])
+    return (tok.stdout or "").strip()
+
+
+def make_runner(root: Path) -> tuple:
+    """Quiet git runner. Network remotes use the gh token when one exists."""
+    git = _git()
+    env = quiet_env()
+    flags = 0x08000000 if os.name == "nt" else 0
+
+    def run(argv: List[str], extra_env: Dict[str, str] | None = None) -> subprocess.CompletedProcess:
+        use_env = dict(env)
+        if extra_env:
+            use_env.update(extra_env)
+        kw: Dict[str, Any] = {
+            "cwd": str(root),
+            "timeout": 120,
+            "capture_output": True,
+            "text": True,
+            "env": use_env,
+        }
+        if flags:
+            kw["creationflags"] = flags
+        return subprocess.run(argv, **kw)
+
+    token = _token(run)
+
+    def authed(argv: List[str]) -> subprocess.CompletedProcess:
+        return run(remote_argv(argv, token))
+
+    return git, authed, token
+
+
 def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     root = Path(root)
     art = root / "artifacts"
@@ -149,17 +204,8 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
         row["note"] = "observe_only"
         (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
         return row
-    git = _git()
     silence_git(root)
-    env = quiet_env()
-    kw: Dict[str, Any] = {"cwd": str(root), "timeout": 120, "capture_output": True, "text": True, "env": env, "creationflags": 0x08000000}
-    def run(argv: List[str], extra_env: Dict[str, str] | None = None) -> subprocess.CompletedProcess:
-        use = dict(kw)
-        if extra_env:
-            e = dict(env)
-            e.update(extra_env)
-            use["env"] = e
-        return subprocess.run(argv, **use)
+    git, run, token = make_runner(root)
     try:
         paths = existing_paths(root)
         if not paths:
@@ -176,23 +222,14 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             synced = sync_writer(root, git, run)
             row["sync"] = synced
             pushed = run([git, "push", "origin", "main"])
-            row.update({"push_rc": pushed.returncode, "stderr": ((pushed.stderr or "") + (commit.stderr or ""))[-300:]})
+            row["via"] = "gh_token_url" if token else "origin"
+            row.update({"push_rc": pushed.returncode, "stderr": redact(((pushed.stderr or "") + (pushed.stdout or "") + (commit.stderr or ""))[-300:], token)})
             if pushed.returncode == 0:
                 row["ok"] = True
             else:
                 synced = sync_writer(root, git, run)
                 row["sync_retry"] = synced
-                gh = _gh()
-                token = ""
-                if gh:
-                    tok = run([gh, "auth", "token"])
-                    token = (tok.stdout or "").strip()
-                if token:
-                    retry = run([git, "push", push_url(token), "HEAD:main"])
-                    row["via"] = "gh_token_url"
-                else:
-                    retry = run([git, "push", "origin", "main"])
-                    row["via"] = "retry"
+                retry = run([git, "push", "origin", "main"])
                 row["push_rc"] = retry.returncode
                 row["ok"] = retry.returncode == 0
                 row["stderr"] = redact(((retry.stderr or "") + (retry.stdout or ""))[-300:], token)

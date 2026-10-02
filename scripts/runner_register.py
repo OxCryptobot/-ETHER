@@ -27,18 +27,25 @@ def _gh() -> Optional[str]:
     return None
 
 
-def count_from_body(text: str) -> Optional[int]:
+def status_from_body(text: str) -> Dict[str, Optional[int]]:
     try:
-        n = json.loads(text).get("total_count")
-        return int(n)
+        body = json.loads(text)
+        runners = body.get("runners") or []
+        online = sum(1 for row in runners if str(row.get("status") or "") == "online")
+        total = body.get("total_count")
+        return {"total": int(total) if total is not None else len(runners), "online": online}
     except Exception:
-        return None
+        return {"total": None, "online": None}
 
 
-def _count_via_api() -> Optional[int]:
+def count_from_body(text: str) -> Optional[int]:
+    return status_from_body(text).get("total")
+
+
+def _status_via_api() -> Dict[str, Optional[int]]:
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
-        return None
+        return {"total": None, "online": None}
     req = urllib.request.Request(
         f"https://api.github.com/repos/{REPO}/actions/runners",
         headers={
@@ -49,9 +56,33 @@ def _count_via_api() -> Optional[int]:
     )
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
-            return count_from_body(resp.read().decode())
+            return status_from_body(resp.read().decode())
     except Exception:
-        return None
+        return {"total": None, "online": None}
+
+
+def runner_status() -> Dict[str, Optional[int]]:
+    state = _status_via_api()
+    if state.get("total") is not None:
+        return state
+    gh = _gh()
+    if not gh:
+        return state
+    try:
+        proc = subprocess.run(
+            [gh, "api", f"repos/{REPO}/actions/runners"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        parsed = status_from_body(proc.stdout or "")
+        return parsed if parsed.get("total") is not None else state
+    except Exception:
+        return state
+
+
+def _count_via_api() -> Optional[int]:
+    return _status_via_api().get("total")
 
 
 def _count() -> Optional[int]:

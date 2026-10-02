@@ -49,13 +49,16 @@ def goal_skill(walk: Dict[str, Any] | None = None) -> Dict[str, Any]:
 
 def host_agent_live() -> Dict[str, Any]:
     from scripts.live_status import write
-    from scripts.runner_register import _count
+    from scripts.runner_register import runner_status
     status = write()
-    runners = _count()
+    state = runner_status()
+    runners = state.get("total")
+    online = state.get("online")
     return {
-        "ok": (not status.get("stale")) and runners not in (0, None),
+        "ok": (not status.get("stale")) and online not in (0, None),
         "stale": bool(status.get("stale")),
         "runners": runners,
+        "online": online,
         "app_alive_ts": status.get("app_alive_ts"),
         "note": "observe_only" if os.name != "nt" else "1650",
     }
@@ -87,7 +90,9 @@ def super_auditor(parts: Dict[str, Any]) -> Dict[str, Any]:
     host = parts.get("host-agent-live") or {}
     if host.get("stale"):
         gaps.append("app_alive_stale")
-    if host.get("runners") == 0:
+    if host.get("online") == 0:
+        gaps.append("runner_offline")
+    elif host.get("runners") == 0:
         gaps.append("no_github_runner")
     elif host.get("runners") is None:
         gaps.append("runner_count_unknown")
@@ -101,7 +106,7 @@ def learn(audit: Dict[str, Any]) -> Dict[str, Any]:
     from core.train_gates import may_record_fail
 
     gaps = list(audit.get("gaps") or [])
-    infra = [g for g in gaps if g in {"app_alive_stale", "no_github_runner", "runner_count_unknown"}]
+    infra = [g for g in gaps if g in {"app_alive_stale", "no_github_runner", "runner_count_unknown", "runner_offline"}]
     code = [g for g in gaps if g not in set(infra)]
     if infra and not code:
         _ok, reason = may_record_fail(

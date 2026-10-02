@@ -42,17 +42,15 @@ jobs:
           Set-Location $root
           $env:GIT_TERMINAL_PROMPT = "0"
           $env:GCM_INTERACTIVE = "Never"
-          $env:GIT_CONFIG_COUNT = "1"
-          $env:GIT_CONFIG_KEY_0 = "credential.helper"
-          $env:GIT_CONFIG_VALUE_0 = ""
-          try {
-            $tok = (gh auth token).Trim()
+          $tok = ""
+          try { $tok = (gh auth token).Trim() } catch {}
+          function Invoke-GitAuth([string[]]$argv) {
             if ($tok) {
-              $env:GIT_CONFIG_COUNT = "2"
-              $env:GIT_CONFIG_KEY_1 = "http.extraheader"
-              $env:GIT_CONFIG_VALUE_1 = "AUTHORIZATION: bearer $tok"
+              & git -c "credential.helper=" -c "http.extraheader=AUTHORIZATION: bearer $tok" @argv
+            } else {
+              & git -c "credential.helper=" @argv
             }
-          } catch {}
+          }
           Get-CimInstance Win32_Process -Filter "Name='git.exe'" -ErrorAction SilentlyContinue |
             Where-Object { $_.CommandLine -match 'Otcde\\ETHER' } |
             ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
@@ -91,8 +89,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { git rebase --abort }
             git stash pop
           }
-          git fetch origin main
-          git checkout origin/main -- scripts core
+          Invoke-GitAuth fetch, origin, main
+          if ($LASTEXITCODE -eq 0) { Invoke-GitAuth checkout, FETCH_HEAD, "--", scripts, core }
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
             .\\.venv\\Scripts\\python.exe -m pip install -U pip

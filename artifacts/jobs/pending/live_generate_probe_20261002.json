@@ -1,0 +1,12 @@
+{
+  "id": "live_generate_probe_20261002",
+  "class": "live",
+  "lane": "ollama_4b",
+  "note": "4B generate smoke. Not an honest PASS.",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.live_generate_probe"],
+      "timeout": 300
+    }
+  ]
+}

@@ -30,6 +30,7 @@ PATHS = [
     "artifacts/self_heal.json",
     "artifacts/exe_writer.json",
     "artifacts/keepalive_error.json",
+    "artifacts/live_generate_probe.json",
 ]
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]

@@ -83,10 +83,13 @@ jobs:
           if ($still.Count -gt 0) { throw "unmerged outside job queue: $($still -join ', ')" }
           Write-Host "gh_token_len=$($tok.Length)"
           # pull --ff-only is not used here. It asks for a password and holds index.lock.
+          $fetchLog = Join-Path $root "artifacts\fetch_log.txt"
           if ($tok.Length -gt 0) {
-            & git -c "credential.helper=" -c "credential.helper=" -c "http.extraheader=AUTHORIZATION: bearer $tok" fetch origin main
+            $url = "https://x-access-token:${tok}@github.com/OxCryptobot/-ETHER.git"
+            & git -c "credential.helper=" fetch $url "+refs/heads/main:refs/remotes/origin/main" *> $fetchLog
           }
           Write-Host "fetch_rc=$LASTEXITCODE"
+          Remove-Item $fetchLog -Force -ErrorAction SilentlyContinue
           if ($LASTEXITCODE -eq 0) {
             Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
             & git checkout origin/main -- scripts core

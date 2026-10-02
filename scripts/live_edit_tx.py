@@ -68,6 +68,8 @@ def main() -> int:
 
         result = run_model_edit(workspace, "add.py", text, tests_ok)
         row.update(result)
+        from core.kernel.edit_memory import remember
+        remember(ROOT, f"honest={row.get('honest')} ok={row.get('ok')}")
     except Exception as exc:
         row["error"] = type(exc).__name__
     OUT.parent.mkdir(parents=True, exist_ok=True)

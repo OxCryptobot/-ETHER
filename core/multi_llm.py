@@ -161,11 +161,12 @@ def warm(model: Optional[str] = None) -> Dict[str, Any]:
     try:
         client = _get_client()
         r = client.post(
-            "/api/generate",
+            "/api/chat",
             json={
                 "model": model,
-                "prompt": "ping",
+                "messages": [{"role": "user", "content": "ping"}],
                 "stream": False,
+                "think": False,
                 "keep_alive": "30m",
                 "options": {"num_predict": 1, "temperature": 0.0, "num_ctx": 512},
             },

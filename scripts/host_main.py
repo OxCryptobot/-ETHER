@@ -137,6 +137,11 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["attach_error"] = type(exc).__name__
         try:
+            from core.kernel.plan import heartbeat_plan
+            row["plan"] = heartbeat_plan(stale=False, ollama=bool(row.get("ollama")))
+        except Exception as exc:
+            row["plan_error"] = type(exc).__name__
+        try:
             from scripts.ether_app import mark_alive
             row["alive"] = mark_alive()
         except Exception as exc:

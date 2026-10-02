@@ -73,10 +73,17 @@ jobs:
       - name: Disk LIVE tick (no Matrix UI)
         run: |
           Set-Location $env:ETHER_ROOT
-          $py = ".\.venv\Scripts\python.exe"
-          & $py scripts/host_main.py
-          if ($LASTEXITCODE -ne 0) { throw "host_main failed" }
+          $root = $env:ETHER_ROOT
+          $py = Join-Path $root ".venv\Scripts\python.exe"
+          function Invoke-Tick {
+            $proc = Start-Process -FilePath $py -ArgumentList "scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -PassThru
+            if (-not $proc.WaitForExit(180000)) {
+              Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+              Set-Content -Path (Join-Path $root "artifacts\tick_timeout.json") -Value '{"ok":false,"error":"tick_timeout"}'
+            }
+          }
+          Invoke-Tick
           while ($true) {
-            Start-Sleep -Seconds 300
-            & $py scripts/host_main.py
+            Start-Sleep -Seconds 60
+            Invoke-Tick
           }

@@ -61,3 +61,20 @@ def test_subagent_does_not_share_the_parent_dict() -> None:
     assert out["ok"] is True
     assert out["result"] == "fix add"
     assert parent["secret"] == "no"
+
+
+def test_stale_plan_does_not_edit() -> None:
+    from core.kernel.plan import heartbeat_plan
+
+    assert heartbeat_plan(stale=True, ollama=True)["next"] is None
+    assert heartbeat_plan(stale=False, ollama=True)["next"] == "edit"
+
+
+def test_memory_is_in_the_next_pack(tmp_path: Path) -> None:
+    from core.kernel.edit_memory import remember
+
+    remember(tmp_path, "changed add")
+    (tmp_path / "add.py").write_text("def add(a, b):\n    return 0\n", encoding="utf-8")
+    text = pack(tmp_path, "add", ["add.py"], max_chars=500)
+    assert "changed add" in text
+    assert len(text) <= 500

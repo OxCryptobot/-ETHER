@@ -1,7 +1,9 @@
 """Goal → DAG. One live hypothesis node at a time."""
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+
 
 @dataclass
 class Node:
@@ -11,6 +13,7 @@ class Node:
     status: str = "open"
     confidence: float = 0.5
     class_: str = "fast"
+
 
 @dataclass
 class PlanGraph:
@@ -51,3 +54,13 @@ class PlanGraph:
         if confidence is not None:
             node.confidence = confidence
         self._refresh()
+
+
+def heartbeat_plan(*, stale: bool, ollama: bool) -> Dict[str, object]:
+    """One next step. A stale host does not start an edit."""
+    graph = PlanGraph("host")
+    graph.add(Node("sync", "pull", class_="fast", confidence=0.9))
+    graph.add(Node("edit", "tool edit", depends_on=["sync"], class_="live" if ollama else "fast", confidence=0.6))
+    graph.resolve("sync", ok=not stale, confidence=0.9 if not stale else 0.1)
+    nxt = graph.next_live()
+    return {"next": None if nxt is None else nxt.id, "stale": stale, "ollama": ollama}

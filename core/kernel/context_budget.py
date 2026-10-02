@@ -18,6 +18,14 @@ def pack(root, query: str, files: list[str] | None = None, max_chars: int | None
     budget = max_chars if max_chars is not None else context_char_budget()
     parts: list[str] = []
     try:
+        from core.kernel.edit_memory import recall
+
+        mem = recall(root)
+        if mem:
+            parts.append("### Last edit\n" + mem[:300])
+    except Exception:
+        pass
+    try:
         from core.symbol_index import format_block
 
         sym = format_block(query, root=root, k=6, max_chars=min(600, max(200, budget // 3)))

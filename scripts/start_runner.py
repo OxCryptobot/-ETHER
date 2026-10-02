@@ -19,16 +19,13 @@ def start_runner() -> Dict[str, Any]:
     except Exception as exc:
         row["task_error"] = type(exc).__name__
     run = Path(os.environ.get("ETHER_RUNNER_DIR") or r"C:\actions-runner") / "run.cmd"
-    if run.is_file() and not row.get("ok"):
+    listener = run.parent / "bin" / "Runner.Listener.exe"
+    if not row.get("ok") and (listener.is_file() or run.is_file()):
         try:
-            subprocess.Popen(
-                ["cmd.exe", "/c", str(run)],
-                cwd=str(run.parent),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=flags,
-            )
-            row["spawned_run_cmd"] = True
+            from scripts.win_quiet import popen_hidden
+            argv = [str(listener), "run"] if listener.is_file() else ["cmd.exe", "/c", str(run)]
+            popen_hidden(argv, cwd=str(run.parent))
+            row["spawned_hidden"] = True
             row["ok"] = True
         except Exception as exc:
             row["spawn_error"] = type(exc).__name__

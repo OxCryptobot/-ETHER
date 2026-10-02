@@ -13,13 +13,32 @@ def test_honest_gate_still_rejects_generate():
     ) is False
     assert is_honest_tool_path_pass(
         {"ok": True, "strategy": "tool_runtime", "mode": "live", "degraded": []}
+    ) is False
+    assert is_honest_tool_path_pass(
+        {
+            "ok": True,
+            "strategy": "tool_runtime",
+            "mode": "live",
+            "degraded": [],
+            "tool_runtime_ok": True,
+            "tools": ["apply_patch"],
+            "tests_ok": True,
+        }
     ) is True
 
 
 def test_compute_rates_disguised_pass():
     rows = [
         {"ok": True, "strategy": "generate", "mode": "live", "degraded": []},
-        {"ok": True, "strategy": "tool_runtime", "mode": "live", "degraded": []},
+        {
+            "ok": True,
+            "strategy": "tool_runtime",
+            "mode": "live",
+            "degraded": [],
+            "tool_runtime_ok": True,
+            "tools": ["apply_patch"],
+            "tests_ok": True,
+        },
         {"ok": False, "strategy": "tool_runtime", "mode": "live", "degraded": ["timeout"]},
     ]
     rates = compute_rates(rows)

@@ -40,6 +40,7 @@ jobs:
           $root = $env:ETHER_ROOT
           if (-not (Test-Path $root)) { throw "ETHER_ROOT missing: $root" }
           Set-Location $root
+          $ErrorActionPreference = "Continue"
           $env:GIT_TERMINAL_PROMPT = "0"
           $env:GCM_INTERACTIVE = "Never"
           $tok = ""
@@ -86,7 +87,7 @@ jobs:
           $fetchLog = Join-Path $root "artifacts\fetch_log.txt"
           if ($tok.Length -gt 0) {
             $url = "https://x-access-token:${tok}@github.com/OxCryptobot/-ETHER.git"
-            & git -c "credential.helper=" fetch $url "+refs/heads/main:refs/remotes/origin/main" *> $fetchLog
+            cmd /c "git -c credential.helper= fetch `"$url`" +refs/heads/main:refs/remotes/origin/main > `"$fetchLog`" 2>&1"
           }
           Write-Host "fetch_rc=$LASTEXITCODE"
           Remove-Item $fetchLog -Force -ErrorAction SilentlyContinue

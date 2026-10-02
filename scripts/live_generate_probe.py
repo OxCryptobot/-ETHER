@@ -76,7 +76,8 @@ def main() -> int:
         "model": model,
         "prompt": PROMPT,
         "stream": False,
-        "options": {"temperature": 0, "num_predict": 80},
+        "think": False,
+        "options": {"temperature": 0, "num_predict": 200},
     }).encode()
     req = urllib.request.Request(
         "http://127.0.0.1:11434/api/generate",
@@ -88,9 +89,13 @@ def main() -> int:
         with urllib.request.urlopen(req, timeout=240) as resp:
             payload = json.loads(resp.read().decode())
         text = str(payload.get("response") or "")
+        if not text.strip():
+            text = str(payload.get("thinking") or "")
         code = extract_code(text)
         row["response_tail"] = text[-240:]
         row["ok"] = function_ok(code)
+        if not text.strip():
+            row["error"] = "empty_response"
     except Exception as exc:
         row["error"] = type(exc).__name__
     OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -90,7 +90,17 @@ jobs:
             git stash pop
           }
           Invoke-GitAuth fetch, origin, main
-          if ($LASTEXITCODE -eq 0) { Invoke-GitAuth checkout, FETCH_HEAD, "--", scripts, core }
+          if ($LASTEXITCODE -eq 0) {
+            for ($n = 0; $n -lt 4; $n++) {
+              Get-CimInstance Win32_Process -Filter "Name='git.exe'" -ErrorAction SilentlyContinue |
+                Where-Object { $_.CommandLine -match 'Otcde\\ETHER' } |
+                ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+              Start-Sleep -Seconds 1
+              Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
+              Invoke-GitAuth checkout, FETCH_HEAD, "--", scripts, core
+              if ($LASTEXITCODE -eq 0) { break }
+            }
+          }
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
             .\\.venv\\Scripts\\python.exe -m pip install -U pip

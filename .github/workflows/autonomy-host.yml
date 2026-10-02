@@ -89,13 +89,23 @@ jobs:
             $url = "https://x-access-token:${tok}@github.com/OxCryptobot/-ETHER.git"
             cmd /c "git -c credential.helper= fetch `"$url`" +refs/heads/main:refs/remotes/origin/main > `"$fetchLog`" 2>&1"
           }
-          Write-Host "fetch_rc=$LASTEXITCODE"
+          $fetch = $LASTEXITCODE
+          Write-Host "fetch_rc=$fetch"
           Remove-Item $fetchLog -Force -ErrorAction SilentlyContinue
-          if ($LASTEXITCODE -eq 0) {
-            Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
-            & git checkout origin/main -- scripts core
-            Write-Host "checkout_rc=$LASTEXITCODE"
+          Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -match 'host_main.py' } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          $checkout = 1
+          if ($fetch -eq 0) {
+            for ($n = 0; $n -lt 5; $n++) {
+              Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
+              & git checkout origin/main -- scripts core 2>&1 | Out-Null
+              $checkout = $LASTEXITCODE
+              if ($checkout -eq 0) { break }
+              Start-Sleep -Seconds 1
+            }
           }
+          Write-Host "checkout_rc=$checkout"
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
             .\\.venv\\Scripts\\python.exe -m pip install -U pip

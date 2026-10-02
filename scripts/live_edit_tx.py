@@ -62,9 +62,8 @@ def main() -> int:
         row["response_tail"] = text[-240:]
 
         def tests_ok() -> bool:
-            ns: dict = {}
-            exec(compile((workspace / "add.py").read_text(encoding="utf-8"), "add.py", "exec"), ns, ns)
-            return ns["add"](2, 3) == 5
+            from scripts.live_generate_probe import function_ok
+            return function_ok((workspace / "add.py").read_text(encoding="utf-8"))
 
         result = run_model_edit(workspace, "add.py", text, tests_ok)
         row.update(result)

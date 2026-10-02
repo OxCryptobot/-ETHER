@@ -146,33 +146,21 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["live_error"] = type(exc).__name__
         try:
-            from core.kernel.proactive import act
-            row["proactive"] = act(root)
-        except Exception as exc:
-            row["proactive_error"] = type(exc).__name__
-        try:
             from core.kernel.day_learn import learn
             row["day_learn"] = learn(root)
         except Exception as exc:
             row["day_learn_error"] = type(exc).__name__
         try:
-            from core.kernel.hooks import run_hook
-            from scripts.ether_evolve import cycle
-            row["evolve"] = run_hook(cycle, timeout_s=20)
+            from core.kernel.proactive import act
+            row["proactive"] = act(root)
         except Exception as exc:
-            row["evolve_error"] = type(exc).__name__
-        if row.get("ollama"):
+            row["proactive_error"] = type(exc).__name__
+        if os.environ.get("GITHUB_ACTIONS") != "true":
             try:
-                from core.kernel.hooks import run_hook
-                from scripts.ether_role import tick as role_tick
-                row["role"] = run_hook(role_tick, timeout_s=25)
+                from scripts.runner_service import ensure_service
+                row["service"] = ensure_service()
             except Exception as exc:
-                row["role_error"] = type(exc).__name__
-        try:
-            from scripts.live_status import write as live_status
-            row["live_status"] = live_status()
-        except Exception as exc:
-            row["live_status_error"] = type(exc).__name__
+                row["service_error"] = type(exc).__name__
         try:
             from scripts.origin_publish import publish
             row["publish"] = publish(root, message="1650 host_main")

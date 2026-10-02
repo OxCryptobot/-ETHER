@@ -287,6 +287,8 @@ class LoopResult:
     holdout_reason: str = ""
     tokens_used: int = 0
     elapsed_s: float = 0.0
+    strategy: str = "generate"
+    honest: bool = False
 
     @property
     def attempts_used(self) -> int:
@@ -315,6 +317,8 @@ class LoopResult:
             "tokens_used": self.tokens_used,
             "elapsed_s": round(self.elapsed_s, 3),
             "attempts_used": self.attempts_used,
+            "strategy": self.strategy,
+            "honest": self.honest,
         }
 
 

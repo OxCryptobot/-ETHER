@@ -70,11 +70,12 @@ def _bump_energy(walk: Dict[str, Any]) -> Dict[str, Any]:
         except Exception:
             prev = {}
     n_ok = sum(1 for r in (walk.get("rows") or []) if r.get("ok"))
+    same_day = str(prev.get("evolve_ts") or "")[:10] == datetime.now(timezone.utc).date().isoformat()
     row = {
         "evolve_ts": datetime.now(timezone.utc).isoformat(),
         "evolve_ok": n_ok,
         "evolve_n": int(walk.get("n") or 0),
-        "generation": generation() + 1,
+        "generation": int(prev.get("generation") or 0) if same_day else generation(),
         "source": "ether_evolve.cycle",
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -149,7 +150,16 @@ def cycle() -> Dict[str, Any]:
         "generation": generation() + 1,
         "ts": datetime.now(timezone.utc).isoformat(),
     }
-    record({"verified": row["walk_ok"], "generation": row["generation"], "fail_id": fail_id})
+    today = datetime.now(timezone.utc).date().isoformat()
+    prev_day = str(prev.get("day") or "")
+    if prev_day == today:
+        row["generation"] = int(prev.get("generation") or generation())
+        row["day"] = today
+        row["note"] = "same_day"
+    else:
+        record({"verified": row["walk_ok"], "generation": row["generation"], "fail_id": fail_id, "day": today})
+        row["generation"] = generation()
+        row["day"] = today
     out = _root() / "artifacts" / "evolve.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")

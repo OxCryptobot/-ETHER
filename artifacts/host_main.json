@@ -1,16 +1,16 @@
 {
-  "ts": "2026-09-30T20:23:13.844356+00:00",
+  "ts": "2026-10-02T18:31:30.532183+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-09-30T20:23:50.607911+00:00",
+    "ts": "2026-10-02T18:31:40.856889+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-09-30T20:26:41.772409+00:00",
+    "ts": "2026-10-02T18:34:26.481759+00:00",
     "os": "nt",
     "ok": true,
     "commit_rc": 0,
@@ -21,15 +21,23 @@
       "dirty": true,
       "note": "stash_rebase"
     },
+    "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   43b84288a..ef0c4fc4f  main -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   06b97090e..4e179df42  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-09-30T20:23:49.036349+00:00",
+    "ts": "2026-10-02T18:31:38.474683+00:00",
     "os": "nt",
     "ok": true,
     "armed": false,
     "note": "no hidden startup",
+    "stopped": {
+      "ETHER-Ensure": 1,
+      "ETHER-keepalive": 1,
+      "ETHER-keepalive-5m": 1,
+      "ETHER-keepalive-boot": 1,
+      "ETHER-Daemon": 1
+    },
     "register": {
       "ok": true,
       "note": "already_registered",
@@ -43,14 +51,22 @@
   },
   "daemon": {
     "ok": true,
-    "note": "already_inside_daemon"
+    "spawned": true,
+    "dash": false
   },
   "keepalive": {
-    "ts": "2026-09-30T20:23:49.770645+00:00",
+    "ts": "2026-10-02T18:31:39.497445+00:00",
     "os": "nt",
     "ok": true,
     "armed": false,
     "note": "no hidden startup",
+    "stopped": {
+      "ETHER-Ensure": 1,
+      "ETHER-keepalive": 1,
+      "ETHER-keepalive-5m": 1,
+      "ETHER-keepalive-boot": 1,
+      "ETHER-Daemon": 1
+    },
     "register": {
       "ok": true,
       "note": "already_registered",
@@ -59,7 +75,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-09-30T20:23:50.574950+00:00",
+    "updated": "2026-10-02T18:31:40.818580+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -76,32 +92,9 @@
   },
   "ollama": true,
   "live": {
-    "ok": false,
-    "n": 3,
-    "jobs": [
-      {
-        "job_id": "exe_live_drain_now_20260922",
-        "ok": false,
-        "rc": 1,
-        "finished": "2026-09-30T20:23:50.624926+00:00",
-        "class": "live",
-        "tail": "argv_denied"
-      },
-      {
-        "job_id": "exe_live_ollama_smoke_20260919",
-        "ok": false,
-        "rc": 1,
-        "finished": "2026-09-30T20:23:50.632109+00:00",
-        "class": "live",
-        "tail": "argv_denied\nargv_denied"
-      },
-      {
-        "id": "medic_hb_20260930_160830",
-        "skipped": true,
-        "ok": true,
-        "note": "FAST stays on matrix-worker"
-      }
-    ]
+    "ok": true,
+    "n": 0,
+    "jobs": []
   },
   "evolve": {
     "ok": true,
@@ -115,8 +108,8 @@
     "walk_ok": true,
     "weak": [],
     "fabricate": {
-      "name": "heal_exe_live_ollama_smoke_20",
-      "quarantine_path": "tools/quarantine/heal_exe_live_ollama_smoke_20_20260930_202400.py",
+      "name": "heal_exe_live_drain_now_20260",
+      "quarantine_path": "tools/quarantine/heal_exe_live_drain_now_20260_20261002_183152.py",
       "stages": [
         {
           "stage": "implement",
@@ -164,7 +157,7 @@
       "promoted": false,
       "promote_path": null
     },
-    "fail_id": "exe_live_ollama_smoke_20260919",
+    "fail_id": "exe_live_drain_now_20260922",
     "goal": {
       "id": "drain_and_learn",
       "do": "next FAST job"
@@ -172,7 +165,7 @@
     "skills": {
       "batchphase": {
         "ok": true,
-        "fast_pending": 1,
+        "fast_pending": 0,
         "live_pending": 0,
         "ran": false
       },
@@ -184,7 +177,8 @@
         "ok": true,
         "stale": false,
         "runners": 1,
-        "app_alive_ts": "2026-09-30T20:23:54.956397+00:00",
+        "online": 1,
+        "app_alive_ts": "2026-10-02T18:31:53.009732+00:00",
         "note": "1650"
       },
       "keep-pushing": {
@@ -207,14 +201,14 @@
       }
     },
     "energy": {
-      "evolve_ts": "2026-09-30T20:24:15.334003+00:00",
+      "evolve_ts": "2026-10-02T18:32:07.568134+00:00",
       "evolve_ok": 8,
       "evolve_n": 8,
-      "generation": 1384,
+      "generation": 1603,
       "source": "ether_evolve.cycle"
     },
-    "generation": 1384,
-    "ts": "2026-09-30T20:24:16.099194+00:00"
+    "generation": 1603,
+    "ts": "2026-10-02T18:32:08.350148+00:00"
   },
   "role": {
     "role": "self_build_cowork",
@@ -239,21 +233,21 @@
       ],
       "deliverable": "artifacts\\cowork_out\\self-build_cowork_local_LLM.md"
     },
-    "ts": "2026-09-30T20:26:41.739181+00:00",
-    "generation": 1387
+    "ts": "2026-10-02T18:34:26.481759+00:00",
+    "generation": 1605
   },
   "live_status": {
     "live": true,
     "stale": false,
-    "age_hours": 0.05,
+    "age_hours": 0.04,
     "max_age_hours": 6.0,
     "require": "scripts.host_main.tick on 1650",
     "github_runner": "optional",
-    "app_alive_ts": "2026-09-30T20:23:54.956397+00:00",
-    "attach_updated": "2026-09-30T20:26:38.358531+00:00",
+    "app_alive_ts": "2026-10-02T18:31:53.009732+00:00",
+    "attach_updated": "2026-10-02T18:34:17.641598+00:00",
     "attach_ollama": true,
-    "writer": "exe",
-    "checked_at": "2026-09-30T20:26:41.755672+00:00",
+    "writer": null,
+    "checked_at": "2026-10-02T18:34:26.481759+00:00",
     "note": "open exe is not LIVE. stale app_alive is FAIL."
   }
 }

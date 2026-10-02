@@ -89,23 +89,32 @@ jobs:
           }
           .\\.venv\\Scripts\\python.exe -m pip install -e ".[dev]" -q
 
-      - name: Disk LIVE tick (no Matrix UI)
+      - name: One heartbeat
+        run: |
+          Set-Location $env:ETHER_ROOT
+          $py = Join-Path $env:ETHER_ROOT ".venv\Scripts\python.exe"
+          & $py -u scripts/host_main.py
+          Write-Host "EXIT $LASTEXITCODE"
+          Write-Host "--- app_alive ---"
+          Get-Content (Join-Path $env:ETHER_ROOT "artifacts\app_alive.json") -ErrorAction SilentlyContinue
+          Write-Host "--- git_push ---"
+          Get-Content (Join-Path $env:ETHER_ROOT "artifacts\git_push.json") -ErrorAction SilentlyContinue
+
+      - name: Keep ticking
         run: |
           Set-Location $env:ETHER_ROOT
           $root = $env:ETHER_ROOT
-          $py = Join-Path $root ".venv\Scripts\pythonw.exe"
-          if (-not (Test-Path $py)) { $py = Join-Path $root ".venv\Scripts\python.exe" }
+          $py = Join-Path $root ".venv\Scripts\python.exe"
           function Invoke-Tick {
-            $pull = Start-Process -FilePath "git" -ArgumentList "pull","--ff-only","origin","main" -WorkingDirectory $root -WindowStyle Hidden -PassThru
-            if (-not $pull.WaitForExit(20000)) { Stop-Process -Id $pull.Id -Force -ErrorAction SilentlyContinue }
-            $proc = Start-Process -FilePath $py -ArgumentList "scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -PassThru
-            if (-not $proc.WaitForExit(240000)) {
+            $log = Join-Path $root "artifacts\tick_log.txt"
+            $err = Join-Path $root "artifacts\tick_err.txt"
+            $proc = Start-Process -FilePath $py -ArgumentList "-u","scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+            if (-not $proc.WaitForExit(120000)) {
               Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
               Set-Content -Path (Join-Path $root "artifacts\tick_timeout.json") -Value '{"ok":false,"error":"tick_timeout"}'
             }
           }
-          Invoke-Tick
           while ($true) {
-            Start-Sleep -Seconds 60
+            Start-Sleep -Seconds 90
             Invoke-Tick
           }

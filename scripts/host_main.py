@@ -72,17 +72,11 @@ def _ensure_daemon(root: Path) -> Dict[str, Any]:
     env = os.environ.copy()
     env["ETHER_ROOT"] = str(root)
     env["ETHER_DAEMON_DASHBOARD"] = "0"
-    env["ETHER_FLYWHEEL_PUSH"] = "1"
+    env["ETHER_FLYWHEEL_PUSH"] = "0"
     env["PYTHONPATH"] = str(root)
     try:
-        subprocess.Popen(
-            [str(py), str(script)],
-            cwd=str(root),
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=0x08000000,
-        )
+        from scripts.win_quiet import popen_hidden
+        popen_hidden([str(py), str(script)], cwd=str(root), env=env)
         return {"ok": True, "spawned": True, "dash": False}
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__}

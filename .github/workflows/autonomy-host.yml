@@ -40,6 +40,16 @@ jobs:
           $root = $env:ETHER_ROOT
           if (-not (Test-Path $root)) { throw "ETHER_ROOT missing: $root" }
           Set-Location $root
+          $env:GIT_TERMINAL_PROMPT = "0"
+          $env:GCM_INTERACTIVE = "Never"
+          try {
+            $tok = (gh auth token).Trim()
+            if ($tok) {
+              $env:GIT_CONFIG_COUNT = "1"
+              $env:GIT_CONFIG_KEY_0 = "http.extraheader"
+              $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: bearer $tok"
+            }
+          } catch {}
           function Invoke-Git([string[]]$argv) {
             for ($i = 0; $i -lt 6; $i++) {
               $lock = Join-Path (Get-Location) ".git\index.lock"
@@ -83,7 +93,8 @@ jobs:
         run: |
           Set-Location $env:ETHER_ROOT
           $root = $env:ETHER_ROOT
-          $py = Join-Path $root ".venv\Scripts\python.exe"
+          $py = Join-Path $root ".venv\Scripts\pythonw.exe"
+          if (-not (Test-Path $py)) { $py = Join-Path $root ".venv\Scripts\python.exe" }
           function Invoke-Tick {
             $proc = Start-Process -FilePath $py -ArgumentList "scripts/host_main.py" -WorkingDirectory $root -WindowStyle Hidden -PassThru
             if (-not $proc.WaitForExit(180000)) {

@@ -27,7 +27,7 @@ GATES = [
     "tests/test_gem_topo.py",
     "tests/test_living_contract.py",
 ]
-DETACH = 0x08000000 | 0x00000008 | 0x00000200
+DETACH = 0x08000000 | 0x00000200
 
 
 def ensure_keepalive() -> Dict[str, Any]:

@@ -62,7 +62,10 @@ def run_job(path: Path) -> Dict[str, Any]:
         except Exception:
             pass
         try:
-            proc = subprocess.run(argv, cwd=str(ROOT), capture_output=True, text=True, timeout=int(step.get("timeout") or 180))
+            from scripts.win_quiet import hidden_kwargs
+            kw = hidden_kwargs()
+            kw.update({"cwd": str(ROOT), "stdout": subprocess.PIPE, "stderr": subprocess.PIPE, "text": True, "timeout": int(step.get("timeout") or 180)})
+            proc = subprocess.run(argv, **kw)
             tails.append((proc.stdout or "")[-300:] + (proc.stderr or "")[-200:])
             if proc.returncode != 0:
                 ok = False

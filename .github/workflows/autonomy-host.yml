@@ -83,6 +83,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { git rebase --abort }
             git stash pop
           }
+          git fetch origin main
+          git checkout origin/main -- scripts core
           if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
             python -m venv .venv
             .\\.venv\\Scripts\\python.exe -m pip install -U pip

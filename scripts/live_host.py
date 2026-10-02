@@ -75,32 +75,38 @@ def write_probe(extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
 
 _OLLAMA_PROC = None
 
+def ollama_process_up() -> bool:
+    if os.name != "nt":
+        return False
+    try:
+        from scripts.win_quiet import run_hidden
+        proc = run_hidden(["tasklist", "/FI", "IMAGENAME eq ollama.exe", "/NH"], timeout=8)
+    except Exception:
+        return False
+    return "ollama.exe" in (proc.stdout or "").lower()
+
+
 def start_ollama() -> bool:
     global _OLLAMA_PROC
-    if ollama_up():
+    if ollama_up() or ollama_process_up():
         write_probe({"started": False, "reason": "already_up"})
-        return True
+        return ollama_up() or ollama_process_up()
     bin_ = ollama_bin()
     if not bin_:
         write_probe({"started": False, "reason": "bin_missing"})
         return False
     try:
-        kwargs: Dict[str, Any] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL, "env": os.environ.copy(), "cwd": str(Path(bin_).parent)}
-        kwargs["env"]["PATH"] = str(Path(bin_).parent) + os.pathsep + kwargs["env"].get("PATH", "")
-        if os.name == "nt":
-            kwargs["creationflags"] = 0x08000000
-            si = subprocess.STARTUPINFO()
-            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            si.wShowWindow = 0
-            kwargs["startupinfo"] = si
-        _OLLAMA_PROC = subprocess.Popen([bin_, "serve"], **kwargs)
+        from scripts.win_quiet import popen_hidden
+        env = os.environ.copy()
+        env["PATH"] = str(Path(bin_).parent) + os.pathsep + env.get("PATH", "")
+        _OLLAMA_PROC = popen_hidden([bin_, "serve"], cwd=str(Path(bin_).parent), env=env)
     except OSError as exc:
         write_probe({"started": False, "reason": "spawn_fail", "error": type(exc).__name__})
         return False
     for _ in range(24):
         time.sleep(0.5)
         if ollama_up():
-            write_probe({"started": True, "reason": "spawned"})
+            write_probe({"started": True, "reason": "spawned_hidden"})
             return True
     write_probe({"started": False, "reason": "timeout_api"})
     return ollama_up()
@@ -135,7 +141,10 @@ def ensure_model(pull: bool = False) -> Dict[str, Any]:
     try:
         kw: Dict[str, Any] = {"timeout": 1800, "capture_output": True, "text": True}
         if os.name == "nt":
-            kw["creationflags"] = 0x08000000
+            from scripts.win_quiet import hidden_kwargs
+            hidden = hidden_kwargs()
+            kw["creationflags"] = hidden["creationflags"]
+            kw["startupinfo"] = hidden["startupinfo"]
         subprocess.run([bin_, "pull", TARGET_MODEL], **kw)
     except Exception as exc:
         row = write_probe({"ensure": "pull_fail", "error": type(exc).__name__})

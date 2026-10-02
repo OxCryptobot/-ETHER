@@ -207,7 +207,12 @@ def make_runner(root: Path) -> tuple:
             "env": use_env,
         }
         if flags:
-            kw["creationflags"] = flags
+            kw["creationflags"] = flags | 0x00000200
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0
+            kw["startupinfo"] = si
+            kw["stdin"] = subprocess.DEVNULL
         return subprocess.run(argv, **kw)
 
     token = _token(run)

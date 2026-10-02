@@ -133,16 +133,16 @@ def run(cmd: List[str], timeout: int = 3600) -> subprocess.CompletedProcess:
                 cmd = [str(cand)] + list(cmd[1:])
             elif venv_py.is_file():
                 cmd = [str(venv_py)] + list(cmd[1:])
-    return subprocess.run(
-        cmd,
-        cwd=str(ROOT),
-        env=os.environ.copy(),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-    )
+    argv = list(cmd)
+    if argv and Path(str(argv[0]).replace("\\", "/")).name.lower() in {"git", "git.exe"}:
+        if any(part in {"fetch", "pull", "push"} for part in argv):
+            from scripts.origin_publish import remote_argv
+            from scripts.win_quiet import run_hidden
+            gh = run_hidden(["gh", "auth", "token"], cwd=str(ROOT), timeout=20)
+            token = (gh.stdout or "").strip() if gh.returncode == 0 else ""
+            argv = remote_argv(argv, token)
+    from scripts.win_quiet import run_hidden
+    return run_hidden(argv, cwd=str(ROOT), timeout=timeout)
 
 
 def _measure_paths() -> List[str]:

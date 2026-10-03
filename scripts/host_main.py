@@ -106,20 +106,10 @@ def tick() -> Dict[str, Any]:
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             row["keepalive"] = {"ok": True, "note": "skipped_in_actions"}
             try:
-                from scripts.live_host import ollama_up
-                row["ollama"] = ollama_up()
+                from core.kernel.agent import cycle as agent_cycle
+                row["agent"] = agent_cycle(root, hands=True)
             except Exception as exc:
-                row["ollama_error"] = type(exc).__name__
-            try:
-                from scripts.live_edit_tx import main as edit_main
-                row["edit_rc"] = edit_main()
-            except Exception as exc:
-                row["edit_error"] = type(exc).__name__
-            try:
-                from core.kernel.scale import advance
-                row["scale"] = advance(root)
-            except Exception as exc:
-                row["scale_error"] = type(exc).__name__
+                row["agent_error"] = type(exc).__name__
         else:
             _pull(root)
             try:

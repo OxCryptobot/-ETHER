@@ -141,10 +141,9 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
     actions = tick.split('GITHUB_ACTIONS") == "true"', 1)[1].split("else:", 1)[0]
+    assert "core.kernel.agent" in actions
     assert "start_ollama" not in actions
     assert "self_heal" not in actions
-    assert "live_edit_tx" in actions
-    assert "scale" in actions
     assert "drain_live" not in actions
 
 

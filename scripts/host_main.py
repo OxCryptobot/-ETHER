@@ -101,17 +101,22 @@ def tick() -> Dict[str, Any]:
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
             row["publish_error"] = type(exc).__name__
-        _pull(root)
-        try:
-            from scripts.self_heal import arm
-            row["heal"] = arm()
-        except Exception as exc:
-            row["heal_error"] = type(exc).__name__
         if os.environ.get("GITHUB_ACTIONS") == "true":
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             row["keepalive"] = {"ok": True, "note": "skipped_in_actions"}
+            try:
+                from scripts.live_host import ollama_up
+                row["ollama"] = ollama_up()
+            except Exception as exc:
+                row["ollama_error"] = type(exc).__name__
         else:
+            _pull(root)
+            try:
+                from scripts.self_heal import arm
+                row["heal"] = arm()
+            except Exception as exc:
+                row["heal_error"] = type(exc).__name__
             try:
                 from scripts.start_runner import start_runner
                 row["runner"] = start_runner()
@@ -123,23 +128,23 @@ def tick() -> Dict[str, Any]:
                 row["keepalive"] = ensure_keepalive(root)
             except Exception as exc:
                 row["keepalive_error"] = type(exc).__name__
-        try:
-            from scripts.live_host import start_ollama, consume, ollama_up
-            row["ollama_start"] = start_ollama()
-            row["attach"] = consume({"cmd": "attach"})
-            row["ollama"] = ollama_up()
-        except Exception as exc:
-            row["attach_error"] = type(exc).__name__
-        try:
-            from core.kernel.plan import heartbeat_plan
-            row["plan"] = heartbeat_plan(stale=False, ollama=bool(row.get("ollama")))
-        except Exception as exc:
-            row["plan_error"] = type(exc).__name__
-        try:
-            from scripts.ether_app import mark_alive
-            row["alive"] = mark_alive()
-        except Exception as exc:
-            row["alive_error"] = type(exc).__name__
+            try:
+                from scripts.live_host import start_ollama, consume, ollama_up
+                row["ollama_start"] = start_ollama()
+                row["attach"] = consume({"cmd": "attach"})
+                row["ollama"] = ollama_up()
+            except Exception as exc:
+                row["attach_error"] = type(exc).__name__
+            try:
+                from core.kernel.plan import heartbeat_plan
+                row["plan"] = heartbeat_plan(stale=False, ollama=bool(row.get("ollama")))
+            except Exception as exc:
+                row["plan_error"] = type(exc).__name__
+            try:
+                from scripts.ether_app import mark_alive
+                row["alive"] = mark_alive()
+            except Exception as exc:
+                row["alive_error"] = type(exc).__name__
         try:
             from scripts.drain_live_fifo import drain as drain_live
             row["live"] = drain_live(max_jobs=1)

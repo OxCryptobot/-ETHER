@@ -140,6 +140,10 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     assert "host_main.py" in host
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
+    actions = tick.split('GITHUB_ACTIONS") == "true"', 1)[1].split("else:", 1)[0]
+    assert "start_ollama" not in actions
+    assert "self_heal" not in actions
+    assert "drain_live" in tick
 
 
 def test_network_git_uses_the_token_before_origin() -> None:

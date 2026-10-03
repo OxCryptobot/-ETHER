@@ -1,7 +1,7 @@
 {
-  "ts": "2026-10-03T02:24:38.307100+00:00",
+  "ts": "2026-10-03T02:27:56.804760+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "add_rc": 128,
   "ahead": 4,
   "sync": {
@@ -13,12 +13,19 @@
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "b.com/OxCryptobot/-ETHER.git'\nhint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. If you want to integrate the remote changes,\nhint: use 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c9e182415..065078c01  HEAD -> main\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
     "ahead": 4,
     "dirty": true,
     "note": "stash_failed"
+  },
+  "worktree": {
+    "ok": true,
+    "hard_reset": false,
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c9e182415..065078c01  HEAD -> main\n"
   }
 }

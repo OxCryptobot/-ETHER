@@ -9,8 +9,57 @@
   "walk_n": 8,
   "walk_ok": true,
   "weak": [],
-  "fabricate": null,
-  "fail_id": null,
+  "fabricate": {
+    "name": "heal_week_tick_20261003",
+    "quarantine_path": "tools/quarantine/heal_week_tick_20261003_20261003_143706.py",
+    "stages": [
+      {
+        "stage": "implement",
+        "ok": true,
+        "mode": "stub"
+      },
+      {
+        "stage": "ast_validate",
+        "ok": true,
+        "has_main": true
+      },
+      {
+        "stage": "static_safety",
+        "ok": true,
+        "findings": []
+      },
+      {
+        "stage": "sandbox_selftest",
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "compile_ok\n",
+        "stderr": ""
+      },
+      {
+        "stage": "audit",
+        "ok": true,
+        "approved": true,
+        "risk_score": 0.0
+      },
+      {
+        "stage": "critique",
+        "ok": true,
+        "soft": true,
+        "complexity": 0.1,
+        "critique": "[clean] ~20 lines, complexity=0.10. No structural issues flagged.",
+        "suggestions": []
+      },
+      {
+        "stage": "promote",
+        "ok": false,
+        "note": "ETHER_AUTO_PROMOTE=0"
+      }
+    ],
+    "validation_status": "pending_promote",
+    "promoted": false,
+    "promote_path": null
+  },
+  "fail_id": "week_tick_20261003",
   "goal": {
     "id": "drain_and_learn",
     "do": "next FAST job"
@@ -31,7 +80,7 @@
       "stale": false,
       "runners": null,
       "online": null,
-      "app_alive_ts": "2026-10-03T13:16:05.095804+00:00",
+      "app_alive_ts": "2026-10-03T14:13:45.789045+00:00",
       "note": "observe_only"
     },
     "keep-pushing": {
@@ -56,14 +105,14 @@
     }
   },
   "energy": {
-    "evolve_ts": "2026-10-03T14:13:43.779743+00:00",
+    "evolve_ts": "2026-10-03T14:37:06.927377+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 1610,
+    "generation": 1611,
     "source": "ether_evolve.cycle"
   },
   "generation": 1603,
-  "ts": "2026-10-03T14:13:44.343923+00:00",
+  "ts": "2026-10-03T14:37:07.000911+00:00",
   "day": "2026-10-03",
   "note": "same_day"
 }

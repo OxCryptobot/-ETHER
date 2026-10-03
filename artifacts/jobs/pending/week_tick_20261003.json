@@ -1,0 +1,13 @@
+{
+  "id": "week_tick_20261003",
+  "note": "week autonomy tick: stamp energy + board. FAST lane. wheels on.",
+  "continue_on_fail": true,
+  "class": "fast",
+  "measurement": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_week_tick"],
+      "timeout": 90
+    }
+  ]
+}

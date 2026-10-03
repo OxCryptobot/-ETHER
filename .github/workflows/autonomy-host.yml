@@ -4,25 +4,23 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "ensure | selftest | health | cycle | boot"
+        description: "cycle"
         required: true
         default: "cycle"
         type: choice
         options:
-          - ensure
-          - selftest
-          - health
           - cycle
-          - boot
+  schedule:
+    - cron: "*/15 * * * *"
 
 concurrency:
   group: autonomy-host
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   host:
     runs-on: [self-hosted, Windows, ETHER]
-    timeout-minutes: 360
+    timeout-minutes: 10
     env:
       ETHER_ROOT: C:\\Users\\Otcde\\ETHER
       GIT_TERMINAL_PROMPT: "0"
@@ -35,114 +33,18 @@ jobs:
       - name: Checkout (control scripts)
         uses: actions/checkout@v4
 
-      - name: Soft sync REAL install at ETHER_ROOT
-        run: |
-          $root = $env:ETHER_ROOT
-          if (-not (Test-Path $root)) { throw "ETHER_ROOT missing: $root" }
-          Set-Location $root
-          $ErrorActionPreference = "Continue"
-          $env:GIT_TERMINAL_PROMPT = "0"
-          $env:GCM_INTERACTIVE = "Never"
-          $tok = ""
-          try { $tok = (gh auth token).Trim() } catch {}
-          function Invoke-GitAuth([string[]]$argv) {
-            if ($tok) {
-              & git -c "credential.helper=" -c "http.extraheader=AUTHORIZATION: bearer $tok" @argv
-            } else {
-              & git -c "credential.helper=" @argv
-            }
-          }
-          Get-CimInstance Win32_Process -Filter "Name='git.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -match 'Otcde\\ETHER' } |
-            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-          Start-Sleep -Seconds 1
-          Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
-          function Invoke-Git([string[]]$argv) {
-            for ($i = 0; $i -lt 6; $i++) {
-              $lock = Join-Path (Get-Location) ".git\index.lock"
-              if (Test-Path $lock) {
-                $age = ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalSeconds
-                if ($age -gt 30) { Remove-Item $lock -Force -ErrorAction SilentlyContinue }
-                else { Start-Sleep -Seconds 3; continue }
-              }
-              & git @argv
-              if ($LASTEXITCODE -eq 0) { return }
-              Start-Sleep -Seconds 2
-            }
-          }
-          git merge --abort
-          git rebase --abort
-          $unmerged = @(git diff --name-only --diff-filter=U)
-          foreach ($f in $unmerged) {
-            $n = ($f -replace '\\','/')
-            if ($n -like "artifacts/jobs/*") {
-              git checkout --ours -- $f
-              if ($LASTEXITCODE -ne 0) { git rm -f -- $f } else { git add -- $f }
-            }
-          }
-          $still = @(git diff --name-only --diff-filter=U)
-          if ($still.Count -gt 0) { throw "unmerged outside job queue: $($still -join ', ')" }
-          Write-Host "gh_token_len=$($tok.Length)"
-          # pull --ff-only is not used here. It asks for a password and holds index.lock.
-          $fetchLog = Join-Path $root "artifacts\fetch_log.txt"
-          if ($tok.Length -gt 0) {
-            $url = "https://x-access-token:${tok}@github.com/OxCryptobot/-ETHER.git"
-            cmd /c "git -c credential.helper= fetch `"$url`" +refs/heads/main:refs/remotes/origin/main > `"$fetchLog`" 2>&1"
-          }
-          $fetch = $LASTEXITCODE
-          Write-Host "fetch_rc=$fetch"
-          Remove-Item $fetchLog -Force -ErrorAction SilentlyContinue
-          Get-CimInstance Win32_Process -Filter "Name='python.exe'" -ErrorAction SilentlyContinue |
-            Where-Object { $_.CommandLine -match 'host_main.py' } |
-            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-          $checkout = 1
-          if ($fetch -eq 0) {
-            for ($n = 0; $n -lt 5; $n++) {
-              Get-CimInstance Win32_Process -Filter "Name='git.exe'" -ErrorAction SilentlyContinue |
-                ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-              Start-Sleep -Seconds 1
-              Remove-Item (Join-Path $root ".git\index.lock") -Force -ErrorAction SilentlyContinue
-              & git checkout origin/main -- scripts core 2>&1 | Out-Null
-              $checkout = $LASTEXITCODE
-              if ($checkout -eq 0) { break }
-            }
-          }
-          Write-Host "checkout_rc=$checkout"
-          if (-not (Test-Path .\\.venv\\Scripts\\python.exe)) {
-            python -m venv .venv
-            .\\.venv\\Scripts\\python.exe -m pip install -U pip
-          }
-          .\\.venv\\Scripts\\python.exe -m pip install -e ".[dev]" -q
-
-      - name: One heartbeat
+      - name: One tick
         run: |
           $ErrorActionPreference = "Continue"
           $env:PYTHONPATH = $env:GITHUB_WORKSPACE
+          $env:GIT_TERMINAL_PROMPT = "0"
+          $env:GCM_INTERACTIVE = "Never"
           Set-Location $env:GITHUB_WORKSPACE
           $py = Join-Path $env:ETHER_ROOT ".venv\Scripts\python.exe"
+          if (-not (Test-Path $py)) { throw "venv python missing: $py" }
           & $py -u scripts/host_main.py
           Write-Host "EXIT $LASTEXITCODE"
           Write-Host "--- app_alive ---"
           Get-Content (Join-Path $env:ETHER_ROOT "artifacts\app_alive.json") -ErrorAction SilentlyContinue
           Write-Host "--- git_push ---"
           Get-Content (Join-Path $env:ETHER_ROOT "artifacts\git_push.json") -ErrorAction SilentlyContinue
-
-      - name: Keep ticking
-        run: |
-          $ErrorActionPreference = "Continue"
-          $env:PYTHONPATH = $env:GITHUB_WORKSPACE
-          $root = $env:ETHER_ROOT
-          $py = Join-Path $root ".venv\Scripts\python.exe"
-          function Invoke-Tick {
-            $log = Join-Path $root "artifacts\tick_log.txt"
-            $err = Join-Path $root "artifacts\tick_err.txt"
-            $proc = Start-Process -FilePath $py -ArgumentList "-u","scripts/host_main.py" -WorkingDirectory $env:GITHUB_WORKSPACE -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
-            if (-not $proc.WaitForExit(120000)) {
-              Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-              Set-Content -Path (Join-Path $root "artifacts\tick_timeout.json") -Value '{"ok":false,"error":"tick_timeout"}'
-            }
-          }
-          while ($true) {
-            Start-Sleep -Seconds 90
-            Invoke-Tick
-          }

@@ -133,11 +133,11 @@ def test_heartbeat_publishes_before_slow_work() -> None:
         assert "reset --hard origin" not in text
     host = Path(".github/workflows/autonomy-host.yml").read_text(encoding="utf-8")
     assert "reset --hard" not in host
-    assert "pull --ff-only" in host
-    assert "while ($true)" in host
-    assert "artifacts/jobs/*" in host
-    assert "index.lock" in host
-    assert "rebase failed; worktree was not reset" not in host
+    assert "while ($true)" not in host
+    assert "Stop-Process" not in host
+    assert "cancel-in-progress: true" in host
+    assert "timeout-minutes: 10" in host
+    assert "host_main.py" in host
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
 

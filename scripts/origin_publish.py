@@ -144,6 +144,56 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     return row
 
 
+def publish_worktree(root: Path, git: str, runner: Runner, message: str, token: str) -> Dict[str, Any]:
+    """Commit the heartbeat files onto origin/main from a clean tree. Never reset --hard."""
+    import shutil
+    import tempfile
+
+    row: Dict[str, Any] = {"ok": False, "hard_reset": False, "note": "worktree"}
+    paths = existing_paths(root)
+    if not paths:
+        row["note"] = "nothing_to_add"
+        return row
+    fetched = runner([git, "fetch", "origin"])
+    if fetched.returncode != 0:
+        row["note"] = "fetch_failed"
+        return row
+    wt = Path(tempfile.mkdtemp(prefix="ether_pub_"))
+    added = runner([git, "worktree", "add", "--detach", str(wt), "origin/main"])
+    if added.returncode != 0:
+        shutil.rmtree(wt, ignore_errors=True)
+        row["note"] = "worktree_failed"
+        return row
+    try:
+        for rel in paths:
+            src = root / rel
+            dest = wt / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+        def wtgit(args: List[str]) -> subprocess.CompletedProcess:
+            return runner([git, "-C", str(wt), *args])
+        wtgit(["add", "-f", "--", *paths])
+        quiet = wtgit(["diff", "--cached", "--quiet"])
+        if quiet.returncode == 0:
+            row.update({"ok": True, "note": "no_change"})
+            return row
+        commit = wtgit(["-c", "user.email=ether@local", "-c", "user.name=ether-exe", "commit", "-m", message])
+        if commit.returncode != 0:
+            row["note"] = "commit_failed"
+            return row
+        url = push_url(token) if token else "origin"
+        pushed = runner([git, "-C", str(wt), "push", url, "HEAD:main"])
+        row["push_rc"] = pushed.returncode
+        row["stderr"] = redact(((pushed.stderr or "") + (pushed.stdout or ""))[-300:], token)
+        row["ok"] = pushed.returncode == 0
+        if row["ok"]:
+            row["note"] = "worktree_push"
+    finally:
+        runner([git, "worktree", "remove", "--force", str(wt)])
+        shutil.rmtree(wt, ignore_errors=True)
+    return row
+
+
 def quiet_env(base: Dict[str, str] | None = None) -> Dict[str, str]:
     env = dict(base or os.environ)
     env["GIT_TERMINAL_PROMPT"] = "0"
@@ -272,6 +322,12 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
                 row["push_rc"] = retry.returncode
                 row["ok"] = retry.returncode == 0
                 row["stderr"] = redact(((retry.stderr or "") + (retry.stdout or ""))[-300:], token)
+                if not row["ok"]:
+                    via = publish_worktree(root, git, run, message, token)
+                    row["worktree"] = via
+                    row["ok"] = bool(via.get("ok"))
+                    if via.get("stderr"):
+                        row["stderr"] = via["stderr"]
     except Exception as exc:
         row["error"] = type(exc).__name__
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")

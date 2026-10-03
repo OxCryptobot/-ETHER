@@ -2,7 +2,7 @@
 import subprocess
 from pathlib import Path
 
-from scripts.origin_publish import existing_paths, hard_reset_allowed, sync_writer
+from scripts.origin_publish import existing_paths, hard_reset_allowed, publish_worktree, sync_writer
 
 
 def test_hard_reset_blocked_when_ahead_or_dirty() -> None:
@@ -106,6 +106,44 @@ def test_sync_keeps_dirty_tree_while_ahead(tmp_path: Path) -> None:
     assert "writer-alive" in log
     assert "cloud-tick" in log
     assert (writer / "dirty.txt").read_text(encoding="utf-8") == "keep-me\n"
+
+
+def test_worktree_publishes_without_resetting_a_dirty_tree(tmp_path: Path) -> None:
+    seed = tmp_path / "seed"
+    origin = tmp_path / "origin.git"
+    writer = tmp_path / "writer"
+    seed.mkdir()
+    env = {
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@local",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@local",
+        "GIT_CONFIG_NOSYSTEM": "1",
+    }
+    def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True, env=env, check=False)
+
+    git(seed, "init")
+    art = seed / "artifacts"
+    art.mkdir()
+    (art / "app_alive.json").write_text('{"ts":"old"}\n', encoding="utf-8")
+    git(seed, "add", "artifacts/app_alive.json")
+    git(seed, "commit", "-m", "base")
+    git(seed, "branch", "-M", "main")
+    subprocess.run(["git", "clone", "--bare", str(seed), str(origin)], check=True, capture_output=True)
+    subprocess.run(["git", "clone", str(origin), str(writer)], check=True, capture_output=True, env=env)
+    (writer / "junk.txt").write_text("keep\n", encoding="utf-8")
+    (writer / "artifacts" / "app_alive.json").write_text('{"ts":"today"}\n', encoding="utf-8")
+
+    def runner(argv: list) -> subprocess.CompletedProcess:
+        return subprocess.run(argv, cwd=str(writer), capture_output=True, text=True, env=env, check=False)
+
+    row = publish_worktree(writer, "git", runner, "1650 host_main", "")
+    assert row["ok"] is True
+    assert row["hard_reset"] is False
+    assert (writer / "junk.txt").read_text(encoding="utf-8") == "keep\n"
+    shown = subprocess.run(["git", "--git-dir", str(origin), "show", "HEAD:artifacts/app_alive.json"], capture_output=True, text=True, check=False)
+    assert "today" in shown.stdout
 
 
 def test_writer_paths_do_not_include_the_job_queue() -> None:

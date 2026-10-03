@@ -115,6 +115,11 @@ def tick() -> Dict[str, Any]:
                 row["edit_rc"] = edit_main()
             except Exception as exc:
                 row["edit_error"] = type(exc).__name__
+            try:
+                from core.kernel.scale import advance
+                row["scale"] = advance(root)
+            except Exception as exc:
+                row["scale_error"] = type(exc).__name__
         else:
             _pull(root)
             try:

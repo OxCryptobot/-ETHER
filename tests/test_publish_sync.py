@@ -144,6 +144,7 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     assert "start_ollama" not in actions
     assert "self_heal" not in actions
     assert "live_edit_tx" in actions
+    assert "scale" in actions
     assert "drain_live" not in actions
 
 

@@ -1,7 +1,7 @@
 {
   "live": true,
   "stale": false,
-  "age_hours": 0.8,
+  "age_hours": 1.02,
   "max_age_hours": 6.0,
   "same_utc_day": true,
   "require": "scripts.host_main.tick on 1650",
@@ -10,6 +10,6 @@
   "attach_updated": "2026-10-03T18:09:28.118890+00:00",
   "attach_ollama": true,
   "writer": "exe",
-  "checked_at": "2026-10-03T18:57:14.441627+00:00",
+  "checked_at": "2026-10-03T19:10:21.554051+00:00",
   "note": "open exe is not LIVE. stale app_alive is FAIL."
 }

@@ -1,15 +1,12 @@
-# ETHER product (one path)
+# ETHER product
 
-Engine: `scripts/ether_app.py` or `ETHER.exe` after a green `build-exe` run.
-Live view: Grok Control Matrix only (`?view=bus`). Dual chat is locked.
-Root on this machine: `C:\\Users\\Otcde\\ETHER` (`ETHER_ROOT`).
+One process on the 1650. `scripts/host_main.py` starts `core/kernel/agent.py`.
+The cycle is perceive, decide, edit, verify, remember.
+Matrix is the view. It does not start, stop, or edit.
+There is no `ETHER.exe`. Do not build another one.
 
-Do not run: old `.cmd`, `.bat`, `.vbs`, `attach_1650.ps1`, desktop harness, `:8787` cockpit.
-`:8787` is headless health/API. The HTML Control Matrix there is retired (HTTP 410).
-FAST proof: GitHub `matrix-worker`. Not the GPU.
-LIVE: Ollama on the 1650 inside the engine process.
+`honest` is true only after a tool edit and a passing test.
+Git is the publish step, not the brain. A job file is not the brain.
 
-Attach is a report (`artifacts/host_attach.json`). If the engine ran, origin gets `1650 app attach`.
-If it did not, the engine did not reach this folder.
-
-Build EXE: Actions workflow `build-exe` → artifact `ETHER-exe`.
+Not this product: a trading bot, a second writer, a swarm, port 8787.
+Next gate: the 1650 process publishes `app_alive`, then the same edit passes twice.

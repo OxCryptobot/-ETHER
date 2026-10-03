@@ -32,8 +32,6 @@ PATHS = [
     "artifacts/keepalive_error.json",
     "artifacts/live_generate_probe.json",
     "artifacts/live_edit_tx.json",
-    "artifacts/desk.json",
-    "artifacts/desk_ledger.json",
 ]
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]

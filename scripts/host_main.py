@@ -101,11 +101,6 @@ def tick() -> Dict[str, Any]:
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
             row["publish_error"] = type(exc).__name__
-        try:
-            from core.kernel.desk import cycle as desk_cycle
-            row["desk"] = desk_cycle(root)
-        except Exception as exc:
-            row["desk_error"] = type(exc).__name__
         _pull(root)
         try:
             from scripts.self_heal import arm

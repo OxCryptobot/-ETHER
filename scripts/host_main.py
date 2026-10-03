@@ -110,6 +110,11 @@ def tick() -> Dict[str, Any]:
                 row["ollama"] = ollama_up()
             except Exception as exc:
                 row["ollama_error"] = type(exc).__name__
+            try:
+                from scripts.live_edit_tx import main as edit_main
+                row["edit_rc"] = edit_main()
+            except Exception as exc:
+                row["edit_error"] = type(exc).__name__
         else:
             _pull(root)
             try:
@@ -145,11 +150,11 @@ def tick() -> Dict[str, Any]:
                 row["alive"] = mark_alive()
             except Exception as exc:
                 row["alive_error"] = type(exc).__name__
-        try:
-            from scripts.drain_live_fifo import drain as drain_live
-            row["live"] = drain_live(max_jobs=1)
-        except Exception as exc:
-            row["live_error"] = type(exc).__name__
+            try:
+                from scripts.drain_live_fifo import drain as drain_live
+                row["live"] = drain_live(max_jobs=1)
+            except Exception as exc:
+                row["live_error"] = type(exc).__name__
         try:
             from core.kernel.day_learn import learn
             row["day_learn"] = learn(root)

@@ -143,7 +143,8 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     actions = tick.split('GITHUB_ACTIONS") == "true"', 1)[1].split("else:", 1)[0]
     assert "start_ollama" not in actions
     assert "self_heal" not in actions
-    assert "drain_live" in tick
+    assert "live_edit_tx" in actions
+    assert "drain_live" not in actions
 
 
 def test_network_git_uses_the_token_before_origin() -> None:

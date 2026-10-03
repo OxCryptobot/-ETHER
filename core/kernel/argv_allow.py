@@ -12,6 +12,8 @@ def argv_allowed(argv: Sequence[str]) -> bool:
     if any(b in str(x).lower() for x in argv for b in BLOCKED):
         return False
     head = Path(str(argv[0]).replace("\\", "/")).name.lower()
+    if head == "pytest":
+        return True
     if head not in {"python.exe", "python", "py"}:
         return False
     if "-m" not in argv:

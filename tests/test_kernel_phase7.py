@@ -6,7 +6,11 @@ from core.kernel.ownership import may_write, owner_of
 from core.kernel.parse_fail import parse_fail
 from core.kernel.strangle import finalize
 
-def test_argv_blocks_shell() -> None:
+def test_argv_is_only_the_edit_or_pytest() -> None:
+    assert argv_allowed(["python", "-m", "scripts.live_edit_tx"]) is True
+    assert argv_allowed(["python", "-c", "import scripts.live_edit_tx"]) is False
+    assert argv_allowed(["python", "-m", "scripts.live_generate_probe"]) is False
+    assert argv_allowed(["python", "evil.py"]) is False
     assert argv_allowed([".venv/Scripts/python.exe", "-m", "pytest", "tests/test_kernel_phase7.py"]) is True
     assert argv_allowed(["powershell", "-Command", "calc"]) is False
     assert argv_allowed(["cmd.exe", "/c", "echo hi"]) is False

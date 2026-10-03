@@ -79,9 +79,21 @@ def run_job(path: Path) -> Dict[str, Any]:
     path.unlink(missing_ok=True)
     return report
 
+def _edit_job(path: Path) -> bool:
+    try:
+        job = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    for raw in job.get("steps") or []:
+        argv = [str(x) for x in (_normalize_step(raw).get("argv") or [])]
+        if "scripts.live_edit_tx" in argv:
+            return True
+    return False
+
+
 def drain(max_jobs: int = 0) -> Dict[str, Any]:
     PENDING.mkdir(parents=True, exist_ok=True)
-    files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep")
+    files = sorted(p for p in PENDING.glob("*.json") if p.name != ".gitkeep" and _edit_job(p))
     if max_jobs > 0:
         files = files[:max_jobs]
     reports = [run_job(p) for p in files]

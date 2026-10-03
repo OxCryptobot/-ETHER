@@ -9,12 +9,60 @@
   "walk_n": 8,
   "walk_ok": true,
   "weak": [],
-  "fabricate": null,
-  "fail_id": null,
+  "fabricate": {
+    "name": "heal_live_generate_probe_2026",
+    "quarantine_path": "tools/quarantine/heal_live_generate_probe_2026_20261003_031859.py",
+    "stages": [
+      {
+        "stage": "implement",
+        "ok": true,
+        "mode": "stub"
+      },
+      {
+        "stage": "ast_validate",
+        "ok": true,
+        "has_main": true
+      },
+      {
+        "stage": "static_safety",
+        "ok": true,
+        "findings": []
+      },
+      {
+        "stage": "sandbox_selftest",
+        "ok": true,
+        "exit_code": 0,
+        "stdout": "compile_ok\n",
+        "stderr": ""
+      },
+      {
+        "stage": "audit",
+        "ok": true,
+        "approved": true,
+        "risk_score": 0.0
+      },
+      {
+        "stage": "critique",
+        "ok": true,
+        "soft": true,
+        "complexity": 0.1,
+        "critique": "[clean] ~20 lines, complexity=0.10. No structural issues flagged.",
+        "suggestions": []
+      },
+      {
+        "stage": "promote",
+        "ok": false,
+        "note": "ETHER_AUTO_PROMOTE=0"
+      }
+    ],
+    "validation_status": "pending_promote",
+    "promoted": false,
+    "promote_path": null
+  },
+  "fail_id": "live_generate_probe_20261002c",
   "goal": {
-    "id": "restore_1650_writer",
-    "do": "runner_register then host_main.tick",
-    "why": "app_alive older than 6h and GitHub has no runner until the 1650 registers"
+    "id": "drain_and_learn",
+    "do": "next FAST job"
   },
   "skills": {
     "batchphase": {
@@ -24,16 +72,15 @@
       "ran": false
     },
     "goal": {
-      "id": "restore_1650_writer",
-      "do": "runner_register then host_main.tick",
-      "why": "app_alive older than 6h and GitHub has no runner until the 1650 registers"
+      "id": "drain_and_learn",
+      "do": "next FAST job"
     },
     "host-agent-live": {
       "ok": false,
-      "stale": true,
+      "stale": false,
       "runners": null,
       "online": null,
-      "app_alive_ts": "2026-09-30T20:27:25.459719+00:00",
+      "app_alive_ts": "2026-10-03T03:09:25.756320+00:00",
       "note": "observe_only"
     },
     "keep-pushing": {
@@ -48,7 +95,6 @@
     "super-auditor": {
       "ok": false,
       "gaps": [
-        "app_alive_stale",
         "runner_count_unknown"
       ]
     },
@@ -59,12 +105,14 @@
     }
   },
   "energy": {
-    "evolve_ts": "2026-10-02T18:10:04.408459+00:00",
+    "evolve_ts": "2026-10-03T03:18:59.994622+00:00",
     "evolve_ok": 8,
     "evolve_n": 8,
-    "generation": 1602,
+    "generation": 1604,
     "source": "ether_evolve.cycle"
   },
-  "generation": 1602,
-  "ts": "2026-10-02T18:10:04.464694+00:00"
+  "generation": 1603,
+  "ts": "2026-10-03T03:19:00.067129+00:00",
+  "day": "2026-10-03",
+  "note": "same_day"
 }

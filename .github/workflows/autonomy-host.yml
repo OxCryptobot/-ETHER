@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "cycle"
+        description: "ensure or cycle"
         required: true
         default: "cycle"
         type: choice
         options:
+          - ensure
           - cycle
   schedule:
     - cron: "*/15 * * * *"

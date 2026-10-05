@@ -115,6 +115,13 @@ def diagnose(task: Dict[str, Any], src: str) -> str:
         return "the function raised"
 
 
+def repair_note(task: Dict[str, Any], attempted_src: str) -> str:
+    note = diagnose(task, attempted_src)
+    if not note or task.get("banned") and task["banned"] in note:
+        return ""
+    return note
+
+
 def _load(path: Path) -> Dict[str, Any]:
     if not path.is_file():
         return {}

@@ -37,8 +37,8 @@ def _ask(prompt: str) -> str:
 
 def main() -> int:
     from core.kernel.context_budget import pack
-    from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task
-    from core.kernel.product_loop import run_model_edit
+    from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task, repair_note
+    from core.kernel.product_loop import extract_function, run_model_edit
 
     row = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -92,6 +92,14 @@ def main() -> int:
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
         result = run_model_edit(workspace, task["file"], text, tests_ok)
+        if not result.get("honest"):
+            attempted = extract_function(text) or task["source"]
+            note = repair_note(task, attempted)
+            if note and note != failing:
+                row["repair"] = note
+                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n")
+                result = run_model_edit(workspace, task["file"], text, tests_ok)
+        row["response_tail"] = text[-240:]
         row.update(result)
         if row.get("honest"):
             mark_passed(ROOT, task["id"])

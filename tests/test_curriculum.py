@@ -72,6 +72,11 @@ def test_failing_cases_do_not_contain_the_patch() -> None:
     span_note = diagnose(span, span["source"])
     assert "span([1, 4, 2]) returned 0, expected 3" in span_note
     assert "max(nums)" not in span_note
+    from core.kernel.curriculum import repair_note
+    off = "def span(nums):\n    if not nums:\n        return 0\n    return max(nums) - min(nums) + 1\n"
+    repair = repair_note(span, off)
+    assert "returned 4, expected 3" in repair
+    assert "max(nums)" not in repair
     assert "return -1" not in note
     assert sign["banned"] not in note
     for task in TASKS:

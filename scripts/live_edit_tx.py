@@ -37,6 +37,7 @@ def _ask(prompt: str) -> str:
 
 def main() -> int:
     from core.kernel.context_budget import pack
+    from core.kernel.curriculum import checker_for, mark_passed, next_task
     from core.kernel.product_loop import run_model_edit
 
     row = {
@@ -45,6 +46,14 @@ def main() -> int:
         "honest": False,
         "note": "tool edit then tests. generate-only is not a pass",
     }
+    task = next_task(ROOT)
+    if task is None:
+        row["note"] = "curriculum_hold"
+        OUT.parent.mkdir(parents=True, exist_ok=True)
+        OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(row))
+        return 0
+    row["task"] = task["id"]
     if os.name != "nt":
         row["note"] = "observe_only"
         OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -54,21 +63,24 @@ def main() -> int:
     parent = Path(tempfile.mkdtemp(prefix="ether_edit_"))
     workspace = parent / "ws"
     workspace.mkdir()
-    (workspace / "add.py").write_text("def add(a, b):\n    return a - b\n", encoding="utf-8")
-    prompt = pack(workspace, "add", ["add.py"], max_chars=800)
-    prompt += "\n\nReply with exactly two lines:\nOLD: return a - b\nNEW: return a + b\n"
+    (workspace / task["file"]).write_text(task["source"], encoding="utf-8")
+    prompt = pack(workspace, task["id"], [task["file"]], max_chars=800)
+    prompt += "\n\n" + task["prompt"]
     try:
         text = _ask(prompt)
         row["response_tail"] = text[-240:]
 
         def tests_ok() -> bool:
-            from scripts.live_generate_probe import function_ok
-            return function_ok((workspace / "add.py").read_text(encoding="utf-8"))
+            return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
-        result = run_model_edit(workspace, "add.py", text, tests_ok)
+        result = run_model_edit(workspace, task["file"], text, tests_ok)
         row.update(result)
-        from core.kernel.edit_memory import remember
-        remember(ROOT, f"honest={row.get('honest')} ok={row.get('ok')}")
+        if row.get("honest"):
+            mark_passed(ROOT, task["id"])
+        from core.kernel.edit_memory import recall, remember
+        prior = recall(ROOT)
+        line = f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
+        remember(ROOT, (prior + " | " + line)[-400:] if prior else line)
     except Exception as exc:
         row["error"] = type(exc).__name__
     OUT.parent.mkdir(parents=True, exist_ok=True)

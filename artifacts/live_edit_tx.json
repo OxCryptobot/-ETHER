@@ -1,21 +1,14 @@
 {
-  "ts": "2026-10-05T16:02:55.189168+00:00",
-  "ok": true,
-  "honest": true,
+  "ts": "2026-10-05T16:04:39.507454+00:00",
+  "ok": false,
+  "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
-  "task": "sign",
-  "failing": "sign(-4) returned 1, expected -1; sign(0) returned 1, expected 0; sign(9) returned 1, expected 1",
-  "response_tail": "OLD: return 1\nNEW: return 1 if n > 0 else (0 if n == 0 else -1)",
-  "strategy": "tool_runtime",
+  "task": "span",
+  "failing": "the test file failed",
+  "response_tail": "OLD: def span(nums):\n    return 0\nNEW: def span(nums):\n    if not nums:\n        return 0\n    min_val = min(nums)\n    max_val = max(nums)\n    return max_val - min_val + 1",
+  "strategy": "generate",
   "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": true,
-  "tools": [
-    "replace_once"
-  ],
-  "tests_ok": true,
-  "tx": [
-    "begin",
-    "promote"
-  ]
+  "generate_fallback": true,
+  "reason": "no_tool_edit",
+  "tests_ok": false
 }

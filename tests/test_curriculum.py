@@ -68,6 +68,10 @@ def test_failing_cases_do_not_contain_the_patch() -> None:
     note = diagnose(sign, sign["source"])
     assert "returned 1, expected -1" in note
     assert "sign(9) returned 1, expected 1" in note
+    span = next(t for t in TASKS if t["id"] == "span")
+    span_note = diagnose(span, span["source"])
+    assert "span([1, 4, 2]) returned 0, expected 3" in span_note
+    assert "max(nums)" not in span_note
     assert "return -1" not in note
     assert sign["banned"] not in note
     for task in TASKS:

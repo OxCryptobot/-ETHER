@@ -84,7 +84,9 @@ TASKS: List[Dict[str, Any]] = [
         "source": "def span(nums):\n    return 0\n",
         "also": {"test_bounds.py": SPAN_TEST},
         "test": "test_bounds.py",
-        "prompt": "test_bounds.py fails. Change only the return in bounds.py. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
+        "fn": "span",
+        "cases": [(([1, 4, 2],), 3), (([5],), 0), (([],), 0)],
+        "prompt": "test_bounds.py fails. NEW must be one line, the return only. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "max(nums)",
         "check": _check_span,
     },
@@ -93,12 +95,10 @@ TASKS: List[Dict[str, Any]] = [
 
 def diagnose(task: Dict[str, Any], src: str) -> str:
     """What the current code returns. Never the patch."""
-    if task.get("test"):
-        return "the test file failed"
     fn_name = str(task.get("fn") or "")
     cases = task.get("cases") or []
     if not fn_name or not cases:
-        return ""
+        return "the test file failed" if task.get("test") else ""
     ns: Dict[str, Any] = {}
     try:
         exec(src, ns)  # noqa: S102

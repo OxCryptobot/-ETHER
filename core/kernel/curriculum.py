@@ -108,9 +108,8 @@ def diagnose(task: Dict[str, Any], src: str) -> str:
         lines = []
         for args, want in cases:
             got = fn(*args)
-            if got != want:
-                shown = args[0] if len(args) == 1 else args
-                lines.append(f"{fn_name}({shown}) returned {got}, expected {want}")
+            shown = args[0] if len(args) == 1 else args
+            lines.append(f"{fn_name}({shown}) returned {got}, expected {want}")
         return "; ".join(lines)[:300]
     except Exception:
         return "the function raised"

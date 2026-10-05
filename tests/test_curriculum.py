@@ -67,6 +67,7 @@ def test_failing_cases_do_not_contain_the_patch() -> None:
     sign = next(t for t in TASKS if t["id"] == "sign")
     note = diagnose(sign, sign["source"])
     assert "returned 1, expected -1" in note
+    assert "sign(9) returned 1, expected 1" in note
     assert "return -1" not in note
     assert sign["banned"] not in note
     for task in TASKS:

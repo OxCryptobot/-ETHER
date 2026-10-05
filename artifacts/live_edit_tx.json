@@ -1,20 +1,20 @@
 {
-  "ts": "2026-10-05T15:41:06.590772+00:00",
-  "ok": true,
-  "honest": true,
+  "ts": "2026-10-05T15:58:17.490559+00:00",
+  "ok": false,
+  "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
-  "task": "clamp",
-  "response_tail": "OLD: return n\nNEW: return max(lo, min(hi, n))",
+  "task": "sign",
+  "response_tail": "OLD: return 1\nNEW: return n if n != 0 else 0",
   "strategy": "tool_runtime",
   "mode": "live",
   "degraded": [],
-  "tool_runtime_ok": true,
+  "tool_runtime_ok": false,
   "tools": [
     "replace_once"
   ],
-  "tests_ok": true,
+  "tests_ok": false,
   "tx": [
     "begin",
-    "promote"
+    "revert"
   ]
 }

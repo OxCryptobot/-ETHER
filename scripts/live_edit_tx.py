@@ -12,7 +12,7 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "live_edit_tx.json"
 
 
-def _ask(prompt: str) -> str:
+def _ask(prompt: str, temperature: float = 0) -> str:
     from scripts.live_generate_probe import pick_model
 
     model = pick_model()
@@ -21,7 +21,7 @@ def _ask(prompt: str) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_predict": 220},
+        "options": {"temperature": temperature, "num_predict": 220},
     }).encode()
     req = urllib.request.Request(
         "http://127.0.0.1:11434/api/chat",
@@ -97,7 +97,7 @@ def main() -> int:
             note = repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
-                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n")
+                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4)
                 result = run_model_edit(workspace, task["file"], text, tests_ok)
         row["response_tail"] = text[-240:]
         row.update(result)

@@ -1,21 +1,21 @@
 {
-  "ts": "2026-10-05T16:01:28.497848+00:00",
-  "ok": false,
-  "honest": false,
+  "ts": "2026-10-05T16:02:55.189168+00:00",
+  "ok": true,
+  "honest": true,
   "note": "tool edit then tests. generate-only is not a pass",
   "task": "sign",
-  "failing": "sign(-4) returned 1, expected -1; sign(0) returned 1, expected 0",
-  "response_tail": "OLD: return 1\nNEW: return n if n > 0 else (0 if n == 0 else -1)",
+  "failing": "sign(-4) returned 1, expected -1; sign(0) returned 1, expected 0; sign(9) returned 1, expected 1",
+  "response_tail": "OLD: return 1\nNEW: return 1 if n > 0 else (0 if n == 0 else -1)",
   "strategy": "tool_runtime",
   "mode": "live",
   "degraded": [],
-  "tool_runtime_ok": false,
+  "tool_runtime_ok": true,
   "tools": [
     "replace_once"
   ],
-  "tests_ok": false,
+  "tests_ok": true,
   "tx": [
     "begin",
-    "revert"
+    "promote"
   ]
 }

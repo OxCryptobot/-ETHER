@@ -8,8 +8,8 @@
     "verify",
     "remember"
   ],
-  "honest": false,
-  "lesson": "honest=True ok=True | clamp: pass | sign: fail",
+  "honest": true,
+  "lesson": "honest=True ok=True | clamp: pass | sign: fail | sign: fail",
   "learned": true,
   "scale": {
     "repeatable": true,

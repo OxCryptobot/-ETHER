@@ -86,7 +86,7 @@ TASKS: List[Dict[str, Any]] = [
         "test": "test_bounds.py",
         "fn": "span",
         "cases": [(([1, 4, 2],), 3), (([5],), 0), (([],), 0)],
-        "prompt": "test_bounds.py fails. NEW must be one line, the return only. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
+        "prompt": "test_bounds.py fails. Reply with a complete def span function, or exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "max(nums)",
         "check": _check_span,
     },

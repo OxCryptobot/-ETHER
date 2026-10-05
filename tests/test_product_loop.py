@@ -6,14 +6,38 @@ from core.kernel.product_loop import run_edit, run_model_edit
 from core.kernel.subagent import isolate
 
 
-def test_generate_text_is_not_a_pass(tmp_path: Path) -> None:
+def test_prose_is_not_a_pass(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()
     (ws / "add.py").write_text("def add(a, b):\n    return a - b\n", encoding="utf-8")
-    row = run_model_edit(ws, "add.py", "def add(a, b):\n    return a + b\n", lambda: True)
+    row = run_model_edit(ws, "add.py", "I would add the numbers together.", lambda: True)
     assert row["honest"] is False
     assert row["strategy"] == "generate"
     assert "return a - b" in (ws / "add.py").read_text(encoding="utf-8")
+
+
+def test_a_complete_function_is_kept_only_when_tests_pass(tmp_path: Path) -> None:
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "bounds.py").write_text("def span(nums):\n    return 0\n", encoding="utf-8")
+    good = "def span(nums):\n    return (max(nums) - min(nums)) if nums else 0\n"
+
+    def tests_ok() -> bool:
+        ns: dict = {}
+        exec(compile((ws / "bounds.py").read_text(encoding="utf-8"), "bounds.py", "exec"), ns, ns)
+        return ns["span"]([1, 4, 2]) == 3 and ns["span"]([]) == 0
+
+    row = run_model_edit(ws, "bounds.py", good, tests_ok)
+    assert row["honest"] is True
+    assert row["tools"] == ["replace_file"]
+    assert "promote" in row["tx"]
+    bad = run_model_edit(ws, "bounds.py", "def span(nums):\n    return 1\n", lambda: False)
+    assert bad["honest"] is False
+    assert "revert" in bad["tx"]
+    assert "return 0" not in (ws / "bounds.py").read_text(encoding="utf-8")
+    cut = run_model_edit(ws, "bounds.py", "def span(nums):\n    for n in nums:\n        if n <", lambda: True)
+    assert cut["reason"] == "no_tool_edit"
+    assert cut["honest"] is False
 
 
 def test_tool_edit_promotes_only_when_tests_pass(tmp_path: Path) -> None:

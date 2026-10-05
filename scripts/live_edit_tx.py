@@ -21,7 +21,7 @@ def _ask(prompt: str) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_predict": 80},
+        "options": {"temperature": 0, "num_predict": 220},
     }).encode()
     req = urllib.request.Request(
         "http://127.0.0.1:11434/api/chat",

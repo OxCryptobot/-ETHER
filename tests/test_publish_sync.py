@@ -151,6 +151,7 @@ def test_writer_paths_do_not_include_the_job_queue() -> None:
     assert "artifacts/jobs" not in PATHS
     assert "artifacts/gem_energy.json" not in PATHS
     assert "artifacts/app_alive.json" in PATHS
+    assert "artifacts/edit_memory.json" in PATHS
 
 
 def test_heartbeat_publishes_before_slow_work() -> None:

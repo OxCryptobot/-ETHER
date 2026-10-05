@@ -1,10 +1,11 @@
 {
-  "ts": "2026-10-05T15:58:17.490559+00:00",
+  "ts": "2026-10-05T16:01:28.497848+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
   "task": "sign",
-  "response_tail": "OLD: return 1\nNEW: return n if n != 0 else 0",
+  "failing": "sign(-4) returned 1, expected -1; sign(0) returned 1, expected 0",
+  "response_tail": "OLD: return 1\nNEW: return n if n > 0 else (0 if n == 0 else -1)",
   "strategy": "tool_runtime",
   "mode": "live",
   "degraded": [],

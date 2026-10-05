@@ -1,11 +1,11 @@
 {
-  "ts": "2026-10-05T19:11:00.366645+00:00",
+  "ts": "2026-10-05T20:09:38.313062+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
   "task": "span",
   "failing": "span([1, 4, 2]) returned 0, expected 3; span([5]) returned 0, expected 0; span([]) returned 0, expected 0",
-  "response_tail": "def span(nums):\n    if not nums:\n        return 0\n    return max(nums) - min(nums) + 1",
+  "response_tail": "```python\ndef span(nums):\n    if not nums:\n        return 0\n    max_val = max(nums)\n    min_val = min(nums)\n    return max_val - min_val + 1\n```",
   "repair": "span([1, 4, 2]) returned 4, expected 3; span([5]) returned 1, expected 0; span([]) returned 0, expected 0",
   "strategy": "tool_runtime",
   "mode": "live",

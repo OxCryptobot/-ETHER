@@ -37,7 +37,7 @@ def _ask(prompt: str) -> str:
 
 def main() -> int:
     from core.kernel.context_budget import pack
-    from core.kernel.curriculum import checker_for, mark_passed, next_task
+    from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task
     from core.kernel.product_loop import run_model_edit
 
     row = {
@@ -68,6 +68,10 @@ def main() -> int:
     for name, body in also.items():
         (workspace / name).write_text(body, encoding="utf-8")
     prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=800)
+    failing = diagnose(task, task["source"])
+    if failing:
+        prompt += "\n\nFailing cases:\n" + failing
+        row["failing"] = failing
     prompt += "\n\n" + task["prompt"]
     try:
         text = _ask(prompt)

@@ -54,6 +54,8 @@ TASKS: List[Dict[str, Any]] = [
         "source": "def add(a, b):\n    return a - b\n",
         "prompt": "add(2, 3) must be 5. Change only the broken return. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "return a + b",
+        "fn": "add",
+        "cases": [((2, 3), 5), ((0, 0), 0)],
         "check": _check_add,
     },
     {
@@ -62,6 +64,8 @@ TASKS: List[Dict[str, Any]] = [
         "source": "def clamp(n, lo, hi):\n    return n\n",
         "prompt": "clamp(n, lo, hi) must keep n inside lo..hi. Change only the return. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "min(",
+        "fn": "clamp",
+        "cases": [((5, 0, 3), 3), ((-1, 0, 3), 0), ((2, 0, 3), 2)],
         "check": _check_clamp,
     },
     {
@@ -70,6 +74,8 @@ TASKS: List[Dict[str, Any]] = [
         "source": "def sign(n):\n    return 1\n",
         "prompt": "sign(n) must be -1, 0, or 1. Change only the return. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "return -1",
+        "fn": "sign",
+        "cases": [((-4,), -1), ((0,), 0), ((9,), 1)],
         "check": _check_sign,
     },
     {
@@ -83,6 +89,31 @@ TASKS: List[Dict[str, Any]] = [
         "check": _check_span,
     },
 ]
+
+
+def diagnose(task: Dict[str, Any], src: str) -> str:
+    """What the current code returns. Never the patch."""
+    if task.get("test"):
+        return "the test file failed"
+    fn_name = str(task.get("fn") or "")
+    cases = task.get("cases") or []
+    if not fn_name or not cases:
+        return ""
+    ns: Dict[str, Any] = {}
+    try:
+        exec(src, ns)  # noqa: S102
+        fn = ns.get(fn_name)
+        if not callable(fn):
+            return f"{fn_name} is missing"
+        lines = []
+        for args, want in cases:
+            got = fn(*args)
+            if got != want:
+                shown = args[0] if len(args) == 1 else args
+                lines.append(f"{fn_name}({shown}) returned {got}, expected {want}")
+        return "; ".join(lines)[:300]
+    except Exception:
+        return "the function raised"
 
 
 def _load(path: Path) -> Dict[str, Any]:

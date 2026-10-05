@@ -61,7 +61,14 @@ def test_span_uses_a_second_file_and_a_failed_edit_reverts(tmp_path: Path) -> No
     assert fixed.returncode == 0
 
 
-def test_checkers_reject_the_broken_source() -> None:
+def test_failing_cases_do_not_contain_the_patch() -> None:
+    from core.kernel.curriculum import diagnose
+
+    sign = next(t for t in TASKS if t["id"] == "sign")
+    note = diagnose(sign, sign["source"])
+    assert "returned 1, expected -1" in note
+    assert "return -1" not in note
+    assert sign["banned"] not in note
     for task in TASKS:
         assert checker_for(task["id"])(task["source"]) is False
     assert checker_for("clamp")("def clamp(n, lo, hi):\n    return min(max(n, lo), hi)\n") is True

@@ -1,22 +1,6 @@
 {
-  "ts": "2026-10-05T22:15:39.418977+00:00",
-  "ok": true,
-  "honest": true,
-  "note": "tool edit then tests. generate-only is not a pass",
-  "task": "span",
-  "failing": "span([1, 4, 2]) returned 0, expected 3; span([5]) returned 0, expected 0; span([]) returned 0, expected 0",
-  "response_tail": "ef span(nums):\n    if not nums:\n        return 0\n    min_val = max_val = nums[0]\n    for num in nums:\n        if num < min_val:\n            min_val = num\n        elif num > max_val:\n            max_val = num\n    return max_val - min_val\n```",
-  "repair": "span([1, 4, 2]) returned 4, expected 3; span([5]) returned 1, expected 0; span([]) returned 0, expected 0",
-  "strategy": "tool_runtime",
-  "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": true,
-  "tools": [
-    "replace_file"
-  ],
-  "tests_ok": true,
-  "tx": [
-    "begin",
-    "promote"
-  ]
+  "ts": "2026-10-05T23:10:10.923113+00:00",
+  "ok": false,
+  "honest": false,
+  "note": "curriculum_hold"
 }

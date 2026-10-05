@@ -27,6 +27,26 @@ def _check_sign(src: str) -> bool:
     return callable(fn) and fn(-4) == -1 and fn(0) == 0 and fn(9) == 1
 
 
+def _check_span(src: str) -> bool:
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    fn = ns.get("span")
+    if not callable(fn):
+        return False
+    try:
+        return fn([1, 4, 2]) == 3 and fn([5]) == 0 and fn([]) == 0
+    except Exception:
+        return False
+
+
+SPAN_TEST = (
+    "from bounds import span\n"
+    "assert span([1, 4, 2]) == 3\n"
+    "assert span([5]) == 0\n"
+    "assert span([]) == 0\n"
+)
+
+
 TASKS: List[Dict[str, Any]] = [
     {
         "id": "add",
@@ -51,6 +71,16 @@ TASKS: List[Dict[str, Any]] = [
         "prompt": "sign(n) must be -1, 0, or 1. Change only the return. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "return -1",
         "check": _check_sign,
+    },
+    {
+        "id": "span",
+        "file": "bounds.py",
+        "source": "def span(nums):\n    return 0\n",
+        "also": {"test_bounds.py": SPAN_TEST},
+        "test": "test_bounds.py",
+        "prompt": "test_bounds.py fails. Change only the return in bounds.py. Reply with exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
+        "banned": "max(nums)",
+        "check": _check_span,
     },
 ]
 

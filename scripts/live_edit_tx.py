@@ -64,13 +64,27 @@ def main() -> int:
     workspace = parent / "ws"
     workspace.mkdir()
     (workspace / task["file"]).write_text(task["source"], encoding="utf-8")
-    prompt = pack(workspace, task["id"], [task["file"]], max_chars=800)
+    also = task.get("also") or {}
+    for name, body in also.items():
+        (workspace / name).write_text(body, encoding="utf-8")
+    prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=800)
     prompt += "\n\n" + task["prompt"]
     try:
         text = _ask(prompt)
         row["response_tail"] = text[-240:]
 
         def tests_ok() -> bool:
+            if task.get("test"):
+                import subprocess
+                import sys
+                proc = subprocess.run(
+                    [sys.executable, str(workspace / task["test"])],
+                    cwd=str(workspace),
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+                return proc.returncode == 0
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
         result = run_model_edit(workspace, task["file"], text, tests_ok)

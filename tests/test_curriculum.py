@@ -9,6 +9,8 @@ def test_prompt_does_not_contain_the_answer() -> None:
     for task in TASKS:
         assert task["banned"] not in task["prompt"]
         assert task["banned"] not in task["source"]
+        for body in (task.get("also") or {}).values():
+            assert task["banned"] not in body
 
 
 def test_fresh_root_starts_at_add(tmp_path: Path) -> None:
@@ -31,7 +33,32 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "clamp")
     assert next_task(tmp_path)["id"] == "sign"
     mark_passed(tmp_path, "sign")
+    assert next_task(tmp_path)["id"] == "span"
+    mark_passed(tmp_path, "span")
     assert next_task(tmp_path) is None
+
+
+def test_span_uses_a_second_file_and_a_failed_edit_reverts(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    from core.kernel.product_loop import run_edit
+
+    task = next(t for t in TASKS if t["id"] == "span")
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "bounds.py").write_text(task["source"], encoding="utf-8")
+    (ws / "test_bounds.py").write_text(task["also"]["test_bounds.py"], encoding="utf-8")
+    broken = subprocess.run([sys.executable, str(ws / "test_bounds.py")], cwd=str(ws), capture_output=True, text=True)
+    assert broken.returncode != 0
+    row = run_edit(ws, "bounds.py", "return 0", "return 1", lambda: False)
+    assert row["honest"] is False
+    assert "revert" in row["tx"]
+    assert (ws / "bounds.py").read_text(encoding="utf-8") == task["source"]
+    assert "span([1, 4, 2])" in (ws / "test_bounds.py").read_text(encoding="utf-8")
+    (ws / "bounds.py").write_text("def span(nums):\n    return (max(nums) - min(nums)) if nums else 0\n", encoding="utf-8")
+    fixed = subprocess.run([sys.executable, str(ws / "test_bounds.py")], cwd=str(ws), capture_output=True, text=True)
+    assert fixed.returncode == 0
 
 
 def test_checkers_reject_the_broken_source() -> None:
@@ -39,3 +66,5 @@ def test_checkers_reject_the_broken_source() -> None:
         assert checker_for(task["id"])(task["source"]) is False
     assert checker_for("clamp")("def clamp(n, lo, hi):\n    return min(max(n, lo), hi)\n") is True
     assert checker_for("sign")("def sign(n):\n    return (n > 0) - (n < 0)\n") is True
+    assert checker_for("span")("def span(nums):\n    return (max(nums) - min(nums)) if nums else 0\n") is True
+

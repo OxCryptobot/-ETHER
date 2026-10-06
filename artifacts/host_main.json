@@ -1,16 +1,16 @@
 {
-  "ts": "2026-10-05T23:09:57.734416+00:00",
+  "ts": "2026-10-06T00:11:41.284950+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-05T23:09:57.885752+00:00",
+    "ts": "2026-10-06T00:11:41.450256+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-05T23:10:10.939391+00:00",
+    "ts": "2026-10-06T00:11:54.089556+00:00",
     "os": "nt",
     "ok": true,
     "add_rc": 128,
@@ -24,7 +24,7 @@
     },
     "via": "gh_token_url",
     "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   0df8b579c..10a92e4f9  HEAD -> main\n",
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   a7ca79811..95a94138a  HEAD -> main\n",
     "sync_retry": {
       "ok": false,
       "hard_reset": false,
@@ -37,7 +37,7 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   0df8b579c..10a92e4f9  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   a7ca79811..95a94138a  HEAD -> main\n"
     }
   },
   "runner": {
@@ -64,7 +64,7 @@
     ],
     "honest": false,
     "lesson": "honest=True ok=True | clamp: pass | sign: fail | sign: fail | sign: pass | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: fail | span: pass",
-    "learned": true,
+    "learned": false,
     "scale": {
       "repeatable": true,
       "checker_writes": 0
@@ -77,7 +77,7 @@
   "day_learn": {
     "ok": true,
     "skipped": true,
-    "day": "2026-10-05",
+    "day": "2026-10-06",
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",

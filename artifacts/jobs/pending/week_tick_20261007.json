@@ -1,0 +1,13 @@
+{
+  "id": "week_tick_20261007",
+  "note": "FAST week tick: scripts.ether_week_tick stamp energy + board. Wheels on. Do not invent ollama.",
+  "continue_on_fail": true,
+  "class": "fast",
+  "measurement": true,
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "-m", "scripts.ether_week_tick"],
+      "timeout": 90
+    }
+  ]
+}

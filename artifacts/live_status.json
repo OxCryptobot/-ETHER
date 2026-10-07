@@ -1,15 +1,15 @@
 {
   "live": true,
   "stale": false,
-  "age_hours": 0.41,
+  "age_hours": 0.02,
   "max_age_hours": 6.0,
   "same_utc_day": true,
   "require": "scripts.host_main.tick on 1650",
   "github_runner": "optional",
-  "app_alive_ts": "2026-10-07T01:46:42.684321+00:00",
-  "attach_updated": "2026-10-07T01:47:07.505151+00:00",
+  "app_alive_ts": "2026-10-07T03:09:28.464409+00:00",
+  "attach_updated": "2026-10-07T03:09:41.056382+00:00",
   "attach_ollama": true,
-  "writer": null,
-  "checked_at": "2026-10-07T02:11:14.089375+00:00",
+  "writer": "exe",
+  "checked_at": "2026-10-07T03:10:28.538884+00:00",
   "note": "open exe is not LIVE. stale app_alive is FAIL."
 }

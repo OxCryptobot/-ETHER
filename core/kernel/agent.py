@@ -67,11 +67,12 @@ def cycle(
     from core.kernel.day_learn import learn
 
     learned = learn(root, now)
+    held = edit_row.get("note") == "curriculum_hold"
     row = {
         "ok": True,
-        "decision": "edit",
+        "decision": "hold" if held else "edit",
         "stages": stages,
-        "honest": bool(edit_row.get("honest")),
+        "honest": bool(scale.get("honest")) if held else bool(edit_row.get("honest")),
         "lesson": lesson,
         "learned": bool(learned.get("skipped")),
         "scale": {"repeatable": scale.get("repeatable"), "checker_writes": (scale.get("checker") or {}).get("writes")},

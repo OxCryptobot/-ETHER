@@ -35,6 +35,8 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "sign")
     assert next_task(tmp_path)["id"] == "span"
     mark_passed(tmp_path, "span")
+    assert next_task(tmp_path)["id"] == "uniq"
+    mark_passed(tmp_path, "uniq")
     assert next_task(tmp_path) is None
 
 

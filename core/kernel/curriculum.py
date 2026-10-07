@@ -39,6 +39,25 @@ def _check_span(src: str) -> bool:
         return False
 
 
+def _check_uniq(src: str) -> bool:
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    fn = ns.get("uniq")
+    if not callable(fn):
+        return False
+    try:
+        return fn([1, 1, 2, 1]) == [1, 2] and fn([]) == [] and fn([3, 3]) == [3]
+    except Exception:
+        return False
+
+
+UNIQ_TEST = (
+    "from uniq import uniq\n"
+    "assert uniq([1, 1, 2, 1]) == [1, 2]\n"
+    "assert uniq([]) == []\n"
+    "assert uniq([3, 3]) == [3]\n"
+)
+
 SPAN_TEST = (
     "from bounds import span\n"
     "assert span([1, 4, 2]) == 3\n"
@@ -89,6 +108,18 @@ TASKS: List[Dict[str, Any]] = [
         "prompt": "test_bounds.py fails. Reply with a complete def span function, or exactly two lines:\nOLD: <the current line>\nNEW: <the fixed line>\n",
         "banned": "max(nums)",
         "check": _check_span,
+    },
+    {
+        "id": "uniq",
+        "file": "uniq.py",
+        "source": "def uniq(nums):\n    return list(nums)\n",
+        "also": {"test_uniq.py": UNIQ_TEST},
+        "test": "test_uniq.py",
+        "fn": "uniq",
+        "cases": [(([1, 1, 2, 1],), [1, 2]), (([],), []), (([3, 3],), [3])],
+        "prompt": "test_uniq.py fails. Keep the first time each value appears, in that order. Reply with a complete def uniq function.\n",
+        "banned": "dict.fromkeys",
+        "check": _check_uniq,
     },
 ]
 

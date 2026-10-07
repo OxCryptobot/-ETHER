@@ -47,6 +47,26 @@ def test_two_honest_timestamps_open_a_read_only_look(tmp_path: Path) -> None:
     assert row["second_look"]["worker"] == "read_only"
 
 
+def test_hold_does_not_erase_earlier_passes(tmp_path: Path) -> None:
+    _edit(tmp_path, "t1", True)
+    advance(tmp_path)
+    _edit(tmp_path, "t2", True)
+    advance(tmp_path)
+    art = tmp_path / "artifacts"
+    (art / "live_edit_tx.json").write_text(json.dumps({
+        "ts": "t3",
+        "ok": False,
+        "honest": False,
+        "note": "curriculum_hold",
+    }), encoding="utf-8")
+    row = advance(tmp_path)
+    assert row["held"] is True
+    assert row["honest"] is True
+    assert row["checker"]["note"] == "curriculum_hold"
+    assert row["second_look"]["n"] == 2
+    assert row["second_look"]["writes"] == 0
+
+
 def test_a_failed_edit_does_not_count(tmp_path: Path) -> None:
     _edit(tmp_path, "t1", False)
     row = advance(tmp_path)

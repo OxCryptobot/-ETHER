@@ -39,6 +39,18 @@ def _check_span(src: str) -> bool:
         return False
 
 
+def _check_above(src: str) -> bool:
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    fn = ns.get("above")
+    if not callable(fn):
+        return False
+    try:
+        return fn([1, 5, 3], 3) == 1 and fn([], 0) == 0 and fn([2, 2], 1) == 2
+    except Exception:
+        return False
+
+
 def _check_uniq(src: str) -> bool:
     ns: Dict[str, Any] = {}
     exec(src, ns)  # noqa: S102
@@ -120,6 +132,16 @@ TASKS: List[Dict[str, Any]] = [
         "prompt": "test_uniq.py fails. Keep the first time each value appears, in that order. Reply with a complete def uniq function.\n",
         "banned": "dict.fromkeys",
         "check": _check_uniq,
+    },
+    {
+        "id": "above",
+        "file": "above.py",
+        "source": "def above(nums, limit):\n    return len(nums)\n",
+        "fn": "above",
+        "cases": [(([1, 5, 3], 3), 1), (([], 0), 0), (([2, 2], 1), 2)],
+        "prompt": "above(nums, limit) counts values strictly greater than limit. Reply with a complete def above function.\n",
+        "banned": "n > limit",
+        "check": _check_above,
     },
 ]
 

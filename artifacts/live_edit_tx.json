@@ -1,21 +1,6 @@
 {
-  "ts": "2026-10-07T01:46:56.222962+00:00",
-  "ok": true,
-  "honest": true,
-  "note": "tool edit then tests. generate-only is not a pass",
-  "task": "above",
-  "failing": "above(([1, 5, 3], 3)) returned 3, expected 1; above(([], 0)) returned 0, expected 0; above(([2, 2], 1)) returned 2, expected 2",
-  "response_tail": "```python\ndef above(nums, limit):\n    return sum(1 for num in nums if num > limit)\n```",
-  "strategy": "tool_runtime",
-  "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": true,
-  "tools": [
-    "replace_file"
-  ],
-  "tests_ok": true,
-  "tx": [
-    "begin",
-    "promote"
-  ]
+  "ts": "2026-10-07T02:11:12.144730+00:00",
+  "ok": false,
+  "honest": false,
+  "note": "curriculum_hold"
 }

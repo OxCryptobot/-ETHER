@@ -1,12 +1,13 @@
 {
   "ok": true,
-  "honest": false,
+  "held": false,
+  "honest": true,
   "repeatable": true,
   "checker": {
     "gem": "clear_quartz",
     "writes": 0,
-    "ok": false,
-    "skipped": true
+    "ok": true,
+    "skipped": false
   },
   "second_look": {
     "open": true,
@@ -14,6 +15,6 @@
     "stream": false,
     "cross_repo": false,
     "worker": "read_only",
-    "n": 79
+    "n": 80
   }
 }

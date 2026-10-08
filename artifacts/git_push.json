@@ -1,7 +1,7 @@
 {
-  "ts": "2026-10-08T03:09:15.310547+00:00",
+  "ts": "2026-10-08T04:09:27.118862+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "add_rc": 128,
   "ahead": 4,
   "sync": {
@@ -13,7 +13,7 @@
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at 8cf874788cf99b204bb3335a8148a5eea356446a but expected 85ee58845f9fa982cf4297a3f534f26d74789e47)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   319accd02..bb7a9b416  HEAD -> main\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
@@ -22,10 +22,10 @@
     "note": "stash_failed"
   },
   "worktree": {
-    "ok": false,
+    "ok": true,
     "hard_reset": false,
-    "note": "worktree",
-    "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at 8cf874788cf99b204bb3335a8148a5eea356446a but expected 85ee58845f9fa982cf4297a3f534f26d74789e47)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   319accd02..bb7a9b416  HEAD -> main\n"
   }
 }

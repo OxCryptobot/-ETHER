@@ -77,6 +77,48 @@ SPAN_TEST = (
     "assert span([]) == 0\n"
 )
 
+MERGE_SRC = (
+    "def merge_intervals(intervals):\n"
+    "    if not intervals:\n"
+    "        return []\n"
+    "    out = []\n"
+    "    for start, end in intervals:\n"
+    "        if not out:\n"
+    "            out.append((start, end))\n"
+    "            continue\n"
+    "        ps, pe = out[-1]\n"
+    "        if start <= pe and end <= pe:\n"
+    "            continue\n"
+    "        out.append((start, end))\n"
+    "    return out\n"
+)
+
+MERGE_TEST = (
+    "import sys\n"
+    "from pathlib import Path\n"
+    "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
+    "from intervals import merge_intervals\n"
+    "assert merge_intervals([]) == []\n"
+    "assert merge_intervals([(1, 2), (4, 5)]) == [(1, 2), (4, 5)]\n"
+    "assert merge_intervals([(1, 3), (2, 5)]) == [(1, 5)]\n"
+)
+
+
+def _check_merge(src: str) -> bool:
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    fn = ns.get("merge_intervals")
+    if not callable(fn):
+        return False
+    try:
+        return (
+            fn([]) == []
+            and fn([(1, 2), (4, 5)]) == [(1, 2), (4, 5)]
+            and fn([(1, 3), (2, 5)]) == [(1, 5)]
+        )
+    except Exception:
+        return False
+
 
 TASKS: List[Dict[str, Any]] = [
     {
@@ -143,7 +185,36 @@ TASKS: List[Dict[str, Any]] = [
         "banned": "n > limit",
         "check": _check_above,
     },
+    {
+        "id": "merge",
+        "file": "intervals.py",
+        "source": MERGE_SRC,
+        "also": {"tests/test_merge.py": MERGE_TEST},
+        "test": "tests/test_merge.py",
+        "repo": True,
+        "budget": 1600,
+        "predict": 320,
+        "fn": "merge_intervals",
+        "cases": [
+            (([(1, 3), (2, 5)],), [(1, 5)]),
+            (([(1, 2), (4, 5)],), [(1, 2), (4, 5)]),
+            (([],), []),
+        ],
+        "prompt": "tests/test_merge.py fails. Overlapping intervals must become one range. Reply with a complete def merge_intervals function.\n",
+        "banned": "max(pe, end)",
+        "check": _check_merge,
+    },
 ]
+
+
+def write_task(workspace: Path, task: Dict[str, Any]) -> None:
+    dest = workspace / task["file"]
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(task["source"], encoding="utf-8")
+    for name, body in (task.get("also") or {}).items():
+        path = workspace / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body, encoding="utf-8")
 
 
 def diagnose(task: Dict[str, Any], src: str) -> str:
@@ -163,7 +234,7 @@ def diagnose(task: Dict[str, Any], src: str) -> str:
             got = fn(*args)
             shown = args[0] if len(args) == 1 else args
             lines.append(f"{fn_name}({shown}) returned {got}, expected {want}")
-        return "; ".join(lines)[:300]
+        return "; ".join(lines)[:400]
     except Exception:
         return "the function raised"
 

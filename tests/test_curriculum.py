@@ -39,7 +39,46 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "uniq")
     assert next_task(tmp_path)["id"] == "above"
     mark_passed(tmp_path, "above")
+    task = next_task(tmp_path)
+    assert task is not None and task["id"] == "merge" and task["repo"] is True
+    mark_passed(tmp_path, "merge")
     assert next_task(tmp_path) is None
+
+
+def test_merge_is_a_repo_file_and_the_prompt_has_no_patch(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    from core.kernel.curriculum import diagnose, write_task
+
+    task = next(t for t in TASKS if t["id"] == "merge")
+    assert task["banned"] not in task["source"]
+    assert task["banned"] not in task["prompt"]
+    assert task["banned"] not in task["also"]["tests/test_merge.py"]
+    note = diagnose(task, task["source"])
+    assert "expected [(1, 5)]" in note
+    assert task["banned"] not in note
+    write_task(tmp_path, task)
+    assert (tmp_path / "intervals.py").is_file()
+    assert (tmp_path / "tests" / "test_merge.py").is_file()
+    broken = subprocess.run([sys.executable, str(tmp_path / "tests" / "test_merge.py")], cwd=str(tmp_path), capture_output=True, text=True)
+    assert broken.returncode != 0
+    (tmp_path / "intervals.py").write_text(
+        "def merge_intervals(intervals):\n"
+        "    if not intervals:\n"
+        "        return []\n"
+        "    out = []\n"
+        "    for start, end in sorted(intervals):\n"
+        "        if not out or start > out[-1][1]:\n"
+        "            out.append((start, end))\n"
+        "        else:\n"
+        "            ps, pe = out[-1]\n"
+        "            out[-1] = (ps, max(pe, end))\n"
+        "    return out\n",
+        encoding="utf-8",
+    )
+    fixed = subprocess.run([sys.executable, str(tmp_path / "tests" / "test_merge.py")], cwd=str(tmp_path), capture_output=True, text=True)
+    assert fixed.returncode == 0
 
 
 def test_span_uses_a_second_file_and_a_failed_edit_reverts(tmp_path: Path) -> None:

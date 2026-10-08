@@ -12,7 +12,7 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "live_edit_tx.json"
 
 
-def _ask(prompt: str, temperature: float = 0) -> str:
+def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
     from scripts.live_generate_probe import pick_model
 
     model = pick_model()
@@ -21,7 +21,7 @@ def _ask(prompt: str, temperature: float = 0) -> str:
         "messages": [{"role": "user", "content": prompt}],
         "stream": False,
         "think": False,
-        "options": {"temperature": temperature, "num_predict": 220},
+        "options": {"temperature": temperature, "num_predict": n},
     }).encode()
     req = urllib.request.Request(
         "http://127.0.0.1:11434/api/chat",
@@ -37,7 +37,7 @@ def _ask(prompt: str, temperature: float = 0) -> str:
 
 def main() -> int:
     from core.kernel.context_budget import pack
-    from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task, repair_note
+    from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task, repair_note, write_task
     from core.kernel.product_loop import extract_function, run_model_edit
 
     row = {
@@ -54,6 +54,7 @@ def main() -> int:
         print(json.dumps(row))
         return 0
     row["task"] = task["id"]
+    row["repo"] = bool(task.get("repo"))
     if os.name != "nt":
         row["note"] = "observe_only"
         OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -63,18 +64,17 @@ def main() -> int:
     parent = Path(tempfile.mkdtemp(prefix="ether_edit_"))
     workspace = parent / "ws"
     workspace.mkdir()
-    (workspace / task["file"]).write_text(task["source"], encoding="utf-8")
     also = task.get("also") or {}
-    for name, body in also.items():
-        (workspace / name).write_text(body, encoding="utf-8")
-    prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=800)
+    write_task(workspace, task)
+    predict = int(task.get("predict") or 220)
+    prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=int(task.get("budget") or 800))
     failing = diagnose(task, task["source"])
     if failing:
         prompt += "\n\nFailing cases:\n" + failing
         row["failing"] = failing
     prompt += "\n\n" + task["prompt"]
     try:
-        text = _ask(prompt)
+        text = _ask(prompt, n=predict)
         row["response_tail"] = text[-240:]
 
         def tests_ok() -> bool:
@@ -97,7 +97,7 @@ def main() -> int:
             note = repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
-                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4)
+                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4, n=predict)
                 result = run_model_edit(workspace, task["file"], text, tests_ok)
         row["response_tail"] = text[-240:]
         row.update(result)

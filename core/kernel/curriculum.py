@@ -268,10 +268,40 @@ def _passed(root: Path) -> List[str]:
     return []
 
 
+def kept(root: Path, task: Dict[str, Any]) -> bool:
+    from core.kernel.worktree import tree_path
+
+    path = tree_path(root) / str(task["file"])
+    if not path.is_file():
+        return False
+    try:
+        return bool(task["check"](path.read_text(encoding="utf-8")))
+    except Exception:
+        return False
+
+
+def hold_status(root: Path) -> Dict[str, Any]:
+    done = set(_passed(root))
+    repo_tasks = [task for task in TASKS if task.get("repo") and task["id"] in done]
+    if not repo_tasks:
+        return {"note": "curriculum_hold", "persisted": False}
+    last = repo_tasks[-1]
+    ok = kept(root, last)
+    return {
+        "note": "kept" if ok else "curriculum_hold",
+        "persisted": ok,
+        "task": last["id"],
+        "file": last["file"],
+    }
+
+
 def next_task(root: Path) -> Optional[Dict[str, Any]]:
     done = set(_passed(root))
     for task in TASKS:
         if task["id"] not in done:
+            return task
+    for task in reversed(TASKS):
+        if task.get("repo") and task["id"] in done and not kept(root, task):
             return task
     return None
 

@@ -56,7 +56,9 @@ artifacts/jobs/done/*.json
 artifacts/jobs/failed_archived/*.json
 artifacts/jobs/running/*.json
 
-# Environment
+# Model edit tree. It is its own git repo. Do not publish it as product source.
+edit_ws/
+edit_ws.snap/
 .env
 .env.*
 !.env.example

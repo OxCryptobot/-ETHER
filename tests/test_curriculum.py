@@ -42,7 +42,61 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     task = next_task(tmp_path)
     assert task is not None and task["id"] == "merge" and task["repo"] is True
     mark_passed(tmp_path, "merge")
+    assert next_task(tmp_path)["id"] == "merge"
+    from core.kernel.worktree import tree_path
+
+    fixed = (
+        "def merge_intervals(intervals):\n"
+        "    if not intervals:\n"
+        "        return []\n"
+        "    out = []\n"
+        "    for start, end in sorted(intervals):\n"
+        "        if not out or start > out[-1][1]:\n"
+        "            out.append((start, end))\n"
+        "        else:\n"
+        "            ps, pe = out[-1]\n"
+        "            out[-1] = (ps, max(pe, end))\n"
+        "    return out\n"
+    )
+    dest = tree_path(tmp_path)
+    dest.mkdir()
+    (dest / "intervals.py").write_text(fixed, encoding="utf-8")
     assert next_task(tmp_path) is None
+
+
+def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
+    from core.kernel.curriculum import hold_status, mark_passed
+    from core.kernel.worktree import seal, tree_path
+
+    for name in ("add", "clamp", "sign", "span", "uniq", "above", "merge"):
+        mark_passed(tmp_path, name)
+    assert next_task(tmp_path)["id"] == "merge"
+    fixed = (
+        "def merge_intervals(intervals):\n"
+        "    if not intervals:\n"
+        "        return []\n"
+        "    out = []\n"
+        "    for start, end in intervals:\n"
+        "        if out and start <= out[-1][1]:\n"
+        "            ps, pe = out[-1]\n"
+        "            out[-1] = (ps, max(pe, end))\n"
+        "        else:\n"
+        "            out.append((start, end))\n"
+        "    return out\n"
+    )
+    ws = tree_path(tmp_path)
+    ws.mkdir()
+    (ws / "intervals.py").write_text(fixed, encoding="utf-8")
+    (ws / "tests").mkdir()
+    row = seal(tmp_path, "merge")
+    assert row["rc"] == 0
+    assert (ws / ".git").is_dir()
+    assert not (tmp_path / ".git").exists()
+    assert next_task(tmp_path) is None
+    status = hold_status(tmp_path)
+    assert status["persisted"] is True
+    assert status["note"] == "kept"
+    assert (ws / "intervals.py").read_text(encoding="utf-8") == fixed
 
 
 def test_merge_is_a_repo_file_and_the_prompt_has_no_patch(tmp_path: Path) -> None:

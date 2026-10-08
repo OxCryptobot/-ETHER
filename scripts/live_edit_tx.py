@@ -48,7 +48,9 @@ def main() -> int:
     }
     task = next_task(ROOT)
     if task is None:
-        row["note"] = "curriculum_hold"
+        from core.kernel.curriculum import hold_status
+
+        row.update(hold_status(ROOT))
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(row))
@@ -61,9 +63,14 @@ def main() -> int:
         OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(row))
         return 0
-    parent = Path(tempfile.mkdtemp(prefix="ether_edit_"))
-    workspace = parent / "ws"
-    workspace.mkdir()
+    if task.get("repo"):
+        from core.kernel.worktree import ensure_tree
+
+        workspace = ensure_tree(ROOT)
+    else:
+        parent = Path(tempfile.mkdtemp(prefix="ether_edit_"))
+        workspace = parent / "ws"
+        workspace.mkdir()
     also = task.get("also") or {}
     write_task(workspace, task)
     predict = int(task.get("predict") or 220)
@@ -103,6 +110,10 @@ def main() -> int:
         row.update(result)
         if row.get("honest"):
             mark_passed(ROOT, task["id"])
+            if task.get("repo"):
+                from core.kernel.worktree import seal
+
+                row["seal"] = seal(ROOT, task["id"])
         from core.kernel.edit_memory import recall, remember
         prior = recall(ROOT)
         line = f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"

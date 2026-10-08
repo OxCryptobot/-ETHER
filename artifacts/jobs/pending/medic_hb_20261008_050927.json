@@ -1,0 +1,15 @@
+{
+  "id": "medic_hb_20261008_050927",
+  "job_class": "FAST",
+  "class": "fast",
+  "continue_on_fail": true,
+  "timeout": 120,
+  "note": "medic git heartbeat wake",
+  "steps": [
+    {
+      "argv": [".venv/Scripts/python.exe", "scripts/health_check.py", "--skip-sandbox"],
+      "timeout": 120,
+      "continue_on_fail": true
+    }
+  ]
+}

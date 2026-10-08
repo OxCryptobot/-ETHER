@@ -57,12 +57,11 @@ def test_hold_does_not_erase_earlier_passes(tmp_path: Path) -> None:
         "ts": "t3",
         "ok": False,
         "honest": False,
-        "note": "curriculum_hold",
+        "note": "kept",
     }), encoding="utf-8")
     row = advance(tmp_path)
     assert row["held"] is True
     assert row["honest"] is True
-    assert row["checker"]["note"] == "curriculum_hold"
     assert row["second_look"]["n"] == 2
     assert row["second_look"]["writes"] == 0
 

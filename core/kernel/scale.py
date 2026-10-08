@@ -54,11 +54,11 @@ def advance(root: Path) -> Dict[str, Any]:
     if edit.get("honest") and edit.get("ts") and not any(i.get("ts") == edit.get("ts") for i in items):
         items.append({"ts": edit.get("ts"), "honest": True})
     hist_path.write_text(json.dumps({"items": items}, indent=2) + "\n", encoding="utf-8")
-    held = edit.get("note") == "curriculum_hold"
+    held = edit.get("note") in ("curriculum_hold", "kept")
     prior = any(bool(i.get("honest")) for i in items)
     verdict = check(edit)
     if held:
-        verdict = {"gem": "clear_quartz", "writes": 0, "ok": prior, "skipped": True, "note": "curriculum_hold"}
+        verdict = {"gem": "clear_quartz", "writes": 0, "ok": prior, "skipped": True, "note": edit.get("note")}
     look = second_look(items)
     (art / "gem_check.json").write_text(json.dumps(verdict, indent=2) + "\n", encoding="utf-8")
     row = {

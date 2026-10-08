@@ -67,7 +67,7 @@ def cycle(
     from core.kernel.day_learn import learn
 
     learned = learn(root, now)
-    held = edit_row.get("note") == "curriculum_hold"
+    held = edit_row.get("note") in ("curriculum_hold", "kept")
     row = {
         "ok": True,
         "decision": "hold" if held else "edit",

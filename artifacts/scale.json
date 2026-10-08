@@ -1,14 +1,13 @@
 {
   "ok": true,
-  "held": true,
+  "held": false,
   "honest": true,
   "repeatable": true,
   "checker": {
     "gem": "clear_quartz",
     "writes": 0,
     "ok": true,
-    "skipped": true,
-    "note": "curriculum_hold"
+    "skipped": false
   },
   "second_look": {
     "open": true,
@@ -16,6 +15,6 @@
     "stream": false,
     "cross_repo": false,
     "worker": "read_only",
-    "n": 82
+    "n": 83
   }
 }

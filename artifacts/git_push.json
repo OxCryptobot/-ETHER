@@ -1,32 +1,32 @@
 {
-  "ts": "2026-10-09T03:09:30.174728+00:00",
+  "ts": "2026-10-09T04:09:29.094180+00:00",
   "os": "nt",
-  "ok": true,
+  "ok": false,
   "add_rc": 0,
-  "ahead": 270,
+  "ahead": 390,
   "commit_rc": 0,
   "sync": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 271,
+    "ahead": 391,
     "dirty": true,
     "note": "rebase_abort"
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   13fbe2ab4..e82fbc5d7  HEAD -> main\n",
+  "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 271,
+    "ahead": 391,
     "dirty": true,
     "note": "rebase_abort"
   },
   "worktree": {
-    "ok": true,
+    "ok": false,
     "hard_reset": false,
-    "note": "worktree_push",
-    "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   13fbe2ab4..e82fbc5d7  HEAD -> main\n"
+    "note": "worktree",
+    "push_rc": 1,
+    "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n"
   }
 }

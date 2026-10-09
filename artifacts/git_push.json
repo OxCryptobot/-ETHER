@@ -1,24 +1,24 @@
 {
-  "ts": "2026-10-09T06:13:49.691191+00:00",
+  "ts": "2026-10-09T07:13:02.893552+00:00",
   "os": "nt",
   "ok": false,
   "add_rc": 0,
-  "ahead": 636,
+  "ahead": 754,
   "commit_rc": 0,
   "sync": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 637,
+    "ahead": 755,
     "dirty": true,
     "note": "rebase_abort"
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at fceb564c432fa3d69ef6c5c24519fe36a9607c29 but expected 57f78e391deedf475efae5178bddab98293c4f85)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 637,
+    "ahead": 755,
     "dirty": true,
     "note": "rebase_abort"
   },
@@ -27,6 +27,6 @@
     "hard_reset": false,
     "note": "worktree",
     "push_rc": 1,
-    "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at fceb564c432fa3d69ef6c5c24519fe36a9607c29 but expected 57f78e391deedf475efae5178bddab98293c4f85)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
   }
 }

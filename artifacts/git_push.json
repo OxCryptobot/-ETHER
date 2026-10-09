@@ -1,32 +1,32 @@
 {
-  "ts": "2026-10-09T07:13:02.893552+00:00",
+  "ts": "2026-10-09T07:13:19.083279+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "add_rc": 0,
-  "ahead": 754,
+  "ahead": 755,
   "commit_rc": 0,
   "sync": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 755,
+    "ahead": 756,
     "dirty": true,
     "note": "rebase_abort"
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at fceb564c432fa3d69ef6c5c24519fe36a9607c29 but expected 57f78e391deedf475efae5178bddab98293c4f85)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fceb564c4..cbcc071ba  HEAD -> main\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 755,
+    "ahead": 757,
     "dirty": true,
     "note": "rebase_abort"
   },
   "worktree": {
-    "ok": false,
+    "ok": true,
     "hard_reset": false,
-    "note": "worktree",
-    "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]     HEAD -> main (cannot lock ref 'refs/heads/main': is at fceb564c432fa3d69ef6c5c24519fe36a9607c29 but expected 57f78e391deedf475efae5178bddab98293c4f85)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fceb564c4..cbcc071ba  HEAD -> main\n"
   }
 }

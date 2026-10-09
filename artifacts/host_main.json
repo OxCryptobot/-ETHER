@@ -1,44 +1,44 @@
 {
-  "ts": "2026-10-09T21:19:38.647977+00:00",
+  "ts": "2026-10-09T22:10:35.824873+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-09T21:19:38.808697+00:00",
+    "ts": "2026-10-09T22:10:35.985033+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-09T21:19:57.432858+00:00",
+    "ts": "2026-10-09T22:10:55.707119+00:00",
     "os": "nt",
     "ok": true,
     "add_rc": 0,
-    "ahead": 2333,
+    "ahead": 2435,
     "commit_rc": 0,
     "sync": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 2334,
+      "ahead": 2436,
       "dirty": true,
       "note": "rebase_abort"
     },
     "via": "gh_token_url",
     "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   65f967994..1c9b92e34  HEAD -> main\n",
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fed4fd94e..3b891b925  HEAD -> main\n",
     "sync_retry": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 2334,
+      "ahead": 2436,
       "dirty": true,
-      "note": "stash_failed"
+      "note": "rebase_abort"
     },
     "worktree": {
       "ok": true,
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   65f967994..1c9b92e34  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fed4fd94e..3b891b925  HEAD -> main\n"
     }
   },
   "runner": {

@@ -6,6 +6,23 @@ from core.kernel.product_loop import run_edit, run_model_edit
 from core.kernel.subagent import isolate
 
 
+def test_revert_keeps_the_worktree_git_dir(tmp_path: Path) -> None:
+    from core.kernel.edit_tx import EditTx
+
+    ws = tmp_path / "edit_ws"
+    git = ws / ".git" / "objects"
+    git.mkdir(parents=True)
+    (git / "pack").write_text("keep", encoding="utf-8")
+    (ws / "ends.py").write_text("def ends(s):\n    return s[:1]\n", encoding="utf-8")
+    tx = EditTx(ws, tmp_path / "edit_ws.snap")
+    tx.begin()
+    assert not (tmp_path / "edit_ws.snap" / ".git").exists()
+    (ws / "ends.py").write_text("broken\n", encoding="utf-8")
+    tx.revert()
+    assert (git / "pack").read_text(encoding="utf-8") == "keep"
+    assert "return s[:1]" in (ws / "ends.py").read_text(encoding="utf-8")
+
+
 def test_prose_is_not_a_pass(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()

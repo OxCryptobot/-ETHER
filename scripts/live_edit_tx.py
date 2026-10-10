@@ -74,16 +74,19 @@ def main() -> int:
     also = task.get("also") or {}
     write_task(workspace, task)
     predict = int(task.get("predict") or 220)
-    prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=int(task.get("budget") or 800))
     failing = diagnose(task, task["source"])
     if failing:
-        prompt += "\n\nFailing cases:\n" + failing
         row["failing"] = failing
-    prompt += "\n\n" + task["prompt"]
-    try:
-        text = _ask(prompt, n=predict)
-        row["response_tail"] = text[-240:]
+    if task.get("must_read"):
+        from core.kernel.read_gate import blind_prompt
 
+        prompt = blind_prompt(task, failing)
+    else:
+        prompt = pack(workspace, task["id"], [task["file"], *also.keys()], max_chars=int(task.get("budget") or 800))
+        if failing:
+            prompt += "\n\nFailing cases:\n" + failing
+        prompt += "\n\n" + task["prompt"]
+    try:
         def tests_ok() -> bool:
             if task.get("test"):
                 import subprocess
@@ -98,15 +101,46 @@ def main() -> int:
                 return proc.returncode == 0
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
-        result = run_model_edit(workspace, task["file"], text, tests_ok)
-        if not result.get("honest"):
+        if task.get("must_read"):
+            from core.kernel.read_gate import file_names, take_read
+
+            allowed = file_names(task)
+            text = _ask(prompt, n=48)
+            path = take_read(text, allowed)
+            if path != task["file"]:
+                text = _ask(prompt + "\nThat was not a READ line. Reply with one READ line.\n", temperature=0.3, n=48)
+                path = take_read(text, allowed)
+            row["read"] = path
+            if path != task["file"]:
+                text_tail = text
+                result = {
+                    "ok": False,
+                    "honest": False,
+                    "strategy": "generate",
+                    "mode": "live",
+                    "generate_fallback": True,
+                    "reason": "no_read",
+                    "tests_ok": False,
+                }
+            else:
+                body = (workspace / path).read_text(encoding="utf-8")
+                prompt = prompt + "\n\n### " + path + "\n" + body + "\n\n" + task["prompt"]
+                text = _ask(prompt, n=predict)
+                text_tail = text
+                result = run_model_edit(workspace, task["file"], text, tests_ok)
+        else:
+            text = _ask(prompt, n=predict)
+            text_tail = text
+            result = run_model_edit(workspace, task["file"], text, tests_ok)
+        if not result.get("honest") and result.get("reason") != "no_read":
             attempted = extract_function(text) or task["source"]
             note = repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
                 text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4, n=predict)
+                text_tail = text
                 result = run_model_edit(workspace, task["file"], text, tests_ok)
-        row["response_tail"] = text[-240:]
+        row["response_tail"] = text_tail[-240:]
         row.update(result)
         if row.get("honest"):
             mark_passed(ROOT, task["id"])

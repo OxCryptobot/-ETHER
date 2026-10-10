@@ -42,6 +42,8 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     task = next_task(tmp_path)
     assert task is not None and task["id"] == "merge" and task["repo"] is True
     mark_passed(tmp_path, "merge")
+    assert next_task(tmp_path)["id"] == "ends"
+    mark_passed(tmp_path, "ends")
     assert next_task(tmp_path)["id"] == "merge"
     from core.kernel.worktree import tree_path
 
@@ -61,6 +63,8 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     dest = tree_path(tmp_path)
     dest.mkdir()
     (dest / "intervals.py").write_text(fixed, encoding="utf-8")
+    assert next_task(tmp_path)["id"] == "ends"
+    (dest / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
     assert next_task(tmp_path) is None
 
 
@@ -68,8 +72,8 @@ def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
     from core.kernel.curriculum import hold_status, mark_passed
     from core.kernel.worktree import seal, tree_path
 
-    for name in ("add", "clamp", "sign", "span", "uniq", "above", "merge"):
-        mark_passed(tmp_path, name)
+    for task in TASKS:
+        mark_passed(tmp_path, task["id"])
     assert next_task(tmp_path)["id"] == "merge"
     fixed = (
         "def merge_intervals(intervals):\n"
@@ -92,11 +96,26 @@ def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
     assert row["rc"] == 0
     assert (ws / ".git").is_dir()
     assert not (tmp_path / ".git").exists()
+    (ws / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
     assert next_task(tmp_path) is None
     status = hold_status(tmp_path)
     assert status["persisted"] is True
     assert status["note"] == "kept"
+    assert status["file"] == "ends.py"
     assert (ws / "intervals.py").read_text(encoding="utf-8") == fixed
+
+
+def test_the_source_is_hidden_until_it_is_read() -> None:
+    from core.kernel.read_gate import blind_prompt, take_read
+
+    task = next(t for t in TASKS if t["id"] == "ends")
+    prompt = blind_prompt(task, "ends('ether') returned e, expected er")
+    assert task["source"] not in prompt
+    assert task["banned"] not in prompt
+    assert "ends.py" in prompt
+    assert take_read("READ: ends.py\n", ["ends.py", "tests/test_ends.py"]) == "ends.py"
+    assert take_read("READ: secrets.py\n", ["ends.py"]) is None
+    assert take_read("def ends(s):\n    return s[0] + s[-1]\n", ["ends.py"]) is None
 
 
 def test_merge_is_a_repo_file_and_the_prompt_has_no_patch(tmp_path: Path) -> None:

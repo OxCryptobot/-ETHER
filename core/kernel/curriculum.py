@@ -104,6 +104,18 @@ MERGE_TEST = (
 )
 
 
+def _check_ends(src: str) -> bool:
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    fn = ns.get("ends")
+    if not callable(fn):
+        return False
+    try:
+        return fn("ether") == "er" and fn("a") == "a" and fn("") == ""
+    except Exception:
+        return False
+
+
 def _check_merge(src: str) -> bool:
     ns: Dict[str, Any] = {}
     exec(src, ns)  # noqa: S102
@@ -204,6 +216,32 @@ TASKS: List[Dict[str, Any]] = [
         "banned": "max(pe, end)",
         "check": _check_merge,
     },
+    {
+        "id": "ends",
+        "file": "ends.py",
+        "source": "def ends(s):\n    return s[0] if s else \"\"\n",
+        "also": {
+            "tests/test_ends.py": (
+                "import sys\n"
+                "from pathlib import Path\n"
+                "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
+                "from ends import ends\n"
+                "assert ends('ether') == 'er'\n"
+                "assert ends('a') == 'a'\n"
+                "assert ends('') == ''\n"
+            )
+        },
+        "test": "tests/test_ends.py",
+        "repo": True,
+        "must_read": True,
+        "budget": 1200,
+        "predict": 160,
+        "fn": "ends",
+        "cases": [(("ether",), "er"), (("a",), "a"), (("",), "")],
+        "prompt": "Reply with a complete def ends function. First and last character, or empty.\n",
+        "banned": "s[-1]",
+        "check": _check_ends,
+    },
 ]
 
 
@@ -285,14 +323,11 @@ def hold_status(root: Path) -> Dict[str, Any]:
     repo_tasks = [task for task in TASKS if task.get("repo") and task["id"] in done]
     if not repo_tasks:
         return {"note": "curriculum_hold", "persisted": False}
+    missing = [task for task in repo_tasks if not kept(root, task)]
+    if missing:
+        return {"note": "curriculum_hold", "persisted": False, "task": missing[0]["id"], "file": missing[0]["file"]}
     last = repo_tasks[-1]
-    ok = kept(root, last)
-    return {
-        "note": "kept" if ok else "curriculum_hold",
-        "persisted": ok,
-        "task": last["id"],
-        "file": last["file"],
-    }
+    return {"note": "kept", "persisted": True, "task": last["id"], "file": last["file"]}
 
 
 def next_task(root: Path) -> Optional[Dict[str, Any]]:
@@ -300,7 +335,7 @@ def next_task(root: Path) -> Optional[Dict[str, Any]]:
     for task in TASKS:
         if task["id"] not in done:
             return task
-    for task in reversed(TASKS):
+    for task in TASKS:
         if task.get("repo") and task["id"] in done and not kept(root, task):
             return task
     return None

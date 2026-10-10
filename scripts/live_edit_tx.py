@@ -105,13 +105,19 @@ def main() -> int:
             from core.kernel.read_gate import file_names, take_read
 
             allowed = file_names(task)
+            seen = []
             text = _ask(prompt, n=48)
-            path = take_read(text, allowed)
-            if path != task["file"]:
-                text = _ask(prompt + "\nThat was not a READ line. Reply with one READ line.\n", temperature=0.3, n=48)
+            for _ in range(3):
                 path = take_read(text, allowed)
-            row["read"] = path
-            if path != task["file"]:
+                if path and path not in seen:
+                    seen.append(path)
+                    body = (workspace / path).read_text(encoding="utf-8")
+                    prompt = prompt + "\n\n### " + path + "\n" + body
+                    if path == task["file"]:
+                        break
+                text = _ask(prompt + "\nReply with one READ line for a file not opened yet.\n", temperature=0.3, n=48)
+            row["read"] = seen
+            if task["file"] not in seen:
                 text_tail = text
                 result = {
                     "ok": False,
@@ -123,8 +129,7 @@ def main() -> int:
                     "tests_ok": False,
                 }
             else:
-                body = (workspace / path).read_text(encoding="utf-8")
-                prompt = prompt + "\n\n### " + path + "\n" + body + "\n\n" + task["prompt"]
+                prompt = prompt + "\n\n" + task["prompt"]
                 text = _ask(prompt, n=predict)
                 text_tail = text
                 result = run_model_edit(workspace, task["file"], text, tests_ok)

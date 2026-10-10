@@ -115,6 +115,7 @@ def test_the_source_is_hidden_until_it_is_read() -> None:
     assert "ends.py" in prompt
     assert take_read("READ: ends.py\n", ["ends.py", "tests/test_ends.py"]) == "ends.py"
     assert take_read("READ: secrets.py\n", ["ends.py"]) is None
+    assert take_read("READ: tests/test_ends.py\n", ["ends.py", "tests/test_ends.py"]) == "tests/test_ends.py"
     assert take_read("def ends(s):\n    return s[0] + s[-1]\n", ["ends.py"]) is None
 
 

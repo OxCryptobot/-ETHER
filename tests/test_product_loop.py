@@ -23,6 +23,26 @@ def test_revert_keeps_the_worktree_git_dir(tmp_path: Path) -> None:
     assert "return s[:1]" in (ws / "ends.py").read_text(encoding="utf-8")
 
 
+def test_a_stale_snapshot_git_dir_is_wiped(tmp_path: Path) -> None:
+    from core.kernel.edit_tx import EditTx
+
+    ws = tmp_path / "edit_ws"
+    (ws / ".git").mkdir(parents=True)
+    (ws / "a.py").write_text("one\n", encoding="utf-8")
+    snap = tmp_path / "edit_ws.snap"
+    obj = snap / ".git" / "objects"
+    obj.mkdir(parents=True)
+    (obj / "x").write_text("old", encoding="utf-8")
+    (snap / "a.py").write_text("stale\n", encoding="utf-8")
+    tx = EditTx(ws, snap)
+    tx.begin()
+    assert not (snap / ".git").exists()
+    (ws / "a.py").write_text("new\n", encoding="utf-8")
+    tx.revert()
+    assert (ws / "a.py").read_text(encoding="utf-8") == "one\n"
+    assert (ws / ".git").is_dir()
+
+
 def test_prose_is_not_a_pass(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()

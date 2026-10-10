@@ -1,16 +1,14 @@
 {
-  "ts": "2026-10-10T06:48:44.485140+00:00",
+  "ts": "2026-10-10T06:52:36.316264+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
   "task": "ends",
   "repo": true,
   "failing": "ends(ether) returned e, expected er; ends(a) returned a, expected a; ends() returned , expected ",
-  "read": "tests/test_ends.py",
-  "response_tail": "READ: tests/test_ends.py",
-  "strategy": "generate",
-  "mode": "live",
-  "generate_fallback": true,
-  "reason": "no_read",
-  "tests_ok": false
+  "read": [
+    "tests/test_ends.py",
+    "ends.py"
+  ],
+  "error": "Error"
 }

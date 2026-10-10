@@ -104,6 +104,22 @@ MERGE_TEST = (
 )
 
 
+def _check_pair(src: str) -> bool:
+    greet_src = src.split("def greet", 1)[-1] if "def greet" in src else ""
+    if "person(" not in greet_src:
+        return False
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    person = ns.get("person")
+    greet = ns.get("greet")
+    if not callable(person) or not callable(greet):
+        return False
+    try:
+        return person() == "ada" and greet() == "hi ada"
+    except Exception:
+        return False
+
+
 def _check_ends(src: str) -> bool:
     ns: Dict[str, Any] = {}
     exec(src, ns)  # noqa: S102
@@ -242,6 +258,35 @@ TASKS: List[Dict[str, Any]] = [
         "banned": "s[-1]",
         "check": _check_ends,
     },
+    {
+        "id": "pair",
+        "file": "greet.py",
+        "source": "def greet():\n    return 'hi'\n",
+        "also": {
+            "person.py": "def person():\n    return ''\n",
+            "tests/test_pair.py": (
+                "import inspect\n"
+                "import sys\n"
+                "from pathlib import Path\n"
+                "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
+                "from person import person\n"
+                "from greet import greet\n"
+                "assert person() == 'ada'\n"
+                "assert 'person(' in inspect.getsource(greet)\n"
+                "assert greet() == 'hi ada'\n"
+            ),
+        },
+        "parts": {"person": "person.py", "greet": "greet.py"},
+        "test": "tests/test_pair.py",
+        "repo": True,
+        "must_read": True,
+        "budget": 1600,
+        "predict": 220,
+        "fn": "greet",
+        "prompt": "Reply with a complete def person and a complete def greet. greet must call person.\n",
+        "banned": "return 'ada'",
+        "check": _check_pair,
+    },
 ]
 
 
@@ -309,10 +354,19 @@ def _passed(root: Path) -> List[str]:
 def kept(root: Path, task: Dict[str, Any]) -> bool:
     from core.kernel.worktree import tree_path
 
-    path = tree_path(root) / str(task["file"])
-    if not path.is_file():
-        return False
+    ws = tree_path(root)
     try:
+        if task.get("parts"):
+            blobs = []
+            for rel in task["parts"].values():
+                path = ws / str(rel)
+                if not path.is_file():
+                    return False
+                blobs.append(path.read_text(encoding="utf-8"))
+            return bool(task["check"]("\n".join(blobs)))
+        path = ws / str(task["file"])
+        if not path.is_file():
+            return False
         return bool(task["check"](path.read_text(encoding="utf-8")))
     except Exception:
         return False

@@ -43,6 +43,46 @@ def test_a_stale_snapshot_git_dir_is_wiped(tmp_path: Path) -> None:
     assert (ws / ".git").is_dir()
 
 
+def test_two_files_revert_together(tmp_path: Path) -> None:
+    from core.kernel.product_loop import files_from_reply, run_files_edit
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "person.py").write_text("def person():\n    return ''\n", encoding="utf-8")
+    (ws / "greet.py").write_text("def greet():\n    return 'hi'\n", encoding="utf-8")
+    reply = "def person():\n    return 'ada'\n\ndef greet():\n    return 'hi ada'\n"
+    assert files_from_reply(reply, {"person": "person.py"}) is None
+    mapping = files_from_reply(reply, {"person": "person.py", "greet": "greet.py"})
+    assert mapping is not None and set(mapping) == {"person.py", "greet.py"}
+
+    def fail() -> bool:
+        return False
+
+    bad = run_files_edit(ws, mapping, fail)
+    assert bad["honest"] is False
+    assert "revert" in bad["tx"]
+    assert (ws / "person.py").read_text(encoding="utf-8") == "def person():\n    return ''\n"
+    assert (ws / "greet.py").read_text(encoding="utf-8") == "def greet():\n    return 'hi'\n"
+
+    good_reply = "def person():\n    return 'ada'\n\ndef greet():\n    return 'hi ' + person()\n"
+    good_map = files_from_reply(good_reply, {"person": "person.py", "greet": "greet.py"})
+    assert good_map is not None
+
+    def tests_ok() -> bool:
+        ns: dict = {}
+        exec((ws / "person.py").read_text(encoding="utf-8"), ns)
+        exec((ws / "greet.py").read_text(encoding="utf-8"), ns)
+        return ns["person"]() == "ada" and ns["greet"]() == "hi ada"
+
+    row = run_files_edit(ws, good_map, tests_ok)
+    assert row["honest"] is True
+    assert row["tests_ok"] is True
+    assert "promote" in row["tx"]
+    assert len(row["files"]) == 2
+    assert (ws / "person.py").read_text(encoding="utf-8").startswith("def person")
+    assert "person()" in (ws / "greet.py").read_text(encoding="utf-8")
+
+
 def test_prose_is_not_a_pass(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()

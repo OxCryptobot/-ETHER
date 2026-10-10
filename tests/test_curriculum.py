@@ -44,6 +44,8 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "merge")
     assert next_task(tmp_path)["id"] == "ends"
     mark_passed(tmp_path, "ends")
+    assert next_task(tmp_path)["id"] == "pair"
+    mark_passed(tmp_path, "pair")
     assert next_task(tmp_path)["id"] == "merge"
     from core.kernel.worktree import tree_path
 
@@ -65,6 +67,9 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     (dest / "intervals.py").write_text(fixed, encoding="utf-8")
     assert next_task(tmp_path)["id"] == "ends"
     (dest / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
+    assert next_task(tmp_path)["id"] == "pair"
+    (dest / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
+    (dest / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
     assert next_task(tmp_path) is None
 
 
@@ -97,12 +102,40 @@ def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
     assert (ws / ".git").is_dir()
     assert not (tmp_path / ".git").exists()
     (ws / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
+    (ws / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
+    (ws / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
     assert next_task(tmp_path) is None
     status = hold_status(tmp_path)
     assert status["persisted"] is True
     assert status["note"] == "kept"
-    assert status["file"] == "ends.py"
+    assert status["file"] == "greet.py"
     assert (ws / "intervals.py").read_text(encoding="utf-8") == fixed
+
+
+def test_pair_changes_two_files_or_neither(tmp_path: Path) -> None:
+    import subprocess
+    import sys
+
+    from core.kernel.curriculum import write_task
+
+    task = next(t for t in TASKS if t["id"] == "pair")
+    assert task["banned"] not in task["prompt"]
+    assert task["banned"] not in task["source"]
+    assert task["banned"] not in task["also"]["person.py"]
+    write_task(tmp_path, task)
+    test = tmp_path / "tests" / "test_pair.py"
+    broken = subprocess.run([sys.executable, str(test)], cwd=str(tmp_path), capture_output=True, text=True)
+    assert broken.returncode != 0
+    (tmp_path / "greet.py").write_text("def greet():\n    return 'hi ada'\n", encoding="utf-8")
+    only_one = subprocess.run([sys.executable, str(test)], cwd=str(tmp_path), capture_output=True, text=True)
+    assert only_one.returncode != 0
+    (tmp_path / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
+    (tmp_path / "greet.py").write_text(
+        "def greet():\n    from person import person\n    return 'hi ' + person()\n",
+        encoding="utf-8",
+    )
+    both = subprocess.run([sys.executable, str(test)], cwd=str(tmp_path), capture_output=True, text=True)
+    assert both.returncode == 0
 
 
 def test_the_source_is_hidden_until_it_is_read() -> None:

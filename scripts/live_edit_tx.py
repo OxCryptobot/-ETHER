@@ -44,7 +44,7 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
 def main() -> int:
     from core.kernel.context_budget import pack
     from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task, repair_note, write_task
-    from core.kernel.product_loop import extract_function, run_model_edit
+    from core.kernel.product_loop import apply_reply, extract_function
 
     row = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -142,11 +142,11 @@ def main() -> int:
                     row["ask_error"] = f"{type(exc).__name__}: {exc}"[:300]
                     text = _ask(prompt, n=predict)
                 text_tail = text
-                result = run_model_edit(workspace, task["file"], text, tests_ok)
+                result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         else:
             text = _ask(prompt, n=predict)
             text_tail = text
-            result = run_model_edit(workspace, task["file"], text, tests_ok)
+            result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         if not result.get("honest") and result.get("reason") != "no_read":
             attempted = extract_function(text) or task["source"]
             note = repair_note(task, attempted)
@@ -154,7 +154,7 @@ def main() -> int:
                 row["repair"] = note
                 text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4, n=predict)
                 text_tail = text
-                result = run_model_edit(workspace, task["file"], text, tests_ok)
+                result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         row["response_tail"] = text_tail[-240:]
         row.update(result)
         if row.get("honest"):

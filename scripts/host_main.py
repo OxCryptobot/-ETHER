@@ -104,7 +104,12 @@ def tick() -> Dict[str, Any]:
         if os.environ.get("GITHUB_ACTIONS") == "true":
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
-            row["keepalive"] = {"ok": True, "note": "skipped_in_actions"}
+            try:
+                from scripts.self_heal import arm
+                row["heal"] = arm()
+            except Exception as exc:
+                row["heal_error"] = type(exc).__name__
+            row["keepalive"] = {"ok": True, "note": "runner_watch"}
             try:
                 from core.kernel.agent import cycle as agent_cycle
                 row["agent"] = agent_cycle(root, hands=True)

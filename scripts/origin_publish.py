@@ -28,6 +28,7 @@ PATHS = [
     "artifacts/host_main.json",
     "artifacts/exe_loop.json",
     "artifacts/self_heal.json",
+    "artifacts/runner_watch.json",
     "artifacts/exe_writer.json",
     "artifacts/keepalive_error.json",
     "artifacts/live_generate_probe.json",

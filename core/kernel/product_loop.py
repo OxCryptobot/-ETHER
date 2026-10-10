@@ -218,8 +218,8 @@ def apply_reply(
     parts: Optional[Dict[str, str]] = None,
 ) -> Dict[str, object]:
     if parts:
-        mapping = files_from_reply(model_text, parts)
-        if mapping is None:
+        found = extract_functions(model_text)
+        if any(fn not in found for fn in parts):
             return {
                 "ok": False,
                 "honest": False,
@@ -229,5 +229,10 @@ def apply_reply(
                 "reason": "no_tool_edit",
                 "tests_ok": False,
             }
+        rels = list(dict.fromkeys(parts.values()))
+        if len(rels) == 1:
+            src = "\n".join(found[fn] for fn in parts)
+            return run_file_edit(workspace, rels[0], src, test_fn)
+        mapping = {str(rel): found[fn] for fn, rel in parts.items()}
         return run_files_edit(workspace, mapping, test_fn)
     return run_model_edit(workspace, rel, model_text, test_fn)

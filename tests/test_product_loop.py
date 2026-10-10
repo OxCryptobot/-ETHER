@@ -83,6 +83,30 @@ def test_two_files_revert_together(tmp_path: Path) -> None:
     assert "person()" in (ws / "greet.py").read_text(encoding="utf-8")
 
 
+def test_dropping_the_old_fix_does_not_land(tmp_path: Path) -> None:
+    from core.kernel.product_loop import apply_reply
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    original = "def merge_intervals(intervals):\n    return list(intervals)\n\ndef adjacent(a, b):\n    return False\n"
+    (ws / "intervals.py").write_text(original, encoding="utf-8")
+    parts = {"merge_intervals": "intervals.py", "adjacent": "intervals.py"}
+    missing = apply_reply(ws, "intervals.py", "def adjacent(a, b):\n    return True\n", lambda: True, parts)
+    assert missing["reason"] == "no_tool_edit"
+    assert (ws / "intervals.py").read_text(encoding="utf-8") == original
+    both = (
+        "def merge_intervals(intervals):\n"
+        "    return []\n"
+        "def adjacent(a, b):\n"
+        "    return a[1] >= b[0] and b[1] >= a[0]\n"
+    )
+    row = apply_reply(ws, "intervals.py", both, lambda: False, parts)
+    assert row["honest"] is False
+    assert "revert" in row["tx"]
+    assert (ws / "intervals.py").read_text(encoding="utf-8") == original
+
+
+
 def test_prose_is_not_a_pass(tmp_path: Path) -> None:
     ws = tmp_path / "ws"
     ws.mkdir()

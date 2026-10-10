@@ -46,6 +46,7 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "ends")
     assert next_task(tmp_path)["id"] == "pair"
     mark_passed(tmp_path, "pair")
+    mark_passed(tmp_path, "touch")
     assert next_task(tmp_path)["id"] == "merge"
     from core.kernel.worktree import tree_path
 
@@ -70,6 +71,23 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     assert next_task(tmp_path)["id"] == "pair"
     (dest / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
     (dest / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
+    assert next_task(tmp_path)["id"] == "touch"
+    (dest / "intervals.py").write_text(
+        "def merge_intervals(intervals):\n"
+        "    if not intervals:\n"
+        "        return []\n"
+        "    out = []\n"
+        "    for start, end in sorted(intervals):\n"
+        "        if not out or start > out[-1][1]:\n"
+        "            out.append((start, end))\n"
+        "        else:\n"
+        "            ps, pe = out[-1]\n"
+        "            out[-1] = (ps, max(pe, end))\n"
+        "    return out\n"
+        "def adjacent(a, b):\n"
+        "    return a[1] >= b[0] and b[1] >= a[0]\n",
+        encoding="utf-8",
+    )
     assert next_task(tmp_path) is None
 
 
@@ -104,12 +122,20 @@ def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
     (ws / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
     (ws / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
     (ws / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
+    (ws / "intervals.py").write_text(
+        fixed
+        + "def adjacent(a, b):\n"
+        + "    return a[1] >= b[0] and b[1] >= a[0]\n",
+        encoding="utf-8",
+    )
     assert next_task(tmp_path) is None
     status = hold_status(tmp_path)
     assert status["persisted"] is True
     assert status["note"] == "kept"
-    assert status["file"] == "greet.py"
-    assert (ws / "intervals.py").read_text(encoding="utf-8") == fixed
+    assert status["file"] == "intervals.py"
+    text = (ws / "intervals.py").read_text(encoding="utf-8")
+    assert "max(pe, end)" in text
+    assert "def adjacent" in text
 
 
 def test_pair_changes_two_files_or_neither(tmp_path: Path) -> None:

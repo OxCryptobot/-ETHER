@@ -120,6 +120,28 @@ def _check_pair(src: str) -> bool:
         return False
 
 
+def _check_touch(src: str) -> bool:
+    if "def merge_intervals" not in src or "def adjacent" not in src:
+        return False
+    ns: Dict[str, Any] = {}
+    exec(src, ns)  # noqa: S102
+    merge = ns.get("merge_intervals")
+    adj = ns.get("adjacent")
+    if not callable(merge) or not callable(adj):
+        return False
+    try:
+        return (
+            merge([(1, 3), (2, 5)]) == [(1, 5)]
+            and merge([(1, 2), (4, 5)]) == [(1, 2), (4, 5)]
+            and merge([]) == []
+            and adj((1, 2), (2, 4)) is True
+            and adj((1, 2), (3, 4)) is False
+            and adj((1, 5), (2, 3)) is True
+        )
+    except Exception:
+        return False
+
+
 def _check_ends(src: str) -> bool:
     ns: Dict[str, Any] = {}
     exec(src, ns)  # noqa: S102
@@ -287,6 +309,50 @@ TASKS: List[Dict[str, Any]] = [
         "banned": "return 'ada'",
         "check": _check_pair,
     },
+    {
+        "id": "touch",
+        "file": "intervals.py",
+        "source": (
+            "def merge_intervals(intervals):\n"
+            "    if not intervals:\n"
+            "        return []\n"
+            "    out = []\n"
+            "    for start, end in sorted(intervals):\n"
+            "        if not out or start > out[-1][1]:\n"
+            "            out.append((start, end))\n"
+            "        else:\n"
+            "            ps, pe = out[-1]\n"
+            "            out[-1] = (ps, max(pe, end))\n"
+            "    return out\n"
+            "\n"
+            "def adjacent(a, b):\n"
+            "    return False\n"
+        ),
+        "also": {
+            "tests/test_touch.py": (
+                "import sys\n"
+                "from pathlib import Path\n"
+                "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
+                "from intervals import adjacent, merge_intervals\n"
+                "assert merge_intervals([(1, 3), (2, 5)]) == [(1, 5)]\n"
+                "assert merge_intervals([(1, 2), (4, 5)]) == [(1, 2), (4, 5)]\n"
+                "assert merge_intervals([]) == []\n"
+                "assert adjacent((1, 2), (2, 4)) is True\n"
+                "assert adjacent((1, 2), (3, 4)) is False\n"
+                "assert adjacent((1, 5), (2, 3)) is True\n"
+            )
+        },
+        "parts": {"merge_intervals": "intervals.py", "adjacent": "intervals.py"},
+        "test": "tests/test_touch.py",
+        "repo": True,
+        "must_read": True,
+        "budget": 1800,
+        "predict": 360,
+        "fn": "adjacent",
+        "prompt": "Reply with the complete def merge_intervals and def adjacent. Adjacent means the ranges touch or overlap. Do not break merge.\n",
+        "banned": "b[0] <= a[1]",
+        "check": _check_touch,
+    },
 ]
 
 
@@ -358,7 +424,11 @@ def kept(root: Path, task: Dict[str, Any]) -> bool:
     try:
         if task.get("parts"):
             blobs = []
+            seen = []
             for rel in task["parts"].values():
+                if rel in seen:
+                    continue
+                seen.append(rel)
                 path = ws / str(rel)
                 if not path.is_file():
                     return False

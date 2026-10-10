@@ -29,9 +29,15 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=90) as resp:
-        payload = json.loads(resp.read().decode())
-    message = payload.get("message") or {}
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        raw = resp.read().decode()
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(raw[:180]) from exc
+    message = payload.get("message") if isinstance(payload, dict) else None
+    if not isinstance(message, dict):
+        raise RuntimeError(raw[:180])
     return str(message.get("content") or "")
 
 
@@ -130,7 +136,11 @@ def main() -> int:
                 }
             else:
                 prompt = prompt + "\n\n" + task["prompt"]
-                text = _ask(prompt, n=predict)
+                try:
+                    text = _ask(prompt, n=predict)
+                except Exception as exc:
+                    row["ask_error"] = f"{type(exc).__name__}: {exc}"[:300]
+                    text = _ask(prompt, n=predict)
                 text_tail = text
                 result = run_model_edit(workspace, task["file"], text, tests_ok)
         else:
@@ -158,7 +168,7 @@ def main() -> int:
         line = f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
         remember(ROOT, (prior + " | " + line)[-400:] if prior else line)
     except Exception as exc:
-        row["error"] = type(exc).__name__
+        row["error"] = f"{type(exc).__name__}: {exc}"[:300]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
     print(json.dumps(row, default=str))

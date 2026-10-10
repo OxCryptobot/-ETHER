@@ -24,6 +24,17 @@ def blind_prompt(task: Dict[str, Any], failing: str) -> str:
     return "\n".join(lines)
 
 
+def read_nudge(allowed: List[str], seen: List[str]) -> str:
+    """Name the files still closed. Not the source, and not the patch."""
+    closed = [name for name in allowed if name not in seen]
+    opened = seen or ["none"]
+    return (
+        "Already open: " + ", ".join(opened) + "\n"
+        "Still closed: " + ", ".join(closed) + "\n"
+        "Reply with exactly one line: READ: <one still closed path>"
+    )
+
+
 def take_read(text: str, allowed: List[str]) -> Optional[str]:
     for line in (text or "").splitlines():
         if not line.startswith("READ:"):

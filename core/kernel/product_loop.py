@@ -63,16 +63,17 @@ def extract_function(text: str) -> Optional[str]:
     """A complete function, if the reply has one. Truncated code is not an edit."""
     raw = (text or "").replace("```python", "").replace("```", "")
     lines = raw.splitlines()
-    start = next((i for i, line in enumerate(lines) if line.startswith("def ")), None)
-    if start is None:
+    starts = [i for i, line in enumerate(lines) if line.startswith("def ")]
+    if not starts:
         return None
+    start = starts[-1]
     body = []
     for line in lines[start:]:
         if body and line and not line[0].isspace() and not line.startswith("#"):
             break
         body.append(line.rstrip())
     src = "\n".join(body).strip() + "\n"
-    if src.count("def ") != 1 or "return " not in src:
+    if "return " not in src:
         return None
     try:
         compile(src, "<edit>", "exec")

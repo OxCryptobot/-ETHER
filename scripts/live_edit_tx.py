@@ -108,7 +108,7 @@ def main() -> int:
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
         if task.get("must_read"):
-            from core.kernel.read_gate import file_names, take_read
+            from core.kernel.read_gate import file_names, read_nudge, take_read
 
             allowed = file_names(task)
             seen = []
@@ -121,7 +121,7 @@ def main() -> int:
                     prompt = prompt + "\n\n### " + path + "\n" + body
                     if path == task["file"]:
                         break
-                text = _ask(prompt + "\nReply with one READ line for a file not opened yet.\n", temperature=0.3, n=48)
+                text = _ask(prompt + "\n" + read_nudge(allowed, seen), temperature=0.3, n=48)
             row["read"] = seen
             if task["file"] not in seen:
                 text_tail = text

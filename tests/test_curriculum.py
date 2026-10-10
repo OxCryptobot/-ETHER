@@ -117,6 +117,19 @@ def test_the_source_is_hidden_until_it_is_read() -> None:
     assert take_read("READ: secrets.py\n", ["ends.py"]) is None
     assert take_read("READ: tests/test_ends.py\n", ["ends.py", "tests/test_ends.py"]) == "tests/test_ends.py"
     assert take_read("def ends(s):\n    return s[0] + s[-1]\n", ["ends.py"]) is None
+    from core.kernel.read_gate import read_nudge
+
+    nudge = read_nudge(["ends.py", "tests/test_ends.py"], ["tests/test_ends.py"])
+    assert "Still closed: ends.py" in nudge
+    assert task["source"] not in nudge
+    assert task["banned"] not in nudge
+    from core.kernel.curriculum import diagnose, repair_note
+
+    wrong = "def ends(s):\n    return s[-1] if s else \"\"\n"
+    note = repair_note(task, wrong)
+    assert "expected 'er'" in note or "expected er" in note
+    assert task["banned"] not in note
+    assert note != diagnose(task, task["source"])
 
 
 def test_merge_is_a_repo_file_and_the_prompt_has_no_patch(tmp_path: Path) -> None:

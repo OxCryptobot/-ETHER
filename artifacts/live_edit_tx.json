@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-10T10:09:13.878976+00:00",
+  "ts": "2026-10-10T11:13:17.642442+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
@@ -7,21 +7,12 @@
   "repo": true,
   "failing": "ends(ether) returned e, expected er; ends(a) returned a, expected a; ends() returned , expected ",
   "read": [
-    "tests/test_ends.py",
-    "ends.py"
+    "tests/test_ends.py"
   ],
-  "repair": "ends(ether) returned r, expected er; ends(a) returned a, expected a; ends() returned , expected ",
-  "response_tail": "def ends(s):\n    return s[-1] if s else \"\"",
-  "strategy": "tool_runtime",
+  "response_tail": "READ: ends.py",
+  "strategy": "generate",
   "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": false,
-  "tools": [
-    "replace_file"
-  ],
-  "tests_ok": false,
-  "tx": [
-    "begin",
-    "revert"
-  ]
+  "generate_fallback": true,
+  "reason": "no_read",
+  "tests_ok": false
 }

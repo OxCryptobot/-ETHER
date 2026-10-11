@@ -15,10 +15,12 @@ OUT = ROOT / "artifacts" / "live_edit_tx.json"
 def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
     from scripts.live_generate_probe import pick_model
 
+    from core.kernel.agent_prompt import messages
+
     model = pick_model()
     body = json.dumps({
         "model": model,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages(prompt),
         "stream": False,
         "think": False,
         "options": {"temperature": temperature, "num_predict": n},

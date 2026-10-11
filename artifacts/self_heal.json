@@ -1,15 +1,25 @@
 {
-  "ts": "2026-10-02T22:20:21.150309+00:00",
+  "ts": "2026-10-11T17:27:31.408044+00:00",
   "os": "nt",
   "ok": true,
-  "armed": false,
-  "note": "no hidden startup",
+  "armed": true,
+  "note": "runner_watch",
   "stopped": {
     "ETHER-Ensure": 1,
     "ETHER-keepalive": 1,
     "ETHER-keepalive-5m": 1,
     "ETHER-keepalive-boot": 1,
     "ETHER-Daemon": 1
+  },
+  "installed": [
+    "runner_watch.py",
+    "start_runner.py",
+    "win_quiet.py"
+  ],
+  "watch": {
+    "ok": true,
+    "task": "ETHER-RunnerWatch",
+    "rc": 0
   },
   "register": {
     "ok": true,

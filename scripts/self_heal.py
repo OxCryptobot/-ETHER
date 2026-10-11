@@ -58,6 +58,26 @@ def watch_argv(root: Path, pyw: Path) -> List[str]:
     ]
 
 
+WATCH_FILES = ("runner_watch.py", "start_runner.py", "win_quiet.py")
+
+
+def install_watch(root: Path) -> List[str]:
+    """Copy the watch onto the machine folder. The Actions checkout is not that folder."""
+    here = Path(__file__).resolve().parent
+    dest_dir = Path(root) / "scripts"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    written: List[str] = []
+    for name in WATCH_FILES:
+        src = here / name
+        dest = dest_dir / name
+        if not src.is_file():
+            continue
+        if src.resolve() != dest.resolve():
+            dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+        written.append(name)
+    return written
+
+
 def _run(argv: List[str], timeout: int = 30) -> int:
     try:
         p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, creationflags=FLAGS)
@@ -80,6 +100,7 @@ def arm() -> Dict[str, Any]:
         stopped[name] = _run(["schtasks", "/Delete", "/TN", name, "/F"])
     row["stopped"] = stopped
     root = _root()
+    row["installed"] = install_watch(root)
     pyw = watch_python(root)
     if pyw is None:
         row["watch"] = {"ok": False, "note": "no_pythonw"}

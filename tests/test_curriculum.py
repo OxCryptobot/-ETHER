@@ -274,3 +274,34 @@ def test_failing_cases_do_not_contain_the_patch() -> None:
     assert checker_for("sign")("def sign(n):\n    return (n > 0) - (n < 0)\n") is True
     assert checker_for("span")("def span(nums):\n    return (max(nums) - min(nums)) if nums else 0\n") is True
 
+
+def test_last_two_characters_is_not_the_ends_fix() -> None:
+    cheat = "def ends(s):\n    return s[-2:] if len(s) > 1 else s[:1] if s else ''\n"
+    real = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    assert checker_for("ends")(cheat) is False
+    assert checker_for("ends")(real) is True
+
+
+def test_sealing_one_task_restores_a_kept_file(tmp_path: Path) -> None:
+    import subprocess
+
+    from core.kernel.worktree import seal, tree_path
+
+    ws = tree_path(tmp_path)
+    ws.mkdir()
+    subprocess.run(["git", "init"], cwd=str(ws), check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "ether@local"], cwd=str(ws), check=True)
+    subprocess.run(["git", "config", "user.name", "ether-edit"], cwd=str(ws), check=True)
+    (ws / "intervals.py").write_text("def merge_intervals(intervals):\n    return []\n", encoding="utf-8")
+    subprocess.run(["git", "add", "intervals.py"], cwd=str(ws), check=True)
+    subprocess.run(["git", "commit", "-m", "merge"], cwd=str(ws), check=True, capture_output=True)
+    (ws / "intervals.py").unlink()
+    (ws / "ends.py").write_text("def ends(s):\n    return s\n", encoding="utf-8")
+    row = seal(tmp_path, "ends", ["ends.py"])
+    assert row["rc"] == 0
+    assert (ws / "intervals.py").is_file()
+    assert "def merge_intervals" in (ws / "intervals.py").read_text(encoding="utf-8")
+    shown = subprocess.run(["git", "ls-files"], cwd=str(ws), capture_output=True, text=True, check=True)
+    assert "intervals.py" in shown.stdout
+    assert "ends.py" in shown.stdout
+

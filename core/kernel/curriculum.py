@@ -149,7 +149,7 @@ def _check_ends(src: str) -> bool:
     if not callable(fn):
         return False
     try:
-        return fn("ether") == "er" and fn("a") == "a" and fn("") == ""
+        return fn("ether") == "er" and fn("abc") == "ac" and fn("a") == "a" and fn("") == ""
     except Exception:
         return False
 
@@ -265,6 +265,7 @@ TASKS: List[Dict[str, Any]] = [
                 "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
                 "from ends import ends\n"
                 "assert ends('ether') == 'er'\n"
+                "assert ends('abc') == 'ac'\n"
                 "assert ends('a') == 'a'\n"
                 "assert ends('') == ''\n"
             )
@@ -275,7 +276,7 @@ TASKS: List[Dict[str, Any]] = [
         "budget": 1200,
         "predict": 160,
         "fn": "ends",
-        "cases": [(("ether",), "er"), (("a",), "a"), (("",), "")],
+        "cases": [(("ether",), "er"), (("abc",), "ac"), (("a",), "a"), (("",), "")],
         "prompt": "Reply with a complete def ends function. First and last character, or empty.\n",
         "banned": "s[-1]",
         "check": _check_ends,

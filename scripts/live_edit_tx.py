@@ -166,7 +166,7 @@ def main() -> int:
             if task.get("repo"):
                 from core.kernel.worktree import seal
 
-                row["seal"] = seal(ROOT, task["id"])
+                row["seal"] = seal(ROOT, task["id"], [task["file"], *list(task.get("also") or {})])
         from core.kernel.edit_memory import recall, remember
         prior = recall(ROOT)
         line = f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"

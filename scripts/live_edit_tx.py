@@ -110,7 +110,7 @@ def main() -> int:
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
         if task.get("must_read"):
-            from core.kernel.read_gate import file_names, read_nudge, take_read
+            from core.kernel.read_gate import file_names, for_edit, read_nudge, repair_ask, take_read
 
             allowed = file_names(task)
             seen = []
@@ -137,7 +137,7 @@ def main() -> int:
                     "tests_ok": False,
                 }
             else:
-                prompt = prompt + "\n\n" + task["prompt"]
+                prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
                 try:
                     text = _ask(prompt, n=predict)
                 except Exception as exc:
@@ -150,11 +150,13 @@ def main() -> int:
             text_tail = text
             result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         if not result.get("honest") and result.get("reason") != "no_read":
+            from core.kernel.read_gate import repair_ask
+
             attempted = extract_function(text) or task["source"]
             note = repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
-                text = _ask(prompt + "\n\nYour last function " + note + "\nReply with a complete function only.\n", temperature=0.4, n=predict)
+                text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict)
                 text_tail = text
                 result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         row["response_tail"] = text_tail[-240:]

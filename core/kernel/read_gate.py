@@ -60,6 +60,16 @@ def repair_ask(note: str, names: Optional[List[str]] = None) -> str:
     return "Your last edit " + note + "\n" + tail + "\n"
 
 
+def failure_note(static: str, output: str, banned: str = "") -> str:
+    """The test output, when it says more than the static line. Never the patch."""
+    text = " ".join((output or "").split())[:300]
+    if not text or text == (static or ""):
+        return ""
+    if banned and banned in text:
+        return ""
+    return text
+
+
 def take_read(text: str, allowed: List[str]) -> Optional[str]:
     for line in (text or "").splitlines():
         if not line.startswith("READ:"):

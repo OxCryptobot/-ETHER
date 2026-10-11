@@ -95,6 +95,10 @@ def main() -> int:
             prompt += "\n\nFailing cases:\n" + failing
         prompt += "\n\n" + task["prompt"]
     try:
+        from core.kernel.read_gate import failure_note
+
+        failed: dict = {}
+
         def tests_ok() -> bool:
             if task.get("test"):
                 import subprocess
@@ -106,6 +110,7 @@ def main() -> int:
                     text=True,
                     timeout=15,
                 )
+                failed["text"] = ((proc.stdout or "") + (proc.stderr or ""))[-400:]
                 return proc.returncode == 0
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
@@ -153,7 +158,8 @@ def main() -> int:
             from core.kernel.read_gate import repair_ask
 
             attempted = extract_function(text) or task["source"]
-            note = repair_note(task, attempted)
+            note = failure_note(failing, failed.get("text", ""), str(task.get("banned") or ""))
+            note = note or repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
                 text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict)

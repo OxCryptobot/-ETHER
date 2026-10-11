@@ -28,3 +28,12 @@ def test_the_edit_turn_stops_asking_for_read() -> None:
     assert "def person" in repair and "def greet" in repair
     assert "function only" not in repair
     assert pair["banned"] not in repair
+
+
+def test_a_traceback_is_a_repair_note_and_the_patch_is_not() -> None:
+    from core.kernel.read_gate import failure_note
+
+    note = failure_note("the test file failed", "NameError: name 'person' is not defined")
+    assert "person" in note
+    assert failure_note("the test file failed", "the test file failed") == ""
+    assert failure_note("the test file failed", "return 'ada'", "return 'ada'") == ""

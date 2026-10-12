@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-12T05:12:04.781070+00:00",
+  "ts": "2026-10-12T06:13:16.198376+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
@@ -11,17 +11,10 @@
     "ends.py"
   ],
   "repair": "Traceback (most recent call last): File \"C:\\Users\\Otcde\\ETHER\\edit_ws\\tests\\test_ends.py\", line 5, in <module> assert ends('ether') == 'er' ^^^^^^^^^^^^^^^^^^^^^ AssertionError",
-  "response_tail": "def ends(s):\n    return s[-2:] if len(s) > 1 else s[:1] if s else \"\"",
-  "strategy": "tool_runtime",
+  "response_tail": "READ: tests/test_ends.py",
+  "strategy": "generate",
   "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": false,
-  "tools": [
-    "replace_file"
-  ],
-  "tests_ok": false,
-  "tx": [
-    "begin",
-    "revert"
-  ]
+  "generate_fallback": true,
+  "reason": "no_tool_edit",
+  "tests_ok": false
 }

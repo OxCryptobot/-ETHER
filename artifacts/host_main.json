@@ -1,35 +1,35 @@
 {
-  "ts": "2026-10-13T23:57:57.366337+00:00",
+  "ts": "2026-10-14T00:14:12.355966+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-13T23:57:57.531281+00:00",
+    "ts": "2026-10-14T00:14:12.517189+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-13T23:58:43.150475+00:00",
+    "ts": "2026-10-14T00:14:44.259747+00:00",
     "os": "nt",
     "ok": true,
     "add_rc": 0,
-    "ahead": 3873,
+    "ahead": 3876,
     "commit_rc": 0,
     "sync": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 3874,
+      "ahead": 3877,
       "dirty": true,
       "note": "rebase_abort"
     },
     "via": "gh_token_url",
     "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   9bd78ea90..bf6c594f8  HEAD -> main\n",
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   2d5c4c587..a38ee7a3d  HEAD -> main\n",
     "sync_retry": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 3874,
+      "ahead": 3877,
       "dirty": true,
       "note": "rebase_abort"
     },
@@ -38,7 +38,7 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   9bd78ea90..bf6c594f8  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   2d5c4c587..a38ee7a3d  HEAD -> main\n"
     }
   },
   "runner": {
@@ -50,7 +50,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-13T23:58:18.313770+00:00",
+    "ts": "2026-10-14T00:14:33.531625+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -93,7 +93,7 @@
       "remember"
     ],
     "honest": false,
-    "lesson": "n targeted kernel pytest after one surgical patch | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail | ends: fail",
+    "lesson": "day 2026-10-14: unknown: re-run targeted kernel pytest after one surgical patch",
     "learned": true,
     "scale": {
       "repeatable": true,
@@ -107,7 +107,7 @@
   "day_learn": {
     "ok": true,
     "skipped": true,
-    "day": "2026-10-13",
+    "day": "2026-10-14",
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",

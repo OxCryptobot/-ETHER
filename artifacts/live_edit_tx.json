@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-14T10:12:08.369131+00:00",
+  "ts": "2026-10-14T11:12:11.205195+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
@@ -11,7 +11,7 @@
     "ends.py"
   ],
   "repair": "ends(ether) returned er, expected er; ends(abc) returned bc, expected ac; ends(a) returned a, expected a; ends() returned , expected ",
-  "response_tail": "def ends(s):\n    return s[-2:] if len(s) > 1 else s[0] if s else \"\"",
+  "response_tail": "def ends(s):\n    return s[-2:] if len(s) >= 2 else s[:1] if len(s) == 1 else \"\"",
   "strategy": "tool_runtime",
   "mode": "live",
   "degraded": [],

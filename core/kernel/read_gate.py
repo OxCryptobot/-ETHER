@@ -60,6 +60,13 @@ def repair_ask(note: str, names: Optional[List[str]] = None) -> str:
     return "Your last edit " + note + "\n" + tail + "\n"
 
 
+def with_cases(trace: str, failing: str) -> str:
+    """A traceback names one assertion. The other cases still have to be in the note."""
+    if trace and failing and failing not in trace:
+        return trace + " | " + failing
+    return trace or failing or ""
+
+
 def failure_note(static: str, output: str, banned: str = "") -> str:
     """The test output, when it says more than the static line. Never the patch."""
     text = " ".join((output or "").split())[:300]

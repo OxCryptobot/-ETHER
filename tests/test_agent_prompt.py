@@ -42,3 +42,12 @@ def test_a_traceback_is_a_repair_note_and_the_patch_is_not() -> None:
     assert "person" in note
     assert failure_note("the test file failed", "the test file failed") == ""
     assert failure_note("the test file failed", "return 'ada'", "return 'ada'") == ""
+
+
+def test_a_one_line_traceback_keeps_the_other_cases() -> None:
+    from core.kernel.read_gate import with_cases
+
+    failing = "ends(ether) returned e, expected er; ends(abc) returned a, expected ac"
+    note = with_cases("AssertionError", failing)
+    assert "abc" in note and "AssertionError" in note
+    assert with_cases(failing, failing) == failing

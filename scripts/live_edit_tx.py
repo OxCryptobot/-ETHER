@@ -157,11 +157,12 @@ def main() -> int:
             text_tail = text
             result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         if not result.get("honest") and result.get("reason") != "no_read":
-            from core.kernel.read_gate import repair_ask
+            from core.kernel.read_gate import repair_ask, with_cases
 
             attempted = extract_function(text) or task["source"]
             note = failure_note(failing, failed.get("text", ""), str(task.get("banned") or ""))
             note = note or repair_note(task, attempted)
+            note = with_cases(note, failing)
             if note and note != failing:
                 row["repair"] = note
                 text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict, edit=True)

@@ -64,7 +64,7 @@ def learn(root: Path, now: Optional[datetime] = None) -> Dict[str, Any]:
         }
         try:
             from core.kernel.edit_memory import remember
-            remember(root, f"day {today}: {lesson.get('root_cause')}: {lesson.get('smallest_experiment')}")
+            remember(root, f"day {today}: {lesson.get('root_cause')}: {lesson.get('smallest_experiment')}", "day")
         except Exception:
             pass
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -77,3 +77,11 @@ def test_the_lesson_is_the_failure_and_not_the_patch() -> None:
 
     assert "bc" in lesson_line("ends(abc) returned bc, expected ac", "s[-1]")
     assert lesson_line("return s[-1]", "s[-1]") == ""
+
+
+def test_a_day_note_does_not_erase_the_edit_lesson(tmp_path) -> None:
+    from core.kernel.edit_memory import recall, remember
+
+    remember(tmp_path, "ends(abc) returned bc, expected ac")
+    remember(tmp_path, "day 2026-10-14: unknown", "day")
+    assert recall(tmp_path) == "ends(abc) returned bc, expected ac"

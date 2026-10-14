@@ -55,7 +55,7 @@ def act(root: Path) -> Dict[str, Any]:
         done_path.write_text(json.dumps({"ids": sorted(done)}, indent=2) + "\n", encoding="utf-8")
         try:
             from core.kernel.edit_memory import remember
-            remember(root, f"retry queued for {jid}")
+            remember(root, f"retry queued for {jid}", "retry")
         except Exception:
             pass
         row.update({"queued": True, "id": retry_id, "of": jid})

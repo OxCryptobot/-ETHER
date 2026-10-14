@@ -5,10 +5,19 @@ import json
 from pathlib import Path
 
 
-def remember(root: Path, text: str) -> None:
+def remember(root: Path, text: str, slot: str = "text") -> None:
     path = Path(root) / "artifacts" / "edit_memory.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"text": (text or "")[-400:]}) + "\n", encoding="utf-8")
+    data: dict = {}
+    if path.is_file():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                data = loaded
+        except Exception:
+            data = {}
+    data[slot] = (text or "")[-400:]
+    path.write_text(json.dumps(data) + "\n", encoding="utf-8")
 
 
 def lesson_line(text: str, banned: str = "") -> str:

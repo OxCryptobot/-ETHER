@@ -157,15 +157,18 @@ def main() -> int:
             text_tail = text
             result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         if result.get("reason") != "no_read":
-            from core.kernel.read_gate import fresh_note, repair_ask, with_cases
+            from core.kernel.read_gate import fresh_note, pick_note, repair_ask
 
             seen_notes: list = []
             for _ in range(2):
                 if result.get("honest"):
                     break
                 attempted = extract_function(text) or task["source"]
-                note = failure_note(failing, failed.get("text", ""), str(task.get("banned") or ""))
-                note = with_cases(note or repair_note(task, attempted), failing)
+                note = pick_note(
+                    repair_note(task, attempted),
+                    failure_note(failing, failed.get("text", ""), str(task.get("banned") or "")),
+                    failing,
+                )
                 note = fresh_note(note, seen_notes, failing)
                 if not note:
                     break

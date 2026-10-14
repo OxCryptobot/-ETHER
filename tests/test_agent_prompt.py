@@ -61,3 +61,12 @@ def test_the_same_failure_is_not_repaired_twice() -> None:
     first = "ends(abc) returned bc, expected ac"
     assert fresh_note(first, [], failing) == first
     assert fresh_note(first, [first], failing) == ""
+
+
+def test_a_new_case_list_beats_the_same_traceback() -> None:
+    from core.kernel.read_gate import pick_note
+
+    failing = "ends(ether) returned e, expected er; ends(abc) returned a, expected ac"
+    changed = "ends(ether) returned r, expected er; ends(abc) returned c, expected ac"
+    assert pick_note(changed, "AssertionError", failing) == changed
+    assert "abc" in pick_note(failing, "AssertionError", failing)

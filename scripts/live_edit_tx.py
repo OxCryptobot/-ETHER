@@ -217,9 +217,10 @@ def main() -> int:
         learned = lesson_line(str(row.get("repair") or ""), str(task.get("banned") or ""))
         line = learned or f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
         remember(ROOT, line)
-        from core.kernel.curriculum import bench
+        from core.kernel.curriculum import bench, note_open
 
         row["bench"] = bench(ROOT, row)
+        note_open(ROOT, task["id"])
     except Exception as exc:
         row["error"] = f"{type(exc).__name__}: {exc}"[:300]
     OUT.parent.mkdir(parents=True, exist_ok=True)

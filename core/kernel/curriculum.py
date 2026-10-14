@@ -461,20 +461,39 @@ def next_task(root: Path) -> Optional[Dict[str, Any]]:
     for task in TASKS:
         if task["id"] not in done:
             return task
-    for task in TASKS:
-        if task.get("repo") and task["id"] in done and not kept(root, task):
-            return task
-    return None
+    unkept = [task for task in TASKS if task.get("repo") and task["id"] in done and not kept(root, task)]
+    if not unkept:
+        return None
+    last = str(_load(root / "artifacts" / "curriculum.json").get("last_open") or "")
+    if not last:
+        last = str(_load(root / "artifacts" / "live_edit_tx.json").get("task") or "")
+    if last:
+        for task in unkept:
+            if task["id"] != last:
+                return task
+    return unkept[0]
 
 
 def mark_passed(root: Path, task_id: str) -> None:
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
-    done = _passed(root)
+    path = art / "curriculum.json"
+    state = _load(path)
+    done = [str(x) for x in (state.get("passed") or [])]
+    if not done:
+        done = _passed(root)
     if task_id not in done:
         done.append(task_id)
-    path = art / "curriculum.json"
-    path.write_text(json.dumps({"passed": done}, indent=2) + "\n", encoding="utf-8")
+    state["passed"] = done
+    path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def note_open(root: Path, task_id: str) -> None:
+    path = Path(root) / "artifacts" / "curriculum.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    state = _load(path)
+    state["last_open"] = task_id
+    path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
 
 def bench(root: Path, last: Dict[str, Any]) -> Dict[str, Any]:

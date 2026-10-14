@@ -39,6 +39,7 @@ PATHS = [
     "artifacts/agent.json",
     "artifacts/curriculum.json",
     "artifacts/edit_memory.json",
+    "artifacts/agent_bench.json",
 ]
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]

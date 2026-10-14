@@ -28,6 +28,14 @@ def test_two_honest_passes_skip_add(tmp_path: Path) -> None:
     assert task is not None and task["id"] == "clamp"
 
 
+def test_a_stuck_task_does_not_block_the_next_unkept(tmp_path: Path, monkeypatch) -> None:
+    for task in TASKS:
+        mark_passed(tmp_path, task["id"])
+    (tmp_path / "artifacts" / "live_edit_tx.json").write_text(json.dumps({"task": "ends"}), encoding="utf-8")
+    monkeypatch.setattr("core.kernel.curriculum.kept", lambda _root, task: task["id"] in {"merge", "touch"})
+    assert next_task(tmp_path)["id"] == "pair"
+
+
 def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     mark_passed(tmp_path, "add")
     mark_passed(tmp_path, "clamp")

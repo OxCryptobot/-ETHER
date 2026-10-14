@@ -143,6 +143,11 @@ def main() -> int:
                 }
             else:
                 prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
+                from core.kernel.edit_memory import lesson_line, recall
+
+                learned = lesson_line(recall(ROOT), str(task.get("banned") or ""))
+                if learned:
+                    prompt = prompt + "Last failure: " + learned + "\n"
                 try:
                     text = _ask(prompt, n=predict, edit=True)
                 except Exception as exc:
@@ -185,10 +190,11 @@ def main() -> int:
                 from core.kernel.worktree import seal
 
                 row["seal"] = seal(ROOT, task["id"], [task["file"], *list(task.get("also") or {})])
-        from core.kernel.edit_memory import recall, remember
-        prior = recall(ROOT)
-        line = f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
-        remember(ROOT, (prior + " | " + line)[-400:] if prior else line)
+        from core.kernel.edit_memory import lesson_line, remember
+
+        learned = lesson_line(str(row.get("repair") or ""), str(task.get("banned") or ""))
+        line = learned or f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
+        remember(ROOT, line)
     except Exception as exc:
         row["error"] = f"{type(exc).__name__}: {exc}"[:300]
     OUT.parent.mkdir(parents=True, exist_ok=True)

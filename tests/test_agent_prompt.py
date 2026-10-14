@@ -70,3 +70,10 @@ def test_a_new_case_list_beats_the_same_traceback() -> None:
     changed = "ends(ether) returned r, expected er; ends(abc) returned c, expected ac"
     assert pick_note(changed, "AssertionError", failing) == changed
     assert "abc" in pick_note(failing, "AssertionError", failing)
+
+
+def test_the_lesson_is_the_failure_and_not_the_patch() -> None:
+    from core.kernel.edit_memory import lesson_line
+
+    assert "bc" in lesson_line("ends(abc) returned bc, expected ac", "s[-1]")
+    assert lesson_line("return s[-1]", "s[-1]") == ""

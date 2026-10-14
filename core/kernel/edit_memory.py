@@ -11,6 +11,14 @@ def remember(root: Path, text: str) -> None:
     path.write_text(json.dumps({"text": (text or "")[-400:]}) + "\n", encoding="utf-8")
 
 
+def lesson_line(text: str, banned: str = "") -> str:
+    """One failure the next edit may see. Never the banned patch."""
+    text = " ".join((text or "").split())
+    if not text or (banned and banned in text):
+        return ""
+    return text[-300:]
+
+
 def recall(root: Path) -> str:
     path = Path(root) / "artifacts" / "edit_memory.json"
     if not path.is_file():

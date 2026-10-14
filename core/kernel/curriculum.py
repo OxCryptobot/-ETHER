@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -474,6 +475,35 @@ def mark_passed(root: Path, task_id: str) -> None:
         done.append(task_id)
     path = art / "curriculum.json"
     path.write_text(json.dumps({"passed": done}, indent=2) + "\n", encoding="utf-8")
+
+
+def bench(root: Path, last: Dict[str, Any]) -> Dict[str, Any]:
+    """The live curriculum. Not scoreboard_latest.json."""
+    done = _passed(root)
+    kept_ids = []
+    open_id = None
+    for task in TASKS:
+        if task["id"] not in done:
+            open_id = open_id or task["id"]
+            continue
+        if task.get("repo") and kept(root, task):
+            kept_ids.append(task["id"])
+        elif task.get("repo") and open_id is None:
+            open_id = task["id"]
+    row = {
+        "updated": datetime.now(timezone.utc).isoformat(),
+        "passed_marks": done,
+        "kept": kept_ids,
+        "open": open_id,
+        "last_task": last.get("task"),
+        "last_honest": bool(last.get("honest")),
+        "last_reason": last.get("reason") or "",
+        "note": "This is the live curriculum. scoreboard_latest.json is not this benchmark.",
+    }
+    path = Path(root) / "artifacts" / "agent_bench.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    return row
 
 
 def checker_for(task_id: str) -> Callable[[str], bool]:

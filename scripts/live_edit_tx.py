@@ -46,7 +46,7 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220, edit: bool = False) 
 def main() -> int:
     from core.kernel.context_budget import pack
     from core.kernel.curriculum import checker_for, diagnose, mark_passed, next_task, repair_note, write_task
-    from core.kernel.product_loop import apply_reply, extract_function
+    from core.kernel.product_loop import apply_reply, body_key, extract_function
 
     row = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -161,6 +161,10 @@ def main() -> int:
             text = _ask(prompt, n=predict, edit=True)
             text_tail = text
             result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
+        seen_bodies = []
+        first_key = body_key(extract_function(text) or "")
+        if first_key:
+            seen_bodies.append(first_key)
         if result.get("reason") != "no_read":
             from core.kernel.read_gate import fresh_note, pick_note, repair_ask
 
@@ -181,6 +185,24 @@ def main() -> int:
                 row["repair"] = note
                 text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict, edit=True)
                 text_tail = text
+                key = body_key(extract_function(text) or "")
+                if key and key in seen_bodies:
+                    text = _ask(prompt + "\nThat function already failed. Reply with a different function.\n", temperature=0.4, n=predict, edit=True)
+                    text_tail = text
+                    key = body_key(extract_function(text) or "")
+                    if not key or key in seen_bodies:
+                        result = {
+                            "ok": False,
+                            "honest": False,
+                            "strategy": "tool_runtime",
+                            "mode": "live",
+                            "reason": "repeated",
+                            "tests_ok": False,
+                            "tools": ["replace_file"],
+                        }
+                        break
+                if key:
+                    seen_bodies.append(key)
                 result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         row["response_tail"] = text_tail[-240:]
         row.update(result)
@@ -195,6 +217,9 @@ def main() -> int:
         learned = lesson_line(str(row.get("repair") or ""), str(task.get("banned") or ""))
         line = learned or f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
         remember(ROOT, line)
+        from core.kernel.curriculum import bench
+
+        row["bench"] = bench(ROOT, row)
     except Exception as exc:
         row["error"] = f"{type(exc).__name__}: {exc}"[:300]
     OUT.parent.mkdir(parents=True, exist_ok=True)

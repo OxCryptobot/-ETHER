@@ -82,6 +82,11 @@ def extract_function(text: str) -> Optional[str]:
     return src
 
 
+def body_key(src: str) -> str:
+    """Two replies that differ only by whitespace are the same function."""
+    return "".join((src or "").split())
+
+
 def extract_functions(text: str) -> Dict[str, str]:
     """Every complete function in the reply, by name. The last one wins."""
     raw = (text or "").replace("```python", "").replace("```", "")

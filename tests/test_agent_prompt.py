@@ -85,3 +85,24 @@ def test_a_day_note_does_not_erase_the_edit_lesson(tmp_path) -> None:
     remember(tmp_path, "ends(abc) returned bc, expected ac")
     remember(tmp_path, "day 2026-10-14: unknown", "day")
     assert recall(tmp_path) == "ends(abc) returned bc, expected ac"
+
+
+def test_whitespace_does_not_make_a_failed_function_new() -> None:
+    from core.kernel.product_loop import body_key
+
+    one = "def ends(s):\n    return s[-2:]\n"
+    two = "def ends(s):\n  return s[-2:]\n"
+    assert body_key(one) == body_key(two)
+    assert body_key(one) != body_key("def ends(s):\n    return s[0]\n")
+
+
+def test_the_live_bench_is_not_the_old_scoreboard(tmp_path) -> None:
+    from core.kernel.curriculum import bench, mark_passed
+
+    mark_passed(tmp_path, "add")
+    row = bench(tmp_path, {"task": "ends", "honest": False, "reason": "repeated"})
+    assert row["passed_marks"] == ["add"]
+    assert row["last_honest"] is False
+    assert row["open"] == "clamp"
+    assert "scoreboard_latest" in row["note"]
+    assert (tmp_path / "artifacts" / "agent_bench.json").is_file()

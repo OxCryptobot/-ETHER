@@ -51,3 +51,13 @@ def test_a_one_line_traceback_keeps_the_other_cases() -> None:
     note = with_cases("AssertionError", failing)
     assert "abc" in note and "AssertionError" in note
     assert with_cases(failing, failing) == failing
+
+
+def test_the_same_failure_is_not_repaired_twice() -> None:
+    from core.kernel.read_gate import fresh_note
+
+    failing = "ends(ether) returned e, expected er"
+    assert fresh_note(failing, [], failing) == ""
+    first = "ends(abc) returned bc, expected ac"
+    assert fresh_note(first, [], failing) == first
+    assert fresh_note(first, [first], failing) == ""

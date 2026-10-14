@@ -60,6 +60,13 @@ def repair_ask(note: str, names: Optional[List[str]] = None) -> str:
     return "Your last edit " + note + "\n" + tail + "\n"
 
 
+def fresh_note(note: str, seen: List[str], failing: str) -> str:
+    """A repair only fires when the failure is one this turn has not already shown."""
+    if not note or note == (failing or "") or note in seen:
+        return ""
+    return note
+
+
 def with_cases(trace: str, failing: str) -> str:
     """A traceback names one assertion. The other cases still have to be in the note."""
     if trace and failing and failing not in trace:

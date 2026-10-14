@@ -12,7 +12,7 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "live_edit_tx.json"
 
 
-def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
+def _ask(prompt: str, temperature: float = 0, n: int = 220, edit: bool = False) -> str:
     from scripts.live_generate_probe import pick_model
 
     from core.kernel.agent_prompt import messages
@@ -20,7 +20,7 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220) -> str:
     model = pick_model()
     body = json.dumps({
         "model": model,
-        "messages": messages(prompt),
+        "messages": messages(prompt, edit=edit),
         "stream": False,
         "think": False,
         "options": {"temperature": temperature, "num_predict": n},
@@ -144,14 +144,16 @@ def main() -> int:
             else:
                 prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
                 try:
-                    text = _ask(prompt, n=predict)
+                    text = _ask(prompt, n=predict, edit=True)
                 except Exception as exc:
                     row["ask_error"] = f"{type(exc).__name__}: {exc}"[:300]
-                    text = _ask(prompt, n=predict)
+                    text = _ask(prompt, n=predict, edit=True)
+                if "def " not in text:
+                    text = _ask(prompt + "\nDo not reply READ. Reply with the function or functions.\n", temperature=0.4, n=predict, edit=True)
                 text_tail = text
                 result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         else:
-            text = _ask(prompt, n=predict)
+            text = _ask(prompt, n=predict, edit=True)
             text_tail = text
             result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         if not result.get("honest") and result.get("reason") != "no_read":
@@ -162,7 +164,7 @@ def main() -> int:
             note = note or repair_note(task, attempted)
             if note and note != failing:
                 row["repair"] = note
-                text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict)
+                text = _ask(prompt + "\n" + repair_ask(note, list((task.get("parts") or {}))), temperature=0.4, n=predict, edit=True)
                 text_tail = text
                 result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         row["response_tail"] = text_tail[-240:]

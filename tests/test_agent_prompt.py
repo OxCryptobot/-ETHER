@@ -1,15 +1,20 @@
-from core.kernel.agent_prompt import SYSTEM, messages
+from core.kernel.agent_prompt import EDIT, SYSTEM, messages
 
 
 def test_the_prompt_fits_a_4b_and_speaks_the_parser() -> None:
     assert len(SYSTEM) < 500
+    assert len(EDIT) < 500
     assert "READ:" in SYSTEM
-    assert "complete function" in SYSTEM
+    assert "READ:" not in EDIT
+    assert "complete function" in EDIT
     for leaked in ("return a + b", "s[0] + s[-1]", "return 'ada'", "hi ada"):
         assert leaked not in SYSTEM
+        assert leaked not in EDIT
     sent = messages("Failing cases:\nends")
-    assert sent[0]["role"] == "system"
-    assert sent[1] == {"role": "user", "content": "Failing cases:\nends"}
+    assert sent[0]["content"] == SYSTEM
+    edit = messages("def ends", edit=True)
+    assert edit[0]["content"] == EDIT
+    assert edit[1] == {"role": "user", "content": "def ends"}
 
 
 def test_the_edit_turn_stops_asking_for_read() -> None:

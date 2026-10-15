@@ -83,6 +83,23 @@ def test_two_files_revert_together(tmp_path: Path) -> None:
     assert "person()" in (ws / "greet.py").read_text(encoding="utf-8")
 
 
+def test_an_import_above_the_function_is_kept(tmp_path: Path) -> None:
+    from core.kernel.product_loop import extract_functions
+
+    reply = (
+        "### greet.py\n"
+        "from person import person\n\n"
+        "def greet():\n"
+        "    return 'hi ' + person()\n\n"
+        "### person.py\n"
+        "def person():\n"
+        "    return 'ada'\n"
+    )
+    found = extract_functions(reply)
+    assert found["greet"].startswith("from person import person")
+    assert "from " not in found["person"]
+
+
 def test_dropping_the_old_fix_does_not_land(tmp_path: Path) -> None:
     from core.kernel.product_loop import apply_reply
 

@@ -88,7 +88,11 @@ def body_key(src: str) -> str:
 
 
 def extract_functions(text: str) -> Dict[str, str]:
-    """Every complete function in the reply, by name. The last one wins."""
+    """Every complete function in the reply, by name. The last one wins.
+
+    Import lines directly above a function stay with it. They are not the body,
+    and dropping them turns a cross-file call into a NameError.
+    """
     raw = (text or "").replace("```python", "").replace("```", "")
     lines = raw.splitlines()
     starts = [i for i, line in enumerate(lines) if line.startswith("def ")]
@@ -102,6 +106,17 @@ def extract_functions(text: str) -> Dict[str, str]:
         src = "\n".join(body).strip() + "\n"
         if "return " not in src:
             continue
+        picked: List[str] = []
+        i = start - 1
+        while i >= 0 and not lines[i].strip():
+            i -= 1
+        while i >= 0 and (lines[i].strip().startswith("from ") or lines[i].strip().startswith("import ")):
+            picked.append(lines[i].strip())
+            i -= 1
+            while i >= 0 and not lines[i].strip():
+                i -= 1
+        if picked:
+            src = "\n".join(reversed(picked)) + "\n\n" + src
         try:
             compile(src, "<edit>", "exec")
         except SyntaxError:

@@ -8,8 +8,8 @@
     "verify",
     "remember"
   ],
-  "honest": false,
-  "lesson": "aceback (most recent call last): File \"C:\\Users\\Otcde\\ETHER\\edit_ws\\tests\\test_pair.py\", line 9, in <module> assert greet() == 'hi ada' ^^^^^^^ File \"C:\\Users\\Otcde\\ETHER\\edit_ws\\greet.py\", line 2, in greet return 'hi ' + person() ^^^^^^ NameError: name 'person' is not defined | the test file failed",
+  "honest": true,
+  "lesson": "ends(ether) returned er, expected er; ends(abc) returned bc, expected ac; ends(a) returned a, expected a; ends() returned , expected",
   "learned": true,
   "scale": {
     "repeatable": true,

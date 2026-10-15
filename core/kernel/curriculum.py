@@ -307,7 +307,7 @@ TASKS: List[Dict[str, Any]] = [
         "budget": 1600,
         "predict": 220,
         "fn": "greet",
-        "prompt": "Reply with a complete def person and a complete def greet. greet must call person.\n",
+        "prompt": "Reply with a complete def person and a complete def greet. They live in different files. greet must call person, so the call needs an import.\n",
         "banned": "return 'ada'",
         "check": _check_pair,
     },

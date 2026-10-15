@@ -28,6 +28,41 @@ def lesson_line(text: str, banned: str = "") -> str:
     return text[-300:]
 
 
+def recall_task(root: Path, task_id: str) -> str:
+    """The last failure of this task. Another task's failure is not shown."""
+    path = Path(root) / "artifacts" / "edit_memory.json"
+    if not path.is_file():
+        return ""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    lessons = data.get("lessons") if isinstance(data, dict) else None
+    if not isinstance(lessons, dict):
+        return ""
+    return str(lessons.get(task_id) or "")
+
+
+def remember_task(root: Path, task_id: str, text: str) -> None:
+    path = Path(root) / "artifacts" / "edit_memory.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data: dict = {}
+    if path.is_file():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                data = loaded
+        except Exception:
+            data = {}
+    lessons = data.get("lessons")
+    if not isinstance(lessons, dict):
+        lessons = {}
+    lessons[task_id] = (text or "")[-400:]
+    data["lessons"] = lessons
+    data["text"] = lessons[task_id]
+    path.write_text(json.dumps(data) + "\n", encoding="utf-8")
+
+
 def recall(root: Path) -> str:
     path = Path(root) / "artifacts" / "edit_memory.json"
     if not path.is_file():

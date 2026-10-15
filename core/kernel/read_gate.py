@@ -4,6 +4,15 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 
+def source_files(task: Dict[str, Any]) -> List[str]:
+    """Every file the edit can change. Not the test."""
+    names = [str(task["file"])]
+    for name in (task.get("parts") or {}).values():
+        if str(name) not in names:
+            names.append(str(name))
+    return names
+
+
 def file_names(task: Dict[str, Any]) -> List[str]:
     names = [str(task["file"])]
     for name in task.get("also") or {}:

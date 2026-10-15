@@ -115,22 +115,23 @@ def main() -> int:
             return checker_for(task["id"])((workspace / task["file"]).read_text(encoding="utf-8"))
 
         if task.get("must_read"):
-            from core.kernel.read_gate import file_names, for_edit, read_nudge, repair_ask, take_read
+            from core.kernel.read_gate import file_names, for_edit, read_nudge, repair_ask, source_files, take_read
 
             allowed = file_names(task)
+            needed = source_files(task)
             seen = []
             text = _ask(prompt, n=48)
-            for _ in range(3):
+            for _ in range(len(allowed) + 1):
                 path = take_read(text, allowed)
                 if path and path not in seen:
                     seen.append(path)
                     body = (workspace / path).read_text(encoding="utf-8")
                     prompt = prompt + "\n\n### " + path + "\n" + body
-                    if path == task["file"]:
-                        break
+                if all(name in seen for name in needed):
+                    break
                 text = _ask(prompt + "\n" + read_nudge(allowed, seen), temperature=0.3, n=48)
             row["read"] = seen
-            if task["file"] not in seen:
+            if any(name not in seen for name in needed):
                 text_tail = text
                 result = {
                     "ok": False,
@@ -143,9 +144,9 @@ def main() -> int:
                 }
             else:
                 prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
-                from core.kernel.edit_memory import lesson_line, recall
+                from core.kernel.edit_memory import lesson_line, recall_task
 
-                learned = lesson_line(recall(ROOT), str(task.get("banned") or ""))
+                learned = lesson_line(recall_task(ROOT, task["id"]), str(task.get("banned") or ""))
                 if learned:
                     prompt = prompt + "Last failure: " + learned + "\n"
                 try:
@@ -203,6 +204,25 @@ def main() -> int:
                         break
                 if key:
                     seen_bodies.append(key)
+                new_src = extract_function(text) or ""
+                new_note = repair_note(task, new_src) if new_src else ""
+                old_note = repair_note(task, attempted)
+                if (
+                    new_note
+                    and new_note == old_note
+                    and "the test file failed" not in new_note
+                    and new_note != "the function raised"
+                ):
+                    result = {
+                        "ok": False,
+                        "honest": False,
+                        "strategy": "tool_runtime",
+                        "mode": "live",
+                        "reason": "repeated",
+                        "tests_ok": False,
+                        "tools": ["replace_file"],
+                    }
+                    break
                 result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         row["response_tail"] = text_tail[-240:]
         row.update(result)
@@ -212,11 +232,11 @@ def main() -> int:
                 from core.kernel.worktree import seal
 
                 row["seal"] = seal(ROOT, task["id"], [task["file"], *list(task.get("also") or {})])
-        from core.kernel.edit_memory import lesson_line, remember
+        from core.kernel.edit_memory import lesson_line, remember_task
 
         learned = lesson_line(str(row.get("repair") or ""), str(task.get("banned") or ""))
         line = learned or f"{task['id']}: {'pass' if row.get('honest') else 'fail'}"
-        remember(ROOT, line)
+        remember_task(ROOT, task["id"], line)
         from core.kernel.curriculum import bench, note_open
 
         row["bench"] = bench(ROOT, row)

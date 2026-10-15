@@ -106,3 +106,34 @@ def test_the_live_bench_is_not_the_old_scoreboard(tmp_path) -> None:
     assert row["open"] == "clamp"
     assert "scoreboard_latest" in row["note"]
     assert (tmp_path / "artifacts" / "agent_bench.json").is_file()
+
+
+def test_pair_is_not_editable_until_person_is_open() -> None:
+    from core.kernel.curriculum import TASKS
+    from core.kernel.read_gate import source_files
+
+    pair = next(item for item in TASKS if item["id"] == "pair")
+    assert source_files(pair) == ["greet.py", "person.py"]
+    assert "return 'ada'" not in pair["prompt"]
+    assert "import" in pair["prompt"]
+
+
+def test_one_task_does_not_see_the_other_failure(tmp_path) -> None:
+    from core.kernel.edit_memory import recall_task, remember_task
+
+    remember_task(tmp_path, "pair", "NameError: name 'person' is not defined")
+    remember_task(tmp_path, "ends", "ends(abc) returned bc, expected ac")
+    assert "person" in recall_task(tmp_path, "pair")
+    assert "abc" in recall_task(tmp_path, "ends")
+    assert "person" not in recall_task(tmp_path, "ends")
+
+
+def test_two_spellings_of_the_same_slice_fail_the_same_way() -> None:
+    from core.kernel.curriculum import TASKS, repair_note
+
+    task = next(item for item in TASKS if item["id"] == "ends")
+    one = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    two = "def ends(s):\n    return s[-2:] if s else ''\n"
+    assert repair_note(task, one) == repair_note(task, two)
+    other = "def ends(s):\n    return s[0] if s else ''\n"
+    assert repair_note(task, one) != repair_note(task, other)

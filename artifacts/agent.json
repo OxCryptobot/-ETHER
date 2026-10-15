@@ -9,7 +9,7 @@
     "remember"
   ],
   "honest": false,
-  "lesson": "Traceback (most recent call last): File \"C:\\Users\\Otcde\\ETHER\\edit_ws\\tests\\test_pair.py\", line 9, in <module> assert greet() == 'hi ada' ^^^^^^^ File \"C:\\Users\\Otcde\\ETHER\\edit_ws\\greet.py\", line 2, in greet p = person() ^^^^^^ NameError: name 'person' is not defined | the test file failed",
+  "lesson": "ends(ether) returned r, expected er; ends(abc) returned c, expected ac; ends(a) returned a, expected a; ends() returned , expected",
   "learned": true,
   "scale": {
     "repeatable": true,

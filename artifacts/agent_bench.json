@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-15T13:58:21.272277+00:00",
+  "updated": "2026-10-15T14:02:07.238253+00:00",
   "passed_marks": [
     "add",
     "clamp",
@@ -14,11 +14,12 @@
   ],
   "kept": [
     "merge",
+    "pair",
     "touch"
   ],
   "open": "ends",
-  "last_task": "pair",
-  "last_honest": true,
-  "last_reason": "",
+  "last_task": "ends",
+  "last_honest": false,
+  "last_reason": "repeated",
   "note": "This is the live curriculum. scoreboard_latest.json is not this benchmark."
 }

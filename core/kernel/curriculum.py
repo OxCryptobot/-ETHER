@@ -109,8 +109,13 @@ def _check_pair(src: str) -> bool:
     greet_src = src.split("def greet", 1)[-1] if "def greet" in src else ""
     if "person(" not in greet_src:
         return False
+    body = "\n".join(
+        line
+        for line in src.splitlines()
+        if not line.strip().startswith("from person") and not line.strip().startswith("import person")
+    )
     ns: Dict[str, Any] = {}
-    exec(src, ns)  # noqa: S102
+    exec(body, ns)  # noqa: S102
     person = ns.get("person")
     greet = ns.get("greet")
     if not callable(person) or not callable(greet):

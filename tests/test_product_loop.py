@@ -100,6 +100,19 @@ def test_an_import_above_the_function_is_kept(tmp_path: Path) -> None:
     assert "from " not in found["person"]
 
 
+def test_a_kept_pair_may_import() -> None:
+    from core.kernel.curriculum import checker_for
+
+    src = (
+        "def person():\n"
+        "    return 'ada'\n"
+        "from person import person\n"
+        "def greet():\n"
+        "    return 'hi ' + person()\n"
+    )
+    assert checker_for("pair")(src) is True
+
+
 def test_dropping_the_old_fix_does_not_land(tmp_path: Path) -> None:
     from core.kernel.product_loop import apply_reply
 

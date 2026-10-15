@@ -137,3 +137,19 @@ def test_two_spellings_of_the_same_slice_fail_the_same_way() -> None:
     assert repair_note(task, one) == repair_note(task, two)
     other = "def ends(s):\n    return s[0] if s else ''\n"
     assert repair_note(task, one) != repair_note(task, other)
+
+
+def test_a_repair_does_not_praise_the_case_that_passed() -> None:
+    from core.kernel.curriculum import TASKS, diagnose, repair_note
+    from core.kernel.edit_memory import lesson_line
+
+    task = next(item for item in TASKS if item["id"] == "ends")
+    src = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    note = repair_note(task, src)
+    assert "returned bc, expected ac" in note
+    assert "returned er, expected er" not in note
+    right = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    assert diagnose(task, right) == ""
+    stored = lesson_line("ends(ether) returned er, expected er; ends(abc) returned bc, expected ac")
+    assert "expected ac" in stored
+    assert "returned er, expected er" not in stored

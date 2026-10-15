@@ -21,8 +21,17 @@ def remember(root: Path, text: str, slot: str = "text") -> None:
 
 
 def lesson_line(text: str, banned: str = "") -> str:
-    """One failure the next edit may see. Never the banned patch."""
-    text = " ".join((text or "").split())
+    """One failure the next edit may see. Never the banned patch, and never a case that already matched."""
+    kept = []
+    for part in (text or "").split(";"):
+        piece = " ".join(part.split())
+        if "returned " in piece and ", expected " in piece:
+            got, _, want = piece.partition("returned ")[2].partition(", expected ")
+            if got.strip() == want.strip():
+                continue
+        if piece:
+            kept.append(piece)
+    text = "; ".join(kept)
     if not text or (banned and banned in text):
         return ""
     return text[-300:]

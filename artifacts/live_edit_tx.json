@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-16T05:36:07.193302+00:00",
+  "ts": "2026-10-16T06:12:36.532912+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
@@ -11,21 +11,16 @@
     "ends.py"
   ],
   "repair": "ends(abc) returned bc, expected ac",
-  "response_tail": "def ends(s):\n    return s[-1] if len(s) > 0 else \"\"",
+  "response_tail": "def ends(s):\n    return s[-2:] if len(s) >= 2 else s",
   "strategy": "tool_runtime",
   "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": false,
+  "reason": "repeated",
+  "tests_ok": false,
   "tools": [
     "replace_file"
   ],
-  "tests_ok": false,
-  "tx": [
-    "begin",
-    "revert"
-  ],
   "bench": {
-    "updated": "2026-10-16T05:36:34.002864+00:00",
+    "updated": "2026-10-16T06:13:06.520268+00:00",
     "passed_marks": [
       "add",
       "clamp",
@@ -46,7 +41,7 @@
     "open": "ends",
     "last_task": "ends",
     "last_honest": false,
-    "last_reason": "",
+    "last_reason": "repeated",
     "note": "This is the live curriculum. scoreboard_latest.json is not this benchmark."
   }
 }

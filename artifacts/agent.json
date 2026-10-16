@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "decision": "edit",
+  "decision": "hold",
   "stages": [
     "perceive",
     "decide",
@@ -9,7 +9,7 @@
     "remember"
   ],
   "honest": true,
-  "lesson": "ends(abc) returned bc, expected ac; ends(ether) returned ther, expected er; ends(a) returned , expected a",
+  "lesson": "ends: pass",
   "learned": true,
   "scale": {
     "repeatable": true,

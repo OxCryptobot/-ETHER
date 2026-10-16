@@ -1,35 +1,35 @@
 {
-  "ts": "2026-10-15T23:12:57.934439+00:00",
+  "ts": "2026-10-16T00:11:58.231929+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-15T23:12:58.101513+00:00",
+    "ts": "2026-10-16T00:11:58.403772+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-15T23:13:48.870884+00:00",
+    "ts": "2026-10-16T00:12:48.033184+00:00",
     "os": "nt",
     "ok": true,
     "add_rc": 0,
-    "ahead": 4017,
+    "ahead": 4019,
     "commit_rc": 0,
     "sync": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 4018,
+      "ahead": 4020,
       "dirty": true,
       "note": "rebase_abort"
     },
     "via": "gh_token_url",
     "push_rc": 1,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   03c0c986f..44ebac899  HEAD -> main\n",
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12504a4a4..2c3f8ef68  HEAD -> main\n",
     "sync_retry": {
       "ok": false,
       "hard_reset": false,
-      "ahead": 4018,
+      "ahead": 4020,
       "dirty": true,
       "note": "rebase_abort"
     },
@@ -38,7 +38,7 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   03c0c986f..44ebac899  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12504a4a4..2c3f8ef68  HEAD -> main\n"
     }
   },
   "runner": {
@@ -50,7 +50,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-15T23:13:20.326741+00:00",
+    "ts": "2026-10-16T00:12:19.392411+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -94,7 +94,7 @@
     ],
     "honest": false,
     "lesson": "ends(abc) returned bc, expected ac",
-    "learned": true,
+    "learned": false,
     "scale": {
       "repeatable": true,
       "checker_writes": 0
@@ -107,7 +107,7 @@
   "day_learn": {
     "ok": true,
     "skipped": true,
-    "day": "2026-10-15",
+    "day": "2026-10-16",
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",

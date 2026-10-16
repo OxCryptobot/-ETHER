@@ -153,3 +153,17 @@ def test_a_repair_does_not_praise_the_case_that_passed() -> None:
     stored = lesson_line("ends(ether) returned er, expected er; ends(abc) returned bc, expected ac")
     assert "expected ac" in stored
     assert "returned er, expected er" not in stored
+
+
+def test_the_case_that_kills_a_slice_comes_first() -> None:
+    from core.kernel.curriculum import TASKS
+    from core.kernel.edit_memory import already_known
+
+    task = next(item for item in TASKS if item["id"] == "ends")
+    assert task["cases"][0][0] == ("abc",)
+    test = task["also"]["tests/test_ends.py"]
+    assert test.index("abc") < test.index("ether")
+    assert "s[-1]" not in task["prompt"]
+    assert "s[0] +" not in task["prompt"]
+    assert already_known("ends(abc) returned bc, expected ac", "ends(abc) returned bc, expected ac")
+    assert already_known("ends(abc) returned bc, expected ac", "") is False

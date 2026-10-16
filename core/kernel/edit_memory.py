@@ -72,6 +72,11 @@ def remember_task(root: Path, task_id: str, text: str) -> None:
     path.write_text(json.dumps(data) + "\n", encoding="utf-8")
 
 
+def already_known(learned: str, note: str) -> bool:
+    """True when this attempt fails the same way as the stored lesson."""
+    return bool(learned and note and note in learned)
+
+
 def recall(root: Path) -> str:
     path = Path(root) / "artifacts" / "edit_memory.json"
     if not path.is_file():

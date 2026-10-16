@@ -270,8 +270,8 @@ TASKS: List[Dict[str, Any]] = [
                 "from pathlib import Path\n"
                 "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
                 "from ends import ends\n"
-                "assert ends('ether') == 'er'\n"
                 "assert ends('abc') == 'ac'\n"
+                "assert ends('ether') == 'er'\n"
                 "assert ends('a') == 'a'\n"
                 "assert ends('') == ''\n"
             )
@@ -282,7 +282,7 @@ TASKS: List[Dict[str, Any]] = [
         "budget": 1200,
         "predict": 160,
         "fn": "ends",
-        "cases": [(("ether",), "er"), (("abc",), "ac"), (("a",), "a"), (("",), "")],
+        "cases": [(("abc",), "ac"), (("ether",), "er"), (("a",), "a"), (("",), "")],
         "prompt": "Reply with a complete def ends function. First and last character, or empty.\n",
         "banned": "s[-1]",
         "check": _check_ends,

@@ -144,7 +144,7 @@ def main() -> int:
                 }
             else:
                 prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
-                from core.kernel.edit_memory import lesson_line, recall_task
+                from core.kernel.edit_memory import already_known, lesson_line, recall_task
 
                 learned = lesson_line(recall_task(ROOT, task["id"]), str(task.get("banned") or ""))
                 if learned:
@@ -157,7 +157,32 @@ def main() -> int:
                 if "def " not in text:
                     text = _ask(prompt + "\nDo not reply READ. Reply with the function or functions.\n", temperature=0.4, n=predict, edit=True)
                 text_tail = text
-                result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
+                first_src = extract_function(text) or ""
+                first_note = repair_note(task, first_src) if first_src else ""
+                if already_known(learned, first_note):
+                    text = _ask(
+                        prompt + "\nThat failure is already known. Reply with a different function.\n",
+                        temperature=0.4,
+                        n=predict,
+                        edit=True,
+                    )
+                    text_tail = text
+                    second = extract_function(text) or ""
+                    second_note = repair_note(task, second) if second else ""
+                    if second_note and second_note == first_note:
+                        result = {
+                            "ok": False,
+                            "honest": False,
+                            "strategy": "tool_runtime",
+                            "mode": "live",
+                            "reason": "repeated",
+                            "tests_ok": False,
+                            "tools": ["replace_file"],
+                        }
+                    else:
+                        result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
+                else:
+                    result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         else:
             text = _ask(prompt, n=predict, edit=True)
             text_tail = text

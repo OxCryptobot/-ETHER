@@ -1,5 +1,5 @@
 {
-  "ts": "2026-10-16T14:16:21.187738+00:00",
+  "ts": "2026-10-16T14:52:25.557924+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
@@ -11,7 +11,7 @@
     "ends.py"
   ],
   "repair": "ends(abc) returned bc, expected ac",
-  "response_tail": "def ends(s):\n    return s[-2:] if len(s) >= 2 else s",
+  "response_tail": "def ends(s):\n    return s[-1] if s else \"\"",
   "strategy": "tool_runtime",
   "mode": "live",
   "reason": "repeated",
@@ -20,7 +20,7 @@
     "replace_file"
   ],
   "bench": {
-    "updated": "2026-10-16T14:16:49.822829+00:00",
+    "updated": "2026-10-16T14:52:52.372479+00:00",
     "passed_marks": [
       "add",
       "clamp",

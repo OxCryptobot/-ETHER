@@ -1,56 +1,9 @@
 {
-  "ts": "2026-10-16T22:35:27.986813+00:00",
-  "ok": true,
-  "honest": true,
-  "note": "tool edit then tests. generate-only is not a pass",
-  "task": "ends",
-  "repo": true,
-  "failing": "edges(abc) returned a, expected ac; edges(abcd) returned a, expected ad",
-  "read": [
-    "ends.py"
-  ],
-  "samples": 1,
-  "response_tail": "def edges(s):\n    return s[0] + s[-1] if len(s) > 1 else s[0] if s else \"\"\n",
-  "strategy": "tool_runtime",
-  "mode": "live",
-  "degraded": [],
-  "tool_runtime_ok": true,
-  "tools": [
-    "replace_file"
-  ],
-  "tests_ok": true,
-  "tx": [
-    "begin",
-    "promote"
-  ],
-  "seal": {
-    "rc": 0,
-    "tail": "[master 8e411d6] ends\n 2 files changed, 7 insertions(+), 11 deletions(-)\n"
-  },
-  "bench": {
-    "updated": "2026-10-16T22:35:48.344601+00:00",
-    "passed_marks": [
-      "add",
-      "clamp",
-      "sign",
-      "span",
-      "uniq",
-      "above",
-      "merge",
-      "ends",
-      "pair",
-      "touch"
-    ],
-    "kept": [
-      "merge",
-      "ends",
-      "pair",
-      "touch"
-    ],
-    "open": null,
-    "last_task": "ends",
-    "last_honest": true,
-    "last_reason": "",
-    "note": "This is the live curriculum. scoreboard_latest.json is not this benchmark."
-  }
+  "ts": "2026-10-16T23:11:03.231348+00:00",
+  "ok": false,
+  "honest": false,
+  "note": "kept",
+  "persisted": true,
+  "task": "touch",
+  "file": "intervals.py"
 }

@@ -8,8 +8,8 @@
     "verify",
     "remember"
   ],
-  "honest": false,
-  "lesson": "ends(abc) returned bc, expected ac",
+  "honest": true,
+  "lesson": "ends(abc) returned bc, expected ac; ends(ether) returned ther, expected er; ends(a) returned , expected a",
   "learned": true,
   "scale": {
     "repeatable": true,

@@ -1,26 +1,31 @@
 {
-  "ts": "2026-10-16T18:41:20.615452+00:00",
+  "ts": "2026-10-16T18:46:38.708489+00:00",
   "ok": false,
   "honest": false,
   "note": "tool edit then tests. generate-only is not a pass",
   "task": "ends",
   "repo": true,
-  "failing": "ends(ether) returned e, expected er; ends(abc) returned a, expected ac",
+  "failing": "ends(abc) returned a, expected ac; ends(ether) returned e, expected er",
   "read": [
     "tests/test_ends.py",
     "ends.py"
   ],
-  "repair": "ends(abc) returned bc, expected ac",
+  "repair": "ends(abc) returned c, expected ac; ends(ether) returned r, expected er",
   "response_tail": "def ends(s):\n    return s[-2:] if len(s) >= 2 else s",
   "strategy": "tool_runtime",
   "mode": "live",
-  "reason": "repeated",
-  "tests_ok": false,
+  "degraded": [],
+  "tool_runtime_ok": false,
   "tools": [
     "replace_file"
   ],
+  "tests_ok": false,
+  "tx": [
+    "begin",
+    "revert"
+  ],
   "bench": {
-    "updated": "2026-10-16T18:41:49.534243+00:00",
+    "updated": "2026-10-16T18:46:54.614366+00:00",
     "passed_marks": [
       "add",
       "clamp",
@@ -41,7 +46,7 @@
     "open": "ends",
     "last_task": "ends",
     "last_honest": false,
-    "last_reason": "repeated",
+    "last_reason": "",
     "note": "This is the live curriculum. scoreboard_latest.json is not this benchmark."
   }
 }

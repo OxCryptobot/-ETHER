@@ -75,7 +75,7 @@ def test_passed_task_is_not_repeated(tmp_path: Path) -> None:
     dest.mkdir()
     (dest / "intervals.py").write_text(fixed, encoding="utf-8")
     assert next_task(tmp_path)["id"] == "ends"
-    (dest / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
+    (dest / "ends.py").write_text("def edges(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
     assert next_task(tmp_path)["id"] == "pair"
     (dest / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
     (dest / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
@@ -127,7 +127,7 @@ def test_a_kept_file_is_not_edited_again(tmp_path: Path) -> None:
     assert row["rc"] == 0
     assert (ws / ".git").is_dir()
     assert not (tmp_path / ".git").exists()
-    (ws / "ends.py").write_text("def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
+    (ws / "ends.py").write_text("def edges(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n", encoding="utf-8")
     (ws / "person.py").write_text("def person():\n    return 'ada'\n", encoding="utf-8")
     (ws / "greet.py").write_text("def greet():\n    return 'hi ' + person()\n", encoding="utf-8")
     (ws / "intervals.py").write_text(
@@ -192,9 +192,9 @@ def test_the_source_is_hidden_until_it_is_read() -> None:
     assert task["banned"] not in nudge
     from core.kernel.curriculum import diagnose, repair_note
 
-    wrong = "def ends(s):\n    return s[-1] if s else \"\"\n"
+    wrong = "def edges(s):\n    return s[-1] if s else \"\"\n"
     note = repair_note(task, wrong)
-    assert "expected 'er'" in note or "expected er" in note
+    assert "expected ad" in note
     assert task["banned"] not in note
     assert note != diagnose(task, task["source"])
 
@@ -284,8 +284,8 @@ def test_failing_cases_do_not_contain_the_patch() -> None:
 
 
 def test_last_two_characters_is_not_the_ends_fix() -> None:
-    cheat = "def ends(s):\n    return s[-2:] if len(s) > 1 else s[:1] if s else ''\n"
-    real = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    cheat = "def edges(s):\n    return s[-2:] if len(s) > 1 else s[:1] if s else ''\n"
+    real = "def edges(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
     assert checker_for("ends")(cheat) is False
     assert checker_for("ends")(real) is True
 

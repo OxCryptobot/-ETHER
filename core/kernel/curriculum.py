@@ -151,11 +151,11 @@ def _check_touch(src: str) -> bool:
 def _check_ends(src: str) -> bool:
     ns: Dict[str, Any] = {}
     exec(src, ns)  # noqa: S102
-    fn = ns.get("ends")
+    fn = ns.get("edges")
     if not callable(fn):
         return False
     try:
-        return fn("ether") == "er" and fn("abc") == "ac" and fn("a") == "a" and fn("") == ""
+        return fn("abc") == "ac" and fn("abcd") == "ad" and fn("a") == "a" and fn("") == ""
     except Exception:
         return False
 
@@ -263,17 +263,17 @@ TASKS: List[Dict[str, Any]] = [
     {
         "id": "ends",
         "file": "ends.py",
-        "source": "def ends(s):\n    return s[0] if s else \"\"\n",
+        "source": "def edges(s):\n    return s[0] if s else \"\"\n",
         "also": {
             "tests/test_ends.py": (
                 "import sys\n"
                 "from pathlib import Path\n"
                 "sys.path.insert(0, str(Path(__file__).resolve().parents[1]))\n"
-                "from ends import ends\n"
-                "assert ends('abc') == 'ac'\n"
-                "assert ends('ether') == 'er'\n"
-                "assert ends('a') == 'a'\n"
-                "assert ends('') == ''\n"
+                "from ends import edges\n"
+                "assert edges('abc') == 'ac'\n"
+                "assert edges('abcd') == 'ad'\n"
+                "assert edges('a') == 'a'\n"
+                "assert edges('') == ''\n"
             )
         },
         "test": "tests/test_ends.py",
@@ -281,9 +281,9 @@ TASKS: List[Dict[str, Any]] = [
         "must_read": True,
         "budget": 1200,
         "predict": 160,
-        "fn": "ends",
-        "cases": [(("abc",), "ac"), (("ether",), "er"), (("a",), "a"), (("",), "")],
-        "prompt": "Reply with a complete def ends function. First and last character, or empty.\n",
+        "fn": "edges",
+        "cases": [(("abc",), "ac"), (("abcd",), "ad"), (("a",), "a"), (("",), "")],
+        "prompt": "Reply with a complete def edges function. First and last character, or empty.\n",
         "banned": "s[-1]",
         "check": _check_ends,
     },

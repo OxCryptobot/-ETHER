@@ -27,7 +27,7 @@ def test_the_edit_turn_stops_asking_for_read() -> None:
     edit = for_edit(shown, task["prompt"], [])
     assert "READ:" not in edit
     assert "### ends.py" in edit
-    assert "def ends" in edit
+    assert "def edges" in edit
     pair = next(item for item in TASKS if item["id"] == "pair")
     repair = repair_ask("the test file failed", list(pair["parts"]))
     assert "def person" in repair and "def greet" in repair
@@ -132,10 +132,10 @@ def test_two_spellings_of_the_same_slice_fail_the_same_way() -> None:
     from core.kernel.curriculum import TASKS, repair_note
 
     task = next(item for item in TASKS if item["id"] == "ends")
-    one = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
-    two = "def ends(s):\n    return s[-2:] if s else ''\n"
+    one = "def edges(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    two = "def edges(s):\n    return s[-2:] if s else ''\n"
     assert repair_note(task, one) == repair_note(task, two)
-    other = "def ends(s):\n    return s[0] if s else ''\n"
+    other = "def edges(s):\n    return s[0] if s else ''\n"
     assert repair_note(task, one) != repair_note(task, other)
 
 
@@ -144,11 +144,11 @@ def test_a_repair_does_not_praise_the_case_that_passed() -> None:
     from core.kernel.edit_memory import lesson_line
 
     task = next(item for item in TASKS if item["id"] == "ends")
-    src = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    src = "def edges(s):\n    return s[-2:] if len(s) >= 2 else s\n"
     note = repair_note(task, src)
     assert "returned bc, expected ac" in note
-    assert "returned er, expected er" not in note
-    right = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    assert "returned cd, expected ad" in note
+    right = "def edges(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
     assert diagnose(task, right) == ""
     stored = lesson_line("ends(ether) returned er, expected er; ends(abc) returned bc, expected ac")
     assert "expected ac" in stored
@@ -162,7 +162,9 @@ def test_the_case_that_kills_a_slice_comes_first() -> None:
     task = next(item for item in TASKS if item["id"] == "ends")
     assert task["cases"][0][0] == ("abc",)
     test = task["also"]["tests/test_ends.py"]
-    assert test.index("abc") < test.index("ether")
+    assert "ether" not in test
+    assert "edges" in task["prompt"]
+    assert "def ends" not in task["prompt"]
     assert "s[-1]" not in task["prompt"]
     assert "s[0] +" not in task["prompt"]
     assert already_known("ends(abc) returned bc, expected ac", "ends(abc) returned bc, expected ac")
@@ -173,10 +175,10 @@ def test_the_sample_that_fails_fewer_cases_is_kept() -> None:
     from core.kernel.curriculum import TASKS, miss_count, prefer
 
     task = next(item for item in TASKS if item["id"] == "ends")
-    last_two = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
-    last_one = "def ends(s):\n    return s[-1] if s else ''\n"
-    both = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
-    assert miss_count(task, last_two) == 1
+    last_two = "def edges(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    last_one = "def edges(s):\n    return s[-1] if s else ''\n"
+    both = "def edges(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    assert miss_count(task, last_two) == 2
     assert miss_count(task, last_one) == 2
     assert miss_count(task, both) == 0
     assert prefer(task, [last_two, last_one, both]) == both

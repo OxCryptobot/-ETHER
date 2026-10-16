@@ -404,6 +404,43 @@ def repair_note(task: Dict[str, Any], attempted_src: str) -> str:
     return note
 
 
+def miss_count(task: Dict[str, Any], src: str) -> Optional[int]:
+    """How many cases this function misses. None when it cannot be scored."""
+    fn_name = str(task.get("fn") or "")
+    cases = task.get("cases") or []
+    if not fn_name or not cases or not src:
+        return None
+    ns: Dict[str, Any] = {}
+    try:
+        exec(src, ns)  # noqa: S102
+        fn = ns.get(fn_name)
+        if not callable(fn):
+            return None
+        missed = 0
+        for args, want in cases:
+            if fn(*args) != want:
+                missed += 1
+        return missed
+    except Exception:
+        return None
+
+
+def prefer(task: Dict[str, Any], sources: List[str]) -> str:
+    """The candidate that fails the fewest cases. Not a new answer."""
+    best = ""
+    best_n: Optional[int] = None
+    for src in sources:
+        missed = miss_count(task, src)
+        if missed is None:
+            continue
+        if best_n is None or missed < best_n:
+            best = src
+            best_n = missed
+            if missed == 0:
+                break
+    return best
+
+
 def _load(path: Path) -> Dict[str, Any]:
     if not path.is_file():
         return {}

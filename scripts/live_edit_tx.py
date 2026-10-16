@@ -144,7 +144,8 @@ def main() -> int:
                 }
             else:
                 prompt = for_edit(prompt, task["prompt"], list((task.get("parts") or {})))
-                from core.kernel.edit_memory import already_known, lesson_line, recall_task
+                from core.kernel.edit_memory import lesson_line, recall_task
+                from core.kernel.curriculum import miss_count, prefer
 
                 learned = lesson_line(recall_task(ROOT, task["id"]), str(task.get("banned") or ""))
                 if learned:
@@ -156,33 +157,27 @@ def main() -> int:
                     text = _ask(prompt, n=predict, edit=True)
                 if "def " not in text:
                     text = _ask(prompt + "\nDo not reply READ. Reply with the function or functions.\n", temperature=0.4, n=predict, edit=True)
+                texts = [text]
+                if task.get("cases"):
+                    for temp in (0.7, 0.9):
+                        src = extract_function(texts[-1]) or ""
+                        if miss_count(task, src) == 0:
+                            break
+                        note = repair_note(task, src) if src else ""
+                        texts.append(
+                            _ask(
+                                prompt + "\n" + (note or "That failed.") + "\nReply with a different function.\n",
+                                temperature=temp,
+                                n=predict,
+                                edit=True,
+                            )
+                        )
+                    chosen = prefer(task, [extract_function(item) or "" for item in texts])
+                    if chosen:
+                        text = chosen
                 text_tail = text
-                first_src = extract_function(text) or ""
-                first_note = repair_note(task, first_src) if first_src else ""
-                if already_known(learned, first_note):
-                    text = _ask(
-                        prompt + "\nThat failure is already known. Reply with a different function.\n",
-                        temperature=0.4,
-                        n=predict,
-                        edit=True,
-                    )
-                    text_tail = text
-                    second = extract_function(text) or ""
-                    second_note = repair_note(task, second) if second else ""
-                    if second_note and second_note == first_note:
-                        result = {
-                            "ok": False,
-                            "honest": False,
-                            "strategy": "tool_runtime",
-                            "mode": "live",
-                            "reason": "repeated",
-                            "tests_ok": False,
-                            "tools": ["replace_file"],
-                        }
-                    else:
-                        result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
-                else:
-                    result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
+                row["samples"] = len(texts)
+                result = apply_reply(workspace, task["file"], text, tests_ok, task.get("parts"))
         else:
             text = _ask(prompt, n=predict, edit=True)
             text_tail = text

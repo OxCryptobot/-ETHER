@@ -167,3 +167,17 @@ def test_the_case_that_kills_a_slice_comes_first() -> None:
     assert "s[0] +" not in task["prompt"]
     assert already_known("ends(abc) returned bc, expected ac", "ends(abc) returned bc, expected ac")
     assert already_known("ends(abc) returned bc, expected ac", "") is False
+
+
+def test_the_sample_that_fails_fewer_cases_is_kept() -> None:
+    from core.kernel.curriculum import TASKS, miss_count, prefer
+
+    task = next(item for item in TASKS if item["id"] == "ends")
+    last_two = "def ends(s):\n    return s[-2:] if len(s) >= 2 else s\n"
+    last_one = "def ends(s):\n    return s[-1] if s else ''\n"
+    both = "def ends(s):\n    if len(s) < 2:\n        return s\n    return s[0] + s[-1]\n"
+    assert miss_count(task, last_two) == 1
+    assert miss_count(task, last_one) == 2
+    assert miss_count(task, both) == 0
+    assert prefer(task, [last_two, last_one, both]) == both
+    assert "s[-1]" not in task["prompt"]

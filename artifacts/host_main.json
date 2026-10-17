@@ -1,29 +1,29 @@
 {
-  "ts": "2026-10-17T21:11:01.921557+00:00",
+  "ts": "2026-10-17T22:09:18.673535+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-17T21:11:02.080378+00:00",
+    "ts": "2026-10-17T22:09:18.840101+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-17T21:11:30.311724+00:00",
+    "ts": "2026-10-17T22:09:47.024804+00:00",
     "os": "nt",
-    "ok": false,
+    "ok": true,
     "ahead": 4140,
     "worktree": {
-      "ok": false,
+      "ok": true,
       "hard_reset": false,
-      "note": "worktree",
-      "push_rc": 128,
-      "stderr": "fatal: unable to access 'https://github.com/OxCryptobot/-ETHER.git/': Empty reply from server\n"
+      "note": "worktree_push",
+      "push_rc": 0,
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   3ee415134..f63806633  HEAD -> main\n"
     },
-    "push_rc": 128,
-    "note": "worktree",
-    "stderr": "fatal: unable to access 'https://github.com/OxCryptobot/-ETHER.git/': Empty reply from server\n"
+    "push_rc": 0,
+    "note": "worktree_push",
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   3ee415134..f63806633  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-17T21:11:09.152542+00:00",
+    "ts": "2026-10-17T22:09:25.882156+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,

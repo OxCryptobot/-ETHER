@@ -6,15 +6,22 @@
       "read_file",
       "grep",
       "read_file",
-      "grep",
-      "grep",
-      "grep"
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file"
     ],
-    "hits": [],
+    "hits": [
+      "tests/conftest.py:1:\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"",
+      "tests/conftest.py:2:import sys",
+      "tests/conftest.py:3:from pathlib import Path",
+      "tests/test_greeter.py:3:from greeter import greet"
+    ],
     "rejected": "test.py",
     "patch": "",
     "assertion": "",
-    "pattern": "\\.py$",
+    "pattern": "import",
     "missed": [
       "fail",
       "\\.py$"
@@ -24,8 +31,10 @@
     "read_file",
     "grep",
     "read_file",
-    "grep",
-    "grep",
-    "grep"
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file"
   ]
 }

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-10-17T21:11:30.311724+00:00",
+  "ts": "2026-10-17T22:09:18.858898+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "ahead": 4140,
   "worktree": {
-    "ok": false,
+    "ok": true,
     "hard_reset": false,
-    "note": "worktree",
-    "push_rc": 128,
-    "stderr": "fatal: unable to access 'https://github.com/OxCryptobot/-ETHER.git/': Empty reply from server\n"
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   f0ad2c10f..3ee415134  HEAD -> main\n"
   },
-  "push_rc": 128,
-  "note": "worktree",
-  "stderr": "fatal: unable to access 'https://github.com/OxCryptobot/-ETHER.git/': Empty reply from server\n"
+  "push_rc": 0,
+  "note": "worktree_push",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   f0ad2c10f..3ee415134  HEAD -> main\n"
 }

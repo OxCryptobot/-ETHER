@@ -195,3 +195,14 @@ def test_the_same_miss_stops(tmp_path: Path) -> None:
     row = run(_root(tmp_path), again, steps=8)
     assert row["honest"] is False
     assert row["tools"].count("grep") == 4
+
+
+def test_a_read_without_a_hit_stops(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    def invented(prompt: str, n: int = 180) -> str:
+        return json.dumps({"tool": "read_file", "args": {"path": "src/main.rs"}})
+
+    row = run(_root(tmp_path), invented, steps=8)
+    assert row["honest"] is False
+    assert row["tools"].count("read_file") == 3

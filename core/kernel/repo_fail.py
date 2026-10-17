@@ -316,14 +316,20 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             prompt = fit(base, {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
             tools.append(tool)
             continue
-        if tool == "read_file" and hits:
+        if tool == "read_file":
             wanted = str(args.get("path") or "").replace("\\", "/")
             known = [item.split(":", 1)[0] for item in hits]
             if wanted not in known:
                 rejected = wanted
-                obs = {"ok": False, "reason": "that path is not a search hit", "hits": hits[:6]}
+                if wanted and wanted == last_refused:
+                    repeats += 1
+                else:
+                    repeats = 1
+                    last_refused = wanted
                 tools.append(tool)
-                prompt = fit(base, obs)
+                prompt = fit(base, {"ok": False, "reason": "search before you read. that path is not a hit", "hits": hits[:6]})
+                if repeats >= 3:
+                    break
                 continue
         if tool == "read_file" and focus:
             args = dict(args)

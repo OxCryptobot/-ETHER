@@ -18,14 +18,16 @@
       "tests/conftest.py:3:from pathlib import Path",
       "tests/test_greeter.py:3:from greeter import greet"
     ],
-    "rejected": "",
+    "rejected": "conftest.py",
     "patch": "",
     "assertion": "",
     "pattern": "",
     "missed": [
       "fail",
       "\\.py$"
-    ]
+    ],
+    "body": "\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"\nimport sys\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\nif str(ROOT) not in sys.path:\n    sys.path.insert(0, str(ROOT))\n",
+    "read_path": "tests/conftest.py"
   },
   "last_tools": [
     "read_file",

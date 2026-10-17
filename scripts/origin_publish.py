@@ -283,6 +283,11 @@ def make_runner(root: Path) -> tuple:
     return git, authed, token
 
 
+def publish_plan(ahead: int) -> str:
+    """A diverged local branch is not rebased. Artifacts go out from origin/main."""
+    return "worktree" if ahead > 0 else "local"
+
+
 def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     root = Path(root)
     art = root / "artifacts"
@@ -307,7 +312,15 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
         diff = run([git, "diff", "--cached", "--quiet", "--", *paths])
         ahead = _int_stdout(run([git, "rev-list", "--count", "origin/main..HEAD"]))
         row["ahead"] = ahead
-        if diff.returncode == 0 and ahead == 0:
+        if publish_plan(ahead) == "worktree":
+            via = publish_worktree(root, git, run, message, token)
+            row["worktree"] = via
+            row["push_rc"] = via.get("push_rc", 0 if via.get("ok") else 1)
+            row["ok"] = bool(via.get("ok"))
+            row["note"] = via.get("note") or "worktree"
+            if via.get("stderr"):
+                row["stderr"] = via["stderr"]
+        elif diff.returncode == 0 and ahead == 0:
             row.update({"ok": True, "note": "no_change"})
         else:
             if diff.returncode != 0:

@@ -2,10 +2,12 @@
 import subprocess
 from pathlib import Path
 
-from scripts.origin_publish import existing_paths, hard_reset_allowed, publish_worktree, sync_writer
+from scripts.origin_publish import existing_paths, hard_reset_allowed, publish_plan, publish_worktree, sync_writer
 
 
-def test_hard_reset_blocked_when_ahead_or_dirty() -> None:
+def test_a_diverged_branch_is_not_rebased() -> None:
+    assert publish_plan(0) == "local"
+    assert publish_plan(4139) == "worktree"
     assert hard_reset_allowed(local_ahead=0, dirty=False) is True
     assert hard_reset_allowed(local_ahead=1, dirty=False) is False
     assert hard_reset_allowed(local_ahead=0, dirty=True) is False

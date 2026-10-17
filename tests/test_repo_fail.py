@@ -137,10 +137,10 @@ def test_the_same_failure_can_pass_twice(tmp_path: Path) -> None:
     third = run(root, counting)
     assert first["honest"] is True and first["passes"] == 1
     assert second["honest"] is True and second["passes"] == 2
-    assert second["tools"][0] == "read_file"
+    assert second["tools"][0] == "apply_patch"
     assert third["note"] == "repo_fail_repeated"
     assert third["honest"] is False
-    assert calls["n"] == 5
+    assert calls["n"] == 4
 
 
 def test_a_miss_is_not_searched_again(tmp_path: Path) -> None:
@@ -207,3 +207,46 @@ def test_a_read_without_a_hit_stops(tmp_path: Path) -> None:
     row = run(_root(tmp_path), invented, steps=8)
     assert row["honest"] is False
     assert row["tools"].count("read_file") == 3
+
+
+def test_one_read_then_a_different_tool(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import load_state, run, start_prompt
+
+    root = _root(tmp_path)
+
+    def ask(prompt: str, n: int = 180) -> str:
+        if "already read" in prompt:
+            return json.dumps({
+                "tool": "apply_patch",
+                "args": {
+                    "path": "greeter.py",
+                    "old": 'return f"Hello {name}"',
+                    "new": 'return f"Hello, {name}!"',
+                },
+            })
+        if "body" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
+        if "hits" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+
+    row = run(root, ask)
+    assert row["honest"] is True
+    assert row["tools"].count("read_file") == 2
+    assert row["tools"][-1] == "apply_patch"
+    shown = start_prompt(load_state(root))
+    assert "read_file, read_file" not in shown
+    assert "Hello {name}" in shown
+
+
+def test_the_same_read_stops(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    def again(prompt: str, n: int = 180) -> str:
+        if "hits" in prompt or "body" in prompt or "already read" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+
+    row = run(_root(tmp_path), again, steps=8)
+    assert row["honest"] is False
+    assert row["tools"].count("read_file") == 4

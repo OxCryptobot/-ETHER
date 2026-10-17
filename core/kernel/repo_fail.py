@@ -41,16 +41,15 @@ def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
     if not trace or trace.get("day") != _today(now):
         return ""
     lines: List[str] = []
-    tools = [str(item) for item in (trace.get("tools") or [])]
-    if tools:
-        lines.append("tools: " + ", ".join(tools))
-    hits = [str(item) for item in (trace.get("hits") or [])][:6]
     missed = _missed(state)
     if missed:
         lines.append("do not search again: " + ", ".join(missed))
-    if trace.get("rejected"):
-        lines.append("rejected: " + str(trace["rejected"]))
-    if hits:
+    body = str(trace.get("body") or "")
+    hits = [str(item) for item in (trace.get("hits") or [])][:6]
+    if body:
+        lines.append("body:")
+        lines.append(body[:500])
+    elif hits:
         lines.append("hits:")
         lines.extend(hits)
     if trace.get("patch"):
@@ -205,7 +204,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": True, "path": path.relative_to(workspace).as_posix(), "body": _slice(path.read_text(encoding="utf-8"), str(args.get("focus") or ""))}
     if tool == "run_tests":
         result = _pytest(workspace)
-        return {"ok": result["ok"], "tests_ok": result["ok"], "tail": result["tail"]}
+        return {"ok": result["ok"], "tests_ok": result["ok"], "tail": result["tail"], "assertion": result.get("assertion") or ""}
     if tool == "apply_patch":
         path = _inside(workspace, str(args.get("path") or ""))
         old = str(args.get("old") or "")
@@ -229,7 +228,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": False, "reason": "unknown tool"}
 
 
-def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "", missed: List[str] | None = None) -> None:
+def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "", missed: List[str] | None = None, body: str = "", read_path: str = "") -> None:
     state["trace"] = {
         "day": _today(),
         "tools": list(tools),
@@ -239,6 +238,8 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
         "assertion": assertion[:180],
         "pattern": pattern[:120],
         "missed": [str(item) for item in (missed or [])][:8],
+        "body": (body or "")[:500],
+        "read_path": read_path,
     }
     state["last_tools"] = list(tools)
     _save(root, state)
@@ -274,9 +275,13 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     focus = ""
     rejected = ""
     failed_patch = ""
-    assertion = ""
+    assertion = str(remembered.get("assertion") or "") if remembered.get("day") == _today() else ""
+    last_body = str(remembered.get("body") or "") if remembered.get("day") == _today() else ""
+    read_path = str(remembered.get("read_path") or "") if last_body else ""
+    read_paths = [read_path] if read_path else []
     repeats = 0
     last_refused = ""
+    saw_file = bool(last_body)
     row: Dict[str, Any] = {
         "ok": False,
         "honest": False,
@@ -331,6 +336,21 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 if repeats >= 3:
                     break
                 continue
+            if wanted in read_paths:
+                if wanted == last_refused:
+                    repeats += 1
+                else:
+                    repeats = 1
+                    last_refused = wanted
+                tools.append(tool)
+                prompt = fit(base, {
+                    "ok": False,
+                    "reason": "that file was already read. next is grep, run_tests, or apply_patch",
+                    "body": last_body[:400],
+                })
+                if repeats >= 3:
+                    break
+                continue
         if tool == "read_file" and focus:
             args = dict(args)
             args["focus"] = focus
@@ -347,9 +367,16 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 obs = {"ok": False, "reason": "no line contains that string. search for a different string", "pattern": focus, "missed": missed[-6:]}
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
             saw_file = True
-            obs["next"] = "apply_patch"
+            last_body = str(obs.get("body") or "")
+            read_path = str(obs.get("path") or wanted)
+            if read_path not in read_paths:
+                read_paths.append(read_path)
+            obs["next"] = "apply_patch or run_tests"
+            repeats = 0
         elif tool == "read_file":
             rejected = str(args.get("path") or rejected)
+        if tool == "run_tests" and obs.get("assertion"):
+            assertion = str(obs.get("assertion") or "")
         row["response_tail"] = text[-240:]
         if tool == "apply_patch":
             row["tx"] = obs.get("tx") or []
@@ -361,7 +388,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if obs.get("tests_ok") and saw_file and "apply_patch" in tools:
             passes.append(datetime.now(timezone.utc).isoformat())
             state["passes"] = passes
-            _remember(root, state, tools, hits, pattern=focus, missed=missed)
+            _remember(root, state, tools, hits, pattern=focus, missed=missed, body=last_body, read_path=read_path, assertion=assertion)
             row.update({
                 "ok": True,
                 "tests_ok": True,
@@ -372,7 +399,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             row["honest"] = is_honest_tool_path_pass(row)
             return row
         prompt = fit(base, obs)
-    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed)
+    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed, body=last_body, read_path=read_path)
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)

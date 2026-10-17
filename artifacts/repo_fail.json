@@ -3,29 +3,32 @@
   "trace": {
     "day": "2026-10-17",
     "tools": [
-      "grep",
-      "grep",
-      "grep",
-      "grep",
-      "grep",
-      "grep",
-      "grep",
-      "grep"
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file",
+      "read_file"
     ],
     "hits": [],
-    "rejected": "",
+    "rejected": "src/main.rs",
     "patch": "",
     "assertion": "",
-    "pattern": "fail"
+    "pattern": "",
+    "missed": [
+      "fail"
+    ]
   },
   "last_tools": [
-    "grep",
-    "grep",
-    "grep",
-    "grep",
-    "grep",
-    "grep",
-    "grep",
-    "grep"
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file",
+    "read_file"
   ]
 }

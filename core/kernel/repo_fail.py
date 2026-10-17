@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
@@ -28,6 +29,39 @@ def opening() -> str:
         '{"tool":"run_tests","args":{}}\n'
         "Search or read before you patch.\n"
     )
+
+
+def _today(now: datetime | None = None) -> str:
+    return (now or datetime.now(timezone.utc)).date().isoformat()
+
+
+def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
+    """Today's tool trace only. A slogan is not memory, and yesterday is dropped."""
+    trace = state.get("trace") if isinstance(state.get("trace"), dict) else {}
+    if not trace or trace.get("day") != _today(now):
+        return ""
+    lines: List[str] = []
+    tools = [str(item) for item in (trace.get("tools") or [])]
+    if tools:
+        lines.append("tools: " + ", ".join(tools))
+    if trace.get("rejected"):
+        lines.append("rejected: " + str(trace["rejected"]))
+    hits = [str(item) for item in (trace.get("hits") or [])][:6]
+    if hits:
+        lines.append("hits:")
+        lines.extend(hits)
+    if trace.get("patch"):
+        lines.append("patch failed: " + str(trace["patch"])[:180])
+    if trace.get("assertion"):
+        lines.append("assertion: " + str(trace["assertion"])[:180])
+    return "\n".join(lines)
+
+
+def start_prompt(state: Dict[str, Any], now: datetime | None = None) -> str:
+    trace = trace_text(state, now)
+    if not trace:
+        return opening()
+    return opening() + "Last trace:\n" + trace + "\n"
 
 
 def _state_path(root: Path) -> Path:
@@ -91,6 +125,25 @@ def _inside(workspace: Path, rel: str) -> Path | None:
     return path
 
 
+def _slice(text: str, focus: str) -> str:
+    """Matching lines, not the file. A 4B cannot hold the rest."""
+    if not focus:
+        return text[:800]
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if focus in line:
+            return "\n".join(lines[max(0, i - 2) : i + 6])[:800]
+    return text[:800]
+
+
+def _assertion(tail: str) -> str:
+    for line in (tail or "").splitlines():
+        piece = line.strip()
+        if "AssertionError" in piece or piece.startswith("E ") or "assert " in piece:
+            return piece[:180]
+    return (tail or "").strip()[-180:]
+
+
 def _pytest(workspace: Path) -> Dict[str, Any]:
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", "tests", "-q", "--tb=line"],
@@ -100,7 +153,7 @@ def _pytest(workspace: Path) -> Dict[str, Any]:
         timeout=30,
     )
     tail = ((proc.stdout or "") + (proc.stderr or ""))[-400:]
-    return {"ok": proc.returncode == 0, "tail": tail}
+    return {"ok": proc.returncode == 0, "tail": tail, "assertion": _assertion(tail)}
 
 
 def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -127,7 +180,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         path = _inside(workspace, str(args.get("path") or ""))
         if path is None or not path.is_file():
             return {"ok": False, "reason": "no such file"}
-        return {"ok": True, "path": path.relative_to(workspace).as_posix(), "body": path.read_text(encoding="utf-8")[:800]}
+        return {"ok": True, "path": path.relative_to(workspace).as_posix(), "body": _slice(path.read_text(encoding="utf-8"), str(args.get("focus") or ""))}
     if tool == "run_tests":
         result = _pytest(workspace)
         return {"ok": result["ok"], "tests_ok": result["ok"], "tail": result["tail"]}
@@ -144,7 +197,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         result = _pytest(workspace)
         if not result["ok"]:
             path.write_text(body, encoding="utf-8")
-            return {"ok": False, "tests_ok": False, "tx": ["begin", "revert"], "tail": result["tail"]}
+            return {"ok": False, "tests_ok": False, "tx": ["begin", "revert"], "tail": result["tail"], "assertion": result.get("assertion") or ""}
         return {
             "ok": True,
             "tests_ok": True,
@@ -152,6 +205,24 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
             "path": path.relative_to(workspace).as_posix(),
         }
     return {"ok": False, "reason": "unknown tool"}
+
+
+def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "") -> None:
+    state["trace"] = {
+        "day": _today(),
+        "tools": list(tools),
+        "hits": hits[:6],
+        "rejected": rejected,
+        "patch": patch[:180],
+        "assertion": assertion[:180],
+    }
+    state["last_tools"] = list(tools)
+    _save(root, state)
+
+
+def _coerce(text: str) -> str:
+    raw = text or ""
+    return raw.replace('"tool","', '"tool":"').replace('"args","', '"args":"')
 
 
 def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any]:
@@ -169,10 +240,16 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             "mode": "live",
         }
     workspace = reset_workspace(root)
-    prompt = opening()
+    base = start_prompt(state)
+    prompt = base
     tools: List[str] = []
     saw_file = False
-    hits: List[str] = []
+    remembered = state.get("trace") if isinstance(state.get("trace"), dict) else {}
+    hits = [str(item) for item in (remembered.get("hits") or [])] if remembered.get("day") == _today() else []
+    focus = ""
+    rejected = ""
+    failed_patch = ""
+    assertion = ""
     row: Dict[str, Any] = {
         "ok": False,
         "honest": False,
@@ -189,45 +266,50 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         except Exception as exc:
             row["ask_error"] = f"{type(exc).__name__}: {exc}"[:300]
             break
-        action = parse_action(text)
+        action = parse_action(_coerce(text))
         tool = str(action.get("tool") or "")
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
         if tool not in ALLOWED:
-            prompt = fit(opening(), {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
+            prompt = fit(base, {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
             continue
         if tool == "apply_patch" and not saw_file:
-            prompt = fit(opening(), {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
+            prompt = fit(base, {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
             tools.append(tool)
             continue
         if tool == "read_file" and hits:
             wanted = str(args.get("path") or "").replace("\\", "/")
             known = [item.split(":", 1)[0] for item in hits]
             if wanted not in known:
+                rejected = wanted
                 obs = {"ok": False, "reason": "that path is not a search hit", "hits": hits[:6]}
                 tools.append(tool)
-                prompt = fit(opening(), obs)
+                prompt = fit(base, obs)
                 continue
+        if tool == "read_file" and focus:
+            args = dict(args)
+            args["focus"] = focus
         obs = act(workspace, tool, args)
         tools.append(tool)
-        if tool == "grep" and obs.get("hits"):
-            hits = [str(item) for item in obs["hits"]]
+        if tool == "grep":
+            focus = str(args.get("pattern") or focus)
+            if obs.get("hits"):
+                hits = [str(item) for item in obs["hits"]]
+                saw_file = True
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
             saw_file = True
             obs["next"] = "apply_patch"
-        elif tool == "grep" and obs.get("ok") and obs.get("hits"):
-            saw_file = True
         row["response_tail"] = text[-240:]
         if tool == "apply_patch":
             row["tx"] = obs.get("tx") or []
             row["tests_ok"] = bool(obs.get("tests_ok"))
             row["file"] = obs.get("path") or ""
+            if not obs.get("tests_ok"):
+                failed_patch = str(obs.get("reason") or obs.get("tail") or "")[:180]
+                assertion = str(obs.get("assertion") or "")
         if obs.get("tests_ok") and saw_file and "apply_patch" in tools:
-            from datetime import datetime, timezone
-
             passes.append(datetime.now(timezone.utc).isoformat())
             state["passes"] = passes
-            state["last_tools"] = list(tools)
-            _save(root, state)
+            _remember(root, state, tools, hits)
             row.update({
                 "ok": True,
                 "tests_ok": True,
@@ -237,7 +319,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             })
             row["honest"] = is_honest_tool_path_pass(row)
             return row
-        prompt = fit(opening(), obs)
+        prompt = fit(base, obs)
+    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion)
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)

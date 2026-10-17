@@ -32,6 +32,35 @@ def test_a_tool_result_stays_inside_the_budget() -> None:
     assert "grep" in text
 
 
+def test_a_read_is_the_matching_lines_not_the_file(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import act
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    lines = ["HEAD marker that must stay out"] + ["padding"] * 40 + ["the failing symbol is here"] + ["tail"]
+    (ws / "mod.py").write_text("\n".join(lines), encoding="utf-8")
+    obs = act(ws, "read_file", {"path": "mod.py", "focus": "failing symbol"})
+    assert "failing symbol" in obs["body"]
+    assert "HEAD marker" not in obs["body"]
+
+
+def test_yesterdays_trace_is_dropped_and_today_is_only_the_trace() -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from core.kernel.repo_fail import start_prompt, trace_text
+
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
+    state = {"trace": {"day": yesterday, "hits": ["greeter.py:4:return"], "tools": ["grep"]}}
+    assert trace_text(state) == ""
+    assert "greeter" not in start_prompt(state)
+    state["trace"]["day"] = datetime.now(timezone.utc).date().isoformat()
+    state["trace"]["assertion"] = "assert greet() == 'Hello, World!'"
+    shown = start_prompt(state)
+    assert "greeter.py" in shown
+    assert "assert greet" in shown
+    assert "Last failure" not in shown
+
+
 def _ask(prompt: str, n: int = 180) -> str:
     if "body" in prompt:
         return json.dumps({
@@ -106,6 +135,7 @@ def test_the_same_failure_can_pass_twice(tmp_path: Path) -> None:
     third = run(root, counting)
     assert first["honest"] is True and first["passes"] == 1
     assert second["honest"] is True and second["passes"] == 2
+    assert second["tools"][0] == "read_file"
     assert third["note"] == "repo_fail_repeated"
     assert third["honest"] is False
-    assert calls["n"] == 6
+    assert calls["n"] == 5

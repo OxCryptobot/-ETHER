@@ -22,6 +22,7 @@ def test_the_opening_prompt_does_not_name_the_file() -> None:
     assert "Hello" not in text
     assert "return f" not in text
     assert "fail" not in text.lower()
+    assert "regex" not in text
 
 
 def test_a_tool_result_stays_inside_the_budget() -> None:

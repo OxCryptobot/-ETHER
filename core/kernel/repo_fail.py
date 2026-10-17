@@ -23,7 +23,7 @@ def opening() -> str:
     return (
         "You have not been told which file.\n"
         "Reply with one JSON object and nothing else.\n"
-        '{"tool":"grep","args":{"pattern":"<regex>"}}\n'
+        '{"tool":"grep","args":{"pattern":"<text in a line>"}}\n'
         '{"tool":"read_file","args":{"path":"<relative path>"}}\n'
         '{"tool":"apply_patch","args":{"path":"<relative path>","old":"<exact text>","new":"<exact text>"}}\n'
         '{"tool":"run_tests","args":{}}\n'

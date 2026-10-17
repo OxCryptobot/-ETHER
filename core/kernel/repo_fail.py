@@ -44,9 +44,13 @@ def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
     tools = [str(item) for item in (trace.get("tools") or [])]
     if tools:
         lines.append("tools: " + ", ".join(tools))
+    hits = [str(item) for item in (trace.get("hits") or [])][:6]
+    if trace.get("pattern"):
+        lines.append("pattern: " + str(trace["pattern"])[:120])
+        if not hits:
+            lines.append("pattern matched nothing")
     if trace.get("rejected"):
         lines.append("rejected: " + str(trace["rejected"]))
-    hits = [str(item) for item in (trace.get("hits") or [])][:6]
     if hits:
         lines.append("hits:")
         lines.extend(hits)
@@ -207,7 +211,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": False, "reason": "unknown tool"}
 
 
-def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "") -> None:
+def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "") -> None:
     state["trace"] = {
         "day": _today(),
         "tools": list(tools),
@@ -215,6 +219,7 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
         "rejected": rejected,
         "patch": patch[:180],
         "assertion": assertion[:180],
+        "pattern": pattern[:120],
     }
     state["last_tools"] = list(tools)
     _save(root, state)
@@ -298,6 +303,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
             saw_file = True
             obs["next"] = "apply_patch"
+        elif tool == "read_file":
+            rejected = str(args.get("path") or rejected)
         row["response_tail"] = text[-240:]
         if tool == "apply_patch":
             row["tx"] = obs.get("tx") or []
@@ -309,7 +316,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if obs.get("tests_ok") and saw_file and "apply_patch" in tools:
             passes.append(datetime.now(timezone.utc).isoformat())
             state["passes"] = passes
-            _remember(root, state, tools, hits)
+            _remember(root, state, tools, hits, pattern=focus)
             row.update({
                 "ok": True,
                 "tests_ok": True,
@@ -320,7 +327,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             row["honest"] = is_honest_tool_path_pass(row)
             return row
         prompt = fit(base, obs)
-    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion)
+    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus)
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)

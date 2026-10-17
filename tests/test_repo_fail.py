@@ -78,6 +78,19 @@ def test_a_patch_before_a_read_is_not_a_pass(tmp_path: Path) -> None:
     assert (tmp_path / "repo_fail_ws" / "greeter.py").read_text(encoding="utf-8").count('Hello {name}') == 1
 
 
+def test_an_invented_path_is_not_a_read(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    def invented(prompt: str, n: int = 180) -> str:
+        if "hits" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "test/test.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+
+    row = run(_root(tmp_path), invented, steps=2)
+    assert row["honest"] is False
+    assert "apply_patch" not in row["tools"]
+
+
 def test_the_same_failure_can_pass_twice(tmp_path: Path) -> None:
     from core.kernel.repo_fail import run
 

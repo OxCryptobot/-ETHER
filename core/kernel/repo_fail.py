@@ -172,6 +172,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     prompt = opening()
     tools: List[str] = []
     saw_file = False
+    hits: List[str] = []
     row: Dict[str, Any] = {
         "ok": False,
         "honest": False,
@@ -195,12 +196,25 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             prompt = fit(opening(), {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
             continue
         if tool == "apply_patch" and not saw_file:
-            prompt = fit(opening(), {"ok": False, "reason": "search or read before a patch"})
+            prompt = fit(opening(), {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
             tools.append(tool)
             continue
+        if tool == "read_file" and hits:
+            wanted = str(args.get("path") or "").replace("\\", "/")
+            known = [item.split(":", 1)[0] for item in hits]
+            if wanted not in known:
+                obs = {"ok": False, "reason": "that path is not a search hit", "hits": hits[:6]}
+                tools.append(tool)
+                prompt = fit(opening(), obs)
+                continue
         obs = act(workspace, tool, args)
         tools.append(tool)
-        if tool in ("grep", "read_file") and obs.get("ok") and (obs.get("hits") or obs.get("body")):
+        if tool == "grep" and obs.get("hits"):
+            hits = [str(item) for item in obs["hits"]]
+        if tool == "read_file" and obs.get("ok") and obs.get("body"):
+            saw_file = True
+            obs["next"] = "apply_patch"
+        elif tool == "grep" and obs.get("ok") and obs.get("hits"):
             saw_file = True
         row["response_tail"] = text[-240:]
         if tool == "apply_patch":

@@ -1,22 +1,45 @@
 {
-  "ts": "2026-10-17T15:51:30.414281+00:00",
+  "ts": "2026-10-17T16:11:06.156465+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-17T15:51:30.581786+00:00",
+    "ts": "2026-10-17T16:11:06.318585+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-17T15:52:27.670523+00:00",
+    "ts": "2026-10-17T16:11:59.255453+00:00",
     "os": "nt",
-    "ok": false,
+    "ok": true,
     "add_rc": 0,
-    "ahead": 4135,
+    "ahead": 4137,
     "commit_rc": 0,
-    "error": "TimeoutExpired"
+    "sync": {
+      "ok": false,
+      "hard_reset": false,
+      "ahead": 4138,
+      "dirty": true,
+      "note": "rebase_abort"
+    },
+    "via": "gh_token_url",
+    "push_rc": 1,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   69a496c3e..80803edbe  HEAD -> main\n",
+    "sync_retry": {
+      "ok": false,
+      "hard_reset": false,
+      "ahead": 4138,
+      "dirty": true,
+      "note": "rebase_abort"
+    },
+    "worktree": {
+      "ok": true,
+      "hard_reset": false,
+      "note": "worktree_push",
+      "push_rc": 0,
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   69a496c3e..80803edbe  HEAD -> main\n"
+    }
   },
   "runner": {
     "ok": true,
@@ -27,7 +50,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-17T15:51:53.586433+00:00",
+    "ts": "2026-10-17T16:11:28.025859+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,

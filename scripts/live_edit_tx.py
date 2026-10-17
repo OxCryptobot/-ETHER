@@ -56,13 +56,20 @@ def main() -> int:
     }
     task = next_task(ROOT)
     if task is None:
-        from core.kernel.curriculum import hold_status
+        if os.name != "nt":
+            row["note"] = "observe_only"
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+            print(json.dumps(row))
+            return 0
+        from core.kernel.repo_fail import run as repo_run
 
-        row.update(hold_status(ROOT))
+        row = repo_run(ROOT, _ask)
+        row["ts"] = datetime.now(timezone.utc).isoformat()
         OUT.parent.mkdir(parents=True, exist_ok=True)
-        OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps(row))
-        return 0
+        OUT.write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
+        print(json.dumps(row, default=str))
+        return 0 if row.get("honest") else 1
     row["task"] = task["id"]
     row["repo"] = bool(task.get("repo"))
     if os.name != "nt":

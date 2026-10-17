@@ -21,6 +21,7 @@ def test_the_opening_prompt_does_not_name_the_file() -> None:
     assert "fixtures" not in text
     assert "Hello" not in text
     assert "return f" not in text
+    assert "fail" not in text.lower()
 
 
 def test_a_tool_result_stays_inside_the_budget() -> None:
@@ -139,3 +140,58 @@ def test_the_same_failure_can_pass_twice(tmp_path: Path) -> None:
     assert third["note"] == "repo_fail_repeated"
     assert third["honest"] is False
     assert calls["n"] == 5
+
+
+def test_a_miss_is_not_searched_again(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from core.kernel.repo_fail import run
+
+    root = _root(tmp_path)
+    (root / "artifacts").mkdir(parents=True)
+    (root / "artifacts" / "repo_fail.json").write_text(
+        json.dumps({
+            "passes": [],
+            "trace": {
+                "day": datetime.now(timezone.utc).date().isoformat(),
+                "pattern": "fail",
+                "hits": [],
+                "tools": ["grep"],
+            },
+        }),
+        encoding="utf-8",
+    )
+    calls = {"n": 0}
+
+    def ask(prompt: str, n: int = 180) -> str:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            assert "do not search again: fail" in prompt
+            return json.dumps({"tool": "grep", "args": {"pattern": "fail"}})
+        if "body" in prompt:
+            return json.dumps({
+                "tool": "apply_patch",
+                "args": {
+                    "path": "greeter.py",
+                    "old": 'return f"Hello {name}"',
+                    "new": 'return f"Hello, {name}!"',
+                },
+            })
+        if '"hits"' in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+
+    row = run(root, ask)
+    assert row["honest"] is True
+    assert row["tools"].count("grep") == 2
+
+
+def test_the_same_miss_stops(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    def again(prompt: str, n: int = 180) -> str:
+        return json.dumps({"tool": "grep", "args": {"pattern": "fail"}})
+
+    row = run(_root(tmp_path), again, steps=8)
+    assert row["honest"] is False
+    assert row["tools"].count("grep") == 4

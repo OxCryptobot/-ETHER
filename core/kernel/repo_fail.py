@@ -21,7 +21,7 @@ NEED = 2
 def opening() -> str:
     """No path and no expected text. The model has to search."""
     return (
-        "A test in this project fails. You have not been told which file.\n"
+        "You have not been told which file.\n"
         "Reply with one JSON object and nothing else.\n"
         '{"tool":"grep","args":{"pattern":"<regex>"}}\n'
         '{"tool":"read_file","args":{"path":"<relative path>"}}\n'
@@ -45,10 +45,9 @@ def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
     if tools:
         lines.append("tools: " + ", ".join(tools))
     hits = [str(item) for item in (trace.get("hits") or [])][:6]
-    if trace.get("pattern"):
-        lines.append("pattern: " + str(trace["pattern"])[:120])
-        if not hits:
-            lines.append("pattern matched nothing")
+    missed = _missed(state)
+    if missed:
+        lines.append("do not search again: " + ", ".join(missed))
     if trace.get("rejected"):
         lines.append("rejected: " + str(trace["rejected"]))
     if hits:
@@ -106,14 +105,33 @@ def reset_workspace(root: Path) -> Path:
     return dest
 
 
+def _missed(state: Dict[str, Any]) -> List[str]:
+    """Patterns that already matched nothing today. Yesterday is not included."""
+    trace = state.get("trace") if isinstance(state.get("trace"), dict) else {}
+    if not trace or trace.get("day") != _today():
+        return []
+    missed: List[str] = []
+    for item in trace.get("missed") or []:
+        text = str(item).strip()
+        if text and text not in missed:
+            missed.append(text)
+    pattern = str(trace.get("pattern") or "").strip()
+    if pattern and not trace.get("hits") and pattern not in missed:
+        missed.append(pattern)
+    return missed
+
+
 def fit(prompt: str, obs: Dict[str, Any], budget: int | None = None) -> str:
     """The instruction stays. A tool result is cut to the budget, not the whole file."""
     cap = budget if budget is not None else min(context_char_budget(), 1800)
+    reason = str(obs.get("reason") or "")
+    notice = (reason + "\n") if reason else ""
     block = json.dumps(obs, default=str)
-    if len(block) > 700:
-        block = block[:700]
-    head = prompt[:500]
-    merged = head + "\n" + block + "\nReply with one JSON tool.\n"
+    tail = "\nReply with one JSON tool.\n"
+    keep = min(160, max(0, cap - len(notice) - len(tail)))
+    block = block[: max(0, cap - len(notice) - len(tail) - keep)]
+    head = prompt[:keep]
+    merged = notice + head + "\n" + block + tail
     return merged[:cap]
 
 
@@ -211,7 +229,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": False, "reason": "unknown tool"}
 
 
-def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "") -> None:
+def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "", missed: List[str] | None = None) -> None:
     state["trace"] = {
         "day": _today(),
         "tools": list(tools),
@@ -220,6 +238,7 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
         "patch": patch[:180],
         "assertion": assertion[:180],
         "pattern": pattern[:120],
+        "missed": [str(item) for item in (missed or [])][:8],
     }
     state["last_tools"] = list(tools)
     _save(root, state)
@@ -251,10 +270,13 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     saw_file = False
     remembered = state.get("trace") if isinstance(state.get("trace"), dict) else {}
     hits = [str(item) for item in (remembered.get("hits") or [])] if remembered.get("day") == _today() else []
+    missed = _missed(state)
     focus = ""
     rejected = ""
     failed_patch = ""
     assertion = ""
+    repeats = 0
+    last_refused = ""
     row: Dict[str, Any] = {
         "ok": False,
         "honest": False,
@@ -277,6 +299,19 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if tool not in ALLOWED:
             prompt = fit(base, {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
             continue
+        if tool == "grep":
+            pattern = str(args.get("pattern") or "").strip()
+            if pattern in missed:
+                if pattern == last_refused:
+                    repeats += 1
+                else:
+                    repeats = 1
+                    last_refused = pattern
+                tools.append(tool)
+                prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})
+                if repeats >= 3:
+                    break
+                continue
         if tool == "apply_patch" and not saw_file:
             prompt = fit(base, {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
             tools.append(tool)
@@ -296,10 +331,14 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         obs = act(workspace, tool, args)
         tools.append(tool)
         if tool == "grep":
-            focus = str(args.get("pattern") or focus)
+            focus = str(args.get("pattern") or focus).strip()
             if obs.get("hits"):
                 hits = [str(item) for item in obs["hits"]]
                 saw_file = True
+                repeats = 0
+            elif focus and focus not in missed:
+                missed.append(focus)
+                obs = {"ok": False, "reason": "no line contains that string. search for a different string", "pattern": focus, "missed": missed[-6:]}
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
             saw_file = True
             obs["next"] = "apply_patch"
@@ -316,7 +355,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if obs.get("tests_ok") and saw_file and "apply_patch" in tools:
             passes.append(datetime.now(timezone.utc).isoformat())
             state["passes"] = passes
-            _remember(root, state, tools, hits, pattern=focus)
+            _remember(root, state, tools, hits, pattern=focus, missed=missed)
             row.update({
                 "ok": True,
                 "tests_ok": True,
@@ -327,7 +366,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             row["honest"] = is_honest_tool_path_pass(row)
             return row
         prompt = fit(base, obs)
-    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus)
+    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed)
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)

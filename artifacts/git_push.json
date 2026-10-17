@@ -1,26 +1,32 @@
 {
-  "ts": "2026-10-17T15:03:45.334992+00:00",
+  "ts": "2026-10-17T15:13:23.191003+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "add_rc": 0,
-  "ahead": 4131,
+  "ahead": 4132,
   "commit_rc": 0,
   "sync": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 4132,
+    "ahead": 4133,
     "dirty": true,
     "note": "rebase_abort"
   },
   "via": "gh_token_url",
   "push_rc": 1,
-  "stderr": "b.com/OxCryptobot/-ETHER.git'\nhint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. If you want to integrate the remote changes,\nhint: use 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   568e180fa..b0f0b4d43  HEAD -> main\n",
   "sync_retry": {
     "ok": false,
     "hard_reset": false,
-    "ahead": 4132,
+    "ahead": 4133,
     "dirty": true,
     "note": "rebase_abort"
   },
-  "error": "TimeoutExpired"
+  "worktree": {
+    "ok": true,
+    "hard_reset": false,
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   568e180fa..b0f0b4d43  HEAD -> main\n"
+  }
 }

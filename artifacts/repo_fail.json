@@ -4,7 +4,7 @@
     "day": "2026-10-17",
     "tools": [
       "read_file",
-      "grep",
+      "read_file",
       "read_file",
       "read_file",
       "read_file",
@@ -18,10 +18,10 @@
       "tests/conftest.py:3:from pathlib import Path",
       "tests/test_greeter.py:3:from greeter import greet"
     ],
-    "rejected": "test.py",
+    "rejected": "",
     "patch": "",
     "assertion": "",
-    "pattern": "import",
+    "pattern": "",
     "missed": [
       "fail",
       "\\.py$"
@@ -29,7 +29,7 @@
   },
   "last_tools": [
     "read_file",
-    "grep",
+    "read_file",
     "read_file",
     "read_file",
     "read_file",

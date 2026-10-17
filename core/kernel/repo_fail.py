@@ -35,6 +35,12 @@ def _today(now: datetime | None = None) -> str:
     return (now or datetime.now(timezone.utc)).date().isoformat()
 
 
+def _useful_body(text: str) -> bool:
+    """A test helper is not memory. Keep a definition or an assertion."""
+    raw = text or ""
+    return "def " in raw or "assert " in raw
+
+
 def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
     """Today's tool trace only. A slogan is not memory, and yesterday is dropped."""
     trace = state.get("trace") if isinstance(state.get("trace"), dict) else {}
@@ -45,6 +51,8 @@ def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
     if missed:
         lines.append("do not search again: " + ", ".join(missed))
     body = str(trace.get("body") or "")
+    if body and not _useful_body(body):
+        body = ""
     hits = [str(item) for item in (trace.get("hits") or [])][:6]
     if body:
         lines.append("body:")
@@ -228,7 +236,8 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     return {"ok": False, "reason": "unknown tool"}
 
 
-def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "", missed: List[str] | None = None, body: str = "", read_path: str = "") -> None:
+def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[str], *, rejected: str = "", patch: str = "", assertion: str = "", pattern: str = "", missed: List[str] | None = None, body: str = "", read_path: str = "", read_paths: List[str] | None = None) -> None:
+    kept = body if _useful_body(body) else ""
     state["trace"] = {
         "day": _today(),
         "tools": list(tools),
@@ -238,8 +247,9 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
         "assertion": assertion[:180],
         "pattern": pattern[:120],
         "missed": [str(item) for item in (missed or [])][:8],
-        "body": (body or "")[:500],
-        "read_path": read_path,
+        "body": kept[:500],
+        "read_path": read_path if kept else "",
+        "read_paths": [str(item) for item in (read_paths or [])][:8],
     }
     state["last_tools"] = list(tools)
     _save(root, state)
@@ -277,10 +287,12 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     failed_patch = ""
     assertion = str(remembered.get("assertion") or "") if remembered.get("day") == _today() else ""
     last_body = str(remembered.get("body") or "") if remembered.get("day") == _today() else ""
+    if last_body and not _useful_body(last_body):
+        last_body = ""
+    remembered_paths = [str(item) for item in (remembered.get("read_paths") or [])] if remembered.get("day") == _today() else []
     read_path = str(remembered.get("read_path") or "") if last_body else ""
-    read_paths = [read_path] if read_path else []
-    repeats = 0
-    last_refused = ""
+    read_paths = list(dict.fromkeys(remembered_paths + ([read_path] if read_path else [])))
+    refusals = 0
     saw_file = bool(last_body)
     row: Dict[str, Any] = {
         "ok": False,
@@ -307,48 +319,30 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if tool == "grep":
             pattern = str(args.get("pattern") or "").strip()
             if pattern in missed:
-                if pattern == last_refused:
-                    repeats += 1
-                else:
-                    repeats = 1
-                    last_refused = pattern
+                refusals += 1
                 tools.append(tool)
                 prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})
-                if repeats >= 3:
+                if refusals >= 3:
                     break
                 continue
         if tool == "apply_patch" and not saw_file:
+            refusals += 1
             prompt = fit(base, {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})
             tools.append(tool)
+            if refusals >= 3:
+                break
             continue
         if tool == "read_file":
             wanted = str(args.get("path") or "").replace("\\", "/")
             known = [item.split(":", 1)[0] for item in hits]
-            if wanted not in known:
+            unread = [path for path in known if path not in read_paths]
+            if wanted not in known or wanted in read_paths:
+                refusals += 1
                 rejected = wanted
-                if wanted and wanted == last_refused:
-                    repeats += 1
-                else:
-                    repeats = 1
-                    last_refused = wanted
+                reason = "that file was already read. next is grep, run_tests, or apply_patch" if wanted in read_paths else "that path is not a hit"
                 tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": "search before you read. that path is not a hit", "hits": hits[:6]})
-                if repeats >= 3:
-                    break
-                continue
-            if wanted in read_paths:
-                if wanted == last_refused:
-                    repeats += 1
-                else:
-                    repeats = 1
-                    last_refused = wanted
-                tools.append(tool)
-                prompt = fit(base, {
-                    "ok": False,
-                    "reason": "that file was already read. next is grep, run_tests, or apply_patch",
-                    "body": last_body[:400],
-                })
-                if repeats >= 3:
+                prompt = fit(base, {"ok": False, "reason": reason, "unread": unread[:6], "hits": hits[:6]})
+                if refusals >= 3:
                     break
                 continue
         if tool == "read_file" and focus:
@@ -361,18 +355,20 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             if obs.get("hits"):
                 hits = [str(item) for item in obs["hits"]]
                 saw_file = True
-                repeats = 0
             elif focus and focus not in missed:
                 missed.append(focus)
                 obs = {"ok": False, "reason": "no line contains that string. search for a different string", "pattern": focus, "missed": missed[-6:]}
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
-            saw_file = True
-            last_body = str(obs.get("body") or "")
-            read_path = str(obs.get("path") or wanted)
-            if read_path not in read_paths:
-                read_paths.append(read_path)
+            raw = str(obs.get("body") or "")
+            opened = str(obs.get("path") or wanted)
+            if opened not in read_paths:
+                read_paths.append(opened)
+            if _useful_body(raw):
+                saw_file = True
+                last_body = raw
+                read_path = opened
             obs["next"] = "apply_patch or run_tests"
-            repeats = 0
+            obs["unread"] = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths][:6]
         elif tool == "read_file":
             rejected = str(args.get("path") or rejected)
         if tool == "run_tests" and obs.get("assertion"):
@@ -388,7 +384,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if obs.get("tests_ok") and saw_file and "apply_patch" in tools:
             passes.append(datetime.now(timezone.utc).isoformat())
             state["passes"] = passes
-            _remember(root, state, tools, hits, pattern=focus, missed=missed, body=last_body, read_path=read_path, assertion=assertion)
+            _remember(root, state, tools, hits, pattern=focus, missed=missed, body=last_body, read_path=read_path, read_paths=read_paths, assertion=assertion)
             row.update({
                 "ok": True,
                 "tests_ok": True,
@@ -399,7 +395,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             row["honest"] = is_honest_tool_path_pass(row)
             return row
         prompt = fit(base, obs)
-    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed, body=last_body, read_path=read_path)
+    _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed, body=last_body, read_path=read_path, read_paths=read_paths)
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)

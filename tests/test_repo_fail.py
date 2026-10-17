@@ -250,3 +250,36 @@ def test_the_same_read_stops(tmp_path: Path) -> None:
     row = run(_root(tmp_path), again, steps=8)
     assert row["honest"] is False
     assert row["tools"].count("read_file") == 4
+
+
+def test_alternating_bad_reads_stop(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    paths = ["src/main.rs", "conftest.py", "tests/missing.py"]
+    calls = {"n": 0}
+
+    def alternate(prompt: str, n: int = 180) -> str:
+        path = paths[calls["n"] % len(paths)]
+        calls["n"] += 1
+        return json.dumps({"tool": "read_file", "args": {"path": path}})
+
+    row = run(_root(tmp_path), alternate, steps=8)
+    assert row["honest"] is False
+    assert row["tools"].count("read_file") == 3
+
+
+def test_a_helper_body_is_not_memory(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import load_state, run, start_prompt
+
+    root = _root(tmp_path)
+
+    def ask(prompt: str, n: int = 180) -> str:
+        if "hits" in prompt and "body" not in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "tests/conftest.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "import"}})
+
+    row = run(root, ask, steps=2)
+    assert row["honest"] is False
+    shown = start_prompt(load_state(root))
+    assert "sys.path.insert" not in shown
+    assert "from greeter import greet" in shown

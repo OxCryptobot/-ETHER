@@ -306,10 +306,6 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
             return row
         run([git, "fetch", "origin", "main"])
-        run([git, "update-index", "--no-skip-worktree", "--no-assume-unchanged", "--", *paths])
-        added = run([git, "add", "-f", "--", *paths])
-        row["add_rc"] = added.returncode
-        diff = run([git, "diff", "--cached", "--quiet", "--", *paths])
         ahead = _int_stdout(run([git, "rev-list", "--count", "origin/main..HEAD"]))
         row["ahead"] = ahead
         if publish_plan(ahead) == "worktree":
@@ -320,32 +316,37 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             row["note"] = via.get("note") or "worktree"
             if via.get("stderr"):
                 row["stderr"] = via["stderr"]
-        elif diff.returncode == 0 and ahead == 0:
-            row.update({"ok": True, "note": "no_change"})
         else:
-            if diff.returncode != 0:
-                commit = run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-exe", "commit", "-m", message])
-                row["commit_rc"] = commit.returncode
-            synced = sync_writer(root, git, run)
-            row["sync"] = synced
-            pushed = run([git, "push", "origin", "main"])
-            row["via"] = "gh_token_url" if token else "origin"
-            row.update({"push_rc": pushed.returncode, "stderr": redact(((pushed.stderr or "") + (pushed.stdout or "") + (commit.stderr if diff.returncode != 0 else ""))[-300:], token)})
-            if pushed.returncode == 0:
-                row["ok"] = True
+            run([git, "update-index", "--no-skip-worktree", "--no-assume-unchanged", "--", *paths])
+            added = run([git, "add", "-f", "--", *paths])
+            row["add_rc"] = added.returncode
+            diff = run([git, "diff", "--cached", "--quiet", "--", *paths])
+            if diff.returncode == 0 and ahead == 0:
+                row.update({"ok": True, "note": "no_change"})
             else:
+                if diff.returncode != 0:
+                    commit = run([git, "-c", "user.email=ether@local", "-c", "user.name=ether-exe", "commit", "-m", message])
+                    row["commit_rc"] = commit.returncode
                 synced = sync_writer(root, git, run)
-                row["sync_retry"] = synced
-                retry = run([git, "push", "origin", "main"])
-                row["push_rc"] = retry.returncode
-                row["ok"] = retry.returncode == 0
-                row["stderr"] = redact(((retry.stderr or "") + (retry.stdout or ""))[-300:], token)
-                if not row["ok"]:
-                    via = publish_worktree(root, git, run, message, token)
-                    row["worktree"] = via
-                    row["ok"] = bool(via.get("ok"))
-                    if via.get("stderr"):
-                        row["stderr"] = via["stderr"]
+                row["sync"] = synced
+                pushed = run([git, "push", "origin", "main"])
+                row["via"] = "gh_token_url" if token else "origin"
+                row.update({"push_rc": pushed.returncode, "stderr": redact(((pushed.stderr or "") + (pushed.stdout or "") + (commit.stderr if diff.returncode != 0 else ""))[-300:], token)})
+                if pushed.returncode == 0:
+                    row["ok"] = True
+                else:
+                    synced = sync_writer(root, git, run)
+                    row["sync_retry"] = synced
+                    retry = run([git, "push", "origin", "main"])
+                    row["push_rc"] = retry.returncode
+                    row["ok"] = retry.returncode == 0
+                    row["stderr"] = redact(((retry.stderr or "") + (retry.stdout or ""))[-300:], token)
+                    if not row["ok"]:
+                        via = publish_worktree(root, git, run, message, token)
+                        row["worktree"] = via
+                        row["ok"] = bool(via.get("ok"))
+                        if via.get("stderr"):
+                            row["stderr"] = via["stderr"]
     except Exception as exc:
         row["error"] = type(exc).__name__
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")

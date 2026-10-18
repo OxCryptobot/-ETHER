@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -36,6 +37,32 @@ def _today(now: datetime | None = None) -> str:
 
 
 def _useful_body(text: str) -> bool:
+    """A test helper is not memory. Keep a definition or an assertion."""
+    raw = text or ""
+    return "def " in raw or "assert " in raw
+
+
+def _imports(text: str) -> List[str]:
+    """Module names a read body imports. The harness does not open them."""
+    found: List[str] = []
+    for match in re.finditer(r"from\s+([A-Za-z_][\w.]*)\s+import", text or ""):
+        name = match.group(1).split(".")[0]
+        if name and name not in found:
+            found.append(name)
+    return found
+
+
+def _add_imports(hits: List[str], body: str, workspace: Path) -> List[str]:
+    """An import of a file that exists becomes an unread path the model can choose."""
+    known = [item.split(":", 1)[0] for item in hits]
+    for name in _imports(body):
+        candidate = f"{name}.py"
+        if candidate in known:
+            continue
+        if (workspace / candidate).is_file():
+            hits.append(candidate)
+            known.append(candidate)
+    return known
     """A test helper is not memory. Keep a definition or an assertion."""
     raw = text or ""
     return "def " in raw or "assert " in raw
@@ -336,12 +363,25 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             wanted = str(args.get("path") or "").replace("\\", "/")
             known = [item.split(":", 1)[0] for item in hits]
             unread = [path for path in known if path not in read_paths]
+            if not known:
+                refusals += 1
+                rejected = wanted
+                tools.append(tool)
+                prompt = fit(base, {"ok": False, "reason": "search first. next tool is grep"})
+                if refusals >= 3:
+                    break
+                continue
             if wanted not in known or wanted in read_paths:
                 refusals += 1
                 rejected = wanted
-                reason = "that file was already read. next is grep, run_tests, or apply_patch" if wanted in read_paths else "that path is not a hit"
+                if last_body:
+                    reason = "that file was already read. next is grep or apply_patch"
+                elif wanted in read_paths:
+                    reason = "that file was already read. next is grep, run_tests, or apply_patch"
+                else:
+                    reason = "that path is not a hit"
                 tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": reason, "unread": unread[:6], "hits": hits[:6]})
+                prompt = fit(base, {"ok": False, "reason": reason, "unread": unread[:6]})
                 if refusals >= 3:
                     break
                 continue
@@ -367,6 +407,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 saw_file = True
                 last_body = raw
                 read_path = opened
+                _add_imports(hits, raw, workspace)
             obs["next"] = "apply_patch or run_tests"
             obs["unread"] = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths][:6]
         elif tool == "read_file":

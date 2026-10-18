@@ -283,3 +283,43 @@ def test_a_helper_body_is_not_memory(tmp_path: Path) -> None:
     shown = start_prompt(load_state(root))
     assert "sys.path.insert" not in shown
     assert "from greeter import greet" in shown
+
+
+def test_an_empty_hit_list_forces_a_search(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import run
+
+    def invented(prompt: str, n: int = 180) -> str:
+        return json.dumps({"tool": "read_file", "args": {"path": "src/main/java/Calculator.java"}})
+
+    row = run(_root(tmp_path), invented, steps=8)
+    assert row["honest"] is False
+    assert row["tools"].count("read_file") == 3
+
+
+def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import load_state, run, start_prompt
+
+    root = _root(tmp_path)
+
+    def ask(prompt: str, n: int = 180) -> str:
+        if "unread" in prompt and "greeter.py" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
+        if "body" in prompt or "already read" in prompt:
+            return json.dumps({
+                "tool": "apply_patch",
+                "args": {
+                    "path": "greeter.py",
+                    "old": 'return f"Hello {name}"',
+                    "new": 'return f"Hello, {name}!"',
+                },
+            })
+        if "hits" in prompt:
+            return json.dumps({"tool": "read_file", "args": {"path": "tests/test_greeter.py"}})
+        return json.dumps({"tool": "grep", "args": {"pattern": "greet"}})
+
+    row = run(root, ask)
+    assert row["honest"] is True
+    assert "read_file" in row["tools"]
+    assert row["tools"][-1] == "apply_patch"
+    shown = start_prompt(load_state(root))
+    assert "Hello {name}" in shown

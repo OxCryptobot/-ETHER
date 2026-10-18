@@ -343,6 +343,15 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         if tool not in ALLOWED:
             prompt = fit(base, {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
             continue
+        if last_body and "assert " not in last_body and tool in ("grep", "read_file"):
+            unread_now = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths]
+            if not unread_now:
+                refusals += 1
+                tools.append(tool)
+                prompt = fit(base, {"ok": False, "reason": "the source is open. next tool is apply_patch", "source": last_body[:400]})
+                if refusals >= 3:
+                    break
+                continue
         if tool == "grep":
             pattern = str(args.get("pattern") or "").strip()
             if pattern in missed:

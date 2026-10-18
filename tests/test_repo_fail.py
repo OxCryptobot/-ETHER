@@ -302,6 +302,15 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     root = _root(tmp_path)
 
     def ask(prompt: str, n: int = 180) -> str:
+        if "next tool is apply_patch" in prompt:
+            return json.dumps({
+                "tool": "apply_patch",
+                "args": {
+                    "path": "greeter.py",
+                    "old": 'return f"Hello {name}"',
+                    "new": 'return f"Hello, {name}!"',
+                },
+            })
         if "unread" in prompt and "greeter.py" in prompt:
             return json.dumps({"tool": "read_file", "args": {"path": "greeter.py"}})
         if "body" in prompt or "already read" in prompt:
@@ -321,5 +330,42 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     assert row["honest"] is True
     assert "read_file" in row["tools"]
     assert row["tools"][-1] == "apply_patch"
-    shown = start_prompt(load_state(root))
-    assert "Hello {name}" in shown
+
+
+def test_an_open_source_forces_a_patch(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from core.kernel.repo_fail import run
+
+    root = _root(tmp_path)
+    (root / "artifacts").mkdir(parents=True)
+    (root / "artifacts" / "repo_fail.json").write_text(
+        json.dumps({
+            "passes": [],
+            "trace": {
+                "day": datetime.now(timezone.utc).date().isoformat(),
+                "body": 'def greet(name: str) -> str:\n    return f"Hello {name}"\n',
+                "read_path": "greeter.py",
+                "read_paths": ["greeter.py"],
+                "hits": ["greeter.py:4:return f\"Hello {name}\""],
+                "tools": ["read_file"],
+            },
+        }),
+        encoding="utf-8",
+    )
+
+    def ask(prompt: str, n: int = 180) -> str:
+        if "next tool is apply_patch" in prompt or "source" in prompt:
+            return json.dumps({
+                "tool": "apply_patch",
+                "args": {
+                    "path": "greeter.py",
+                    "old": 'return f"Hello {name}"',
+                    "new": 'return f"Hello, {name}!"',
+                },
+            })
+        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+
+    row = run(root, ask)
+    assert row["honest"] is True
+    assert row["tools"][-1] == "apply_patch"

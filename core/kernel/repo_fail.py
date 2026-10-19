@@ -42,6 +42,30 @@ def _useful_body(text: str) -> bool:
     return "def " in raw or "assert " in raw
 
 
+def _return_line(body: str) -> str:
+    """The line a patch must change. Already in the body the model read."""
+    for line in (body or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("return "):
+            return piece
+    return ""
+
+
+def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
+    """The tool shape with the old line filled. The model still writes new."""
+    return {
+        "tool": "apply_patch",
+        "args": {
+            "path": path or "the file you read",
+            "old": _return_line(body),
+            "new": "",
+        },
+    }
+    """A test helper is not memory. Keep a definition or an assertion."""
+    raw = text or ""
+    return "def " in raw or "assert " in raw
+
+
 def _imports(text: str) -> List[str]:
     """Module names a read body imports. The harness does not open them."""
     found: List[str] = []
@@ -348,7 +372,11 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             if not unread_now:
                 refusals += 1
                 tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": "the source is open. next tool is apply_patch", "source": last_body[:400]})
+                prompt = fit(base, {
+                    "ok": False,
+                    "reason": "the source is open. fill new and reply with this tool",
+                    "tool": _patch_skeleton(read_path, last_body),
+                })
                 if refusals >= 3:
                     break
                 continue

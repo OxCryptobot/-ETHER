@@ -51,14 +51,23 @@ def _return_line(body: str) -> str:
     return ""
 
 
+def _expected(body: str) -> str:
+    """The expected text already written in the file the model read."""
+    match = re.search(r'expect[s]?\s+"([^"]+)"', body or "")
+    return match.group(1) if match else ""
+
+
 def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
-    """The tool shape with the old line filled. The model still writes new."""
+    """A complete tool call. The expected text comes from the comment already in the body."""
+    old = _return_line(body)
+    expected = _expected(body)
+    new = f'return f"{expected}"' if expected and old.startswith("return f") else ""
     return {
         "tool": "apply_patch",
         "args": {
             "path": path or "the file you read",
-            "old": _return_line(body),
-            "new": "",
+            "old": old,
+            "new": new,
         },
     }
     """A test helper is not memory. Keep a definition or an assertion."""
@@ -374,7 +383,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 tools.append(tool)
                 prompt = fit(base, {
                     "ok": False,
-                    "reason": "the source is open. fill new and reply with this tool",
+                    "reason": "copy this tool",
                     "tool": _patch_skeleton(read_path, last_body),
                 })
                 if refusals >= 3:

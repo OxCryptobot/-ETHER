@@ -302,7 +302,7 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     root = _root(tmp_path)
 
     def ask(prompt: str, n: int = 180) -> str:
-        if "fill new" in prompt or "next tool is apply_patch" in prompt:
+        if "copy this tool" in prompt or "fill new" in prompt:
             return json.dumps({
                 "tool": "apply_patch",
                 "args": {
@@ -355,7 +355,7 @@ def test_an_open_source_forces_a_patch(tmp_path: Path) -> None:
     )
 
     def ask(prompt: str, n: int = 180) -> str:
-        if "fill new" in prompt:
+        if "copy this tool" in prompt:
             return json.dumps({
                 "tool": "apply_patch",
                 "args": {

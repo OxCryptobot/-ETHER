@@ -1,6 +1,6 @@
 {
-  "ok": false,
-  "honest": false,
+  "ok": true,
+  "honest": true,
   "note": "repo fail. the model must find the file",
   "task": "repo_fail",
   "strategy": "tool_runtime",
@@ -8,10 +8,16 @@
   "degraded": [],
   "tools": [
     "read_file",
-    "_retry",
-    "_retry"
+    "apply_patch"
   ],
   "response_tail": "return f\"Hello, {name}!\"",
-  "passes": 0,
-  "ts": "2026-10-20T19:54:25.607731+00:00"
+  "tx": [
+    "begin",
+    "promote"
+  ],
+  "tests_ok": true,
+  "file": "greeter.py",
+  "passes": 1,
+  "tool_runtime_ok": true,
+  "ts": "2026-10-20T19:57:45.317121+00:00"
 }

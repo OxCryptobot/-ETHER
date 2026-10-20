@@ -1,11 +1,12 @@
 {
-  "passes": [],
+  "passes": [
+    "2026-10-20T19:57:45.316114+00:00"
+  ],
   "trace": {
     "day": "2026-10-20",
     "tools": [
       "read_file",
-      "_retry",
-      "_retry"
+      "apply_patch"
     ],
     "hits": [
       "tests/conftest.py:1:\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"",
@@ -29,8 +30,7 @@
   },
   "last_tools": [
     "read_file",
-    "_retry",
-    "_retry"
+    "apply_patch"
   ],
-  "stamp": "690057713628780741"
+  "stamp": "3587523327899439543"
 }

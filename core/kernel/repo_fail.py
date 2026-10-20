@@ -381,11 +381,9 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             if not unread_now:
                 refusals += 1
                 tools.append(tool)
-                prompt = fit(base, {
-                    "ok": False,
-                    "reason": "copy this tool",
-                    "tool": _patch_skeleton(read_path, last_body),
-                })
+                skeleton = _patch_skeleton(read_path, last_body)
+                prompt = "copy this tool and nothing else\n" + json.dumps(skeleton)
+                row["response_tail"] = text[-240:]
                 if refusals >= 3:
                     break
                 continue
@@ -486,4 +484,6 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     row["tools"] = list(tools)
     row["honest"] = False
     row["passes"] = len(passes)
+    if "response_tail" not in row:
+        row["response_tail"] = ""
     return row

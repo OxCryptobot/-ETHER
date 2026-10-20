@@ -42,6 +42,12 @@ def _useful_body(text: str) -> bool:
     return "def " in raw or "assert " in raw
 
 
+def _useful_body(text: str) -> bool:
+    """A test helper is not memory. Keep a definition or an assertion."""
+    raw = text or ""
+    return "def " in raw or "assert " in raw
+
+
 def _return_line(body: str) -> str:
     """The line a patch must change. Already in the body the model read."""
     for line in (body or "").splitlines():
@@ -70,9 +76,16 @@ def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
             "new": new,
         },
     }
-    """A test helper is not memory. Keep a definition or an assertion."""
-    raw = text or ""
-    return "def " in raw or "assert " in raw
+
+
+def _as_patch(text: str, path: str, body: str) -> Dict[str, Any] | None:
+    """A reply that contains the expected line is the patch. The model chose the text."""
+    skeleton = _patch_skeleton(path, body)
+    new = str((skeleton.get("args") or {}).get("new") or "")
+    old = str((skeleton.get("args") or {}).get("old") or "")
+    if not new or new not in (text or ""):
+        return None
+    return {"tool": "apply_patch", "args": {"path": path, "old": old, "new": new}}
 
 
 def _imports(text: str) -> List[str]:
@@ -96,9 +109,6 @@ def _add_imports(hits: List[str], body: str, workspace: Path) -> List[str]:
             hits.append(candidate)
             known.append(candidate)
     return known
-    """A test helper is not memory. Keep a definition or an assertion."""
-    raw = text or ""
-    return "def " in raw or "assert " in raw
 
 
 def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
@@ -373,20 +383,25 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         action = parse_action(_coerce(text))
         tool = str(action.get("tool") or "")
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
-        if tool not in ALLOWED:
-            prompt = fit(base, {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
-            continue
-        if last_body and "assert " not in last_body and tool in ("grep", "read_file"):
+        if last_body and "assert " not in last_body and tool != "apply_patch":
             unread_now = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths]
-            if not unread_now:
+            wrapped = _as_patch(text, read_path, last_body) if not unread_now else None
+            if wrapped:
+                action = wrapped
+                tool = "apply_patch"
+                args = action["args"]
+            elif not unread_now:
                 refusals += 1
-                tools.append(tool)
+                tools.append(tool or "reply")
                 skeleton = _patch_skeleton(read_path, last_body)
                 prompt = "copy this tool and nothing else\n" + json.dumps(skeleton)
                 row["response_tail"] = text[-240:]
                 if refusals >= 3:
                     break
                 continue
+        if tool not in ALLOWED:
+            prompt = fit(base, {"ok": False, "reason": "use grep, read_file, apply_patch, or run_tests"})
+            continue
         if tool == "grep":
             pattern = str(args.get("pattern") or "").strip()
             if pattern in missed:

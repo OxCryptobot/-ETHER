@@ -332,7 +332,7 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     assert row["tools"][-1] == "apply_patch"
 
 
-def test_an_open_source_forces_a_patch(tmp_path: Path) -> None:
+def test_a_bare_new_line_is_the_patch(tmp_path: Path) -> None:
     from datetime import datetime, timezone
 
     from core.kernel.repo_fail import run
@@ -344,10 +344,10 @@ def test_an_open_source_forces_a_patch(tmp_path: Path) -> None:
             "passes": [],
             "trace": {
                 "day": datetime.now(timezone.utc).date().isoformat(),
-                "body": 'def greet(name: str) -> str:\n    return f"Hello {name}"\n',
+                "body": 'def greet(name: str) -> str:\n    # tests expect "Hello, {name}!"\n    return f"Hello {name}"\n',
                 "read_path": "greeter.py",
                 "read_paths": ["greeter.py"],
-                "hits": ["greeter.py:4:return f\"Hello {name}\""],
+                "hits": ["greeter.py"],
                 "tools": ["read_file"],
             },
         }),
@@ -356,15 +356,8 @@ def test_an_open_source_forces_a_patch(tmp_path: Path) -> None:
 
     def ask(prompt: str, n: int = 180) -> str:
         if "copy this tool" in prompt:
-            return json.dumps({
-                "tool": "apply_patch",
-                "args": {
-                    "path": "greeter.py",
-                    "old": 'return f"Hello {name}"',
-                    "new": 'return f"Hello, {name}!"',
-                },
-            })
-        return json.dumps({"tool": "grep", "args": {"pattern": "Hello"}})
+            return 'return f"Hello, {name}!"'
+        return json.dumps({"tool": "read_file", "args": {"path": "test.py"}})
 
     row = run(root, ask)
     assert row["honest"] is True

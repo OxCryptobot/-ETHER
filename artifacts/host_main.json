@@ -1,29 +1,20 @@
 {
-  "ts": "2026-10-20T03:08:53.687803+00:00",
+  "ts": "2026-10-20T04:04:29.569194+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-20T03:08:53.854990+00:00",
+    "ts": "2026-10-20T04:04:29.738468+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-20T03:09:24.461254+00:00",
+    "ts": "2026-10-20T04:04:59.234467+00:00",
     "os": "nt",
-    "ok": true,
+    "ok": false,
     "ahead": 4140,
-    "worktree": {
-      "ok": true,
-      "hard_reset": false,
-      "note": "worktree_push",
-      "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12aa69bd7..a3043e2d7  HEAD -> main\n"
-    },
-    "push_rc": 0,
-    "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12aa69bd7..a3043e2d7  HEAD -> main\n"
+    "error": "TimeoutExpired"
   },
   "runner": {
     "ok": true,
@@ -34,7 +25,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-20T03:09:02.306804+00:00",
+    "ts": "2026-10-20T04:04:37.078477+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,

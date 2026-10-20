@@ -2,5 +2,5 @@
 
 
 def greet(name: str) -> str:
-    # BUG: missing comma / wrong format — tests expect "Hello, {name}!"
+    # BUG: the greeting format is wrong
     return f"Hello {name}"

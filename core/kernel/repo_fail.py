@@ -57,23 +57,26 @@ def _return_line(body: str) -> str:
     return ""
 
 
-def _expected(body: str) -> str:
+def _assertion_from(body: str) -> str:
+    """The assertion the model already read. Not the answer."""
+    for line in (body or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("assert "):
+            return piece
+    return ""
     """The expected text already written in the file the model read."""
     match = re.search(r'expect[s]?\s+"([^"]+)"', body or "")
     return match.group(1) if match else ""
 
 
 def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
-    """A complete tool call. The expected text comes from the comment already in the body."""
-    old = _return_line(body)
-    expected = _expected(body)
-    new = f'return f"{expected}"' if expected and old.startswith("return f") else ""
+    """The tool shape. The model writes new. The comment does not contain it."""
     return {
         "tool": "apply_patch",
         "args": {
             "path": path or "the file you read",
-            "old": old,
-            "new": new,
+            "old": _return_line(body),
+            "new": "",
         },
     }
 
@@ -414,8 +417,10 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 refusals += 1
                 tools.append(tool or "reply")
                 prompt = (
-                    "The source is below. Reply with exactly two lines and nothing else.\n"
+                    "The source is below. The assertion is the judge.\n"
                     f"{last_body}\n"
+                    f"assertion: {assertion or 'the test you read'}\n"
+                    "Reply with exactly two lines and nothing else.\n"
                     f"OLD: {_return_line(last_body)}\n"
                     "NEW: <the fixed line>\n"
                 )
@@ -494,6 +499,9 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 last_body = raw
                 read_path = opened
                 _add_imports(hits, raw, workspace)
+                found = _assertion_from(raw)
+                if found:
+                    assertion = found
             obs["next"] = "apply_patch or run_tests"
             obs["unread"] = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths][:6]
         elif tool == "read_file":

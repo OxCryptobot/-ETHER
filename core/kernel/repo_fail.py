@@ -82,11 +82,15 @@ def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
 
 
 def _as_patch(text: str, path: str, body: str) -> Dict[str, Any] | None:
-    """A reply that contains the expected line is the patch. The model chose the text."""
-    skeleton = _patch_skeleton(path, body)
-    new = str((skeleton.get("args") or {}).get("new") or "")
-    old = str((skeleton.get("args") or {}).get("old") or "")
-    if not new or new not in (text or ""):
+    """A reply that is a return line is the patch. The model chose the text."""
+    old = _return_line(body)
+    new = ""
+    for line in (text or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("return ") and piece != old:
+            new = piece
+            break
+    if not new:
         return None
     return {"tool": "apply_patch", "args": {"path": path, "old": old, "new": new}}
 

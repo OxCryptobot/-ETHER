@@ -351,9 +351,22 @@ def _coerce(text: str) -> str:
     return raw.replace('"tool","', '"tool":"').replace('"args","', '"args":"')
 
 
+def _fixture_stamp(root: Path) -> str:
+    """Changes when the planted source changes, so an old pass does not block a new fixture."""
+    path = Path(root) / FIXTURE / "greeter.py"
+    if not path.is_file():
+        return ""
+    return str(hash(path.read_text(encoding="utf-8")))
+
+
 def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any]:
     root = Path(root)
     state = load_state(root)
+    stamp = _fixture_stamp(root)
+    if state.get("stamp") != stamp:
+        state["passes"] = []
+        state["stamp"] = stamp
+        _save(root, state)
     passes = [str(item) for item in (state.get("passes") or [])]
     if len(passes) >= NEED:
         return {

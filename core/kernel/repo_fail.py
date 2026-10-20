@@ -414,8 +414,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 refusals += 1
                 tools.append(tool or "reply")
                 prompt = (
-                    "The source is open. Do not reply with READ.\n"
-                    "Reply with exactly two lines:\n"
+                    "The source is below. Reply with exactly two lines and nothing else.\n"
+                    f"{last_body}\n"
                     f"OLD: {_return_line(last_body)}\n"
                     "NEW: <the fixed line>\n"
                 )

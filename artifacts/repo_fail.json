@@ -4,8 +4,8 @@
     "day": "2026-10-20",
     "tools": [
       "read_file",
-      "read_file",
-      "read_file"
+      "_retry",
+      "_retry"
     ],
     "hits": [
       "tests/conftest.py:1:\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"",
@@ -29,7 +29,7 @@
   },
   "last_tools": [
     "read_file",
-    "read_file",
-    "read_file"
+    "_retry",
+    "_retry"
   ]
 }

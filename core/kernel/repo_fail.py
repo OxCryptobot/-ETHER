@@ -88,6 +88,24 @@ def _as_patch(text: str, path: str, body: str) -> Dict[str, Any] | None:
     return {"tool": "apply_patch", "args": {"path": path, "old": old, "new": new}}
 
 
+def _from_text(text: str) -> Dict[str, Any]:
+    """The formats the 4B already emits: READ, OLD/NEW, or JSON."""
+    raw = text or ""
+    for line in raw.splitlines():
+        piece = line.strip()
+        if piece.startswith("READ:"):
+            return {"tool": "read_file", "args": {"path": piece[5:].strip()}}
+        if piece.startswith("OLD:"):
+            old = piece[4:].strip()
+            new = ""
+            for other in raw.splitlines():
+                if other.strip().startswith("NEW:"):
+                    new = other.strip()[4:].strip()
+            if old and new:
+                return {"tool": "apply_patch", "args": {"old": old, "new": new, "path": ""}}
+    return parse_action(_coerce(raw))
+
+
 def _imports(text: str) -> List[str]:
     """Module names a read body imports. The harness does not open them."""
     found: List[str] = []
@@ -376,11 +394,13 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     }
     for _ in range(steps):
         try:
+            text = ask(prompt, n=48, edit=True) if last_body and "assert " not in last_body else ask(prompt, n=180)
+        except TypeError:
             text = ask(prompt, n=180)
         except Exception as exc:
             row["ask_error"] = f"{type(exc).__name__}: {exc}"[:300]
             break
-        action = parse_action(_coerce(text))
+        action = _from_text(text)
         tool = str(action.get("tool") or "")
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
         if last_body and "assert " not in last_body and tool != "apply_patch":
@@ -393,8 +413,12 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             elif not unread_now:
                 refusals += 1
                 tools.append(tool or "reply")
-                skeleton = _patch_skeleton(read_path, last_body)
-                prompt = "copy this tool and nothing else\n" + json.dumps(skeleton)
+                prompt = (
+                    "The source is open. Do not reply with READ.\n"
+                    "Reply with exactly two lines:\n"
+                    f"OLD: {_return_line(last_body)}\n"
+                    "NEW: <the fixed line>\n"
+                )
                 row["response_tail"] = text[-240:]
                 if refusals >= 3:
                     break
@@ -411,6 +435,9 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 if refusals >= 3:
                     break
                 continue
+        if tool == "apply_patch" and not args.get("path"):
+            args = dict(args)
+            args["path"] = read_path
         if tool == "apply_patch" and not saw_file:
             refusals += 1
             prompt = fit(base, {"ok": False, "reason": "search or read before a patch", "hits": hits[:6]})

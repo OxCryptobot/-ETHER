@@ -301,8 +301,8 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
 
     root = _root(tmp_path)
 
-    def ask(prompt: str, n: int = 180) -> str:
-        if "copy this tool" in prompt or "fill new" in prompt:
+    def ask(prompt: str, n: int = 180, edit: bool = False) -> str:
+        if "NEW:" in prompt or "copy this tool" in prompt or "fill new" in prompt:
             return json.dumps({
                 "tool": "apply_patch",
                 "args": {
@@ -354,10 +354,10 @@ def test_a_bare_new_line_is_the_patch(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    def ask(prompt: str, n: int = 180) -> str:
-        if "copy this tool" in prompt:
-            return 'return f"Hello, {name}!"'
-        return json.dumps({"tool": "read_file", "args": {"path": "test.py"}})
+    def ask(prompt: str, n: int = 180, edit: bool = False) -> str:
+        if "NEW:" in prompt:
+            return 'OLD: return f"Hello {name}"\nNEW: return f"Hello, {name}!"'
+        return "READ: test.py"
 
     row = run(root, ask)
     assert row["honest"] is True

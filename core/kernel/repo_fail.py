@@ -360,17 +360,20 @@ def _fixture_stamp(root: Path) -> str:
     path = Path(root) / FIXTURE / "greeter.py"
     if not path.is_file():
         return ""
-    return str(hash(path.read_text(encoding="utf-8")))
+    return "v2:" + str(hash(path.read_text(encoding="utf-8")))
 
 
 def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any]:
     root = Path(root)
     state = load_state(root)
     stamp = _fixture_stamp(root)
-    if state.get("stamp") != stamp:
+    if state.get("stamp") and state.get("stamp") != stamp:
         state["passes"] = []
+        state["trace"] = {}
         state["stamp"] = stamp
         _save(root, state)
+    else:
+        state["stamp"] = stamp
     passes = [str(item) for item in (state.get("passes") or [])]
     if len(passes) >= NEED:
         return {

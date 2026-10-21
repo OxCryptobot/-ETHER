@@ -41,6 +41,9 @@ jobs:
           $env:GIT_TERMINAL_PROMPT = "0"
           $env:GCM_INTERACTIVE = "Never"
           Set-Location $env:GITHUB_WORKSPACE
+          $src = Join-Path $env:GITHUB_WORKSPACE "fixtures\repo_oracle_toy"
+          $dst = Join-Path $env:ETHER_ROOT "fixtures\repo_oracle_toy"
+          if (Test-Path $src) { Copy-Item -Recurse -Force $src $dst }
           $py = Join-Path $env:ETHER_ROOT ".venv\Scripts\python.exe"
           if (-not (Test-Path $py)) { throw "venv python missing: $py" }
           & $py -u scripts/host_main.py

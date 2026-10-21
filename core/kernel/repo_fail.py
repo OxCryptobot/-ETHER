@@ -197,9 +197,18 @@ def workspace_for(root: Path) -> Path:
     return Path(root) / "repo_fail_ws"
 
 
+def _fixture_src(root: Path) -> Path:
+    """The fixture next to the code wins. ETHER_ROOT can be a stale checkout."""
+    here = Path(__file__).resolve().parents[2] / FIXTURE
+    local = Path(root) / FIXTURE
+    if here.is_dir() and (here / "greeter.py").is_file():
+        return here
+    return local
+
+
 def reset_workspace(root: Path) -> Path:
     """A fresh copy of the broken project. The canonical fixture stays broken."""
-    src = Path(root) / FIXTURE
+    src = _fixture_src(root)
     dest = workspace_for(root)
     if dest.exists():
         shutil.rmtree(dest)
@@ -357,7 +366,7 @@ def _coerce(text: str) -> str:
 
 def _fixture_stamp(root: Path) -> str:
     """Changes when the planted source changes, so an old pass does not block a new fixture."""
-    path = Path(root) / FIXTURE / "greeter.py"
+    path = _fixture_src(root) / "greeter.py"
     if not path.is_file():
         return ""
     return "v2:" + str(hash(path.read_text(encoding="utf-8")))

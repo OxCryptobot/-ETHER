@@ -206,13 +206,28 @@ def _fixture_src(root: Path) -> Path:
     return local
 
 
+NO_ANSWER = '''"""Toy package under test — intentional bug for Phase B oracle demos."""
+
+
+def greet(name: str) -> str:
+    # BUG: the greeting format is wrong
+    return f"Hello {name}"
+'''
+
+
 def reset_workspace(root: Path) -> Path:
-    """A fresh copy of the broken project. The canonical fixture stays broken."""
+    """A fresh copy of the broken project. The source is written here, not copied from a stale checkout."""
     src = _fixture_src(root)
     dest = workspace_for(root)
     if dest.exists():
         shutil.rmtree(dest)
-    shutil.copytree(src, dest)
+    if src.is_dir():
+        shutil.copytree(src, dest)
+    else:
+        dest.mkdir(parents=True)
+    target = dest / "greeter.py"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(NO_ANSWER, encoding="utf-8")
     return dest
 
 

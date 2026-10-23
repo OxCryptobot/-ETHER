@@ -8,11 +8,6 @@
   "degraded": [],
   "tools": [
     "read_file",
-    "grep",
-    "read_file",
-    "read_file",
-    "read_file",
-    "read_file",
     "apply_patch"
   ],
   "response_tail": "return f\"Hello, {name}!\"",
@@ -22,8 +17,8 @@
   ],
   "tests_ok": true,
   "file": "greeter.py",
-  "passes": 1,
+  "passes": 2,
   "tool_runtime_ok": true,
-  "grew": "merge_sorted",
-  "ts": "2026-10-23T21:40:26.102956+00:00"
+  "grew": "ledger",
+  "ts": "2026-10-23T22:11:02.414606+00:00"
 }

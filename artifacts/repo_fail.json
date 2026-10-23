@@ -1,5 +1,7 @@
 {
-  "passes": [],
+  "passes": [
+    "2026-10-23T23:33:34.098371+00:00"
+  ],
   "trace": {
     "day": "2026-10-23",
     "tools": [
@@ -9,27 +11,26 @@
       "read_file",
       "read_file",
       "read_file",
-      "_retry"
+      "apply_patch"
     ],
     "hits": [
       "tests/conftest.py:1:\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"",
       "tests/conftest.py:2:import sys",
       "tests/conftest.py:3:from pathlib import Path",
-      "tests/test_wallet.py:3:import pytest",
-      "tests/test_wallet.py:5:from wallet import Wallet",
-      "wallet.py"
+      "tests/test_greeter.py:3:from greeter import greet",
+      "greeter.py"
     ],
-    "rejected": "test/test.py",
+    "rejected": "",
     "patch": "",
-    "assertion": "",
+    "assertion": "assert greet(\"World\") == \"Hello, World!\"",
     "pattern": "import",
     "missed": [],
-    "body": "\"\"\"Toy wallet package \u2014 intentional bugs for Phase B oracle task set.\n\nBUGS:\n- deposit always overwrites balance instead of adding\n- withdraw never checks insufficient funds\n\"\"\"\n\n\nclass Wallet:\n    def __init__(self, balance: float = 0.0) -> None:\n        self.balance = float(balance)\n\n    def deposit(self, amount: float) -> float:\n        if amount < 0:\n            raise ValueError(\"amount must be non-negative\")\n        # BUG: overwrites instead of adding\n        self.balance = amount\n        r",
-    "read_path": "wallet.py",
+    "body": "\"\"\"Toy package under test \u2014 intentional bug for Phase B oracle demos.\"\"\"\n\n\ndef greet(name: str) -> str:\n    # BUG: the greeting format is wrong\n    return f\"Hello {name}\"\n",
+    "read_path": "greeter.py",
     "read_paths": [
       "tests/conftest.py",
-      "tests/test_wallet.py",
-      "wallet.py"
+      "tests/test_greeter.py",
+      "greeter.py"
     ]
   },
   "last_tools": [
@@ -39,7 +40,7 @@
     "read_file",
     "read_file",
     "read_file",
-    "_retry"
+    "apply_patch"
   ],
-  "stamp": "v3:repo_oracle_wallet:wallet.py"
+  "stamp": "v3:repo_oracle_toy:greeter.py"
 }

@@ -1,6 +1,6 @@
 {
-  "ok": false,
-  "honest": false,
+  "ok": true,
+  "honest": true,
   "note": "repo fail. the model must find the file",
   "task": "repo_fail",
   "strategy": "tool_runtime",
@@ -13,9 +13,17 @@
     "read_file",
     "read_file",
     "read_file",
-    "_retry"
+    "apply_patch"
   ],
-  "response_tail": "def deposit(self, amount: float) -> float:\n        if amount < 0:\n            raise ValueError(\"amount must be non-negative\")\n        # BUG: overwrites instead of adding\n        self.balance += amount",
-  "passes": 0,
-  "ts": "2026-10-23T23:11:21.092470+00:00"
+  "response_tail": "return f\"Hello, {name}!\"",
+  "tx": [
+    "begin",
+    "promote"
+  ],
+  "tests_ok": true,
+  "file": "greeter.py",
+  "passes": 1,
+  "tool_runtime_ok": true,
+  "grew": "wallet",
+  "ts": "2026-10-23T23:33:34.098371+00:00"
 }

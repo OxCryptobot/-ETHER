@@ -63,6 +63,20 @@ def main() -> int:
             print(json.dumps(row))
             return 0
         from core.kernel.repo_fail import run as repo_run
+        from core.kernel.self_grow import greeter_proven, next_real
+
+        if greeter_proven(ROOT):
+            real = next_real(ROOT)
+            if real:
+                os.environ["ETHER_FIXTURE"] = real["fixture"]
+                row["note"] = "self_grow. the system picks the next real failure"
+                row["task"] = real["id"]
+            else:
+                row["note"] = "growth_queue_empty. no more planted tasks"
+                OUT.parent.mkdir(parents=True, exist_ok=True)
+                OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+                print(json.dumps(row))
+                return 0
 
         row = repo_run(ROOT, _ask)
         row["ts"] = datetime.now(timezone.utc).isoformat()

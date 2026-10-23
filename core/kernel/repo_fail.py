@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -198,7 +199,12 @@ def workspace_for(root: Path) -> Path:
 
 
 def _fixture_src(root: Path) -> Path:
-    """The fixture next to the code wins. ETHER_ROOT can be a stale checkout."""
+    """The fixture next to the code. A caller may set ETHER_FIXTURE to a real one."""
+    chosen = os.environ.get("ETHER_FIXTURE") or ""
+    if chosen:
+        here = Path(__file__).resolve().parents[2] / chosen
+        if here.is_dir():
+            return here
     here = Path(__file__).resolve().parents[2] / FIXTURE
     local = Path(root) / FIXTURE
     if here.is_dir() and (here / "greeter.py").is_file():
@@ -216,7 +222,7 @@ def greet(name: str) -> str:
 
 
 def reset_workspace(root: Path) -> Path:
-    """A fresh copy of the broken project. The source is written here, not copied from a stale checkout."""
+    """A fresh copy of the chosen project. A real fixture is copied as-is. The toy is rewritten so a stale file cannot leak the answer."""
     src = _fixture_src(root)
     dest = workspace_for(root)
     if dest.exists():
@@ -225,9 +231,8 @@ def reset_workspace(root: Path) -> Path:
         shutil.copytree(src, dest)
     else:
         dest.mkdir(parents=True)
-    target = dest / "greeter.py"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(NO_ANSWER, encoding="utf-8")
+    if (dest / "greeter.py").is_file() and not (dest / "merge.py").is_file():
+        (dest / "greeter.py").write_text(NO_ANSWER, encoding="utf-8")
     return dest
 
 
@@ -380,8 +385,10 @@ def _coerce(text: str) -> str:
 
 
 def _fixture_stamp(root: Path) -> str:
-    """Changes when the planted source changes, so an old pass does not block a new fixture."""
-    path = _fixture_src(root) / "greeter.py"
+    """Stable for a fixture. Does not change because a stale file moved."""
+    src = _fixture_src(root)
+    names = sorted(p.name for p in src.glob("*.py")) if src.is_dir() else []
+    return "v3:" + src.name + ":" + ",".join(names)
     if not path.is_file():
         return ""
     return "v2:" + str(hash(path.read_text(encoding="utf-8")))
@@ -572,6 +579,16 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 "tool_runtime_ok": True,
             })
             row["honest"] = is_honest_tool_path_pass(row)
+            if row["honest"]:
+                try:
+                    from core.kernel.self_grow import mark_done, next_real
+
+                    real = next_real(root)
+                    if real:
+                        mark_done(root, real["id"])
+                        row["grew"] = real["id"]
+                except Exception:
+                    pass
             return row
         prompt = fit(base, obs)
     _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed, body=last_body, read_path=read_path, read_paths=read_paths)

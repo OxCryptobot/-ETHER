@@ -1,37 +1,32 @@
 {
-  "passes": [
-    "2026-10-23T23:33:34.098371+00:00",
-    "2026-10-24T00:13:45.106244+00:00"
-  ],
+  "passes": [],
   "trace": {
-    "day": "2026-10-24",
+    "day": "2026-10-25",
     "tools": [
       "read_file",
       "grep",
       "read_file",
       "read_file",
-      "read_file",
-      "read_file",
-      "apply_patch"
+      "grep",
+      "read_file"
     ],
     "hits": [
-      "tests/conftest.py:1:\"\"\"Ensure fixture root is importable when pytest runs inside staging.\"\"\"",
-      "tests/conftest.py:2:import sys",
-      "tests/conftest.py:3:from pathlib import Path",
-      "tests/test_greeter.py:3:from greeter import greet",
-      "greeter.py"
+      "merge.py:14:def merge_sorted(a: List[T], b: List[T]) -> List[T]:",
+      "tests/test_merge.py:1:from merge import merge_sorted",
+      "tests/test_merge.py:5:assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]",
+      "tests/test_merge.py:9:assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]",
+      "tests/test_merge.py:14:out = merge_sorted([], b)",
+      "tests/test_merge.py:21:out = merge_sorted(a, [])"
     ],
-    "rejected": "",
+    "rejected": "merge.py",
     "patch": "",
-    "assertion": "assert greet(\"World\") == \"Hello, World!\"",
-    "pattern": "import",
+    "assertion": "",
+    "pattern": "merge",
     "missed": [],
-    "body": "\"\"\"Toy package under test \u2014 intentional bug for Phase B oracle demos.\"\"\"\n\n\ndef greet(name: str) -> str:\n    # BUG: the greeting format is wrong\n    return f\"Hello {name}\"\n",
-    "read_path": "greeter.py",
+    "body": "",
+    "read_path": "",
     "read_paths": [
-      "tests/conftest.py",
-      "tests/test_greeter.py",
-      "greeter.py"
+      "merge.py"
     ]
   },
   "last_tools": [
@@ -39,9 +34,8 @@
     "grep",
     "read_file",
     "read_file",
-    "read_file",
-    "read_file",
-    "apply_patch"
+    "grep",
+    "read_file"
   ],
-  "stamp": "v3:repo_oracle_toy:greeter.py"
+  "stamp": "v3:repo_oracle_merge:merge.py"
 }

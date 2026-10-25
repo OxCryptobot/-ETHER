@@ -17,11 +17,12 @@
     "rejected": "src/main.rs",
     "patch": "",
     "assertion": "assert greet(\"World\") == \"Hello, World!\"",
-    "pattern": "search",
+    "pattern": "You have not been told which file",
     "missed": [
       "<text in a line>",
       "already",
-      "search"
+      "search",
+      "You have not been told which file"
     ],
     "body": "def test_greet_basic():\n    assert greet(\"World\") == \"Hello, World!\"\n\n\ndef test_greet_empty():\n    assert greet(\"\") == \"Hello, !\"",
     "read_path": "tests/test_greeter.py",

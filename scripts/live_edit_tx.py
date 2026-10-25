@@ -71,12 +71,7 @@ def main() -> int:
                 os.environ["ETHER_FIXTURE"] = real["fixture"]
                 row["note"] = "self_grow. the system picks the next real failure"
                 row["task"] = real["id"]
-            else:
-                row["note"] = "growth_queue_empty. no more planted tasks"
-                OUT.parent.mkdir(parents=True, exist_ok=True)
-                OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
-                print(json.dumps(row))
-                return 0
+            # always fall through and run. an empty queue is not a stop.
 
         row = repo_run(ROOT, _ask)
         row["ts"] = datetime.now(timezone.utc).isoformat()

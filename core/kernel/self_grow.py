@@ -36,12 +36,12 @@ def save(root: Path, data: Dict[str, Any]) -> None:
 
 
 def next_real(root: Path) -> Optional[Dict[str, str]]:
-    """The first real task the system has not finished. None means the queue is empty."""
+    """The first real task not marked done in the published file. A missing file means start at the first."""
     done = set(str(item) for item in (load(root).get("done") or []))
     for item in QUEUE:
         if item["id"] not in done:
             return item
-    return None
+    return QUEUE[0] if QUEUE else None
 
 
 def mark_done(root: Path, task_id: str) -> None:

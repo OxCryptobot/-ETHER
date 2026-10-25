@@ -279,14 +279,16 @@ def _inside(workspace: Path, rel: str) -> Path | None:
 
 
 def _slice(text: str, focus: str) -> str:
-    """Matching lines, not the file. A 4B cannot hold the rest."""
-    if not focus:
-        return text[:800]
+    """The function if there is one, else the focus window. A window that misses the def is not a read."""
     lines = text.splitlines()
-    for i, line in enumerate(lines):
-        if focus in line:
-            return "\n".join(lines[max(0, i - 2) : i + 6])[:800]
-    return text[:800]
+    def_at = next((i for i, line in enumerate(lines) if line.startswith("def ")), None)
+    if focus and def_at is None:
+        for i, line in enumerate(lines):
+            if focus in line:
+                return "\n".join(lines[max(0, i - 2) : i + 6])[:800]
+        return text[:800]
+    start = def_at or 0
+    return "\n".join(lines[start : start + 40])[:800]
 
 
 def _assertion(tail: str) -> str:
@@ -380,8 +382,12 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
 
 
 def _coerce(text: str) -> str:
+    """The 4B writes commas where colons belong. Repair that before parsing."""
     raw = text or ""
-    return raw.replace('"tool","', '"tool":"').replace('"args","', '"args":"')
+    raw = raw.replace('"tool","', '"tool":"').replace('"args","', '"args":"')
+    raw = raw.replace('{"tool","', '{"tool":"').replace(',"args",{', ',"args":{')
+    raw = raw.replace('"pattern","', '"pattern":"')
+    return raw
 
 
 def _fixture_stamp(root: Path) -> str:

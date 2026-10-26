@@ -1,24 +1,22 @@
 {
-  "ok": true,
-  "honest": true,
+  "ok": false,
+  "honest": false,
   "note": "repo fail. the model must find the file",
   "task": "repo_fail",
   "strategy": "tool_runtime",
   "mode": "live",
   "degraded": [],
   "tools": [
-    "_retry",
-    "apply_patch"
+    "read_file",
+    "grep",
+    "read_file",
+    "read_file",
+    "read_file",
+    "grep",
+    "grep",
+    "read_file"
   ],
-  "response_tail": "return f\"Hello, {name}!\"",
-  "tx": [
-    "begin",
-    "promote"
-  ],
-  "tests_ok": true,
-  "file": "greeter.py",
-  "passes": 2,
-  "tool_runtime_ok": true,
-  "grew": "merge_sorted",
-  "ts": "2026-10-26T14:18:02.158943+00:00"
+  "response_tail": "{\"tool\":\"grep\",\"args\":{\"pattern\":\"import\"}}",
+  "passes": 0,
+  "ts": "2026-10-26T15:16:03.152916+00:00"
 }

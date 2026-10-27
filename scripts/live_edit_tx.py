@@ -63,15 +63,13 @@ def main() -> int:
             print(json.dumps(row))
             return 0
         from core.kernel.repo_fail import run as repo_run
-        from core.kernel.self_grow import greeter_proven, next_real
+        from core.kernel.self_grow import next_real
 
-        if greeter_proven(ROOT):
-            real = next_real(ROOT)
-            if real:
-                os.environ["ETHER_FIXTURE"] = real["fixture"]
-                row["note"] = "self_grow. the system picks the next real failure"
-                row["task"] = real["id"]
-            # always fall through and run. an empty queue is not a stop.
+        real = next_real(ROOT)
+        if real:
+            os.environ["ETHER_FIXTURE"] = real["fixture"]
+            row["note"] = "self_grow. the system picks the next real failure"
+            row["task"] = real["id"]
 
         row = repo_run(ROOT, _ask)
         row["ts"] = datetime.now(timezone.utc).isoformat()

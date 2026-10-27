@@ -590,7 +590,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     from core.kernel.self_grow import mark_done, next_real
 
                     real = next_real(root)
-                    if real:
+                    patched = str(row.get("file") or "")
+                    if real and patched == real.get("file"):
                         mark_done(root, real["id"])
                         row["grew"] = real["id"]
                 except Exception:

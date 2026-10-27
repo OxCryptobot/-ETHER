@@ -5,10 +5,6 @@
     "tools": [
       "read_file",
       "grep",
-      "read_file",
-      "read_file",
-      "read_file",
-      "grep",
       "grep",
       "read_file"
     ],
@@ -19,12 +15,13 @@
       "tests/conftest.py:2:from pathlib import Path",
       "tests/test_merge.py:1:from merge import merge_sorted"
     ],
-    "rejected": "merge.py",
+    "rejected": "src/main/java/com/example/Calculator.java",
     "patch": "",
     "assertion": "assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]",
-    "pattern": "import",
+    "pattern": "already",
     "missed": [
-      "<text in a line>"
+      "<text in a line>",
+      "already"
     ],
     "body": "def test_basic():\n    assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]\n\n\ndef test_duplicates():\n    assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]\n\n\ndef test_empty_left():\n    b = [1, 2]\n    out = merge_sorted([], b)\n    assert out == [1, 2]\n    assert out is not b\n\n\ndef test_empty_right():\n    a = [1, 2]\n    out = merge_sorted(a, [])\n    assert out == [1, 2]\n    assert out is not a\n\n\ndef test_both_empty():\n    assert merge_sorted([], []) == []\n\n\ndef test_longer_left():",
     "read_path": "tests/test_merge.py",
@@ -34,10 +31,6 @@
     ]
   },
   "last_tools": [
-    "read_file",
-    "grep",
-    "read_file",
-    "read_file",
     "read_file",
     "grep",
     "grep",

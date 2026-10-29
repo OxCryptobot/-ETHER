@@ -63,7 +63,26 @@ def _function_block(body: str) -> str:
     return "\n".join(lines[start:end]).rstrip() + "\n"
 
 
+def _source_on_disk(workspace: Path, read_paths: List[str]) -> tuple[str, str]:
+    """The source file that was opened. A later test read must not replace it."""
+    for path in read_paths:
+        if path.startswith("tests/") or path.endswith("conftest.py"):
+            continue
+        file = workspace / path
+        if file.is_file():
+            body = _slice(file.read_text(encoding="utf-8"), "")
+            if _useful_body(body) and not body.strip().startswith("def test"):
+                return path, body
+    return "", ""
+
+
 def _return_line(body: str) -> str:
+    """The line a one-line patch must change. Already in the body the model read."""
+    for line in (body or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("return "):
+            return piece
+    return ""
     """The line a one-line patch must change. Already in the body the model read."""
     for line in (body or "").splitlines():
         piece = line.strip()
@@ -494,6 +513,11 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
         unread_now = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths]
         reading_new = tool == "read_file" and str(args.get("path") or "").replace("\\", "/") in unread_now
+        disk_path, disk_body = _source_on_disk(workspace, read_paths)
+        if disk_body:
+            source_body = disk_body
+            read_path = disk_path
+            last_body = disk_body
         if source_body and tool != "apply_patch" and not reading_new:
             wrapped = _as_patch(text, read_path, source_body)
             if wrapped:
@@ -645,6 +669,10 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     pass
             return row
         prompt = fit(base, obs)
+    disk_path, disk_body = _source_on_disk(workspace, read_paths)
+    if disk_body:
+        last_body = disk_body
+        read_path = disk_path
     _remember(root, state, tools, hits, rejected=rejected, patch=failed_patch, assertion=assertion, pattern=focus, missed=missed, body=last_body, read_path=read_path, read_paths=read_paths)
     row["tools"] = list(tools)
     row["honest"] = False

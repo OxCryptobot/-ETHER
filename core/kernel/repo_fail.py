@@ -49,7 +49,27 @@ def _useful_body(text: str) -> bool:
     return "def " in raw or "assert " in raw
 
 
+def _function_block(body: str) -> str:
+    """The def through the end of the function. The whole block is one replace."""
+    lines = (body or "").splitlines()
+    start = next((i for i, line in enumerate(lines) if line.startswith("def ")), None)
+    if start is None:
+        return ""
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if lines[i] and not lines[i].startswith((" ", "\t", "#")):
+            end = i
+            break
+    return "\n".join(lines[start:end]).rstrip() + "\n"
+
+
 def _return_line(body: str) -> str:
+    """The line a one-line patch must change. Already in the body the model read."""
+    for line in (body or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("return "):
+            return piece
+    return ""
     """The line a patch must change. Already in the body the model read."""
     for line in (body or "").splitlines():
         piece = line.strip()
@@ -83,15 +103,21 @@ def _patch_skeleton(path: str, body: str) -> Dict[str, Any]:
 
 
 def _as_patch(text: str, path: str, body: str) -> Dict[str, Any] | None:
-    """A reply that is a return line is the patch. The model chose the text."""
+    """A return line or a full function is the patch. The model chose the text."""
+    raw = text or ""
+    if "def " in raw:
+        new = _function_block(raw)
+        old = _function_block(body)
+        if new and old and new.strip() != old.strip():
+            return {"tool": "apply_patch", "args": {"path": path, "old": old, "new": new}}
     old = _return_line(body)
     new = ""
-    for line in (text or "").splitlines():
+    for line in raw.splitlines():
         piece = line.strip()
         if piece.startswith("return ") and piece != old:
             new = piece
             break
-    if not new:
+    if not new or not old:
         return None
     return {"tool": "apply_patch", "args": {"path": path, "old": old, "new": new}}
 
@@ -481,7 +507,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     "The source is below. The assertion is the judge.\n"
                     f"{source_body}\n"
                     f"assertion: {assertion or 'the test you read'}\n"
-                    "Reply with exactly two lines and nothing else.\n"
+                    "Reply with the fixed function, or exactly two lines.\n"
                     f"OLD: {_return_line(source_body)}\n"
                     "NEW: <the fixed line>\n"
                 )

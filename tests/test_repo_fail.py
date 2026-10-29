@@ -332,7 +332,50 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     assert row["tools"][-1] == "apply_patch"
 
 
-def test_a_bare_new_line_is_the_patch(tmp_path: Path) -> None:
+def test_a_full_function_fixes_merge(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import _as_patch, _function_block, act
+
+    src = FIXTURE.parent.joinpath("repo_oracle_merge/merge.py").read_text(encoding="utf-8")
+    fixed = (
+        "def merge_sorted(a, b):\n"
+        "    if not a:\n"
+        "        return list(b)\n"
+        "    if not b:\n"
+        "        return list(a)\n"
+        "    out = []\n"
+        "    i = j = 0\n"
+        "    while i < len(a) and j < len(b):\n"
+        "        if a[i] <= b[j]:\n"
+        "            out.append(a[i]); i += 1\n"
+        "        else:\n"
+        "            out.append(b[j]); j += 1\n"
+        "    out.extend(a[i:])\n"
+        "    out.extend(b[j:])\n"
+        "    return out\n"
+    )
+    patch = _as_patch(fixed, "merge.py", src)
+    assert patch is not None
+    assert patch["args"]["old"] == _function_block(src)
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "merge.py").write_text(src, encoding="utf-8")
+    tests = ws / "tests"
+    tests.mkdir()
+    (tests / "test_merge.py").write_text(
+        "from merge import merge_sorted\n"
+        "def test_copy():\n"
+        "    b = [1, 2]\n"
+        "    out = merge_sorted([], b)\n"
+        "    assert out == [1, 2] and out is not b\n"
+        "def test_right():\n"
+        "    assert merge_sorted([0], [1, 2]) == [0, 1, 2]\n",
+        encoding="utf-8",
+    )
+    obs = act(ws, "apply_patch", patch["args"])
+    assert obs["ok"] is True
+    text = (ws / "merge.py").read_text(encoding="utf-8")
+    assert "return list(b)" in text
+    assert "out.extend(b[j:])" in text
     from datetime import datetime, timezone
 
     from core.kernel.repo_fail import run

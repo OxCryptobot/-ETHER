@@ -4,8 +4,9 @@
     "day": "2026-10-29",
     "tools": [
       "grep",
+      "apply_patch",
       "read_file",
-      "grep",
+      "apply_patch",
       "read_file"
     ],
     "hits": [
@@ -16,18 +17,18 @@
       "tests/test_merge.py:14:out = merge_sorted([], b)",
       "tests/test_merge.py:21:out = merge_sorted(a, [])"
     ],
-    "rejected": "merge.py",
-    "patch": "",
-    "assertion": "assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]",
-    "pattern": "merge_sorted",
+    "rejected": "",
+    "patch": "])\nFAILED tests\\test_merge.py::test_longer_left - assert None == [0, 1, 2, 3, 4, 5]\n +  where None = merge_sorted([1, 2, 3, 4, 5], [0])\nFAILED tests\\test_merge.py::test_longer_righ",
+    "assertion": "FAILED tests\\test_merge.py::test_longer_left - assert None == [0, 1, 2, 3, 4, 5]",
+    "pattern": "",
     "missed": [
       "<text in a line>",
       "already",
       "search",
       "You have not been told which file"
     ],
-    "body": "def test_basic():\n    assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]\n\n\ndef test_duplicates():\n    assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]\n\n\ndef test_empty_left():\n    b = [1, 2]\n    out = merge_sorted([], b)\n    assert out == [1, 2]\n    assert out is not b\n\n\ndef test_empty_right():\n    a = [1, 2]\n    out = merge_sorted(a, [])\n    assert out == [1, 2]\n    assert out is not a\n\n\ndef test_both_empty():\n    assert merge_sorted([], []) == []\n\n\ndef test_longer_left():",
-    "read_path": "tests/test_merge.py",
+    "body": "def merge_sorted(a: List[T], b: List[T]) -> List[T]:\n    \"\"\"Return a new sorted list containing all elements of a and b.\n\n    Preconditions: a and b are each sorted ascending.\n    \"\"\"\n    if a is None or b is None:\n        raise TypeError(\"inputs must be lists\")\n    if not a and not b:\n        return []\n    if not a:\n        return b  # BUG: should return list(b)\n    if not b:\n        return a  # BUG: should return list(a)\n\n    out: List[T] = []\n    i = j = 0\n    while i < len(a) and j < len(b):",
+    "read_path": "merge.py",
     "read_paths": [
       "merge.py",
       "tests/test_merge.py"
@@ -35,8 +36,9 @@
   },
   "last_tools": [
     "grep",
+    "apply_patch",
     "read_file",
-    "grep",
+    "apply_patch",
     "read_file"
   ],
   "stamp": "v3:repo_oracle_merge:merge.py"

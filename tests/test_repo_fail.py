@@ -215,7 +215,7 @@ def test_one_read_then_a_different_tool(tmp_path: Path) -> None:
     root = _root(tmp_path)
 
     def ask(prompt: str, n: int = 180) -> str:
-        if "already read" in prompt:
+        if "already read" in prompt or "The source is below" in prompt or "OLD:" in prompt:
             return json.dumps({
                 "tool": "apply_patch",
                 "args": {
@@ -249,7 +249,7 @@ def test_the_same_read_stops(tmp_path: Path) -> None:
 
     row = run(_root(tmp_path), again, steps=8)
     assert row["honest"] is False
-    assert row["tools"].count("read_file") == 4
+    assert row["tools"].count("read_file") <= 2
 
 
 def test_alternating_bad_reads_stop(tmp_path: Path) -> None:

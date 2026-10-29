@@ -440,6 +440,9 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     remembered_paths = [str(item) for item in (remembered.get("read_paths") or [])] if remembered.get("day") == _today() else []
     read_path = str(remembered.get("read_path") or "") if last_body else ""
     read_paths = list(dict.fromkeys(remembered_paths + ([read_path] if read_path else [])))
+    source_body = ""
+    if last_body and not last_body.strip().startswith("def test") and "assert " not in last_body:
+        source_body = last_body
     refusals = 0
     saw_file = bool(last_body)
     row: Dict[str, Any] = {
@@ -463,22 +466,23 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         action = _from_text(text)
         tool = str(action.get("tool") or "")
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
-        if last_body and "assert " not in last_body and tool != "apply_patch":
-            unread_now = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths]
-            wrapped = _as_patch(text, read_path, last_body) if not unread_now else None
+        unread_now = [path for path in [item.split(":", 1)[0] for item in hits] if path not in read_paths]
+        reading_new = tool == "read_file" and str(args.get("path") or "").replace("\\", "/") in unread_now
+        if source_body and tool != "apply_patch" and not reading_new:
+            wrapped = _as_patch(text, read_path, source_body)
             if wrapped:
                 action = wrapped
                 tool = "apply_patch"
                 args = action["args"]
-            elif not unread_now:
+            else:
                 refusals += 1
                 tools.append(tool or "reply")
                 prompt = (
                     "The source is below. The assertion is the judge.\n"
-                    f"{last_body}\n"
+                    f"{source_body}\n"
                     f"assertion: {assertion or 'the test you read'}\n"
                     "Reply with exactly two lines and nothing else.\n"
-                    f"OLD: {_return_line(last_body)}\n"
+                    f"OLD: {_return_line(source_body)}\n"
                     "NEW: <the fixed line>\n"
                 )
                 row["response_tail"] = text[-240:]
@@ -490,7 +494,20 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             continue
         if tool == "grep":
             pattern = str(args.get("pattern") or "").strip()
+            if len(pattern) > 40 or " " in pattern:
+                refusals += 1
+                tools.append(tool)
+                prompt = fit(base, {"ok": False, "reason": "search for a short symbol, not a sentence", "hits": hits[:6]})
+                if refusals >= 3:
+                    break
+                continue
             if pattern in missed:
+                refusals += 1
+                tools.append(tool)
+                prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})
+                if refusals >= 3:
+                    break
+                continue
                 refusals += 1
                 tools.append(tool)
                 prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})
@@ -553,8 +570,12 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 read_paths.append(opened)
             if _useful_body(raw):
                 saw_file = True
-                last_body = raw
-                read_path = opened
+                opened_is_source = not opened.startswith("tests/") and not raw.strip().startswith("def test")
+                if opened_is_source or not source_body:
+                    last_body = raw
+                    read_path = opened
+                if opened_is_source:
+                    source_body = raw
                 _add_imports(hits, raw, workspace)
                 found = _assertion_from(raw)
                 if found:

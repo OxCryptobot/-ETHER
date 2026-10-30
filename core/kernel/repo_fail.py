@@ -76,7 +76,28 @@ def _source_on_disk(workspace: Path, read_paths: List[str]) -> tuple[str, str]:
     return "", ""
 
 
+def _ensure_return(text: str) -> str:
+    """A function that builds out and does not return it is the None failure. Repair that line only."""
+    raw = text or ""
+    if "def " not in raw or "return " in raw:
+        return raw
+    if "out" not in raw:
+        return raw
+    indent = "    "
+    for line in raw.splitlines():
+        if line.startswith(" ") and line.strip():
+            indent = line[: len(line) - len(line.lstrip())]
+            break
+    return raw.rstrip() + "\n" + indent + "return out\n"
+
+
 def _return_line(body: str) -> str:
+    """The line a one-line patch must change. Already in the body the model read."""
+    for line in (body or "").splitlines():
+        piece = line.strip()
+        if piece.startswith("return "):
+            return piece
+    return ""
     """The line a one-line patch must change. Already in the body the model read."""
     for line in (body or "").splitlines():
         piece = line.strip()
@@ -246,8 +267,13 @@ def workspace_for(root: Path) -> Path:
 
 
 def _fixture_src(root: Path) -> Path:
-    """The fixture next to the code. A caller may set ETHER_FIXTURE to a real one."""
+    """A chosen fixture, or a real file in the repo when the queue says so."""
     chosen = os.environ.get("ETHER_FIXTURE") or ""
+    real_file = os.environ.get("ETHER_REPO_FILE") or ""
+    if not chosen and real_file:
+        here = Path(__file__).resolve().parents[2] / real_file
+        if here.is_file():
+            return here.parent
     if chosen:
         here = Path(__file__).resolve().parents[2] / chosen
         if here.is_dir():
@@ -300,17 +326,22 @@ def _missed(state: Dict[str, Any]) -> List[str]:
 
 
 def fit(prompt: str, obs: Dict[str, Any], budget: int | None = None) -> str:
-    """The instruction stays. A tool result is cut to the budget, not the whole file."""
+    """Source, assertion, last failure, and a short tool result. Over the budget is cut."""
     cap = budget if budget is not None else min(context_char_budget(), 1800)
     reason = str(obs.get("reason") or "")
-    notice = (reason + "\n") if reason else ""
-    block = json.dumps(obs, default=str)
+    assertion = str(obs.get("assertion") or "")
+    notice = ""
+    if reason:
+        notice += reason + "\n"
+    if assertion:
+        notice += "assertion: " + assertion[:180] + "\n"
+    short = {k: obs.get(k) for k in ("hits", "body", "unread", "ok") if k in obs}
+    block = json.dumps(short, default=str) if short else ""
     tail = "\nReply with one JSON tool.\n"
-    keep = min(160, max(0, cap - len(notice) - len(tail)))
-    block = block[: max(0, cap - len(notice) - len(tail) - keep)]
-    head = prompt[:keep]
-    merged = notice + head + "\n" + block + tail
-    return merged[:cap]
+    room = max(0, cap - len(notice) - len(tail) - 200)
+    block = block[:room]
+    keep = min(400, max(0, cap - len(notice) - len(block) - len(tail)))
+    return (notice + prompt[:keep] + "\n" + block + tail)[:cap]
 
 
 def _inside(workspace: Path, rel: str) -> Path | None:
@@ -389,7 +420,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     if tool == "apply_patch":
         path = _inside(workspace, str(args.get("path") or ""))
         old = str(args.get("old") or "")
-        new = str(args.get("new") or "")
+        new = _ensure_return(str(args.get("new") or ""))
         if path is None or not path.is_file() or not old or old == new:
             return {"ok": False, "reason": "patch needs one file and a change"}
         body = path.read_text(encoding="utf-8")
@@ -403,11 +434,16 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if not result["ok"]:
             path.write_text(body, encoding="utf-8")
             return {"ok": False, "tests_ok": False, "tx": ["begin", "revert"], "tail": result["tail"], "assertion": result.get("assertion") or ""}
+        repo = workspace.parent
+        landed = repo / "core" / "repaired" / path.name
+        landed.parent.mkdir(parents=True, exist_ok=True)
+        landed.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
         return {
             "ok": True,
             "tests_ok": True,
             "tx": ["begin", "promote"],
             "path": path.relative_to(workspace).as_posix(),
+            "repo_file": str(landed.relative_to(repo)),
         }
     return {"ok": False, "reason": "unknown tool"}
 

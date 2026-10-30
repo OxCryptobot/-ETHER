@@ -67,7 +67,12 @@ def main() -> int:
 
         real = next_real(ROOT)
         if real:
-            os.environ["ETHER_FIXTURE"] = real["fixture"]
+            if real.get("fixture"):
+                os.environ["ETHER_FIXTURE"] = real["fixture"]
+                os.environ.pop("ETHER_REPO_FILE", None)
+            else:
+                os.environ.pop("ETHER_FIXTURE", None)
+                os.environ["ETHER_REPO_FILE"] = real.get("file") or ""
             row["note"] = "self_grow. the system picks the next real failure"
             row["task"] = real["id"]
 

@@ -34,7 +34,22 @@ def test_a_tool_result_stays_inside_the_budget() -> None:
     assert "grep" in text
 
 
+def test_a_prompt_over_the_budget_is_cut() -> None:
+    from core.kernel.repo_fail import fit
+
+    huge = "x" * 5000
+    text = fit(huge, {"assertion": "assert out == [1, 2]"}, budget=500)
+    assert len(text) <= 500
+    assert "assert out" in text
+
+
 def test_a_read_is_the_matching_lines_not_the_file(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import fit
+
+    huge = "x" * 5000
+    text = fit(huge, {"assertion": "assert out == [1, 2]"}, budget=500)
+    assert len(text) <= 500
+    assert "assert out" in text
     from core.kernel.repo_fail import act
 
     ws = tmp_path / "ws"
@@ -332,18 +347,27 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     assert row["tools"][-1] == "apply_patch"
 
 
-def test_a_function_without_return_is_reverted(tmp_path: Path) -> None:
+def test_a_missing_return_is_repaired(tmp_path: Path) -> None:
     from core.kernel.repo_fail import act
 
     ws = tmp_path / "ws"
     ws.mkdir()
     (ws / "merge.py").write_text("def merge_sorted(a, b):\n    return a\n", encoding="utf-8")
     (ws / "tests").mkdir()
-    (ws / "tests" / "test_merge.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
-    obs = act(ws, "apply_patch", {"path": "merge.py", "old": "def merge_sorted(a, b):\n    return a\n", "new": "def merge_sorted(a, b):\n    out = []\n"})
-    assert obs["ok"] is False
-    assert "return" in obs["reason"]
-    assert "return a" in (ws / "merge.py").read_text(encoding="utf-8")
+    (ws / "tests" / "test_merge.py").write_text(
+        "from merge import merge_sorted\n"
+        "def test_ok():\n"
+        "    assert merge_sorted([1], [2]) == [1, 2]\n",
+        encoding="utf-8",
+    )
+    obs = act(ws, "apply_patch", {
+        "path": "merge.py",
+        "old": "def merge_sorted(a, b):\n    return a\n",
+        "new": "def merge_sorted(a, b):\n    out = [a[0], b[0]]\n",
+    })
+    assert obs["ok"] is True
+    assert "return out" in (ws / "merge.py").read_text(encoding="utf-8")
+    assert obs.get("repo_file", "").endswith("merge.py")
 
 
 def test_a_full_function_fixes_merge(tmp_path: Path) -> None:

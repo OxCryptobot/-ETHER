@@ -399,6 +399,10 @@ def fit(prompt: str, obs: Dict[str, Any], budget: int | None = None) -> str:
     return (notice + prompt[:keep] + "\n" + block + tail)[:cap]
 
 
+def _files(workspace: Path) -> List[str]:
+    return sorted(p.relative_to(workspace).as_posix() for p in workspace.rglob("*.py"))
+
+
 def _inside(workspace: Path, rel: str) -> Path | None:
     rel = (rel or "").replace("\\", "/").strip()
     if not rel or rel.startswith("/") or ".." in Path(rel).parts:
@@ -708,7 +712,10 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                 saw_file = True
             elif focus and focus not in missed:
                 missed.append(focus)
-                obs = {"ok": False, "reason": "no line contains that string. search for a different string", "pattern": focus, "missed": missed[-6:]}
+                files = _files(workspace)
+                if not hits:
+                    hits = [f"{name}:1:" for name in files][:6]
+                obs = {"ok": False, "reason": "no line contains that string. search for merge_sorted. files: " + ", ".join(files[:8]), "hits": hits[:6]}
         if tool == "read_file" and obs.get("ok") and obs.get("body"):
             raw = str(obs.get("body") or "")
             opened = str(obs.get("path") or wanted)

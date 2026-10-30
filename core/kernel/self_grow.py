@@ -10,6 +10,7 @@ QUEUE: List[Dict[str, str]] = [
     {"id": "merge_sorted", "fixture": "fixtures/repo_oracle_merge", "file": "merge.py"},
     {"id": "ledger", "fixture": "fixtures/repo_oracle_ledger", "file": "ledger.py"},
     {"id": "wallet", "fixture": "fixtures/repo_oracle_wallet", "file": "wallet.py"},
+    {"id": "repo_file", "fixture": "", "file": "core/kernel/honest.py"},
 ]
 
 

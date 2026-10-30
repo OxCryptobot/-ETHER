@@ -5,34 +5,30 @@
 <div id="app">
 <header>
   <h1>ETHER CONTROL MATRIX</h1>
-  <span class="chip">LOCAL</span>
-  <span class="chip" id="stamp">m-local</span>
-  <button onclick="post('/start')">Start LIVE</button>
-  <button onclick="post('/stop')">Stop LIVE</button>
+  <span class="chip">READ ONLY</span>
+  <span class="chip" id="stamp">watching</span>
 </header>
 <section class="rail">
   <div class="card"><div class="k">OLLAMA</div><div class="v" id="ollama">—</div></div>
-  <div class="card"><div class="k">LANE</div><div class="v" id="lane">—</div></div>
-  <div class="card"><div class="k">GEN</div><div class="v" id="gen">—</div></div>
-  <div class="card"><div class="k">PROGRESS</div><div class="v" id="prog">—</div></div>
-  <div class="card"><div class="k">TASKS</div><div class="v" id="tn">—</div></div>
+  <div class="card"><div class="k">TASK</div><div class="v" id="task">—</div></div>
+  <div class="card"><div class="k">HONEST</div><div class="v" id="honest">—</div></div>
+  <div class="card"><div class="k">FILE</div><div class="v" id="file">—</div></div>
+  <div class="card"><div class="k">ALIVE</div><div class="v" id="alive">—</div></div>
   <div class="card"><div class="k">QUEUE</div><div class="v" id="qn">—</div></div>
 </section>
 <div id="mid">
   <div class="pane">
-    <div class="ph">HOST 4B</div>
+    <div class="ph">HANDS — EXE WRITES</div>
     <pre id="left">waiting…</pre>
   </div>
   <div class="pane">
-    <div class="ph">GROK / TASKS / QUEUE</div>
-    <div id="board"></div>
+    <div class="ph">GROWTH QUEUE</div>
     <div id="queue"></div>
-    <pre id="groklog"></pre>
+    <pre id="assert"></pre>
   </div>
 </div>
 <footer>
-  <input id="q" placeholder="Compose…" onkeydown="if(event.key==='Enter')ask()"/>
-  <button onclick="ask()">Send</button>
+  <span class="chip">Matrix watches. The exe writes. This page does not.</span>
 </footer>
 </div>
 <script src="/matrix.js"></script>

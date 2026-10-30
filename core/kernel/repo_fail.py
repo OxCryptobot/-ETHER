@@ -396,6 +396,9 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if body.count(old) != 1:
             return {"ok": False, "reason": "old text must match once"}
         path.write_text(body.replace(old, new, 1), encoding="utf-8")
+        if "def " in new and "return " not in new:
+            path.write_text(body, encoding="utf-8")
+            return {"ok": False, "tests_ok": False, "tx": ["begin", "revert"], "reason": "the function returned None. it must return the list", "assertion": "the function must return the list"}
         result = _pytest(workspace)
         if not result["ok"]:
             path.write_text(body, encoding="utf-8")
@@ -535,8 +538,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     f"{source_body}\n"
                     f"assertion: {assertion or 'the test you read'}\n"
                     "The function must return the list. Do not return None.\n"
-                    "Copy empty inputs. Extend both remainders. End with return out.\n"
-                    "Reply with the fixed function, or exactly two lines.\n"
+                    "Copy empty inputs with list(). Extend both remainders. End with return out.\n"
+                    "Reply with the fixed function.\n"
                     f"OLD: {_return_line(source_body)}\n"
                     "NEW: <the fixed line>\n"
                 )

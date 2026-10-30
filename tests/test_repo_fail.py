@@ -332,6 +332,20 @@ def test_an_import_becomes_an_unread_path(tmp_path: Path) -> None:
     assert row["tools"][-1] == "apply_patch"
 
 
+def test_a_function_without_return_is_reverted(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import act
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "merge.py").write_text("def merge_sorted(a, b):\n    return a\n", encoding="utf-8")
+    (ws / "tests").mkdir()
+    (ws / "tests" / "test_merge.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    obs = act(ws, "apply_patch", {"path": "merge.py", "old": "def merge_sorted(a, b):\n    return a\n", "new": "def merge_sorted(a, b):\n    out = []\n"})
+    assert obs["ok"] is False
+    assert "return" in obs["reason"]
+    assert "return a" in (ws / "merge.py").read_text(encoding="utf-8")
+
+
 def test_a_full_function_fixes_merge(tmp_path: Path) -> None:
     from core.kernel.repo_fail import _as_patch, _function_block, act
 
@@ -376,6 +390,9 @@ def test_a_full_function_fixes_merge(tmp_path: Path) -> None:
     text = (ws / "merge.py").read_text(encoding="utf-8")
     assert "return list(b)" in text
     assert "out.extend(b[j:])" in text
+
+
+def test_a_bare_new_line_is_the_patch(tmp_path: Path) -> None:
     from datetime import datetime, timezone
 
     from core.kernel.repo_fail import run

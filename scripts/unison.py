@@ -53,6 +53,18 @@ def snapshot() -> Dict[str, Any]:
     if stale and "app_alive_stale" not in gaps:
         gaps.append("app_alive_stale")
     learn = skills.get("learn") if isinstance(skills.get("learn"), dict) else {}
+    live = _read(root / "artifacts" / "live_edit_tx.json")
+    growth = _read(root / "artifacts" / "growth.json")
+    fail = _read(root / "artifacts" / "repo_fail.json")
+    trace = fail.get("trace") if isinstance(fail.get("trace"), dict) else {}
+    queue: list = []
+    current = None
+    try:
+        from core.kernel.self_grow import QUEUE, next_real
+        queue = [str(item.get("id")) for item in QUEUE]
+        current = next_real(root)
+    except Exception:
+        current = None
     return {
         "face": "matrix",
         "hands": "exe",
@@ -67,6 +79,12 @@ def snapshot() -> Dict[str, Any]:
         "walk_ok": evolve.get("walk_ok"),
         "gaps": gaps,
         "learn": learn.get("kind"),
+        "task": str((current or {}).get("id") or live.get("task") or ""),
+        "honest": bool(live.get("honest")),
+        "file": str(live.get("file") or trace.get("read_path") or ""),
+        "assertion": str(trace.get("assertion") or "")[:180],
+        "growth_done": [str(item) for item in (growth.get("done") or [])],
+        "growth_queue": queue,
     }
 
 
@@ -104,7 +122,7 @@ dt{color:#8b939c}dd{margin:0}
 async function tick(){
   const res = await fetch("/status");
   const row = await res.json();
-  const keys = ["face","hands","writer","app_alive_ts","stale","ollama","goal","generation","walk_ok","gaps","learn"];
+  const keys = ["face","hands","writer","app_alive_ts","stale","ollama","task","honest","file","assertion","growth_done","growth_queue","goal","generation"];
   const root = document.getElementById("rows");
   root.replaceChildren();
   for (const key of keys){

@@ -80,7 +80,16 @@ def _is_allowlisted(row: Dict[str, Any]) -> bool:
     return _fixture_name(row) in ALLOW
 
 
-def compute() -> Dict[str, Any]:
+def _honest_landed() -> bool:
+    """Soft launch stays blocked until a live edit is honest."""
+    path = ROOT / "artifacts" / "live_edit_tx.json"
+    if not path.is_file():
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return bool(data.get("honest"))
     from core.honest_live import classify_row, collect_scoreboard_rows
 
     denied = _deny()
@@ -175,8 +184,8 @@ def compute() -> Dict[str, Any]:
         "timeout_eligible_ok": timeout_eligible_ok,
         "honest_eligible_ok": honest_eligible_ok,
         "metrics_ok": bool(timeout_eligible_ok and honest_eligible_ok and gate_n > 0),
-        "wheels_must_stay_on": True,
-        "soft_launch_blocked": True,
+        "wheels_must_stay_on": not _honest_landed(),
+        "soft_launch_blocked": not _honest_landed(),
         "publish_ok": True,
         "ok": True,
         "note": (

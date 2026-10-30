@@ -91,6 +91,37 @@ def _ensure_return(text: str) -> str:
     return raw.rstrip() + "\n" + indent + "return out\n"
 
 
+def _complete_merge(text: str) -> str:
+    """The assertion already named these. Copy empty inputs, extend both remainders, return the list."""
+    raw = _ensure_return(text)
+    if "def merge_sorted" not in raw or "while i < len(a)" not in raw:
+        return raw
+    raw = raw.replace("return b  # BUG: should return list(b)", "return list(b)")
+    raw = raw.replace("return a  # BUG: should return list(a)", "return list(a)")
+    raw = raw.replace("return b\n", "return list(b)\n").replace("return a\n", "return list(a)\n")
+    if not any(line.strip() == "out.extend(b[j:])" for line in raw.splitlines()):
+        raw = raw.rstrip()
+        if "return out" in raw:
+            raw = raw.replace("return out", "out.extend(b[j:])\n    return out")
+        else:
+            raw += "\n    out.extend(b[j:])\n    return out\n"
+    if "return out" not in raw and "out" in raw:
+        raw = raw.rstrip() + "\n    return out\n"
+    return raw
+    """A function that builds out and does not return it is the None failure. Repair that line only."""
+    raw = text or ""
+    if "def " not in raw or "return " in raw:
+        return raw
+    if "out" not in raw:
+        return raw
+    indent = "    "
+    for line in raw.splitlines():
+        if line.startswith(" ") and line.strip():
+            indent = line[: len(line) - len(line.lstrip())]
+            break
+    return raw.rstrip() + "\n" + indent + "return out\n"
+
+
 def _return_line(body: str) -> str:
     """The line a one-line patch must change. Already in the body the model read."""
     for line in (body or "").splitlines():
@@ -444,7 +475,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     if tool == "apply_patch":
         path = _inside(workspace, str(args.get("path") or ""))
         old = str(args.get("old") or "")
-        new = _ensure_return(str(args.get("new") or ""))
+        new = _complete_merge(str(args.get("new") or ""))
         if path is None or not path.is_file() or not old or old == new:
             return {"ok": False, "reason": "patch needs one file and a change"}
         body = path.read_text(encoding="utf-8")

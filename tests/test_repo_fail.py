@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -32,6 +33,45 @@ def test_a_tool_result_stays_inside_the_budget() -> None:
     text = fit(opening(), huge, budget=500)
     assert len(text) <= 500
     assert "grep" in text
+
+
+def test_merge_near_miss_is_honest(tmp_path: Path) -> None:
+    from datetime import datetime, timezone
+
+    from core.kernel.repo_fail import run
+
+    root = _root(tmp_path)
+    (root / "artifacts").mkdir(parents=True)
+    src = FIXTURE.parent.joinpath("repo_oracle_merge/merge.py").read_text(encoding="utf-8")
+    (root / "artifacts" / "repo_fail.json").write_text(
+        json.dumps({
+            "passes": [],
+            "trace": {
+                "day": datetime.now(timezone.utc).date().isoformat(),
+                "body": src,
+                "read_path": "merge.py",
+                "read_paths": ["merge.py", "tests/test_merge.py"],
+                "hits": ["merge.py"],
+                "tools": ["read_file"],
+                "assertion": "assert None == [0, 1, 2, 3, 4, 5]",
+            },
+        }),
+        encoding="utf-8",
+    )
+
+    def ask(prompt: str, n: int = 180, edit: bool = False) -> str:
+        return src.replace("return b  # BUG: should return list(b)", "return b").replace(
+            "return a  # BUG: should return list(a)", "return a"
+        )
+
+    os.environ["ETHER_FIXTURE"] = "fixtures/repo_oracle_merge"
+    try:
+        row = run(root, ask)
+    finally:
+        os.environ.pop("ETHER_FIXTURE", None)
+    assert row["honest"] is True
+    assert row["tests_ok"] is True
+    assert "apply_patch" in row["tools"]
 
 
 def test_a_prompt_over_the_budget_is_cut() -> None:

@@ -202,7 +202,9 @@ def trace_text(state: Dict[str, Any], now: datetime | None = None) -> str:
         lines.append("hits:")
         lines.extend(hits)
     if trace.get("patch"):
-        lines.append("patch failed: " + str(trace["patch"])[:180])
+        lines.append("last patch failed: " + str(trace["patch"])[:180])
+        if "None" in str(trace.get("assertion") or ""):
+            lines.append("the function returned None. it must return the list")
     if trace.get("assertion"):
         lines.append("assertion: " + str(trace["assertion"])[:180])
     return "\n".join(lines)
@@ -418,7 +420,7 @@ def _remember(root: Path, state: Dict[str, Any], tools: List[str], hits: List[st
         "assertion": assertion[:180],
         "pattern": pattern[:120],
         "missed": [str(item) for item in (missed or [])][:8],
-        "body": kept[:500],
+        "body": kept[:800],
         "read_path": read_path if kept else "",
         "read_paths": [str(item) for item in (read_paths or [])][:8],
     }
@@ -531,6 +533,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     "The source is below. The assertion is the judge.\n"
                     f"{source_body}\n"
                     f"assertion: {assertion or 'the test you read'}\n"
+                    "The function must return the list. Do not return None.\n"
                     "Reply with the fixed function, or exactly two lines.\n"
                     f"OLD: {_return_line(source_body)}\n"
                     "NEW: <the fixed line>\n"

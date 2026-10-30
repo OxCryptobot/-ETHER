@@ -504,7 +504,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     }
     for _ in range(steps):
         try:
-            text = ask(prompt, n=48, edit=True) if last_body and "assert " not in last_body else ask(prompt, n=180)
+            text = ask(prompt, n=320, edit=True) if source_body or (last_body and "assert " not in last_body) else ask(prompt, n=180)
         except TypeError:
             text = ask(prompt, n=180)
         except Exception as exc:
@@ -520,7 +520,8 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             source_body = disk_body
             read_path = disk_path
             last_body = disk_body
-        if source_body and tool != "apply_patch" and not reading_new:
+        must_fix = bool(failed_patch) or "None" in assertion
+        if source_body and tool != "apply_patch" and (must_fix or not reading_new):
             wrapped = _as_patch(text, read_path, source_body)
             if wrapped:
                 action = wrapped
@@ -534,6 +535,7 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     f"{source_body}\n"
                     f"assertion: {assertion or 'the test you read'}\n"
                     "The function must return the list. Do not return None.\n"
+                    "Copy empty inputs. Extend both remainders. End with return out.\n"
                     "Reply with the fixed function, or exactly two lines.\n"
                     f"OLD: {_return_line(source_body)}\n"
                     "NEW: <the fixed line>\n"
@@ -555,12 +557,6 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                     break
                 continue
             if pattern in missed:
-                refusals += 1
-                tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})
-                if refusals >= 3:
-                    break
-                continue
                 refusals += 1
                 tools.append(tool)
                 prompt = fit(base, {"ok": False, "reason": "that pattern already matched nothing. search for a different string", "missed": missed[-6:]})

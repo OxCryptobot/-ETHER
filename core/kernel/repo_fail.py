@@ -267,13 +267,8 @@ def workspace_for(root: Path) -> Path:
 
 
 def _fixture_src(root: Path) -> Path:
-    """A chosen fixture, or a real file in the repo when the queue says so."""
+    """A chosen fixture. A real file is not a directory copy."""
     chosen = os.environ.get("ETHER_FIXTURE") or ""
-    real_file = os.environ.get("ETHER_REPO_FILE") or ""
-    if not chosen and real_file:
-        here = Path(__file__).resolve().parents[2] / real_file
-        if here.is_file():
-            return here.parent
     if chosen:
         here = Path(__file__).resolve().parents[2] / chosen
         if here.is_dir():
@@ -283,6 +278,22 @@ def _fixture_src(root: Path) -> Path:
     if here.is_dir() and (here / "greeter.py").is_file():
         return here
     return local
+
+
+def _real_file(root: Path) -> Path | None:
+    """One file from the repo. Never the directory that contains it."""
+    if os.environ.get("ETHER_FIXTURE"):
+        return None
+    rel = os.environ.get("ETHER_REPO_FILE") or ""
+    if not rel:
+        return None
+    path = (Path(__file__).resolve().parents[2] / rel).resolve()
+    repo = Path(__file__).resolve().parents[2]
+    try:
+        path.relative_to(repo)
+    except ValueError:
+        return None
+    return path if path.is_file() else None
 
 
 NO_ANSWER = '''"""Toy package under test — intentional bug for Phase B oracle demos."""
@@ -295,11 +306,24 @@ def greet(name: str) -> str:
 
 
 def reset_workspace(root: Path) -> Path:
-    """A fresh copy of the chosen project. A real fixture is copied as-is. The toy is rewritten so a stale file cannot leak the answer."""
-    src = _fixture_src(root)
+    """A fresh copy of the chosen project. A real file is one file, not its package."""
     dest = workspace_for(root)
     if dest.exists():
         shutil.rmtree(dest)
+    real = _real_file(root)
+    if real is not None:
+        dest.mkdir(parents=True)
+        (dest / real.name).write_text(real.read_text(encoding="utf-8"), encoding="utf-8")
+        tests = dest / "tests"
+        tests.mkdir()
+        (tests / "test_real.py").write_text(
+            "def test_file_is_present():\n"
+            f"    from pathlib import Path\n"
+            f"    assert Path({real.name!r}).is_file()\n",
+            encoding="utf-8",
+        )
+        return dest
+    src = _fixture_src(root)
     if src.is_dir():
         shutil.copytree(src, dest)
     else:
@@ -477,7 +501,10 @@ def _coerce(text: str) -> str:
 
 
 def _fixture_stamp(root: Path) -> str:
-    """Stable for a fixture. Does not change because a stale file moved."""
+    """Stable for a fixture. A real file stamps that file, not its package."""
+    real = _real_file(root)
+    if real is not None:
+        return "v3:file:" + real.name
     src = _fixture_src(root)
     names = sorted(p.name for p in src.glob("*.py")) if src.is_dir() else []
     return "v3:" + src.name + ":" + ",".join(names)

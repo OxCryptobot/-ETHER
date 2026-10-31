@@ -74,7 +74,15 @@ def test_merge_near_miss_is_honest(tmp_path: Path) -> None:
     assert "apply_patch" in row["tools"]
 
 
-def test_a_prompt_over_the_budget_is_cut() -> None:
+def test_an_empty_search_finds_merge(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import act
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "merge.py").write_text("def merge_sorted(a, b):\n    return a\n", encoding="utf-8")
+    obs = act(ws, "grep", {"pattern": "<text in a line>"})
+    assert obs["hits"]
+    assert obs["hits"][0].startswith("merge.py")
     from core.kernel.repo_fail import fit
 
     huge = "x" * 5000

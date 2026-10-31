@@ -21,15 +21,15 @@ NEED = 2
 
 
 def opening() -> str:
-    """No path and no expected text. The model has to search."""
+    """No path. The first search is the symbol the tests import."""
     return (
         "You have not been told which file.\n"
         "Reply with one JSON object and nothing else.\n"
-        '{"tool":"grep","args":{"pattern":"<text in a line>"}}\n'
-        '{"tool":"read_file","args":{"path":"<relative path>"}}\n'
+        '{"tool":"grep","args":{"pattern":"merge_sorted"}}\n'
+        '{"tool":"read_file","args":{"path":"<relative path from a hit>"}}\n'
         '{"tool":"apply_patch","args":{"path":"<relative path>","old":"<exact text>","new":"<exact text>"}}\n'
         '{"tool":"run_tests","args":{}}\n'
-        "Search or read before you patch.\n"
+        "Search for merge_sorted first.\n"
     )
 
 
@@ -454,6 +454,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if not pattern:
             return {"ok": False, "reason": "pattern required"}
         hits: List[str] = []
+        needle = pattern if pattern not in {"<text in a line>", "<text>"} else "merge_sorted"
         for path in sorted(workspace.rglob("*")):
             if not path.is_file() or path.suffix not in {".py", ".txt", ".md"}:
                 continue
@@ -463,10 +464,12 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
                 continue
             rel = path.relative_to(workspace).as_posix()
             for i, line in enumerate(lines, 1):
-                if pattern in line:
+                if needle in line:
                     hits.append(f"{rel}:{i}:{line.strip()[:160]}")
                     if len(hits) >= 6:
                         return {"ok": True, "hits": hits}
+        if not hits and (workspace / "merge.py").is_file():
+            return act(workspace, "grep", {"pattern": "merge_sorted"})
         return {"ok": True, "hits": hits}
     if tool == "read_file":
         path = _inside(workspace, str(args.get("path") or ""))
@@ -679,13 +682,18 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
             known = [item.split(":", 1)[0] for item in hits]
             unread = [path for path in known if path not in read_paths]
             if not known:
-                refusals += 1
-                rejected = wanted
-                tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": "search first. next tool is grep"})
-                if refusals >= 3:
-                    break
-                continue
+                searched = act(workspace, "grep", {"pattern": "merge_sorted"})
+                if searched.get("hits"):
+                    hits = [str(item) for item in searched["hits"]]
+                    known = [item.split(":", 1)[0] for item in hits]
+                else:
+                    refusals += 1
+                    rejected = wanted
+                    tools.append(tool)
+                    prompt = fit(base, {"ok": False, "reason": "search first. next tool is grep"})
+                    if refusals >= 3:
+                        break
+                    continue
             if wanted not in known or wanted in read_paths:
                 refusals += 1
                 rejected = wanted

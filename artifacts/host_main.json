@@ -1,16 +1,16 @@
 {
-  "ts": "2026-10-30T23:11:29.835818+00:00",
+  "ts": "2026-10-31T00:14:16.026464+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-10-30T23:11:30.058001+00:00",
+    "ts": "2026-10-31T00:14:16.329256+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-10-30T23:11:57.357313+00:00",
+    "ts": "2026-10-31T00:14:45.599627+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   74d3e3d7cb..ef0b2b114b  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   cdf3eb1a4a..e5372f5908  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   74d3e3d7cb..ef0b2b114b  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   cdf3eb1a4a..e5372f5908  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-10-30T23:11:37.948601+00:00",
+    "ts": "2026-10-31T00:14:24.728689+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -78,7 +78,7 @@
     ],
     "honest": false,
     "lesson": "ends: pass",
-    "learned": true,
+    "learned": false,
     "scale": {
       "repeatable": true,
       "checker_writes": 0
@@ -91,7 +91,7 @@
   "day_learn": {
     "ok": true,
     "skipped": true,
-    "day": "2026-10-30",
+    "day": "2026-10-31",
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",

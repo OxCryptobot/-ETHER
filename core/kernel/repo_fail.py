@@ -580,6 +580,11 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     saw_file = False
     remembered = state.get("trace") if isinstance(state.get("trace"), dict) else {}
     hits = [str(item) for item in (remembered.get("hits") or [])] if remembered.get("day") == _today() else []
+    if (workspace / "merge.py").is_file() and not hits:
+        seeded = act(workspace, "grep", {"pattern": "merge_sorted"})
+        hits = [str(item) for item in (seeded.get("hits") or [])]
+        if hits:
+            prompt = fit(base, {"hits": hits[:6], "reason": "search found merge_sorted. next is read_file of merge.py"})
     missed = _missed(state)
     focus = ""
     rejected = ""

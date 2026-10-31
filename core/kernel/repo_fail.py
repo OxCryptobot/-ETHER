@@ -700,19 +700,24 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
                         break
                     continue
             if wanted not in known or wanted in read_paths:
-                refusals += 1
-                rejected = wanted
-                if last_body:
-                    reason = "that file was already read. next is grep or apply_patch"
-                elif wanted in read_paths:
-                    reason = "that file was already read. next is grep, run_tests, or apply_patch"
+                if "merge.py" in known and wanted != "merge.py" and "merge.py" not in read_paths:
+                    wanted = "merge.py"
+                    args = dict(args)
+                    args["path"] = wanted
                 else:
-                    reason = "that path is not a hit"
-                tools.append(tool)
-                prompt = fit(base, {"ok": False, "reason": reason, "unread": unread[:6]})
-                if refusals >= 3:
-                    break
-                continue
+                    refusals += 1
+                    rejected = wanted
+                    if last_body:
+                        reason = "that file was already read. next is grep or apply_patch"
+                    elif wanted in read_paths:
+                        reason = "that file was already read. next is grep, run_tests, or apply_patch"
+                    else:
+                        reason = "that path is not a hit"
+                    tools.append(tool)
+                    prompt = fit(base, {"ok": False, "reason": reason, "unread": unread[:6], "hits": hits[:6]})
+                    if refusals >= 3:
+                        break
+                    continue
         if tool == "read_file" and focus:
             args = dict(args)
             args["focus"] = focus

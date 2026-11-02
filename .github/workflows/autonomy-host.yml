@@ -40,7 +40,7 @@ jobs:
           $env:PYTHONPATH = $env:GITHUB_WORKSPACE
           $env:GIT_TERMINAL_PROMPT = "0"
           $env:GCM_INTERACTIVE = "Never"
-          $env:ETHER_FIXTURE = "fixtures/repo_oracle_merge"
+          Remove-Item Env:ETHER_FIXTURE -ErrorAction SilentlyContinue
           Remove-Item Env:ETHER_REPO_FILE -ErrorAction SilentlyContinue
           Set-Location $env:GITHUB_WORKSPACE
           foreach ($name in @("repo_oracle_toy","repo_oracle_merge")) {

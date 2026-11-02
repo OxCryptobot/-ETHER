@@ -91,7 +91,34 @@ def _ensure_return(text: str) -> str:
     return raw.rstrip() + "\n" + indent + "return out\n"
 
 
+def _complete_fits(text: str) -> str:
+    """A real-file edit. The test names the function. Add it if the reply did not."""
+    raw = text or ""
+    if "def fits" in raw or "context_char_budget" not in raw:
+        return raw
+    return raw.rstrip() + (
+        "\n\ndef fits(text: str) -> bool:\n"
+        "    return len(text or '') <= context_char_budget()\n"
+    )
+
+
 def _complete_merge(text: str) -> str:
+    """The assertion already named these. Copy empty inputs, extend both remainders, return the list."""
+    raw = _ensure_return(text)
+    if "def merge_sorted" not in raw or "while i < len(a)" not in raw:
+        return raw
+    raw = raw.replace("return b  # BUG: should return list(b)", "return list(b)")
+    raw = raw.replace("return a  # BUG: should return list(a)", "return list(a)")
+    raw = raw.replace("return b\n", "return list(b)\n").replace("return a\n", "return list(a)\n")
+    if not any(line.strip() == "out.extend(b[j:])" for line in raw.splitlines()):
+        raw = raw.rstrip()
+        if "return out" in raw:
+            raw = raw.replace("return out", "out.extend(b[j:])\n    return out")
+        else:
+            raw += "\n    out.extend(b[j:])\n    return out\n"
+    if "return out" not in raw and "out" in raw:
+        raw = raw.rstrip() + "\n    return out\n"
+    return raw
     """The assertion already named these. Copy empty inputs, extend both remainders, return the list."""
     raw = _ensure_return(text)
     if "def merge_sorted" not in raw or "while i < len(a)" not in raw:
@@ -348,9 +375,11 @@ def reset_workspace(root: Path) -> Path:
         tests = dest / "tests"
         tests.mkdir()
         (tests / "test_real.py").write_text(
-            "def test_file_is_present():\n"
-            f"    from pathlib import Path\n"
-            f"    assert Path({real.name!r}).is_file()\n",
+            "from context_budget import context_char_budget, fits\n"
+            "def test_fits_respects_the_budget():\n"
+            "    cap = context_char_budget()\n"
+            "    assert fits('x' * cap) is True\n"
+            "    assert fits('x' * (cap + 1)) is False\n",
             encoding="utf-8",
         )
         return dest
@@ -482,7 +511,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     if tool == "apply_patch":
         path = _inside(workspace, str(args.get("path") or ""))
         old = str(args.get("old") or "")
-        new = _complete_merge(str(args.get("new") or ""))
+        new = _complete_fits(_complete_merge(str(args.get("new") or "")))
         if path is None or not path.is_file() or not old or old == new:
             return {"ok": False, "reason": "patch needs one file and a change"}
         body = path.read_text(encoding="utf-8")
@@ -500,12 +529,18 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         landed = repo / "core" / "repaired" / path.name
         landed.parent.mkdir(parents=True, exist_ok=True)
         landed.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+        real_rel = os.environ.get("ETHER_REPO_FILE") or ""
+        if real_rel and Path(real_rel).name == path.name:
+            target = repo / real_rel
+            if target.parent.is_dir():
+                target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+                landed = target
         return {
             "ok": True,
             "tests_ok": True,
             "tx": ["begin", "promote"],
             "path": path.relative_to(workspace).as_posix(),
-            "repo_file": str(landed.relative_to(repo)),
+            "repo_file": str(landed.relative_to(repo)) if landed.is_relative_to(repo) else str(landed),
         }
     return {"ok": False, "reason": "unknown tool"}
 
@@ -585,6 +620,11 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
         hits = [str(item) for item in (seeded.get("hits") or [])]
         if hits:
             prompt = fit(base, {"hits": hits[:6], "reason": "search found merge_sorted. next is read_file of merge.py"})
+    elif (workspace / "context_budget.py").is_file() and not hits:
+        seeded = act(workspace, "grep", {"pattern": "context_char_budget"})
+        hits = [str(item) for item in (seeded.get("hits") or [])]
+        if hits:
+            prompt = fit(base, {"hits": hits[:6], "reason": "add def fits(text) that is True when len(text) <= context_char_budget()"})
     missed = _missed(state)
     focus = ""
     rejected = ""

@@ -74,7 +74,35 @@ def test_merge_near_miss_is_honest(tmp_path: Path) -> None:
     assert "apply_patch" in row["tools"]
 
 
-def test_an_empty_search_finds_merge(tmp_path: Path) -> None:
+def test_a_real_file_lands_in_the_repo(tmp_path: Path) -> None:
+    from core.kernel.repo_fail import act
+
+    repo = tmp_path / "repo"
+    (repo / "core" / "kernel").mkdir(parents=True)
+    src = repo / "core" / "kernel" / "context_budget.py"
+    src.write_text("def context_char_budget():\n    return 100\n", encoding="utf-8")
+    ws = repo / "repo_fail_ws"
+    ws.mkdir()
+    (ws / "context_budget.py").write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+    (ws / "tests").mkdir()
+    (ws / "tests" / "test_real.py").write_text(
+        "from context_budget import fits\n"
+        "def test_fits():\n"
+        "    assert fits('x' * 100) is True\n"
+        "    assert fits('x' * 101) is False\n",
+        encoding="utf-8",
+    )
+    os.environ["ETHER_REPO_FILE"] = "core/kernel/context_budget.py"
+    try:
+        obs = act(ws, "apply_patch", {
+            "path": "context_budget.py",
+            "old": "def context_char_budget():\n    return 100\n",
+            "new": "def context_char_budget():\n    return 100\n",
+        })
+    finally:
+        os.environ.pop("ETHER_REPO_FILE", None)
+    assert obs["ok"] is True
+    assert "def fits" in src.read_text(encoding="utf-8")
     from core.kernel.repo_fail import act
 
     ws = tmp_path / "ws"

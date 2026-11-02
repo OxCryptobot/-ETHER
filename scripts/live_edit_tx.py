@@ -65,12 +65,16 @@ def main() -> int:
         from core.kernel.repo_fail import run as repo_run
         from core.kernel.self_grow import next_real
 
-        os.environ["ETHER_FIXTURE"] = "fixtures/repo_oracle_merge"
+        os.environ.pop("ETHER_FIXTURE", None)
         os.environ.pop("ETHER_REPO_FILE", None)
         real = next_real(ROOT)
         if real and real.get("fixture"):
             os.environ["ETHER_FIXTURE"] = real["fixture"]
             row["note"] = "self_grow. the system picks the next real failure"
+            row["task"] = real["id"]
+        elif real and real.get("file"):
+            os.environ["ETHER_REPO_FILE"] = real["file"]
+            row["note"] = "self_grow. a real file in the repo"
             row["task"] = real["id"]
 
         row = repo_run(ROOT, _ask)

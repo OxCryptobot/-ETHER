@@ -1,38 +1,42 @@
 {
-  "passes": [
-    "2026-10-31T04:06:02.620901+00:00",
-    "2026-10-31T04:11:03.570764+00:00"
-  ],
+  "passes": [],
   "trace": {
-    "day": "2026-10-31",
+    "day": "2026-11-02",
     "tools": [
+      "read_file",
+      "read_file",
+      "grep",
       "apply_patch",
       "grep",
-      "apply_patch"
+      "apply_patch",
+      "grep"
     ],
     "hits": [
-      "merge.py:14:def merge_sorted(a: List[T], b: List[T]) -> List[T]:",
-      "tests/test_merge.py:1:from merge import merge_sorted",
-      "tests/test_merge.py:5:assert merge_sorted([1, 3, 5], [2, 4, 6]) == [1, 2, 3, 4, 5, 6]",
-      "tests/test_merge.py:9:assert merge_sorted([1, 2, 2], [2, 3]) == [1, 2, 2, 2, 3]",
-      "tests/test_merge.py:14:out = merge_sorted([], b)",
-      "tests/test_merge.py:21:out = merge_sorted(a, [])"
+      "context_budget.py:7:def context_char_budget(model_ctx: int | None = None) -> int:",
+      "context_budget.py:18:budget = max_chars if max_chars is not None else context_char_budget()",
+      "tests/test_real.py:1:from context_budget import context_char_budget, fits",
+      "tests/test_real.py:3:cap = context_char_budget()"
     ],
     "rejected": "",
-    "patch": "",
-    "assertion": "",
+    "patch": "^^^^\ntests\\test_real.py:1: in <module>\n    from context_budget import context_char_budget, fits\nE   ImportError: cannot import name 'fits' from 'context_budget' (C:\\Users\\Otcde\\ETH",
+    "assertion": "E   ImportError: cannot import name 'fits' from 'context_budget' (C:\\Users\\Otcde\\ETHER\\repo_fail_ws\\context_budget.py)",
     "pattern": "",
     "missed": [],
-    "body": "def merge_sorted(a: List[T], b: List[T]) -> List[T]:\n    \"\"\"Return a new sorted list containing all elements of a and b.\n\n    Preconditions: a and b are each sorted ascending.\n    \"\"\"\n    if a is None or b is None:\n        raise TypeError(\"inputs must be lists\")\n    if not a and not b:\n        return []\n    if not a:\n        return b  # BUG: should return list(b)\n    if not b:\n        return a  # BUG: should return list(a)\n\n    out: List[T] = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    # BUG: should also out.extend(b[j:])\n    if i < len(a):\n        out.extend(a[i:])\n    return out\n",
-    "read_path": "merge.py",
+    "body": "def context_char_budget(model_ctx: int | None = None) -> int:\n    ctx = model_ctx or int(os.getenv(\"ETHER_MODEL_CTX\") or \"8192\")\n    tokens = min(int(ctx * 0.35), 1800)\n    return max(800, tokens * 4)\n\n\ndef pack(root, query: str, files: list[str] | None = None, max_chars: int | None = None) -> str:\n    \"\"\"Symbol hits plus the named files. Nothing else. Fits a 4B budget.\"\"\"\n    from pathlib import Path\n\n    root = Path(root)\n    budget = max_chars if max_chars is not None else context_char_budget()\n    parts: list[str] = []\n    try:\n        from core.kernel.edit_memory import recall\n\n        mem = recall(root)\n        if mem:\n            parts.append(\"### Last edit\\n\" + mem[:300])\n    except Exception:\n        pass\n    try:\n        from core.symbol_index import format_block\n\n        sym = f",
+    "read_path": "context_budget.py",
     "read_paths": [
-      "merge.py"
+      "context_budget.py",
+      "tests/test_real.py"
     ]
   },
   "last_tools": [
+    "read_file",
+    "read_file",
+    "grep",
     "apply_patch",
     "grep",
-    "apply_patch"
+    "apply_patch",
+    "grep"
   ],
-  "stamp": "v3:repo_oracle_merge:merge.py"
+  "stamp": "v3:file:context_budget.py"
 }

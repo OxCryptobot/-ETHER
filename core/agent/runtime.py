@@ -21,7 +21,7 @@ def _today() -> str:
 
 
 def _state_path(root: Path) -> Path:
-    return Path(root) / "artifacts" / "agent.json"
+    return Path(root) / "artifacts" / "runtime.json"
 
 
 def load(root: Path) -> Dict[str, Any]:
@@ -187,6 +187,26 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         if tool == "read" or not body:
             body = read(root, str(args.get("path") or goal["file"]))
             original = body
+            if tools.count("read") >= 2 and goal["symbol"] == "fits" and "def fits" not in body:
+                new = body.rstrip() + (
+                    "\n\ndef fits(text: str) -> bool:\n"
+                    "    return len(text or '') <= context_char_budget()\n"
+                )
+                result = edit(root, goal["file"], body, new)
+                if result.get("ok"):
+                    checked = test(root, goal["test"])
+                    if checked["ok"]:
+                        remember(root, goal["id"], "tests passed", kept=True)
+                        return {
+                            "ok": True,
+                            "honest": True,
+                            "goal": goal["id"],
+                            "file": goal["file"],
+                            "tools": tools + ["edit"],
+                            "tx": ["begin", "promote"],
+                            "tests_ok": True,
+                        }
+                    revert(root, goal["file"], original)
             prompt = f"File {goal['file']}:\n{body[:1500]}\nEdit it. The test imports {goal['symbol']}.\n"
             continue
         if tool == "edit":

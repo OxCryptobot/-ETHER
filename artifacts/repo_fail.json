@@ -6,8 +6,7 @@
       "grep",
       "apply_patch",
       "grep",
-      "apply_patch",
-      "grep"
+      "_retry"
     ],
     "hits": [
       "context_budget.py:7:def context_char_budget(model_ctx: int | None = None) -> int:",
@@ -16,8 +15,8 @@
       "tests/test_real.py:3:cap = context_char_budget()"
     ],
     "rejected": "",
-    "patch": "^^^^\ntests\\test_real.py:1: in <module>\n    from context_budget import context_char_budget, fits\nE   ImportError: cannot import name 'fits' from 'context_budget' (C:\\Users\\Otcde\\ETH",
-    "assertion": "E   ImportError: cannot import name 'fits' from 'context_budget' (C:\\Users\\Otcde\\ETHER\\repo_fail_ws\\context_budget.py)",
+    "patch": "=================\nE   TypeError: can't multiply sequence by non-int of type 'list'\nC:\\Users\\Otcde\\ETHER\\repo_fail_ws\\tests\\test_real.py:4: TypeError: can't multiply sequence by non",
+    "assertion": "E   TypeError: can't multiply sequence by non-int of type 'list'",
     "pattern": "",
     "missed": [],
     "body": "def context_char_budget(model_ctx: int | None = None) -> int:\n    ctx = model_ctx or int(os.getenv(\"ETHER_MODEL_CTX\") or \"8192\")\n    tokens = min(int(ctx * 0.35), 1800)\n    return max(800, tokens * 4)\n\n\ndef pack(root, query: str, files: list[str] | None = None, max_chars: int | None = None) -> str:\n    \"\"\"Symbol hits plus the named files. Nothing else. Fits a 4B budget.\"\"\"\n    from pathlib import Path\n\n    root = Path(root)\n    budget = max_chars if max_chars is not None else context_char_budget()\n    parts: list[str] = []\n    try:\n        from core.kernel.edit_memory import recall\n\n        mem = recall(root)\n        if mem:\n            parts.append(\"### Last edit\\n\" + mem[:300])\n    except Exception:\n        pass\n    try:\n        from core.symbol_index import format_block\n\n        sym = f",
@@ -31,8 +30,7 @@
     "grep",
     "apply_patch",
     "grep",
-    "apply_patch",
-    "grep"
+    "_retry"
   ],
   "stamp": "v3:file:context_budget.py"
 }

@@ -10,10 +10,9 @@
     "grep",
     "apply_patch",
     "grep",
-    "apply_patch",
-    "grep"
+    "_retry"
   ],
-  "response_tail": "{\"tool\":\"grep\",\"args\":{\"pattern\":\"merge_sorted\"}}",
+  "response_tail": "return max(800, tokens * 4)",
   "tx": [
     "begin",
     "revert"
@@ -21,5 +20,5 @@
   "tests_ok": false,
   "file": "",
   "passes": 0,
-  "ts": "2026-11-03T16:12:34.641809+00:00"
+  "ts": "2026-11-03T16:22:30.770216+00:00"
 }

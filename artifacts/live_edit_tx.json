@@ -7,18 +7,11 @@
   "mode": "live",
   "degraded": [],
   "tools": [
-    "grep",
-    "apply_patch",
-    "grep",
+    "read_file",
+    "_retry",
     "_retry"
   ],
   "response_tail": "return max(800, tokens * 4)",
-  "tx": [
-    "begin",
-    "revert"
-  ],
-  "tests_ok": false,
-  "file": "",
   "passes": 0,
-  "ts": "2026-11-03T16:22:30.770216+00:00"
+  "ts": "2026-11-03T17:11:04.915648+00:00"
 }

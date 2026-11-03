@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-03T20:00:56.465340+00:00",
+  "ts": "2026-11-03T20:10:24.470020+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-03T20:00:56.921163+00:00",
+    "ts": "2026-11-03T20:10:24.710047+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-03T20:01:51.605674+00:00",
+    "ts": "2026-11-03T20:11:01.174367+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   8d7c6cb0be..db41854e30  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   d988e10c81..421ad67847  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   8d7c6cb0be..db41854e30  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   d988e10c81..421ad67847  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-03T20:01:08.995126+00:00",
+    "ts": "2026-11-03T20:10:34.119254+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,21 +67,18 @@
     "note": "runner_watch"
   },
   "runtime": {
-    "ok": true,
-    "honest": true,
-    "goal": "fits",
-    "file": "core/kernel/context_budget.py",
+    "ok": false,
+    "honest": false,
+    "goal": "budget_cap",
     "tools": [
-      "search",
       "read",
       "read",
-      "edit"
+      "read",
+      "read",
+      "read",
+      "read"
     ],
-    "tx": [
-      "begin",
-      "promote"
-    ],
-    "tests_ok": true
+    "note": "no edit"
   },
   "agent": {
     "ok": true,

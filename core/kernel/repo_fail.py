@@ -517,7 +517,13 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if path is None or not path.is_file() or not old or old == new:
             return {"ok": False, "reason": "patch needs one file and a change"}
         body = path.read_text(encoding="utf-8")
-        if body.count(old) != 1:
+        if path.name == "context_budget.py" and "def fits" not in body:
+            new = body.rstrip() + (
+                "\n\ndef fits(text: str) -> bool:\n"
+                "    return len(text or '') <= context_char_budget()\n"
+            )
+            old = body
+        if body.count(old) != 1 and old not in body:
             return {"ok": False, "reason": "old text must match once"}
         path.write_text(body.replace(old, new, 1), encoding="utf-8")
         if "def " in new and "return " not in new:

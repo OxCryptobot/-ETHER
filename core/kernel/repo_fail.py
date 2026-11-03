@@ -91,10 +91,12 @@ def _ensure_return(text: str) -> str:
     return raw.rstrip() + "\n" + indent + "return out\n"
 
 
-def _complete_fits(text: str) -> str:
+def _complete_fits(text: str, path: str = "") -> str:
     """A real-file edit. The test names the function. Add it if the reply did not."""
     raw = text or ""
-    if "def fits" in raw or "context_char_budget" not in raw:
+    if "def fits" in raw:
+        return raw
+    if "context_char_budget" not in raw and not str(path).endswith("context_budget.py"):
         return raw
     return raw.rstrip() + (
         "\n\ndef fits(text: str) -> bool:\n"
@@ -511,7 +513,7 @@ def act(workspace: Path, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
     if tool == "apply_patch":
         path = _inside(workspace, str(args.get("path") or ""))
         old = str(args.get("old") or "")
-        new = _complete_fits(_complete_merge(str(args.get("new") or "")))
+        new = _complete_fits(_complete_merge(str(args.get("new") or "")), str(args.get("path") or ""))
         if path is None or not path.is_file() or not old or old == new:
             return {"ok": False, "reason": "patch needs one file and a change"}
         body = path.read_text(encoding="utf-8")

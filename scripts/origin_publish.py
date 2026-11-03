@@ -33,6 +33,7 @@ PATHS = [
     "artifacts/keepalive_error.json",
     "artifacts/live_generate_probe.json",
     "artifacts/live_edit_tx.json",
+    "artifacts/agent.json",
     "artifacts/growth.json",
     "artifacts/scale.json",
     "artifacts/honest_history.json",

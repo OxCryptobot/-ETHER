@@ -111,6 +111,13 @@ def tick() -> Dict[str, Any]:
                 row["heal_error"] = type(exc).__name__
             row["keepalive"] = {"ok": True, "note": "runner_watch"}
             try:
+                from core.agent.runtime import run as agent_run
+                from scripts.live_edit_tx import _ask
+
+                row["runtime"] = agent_run(root, _ask)
+            except Exception as exc:
+                row["runtime_error"] = type(exc).__name__
+            try:
                 from core.kernel.agent import cycle as agent_cycle
                 row["agent"] = agent_cycle(root, hands=True)
             except Exception as exc:

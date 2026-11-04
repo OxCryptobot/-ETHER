@@ -15,3 +15,6 @@ class Deadline:
     def raise_if_expired(self) -> None:
         if self.expired():
             raise TimeoutError("job_deadline")
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

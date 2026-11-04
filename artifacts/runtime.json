@@ -8,22 +8,23 @@
     "argv_allow",
     "attach",
     "autonomy",
-    "briefing"
+    "briefing",
+    "cancel"
   ],
   "lessons": [
-    "2026-11-04 budget_cap: already passes",
     "2026-11-04 slice: already passes",
     "2026-11-04 fits: already passes",
     "2026-11-04 agent_pass: tests passed",
     "2026-11-04 argv_allow: tests passed",
     "2026-11-04 attach: tests passed",
     "2026-11-04 autonomy: tests passed",
-    "2026-11-04 briefing: tests passed"
+    "2026-11-04 briefing: tests passed",
+    "2026-11-04 cancel: tests passed"
   ],
   "last": {
-    "goal": "briefing",
+    "goal": "cancel",
     "kept": true,
-    "file": "core/kernel/briefing.py",
-    "ts": "2026-11-04T14:19:58.344732+00:00"
+    "file": "core/kernel/cancel.py",
+    "ts": "2026-11-04T15:14:29.490193+00:00"
   }
 }

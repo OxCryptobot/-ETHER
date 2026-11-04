@@ -45,3 +45,6 @@ def pack(root, query: str, files: list[str] | None = None, max_chars: int | None
         parts.append(chunk)
         used += len(chunk)
     return "\n\n".join(parts)[:budget]
+
+def fits(text: str) -> bool:
+    return len(text or '') <= context_char_budget()

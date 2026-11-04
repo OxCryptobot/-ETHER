@@ -1,16 +1,19 @@
 {
   "day": "2026-11-04",
   "goals": [
-    "fits"
+    "fits",
+    "budget_cap"
   ],
   "lessons": [
     "2026-11-03 fits: tests passed",
     "2026-11-03 budget_cap: no edit",
-    "2026-11-04 budget_cap: no edit"
+    "2026-11-04 budget_cap: no edit",
+    "2026-11-04 budget_cap: already passes"
   ],
   "last": {
     "goal": "budget_cap",
-    "kept": false,
-    "ts": "2026-11-04T01:14:11.645300+00:00"
+    "kept": true,
+    "file": "core/kernel/context_budget.py",
+    "ts": "2026-11-04T01:43:18.086587+00:00"
   }
 }

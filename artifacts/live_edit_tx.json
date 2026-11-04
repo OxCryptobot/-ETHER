@@ -1,23 +1,13 @@
 {
   "ok": true,
-  "honest": true,
-  "note": "repo fail. the model must find the file",
-  "task": "repo_fail",
-  "strategy": "tool_runtime",
-  "mode": "live",
-  "degraded": [],
+  "honest": false,
+  "note": "repo_fail_repeated",
+  "passes": 2,
   "tools": [
     "grep",
     "apply_patch"
   ],
-  "response_tail": "fits('x' * cap) is True\nThe function must return the list. Do not return None.\nCopy empty inputs with list(). Extend both remainders. End with return out.\nReply with the fixed function.\nOLD: return max(800, tokens * 4)\nNEW: <the fixed line>",
-  "tx": [
-    "begin",
-    "promote"
-  ],
-  "tests_ok": true,
-  "file": "context_budget.py",
-  "passes": 2,
-  "tool_runtime_ok": true,
-  "ts": "2026-11-04T01:14:41.344655+00:00"
+  "strategy": "tool_runtime",
+  "mode": "live",
+  "ts": "2026-11-04T01:43:18.186612+00:00"
 }

@@ -7,13 +7,14 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-10-10T12:15:56.486539+00:00",
+  "app_alive_ts": "2026-09-30T20:27:25.459719+00:00",
   "ollama": true,
-  "stale": false,
-  "goal": "drain_and_learn",
-  "generation": 1750,
+  "stale": true,
+  "goal": "restore_1650_writer",
+  "generation": 1602,
   "walk_ok": true,
   "gaps": [
+    "app_alive_stale",
     "runner_count_unknown"
   ],
   "learn": "infra"

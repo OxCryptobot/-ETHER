@@ -10,3 +10,6 @@ def finalize_coding_result(row: Dict[str, Any], *, path: str) -> Dict[str, Any]:
         out["generate_fallback"] = True
         out["strategy"] = path
     return reject_generate_pass(out)
+
+def ready() -> bool:
+    return True

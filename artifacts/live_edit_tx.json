@@ -7,8 +7,6 @@
   "mode": "live",
   "degraded": [],
   "tools": [
-    "read_file",
-    "read_file",
     "grep",
     "apply_patch"
   ],
@@ -19,7 +17,7 @@
   ],
   "tests_ok": true,
   "file": "context_budget.py",
-  "passes": 1,
+  "passes": 2,
   "tool_runtime_ok": true,
-  "ts": "2026-11-04T00:15:04.629776+00:00"
+  "ts": "2026-11-04T01:14:41.344655+00:00"
 }

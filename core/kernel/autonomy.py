@@ -99,3 +99,6 @@ def tick() -> Dict[str, Any]:
             row["live_error"] = type(exc).__name__
     (art / "autonomy_tick.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

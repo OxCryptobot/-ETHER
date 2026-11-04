@@ -6,22 +6,23 @@
     "slice",
     "agent_pass",
     "argv_allow",
-    "attach"
+    "attach",
+    "autonomy"
   ],
   "lessons": [
-    "2026-11-03 budget_cap: no edit",
     "2026-11-04 budget_cap: no edit",
     "2026-11-04 budget_cap: already passes",
     "2026-11-04 slice: already passes",
     "2026-11-04 fits: already passes",
     "2026-11-04 agent_pass: tests passed",
     "2026-11-04 argv_allow: tests passed",
-    "2026-11-04 attach: tests passed"
+    "2026-11-04 attach: tests passed",
+    "2026-11-04 autonomy: tests passed"
   ],
   "last": {
-    "goal": "attach",
+    "goal": "autonomy",
     "kept": true,
-    "file": "core/kernel/attach.py",
-    "ts": "2026-11-04T12:20:45.440836+00:00"
+    "file": "core/kernel/autonomy.py",
+    "ts": "2026-11-04T13:18:11.485663+00:00"
   }
 }

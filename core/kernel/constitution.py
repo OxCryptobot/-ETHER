@@ -9,3 +9,6 @@ TOOL_CONSTITUTION = """You are ETHER on this repo. Matrix is a dashboard, not a 
 Never claim PASS without run_tests ok.
 Never use generate-fallback as success.
 """
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

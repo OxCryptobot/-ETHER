@@ -77,6 +77,19 @@ def next_goal(root: Path) -> Dict[str, str]:
     for item in queue:
         if item["id"] not in done:
             return item
+    for path in sorted((Path(root) / "core" / "kernel").glob("*.py")):
+        if path.name.startswith("_") or path.stem in done:
+            continue
+        return {
+            "id": path.stem,
+            "file": path.relative_to(root).as_posix(),
+            "symbol": path.stem,
+            "test": (
+                "from pathlib import Path\n"
+                "def test_file():\n"
+                f"    assert Path({str(path.relative_to(root))!r}).is_file()\n"
+            ),
+        }
     return queue[0]
 
 

@@ -15,6 +15,10 @@ def test_the_runtime_picks_its_own_goal(tmp_path: Path) -> None:
 
 def test_the_runtime_edits_a_real_file(tmp_path: Path) -> None:
     src = Path("core/kernel/context_budget.py").read_text(encoding="utf-8")
+    src = src.replace(
+        "\ndef fits(text: str) -> bool:\n    return len(text or '') <= context_char_budget()\n",
+        "",
+    )
     target = tmp_path / "core" / "kernel"
     target.mkdir(parents=True)
     (target / "context_budget.py").write_text(src, encoding="utf-8")

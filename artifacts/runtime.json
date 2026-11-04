@@ -15,22 +15,23 @@
     "crash",
     "critique",
     "dirty",
-    "edit_tx"
+    "edit_tx",
+    "events"
   ],
   "lessons": [
-    "2026-11-04 briefing: tests passed",
     "2026-11-04 cancel: tests passed",
     "2026-11-04 constitution: tests passed",
     "2026-11-04 contract: tests passed",
     "2026-11-04 crash: tests passed",
     "2026-11-04 critique: tests passed",
     "2026-11-04 dirty: tests passed",
-    "2026-11-04 edit_tx: tests passed"
+    "2026-11-04 edit_tx: tests passed",
+    "2026-11-04 events: tests passed"
   ],
   "last": {
-    "goal": "edit_tx",
+    "goal": "events",
     "kept": true,
-    "file": "core/kernel/edit_tx.py",
-    "ts": "2026-11-04T19:11:04.312980+00:00"
+    "file": "core/kernel/events.py",
+    "ts": "2026-11-04T20:11:40.612691+00:00"
   }
 }

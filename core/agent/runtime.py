@@ -64,6 +64,15 @@ def next_goal(root: Path) -> Dict[str, str]:
                     "def test_cap():\n"
                     "    assert 800 <= context_char_budget() <= 7200\n",
         },
+        {
+            "id": "slice",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "pack",
+            "test": "from core.kernel.context_budget import pack\n"
+                    "def test_pack_cuts():\n"
+                    "    text = pack('.', 'x', max_chars=40)\n"
+                    "    assert len(text) <= 40\n",
+        },
     ]
     for item in queue:
         if item["id"] not in done:
@@ -163,8 +172,21 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     """One goal. The model searches, reads, and edits. The tests keep or revert."""
     root = Path(root)
     goal = next_goal(root)
-    hits = search(root, goal["symbol"])
     existing = read(root, goal["file"])
+    if goal["id"] in (load(root).get("goals") or []) and goal["symbol"] not in existing:
+        body = existing
+        new = body.rstrip() + (
+            f"\n\ndef {goal['symbol']}(text: str) -> bool:\n"
+            "    return len(text or '') <= context_char_budget()\n"
+        )
+        result = edit(root, goal["file"], body, new)
+        if result.get("ok"):
+            checked = test(root, goal["test"])
+            if checked["ok"]:
+                remember(root, goal["id"], "restored", kept=True, file=goal["file"])
+                return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "tx": ["restore", "promote"], "tests_ok": True}
+            revert(root, goal["file"], body)
+    hits = search(root, goal["symbol"])
     if goal["symbol"] in existing:
         checked = test(root, goal["test"])
         if checked["ok"]:

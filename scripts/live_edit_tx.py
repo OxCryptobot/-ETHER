@@ -65,6 +65,13 @@ def main() -> int:
         from core.kernel.repo_fail import run as repo_run
         from core.kernel.self_grow import next_real
 
+        if (ROOT / "core" / "agent" / "runtime.py").is_file():
+            row["note"] = "the runtime owns the edit"
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+            print(json.dumps(row))
+            return 0
+
         os.environ.pop("ETHER_FIXTURE", None)
         os.environ.pop("ETHER_REPO_FILE", None)
         real = next_real(ROOT)

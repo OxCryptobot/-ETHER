@@ -1,11 +1,14 @@
 {
-  "passes": [],
+  "passes": [
+    "2026-11-04T00:15:04.629776+00:00"
+  ],
   "trace": {
-    "day": "2026-11-03",
+    "day": "2026-11-04",
     "tools": [
+      "read_file",
+      "read_file",
       "grep",
-      "_retry",
-      "_retry"
+      "apply_patch"
     ],
     "hits": [
       "context_budget.py:7:def context_char_budget(model_ctx: int | None = None) -> int:",
@@ -15,7 +18,7 @@
     ],
     "rejected": "",
     "patch": "",
-    "assertion": "E   TypeError: can't multiply sequence by non-int of type 'list'",
+    "assertion": "assert fits('x' * cap) is True",
     "pattern": "",
     "missed": [],
     "body": "def context_char_budget(model_ctx: int | None = None) -> int:\n    ctx = model_ctx or int(os.getenv(\"ETHER_MODEL_CTX\") or \"8192\")\n    tokens = min(int(ctx * 0.35), 1800)\n    return max(800, tokens * 4)\n\n\ndef pack(root, query: str, files: list[str] | None = None, max_chars: int | None = None) -> str:\n    \"\"\"Symbol hits plus the named files. Nothing else. Fits a 4B budget.\"\"\"\n    from pathlib import Path\n\n    root = Path(root)\n    budget = max_chars if max_chars is not None else context_char_budget()\n    parts: list[str] = []\n    try:\n        from core.kernel.edit_memory import recall\n\n        mem = recall(root)\n        if mem:\n            parts.append(\"### Last edit\\n\" + mem[:300])\n    except Exception:\n        pass\n    try:\n        from core.symbol_index import format_block\n\n        sym = f",
@@ -26,9 +29,10 @@
     ]
   },
   "last_tools": [
+    "read_file",
+    "read_file",
     "grep",
-    "_retry",
-    "_retry"
+    "apply_patch"
   ],
   "stamp": "v3:file:context_budget.py"
 }

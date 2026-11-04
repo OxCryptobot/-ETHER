@@ -24,3 +24,6 @@ def may_second_hypothesis(*, fail_is_infra: bool, critique: Dict[str, Any] | Non
     if fail_is_infra:
         return False
     return valid_critique(critique)
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

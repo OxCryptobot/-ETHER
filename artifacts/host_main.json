@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-04T12:20:10.328269+00:00",
+  "ts": "2026-11-04T13:17:39.837949+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-04T12:20:10.574551+00:00",
+    "ts": "2026-11-04T13:17:40.054928+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-04T12:20:45.440836+00:00",
+    "ts": "2026-11-04T13:18:11.501206+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   ef36f672c5..32187b4f0d  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   071859a764..ad821a70bf  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   ef36f672c5..32187b4f0d  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   071859a764..ad821a70bf  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-04T12:20:22.329181+00:00",
+    "ts": "2026-11-04T13:17:49.579373+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -69,9 +69,10 @@
   "runtime": {
     "ok": true,
     "honest": true,
-    "goal": "attach",
-    "file": "core/kernel/attach.py",
+    "goal": "autonomy",
+    "file": "core/kernel/autonomy.py",
     "tools": [
+      "test",
       "read",
       "read",
       "edit"
@@ -102,7 +103,7 @@
   "proactive": {
     "ok": true,
     "queued": true,
-    "id": "retry_live_generate_probe_20261002",
-    "of": "live_generate_probe_20261002"
+    "id": "retry_exe_live_drain_now_20260922",
+    "of": "exe_live_drain_now_20260922"
   }
 }

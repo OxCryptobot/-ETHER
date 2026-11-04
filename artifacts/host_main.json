@@ -1,29 +1,29 @@
 {
-  "ts": "2026-11-04T09:12:26.988133+00:00",
+  "ts": "2026-11-04T09:57:46.839113+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-04T09:12:27.222499+00:00",
+    "ts": "2026-11-04T09:57:46.996087+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-04T09:12:43.256144+00:00",
+    "ts": "2026-11-04T09:58:14.199682+00:00",
     "os": "nt",
-    "ok": true,
+    "ok": false,
     "ahead": 4140,
     "worktree": {
-      "ok": true,
+      "ok": false,
       "hard_reset": false,
-      "note": "worktree_push",
-      "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12b9eebe79..1871db2f3c  HEAD -> main\n"
+      "note": "worktree",
+      "push_rc": 1,
+      "stderr": "r Error        \nremote: Request ID 79CF:2054C7:5A41CD:6CED8B:6AEB01BC        \nremote: Time 2026-11-04T09:58:21Z\nTo https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]       HEAD -> main (Internal Server Error)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
     },
-    "push_rc": 0,
-    "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   12b9eebe79..1871db2f3c  HEAD -> main\n"
+    "push_rc": 1,
+    "note": "worktree",
+    "stderr": "r Error        \nremote: Request ID 79CF:2054C7:5A41CD:6CED8B:6AEB01BC        \nremote: Time 2026-11-04T09:58:21Z\nTo https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]       HEAD -> main (Internal Server Error)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-04T09:12:36.714761+00:00",
+    "ts": "2026-11-04T09:58:10.660555+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,

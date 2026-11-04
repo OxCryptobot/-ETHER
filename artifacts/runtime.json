@@ -4,7 +4,8 @@
     "fits",
     "budget_cap",
     "slice",
-    "agent_pass"
+    "agent_pass",
+    "argv_allow"
   ],
   "lessons": [
     "2026-11-03 fits: tests passed",
@@ -13,12 +14,13 @@
     "2026-11-04 budget_cap: already passes",
     "2026-11-04 slice: already passes",
     "2026-11-04 fits: already passes",
-    "2026-11-04 agent_pass: tests passed"
+    "2026-11-04 agent_pass: tests passed",
+    "2026-11-04 argv_allow: tests passed"
   ],
   "last": {
-    "goal": "agent_pass",
+    "goal": "argv_allow",
     "kept": true,
-    "file": "core/kernel/agent_pass.py",
-    "ts": "2026-11-04T12:14:06.078826+00:00"
+    "file": "core/kernel/argv_allow.py",
+    "ts": "2026-11-04T12:15:07.115642+00:00"
   }
 }

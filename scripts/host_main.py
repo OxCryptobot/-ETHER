@@ -117,11 +117,7 @@ def tick() -> Dict[str, Any]:
                 row["runtime"] = agent_run(root, _ask)
             except Exception as exc:
                 row["runtime_error"] = type(exc).__name__
-            try:
-                from core.kernel.agent import cycle as agent_cycle
-                row["agent"] = agent_cycle(root, hands=True)
-            except Exception as exc:
-                row["agent_error"] = type(exc).__name__
+            row["agent"] = {"ok": True, "note": "runtime owns the edit"}
         else:
             _pull(root)
             try:

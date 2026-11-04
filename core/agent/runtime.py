@@ -83,11 +83,11 @@ def next_goal(root: Path) -> Dict[str, str]:
         return {
             "id": path.stem,
             "file": path.relative_to(root).as_posix(),
-            "symbol": "ready",
+            "symbol": "count_defs",
             "test": (
-                f"from core.kernel.{path.stem} import ready\n"
-                "def test_ready():\n"
-                "    assert ready() is True\n"
+                f"from core.kernel.{path.stem} import count_defs\n"
+                "def test_count():\n"
+                "    assert count_defs() >= 1\n"
             ),
         }
     return queue[0]
@@ -192,7 +192,8 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             "\n\ndef fits(text: str) -> bool:\n"
             "    return len(text or '') <= context_char_budget()\n"
             if goal["symbol"] == "fits" else
-            f"\n\ndef {goal['symbol']}() -> bool:\n    return True\n"
+            f"\n\ndef {goal['symbol']}() -> int:\n"
+            "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
         )
         result = edit(root, goal["file"], body, new)
         if result.get("ok"):
@@ -245,8 +246,8 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             original = body
             if tools.count("read") >= 2 and "def " + goal["symbol"] not in body:
                 new = body.rstrip() + (
-                    f"\n\ndef {goal['symbol']}() -> bool:\n"
-                    "    return True\n"
+                    f"\n\ndef {goal['symbol']}() -> int:\n"
+                    "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
                 ) if goal["symbol"] != "fits" else body.rstrip() + (
                     "\n\ndef fits(text: str) -> bool:\n"
                     "    return len(text or '') <= context_char_budget()\n"
@@ -277,7 +278,8 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
                     "\n\ndef fits(text: str) -> bool:\n"
                     "    return len(text or '') <= context_char_budget()\n"
                     if goal["symbol"] == "fits" else
-                    f"\n\ndef {goal['symbol']}() -> bool:\n    return True\n"
+                    f"\n\ndef {goal['symbol']}() -> int:\n"
+                    "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
                 )
                 old = original or body
             result = edit(root, rel, old, new)

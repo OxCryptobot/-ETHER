@@ -31,3 +31,6 @@ def last(root: Path | None = None) -> Dict[str, Any] | None:
         return json.loads(lines[-1]) if lines else None
     except Exception:
         return None
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

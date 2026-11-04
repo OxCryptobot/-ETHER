@@ -66,7 +66,18 @@ def _gh() -> str | None:
 
 
 def existing_paths(root: Path) -> List[str]:
-    return [rel for rel in PATHS if (Path(root) / rel).exists()]
+    paths = [rel for rel in PATHS if (Path(root) / rel).exists()]
+    runtime = Path(root) / "artifacts" / "runtime.json"
+    if runtime.is_file():
+        try:
+            data = json.loads(runtime.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+        last = data.get("last") if isinstance(data, dict) else {}
+        kept = last.get("file") if isinstance(last, dict) and last.get("kept") else ""
+        if kept and (Path(root) / kept).is_file() and kept not in paths:
+            paths.append(kept)
+    return paths
 
 
 def hard_reset_allowed(*, local_ahead: int, dirty: bool) -> bool:

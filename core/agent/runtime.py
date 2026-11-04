@@ -140,7 +140,7 @@ def test(root: Path, code: str) -> Dict[str, Any]:
     return {"ok": proc.returncode == 0, "tail": tail}
 
 
-def remember(root: Path, goal: str, lesson: str, *, kept: bool) -> None:
+def remember(root: Path, goal: str, lesson: str, *, kept: bool, file: str = "") -> None:
     state = load(root)
     if kept and goal not in (state.get("goals") or []):
         state.setdefault("goals", []).append(goal)
@@ -150,7 +150,12 @@ def remember(root: Path, goal: str, lesson: str, *, kept: bool) -> None:
         lessons.append(line)
     state["lessons"] = lessons[-8:]
     state["day"] = _today()
-    state["last"] = {"goal": goal, "kept": kept, "ts": datetime.now(timezone.utc).isoformat()}
+    state["last"] = {
+        "goal": goal,
+        "kept": kept,
+        "file": file,
+        "ts": datetime.now(timezone.utc).isoformat(),
+    }
     save(root, state)
 
 
@@ -159,6 +164,20 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     root = Path(root)
     goal = next_goal(root)
     hits = search(root, goal["symbol"])
+    existing = read(root, goal["file"])
+    if goal["symbol"] in existing:
+        checked = test(root, goal["test"])
+        if checked["ok"]:
+            remember(root, goal["id"], "already passes", kept=True, file=goal["file"])
+            return {
+                "ok": True,
+                "honest": True,
+                "goal": goal["id"],
+                "file": goal["file"],
+                "tools": ["test"],
+                "tx": ["already"],
+                "tests_ok": True,
+            }
     prompt = (
         f"Goal: add or fix {goal['symbol']} in {goal['file']}.\n"
         f"Hits:\n" + "\n".join(hits[:6]) + "\n"
@@ -196,7 +215,7 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
                 if result.get("ok"):
                     checked = test(root, goal["test"])
                     if checked["ok"]:
-                        remember(root, goal["id"], "tests passed", kept=True)
+                        remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
                         return {
                             "ok": True,
                             "honest": True,
@@ -236,7 +255,7 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
                     "tx": ["begin", "revert"],
                     "assertion": checked["tail"][-180:],
                 }
-            remember(root, goal["id"], "tests passed", kept=True)
+            remember(root, goal["id"], "tests passed", kept=True, file=rel)
             return {
                 "ok": True,
                 "honest": True,

@@ -15,13 +15,14 @@ async function probe(){
   const q=s.growth_queue||[];
   document.getElementById("qn").textContent=String(q.length);
   document.getElementById("left").textContent=
-    "writer="+ (s.writer||"exe") +"\n"+
+    "writer="+ (s.writer||"runtime") +"\n"+
     "alive="+ (s.app_alive_ts||"") +"\n"+
-    "task="+ (s.task||"") +"\n"+
+    "goal="+ (s.task||"") +"\n"+
+    "kept="+ (s.kept?"yes":"no") +"\n"+
     "file="+ (s.file||"");
   const done=new Set(s.growth_done||[]);
-  document.getElementById("queue").innerHTML=q.map(n=>
+  document.getElementById("queue").innerHTML=(s.growth_queue||[]).map(n=>
     "<div class=item>"+(done.has(n)?"done ":"open ")+n+"</div>").join("")||"<div class=item>queue empty</div>";
-  document.getElementById("assert").textContent=s.assertion||"";
+  document.getElementById("assert").textContent=(s.lessons||[]).join("\n");
 }
 probe(); setInterval(probe,3000);

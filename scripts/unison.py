@@ -56,7 +56,12 @@ def snapshot() -> Dict[str, Any]:
     live = _read(root / "artifacts" / "live_edit_tx.json")
     growth = _read(root / "artifacts" / "growth.json")
     fail = _read(root / "artifacts" / "repo_fail.json")
+    runtime = _read(root / "artifacts" / "runtime.json")
+    host = _read(root / "artifacts" / "host_main.json")
     trace = fail.get("trace") if isinstance(fail.get("trace"), dict) else {}
+    last = runtime.get("last") if isinstance(runtime.get("last"), dict) else {}
+    run_row = host.get("runtime") if isinstance(host.get("runtime"), dict) else {}
+    goals = [str(item) for item in (runtime.get("goals") or [])]
     queue: list = []
     current = None
     try:
@@ -65,26 +70,31 @@ def snapshot() -> Dict[str, Any]:
         current = next_real(root)
     except Exception:
         current = None
+    task = str(last.get("goal") or run_row.get("goal") or (current or {}).get("id") or live.get("task") or "")
+    file = str(last.get("file") or run_row.get("file") or live.get("file") or trace.get("read_path") or "")
+    honest = bool(run_row.get("honest") or last.get("kept") or live.get("honest"))
     return {
         "face": "matrix",
-        "hands": "exe",
-        "writer": "exe",
+        "hands": "runtime",
+        "writer": "runtime",
         "mutates": False,
         "ports": {"watch": 7843, "retired": 8787},
         "app_alive_ts": ts or None,
         "ollama": bool(alive.get("ollama")),
         "stale": stale,
-        "goal": goal.get("id"),
+        "goal": task or goal.get("id"),
         "generation": evolve.get("generation"),
         "walk_ok": evolve.get("walk_ok"),
         "gaps": gaps,
         "learn": learn.get("kind"),
-        "task": str((current or {}).get("id") or live.get("task") or ""),
-        "honest": bool(live.get("honest")),
-        "file": str(live.get("file") or trace.get("read_path") or ""),
+        "task": task,
+        "honest": honest,
+        "file": file,
         "assertion": str(trace.get("assertion") or "")[:180],
-        "growth_done": [str(item) for item in (growth.get("done") or [])],
-        "growth_queue": queue,
+        "growth_done": goals or [str(item) for item in (growth.get("done") or [])],
+        "growth_queue": goals or queue,
+        "lessons": [str(item) for item in (runtime.get("lessons") or [])][-4:],
+        "kept": bool(last.get("kept")),
     }
 
 
@@ -115,14 +125,14 @@ dt{color:#8b939c}dd{margin:0}
 </head><body>
 <main>
 <h1>ETHER</h1>
-<p>Matrix watches. The exe writes. This page does not.</p>
+<p>Matrix watches. The runtime writes. This page does not.</p>
 <dl id="rows"></dl>
 </main>
 <script>
 async function tick(){
   const res = await fetch("/status");
   const row = await res.json();
-  const keys = ["face","hands","writer","app_alive_ts","stale","ollama","task","honest","file","assertion","growth_done","growth_queue","goal","generation"];
+  const keys = ["face","hands","writer","app_alive_ts","stale","ollama","task","honest","kept","file","growth_done","lessons"];
   const root = document.getElementById("rows");
   root.replaceChildren();
   for (const key of keys){

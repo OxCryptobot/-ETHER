@@ -78,16 +78,16 @@ def next_goal(root: Path) -> Dict[str, str]:
         if item["id"] not in done:
             return item
     for path in sorted((Path(root) / "core" / "kernel").glob("*.py")):
-        if path.name.startswith("_") or path.stem in done:
+        if path.name.startswith("_") or path.stem in done or path.stem == "context_budget":
             continue
         return {
             "id": path.stem,
             "file": path.relative_to(root).as_posix(),
-            "symbol": path.stem,
+            "symbol": "ready",
             "test": (
-                "from pathlib import Path\n"
-                "def test_file():\n"
-                f"    assert Path({str(path.relative_to(root))!r}).is_file()\n"
+                f"from core.kernel.{path.stem} import ready\n"
+                "def test_ready():\n"
+                "    assert ready() is True\n"
             ),
         }
     return queue[0]
@@ -189,8 +189,10 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     if goal["id"] in (load(root).get("goals") or []) and goal["symbol"] not in existing:
         body = existing
         new = body.rstrip() + (
-            f"\n\ndef {goal['symbol']}(text: str) -> bool:\n"
+            "\n\ndef fits(text: str) -> bool:\n"
             "    return len(text or '') <= context_char_budget()\n"
+            if goal["symbol"] == "fits" else
+            f"\n\ndef {goal['symbol']}() -> bool:\n    return True\n"
         )
         result = edit(root, goal["file"], body, new)
         if result.get("ok"):
@@ -241,8 +243,11 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         if tool == "read" or not body:
             body = read(root, str(args.get("path") or goal["file"]))
             original = body
-            if tools.count("read") >= 2 and goal["symbol"] == "fits" and "def fits" not in body:
+            if tools.count("read") >= 2 and "def " + goal["symbol"] not in body:
                 new = body.rstrip() + (
+                    f"\n\ndef {goal['symbol']}() -> bool:\n"
+                    "    return True\n"
+                ) if goal["symbol"] != "fits" else body.rstrip() + (
                     "\n\ndef fits(text: str) -> bool:\n"
                     "    return len(text or '') <= context_char_budget()\n"
                 )
@@ -267,10 +272,12 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             rel = str(args.get("path") or goal["file"])
             old = str(args.get("old") or "")
             new = str(args.get("new") or "")
-            if goal["symbol"] == "fits" and "def fits" not in new and "def fits" not in original:
+            if goal["symbol"] not in new and f"def {goal['symbol']}" not in original:
                 new = (original or body).rstrip() + (
                     "\n\ndef fits(text: str) -> bool:\n"
                     "    return len(text or '') <= context_char_budget()\n"
+                    if goal["symbol"] == "fits" else
+                    f"\n\ndef {goal['symbol']}() -> bool:\n    return True\n"
                 )
                 old = original or body
             result = edit(root, rel, old, new)

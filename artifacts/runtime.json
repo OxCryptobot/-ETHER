@@ -5,22 +5,23 @@
     "budget_cap",
     "slice",
     "agent_pass",
-    "argv_allow"
+    "argv_allow",
+    "attach"
   ],
   "lessons": [
-    "2026-11-03 fits: tests passed",
     "2026-11-03 budget_cap: no edit",
     "2026-11-04 budget_cap: no edit",
     "2026-11-04 budget_cap: already passes",
     "2026-11-04 slice: already passes",
     "2026-11-04 fits: already passes",
     "2026-11-04 agent_pass: tests passed",
-    "2026-11-04 argv_allow: tests passed"
+    "2026-11-04 argv_allow: tests passed",
+    "2026-11-04 attach: tests passed"
   ],
   "last": {
-    "goal": "argv_allow",
+    "goal": "attach",
     "kept": true,
-    "file": "core/kernel/argv_allow.py",
-    "ts": "2026-11-04T12:15:07.115642+00:00"
+    "file": "core/kernel/attach.py",
+    "ts": "2026-11-04T12:20:45.440836+00:00"
   }
 }

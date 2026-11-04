@@ -27,3 +27,6 @@ def attach_payload(*, ollama_up: bool, prev: Dict[str, Any], cmd: str, extra: Di
     if extra:
         payload.update(extra)
     return True, payload
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

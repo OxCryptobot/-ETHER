@@ -10,22 +10,23 @@
     "autonomy",
     "briefing",
     "cancel",
-    "constitution"
+    "constitution",
+    "contract"
   ],
   "lessons": [
-    "2026-11-04 fits: already passes",
     "2026-11-04 agent_pass: tests passed",
     "2026-11-04 argv_allow: tests passed",
     "2026-11-04 attach: tests passed",
     "2026-11-04 autonomy: tests passed",
     "2026-11-04 briefing: tests passed",
     "2026-11-04 cancel: tests passed",
-    "2026-11-04 constitution: tests passed"
+    "2026-11-04 constitution: tests passed",
+    "2026-11-04 contract: tests passed"
   ],
   "last": {
-    "goal": "constitution",
+    "goal": "contract",
     "kept": true,
-    "file": "core/kernel/constitution.py",
-    "ts": "2026-11-04T16:12:59.453945+00:00"
+    "file": "core/kernel/contract.py",
+    "ts": "2026-11-04T16:13:53.407146+00:00"
   }
 }

@@ -17,3 +17,6 @@ def inject(root: Path) -> str:
     if TOOL_CONSTITUTION.strip() in body:
         return body[:1600]
     return (TOOL_CONSTITUTION.strip() + "\n\n" + body)[:1600]
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))

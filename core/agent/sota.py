@@ -149,6 +149,11 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         text = ask(prompt, n=240)
     except Exception as exc:
         return {"ok": False, "honest": False, "goal": goal["id"], "error": str(exc)[:200]}
+    if text.strip().startswith("READ") or text.strip().startswith("{"):
+        try:
+            text = ask("Copy this and nothing else:\n" + prompt, n=240)
+        except Exception:
+            pass
     start = text.find("def ")
     fn = text[start:].strip() if start >= 0 else ""
     if not fn.startswith(f"def {goal['symbol']}"):

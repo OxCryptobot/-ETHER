@@ -57,6 +57,8 @@ def snapshot() -> Dict[str, Any]:
     growth = _read(root / "artifacts" / "growth.json")
     fail = _read(root / "artifacts" / "repo_fail.json")
     runtime = _read(root / "artifacts" / "runtime.json")
+    sota = _read(root / "artifacts" / "sota.json")
+    sota_last = sota.get("last") if isinstance(sota.get("last"), dict) else {}
     host = _read(root / "artifacts" / "host_main.json")
     trace = fail.get("trace") if isinstance(fail.get("trace"), dict) else {}
     last = runtime.get("last") if isinstance(runtime.get("last"), dict) else {}
@@ -94,7 +96,9 @@ def snapshot() -> Dict[str, Any]:
         "growth_done": goals or [str(item) for item in (growth.get("done") or [])],
         "growth_queue": goals or queue,
         "lessons": [str(item) for item in (runtime.get("lessons") or [])][-4:],
-        "kept": bool(last.get("kept")),
+        "sota_goal": str(sota_last.get("goal") or ""),
+        "sota_kept": bool(sota_last.get("kept")),
+        "sota_goals": [str(item) for item in (sota.get("goals") or [])],
     }
 
 

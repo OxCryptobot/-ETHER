@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-05T00:12:47.700995+00:00",
+  "ts": "2026-11-05T01:13:52.438464+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-05T00:12:47.935405+00:00",
+    "ts": "2026-11-05T01:13:52.700194+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-05T00:13:33.453985+00:00",
+    "ts": "2026-11-05T01:14:35.173288+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   e053360b8a..fd99b15f16  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c00d5f0ea6..f28c61d53c  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   e053360b8a..fd99b15f16  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c00d5f0ea6..f28c61d53c  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-05T00:12:57.030166+00:00",
+    "ts": "2026-11-05T01:14:01.294301+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -86,16 +86,8 @@
   },
   "day_learn": {
     "ok": true,
+    "skipped": true,
     "day": "2026-11-05",
-    "skipped": false,
-    "lesson": {
-      "root_cause": "unknown",
-      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
-      "smallest_experiment": "re-run targeted kernel pytest after one surgical patch",
-      "confidence": 0.45,
-      "job_id": "live_generate_probe_20261002",
-      "schema": "ether_mem_v1"
-    },
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
@@ -103,12 +95,6 @@
       "confidence": 0.45,
       "job_id": "live_generate_probe_20261002",
       "schema": "ether_mem_v1"
-    },
-    "thinking": {
-      "before_action": "re-run targeted kernel pytest after one surgical patch",
-      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
-      "root_cause": "unknown",
-      "kept": false
     }
   },
   "proactive": {

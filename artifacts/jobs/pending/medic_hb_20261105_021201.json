@@ -1,0 +1,17 @@
+{
+  "id": "medic_hb_20261105_021201",
+  "class": "fast",
+  "continue_on_fail": true,
+  "source": "git-heartbeat-medic",
+  "created": "2026-11-05T02:12:01Z",
+  "steps": [
+    {
+      "argv": [
+        ".venv/Scripts/python.exe",
+        "scripts/health_check.py",
+        "--skip-sandbox"
+      ],
+      "timeout": 120
+    }
+  ]
+}

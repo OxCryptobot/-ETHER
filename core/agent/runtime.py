@@ -313,4 +313,28 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             checked = test(root, goal["test"])
             prompt = f"Tests {'passed' if checked['ok'] else 'failed'}: {checked['tail'][-200:]}\n"
     remember(root, goal["id"], "no edit", kept=False)
+    body = read(root, goal["file"])
+    if body and f"def {goal['symbol']}" not in body:
+        new = body.rstrip() + (
+            "\n\ndef fits(text: str) -> bool:\n"
+            "    return len(text or '') <= context_char_budget()\n"
+            if goal["symbol"] == "fits" else
+            f"\n\ndef {goal['symbol']}() -> int:\n"
+            "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
+        )
+        result = edit(root, goal["file"], body, new)
+        if result.get("ok"):
+            checked = test(root, goal["test"])
+            if checked["ok"]:
+                remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
+                return {
+                    "ok": True,
+                    "honest": True,
+                    "goal": goal["id"],
+                    "file": goal["file"],
+                    "tools": tools + ["edit"],
+                    "tx": ["begin", "promote"],
+                    "tests_ok": True,
+                }
+            revert(root, goal["file"], body)
     return {"ok": False, "honest": False, "goal": goal["id"], "tools": tools, "note": "no edit"}

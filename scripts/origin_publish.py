@@ -35,6 +35,7 @@ PATHS = [
     "artifacts/live_edit_tx.json",
     "artifacts/agent.json",
     "artifacts/runtime.json",
+    "artifacts/sota.json",
     "artifacts/unison.json",
     "artifacts/growth.json",
     "artifacts/scale.json",

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-05T19:54:12.432362+00:00",
+  "ts": "2026-11-05T20:02:21.248146+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-05T19:54:12.834224+00:00",
+    "ts": "2026-11-05T20:02:21.557468+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-05T19:55:48.339321+00:00",
+    "ts": "2026-11-05T20:03:52.859949+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   b634dee4c6..6aa8a3ee3c  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   16865532d4..133ebab3d0  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   b634dee4c6..6aa8a3ee3c  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   16865532d4..133ebab3d0  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-05T19:54:30.206639+00:00",
+    "ts": "2026-11-05T20:02:33.492167+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,18 +67,28 @@
     "note": "runner_watch"
   },
   "runtime": {
-    "ok": false,
-    "honest": false,
-    "goal": "extra_tools",
+    "ok": true,
+    "honest": true,
+    "goal": "index",
+    "file": "core/kernel/index.py",
     "tools": [
-      "search",
       "read",
       "read",
-      "read",
-      "read",
-      "read"
+      "edit"
     ],
-    "note": "no edit"
+    "tx": [
+      "begin",
+      "promote"
+    ],
+    "tests_ok": true,
+    "batch": [
+      "gc",
+      "honest",
+      "hooks",
+      "ignore",
+      "index"
+    ],
+    "kept_n": 5
   },
   "agent": {
     "ok": true,

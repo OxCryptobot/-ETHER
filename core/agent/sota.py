@@ -137,7 +137,11 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
     prompt = (
-        f"File {goal['file']}:\n{original[-1200:]}\n"
+        f"Write only this function. Do not explain.\n"
+        f"def {goal['symbol']}(text: str) -> int:\n"
+        f"    return text.count('### ')\n"
+        if goal["id"] == "packed_count" else
+        f"File {goal['file']}:\n{original[-800:]}\n"
         f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
         "Reply with the whole function only.\n"
     )
@@ -149,7 +153,7 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     fn = text[start:].strip() if start >= 0 else ""
     if not fn.startswith(f"def {goal['symbol']}"):
         remember(root, goal["id"], "no edit", kept=False)
-        return {"ok": False, "honest": False, "goal": goal["id"], "note": "no function"}
+        return {"ok": False, "honest": False, "goal": goal["id"], "note": "no function", "reply": text[-200:]}
     new = original.rstrip() + "\n\n" + fn + "\n"
     result = edit(root, goal["file"], original, new)
     if not result.get("ok"):

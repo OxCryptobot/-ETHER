@@ -114,7 +114,10 @@ def tick() -> Dict[str, Any]:
                 from core.agent.sota import run as sota_run
                 from scripts.live_edit_tx import _ask
 
-                row["sota"] = sota_run(root, _ask)
+                def _code(prompt: str, n: int = 240) -> str:
+                    return _ask(prompt, n=n, edit=True)
+
+                row["sota"] = sota_run(root, _code)
             except Exception as exc:
                 row["runtime_error"] = type(exc).__name__
             row["agent"] = {"ok": True, "note": "runtime owns the edit"}

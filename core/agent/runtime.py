@@ -45,6 +45,12 @@ def next_goal(root: Path) -> Dict[str, str]:
     """The system picks its own next goal. A finished goal is not repeated today."""
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
+    failed = {
+        str(item).split(" ", 1)[-1].split(":", 1)[0]
+        for item in (state.get("lessons") or [])
+        if str(item).endswith("no edit")
+    }
+    failed = {name for name in failed if sum(str(item).endswith(f"{name}: no edit") for item in (state.get("lessons") or [])) >= 2}
     queue = [
         {
             "id": "fits",
@@ -78,7 +84,7 @@ def next_goal(root: Path) -> Dict[str, str]:
         if item["id"] not in done:
             return item
     for path in sorted((Path(root) / "core" / "kernel").glob("*.py")):
-        if path.name.startswith("_") or path.stem in done or path.stem == "context_budget":
+        if path.name.startswith("_") or path.stem in done or path.stem in failed or path.stem == "context_budget":
             continue
         return {
             "id": path.stem,
@@ -182,8 +188,20 @@ def remember(root: Path, goal: str, lesson: str, *, kept: bool, file: str = "") 
 
 
 def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
-    """One goal. The model searches, reads, and edits. The tests keep or revert."""
+    """A batch. Up to five goals. The tests keep or revert each one."""
     root = Path(root)
+    kept: List[str] = []
+    last: Dict[str, Any] = {"ok": False, "honest": False, "note": "none"}
+    for _ in range(5):
+        last = _one(root, ask)
+        if last.get("ok"):
+            kept.append(str(last.get("goal") or ""))
+            continue
+        break
+    last["batch"] = kept
+    last["kept_n"] = len(kept)
+    return last
+def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     goal = next_goal(root)
     existing = read(root, goal["file"])
     if goal["id"] in (load(root).get("goals") or []) and goal["symbol"] not in existing:

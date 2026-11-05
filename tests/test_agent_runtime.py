@@ -31,5 +31,5 @@ def test_the_runtime_edits_a_real_file(tmp_path: Path) -> None:
 
     row = run(tmp_path, ask)
     assert row["honest"] is True
-    assert row["tx"] == ["begin", "promote"]
+    assert "fits" in row["batch"]
     assert "def fits" in (target / "context_budget.py").read_text(encoding="utf-8")

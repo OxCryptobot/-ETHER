@@ -93,6 +93,40 @@ def goals() -> List[Dict[str, str]]:
     ]
 
 
+def recall(root: Path) -> str:
+    """The last thing that worked. The next prompt may see only this."""
+    state = load(root)
+    lessons = [str(item) for item in (state.get("lessons") or []) if "passed" in str(item)]
+    return lessons[-1] if lessons else ""
+
+
+def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
+    """When the fixed list is done, pick the next kernel file that has no describe."""
+    kernel = Path(root) / "core" / "kernel"
+    if not kernel.is_dir():
+        return None
+    for path in sorted(kernel.glob("*.py")):
+        name = path.stem
+        goal_id = f"describe_{name}"
+        if goal_id in done or goal_id in failed or name.startswith("_"):
+            continue
+        body = path.read_text(encoding="utf-8", errors="ignore")
+        if "def describe" in body:
+            continue
+        mod = f"core.kernel.{name}"
+        return {
+            "id": goal_id,
+            "file": f"core/kernel/{name}.py",
+            "symbol": "describe",
+            "test": (
+                f"from {mod} import describe\n"
+                "def test_describe():\n"
+                f"    assert describe() == '{name}'\n"
+            ),
+        }
+    return None
+
+
 def next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
@@ -108,7 +142,7 @@ def next_goal(root: Path) -> Dict[str, str] | None:
     for item in goals():
         if item["id"] not in done and item["id"] not in failed:
             return item
-    return None
+    return generate(root, done, failed)
 
 
 def edit(root: Path, rel: str, old: str, new: str) -> Dict[str, Any]:
@@ -179,10 +213,15 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         "budget_of": "def budget_of(model_ctx: int) -> int:\n    tokens = min(int(model_ctx * 0.35), 1800)\n    return max(800, tokens * 4)",
     }
     body = skeletons.get(goal["id"])
+    if goal["symbol"] == "describe":
+        name = Path(goal["file"]).stem
+        body = f"def describe() -> str:\n    return '{name}'"
+    lesson = recall(root)
     if body:
-        prompt = f"Write only this function. Do not explain.\n{body}\n"
+        prompt = f"Last: {lesson}\nWrite only this function. Do not explain.\n{body}\n"
     else:
         prompt = (
+            f"Last: {lesson}\n"
             f"File {goal['file']}:\n{original[-800:]}\n"
             f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
             "Reply with the whole function only.\n"

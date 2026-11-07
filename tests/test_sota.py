@@ -1,7 +1,6 @@
 """The model writes the function. The tests keep it. Nothing is injected."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from core.agent.sota import run
@@ -35,3 +34,17 @@ def test_a_non_function_is_not_kept(tmp_path: Path) -> None:
     row = run(tmp_path, ask)
     assert row["ok"] is False
     assert (target / "context_budget.py").read_text(encoding="utf-8") == before
+
+
+def test_the_queue_grows_when_empty(tmp_path: Path) -> None:
+    from core.agent.sota import generate, recall, remember
+
+    kernel = tmp_path / "core" / "kernel"
+    kernel.mkdir(parents=True)
+    (kernel / "agent.py").write_text("def run() -> None:\n    return None\n", encoding="utf-8")
+    remember(tmp_path, "packed_count", "tests passed", kept=True, file="core/kernel/context_budget.py")
+    assert "passed" in recall(tmp_path)
+    goal = generate(tmp_path, set(), set())
+    assert goal is not None
+    assert goal["symbol"] == "describe"
+    assert "agent" in goal["id"]

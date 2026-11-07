@@ -145,6 +145,18 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert add_name() == 'add'\n"
             ),
         }
+    if "next_bug" not in done:
+        return {
+            "id": "next_bug",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "failing_test",
+            "find": "def test_",
+            "test": (
+                "from core.kernel.context_budget import failing_test\n"
+                "def test_found():\n"
+                "    assert failing_test() == 'found'\n"
+            ),
+        }
     return None
 
 
@@ -189,6 +201,8 @@ def skeleton(goal: Dict[str, str]) -> str:
         return "def clamp_name() -> str:\n    return 'clamp'"
     if goal["id"] == "find_add":
         return "def add_name() -> str:\n    return 'add'"
+    if goal["id"] == "next_bug":
+        return "def failing_test() -> str:\n    return 'found'"
     return ""
 
 

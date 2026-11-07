@@ -42,17 +42,11 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
         hit = (tool.get("hits") or [""])[0]
         scratch += f"\nObservation: {tool.get('skill')} ok={tool.get('ok')} {hit}\n"
         try:
-            from core.agent.gems import evolve, fabricate, memory, plan, profile, route
+            from core.agent.gems import chain
 
-            plan(root, "goal")
-            kind = route(root, text).get("next")
-            if kind == "edit" and profile(root, text).get("next") == "ask":
-                return {"ok": False, "text": text, "used": used, "note": "no shape"}
-            if not fabricate(root, tool.get("skill") or "").get("known"):
-                return {"ok": False, "text": text, "used": used, "note": "unknown tool"}
-            memory(root, f"{tool.get('skill')} {hit}")
-            if evolve(root, f"{tool.get('skill')} {hit}").get("new"):
-                scratch += ""
+            row = chain(root, text, tool.get("skill") or "")
+            if not row.get("ok"):
+                return {"ok": False, "text": text, "used": used, "note": row.get("note")}
         except Exception:
             pass
     return {"ok": True, "text": last, "used": used}

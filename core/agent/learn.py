@@ -83,6 +83,19 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert fits_name() == 'fits'\n"
             ),
         }
+    if "count_diff" in have and "room_left" in have and "budget_status" not in done:
+        return {
+            "id": "budget_status",
+            "file": file,
+            "symbol": "budget_status",
+            "test": (
+                "from core.kernel.context_budget import budget_status\n"
+                "def test_status():\n"
+                "    row = budget_status('')\n"
+                "    assert row['over'] is False\n"
+                "    assert row['room'] == 7200\n"
+            ),
+        }
     return None
 
 
@@ -113,6 +126,12 @@ def skeleton(goal: Dict[str, str]) -> str:
         )
     if goal["id"] == "find_fits":
         return "def fits_name() -> str:\n    return 'fits'"
+    if goal["id"] == "budget_status":
+        return (
+            "def budget_status(text: str) -> dict:\n"
+            "    from core.kernel.context_budget import is_over, room_left\n"
+            "    return {'over': is_over(text), 'room': room_left(text)}"
+        )
     return ""
 
 

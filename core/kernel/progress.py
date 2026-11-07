@@ -25,3 +25,6 @@ def snapshot() -> dict:
         "remaining": list(REMAINING_PRODUCT),
         "blocker": "open existing ETHER.exe on the 1650 so ollama attach is true",
     }
+
+def describe() -> str:
+    return 'progress'

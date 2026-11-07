@@ -28,3 +28,6 @@ def collapse_legacy(root: Path | None = None) -> int:
                 shutil.move(str(p), str(target))
                 moved += 1
     return moved
+
+def describe() -> str:
+    return 'queue'

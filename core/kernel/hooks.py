@@ -20,3 +20,9 @@ def run_hook(fn: Callable[..., Any], *args: Any, timeout_s: float = 2.0, **kwarg
     if "e" in box:
         return {"ok": False, "error": type(box["e"]).__name__}
     return box.get("v")
+
+def count_defs() -> int:
+    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))
+
+def describe() -> str:
+    return 'hooks'

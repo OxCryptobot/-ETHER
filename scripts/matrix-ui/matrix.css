@@ -12,6 +12,8 @@ button{background:var(--subtle);color:var(--fg);border:1px solid var(--line);min
 .k{font-size:9px;letter-spacing:.14em;color:var(--mut)}
 .v{font:600 15px ui-monospace,monospace;margin-top:3px}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
+.bar{height:4px;background:var(--line);border-radius:2px;margin-top:6px;overflow:hidden}
+.fill{height:100%;background:var(--ok);width:0;transition:width .4s}
 #mid{display:grid;grid-template-columns:1fr 1fr;min-height:0}
 .pane{border-right:1px solid var(--line);padding:12px;overflow:auto}
 .pane:last-child{border-right:0}

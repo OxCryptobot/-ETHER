@@ -6,23 +6,24 @@ async function probe(){
   const up=!!s.ollama;
   document.getElementById("ollama").textContent=up?"UP":"DOWN";
   document.getElementById("ollama").className="v "+(up?"ok":"bad");
-  document.getElementById("task").textContent=s.task||"—";
-  document.getElementById("honest").textContent=s.honest?"TRUE":"FALSE";
-  document.getElementById("honest").className="v "+(s.honest?"ok":"bad");
-  document.getElementById("file").textContent=s.file||"—";
+  const kept=s.env_kept|| (s.sota_goals||[]).length ||0;
+  document.getElementById("kept").textContent=String(kept);
+  document.getElementById("keptbar").style.width=Math.min(100, kept*4)+"%";
+  document.getElementById("disk").textContent=s.env_disk!=null?s.env_disk+" GB":"—";
+  document.getElementById("last").textContent=s.sota_goal||s.task||"—";
+  document.getElementById("honest").textContent=s.sota_kept||s.honest?"TRUE":"FALSE";
+  document.getElementById("honest").className="v "+(s.sota_kept||s.honest?"ok":"bad");
   document.getElementById("alive").textContent=s.stale?"STALE":"LIVE";
   document.getElementById("alive").className="v "+(s.stale?"bad":"ok");
-  const q=s.growth_queue||[];
-  document.getElementById("qn").textContent=String(q.length);
+  document.getElementById("stamp").textContent=s.app_alive_ts?s.app_alive_ts.slice(11,19)+"Z":"watching";
   document.getElementById("left").textContent=
-    "writer="+ (s.writer||"runtime") +"\n"+
+    "kept="+ kept +"\n"+
+    "disk="+ (s.env_disk!=null?s.env_disk+" GB":"—") +"\n"+
+    "ollama="+ (up?"up":"down") +"\n"+
     "alive="+ (s.app_alive_ts||"") +"\n"+
-    "goal="+ (s.task||"") +"\n"+
-    "kept="+ (s.kept?"yes":"no") +"\n"+
-    "file="+ (s.file||"");
-  const done=new Set(s.growth_done||[]);
-  document.getElementById("queue").innerHTML=(s.growth_queue||[]).map(n=>
-    "<div class=item>"+(done.has(n)?"done ":"open ")+n+"</div>").join("")||"<div class=item>queue empty</div>";
-  document.getElementById("assert").textContent=(s.lessons||[]).join("\n");
+    "last="+ (s.sota_goal||"");
+  const goals=s.sota_goals||s.growth_queue||[];
+  document.getElementById("queue").innerHTML=goals.slice(-12).map(n=>
+    "<div class=item>kept "+n+"</div>").join("")||"<div class=item>none yet</div>";
 }
 probe(); setInterval(probe,3000);

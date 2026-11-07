@@ -37,3 +37,6 @@ class EditTx:
 
 def count_defs() -> int:
     return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))
+
+def describe() -> str:
+    return 'edit_tx'

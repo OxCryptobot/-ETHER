@@ -15,22 +15,27 @@
     "describe_cancel",
     "describe_constitution",
     "describe_context_budget",
-    "describe_contract"
+    "describe_contract",
+    "within_budget",
+    "describe_crash",
+    "describe_critique",
+    "describe_dirty",
+    "describe_edit_tx"
   ],
   "lessons": [
-    "2026-11-07 describe_attach: tests passed",
-    "2026-11-07 describe_autonomy: tests passed",
-    "2026-11-07 describe_briefing: tests passed",
-    "2026-11-07 same_count: tests passed",
-    "2026-11-07 describe_cancel: tests passed",
     "2026-11-07 describe_constitution: tests passed",
     "2026-11-07 describe_context_budget: tests passed",
-    "2026-11-07 describe_contract: tests passed"
+    "2026-11-07 describe_contract: tests passed",
+    "2026-11-07 within_budget: tests passed",
+    "2026-11-07 describe_crash: tests passed",
+    "2026-11-07 describe_critique: tests passed",
+    "2026-11-07 describe_dirty: tests passed",
+    "2026-11-07 describe_edit_tx: tests passed"
   ],
   "last": {
-    "goal": "describe_contract",
+    "goal": "describe_edit_tx",
     "kept": true,
-    "file": "core/kernel/contract.py",
-    "ts": "2026-11-07T11:58:04.774093+00:00"
+    "file": "core/kernel/edit_tx.py",
+    "ts": "2026-11-07T11:58:48.690276+00:00"
   }
 }

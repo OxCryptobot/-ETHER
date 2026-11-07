@@ -48,3 +48,9 @@ def pack(root, query: str, files: list[str] | None = None, max_chars: int | None
 
 def fits(text: str) -> bool:
     return len(text or '') <= context_char_budget()
+
+def packed_count(text: str) -> int:
+    return text.count('### ')
+
+def fits(text: str) -> bool:
+    return len(text or '') <= context_char_budget()

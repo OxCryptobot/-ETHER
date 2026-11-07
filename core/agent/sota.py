@@ -189,6 +189,11 @@ def remember(root: Path, goal: str, lesson: str, *, kept: bool, file: str = "") 
     state = load(root)
     if kept and goal not in (state.get("goals") or []):
         state.setdefault("goals", []).append(goal)
+    if kept and file:
+        files = [str(item) for item in (state.get("files") or [])]
+        if file not in files:
+            files.append(file)
+        state["files"] = files[-20:]
     lessons = [str(item) for item in (state.get("lessons") or [])]
     line = f"{_today()} {goal}: {lesson}"[:240]
     if line not in lessons:

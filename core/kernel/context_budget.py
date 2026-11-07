@@ -62,3 +62,9 @@ def is_over(text: str) -> bool:
 def budget_of(model_ctx: int) -> int:
     tokens = min(int(model_ctx * 0.35), 1800)
     return max(800, tokens * 4)
+
+def same_count(text: str) -> bool:
+    return packed_count(text) == file_count(text)
+
+def within_budget(text: str) -> bool:
+    return fits(text)

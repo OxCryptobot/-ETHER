@@ -48,6 +48,14 @@ def test_a_failed_test_is_skipped(tmp_path: Path) -> None:
     assert goal is None or goal["id"] != "describe_context_budget"
 
 
+def test_kept_files_are_tracked(tmp_path: Path) -> None:
+    from core.agent.sota import load, remember
+
+    remember(tmp_path, "same_count", "tests passed", kept=True, file="core/kernel/context_budget.py")
+    state = load(tmp_path)
+    assert "core/kernel/context_budget.py" in state["files"]
+
+
 def test_the_queue_grows_when_empty(tmp_path: Path) -> None:
     from core.agent.sota import generate, recall, remember
 

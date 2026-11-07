@@ -83,6 +83,9 @@ def existing_paths(root: Path) -> List[str]:
         kept = last.get("file") if isinstance(last, dict) and last.get("kept") else ""
         if kept and (Path(root) / kept).is_file() and kept not in paths:
             paths.append(kept)
+        for rel in data.get("files") or []:
+            if isinstance(rel, str) and (Path(root) / rel).is_file() and rel not in paths:
+                paths.append(rel)
     return paths
 
 

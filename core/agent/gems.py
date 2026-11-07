@@ -97,17 +97,26 @@ def fabricate(root, name: str) -> Dict[str, Any]:
 
 
 def chain(root, text: str, skill: str = "") -> Dict[str, Any]:
-    """One gem's result is the next gem's input. No second model call."""
-    sec = security(root, text)
-    if sec.get("next") == "stop":
-        return {"ok": False, "note": "blocked", "from": "security"}
-    routed = route(root, text)
-    if routed.get("next") == "edit":
-        prof = profile(root, text)
-        if prof.get("next") == "ask":
-            return {"ok": False, "note": "no shape", "from": "profile"}
-    if skill and not fabricate(root, skill).get("known"):
-        return {"ok": False, "note": "unknown tool", "from": "fabricate"}
-    mem = memory(root, f"{skill} {text[:40]}")
-    evo = evolve(root, mem.get("stored") or "")
-    return {"ok": True, "note": "kept" if evo.get("new") else "repeat", "from": "evolve"}
+    """Every gem runs. The bag is the result. The loop acts on it."""
+    bag = {
+        "security": security(root, text).get("next"),
+        "route": route(root, text).get("next"),
+        "profile": profile(root, text).get("next"),
+        "fabricate": fabricate(root, skill).get("known") if skill else True,
+    }
+    stop = (
+        bag["security"] == "stop"
+        or (bag["route"] == "edit" and bag["profile"] == "ask")
+        or not bag["fabricate"]
+    )
+    if not stop:
+        mem = memory(root, f"{skill} {text[:40]}")
+        bag["evolve"] = evolve(root, mem.get("stored") or "").get("new")
+    bag["ok"] = not stop
+    bag["note"] = (
+        "blocked" if bag["security"] == "stop"
+        else "no shape" if bag["route"] == "edit" and bag["profile"] == "ask"
+        else "unknown tool" if not bag["fabricate"]
+        else "kept" if bag.get("evolve") else "repeat"
+    )
+    return bag

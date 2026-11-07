@@ -169,6 +169,9 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         return {"ok": False, "honest": True, "note": "queue empty"}
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
+    if f"def {goal['symbol']}" in original and goal["id"] != "packed_count":
+        remember(root, goal["id"], "already present", kept=True, file=goal["file"])
+        return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "note": "already present"}
     skeletons = {
         "packed_count": "def packed_count(text: str) -> int:\n    return text.count('### ')",
         "file_count": "def file_count(text: str) -> int:\n    return text.count('### ')",

@@ -31,6 +31,7 @@ def test_a_non_function_is_not_kept(tmp_path: Path) -> None:
     def ask(prompt: str, n: int = 240) -> str:
         return "I am not sure"
 
+    before = (target / "context_budget.py").read_text(encoding="utf-8")
     row = run(tmp_path, ask)
     assert row["ok"] is False
-    assert "def packed_count" not in (target / "context_budget.py").read_text(encoding="utf-8")
+    assert (target / "context_budget.py").read_text(encoding="utf-8") == before

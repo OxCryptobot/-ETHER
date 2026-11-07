@@ -43,31 +43,36 @@
     "describe_poll",
     "describe_progress",
     "describe_provider",
-    "describe_queue"
+    "describe_queue",
+    "describe_redact"
   ],
   "lessons": [
-    "2026-11-07 describe_extra_tools: tests failed",
-    "2026-11-07 describe_plan: tests passed",
     "2026-11-07 describe_plan_store: tests passed",
     "2026-11-07 describe_poll: tests passed",
     "2026-11-07 describe_progress: wrong file",
     "2026-11-07 describe_progress: tests passed",
     "2026-11-07 describe_provider: tests passed",
-    "2026-11-07 describe_queue: tests passed"
+    "2026-11-07 describe_queue: tests passed",
+    "2026-11-07 describe_redact: tests passed",
+    "2026-11-07 describe_extra_tools: tests failed"
   ],
   "last": {
-    "goal": "describe_queue",
-    "kept": true,
-    "file": "core/kernel/queue.py",
-    "ts": "2026-11-07T12:14:47.980182+00:00"
+    "goal": "describe_extra_tools",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T12:15:59.099264+00:00"
   },
-  "kept_n": 3,
+  "kept_n": 1,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",
     "core/kernel/poll.py",
     "core/kernel/progress.py",
     "core/kernel/provider.py",
-    "core/kernel/queue.py"
+    "core/kernel/queue.py",
+    "core/kernel/redact.py"
+  ],
+  "skipped": [
+    "describe_extra_tools"
   ]
 }

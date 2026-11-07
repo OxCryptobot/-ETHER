@@ -16,3 +16,6 @@ def secret_hit(text: str) -> Optional[str]:
         if pat.search(blob):
             return "secret_in_write"
     return None
+
+def describe() -> str:
+    return 'secret_scan'

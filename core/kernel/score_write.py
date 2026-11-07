@@ -14,3 +14,6 @@ def write_result(path: Path, result: Dict[str, Any]) -> Dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+def describe() -> str:
+    return 'score_write'

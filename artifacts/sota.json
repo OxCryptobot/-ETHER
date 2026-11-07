@@ -44,25 +44,28 @@
     "describe_progress",
     "describe_provider",
     "describe_queue",
-    "describe_redact"
+    "describe_redact",
+    "describe_sandbox",
+    "describe_score_write",
+    "describe_secret_scan"
   ],
   "lessons": [
-    "2026-11-07 describe_poll: tests passed",
-    "2026-11-07 describe_progress: wrong file",
-    "2026-11-07 describe_progress: tests passed",
     "2026-11-07 describe_provider: tests passed",
     "2026-11-07 describe_queue: tests passed",
     "2026-11-07 describe_redact: tests passed",
     "2026-11-07 describe_extra_tools: tests failed",
-    "2026-11-07 find_fits: tests failed"
+    "2026-11-07 find_fits: tests failed",
+    "2026-11-07 describe_sandbox: tests passed",
+    "2026-11-07 describe_score_write: tests passed",
+    "2026-11-07 describe_secret_scan: tests passed"
   ],
   "last": {
-    "goal": "find_fits",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-07T12:17:03.338735+00:00"
+    "goal": "describe_secret_scan",
+    "kept": true,
+    "file": "core/kernel/secret_scan.py",
+    "ts": "2026-11-07T12:18:07.523122+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 3,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",
@@ -70,7 +73,10 @@
     "core/kernel/progress.py",
     "core/kernel/provider.py",
     "core/kernel/queue.py",
-    "core/kernel/redact.py"
+    "core/kernel/redact.py",
+    "core/kernel/sandbox.py",
+    "core/kernel/score_write.py",
+    "core/kernel/secret_scan.py"
   ],
   "skipped": [
     "describe_extra_tools",

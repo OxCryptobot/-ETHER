@@ -24,23 +24,28 @@
     "describe_events",
     "describe_gc",
     "describe_honest",
-    "describe_hooks"
+    "describe_hooks",
+    "describe_ignore",
+    "describe_index",
+    "describe_job_schema",
+    "describe_lang",
+    "describe_loop_guard"
   ],
   "lessons": [
-    "2026-11-07 describe_critique: tests passed",
-    "2026-11-07 describe_dirty: tests passed",
-    "2026-11-07 describe_edit_tx: tests passed",
-    "2026-11-07 describe_events: tests passed",
-    "2026-11-07 describe_extra_tools: tests failed",
-    "2026-11-07 describe_gc: tests passed",
     "2026-11-07 describe_honest: tests passed",
-    "2026-11-07 describe_hooks: tests passed"
+    "2026-11-07 describe_hooks: tests passed",
+    "2026-11-07 describe_ignore: tests passed",
+    "2026-11-07 describe_index: tests passed",
+    "2026-11-07 describe_job_schema: tests passed",
+    "2026-11-07 describe_lang: tests passed",
+    "2026-11-07 describe_loop_guard: tests passed",
+    "2026-11-07 describe_extra_tools: tests failed"
   ],
   "last": {
-    "goal": "describe_hooks",
-    "kept": true,
-    "file": "core/kernel/hooks.py",
-    "ts": "2026-11-07T12:03:48.008735+00:00"
+    "goal": "describe_extra_tools",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T12:04:41.796659+00:00"
   },
-  "kept_n": 3
+  "kept_n": 5
 }

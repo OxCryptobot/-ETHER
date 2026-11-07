@@ -52,6 +52,12 @@ def fits(text: str) -> bool:
 def packed_count(text: str) -> int:
     return text.count('### ')
 
+def fits(text: str) -> bool:
+    return len(text or '') <= context_char_budget()
+
+def file_count(text: str) -> int:
+    return text.count('### ')
+
 def is_over(text: str) -> bool:
     from core.kernel.context_budget import context_char_budget
     return len(text or '') > context_char_budget()

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-07T12:04:41.829957+00:00",
+  "ts": "2026-11-07T12:05:04.146174+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "ahead": 4140,
   "worktree": {
-    "ok": false,
+    "ok": true,
     "hard_reset": false,
-    "note": "worktree",
-    "push_rc": 1,
-    "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n"
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   5e22d408d8..870c77dd0d  HEAD -> main\n"
   },
-  "push_rc": 1,
-  "note": "worktree",
-  "stderr": "the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.\n"
+  "push_rc": 0,
+  "note": "worktree_push",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   5e22d408d8..870c77dd0d  HEAD -> main\n"
 }

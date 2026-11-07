@@ -29,23 +29,31 @@
     "describe_index",
     "describe_job_schema",
     "describe_lang",
-    "describe_loop_guard"
+    "describe_loop_guard",
+    "count_diff",
+    "room_left",
+    "describe_memory_schema",
+    "describe_operator_intent",
+    "describe_ops",
+    "describe_ownership",
+    "describe_parse_fail",
+    "describe_permissions"
   ],
   "lessons": [
-    "2026-11-07 describe_honest: tests passed",
-    "2026-11-07 describe_hooks: tests passed",
-    "2026-11-07 describe_ignore: tests passed",
-    "2026-11-07 describe_index: tests passed",
-    "2026-11-07 describe_job_schema: tests passed",
-    "2026-11-07 describe_lang: tests passed",
-    "2026-11-07 describe_loop_guard: tests passed",
-    "2026-11-07 describe_extra_tools: tests failed"
+    "2026-11-07 count_diff: tests passed",
+    "2026-11-07 room_left: tests passed",
+    "2026-11-07 describe_memory_schema: tests passed",
+    "2026-11-07 describe_operator_intent: tests passed",
+    "2026-11-07 describe_ops: tests passed",
+    "2026-11-07 describe_ownership: tests passed",
+    "2026-11-07 describe_parse_fail: tests passed",
+    "2026-11-07 describe_permissions: tests passed"
   ],
   "last": {
-    "goal": "describe_extra_tools",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-07T12:04:41.796659+00:00"
+    "goal": "describe_permissions",
+    "kept": true,
+    "file": "core/kernel/permissions.py",
+    "ts": "2026-11-07T12:05:50.204388+00:00"
   },
-  "kept_n": 5
+  "kept_n": 8
 }

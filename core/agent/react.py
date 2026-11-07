@@ -34,4 +34,10 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
         used = True
         hit = (tool.get("hits") or [""])[0]
         scratch += f"\nObservation: {tool.get('skill')} ok={tool.get('ok')} {hit}\n"
+        try:
+            from core.agent.sota import remember
+
+            remember(root, "trace", f"{tool.get('skill')} {hit}"[:180], kept=False)
+        except Exception:
+            pass
     return {"ok": True, "text": last, "used": used}

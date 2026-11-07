@@ -23,3 +23,14 @@ def test_a_repeat_stops(tmp_path: Path) -> None:
     same = '{"tool": "search", "args": {"query": "fits"}}'
     row = react(lambda *_a, **_k: same, tmp_path, "find fits", turns=3)
     assert row.get("note") == "repeat"
+
+
+def test_the_trace_is_remembered(tmp_path: Path) -> None:
+    core = tmp_path / "core" / "kernel"
+    core.mkdir(parents=True)
+    (core / "budget.py").write_text("def fits(text: str) -> bool:\n    return True\n", encoding="utf-8")
+    replies = iter(['{"tool": "search", "args": {"query": "fits"}}', "done"])
+    react(lambda *_a, **_k: next(replies), tmp_path, "find fits", turns=2)
+    from core.agent.sota import recall
+
+    assert "search" in recall(tmp_path)

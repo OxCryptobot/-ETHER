@@ -94,9 +94,12 @@ def goals() -> List[Dict[str, str]]:
 
 
 def recall(root: Path) -> str:
-    """The last thing that worked. The next prompt may see only this."""
+    """The last thing that worked, or the last tool trace."""
     state = load(root)
-    lessons = [str(item) for item in (state.get("lessons") or []) if "passed" in str(item)]
+    lessons = [str(item) for item in (state.get("lessons") or [])]
+    for item in reversed(lessons):
+        if "trace" in item or "passed" in item:
+            return item
     return lessons[-1] if lessons else ""
 
 

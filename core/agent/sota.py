@@ -266,7 +266,9 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     from core.agent.skills import call
 
     tool = call(root, text)
+    used_tool = False
     if tool is not None and tool.get("skill") == "search" and tool.get("hits"):
+        used_tool = True
         hit = tool["hits"][0]
         if find and hit != goal["file"]:
             goal = {**goal, "file": hit}
@@ -301,7 +303,7 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         revert(root, goal["file"], original)
         remember(root, goal["id"], "tests failed", kept=False)
         return {"ok": False, "honest": False, "goal": goal["id"], "note": "tests failed"}
-    remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
+    remember(root, goal["id"], "tests passed" + (" via tool" if used_tool else ""), kept=True, file=goal["file"])
     from core.agent.checker import check
 
     verified = check(root, goal["id"])

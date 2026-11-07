@@ -88,6 +88,9 @@ def room_left(text: str) -> int:
 def fits_name() -> str:
     return 'fits'
 
+def add(a: int, b: int) -> int:
+    return a - b
+
 def budget_status(text: str) -> dict:
     from core.kernel.context_budget import is_over, room_left
     return {'over': is_over(text), 'room': room_left(text)}

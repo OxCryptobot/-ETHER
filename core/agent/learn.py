@@ -96,6 +96,18 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert row['room'] == 7200\n"
             ),
         }
+    if "fix_add" not in done:
+        return {
+            "id": "fix_add",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "add",
+            "test": (
+                "from core.kernel.context_budget import add\n"
+                "def test_add():\n"
+                "    assert add(2, 3) == 5\n"
+                "    assert add(-1, 1) == 0\n"
+            ),
+        }
     return None
 
 
@@ -132,6 +144,8 @@ def skeleton(goal: Dict[str, str]) -> str:
             "    from core.kernel.context_budget import is_over, room_left\n"
             "    return {'over': is_over(text), 'room': room_left(text)}"
         )
+    if goal["id"] == "fix_add":
+        return "def add(a: int, b: int) -> int:\n    return a + b"
     return ""
 
 

@@ -1,6 +1,7 @@
 """The monitor publishes a snapshot. It does not change anything."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from core.agent.env import snapshot, write
@@ -18,3 +19,7 @@ def test_the_snapshot_has_the_machine(tmp_path: Path) -> None:
     written = write(tmp_path)
     assert (art / "env.json").is_file()
     assert written["kept"] == 2
+    write(tmp_path)
+    history = json.loads((art / "env_history.json").read_text(encoding="utf-8"))
+    assert len(history) == 2
+    assert history[-1]["kept"] == 2

@@ -25,5 +25,34 @@ async function probe(){
   const goals=s.sota_goals||s.growth_queue||[];
   document.getElementById("queue").innerHTML=goals.slice(-12).map(n=>
     "<div class=item>kept "+n+"</div>").join("")||"<div class=item>none yet</div>";
+  draw(s.env_history||[]);
+}
+function draw(rows){
+  const c=document.getElementById("chart");
+  if(!c)return;
+  const ctx=c.getContext("2d");
+  const w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#121214";
+  ctx.fillRect(0,0,w,h);
+  if(!rows.length){
+    ctx.fillStyle="#a1a1aa";
+    ctx.fillText("waiting for ticks",16,h/2);
+    return;
+  }
+  const vals=rows.map(r=>Number(r.kept||0));
+  const max=Math.max(1,...vals);
+  ctx.strokeStyle="#4ade80";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=rows.length===1?w/2:(i/(rows.length-1))*(w-24)+12;
+    const y=h-12-(v/max)*(h-28);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle="#a1a1aa";
+  ctx.font="11px ui-monospace,monospace";
+  ctx.fillText("kept "+vals[vals.length-1],12,16);
 }
 probe(); setInterval(probe,3000);

@@ -37,6 +37,7 @@ PATHS = [
     "artifacts/runtime.json",
     "artifacts/sota.json",
     "artifacts/env.json",
+    "artifacts/env_history.json",
     "artifacts/unison.json",
     "artifacts/growth.json",
     "artifacts/scale.json",

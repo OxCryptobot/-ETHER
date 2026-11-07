@@ -39,9 +39,19 @@ def snapshot(root: Path) -> Dict[str, Any]:
 
 def write(root: Path) -> Dict[str, Any]:
     row = snapshot(root)
-    path = Path(root) / "artifacts" / "env.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    art = Path(root) / "artifacts"
+    art.mkdir(parents=True, exist_ok=True)
+    (art / "env.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+    history = art / "env_history.json"
+    rows = []
+    if history.is_file():
+        try:
+            data = json.loads(history.read_text(encoding="utf-8"))
+            rows = data if isinstance(data, list) else []
+        except Exception:
+            rows = []
+    rows.append({"ts": row["ts"], "kept": row["kept"], "disk": row["disk_free_gb"]})
+    history.write_text(json.dumps(rows[-48:], indent=2) + "\n", encoding="utf-8")
     return row
 
 

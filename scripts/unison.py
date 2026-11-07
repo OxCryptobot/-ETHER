@@ -40,7 +40,14 @@ def _stale(ts: str) -> bool:
     return (datetime.now(timezone.utc) - dt).total_seconds() > MAX_AGE_S
 
 
-def snapshot() -> Dict[str, Any]:
+def _read_list(path: Path) -> list:
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    return data if isinstance(data, list) else []
     root = _root()
     alive = _read(root / "artifacts" / "app_alive.json")
     evolve = _read(root / "artifacts" / "evolve.json")
@@ -101,6 +108,7 @@ def snapshot() -> Dict[str, Any]:
         "sota_goals": [str(item) for item in (sota.get("goals") or [])],
         "env_kept": int((_read(root / "artifacts" / "env.json") or {}).get("kept") or 0),
         "env_disk": (_read(root / "artifacts" / "env.json") or {}).get("disk_free_gb"),
+        "env_history": _read_list(root / "artifacts" / "env_history.json"),
     }
 
 

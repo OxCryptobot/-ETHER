@@ -132,6 +132,7 @@ def next_goal(root: Path) -> Dict[str, str] | None:
     done = {str(item) for item in (state.get("goals") or [])}
     lessons = [str(item) for item in (state.get("lessons") or [])]
     failed = set(str(item) for item in (state.get("skipped") or []))
+    failed.discard("find_fits")
     failed.update(
         name
         for name in {item.split(" ", 1)[-1].split(":", 1)[0] for item in lessons}

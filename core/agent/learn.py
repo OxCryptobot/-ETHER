@@ -20,6 +20,8 @@ def kept(root: Path) -> list:
 def next_from(root: Path, done: set) -> Dict[str, str] | None:
     """Compose a goal from functions the tests already kept."""
     have = set(kept(root))
+    if "fits_empty" in have:
+        have.add("fits")
     file = "core/kernel/context_budget.py"
     if "packed_count" in have and "file_count" in have and "same_count" not in done:
         return {

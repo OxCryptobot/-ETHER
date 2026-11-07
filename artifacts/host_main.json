@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-07T12:34:39.107140+00:00",
+  "ts": "2026-11-07T12:36:53.300278+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-07T12:34:39.262139+00:00",
+    "ts": "2026-11-07T12:36:53.481597+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-07T12:35:07.395673+00:00",
+    "ts": "2026-11-07T12:37:04.902581+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   ff089cf7ca..1770e43b80  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   262956cbf6..e345e32e85  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   ff089cf7ca..1770e43b80  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   262956cbf6..e345e32e85  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-07T12:34:46.633438+00:00",
+    "ts": "2026-11-07T12:37:02.711875+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,21 +68,20 @@
   },
   "sota": {
     "ok": false,
-    "honest": false,
-    "goal": "find_clamp",
-    "note": "tests failed",
+    "honest": true,
+    "note": "queue empty",
     "batch": [],
     "kept_n": 0,
-    "batch_size": 5
+    "batch_size": 3
   },
   "env": {
-    "ts": "2026-11-07T12:35:07.376853+00:00",
+    "ts": "2026-11-07T12:37:04.857739+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 221.0,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-07T12:34:39.262139+00:00",
+    "alive_ts": "2026-11-07T12:36:53.481597+00:00",
     "kept": 56,
     "last_goal": "find_clamp",
     "last_kept": false,

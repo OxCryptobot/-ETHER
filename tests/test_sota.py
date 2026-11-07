@@ -56,6 +56,19 @@ def test_kept_files_are_tracked(tmp_path: Path) -> None:
     assert "core/kernel/context_budget.py" in state["files"]
 
 
+def test_a_skip_is_permanent(tmp_path: Path) -> None:
+    from core.agent.sota import load, next_goal, remember
+
+    kernel = tmp_path / "core" / "kernel"
+    kernel.mkdir(parents=True)
+    (kernel / "extra_tools.py").write_text("def run() -> None:\n    return None\n", encoding="utf-8")
+    remember(tmp_path, "describe_extra_tools", "tests failed", kept=False)
+    state = load(tmp_path)
+    assert "describe_extra_tools" in state["skipped"]
+    goal = next_goal(tmp_path)
+    assert goal is None or goal["id"] != "describe_extra_tools"
+
+
 def test_the_queue_grows_when_empty(tmp_path: Path) -> None:
     from core.agent.sota import generate, recall, remember
 

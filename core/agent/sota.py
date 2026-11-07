@@ -131,11 +131,12 @@ def next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
     lessons = [str(item) for item in (state.get("lessons") or [])]
-    failed = {
+    failed = set(str(item) for item in (state.get("skipped") or []))
+    failed.update(
         name
         for name in {item.split(" ", 1)[-1].split(":", 1)[0] for item in lessons}
         if sum(item.endswith(f"{name}: no edit") or item.endswith(f"{name}: tests failed") for item in lessons) >= 1
-    }
+    )
     for item in goals():
         if item["id"] not in done and item["id"] not in failed:
             return item
@@ -199,6 +200,11 @@ def remember(root: Path, goal: str, lesson: str, *, kept: bool, file: str = "") 
     if line not in lessons:
         lessons.append(line)
     state["lessons"] = lessons[-8:]
+    if not kept and ("failed" in lesson or "no edit" in lesson):
+        skipped = [str(item) for item in (state.get("skipped") or [])]
+        if goal not in skipped:
+            skipped.append(goal)
+        state["skipped"] = skipped[-40:]
     state["day"] = _today()
     state["last"] = {"goal": goal, "kept": kept, "file": file, "ts": datetime.now(timezone.utc).isoformat()}
     save(root, state)

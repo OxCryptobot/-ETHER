@@ -109,6 +109,7 @@ def _read_list(path: Path) -> list:
         "env_kept": int((_read(root / "artifacts" / "env.json") or {}).get("kept") or 0),
         "env_disk": (_read(root / "artifacts" / "env.json") or {}).get("disk_free_gb"),
         "env_history": _read_list(root / "artifacts" / "env_history.json"),
+        "skills": ["search", "read", "remember", "edit", "test"],
     }
 
 

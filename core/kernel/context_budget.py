@@ -84,3 +84,6 @@ def count_diff(text: str) -> int:
 def room_left(text: str) -> int:
     from core.kernel.context_budget import budget_of
     return budget_of(8192) - len(text or '')
+
+def fits_name() -> str:
+    return 'fits'

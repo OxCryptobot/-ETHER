@@ -26,3 +26,6 @@ def liveness(*, proc_alive: bool, ollama_up: bool, drain_alive: bool) -> Dict[st
         "writer": ATTACH_WRITER if os.name == "nt" else "observe",
         "ok": bool(proc_alive),
     }
+
+def describe() -> str:
+    return 'writer'

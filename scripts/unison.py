@@ -99,6 +99,8 @@ def snapshot() -> Dict[str, Any]:
         "sota_goal": str(sota_last.get("goal") or ""),
         "sota_kept": bool(sota_last.get("kept")),
         "sota_goals": [str(item) for item in (sota.get("goals") or [])],
+        "env_kept": int((_read(root / "artifacts" / "env.json") or {}).get("kept") or 0),
+        "env_disk": (_read(root / "artifacts" / "env.json") or {}).get("disk_free_gb"),
     }
 
 

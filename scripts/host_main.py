@@ -118,6 +118,9 @@ def tick() -> Dict[str, Any]:
                     return _ask(prompt, n=n, edit=True)
 
                 row["sota"] = sota_run(root, _code)
+                from core.agent.env import write as env_write
+
+                row["env"] = env_write(root)
             except Exception as exc:
                 row["runtime_error"] = type(exc).__name__
             row["agent"] = {"ok": True, "note": "runtime owns the edit"}

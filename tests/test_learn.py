@@ -23,6 +23,10 @@ def test_learning_composes_from_kept(tmp_path: Path) -> None:
     nxt = next_from(tmp_path, done)
     assert nxt is not None
     assert nxt["id"] == "count_diff"
+    found = next_from(tmp_path, done | {"count_diff", "room_left"})
+    assert found is not None
+    assert found["id"] == "find_fits"
+    assert "file" not in found["test"] or "fits_name" in found["test"]
 
 
 def test_the_batch_grows_after_success(tmp_path: Path) -> None:

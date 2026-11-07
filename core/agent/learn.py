@@ -71,6 +71,18 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert room_left('abcd') == 7196\n"
             ),
         }
+    if "fits" in have and "find_fits" not in done:
+        return {
+            "id": "find_fits",
+            "file": file,
+            "symbol": "fits_name",
+            "find": "fits",
+            "test": (
+                "from core.kernel.context_budget import fits_name\n"
+                "def test_name():\n"
+                "    assert fits_name() == 'fits'\n"
+            ),
+        }
     return None
 
 

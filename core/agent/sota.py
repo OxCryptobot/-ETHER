@@ -239,7 +239,15 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         name = Path(goal["file"]).stem
         body = f"def describe() -> str:\n    return '{name}'"
     lesson = recall(root)
-    if body:
+    find = goal.get("find")
+    if find:
+        prompt = (
+            f"Last: {lesson}\n"
+            f"Find the file that defines {find}. "
+            f"Reply with {{\"tool\":\"search\",\"args\":{{\"query\":\"{find}\"}}}} "
+            f"and then def {goal['symbol']}() that returns '{find}'.\n"
+        )
+    elif body:
         prompt = f"Last: {lesson}\nWrite only this function. Do not explain.\n{body}\n"
     else:
         prompt = (
@@ -255,7 +263,12 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
 
     tool = call(root, text)
     if tool is not None and tool.get("skill") == "search" and tool.get("hits"):
-        text = ask(f"Found {tool['hits'][0]}. Write only the function.\n" + prompt, n=240)
+        hit = tool["hits"][0]
+        if find and hit != goal["file"]:
+            goal = {**goal, "file": hit}
+            path = Path(root) / hit
+            original = path.read_text(encoding="utf-8") if path.is_file() else original
+        text = ask(f"Found {hit}. Write only def {goal['symbol']}.\n", n=240)
     if text.strip().startswith("READ") or text.strip().startswith("{"):
         try:
             text = ask("Copy this and nothing else:\n" + prompt, n=240)

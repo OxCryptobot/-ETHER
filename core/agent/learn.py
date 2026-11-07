@@ -111,6 +111,8 @@ def skeleton(goal: Dict[str, str]) -> str:
             "    from core.kernel.context_budget import budget_of\n"
             "    return budget_of(8192) - len(text or '')"
         )
+    if goal["id"] == "find_fits":
+        return "def fits_name() -> str:\n    return 'fits'"
     return ""
 
 

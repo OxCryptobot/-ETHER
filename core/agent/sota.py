@@ -241,11 +241,14 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     lesson = recall(root)
     find = goal.get("find")
     if find:
+        from core.agent.learn import skeleton as learned_skeleton
+
+        body = learned_skeleton(goal) or body
         prompt = (
             f"Last: {lesson}\n"
             f"Find the file that defines {find}. "
-            f"Reply with {{\"tool\":\"search\",\"args\":{{\"query\":\"{find}\"}}}} "
-            f"and then def {goal['symbol']}() that returns '{find}'.\n"
+            f"Reply with {{\"tool\":\"search\",\"args\":{{\"query\":\"{find}\"}}}}\n"
+            f"Then write only:\n{body}\n"
         )
     elif body:
         prompt = f"Last: {lesson}\nWrite only this function. Do not explain.\n{body}\n"
@@ -268,7 +271,7 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             goal = {**goal, "file": hit}
             path = Path(root) / hit
             original = path.read_text(encoding="utf-8") if path.is_file() else original
-        text = ask(f"Found {hit}. Write only def {goal['symbol']}.\n", n=240)
+        text = ask(f"Found {hit}. Write only this:\n{body or ('def ' + goal['symbol'])}\n", n=240)
     if text.strip().startswith("READ") or text.strip().startswith("{"):
         try:
             text = ask("Copy this and nothing else:\n" + prompt, n=240)

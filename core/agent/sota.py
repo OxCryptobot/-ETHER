@@ -251,6 +251,11 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         text = ask(prompt, n=240)
     except Exception as exc:
         return {"ok": False, "honest": False, "goal": goal["id"], "error": str(exc)[:200]}
+    from core.agent.skills import call
+
+    tool = call(root, text)
+    if tool is not None and tool.get("skill") == "search" and tool.get("hits"):
+        text = ask(f"Found {tool['hits'][0]}. Write only the function.\n" + prompt, n=240)
     if text.strip().startswith("READ") or text.strip().startswith("{"):
         try:
             text = ask("Copy this and nothing else:\n" + prompt, n=240)

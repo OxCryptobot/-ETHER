@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from core.agent.checker import check
-from core.agent.skills import list_skills, route
+from core.agent.skills import call, list_skills, route
 
 
 def test_search_finds_the_file(tmp_path: Path) -> None:
@@ -22,6 +22,16 @@ def test_edit_and_test_are_skills(tmp_path: Path) -> None:
     assert "test" in names
     row = route(tmp_path, "edit", rel="missing.py", old="a", new="b")
     assert row["ok"] is False
+
+
+def test_a_tool_reply_runs(tmp_path: Path) -> None:
+    core = tmp_path / "core" / "kernel"
+    core.mkdir(parents=True)
+    (core / "budget.py").write_text("def packed_count(text: str) -> int:\n    return 0\n", encoding="utf-8")
+    row = call(tmp_path, '{"tool": "search", "args": {"query": "packed_count"}}')
+    assert row is not None
+    assert row["ok"] is True
+    assert call(tmp_path, "def packed_count") is None
 
 
 def test_the_checker_cannot_write(tmp_path: Path) -> None:

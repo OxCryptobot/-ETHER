@@ -72,6 +72,25 @@ def list_skills() -> list:
     return sorted(SKILLS)
 
 
+def call(root: Path, text: str) -> Dict[str, Any] | None:
+    """If the model replied with a tool call, run it. Otherwise None."""
+    import json
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        data = json.loads(text[start : end + 1])
+    except Exception:
+        return None
+    if not isinstance(data, dict) or "tool" not in data:
+        return None
+    name = str(data.get("tool") or "")
+    args = data.get("args") if isinstance(data.get("args"), dict) else {}
+    return route(root, name, **args)
+
+
 def route(root: Path, name: str, **args: Any) -> Dict[str, Any]:
     """Call one skill by name. Unknown names fail closed."""
     skill = SKILLS.get(name)

@@ -22,3 +22,6 @@ def write(root: Path, row: Dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return path
+
+def describe() -> str:
+    return 'self_state'

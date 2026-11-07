@@ -17,3 +17,6 @@ def pytest_argv(selector: List[str]) -> List[str]:
     if not selector:
         return ["-q", "--tb=line"]
     return ["-q", "--tb=line", *selector]
+
+def describe() -> str:
+    return 'select_tests'

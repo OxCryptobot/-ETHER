@@ -47,22 +47,22 @@
     "describe_redact"
   ],
   "lessons": [
-    "2026-11-07 describe_plan_store: tests passed",
     "2026-11-07 describe_poll: tests passed",
     "2026-11-07 describe_progress: wrong file",
     "2026-11-07 describe_progress: tests passed",
     "2026-11-07 describe_provider: tests passed",
     "2026-11-07 describe_queue: tests passed",
     "2026-11-07 describe_redact: tests passed",
-    "2026-11-07 describe_extra_tools: tests failed"
+    "2026-11-07 describe_extra_tools: tests failed",
+    "2026-11-07 find_fits: tests failed"
   ],
   "last": {
-    "goal": "describe_extra_tools",
+    "goal": "find_fits",
     "kept": false,
     "file": "",
-    "ts": "2026-11-07T12:15:59.099264+00:00"
+    "ts": "2026-11-07T12:17:03.338735+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",
@@ -73,6 +73,7 @@
     "core/kernel/redact.py"
   ],
   "skipped": [
-    "describe_extra_tools"
+    "describe_extra_tools",
+    "find_fits"
   ]
 }

@@ -5,20 +5,27 @@
     "fits_empty",
     "file_count",
     "is_over",
-    "budget_of"
+    "budget_of",
+    "describe_agent_pass",
+    "describe_argv_allow",
+    "describe_attach",
+    "describe_autonomy",
+    "describe_briefing"
   ],
   "lessons": [
-    "2026-11-05 packed_count: no edit",
-    "2026-11-05 packed_count: tests passed",
-    "2026-11-05 fits_empty: tests passed",
     "2026-11-07 file_count: tests passed",
     "2026-11-07 is_over: tests passed",
-    "2026-11-07 budget_of: tests passed"
+    "2026-11-07 budget_of: tests passed",
+    "2026-11-07 describe_agent_pass: tests passed",
+    "2026-11-07 describe_argv_allow: tests passed",
+    "2026-11-07 describe_attach: tests passed",
+    "2026-11-07 describe_autonomy: tests passed",
+    "2026-11-07 describe_briefing: tests passed"
   ],
   "last": {
-    "goal": "budget_of",
+    "goal": "describe_briefing",
     "kept": true,
-    "file": "core/kernel/context_budget.py",
-    "ts": "2026-11-07T02:53:43.769104+00:00"
+    "file": "core/kernel/briefing.py",
+    "ts": "2026-11-07T11:57:12.182930+00:00"
   }
 }

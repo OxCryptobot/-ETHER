@@ -121,6 +121,18 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert clamp(2, 0, 3) == 2\n"
             ),
         }
+    if "find_clamp" not in done:
+        return {
+            "id": "find_clamp",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "clamp_name",
+            "find": "clamp",
+            "test": (
+                "from core.kernel.context_budget import clamp_name\n"
+                "def test_name():\n"
+                "    assert clamp_name() == 'clamp'\n"
+            ),
+        }
     return None
 
 
@@ -161,6 +173,8 @@ def skeleton(goal: Dict[str, str]) -> str:
         return "def add(a: int, b: int) -> int:\n    return a + b"
     if goal["id"] == "fix_clamp":
         return "def clamp(n: int, lo: int, hi: int) -> int:\n    return max(lo, min(hi, n))"
+    if goal["id"] == "find_clamp":
+        return "def clamp_name() -> str:\n    return 'clamp'"
     return ""
 
 

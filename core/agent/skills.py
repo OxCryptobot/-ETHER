@@ -41,10 +41,30 @@ def remember(root: Path, note: str) -> Dict[str, Any]:
     return {"ok": True, "skill": "remember", "note": note[:180]}
 
 
+def edit_fn(root: Path, rel: str, old: str, new: str) -> Dict[str, Any]:
+    """One replace. The caller reverts if the test fails."""
+    from core.agent.sota import edit as apply
+
+    row = apply(root, rel, old, new)
+    row["skill"] = "edit"
+    return row
+
+
+def test_fn(root: Path, code: str) -> Dict[str, Any]:
+    """Run the goal's test. Returns ok and the tail."""
+    from core.agent.sota import test as run_test
+
+    row = run_test(root, code)
+    row["skill"] = "test"
+    return row
+
+
 SKILLS: Dict[str, Skill] = {
     "search": search,
     "read": read,
     "remember": remember,
+    "edit": edit_fn,
+    "test": test_fn,
 }
 
 

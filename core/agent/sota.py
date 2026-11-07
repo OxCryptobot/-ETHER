@@ -216,6 +216,12 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         return {"ok": False, "honest": True, "note": "queue empty"}
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
+    from core.agent.skills import route
+
+    found = route(root, "search", query=goal["symbol"])
+    if found.get("hits") and goal["file"] not in found["hits"]:
+        remember(root, goal["id"], "wrong file", kept=False)
+        return {"ok": False, "honest": False, "goal": goal["id"], "note": "search missed", "hits": found["hits"]}
     if f"def {goal['symbol']}" in original and goal["id"] != "packed_count":
         remember(root, goal["id"], "already present", kept=True, file=goal["file"])
         return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "note": "already present"}
@@ -266,7 +272,18 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         remember(root, goal["id"], "tests failed", kept=False)
         return {"ok": False, "honest": False, "goal": goal["id"], "note": "tests failed"}
     remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
-    return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "tx": ["begin", "promote"], "tests_ok": True}
+    from core.agent.checker import check
+
+    verified = check(root, goal["id"])
+    return {
+        "ok": True,
+        "honest": True,
+        "goal": goal["id"],
+        "file": goal["file"],
+        "tx": ["search", "edit", "test", "check", "promote"],
+        "tests_ok": True,
+        "checked": verified.get("ok"),
+    }
 
 
 def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:

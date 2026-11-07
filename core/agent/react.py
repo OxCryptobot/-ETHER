@@ -35,9 +35,11 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
         hit = (tool.get("hits") or [""])[0]
         scratch += f"\nObservation: {tool.get('skill')} ok={tool.get('ok')} {hit}\n"
         try:
-            from core.agent.gems import memory, route_stage
+            from core.agent.gems import memory, profile, route, security
 
-            route_stage("sandbox")
+            route(root, text)
+            security(root, text)
+            profile(root, text)
             memory(root, f"{tool.get('skill')} {hit}")
         except Exception:
             pass

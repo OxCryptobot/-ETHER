@@ -94,3 +94,20 @@ def fabricate(root, name: str) -> Dict[str, Any]:
     from core.agent.skills import list_skills
 
     return {**row, "known": name in list_skills()}
+
+
+def chain(root, text: str, skill: str = "") -> Dict[str, Any]:
+    """One gem's result is the next gem's input. No second model call."""
+    sec = security(root, text)
+    if sec.get("next") == "stop":
+        return {"ok": False, "note": "blocked", "from": "security"}
+    routed = route(root, text)
+    if routed.get("next") == "edit":
+        prof = profile(root, text)
+        if prof.get("next") == "ask":
+            return {"ok": False, "note": "no shape", "from": "profile"}
+    if skill and not fabricate(root, skill).get("known"):
+        return {"ok": False, "note": "unknown tool", "from": "fabricate"}
+    mem = memory(root, f"{skill} {text[:40]}")
+    evo = evolve(root, mem.get("stored") or "")
+    return {"ok": True, "note": "kept" if evo.get("new") else "repeat", "from": "evolve"}

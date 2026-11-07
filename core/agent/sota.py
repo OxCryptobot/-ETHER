@@ -281,6 +281,14 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     start = text.find("def ")
     fn = text[start:].strip() if start >= 0 else ""
     if not fn.startswith(f"def {goal['symbol']}"):
+        if body:
+            try:
+                text = ask("Copy this and nothing else:\n" + body, n=240)
+            except Exception:
+                pass
+            start = text.find("def ")
+            fn = text[start:].strip() if start >= 0 else ""
+    if not fn.startswith(f"def {goal['symbol']}"):
         remember(root, goal["id"], "no edit", kept=False)
         return {"ok": False, "honest": False, "goal": goal["id"], "note": "no function", "reply": text[-200:]}
     new = original.rstrip() + "\n\n" + fn + "\n"

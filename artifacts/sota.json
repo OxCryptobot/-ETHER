@@ -20,22 +20,24 @@
     "describe_crash",
     "describe_critique",
     "describe_dirty",
-    "describe_edit_tx"
+    "describe_edit_tx",
+    "describe_events"
   ],
   "lessons": [
-    "2026-11-07 describe_constitution: tests passed",
-    "2026-11-07 describe_context_budget: tests passed",
     "2026-11-07 describe_contract: tests passed",
     "2026-11-07 within_budget: tests passed",
     "2026-11-07 describe_crash: tests passed",
     "2026-11-07 describe_critique: tests passed",
     "2026-11-07 describe_dirty: tests passed",
-    "2026-11-07 describe_edit_tx: tests passed"
+    "2026-11-07 describe_edit_tx: tests passed",
+    "2026-11-07 describe_events: tests passed",
+    "2026-11-07 describe_extra_tools: tests failed"
   ],
   "last": {
-    "goal": "describe_edit_tx",
-    "kept": true,
-    "file": "core/kernel/edit_tx.py",
-    "ts": "2026-11-07T11:58:48.690276+00:00"
-  }
+    "goal": "describe_extra_tools",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T11:59:34.715006+00:00"
+  },
+  "kept_n": 1
 }

@@ -59,20 +59,20 @@
     "fix_clamp"
   ],
   "lessons": [
-    "2026-11-07 describe_self_state: tests passed",
-    "2026-11-07 describe_strangle: tests passed",
     "2026-11-07 describe_tombstone: tests failed",
     "2026-11-07 find_fits: tests passed",
     "2026-11-07 describe_writer: tests passed",
     "2026-11-07 budget_status: tests passed",
     "2026-11-07 fix_add: tests passed",
-    "2026-11-07 fix_clamp: tests passed"
+    "2026-11-07 fix_clamp: tests passed",
+    "2026-11-07 trace: search core\\batch_queue.py",
+    "2026-11-07 find_clamp: tests failed"
   ],
   "last": {
-    "goal": "fix_clamp",
-    "kept": true,
-    "file": "core/kernel/context_budget.py",
-    "ts": "2026-11-07T12:25:13.401682+00:00"
+    "goal": "find_clamp",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T12:35:07.376853+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -97,6 +97,7 @@
   "skipped": [
     "describe_extra_tools",
     "find_fits",
-    "describe_tombstone"
+    "describe_tombstone",
+    "find_clamp"
   ]
 }

@@ -38,12 +38,16 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
             from core.agent.gems import evolve, fabricate, memory, plan, profile, route, security
 
             plan(root, "goal")
-            route(root, text)
-            security(root, text)
-            profile(root, text)
-            fabricate(root, tool.get("skill") or "")
+            kind = route(root, text).get("kind")
+            if not security(root, text).get("clean"):
+                return {"ok": False, "text": text, "used": used, "note": "blocked"}
+            if kind == "edit" and not profile(root, text).get("shape"):
+                return {"ok": False, "text": text, "used": used, "note": "no shape"}
+            if not fabricate(root, tool.get("skill") or "").get("known"):
+                return {"ok": False, "text": text, "used": used, "note": "unknown tool"}
             memory(root, f"{tool.get('skill')} {hit}")
-            evolve(root, f"{tool.get('skill')} {hit}")
+            if evolve(root, f"{tool.get('skill')} {hit}").get("new"):
+                scratch += ""
         except Exception:
             pass
     return {"ok": True, "text": last, "used": used}

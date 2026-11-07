@@ -19,3 +19,13 @@ def test_a_theatre_gem_is_skipped() -> None:
 
 def test_only_live_gems_run() -> None:
     assert live() == ["clear_quartz"]
+
+
+def test_memory_stores_the_trace(tmp_path) -> None:
+    from core.agent.gems import memory
+    from core.agent.sota import recall
+
+    row = memory(tmp_path, "search fits")
+    assert row["ok"] is True
+    assert row["gem"] == "citrine"
+    assert "search" in recall(tmp_path)

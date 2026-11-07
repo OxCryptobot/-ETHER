@@ -31,6 +31,17 @@ def route_stage(stage: str) -> Dict[str, Any]:
     return {"ok": True, "stage": stage, "gem": gid, "role": gem.role, "status": gem.status, "writes": False}
 
 
+def memory(root, note: str) -> Dict[str, Any]:
+    """Citrine stage. The trace is stored. The next prompt may see it."""
+    row = route_stage("memory")
+    if not row["ok"]:
+        return row
+    from core.agent.sota import remember
+
+    remember(root, "trace", note[:180], kept=False)
+    return {**row, "stored": note[:180]}
+
+
 def live() -> list:
     """The gems that can run. The rest stay named."""
     return [g.id for g in live_gems()]

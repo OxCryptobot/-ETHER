@@ -57,6 +57,39 @@ def goals() -> List[Dict[str, str]]:
                 "    assert fits('') is True\n"
             ),
         },
+        {
+            "id": "file_count",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "file_count",
+            "test": (
+                "from core.kernel.context_budget import file_count\n"
+                "def test_files():\n"
+                "    assert file_count('### a.py\\n### b.py\\n') == 2\n"
+                "    assert file_count('') == 0\n"
+            ),
+        },
+        {
+            "id": "is_over",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "is_over",
+            "test": (
+                "from core.kernel.context_budget import is_over\n"
+                "def test_over():\n"
+                "    assert is_over('x' * 10000) is True\n"
+                "    assert is_over('') is False\n"
+            ),
+        },
+        {
+            "id": "budget_of",
+            "file": "core/kernel/context_budget.py",
+            "symbol": "budget_of",
+            "test": (
+                "from core.kernel.context_budget import budget_of\n"
+                "def test_budget():\n"
+                "    assert budget_of(8192) == 7200\n"
+                "    assert budget_of(100) >= 800\n"
+            ),
+        },
     ]
 
 
@@ -136,15 +169,21 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         return {"ok": False, "honest": True, "note": "queue empty"}
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
-    prompt = (
-        f"Write only this function. Do not explain.\n"
-        f"def {goal['symbol']}(text: str) -> int:\n"
-        f"    return text.count('### ')\n"
-        if goal["id"] == "packed_count" else
-        f"File {goal['file']}:\n{original[-800:]}\n"
-        f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
-        "Reply with the whole function only.\n"
-    )
+    skeletons = {
+        "packed_count": "def packed_count(text: str) -> int:\n    return text.count('### ')",
+        "file_count": "def file_count(text: str) -> int:\n    return text.count('### ')",
+        "is_over": "def is_over(text: str) -> bool:\n    from core.kernel.context_budget import context_char_budget\n    return len(text or '') > context_char_budget()",
+        "budget_of": "def budget_of(model_ctx: int) -> int:\n    tokens = min(int(model_ctx * 0.35), 1800)\n    return max(800, tokens * 4)",
+    }
+    body = skeletons.get(goal["id"])
+    if body:
+        prompt = f"Write only this function. Do not explain.\n{body}\n"
+    else:
+        prompt = (
+            f"File {goal['file']}:\n{original[-800:]}\n"
+            f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
+            "Reply with the whole function only.\n"
+        )
     try:
         text = ask(prompt, n=240)
     except Exception as exc:

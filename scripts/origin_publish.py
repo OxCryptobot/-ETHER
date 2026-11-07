@@ -69,12 +69,14 @@ def _gh() -> str | None:
 
 def existing_paths(root: Path) -> List[str]:
     paths = [rel for rel in PATHS if (Path(root) / rel).exists()]
-    runtime = Path(root) / "artifacts" / "runtime.json"
-    if runtime.is_file():
+    for name in ("runtime.json", "sota.json"):
+        path = Path(root) / "artifacts" / name
+        if not path.is_file():
+            continue
         try:
-            data = json.loads(runtime.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
-            data = {}
+            continue
         last = data.get("last") if isinstance(data, dict) else {}
         kept = last.get("file") if isinstance(last, dict) and last.get("kept") else ""
         if kept and (Path(root) / kept).is_file() and kept not in paths:

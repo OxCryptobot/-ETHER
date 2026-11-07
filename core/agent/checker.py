@@ -24,3 +24,9 @@ def check(root: Path, goal: str) -> Dict[str, Any]:
     if file and (Path(root) / file).is_file():
         present = f"def {goal.split('_', 1)[-1]}" in (Path(root) / file).read_text(encoding="utf-8", errors="ignore")
     return {"ok": True, "gem": "checker", "goal": goal, "file": file, "in_file": present, "writes": False}
+
+
+def review(root: Path, goals: list) -> Dict[str, Any]:
+    """A second checker. Reads several kept results. Cannot write."""
+    rows = [check(root, item) for item in goals]
+    return {"ok": all(row.get("ok") for row in rows), "gem": "review", "rows": rows, "writes": False}

@@ -19,3 +19,14 @@ def test_one_lesson_per_day(tmp_path: Path) -> None:
     seen = recall(tmp_path)
     assert "fix_add" in seen
     assert len(seen) <= 300
+
+
+def test_review_reads_and_cannot_write(tmp_path: Path) -> None:
+    from core.agent.checker import review
+
+    state = tmp_path / "artifacts"
+    state.mkdir()
+    (state / "sota.json").write_text('{"goals": ["fix_add", "fix_clamp"]}', encoding="utf-8")
+    row = review(tmp_path, ["fix_add", "fix_clamp"])
+    assert row["writes"] is False
+    assert row["ok"] is True

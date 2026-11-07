@@ -94,3 +94,6 @@ def budget_status(text: str) -> dict:
 
 def add(a: int, b: int) -> int:
     return a + b
+
+def clamp(n: int, lo: int, hi: int) -> int:
+    return n

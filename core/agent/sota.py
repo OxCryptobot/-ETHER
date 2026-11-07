@@ -260,13 +260,16 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             "Reply with the whole function only.\n"
         )
     try:
-        text = ask(prompt, n=240)
+        from core.agent.react import react
+
+        row = react(ask, root, prompt, turns=3)
+        text = row.get("text") or ""
+        used_tool = bool(row.get("used"))
     except Exception as exc:
         return {"ok": False, "honest": False, "goal": goal["id"], "error": str(exc)[:200]}
     from core.agent.skills import call
 
     tool = call(root, text)
-    used_tool = False
     if tool is not None and tool.get("skill") == "search" and tool.get("hits"):
         used_tool = True
         hit = tool["hits"][0]

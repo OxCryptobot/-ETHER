@@ -22,10 +22,9 @@ def test_the_model_writes_it(tmp_path: Path) -> None:
 
 
 def test_a_non_function_is_not_kept(tmp_path: Path) -> None:
-    src = Path("core/kernel/context_budget.py").read_text(encoding="utf-8")
     target = tmp_path / "core" / "kernel"
     target.mkdir(parents=True)
-    (target / "context_budget.py").write_text(src, encoding="utf-8")
+    (target / "context_budget.py").write_text("def fits(text: str) -> bool:\n    return True\n", encoding="utf-8")
 
     def ask(prompt: str, n: int = 240) -> str:
         return "I am not sure"

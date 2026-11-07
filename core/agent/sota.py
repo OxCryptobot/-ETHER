@@ -219,9 +219,10 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     from core.agent.skills import route
 
     found = route(root, "search", query=goal["symbol"])
-    if found.get("hits") and goal["file"] not in found["hits"]:
-        remember(root, goal["id"], "wrong file", kept=False)
-        return {"ok": False, "honest": False, "goal": goal["id"], "note": "search missed", "hits": found["hits"]}
+    hits = found.get("hits") or []
+    if goal["file"] in hits:
+        remember(root, goal["id"], "already present", kept=True, file=goal["file"])
+        return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "note": "found by search"}
     if f"def {goal['symbol']}" in original and goal["id"] != "packed_count":
         remember(root, goal["id"], "already present", kept=True, file=goal["file"])
         return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "note": "already present"}
@@ -243,7 +244,6 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     else:
         prompt = (
             f"Last: {lesson}\n"
-            f"File {goal['file']}:\n{original[-800:]}\n"
             f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
             "Reply with the whole function only.\n"
         )

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-07T11:58:19.901375+00:00",
+  "ts": "2026-11-07T11:59:17.257806+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-07T11:58:20.111223+00:00",
+    "ts": "2026-11-07T11:59:17.466228+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-07T11:58:48.694722+00:00",
+    "ts": "2026-11-07T11:59:34.730642+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 4140,
@@ -19,11 +19,11 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   068d797865..bc3db745b3  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c16d098fc7..2daccf2324  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   068d797865..bc3db745b3  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c16d098fc7..2daccf2324  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -34,7 +34,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-07T11:58:28.222560+00:00",
+    "ts": "2026-11-07T11:59:25.726539+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,23 +67,15 @@
     "note": "runner_watch"
   },
   "sota": {
-    "ok": true,
-    "honest": true,
-    "goal": "describe_edit_tx",
-    "file": "core/kernel/edit_tx.py",
-    "tx": [
-      "begin",
-      "promote"
-    ],
-    "tests_ok": true,
+    "ok": false,
+    "honest": false,
+    "goal": "describe_extra_tools",
+    "note": "tests failed",
     "batch": [
-      "within_budget",
-      "describe_crash",
-      "describe_critique",
-      "describe_dirty",
-      "describe_edit_tx"
+      "describe_events"
     ],
-    "kept_n": 5
+    "kept_n": 1,
+    "batch_size": 5
   },
   "agent": {
     "ok": true,

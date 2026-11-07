@@ -28,6 +28,13 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
         if key in seen:
             return {"ok": False, "text": last, "used": used, "note": "repeat"}
         seen.append(key)
+        try:
+            from core.agent.gems import security
+
+            if security(root, text).get("next") == "stop":
+                return {"ok": False, "text": text, "used": used, "note": "blocked"}
+        except Exception:
+            pass
         tool = call(root, text)
         if tool is None:
             return {"ok": True, "text": last, "used": used}
@@ -35,13 +42,11 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[st
         hit = (tool.get("hits") or [""])[0]
         scratch += f"\nObservation: {tool.get('skill')} ok={tool.get('ok')} {hit}\n"
         try:
-            from core.agent.gems import evolve, fabricate, memory, plan, profile, route, security
+            from core.agent.gems import evolve, fabricate, memory, plan, profile, route
 
             plan(root, "goal")
-            kind = route(root, text).get("kind")
-            if not security(root, text).get("clean"):
-                return {"ok": False, "text": text, "used": used, "note": "blocked"}
-            if kind == "edit" and not profile(root, text).get("shape"):
+            kind = route(root, text).get("next")
+            if kind == "edit" and profile(root, text).get("next") == "ask":
                 return {"ok": False, "text": text, "used": used, "note": "no shape"}
             if not fabricate(root, tool.get("skill") or "").get("known"):
                 return {"ok": False, "text": text, "used": used, "note": "unknown tool"}

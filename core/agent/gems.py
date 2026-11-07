@@ -43,7 +43,7 @@ def route(root, text: str) -> Dict[str, Any]:
     if not row["ok"]:
         return row
     kind = "tool" if '"tool"' in text else "edit"
-    return {**row, "kind": kind}
+    return {**row, "kind": kind, "next": kind}
 
 
 def memory(root, note: str) -> Dict[str, Any]:
@@ -63,7 +63,7 @@ def profile(root, text: str) -> Dict[str, Any]:
     if not row["ok"]:
         return row
     ok = text.strip().startswith("def ")
-    return {**row, "shape": ok}
+    return {**row, "shape": ok, "next": "edit" if ok else "ask"}
 
 
 def security(root, text: str) -> Dict[str, Any]:
@@ -72,7 +72,7 @@ def security(root, text: str) -> Dict[str, Any]:
     if not row["ok"]:
         return row
     bad = "subprocess" in text or "os.system" in text or "__import__" in text
-    return {**row, "clean": not bad}
+    return {**row, "clean": not bad, "next": "stop" if bad else "continue"}
 
 
 def evolve(root, note: str) -> Dict[str, Any]:

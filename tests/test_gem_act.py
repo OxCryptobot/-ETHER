@@ -7,7 +7,7 @@ from core.agent.react import react
 
 
 def test_a_shell_is_blocked(tmp_path: Path) -> None:
-    text = '{"tool": "search", "args": {"query": "os.system(\'rm\')"}}'
+    text = "import subprocess\nos.system('rm')"
     row = react(lambda *_a, **_k: text, tmp_path, "find", turns=2)
     assert row.get("note") == "blocked"
 

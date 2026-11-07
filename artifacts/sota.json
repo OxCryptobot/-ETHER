@@ -1,18 +1,24 @@
 {
-  "day": "2026-11-05",
+  "day": "2026-11-07",
   "goals": [
     "packed_count",
-    "fits_empty"
+    "fits_empty",
+    "file_count",
+    "is_over",
+    "budget_of"
   ],
   "lessons": [
     "2026-11-05 packed_count: no edit",
     "2026-11-05 packed_count: tests passed",
-    "2026-11-05 fits_empty: tests passed"
+    "2026-11-05 fits_empty: tests passed",
+    "2026-11-07 file_count: tests passed",
+    "2026-11-07 is_over: tests passed",
+    "2026-11-07 budget_of: tests passed"
   ],
   "last": {
-    "goal": "fits_empty",
+    "goal": "budget_of",
     "kept": true,
     "file": "core/kernel/context_budget.py",
-    "ts": "2026-11-05T20:14:07.012099+00:00"
+    "ts": "2026-11-07T02:53:43.769104+00:00"
   }
 }

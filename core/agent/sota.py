@@ -142,6 +142,11 @@ def next_goal(root: Path) -> Dict[str, str] | None:
     for item in goals():
         if item["id"] not in done and item["id"] not in failed:
             return item
+    from core.agent.learn import next_from
+
+    learned = next_from(root, done)
+    if learned is not None and learned["id"] not in failed:
+        return learned
     return generate(root, done, failed)
 
 
@@ -212,8 +217,10 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         "is_over": "def is_over(text: str) -> bool:\n    from core.kernel.context_budget import context_char_budget\n    return len(text or '') > context_char_budget()",
         "budget_of": "def budget_of(model_ctx: int) -> int:\n    tokens = min(int(model_ctx * 0.35), 1800)\n    return max(800, tokens * 4)",
     }
-    body = skeletons.get(goal["id"])
-    if goal["symbol"] == "describe":
+    from core.agent.learn import skeleton as learned_skeleton
+
+    body = skeletons.get(goal["id"]) or learned_skeleton(goal)
+    if goal["symbol"] == "describe" and not body:
         name = Path(goal["file"]).stem
         body = f"def describe() -> str:\n    return '{name}'"
     lesson = recall(root)

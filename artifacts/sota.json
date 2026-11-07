@@ -40,20 +40,20 @@
     "describe_permissions"
   ],
   "lessons": [
-    "2026-11-07 count_diff: tests passed",
     "2026-11-07 room_left: tests passed",
     "2026-11-07 describe_memory_schema: tests passed",
     "2026-11-07 describe_operator_intent: tests passed",
     "2026-11-07 describe_ops: tests passed",
     "2026-11-07 describe_ownership: tests passed",
     "2026-11-07 describe_parse_fail: tests passed",
-    "2026-11-07 describe_permissions: tests passed"
+    "2026-11-07 describe_permissions: tests passed",
+    "2026-11-07 describe_extra_tools: tests failed"
   ],
   "last": {
-    "goal": "describe_permissions",
-    "kept": true,
-    "file": "core/kernel/permissions.py",
-    "ts": "2026-11-07T12:05:50.204388+00:00"
+    "goal": "describe_extra_tools",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T12:06:27.769695+00:00"
   },
-  "kept_n": 8
+  "kept_n": 0
 }

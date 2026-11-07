@@ -52,6 +52,9 @@ def fits(text: str) -> bool:
 def packed_count(text: str) -> int:
     return text.count('### ')
 
+def fits(text: str) -> bool:
+    return len(text or '') <= context_char_budget()
+
 def file_count(text: str) -> int:
     return text.count('### ')
 
@@ -64,13 +67,20 @@ def budget_of(model_ctx: int) -> int:
     return max(800, tokens * 4)
 
 def same_count(text: str) -> bool:
+    from core.kernel.context_budget import packed_count, file_count
     return packed_count(text) == file_count(text)
 
+def describe() -> str:
+    return 'context_budget'
+
 def within_budget(text: str) -> bool:
+    from core.kernel.context_budget import fits
     return fits(text)
 
 def count_diff(text: str) -> int:
+    from core.kernel.context_budget import packed_count, file_count
     return abs(packed_count(text) - file_count(text))
 
 def room_left(text: str) -> int:
+    from core.kernel.context_budget import budget_of
     return budget_of(8192) - len(text or '')

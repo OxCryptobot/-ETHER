@@ -47,6 +47,30 @@ def next_from(root: Path, done: set) -> Dict[str, str] | None:
                 "    assert within_budget('x' * 10000) is False\n"
             ),
         }
+    if "packed_count" in have and "file_count" in have and "count_diff" not in done:
+        return {
+            "id": "count_diff",
+            "file": file,
+            "symbol": "count_diff",
+            "test": (
+                "from core.kernel.context_budget import count_diff\n"
+                "def test_diff():\n"
+                "    assert count_diff('### a\\n### b') == 0\n"
+                "    assert count_diff('') == 0\n"
+            ),
+        }
+    if "budget_of" in have and "room_left" not in done:
+        return {
+            "id": "room_left",
+            "file": file,
+            "symbol": "room_left",
+            "test": (
+                "from core.kernel.context_budget import room_left\n"
+                "def test_room():\n"
+                "    assert room_left('') == 7200\n"
+                "    assert room_left('abcd') == 7196\n"
+            ),
+        }
     return None
 
 
@@ -62,6 +86,18 @@ def skeleton(goal: Dict[str, str]) -> str:
             "def within_budget(text: str) -> bool:\n"
             "    from core.kernel.context_budget import fits\n"
             "    return fits(text)"
+        )
+    if goal["id"] == "count_diff":
+        return (
+            "def count_diff(text: str) -> int:\n"
+            "    from core.kernel.context_budget import packed_count, file_count\n"
+            "    return abs(packed_count(text) - file_count(text))"
+        )
+    if goal["id"] == "room_left":
+        return (
+            "def room_left(text: str) -> int:\n"
+            "    from core.kernel.context_budget import budget_of\n"
+            "    return budget_of(8192) - len(text or '')"
         )
     return ""
 

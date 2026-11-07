@@ -19,6 +19,10 @@ def test_learning_composes_from_kept(tmp_path: Path) -> None:
     row = score(tmp_path)
     assert row["kept"] == 4
     assert row["learning"] is True
+    done = {"same_count", "within_budget"}
+    nxt = next_from(tmp_path, done)
+    assert nxt is not None
+    assert nxt["id"] == "count_diff"
 
 
 def test_the_batch_grows_after_success(tmp_path: Path) -> None:

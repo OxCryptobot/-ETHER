@@ -130,14 +130,11 @@ def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
 def next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
+    lessons = [str(item) for item in (state.get("lessons") or [])]
     failed = {
         name
-        for name in {
-            str(item).split(" ", 1)[-1].split(":", 1)[0]
-            for item in (state.get("lessons") or [])
-            if str(item).endswith("no edit")
-        }
-        if sum(str(item).endswith(f"{name}: no edit") for item in (state.get("lessons") or [])) >= 2
+        for name in {item.split(" ", 1)[-1].split(":", 1)[0] for item in lessons}
+        if sum(item.endswith(f"{name}: no edit") or item.endswith(f"{name}: tests failed") for item in lessons) >= 1
     }
     for item in goals():
         if item["id"] not in done and item["id"] not in failed:

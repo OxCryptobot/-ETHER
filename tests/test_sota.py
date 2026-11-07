@@ -36,6 +36,18 @@ def test_a_non_function_is_not_kept(tmp_path: Path) -> None:
     assert (target / "context_budget.py").read_text(encoding="utf-8") == before
 
 
+def test_a_failed_test_is_skipped(tmp_path: Path) -> None:
+    from core.agent.sota import next_goal, remember
+
+    kernel = tmp_path / "core" / "kernel"
+    kernel.mkdir(parents=True)
+    (kernel / "context_budget.py").write_text("def fits(text: str) -> bool:\n    return True\n", encoding="utf-8")
+    (kernel / "agent.py").write_text("def run() -> None:\n    return None\n", encoding="utf-8")
+    remember(tmp_path, "describe_context_budget", "tests failed", kept=False)
+    goal = next_goal(tmp_path)
+    assert goal is None or goal["id"] != "describe_context_budget"
+
+
 def test_the_queue_grows_when_empty(tmp_path: Path) -> None:
     from core.agent.sota import generate, recall, remember
 

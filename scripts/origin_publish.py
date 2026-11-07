@@ -86,6 +86,9 @@ def existing_paths(root: Path) -> List[str]:
         for rel in data.get("files") or []:
             if isinstance(rel, str) and (Path(root) / rel).is_file() and rel not in paths:
                 paths.append(rel)
+        budget = "core/kernel/context_budget.py"
+        if (Path(root) / budget).is_file() and budget not in paths:
+            paths.append(budget)
     return paths
 
 

@@ -68,3 +68,9 @@ def same_count(text: str) -> bool:
 
 def within_budget(text: str) -> bool:
     return fits(text)
+
+def count_diff(text: str) -> int:
+    return abs(packed_count(text) - file_count(text))
+
+def room_left(text: str) -> int:
+    return budget_of(8192) - len(text or '')

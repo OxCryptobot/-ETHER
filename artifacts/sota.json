@@ -54,23 +54,24 @@
     "describe_strangle",
     "find_fits",
     "describe_writer",
-    "budget_status"
+    "budget_status",
+    "fix_add"
   ],
   "lessons": [
-    "2026-11-07 describe_select_tests: tests passed",
     "2026-11-07 describe_self_learn: tests passed",
     "2026-11-07 describe_self_state: tests passed",
     "2026-11-07 describe_strangle: tests passed",
     "2026-11-07 describe_tombstone: tests failed",
     "2026-11-07 find_fits: tests passed",
     "2026-11-07 describe_writer: tests passed",
-    "2026-11-07 budget_status: tests passed"
+    "2026-11-07 budget_status: tests passed",
+    "2026-11-07 fix_add: tests passed"
   ],
   "last": {
-    "goal": "budget_status",
+    "goal": "fix_add",
     "kept": true,
     "file": "core/kernel/context_budget.py",
-    "ts": "2026-11-07T12:21:38.352555+00:00"
+    "ts": "2026-11-07T12:23:17.575962+00:00"
   },
   "kept_n": 1,
   "files": [

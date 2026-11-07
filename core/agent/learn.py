@@ -66,6 +66,28 @@ def skeleton(goal: Dict[str, str]) -> str:
     return ""
 
 
+def batch_size(root: Path) -> int:
+    """Grow when the last tick kept several. Shrink when it kept none. Cap at 10."""
+    path = Path(root) / "artifacts" / "sota.json"
+    if not path.is_file():
+        return 5
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return 5
+    last = data.get("last") if isinstance(data, dict) else {}
+    kept_n = int(data.get("kept_n") or 0) if isinstance(data, dict) else 0
+    if isinstance(last, dict) and last.get("kept") and kept_n == 0:
+        kept_n = 1
+    if kept_n >= 5:
+        return 8
+    if kept_n >= 3:
+        return 6
+    if kept_n == 0:
+        return 3
+    return 5
+
+
 def score(root: Path) -> Dict[str, Any]:
     """How far the loop has grown. Honest: only kept goals count."""
     have = kept(root)

@@ -262,11 +262,14 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
 
 
 def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
-    """Up to five. Only a function the model wrote, and only if the tests pass."""
+    """Adaptive batch. Grows when the last tick kept several. Stops on the first miss."""
+    from core.agent.learn import batch_size
+
     root = Path(root)
+    size = batch_size(root)
     kept: List[str] = []
     last: Dict[str, Any] = {"ok": False, "honest": True, "note": "none"}
-    for _ in range(5):
+    for _ in range(size):
         last = _one(root, ask)
         if last.get("ok"):
             kept.append(str(last.get("goal") or ""))
@@ -274,4 +277,8 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         break
     last["batch"] = kept
     last["kept_n"] = len(kept)
+    last["batch_size"] = size
+    state = load(root)
+    state["kept_n"] = len(kept)
+    save(root, state)
     return last

@@ -43,22 +43,22 @@
     "describe_poll"
   ],
   "lessons": [
-    "2026-11-07 describe_ops: tests passed",
     "2026-11-07 describe_ownership: tests passed",
     "2026-11-07 describe_parse_fail: tests passed",
     "2026-11-07 describe_permissions: tests passed",
     "2026-11-07 describe_extra_tools: tests failed",
     "2026-11-07 describe_plan: tests passed",
     "2026-11-07 describe_plan_store: tests passed",
-    "2026-11-07 describe_poll: tests passed"
+    "2026-11-07 describe_poll: tests passed",
+    "2026-11-07 describe_progress: wrong file"
   ],
   "last": {
-    "goal": "describe_poll",
-    "kept": true,
-    "file": "core/kernel/poll.py",
-    "ts": "2026-11-07T12:07:13.397229+00:00"
+    "goal": "describe_progress",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-07T12:11:54.608946+00:00"
   },
-  "kept_n": 3,
+  "kept_n": 0,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",

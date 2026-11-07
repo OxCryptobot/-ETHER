@@ -55,25 +55,26 @@
     "find_fits",
     "describe_writer",
     "budget_status",
-    "fix_add"
+    "fix_add",
+    "fix_clamp"
   ],
   "lessons": [
-    "2026-11-07 describe_self_learn: tests passed",
     "2026-11-07 describe_self_state: tests passed",
     "2026-11-07 describe_strangle: tests passed",
     "2026-11-07 describe_tombstone: tests failed",
     "2026-11-07 find_fits: tests passed",
     "2026-11-07 describe_writer: tests passed",
     "2026-11-07 budget_status: tests passed",
-    "2026-11-07 fix_add: tests passed"
+    "2026-11-07 fix_add: tests passed",
+    "2026-11-07 fix_clamp: tests passed"
   ],
   "last": {
-    "goal": "fix_add",
+    "goal": "fix_clamp",
     "kept": true,
     "file": "core/kernel/context_budget.py",
-    "ts": "2026-11-07T12:23:17.575962+00:00"
+    "ts": "2026-11-07T12:25:13.401682+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",

@@ -102,6 +102,7 @@ def tick() -> Dict[str, Any]:
         except Exception as exc:
             row["publish_error"] = type(exc).__name__
         if os.environ.get("GITHUB_ACTIONS") == "true":
+            _pull(root)
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             try:

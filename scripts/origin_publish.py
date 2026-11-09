@@ -142,6 +142,13 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
         if not stashed:
             row["note"] = "stash_failed"
             return row
+    if ahead > 100:
+        reset = runner([git, "reset", "--hard", "origin/main"])
+        if reset.returncode == 0:
+            row["ok"] = True
+            row["note"] = "reset_far"
+            row["hard_reset"] = True
+            return row
     if ahead:
         rebase = runner([git, "rebase", "origin/main"])
         if rebase.returncode != 0:

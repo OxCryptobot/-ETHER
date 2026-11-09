@@ -574,3 +574,6 @@ def checker_for(task_id: str) -> Callable[[str], bool]:
         if task["id"] == task_id:
             return task["check"]
     return lambda _src: False
+
+def describe() -> str:
+    return 'curriculum'

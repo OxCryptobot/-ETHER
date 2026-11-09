@@ -1,5 +1,5 @@
 {
-  "day": "2026-11-07",
+  "day": "2026-11-09",
   "goals": [
     "packed_count",
     "fits_empty",
@@ -56,25 +56,28 @@
     "describe_writer",
     "budget_status",
     "fix_add",
-    "fix_clamp"
+    "fix_clamp",
+    "describe_agent",
+    "describe_agent_prompt",
+    "describe_curriculum"
   ],
   "lessons": [
-    "2026-11-07 describe_tombstone: tests failed",
-    "2026-11-07 find_fits: tests passed",
-    "2026-11-07 describe_writer: tests passed",
     "2026-11-07 budget_status: tests passed",
     "2026-11-07 fix_add: tests passed",
     "2026-11-07 fix_clamp: tests passed",
     "2026-11-07 trace: search core\\batch_queue.py",
-    "2026-11-07 find_clamp: tests failed"
+    "2026-11-07 find_clamp: tests failed",
+    "2026-11-09 describe_agent: tests passed",
+    "2026-11-09 describe_agent_prompt: tests passed",
+    "2026-11-09 describe_curriculum: tests passed"
   ],
   "last": {
-    "goal": "find_clamp",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-07T12:35:07.376853+00:00"
+    "goal": "describe_curriculum",
+    "kept": true,
+    "file": "core/kernel/curriculum.py",
+    "ts": "2026-11-09T20:55:14.545953+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 3,
   "files": [
     "core/kernel/plan.py",
     "core/kernel/plan_store.py",
@@ -92,7 +95,10 @@
     "core/kernel/strangle.py",
     "core\\kernel\\context_budget.py",
     "core/kernel/writer.py",
-    "core/kernel/context_budget.py"
+    "core/kernel/context_budget.py",
+    "core/kernel/agent.py",
+    "core/kernel/agent_prompt.py",
+    "core/kernel/curriculum.py"
   ],
   "skipped": [
     "describe_extra_tools",

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-09T20:53:59.641288+00:00",
+  "ts": "2026-11-09T20:58:33.538336+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-09T20:54:00.223339+00:00",
+    "ts": "2026-11-09T20:58:34.055222+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-09T20:55:14.697126+00:00",
+    "ts": "2026-11-09T20:59:29.840584+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,7 +25,7 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   59a228bc12..3c86f7b8d6  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   88d30133ac..3da0ceae54  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -36,7 +36,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-09T20:54:22.098119+00:00",
+    "ts": "2026-11-09T20:58:49.002761+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -71,8 +71,8 @@
   "sota": {
     "ok": true,
     "honest": true,
-    "goal": "describe_curriculum",
-    "file": "core/kernel/curriculum.py",
+    "goal": "describe_repo_fail",
+    "file": "core/kernel/repo_fail.py",
     "tx": [
       "search",
       "edit",
@@ -83,25 +83,28 @@
     "tests_ok": true,
     "checked": true,
     "batch": [
-      "describe_agent",
-      "describe_agent_prompt",
-      "describe_curriculum"
+      "describe_day_learn",
+      "describe_edit_memory",
+      "describe_proactive",
+      "describe_product_loop",
+      "describe_read_gate",
+      "describe_repo_fail"
     ],
-    "kept_n": 3,
-    "batch_size": 3
+    "kept_n": 6,
+    "batch_size": 6
   },
   "env": {
-    "ts": "2026-11-09T20:55:14.571066+00:00",
+    "ts": "2026-11-09T20:59:29.730131+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 220.0,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-09T20:54:00.223339+00:00",
-    "kept": 59,
-    "last_goal": "describe_curriculum",
+    "alive_ts": "2026-11-09T20:58:34.055222+00:00",
+    "kept": 65,
+    "last_goal": "describe_repo_fail",
     "last_kept": true,
-    "batch_size": 3
+    "batch_size": 6
   },
   "agent": {
     "ok": true,
@@ -109,28 +112,21 @@
   },
   "day_learn": {
     "ok": true,
+    "skipped": true,
     "day": "2026-11-09",
-    "skipped": false,
-    "lesson": {
+    "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
       "smallest_experiment": "re-run targeted kernel pytest after one surgical patch",
       "confidence": 0.45,
       "job_id": "live_generate_probe_20261002",
       "schema": "ether_mem_v1"
-    },
-    "preserved": null,
-    "thinking": {
-      "before_action": "re-run targeted kernel pytest after one surgical patch",
-      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
-      "root_cause": "unknown",
-      "kept": false
     }
   },
   "proactive": {
     "ok": true,
     "queued": true,
-    "id": "retry_live_generate_probe_20261002",
-    "of": "live_generate_probe_20261002"
+    "id": "retry_exe_live_drain_now_20260922",
+    "of": "exe_live_drain_now_20260922"
   }
 }

@@ -19,3 +19,6 @@ def isolate(goal: str, context: str, fn: Callable[[Dict[str, str]], Any]) -> Dic
         "error": error,
         "result": result,
     }
+
+def describe() -> str:
+    return 'subagent'

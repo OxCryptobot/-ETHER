@@ -65,29 +65,29 @@
     "describe_proactive",
     "describe_product_loop",
     "describe_read_gate",
-    "describe_repo_fail"
+    "describe_repo_fail",
+    "describe_scale",
+    "describe_self_grow",
+    "describe_subagent"
   ],
   "lessons": [
-    "2026-11-09 describe_agent_prompt: tests passed",
-    "2026-11-09 describe_curriculum: tests passed",
-    "2026-11-09 describe_day_learn: tests passed",
     "2026-11-09 describe_edit_memory: tests passed",
     "2026-11-09 describe_proactive: tests passed",
     "2026-11-09 describe_product_loop: tests passed",
     "2026-11-09 describe_read_gate: tests passed",
-    "2026-11-09 describe_repo_fail: tests passed"
+    "2026-11-09 describe_repo_fail: tests passed",
+    "2026-11-09 describe_scale: tests passed",
+    "2026-11-09 describe_self_grow: tests passed",
+    "2026-11-09 describe_subagent: tests passed"
   ],
   "last": {
-    "goal": "describe_repo_fail",
+    "goal": "describe_subagent",
     "kept": true,
-    "file": "core/kernel/repo_fail.py",
-    "ts": "2026-11-09T20:59:29.706556+00:00"
+    "file": "core/kernel/subagent.py",
+    "ts": "2026-11-09T21:13:29.727212+00:00"
   },
   "kept_n": 6,
   "files": [
-    "core/kernel/redact.py",
-    "core/kernel/sandbox.py",
-    "core/kernel/score_write.py",
     "core/kernel/secret_scan.py",
     "core/kernel/select_tests.py",
     "core/kernel/self_learn.py",
@@ -104,7 +104,10 @@
     "core/kernel/proactive.py",
     "core/kernel/product_loop.py",
     "core/kernel/read_gate.py",
-    "core/kernel/repo_fail.py"
+    "core/kernel/repo_fail.py",
+    "core/kernel/scale.py",
+    "core/kernel/self_grow.py",
+    "core/kernel/subagent.py"
   ],
   "skipped": [
     "describe_extra_tools",

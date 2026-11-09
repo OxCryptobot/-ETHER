@@ -71,3 +71,6 @@ def advance(root: Path) -> Dict[str, Any]:
     }
     (art / "scale.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+def describe() -> str:
+    return 'scale'

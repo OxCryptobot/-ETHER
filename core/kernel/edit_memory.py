@@ -85,3 +85,6 @@ def recall(root: Path) -> str:
         return str(json.loads(path.read_text(encoding="utf-8")).get("text") or "")
     except Exception:
         return ""
+
+def describe() -> str:
+    return 'edit_memory'

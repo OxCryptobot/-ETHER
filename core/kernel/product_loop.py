@@ -256,3 +256,6 @@ def apply_reply(
         mapping = {str(rel): found[fn] for fn, rel in parts.items()}
         return run_files_edit(workspace, mapping, test_fn)
     return run_model_edit(workspace, rel, model_text, test_fn)
+
+def describe() -> str:
+    return 'product_loop'

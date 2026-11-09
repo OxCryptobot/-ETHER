@@ -59,32 +59,32 @@
     "fix_clamp",
     "describe_agent",
     "describe_agent_prompt",
-    "describe_curriculum"
+    "describe_curriculum",
+    "describe_day_learn",
+    "describe_edit_memory",
+    "describe_proactive",
+    "describe_product_loop",
+    "describe_read_gate",
+    "describe_repo_fail"
   ],
   "lessons": [
-    "2026-11-07 budget_status: tests passed",
-    "2026-11-07 fix_add: tests passed",
-    "2026-11-07 fix_clamp: tests passed",
-    "2026-11-07 trace: search core\\batch_queue.py",
-    "2026-11-07 find_clamp: tests failed",
-    "2026-11-09 describe_agent: tests passed",
     "2026-11-09 describe_agent_prompt: tests passed",
-    "2026-11-09 describe_curriculum: tests passed"
+    "2026-11-09 describe_curriculum: tests passed",
+    "2026-11-09 describe_day_learn: tests passed",
+    "2026-11-09 describe_edit_memory: tests passed",
+    "2026-11-09 describe_proactive: tests passed",
+    "2026-11-09 describe_product_loop: tests passed",
+    "2026-11-09 describe_read_gate: tests passed",
+    "2026-11-09 describe_repo_fail: tests passed"
   ],
   "last": {
-    "goal": "describe_curriculum",
+    "goal": "describe_repo_fail",
     "kept": true,
-    "file": "core/kernel/curriculum.py",
-    "ts": "2026-11-09T20:55:14.545953+00:00"
+    "file": "core/kernel/repo_fail.py",
+    "ts": "2026-11-09T20:59:29.706556+00:00"
   },
-  "kept_n": 3,
+  "kept_n": 6,
   "files": [
-    "core/kernel/plan.py",
-    "core/kernel/plan_store.py",
-    "core/kernel/poll.py",
-    "core/kernel/progress.py",
-    "core/kernel/provider.py",
-    "core/kernel/queue.py",
     "core/kernel/redact.py",
     "core/kernel/sandbox.py",
     "core/kernel/score_write.py",
@@ -98,7 +98,13 @@
     "core/kernel/context_budget.py",
     "core/kernel/agent.py",
     "core/kernel/agent_prompt.py",
-    "core/kernel/curriculum.py"
+    "core/kernel/curriculum.py",
+    "core/kernel/day_learn.py",
+    "core/kernel/edit_memory.py",
+    "core/kernel/proactive.py",
+    "core/kernel/product_loop.py",
+    "core/kernel/read_gate.py",
+    "core/kernel/repo_fail.py"
   ],
   "skipped": [
     "describe_extra_tools",

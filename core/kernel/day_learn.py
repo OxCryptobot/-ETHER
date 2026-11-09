@@ -70,3 +70,6 @@ def learn(root: Path, now: Optional[datetime] = None) -> Dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+def describe() -> str:
+    return 'day_learn'

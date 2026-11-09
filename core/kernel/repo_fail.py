@@ -849,3 +849,6 @@ def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any
     if "response_tail" not in row:
         row["response_tail"] = ""
     return row
+
+def describe() -> str:
+    return 'repo_fail'

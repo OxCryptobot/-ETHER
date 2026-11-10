@@ -120,6 +120,15 @@ def tick() -> Dict[str, Any]:
                 row["heal_error"] = type(exc).__name__
             row["keepalive"] = {"ok": True, "note": "runner_watch"}
             try:
+                from core.agent.learn import next_from
+                from core.agent.sota import load
+                state = load(root)
+                done = set(state.get("goals") or []) | set(state.get("skipped") or [])
+                nxt = next_from(root, done)
+                row["next_goal"] = nxt["id"] if nxt else "none"
+            except Exception as exc:
+                row["next_error"] = type(exc).__name__
+            try:
                 from core.agent.sota import run as sota_run
                 from scripts.live_edit_tx import _ask
 

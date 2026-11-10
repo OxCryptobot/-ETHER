@@ -108,8 +108,9 @@ def tick() -> Dict[str, Any]:
                 git, runner, _token = make_runner(root)
                 runner([git, "fetch", "origin"])
                 runner([git, "reset", "--hard", "origin/main"])
-            except Exception:
-                pass
+                row["reset"] = "ok"
+            except Exception as exc:
+                row["reset_error"] = type(exc).__name__
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             try:

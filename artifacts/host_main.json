@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-10T16:57:42.450553+00:00",
+  "ts": "2026-11-10T23:06:21.510070+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-10T16:57:42.894485+00:00",
+    "ts": "2026-11-10T23:06:21.801774+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-10T16:58:03.486116+00:00",
+    "ts": "2026-11-10T23:06:39.266809+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,14 +25,7 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   37b896fa52..fe8949fd12  HEAD -> main\n",
-    "sync_retry": {
-      "ok": true,
-      "hard_reset": false,
-      "ahead": 1,
-      "dirty": true,
-      "note": "stash_rebase"
-    }
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   572a7e0f56..39698eaa29  HEAD -> main\n"
   },
   "runner": {
     "ok": true,
@@ -43,7 +36,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-10T16:57:59.781129+00:00",
+    "ts": "2026-11-10T23:06:33.163070+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -84,13 +77,13 @@
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-10T16:58:03.369186+00:00",
+    "ts": "2026-11-10T23:06:39.204307+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 225.8,
+    "disk_free_gb": 225.1,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-10T16:57:42.894485+00:00",
+    "alive_ts": "2026-11-10T23:06:21.801774+00:00",
     "kept": 69,
     "last_goal": "describe_worktree",
     "last_kept": true,

@@ -1,5 +1,5 @@
 {
-  "day": "2026-11-09",
+  "day": "2026-11-10",
   "goals": [
     "packed_count",
     "fits_empty",
@@ -68,27 +68,27 @@
     "describe_repo_fail",
     "describe_scale",
     "describe_self_grow",
-    "describe_subagent"
+    "describe_subagent",
+    "describe_worktree"
   ],
   "lessons": [
-    "2026-11-09 describe_edit_memory: tests passed",
     "2026-11-09 describe_proactive: tests passed",
     "2026-11-09 describe_product_loop: tests passed",
     "2026-11-09 describe_read_gate: tests passed",
     "2026-11-09 describe_repo_fail: tests passed",
     "2026-11-09 describe_scale: tests passed",
     "2026-11-09 describe_self_grow: tests passed",
-    "2026-11-09 describe_subagent: tests passed"
+    "2026-11-09 describe_subagent: tests passed",
+    "2026-11-10 describe_worktree: tests passed"
   ],
   "last": {
-    "goal": "describe_subagent",
+    "goal": "describe_worktree",
     "kept": true,
-    "file": "core/kernel/subagent.py",
-    "ts": "2026-11-09T21:13:29.727212+00:00"
+    "file": "core/kernel/worktree.py",
+    "ts": "2026-11-10T15:24:57.476048+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/kernel/secret_scan.py",
     "core/kernel/select_tests.py",
     "core/kernel/self_learn.py",
     "core/kernel/self_state.py",
@@ -107,7 +107,8 @@
     "core/kernel/repo_fail.py",
     "core/kernel/scale.py",
     "core/kernel/self_grow.py",
-    "core/kernel/subagent.py"
+    "core/kernel/subagent.py",
+    "core/kernel/worktree.py"
   ],
   "skipped": [
     "describe_extra_tools",

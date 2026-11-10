@@ -41,3 +41,6 @@ def seal(root: Path, message: str, paths: list[str] | None = None) -> Dict[str, 
         check=False,
     )
     return {"rc": commit.returncode, "tail": (commit.stdout or commit.stderr or "")[-180:]}
+
+def describe() -> str:
+    return 'worktree'

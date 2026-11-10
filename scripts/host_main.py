@@ -103,6 +103,13 @@ def tick() -> Dict[str, Any]:
             row["publish_error"] = type(exc).__name__
         if os.environ.get("GITHUB_ACTIONS") == "true":
             _pull(root)
+            try:
+                from scripts.origin_publish import make_runner
+                git, runner, _token = make_runner(root)
+                runner([git, "fetch", "origin"])
+                runner([git, "reset", "--hard", "origin/main"])
+            except Exception:
+                pass
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             try:

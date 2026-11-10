@@ -97,3 +97,13 @@ def add(a: int, b: int) -> int:
 
 def clamp(n: int, lo: int, hi: int) -> int:
     return max(lo, min(hi, n))
+
+
+def slice_to_budget(text: str) -> str:
+    """A 4B cannot hold the repo. Keep the matching lines, not the file."""
+    from core.kernel.context_budget import budget_of
+    cap = budget_of(8192)
+    body = text or ""
+    if len(body) <= cap:
+        return body
+    return body[:cap]

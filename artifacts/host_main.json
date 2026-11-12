@@ -1,22 +1,31 @@
 {
-  "ts": "2026-11-12T06:14:29.824221+00:00",
+  "ts": "2026-11-12T07:16:10.770234+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-12T06:14:30.169456+00:00",
+    "ts": "2026-11-12T07:16:11.105841+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-12T06:14:47.693922+00:00",
+    "ts": "2026-11-12T07:16:27.844801+00:00",
     "os": "nt",
-    "ok": false,
+    "ok": true,
     "ahead": 0,
     "add_rc": 0,
     "commit_rc": 0,
-    "error": "TimeoutExpired"
+    "sync": {
+      "ok": true,
+      "hard_reset": false,
+      "ahead": 1,
+      "dirty": true,
+      "note": "stash_rebase"
+    },
+    "via": "gh_token_url",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   7743398fd7..8f5a1225f8  HEAD -> main\n"
   },
   "reset": "ok",
   "runner": {
@@ -28,7 +37,7 @@
     "note": "skipped_in_actions"
   },
   "heal": {
-    "ts": "2026-11-12T06:14:45.052046+00:00",
+    "ts": "2026-11-12T07:16:25.294660+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -70,13 +79,13 @@
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-12T06:14:47.576352+00:00",
+    "ts": "2026-11-12T07:16:27.760517+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 223.9,
+    "disk_free_gb": 223.6,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-12T06:14:30.169456+00:00",
+    "alive_ts": "2026-11-12T07:16:11.105841+00:00",
     "kept": 69,
     "last_goal": "describe_worktree",
     "last_kept": true,
@@ -88,19 +97,28 @@
   },
   "day_learn": {
     "ok": true,
-    "skipped": true,
     "day": "2026-11-12",
-    "preserved": {
+    "skipped": false,
+    "lesson": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
       "smallest_experiment": "re-run targeted kernel pytest after one surgical patch",
       "confidence": 0.45,
       "job_id": "live_generate_probe_20261002",
       "schema": "ether_mem_v1"
+    },
+    "preserved": null,
+    "thinking": {
+      "before_action": "re-run targeted kernel pytest after one surgical patch",
+      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
+      "root_cause": "unknown",
+      "kept": false
     }
   },
   "proactive": {
     "ok": true,
-    "queued": false
+    "queued": true,
+    "id": "retry_live_generate_probe_20261002",
+    "of": "live_generate_probe_20261002"
   }
 }

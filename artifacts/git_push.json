@@ -1,7 +1,7 @@
 {
-  "ts": "2026-11-14T11:15:02.592178+00:00",
+  "ts": "2026-11-14T12:15:53.585812+00:00",
   "os": "nt",
-  "ok": true,
+  "ok": false,
   "ahead": 0,
   "add_rc": 0,
   "commit_rc": 0,
@@ -13,6 +13,20 @@
     "note": "stash_rebase"
   },
   "via": "gh_token_url",
-  "push_rc": 0,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   cbf5e526a1..eb3b052aa2  HEAD -> main\n"
+  "push_rc": 1,
+  "stderr": "remote: fatal error in commit_refs_rules        \nTo https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]       HEAD -> main (fatal error in commit_refs_rules\n)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n",
+  "sync_retry": {
+    "ok": true,
+    "hard_reset": false,
+    "ahead": 1,
+    "dirty": true,
+    "note": "stash_rebase"
+  },
+  "worktree": {
+    "ok": false,
+    "hard_reset": false,
+    "note": "worktree",
+    "push_rc": 1,
+    "stderr": "remote: fatal error in commit_refs_rules        \nTo https://github.com/OxCryptobot/-ETHER.git\n ! [remote rejected]       HEAD -> main (fatal error in commit_refs_rules\n)\nerror: failed to push some refs to 'https://github.com/OxCryptobot/-ETHER.git'\n"
+  }
 }

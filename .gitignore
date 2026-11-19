@@ -70,3 +70,11 @@ Thumbs.db
 # Pre-commit audit-fast hook diagnostics (P2 fast gate writes this at repo root)
 .audit_health_precommit.json
 artifacts/keepalive.log
+
+# ETHER-Host supervisor runtime (never commit)
+artifacts/host.lock
+artifacts/tick.lock
+artifacts/*.lock.pid
+artifacts/host.stop
+artifacts/supervisor.tmp
+/out/

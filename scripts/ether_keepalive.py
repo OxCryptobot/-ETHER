@@ -1,68 +1,17 @@
-"""1650 keepalive — singleton + host_main."""
+"""Retired name. Kept so an old task/shortcut lands in the ONE supervisor.
+
+The single start path is scripts/host_supervisor.py via the ETHER-Host task
+(scripts/install_host.cmd). The supervisor's OS lock makes a second copy exit.
+"""
 from __future__ import annotations
-import json, os, time
+
+import sys
 from pathlib import Path
 
-def _alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    try:
-        if os.name == "nt":
-            import ctypes
-            h = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
-            if h:
-                ctypes.windll.kernel32.CloseHandle(h)
-                return True
-            return False
-        os.kill(pid, 0)
-        return True
-    except Exception:
-        return False
+if str(Path(__file__).resolve().parents[1]) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-def _lock(root: Path) -> bool:
-    path = root / "artifacts" / "keepalive.pid"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.is_file():
-        try:
-            old = int(path.read_text(encoding="utf-8").strip())
-        except Exception:
-            old = 0
-        if old and old != os.getpid() and _alive(old):
-            return False
-    path.write_text(str(os.getpid()), encoding="utf-8")
-    return True
-
-
-def tick():
-    """One writer pass. Same function the exe and the daemon call."""
-    from scripts.host_main import tick as host_tick
-    return host_tick()
-
-def main() -> None:
-    from scripts.host_main import _root
-    root = _root()
-    if not _lock(root):
-        print(json.dumps({"ok": True, "note": "keepalive_already"}))
-        return
-    while True:
-        try:
-            tick()
-        except Exception as exc:
-            try:
-                (root / "artifacts" / "keepalive_error.json").write_text(
-                    json.dumps({"ok": False, "error": type(exc).__name__}) + "\n",
-                    encoding="utf-8",
-                )
-            except Exception:
-                pass
-        try:
-            from core.kernel.poll import pending_count, poll_seconds
-            time.sleep(float(poll_seconds(pending_count())))
-        except Exception:
-            time.sleep(20)
+from scripts.host_supervisor import main, tick  # noqa: E402,F401
 
 if __name__ == "__main__":
-    from scripts.host_main import tick
-    print(json.dumps(tick(), default=str))
-    if os.name == "nt":
-        main()
+    raise SystemExit(main())

@@ -1,4 +1,8 @@
-"""Stop the old popup tasks. Arm one hidden runner watch. That watch does not run git."""
+"""Stop the legacy starter tasks. Arm one hidden runner watch. That watch does not run git.
+
+ETHER-Host (scripts/install_host.cmd -> scripts/host_supervisor.py) is the one start
+method and is in PROTECTED_TASKS: self-heal never deletes, ends or replaces it.
+"""
 from __future__ import annotations
 import os, subprocess
 from datetime import datetime, timezone
@@ -7,13 +11,26 @@ from typing import Any, Dict, List, Optional
 
 FLAGS = 0x08000000
 WATCH = "ETHER-RunnerWatch"
+# The ONE start method. Self-heal must never stop it (tests enforce this).
+HOST_TASK = "ETHER-Host"
+PROTECTED_TASKS = (HOST_TASK, WATCH, "ETHER-Runner")
+# Legacy starters that raced the writer or flashed consoles. Removed every tick.
 POPUP_TASKS = (
     "ETHER-Ensure",
     "ETHER-keepalive",
     "ETHER-keepalive-5m",
     "ETHER-keepalive-boot",
     "ETHER-Daemon",
+    "ETHER-Keepalive-Logon",
+    "ETHER-Writer",
+    "ETHER-App",
 )
+
+
+def stop_list() -> tuple:
+    """Legacy tasks to delete. Never contains a protected name."""
+    protected = {name.lower() for name in PROTECTED_TASKS}
+    return tuple(name for name in POPUP_TASKS if name.lower() not in protected)
 
 
 def keepalive_vbs(pyw: Path, keep: Path) -> str:
@@ -96,7 +113,7 @@ def arm() -> Dict[str, Any]:
     if os.name != "nt":
         return row
     stopped = {}
-    for name in POPUP_TASKS:
+    for name in stop_list():
         stopped[name] = _run(["schtasks", "/Delete", "/TN", name, "/F"])
     row["stopped"] = stopped
     root = _root()

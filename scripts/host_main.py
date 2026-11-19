@@ -52,6 +52,9 @@ def _pull(root: Path) -> None:
 def _ensure_daemon(root: Path) -> Dict[str, Any]:
     if os.environ.get("ETHER_IN_DAEMON") == "1":
         return {"ok": True, "note": "already_inside_daemon"}
+    if os.environ.get("ETHER_SUPERVISOR") == "1":
+        # ETHER-Host supervisor is the one long-lived loop; no second loop process.
+        return {"ok": True, "note": "supervisor_owns_loop"}
     pid_path = root / "memory" / "daemon" / "daemon.pid"
     if pid_path.is_file():
         try:
@@ -81,8 +84,52 @@ def _ensure_daemon(root: Path) -> Dict[str, Any]:
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__}
 
+def _learn(root: Path, row: Dict[str, Any]) -> None:
+    """next_goal + one honest SOTA batch. Same queue the runtime uses, so the
+    reported next_goal is the goal the batch will actually try."""
+    try:
+        from core.agent.sota import lost_kept, next_goal
+        nxt = next_goal(root)
+        row["next_goal"] = nxt["id"] if nxt else "none"
+        row["lost_kept"] = len(lost_kept(root))
+    except Exception as exc:
+        row["next_error"] = type(exc).__name__
+    try:
+        from core.agent.sota import run as sota_run
+        from scripts.live_edit_tx import _ask
+
+        def _code(prompt: str, n: int = 240) -> str:
+            return _ask(prompt, n=n, edit=True)
+
+        row["sota"] = sota_run(root, _code)
+        from core.agent.env import write as env_write
+
+        row["env"] = env_write(root)
+    except Exception as exc:
+        row["runtime_error"] = type(exc).__name__
+    row["agent"] = {"ok": True, "note": "runtime owns the edit"}
+
+
 def tick() -> Dict[str, Any]:
+    """One writer pass. Serialised across processes by artifacts/tick.lock.
+
+    The supervisor, the optional autonomy-host runner and the old daemon all call
+    this; the OS lock guarantees at most one pass touches git/attach at a time.
+    """
     root = _root()
+    from scripts.host_lock import HostLock
+
+    lock = HostLock(root / "artifacts" / "tick.lock")
+    if not lock.acquire():
+        return {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name,
+                "ok": True, "note": "tick_busy"}
+    try:
+        return _tick(root)
+    finally:
+        lock.release()
+
+
+def _tick(root: Path) -> Dict[str, Any]:
     os.environ["ETHER_ROOT"] = str(root)
     row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name}
     if os.name == "nt":
@@ -103,14 +150,9 @@ def tick() -> Dict[str, Any]:
             row["publish_error"] = type(exc).__name__
         if os.environ.get("GITHUB_ACTIONS") == "true":
             _pull(root)
-            try:
-                from scripts.origin_publish import make_runner
-                git, runner, _token = make_runner(root)
-                runner([git, "fetch", "origin"])
-                runner([git, "reset", "--hard", "origin/main"])
-                row["reset"] = "ok"
-            except Exception as exc:
-                row["reset_error"] = type(exc).__name__
+            # No hard reset: sync_writer (in _pull) rebases and never discards a kept
+            # edit that has not reached origin yet (lost-kept goals, 2026-11-19).
+            row["reset"] = {"skipped": True, "note": "sync_writer_only"}
             row["runner"] = {"ok": True, "note": "already_actions_runner"}
             row["daemon"] = {"ok": True, "note": "skipped_in_actions"}
             try:
@@ -119,28 +161,7 @@ def tick() -> Dict[str, Any]:
             except Exception as exc:
                 row["heal_error"] = type(exc).__name__
             row["keepalive"] = {"ok": True, "note": "runner_watch"}
-            try:
-                # Same picker the run uses, so the published next_goal is the
-                # goal this tick will actually attempt.
-                from core.agent.sota import next_goal as sota_next_goal
-                nxt = sota_next_goal(root)
-                row["next_goal"] = nxt["id"] if nxt else "none"
-            except Exception as exc:
-                row["next_error"] = type(exc).__name__
-            try:
-                from core.agent.sota import run as sota_run
-                from scripts.live_edit_tx import _ask
-
-                def _code(prompt: str, n: int = 240) -> str:
-                    return _ask(prompt, n=n, edit=True)
-
-                row["sota"] = sota_run(root, _code)
-                from core.agent.env import write as env_write
-
-                row["env"] = env_write(root)
-            except Exception as exc:
-                row["runtime_error"] = type(exc).__name__
-            row["agent"] = {"ok": True, "note": "runtime owns the edit"}
+            _learn(root, row)
         else:
             _pull(root)
             try:
@@ -181,6 +202,7 @@ def tick() -> Dict[str, Any]:
                 row["live"] = drain_live(max_jobs=1)
             except Exception as exc:
                 row["live_error"] = type(exc).__name__
+            _learn(root, row)
         try:
             from core.kernel.day_learn import learn
             row["day_learn"] = learn(root)

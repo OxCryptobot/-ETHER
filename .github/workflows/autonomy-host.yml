@@ -34,7 +34,7 @@ jobs:
       - name: Checkout (control scripts)
         uses: actions/checkout@v4
 
-      - name: One tick
+      - name: Ensure ETHER-Host supervisor
         run: |
           $ErrorActionPreference = "Continue"
           $env:PYTHONPATH = $env:GITHUB_WORKSPACE
@@ -50,7 +50,14 @@ jobs:
           }
           $py = Join-Path $env:ETHER_ROOT ".venv\Scripts\python.exe"
           if (-not (Test-Path $py)) { throw "venv python missing: $py" }
-          & $py -u scripts/host_main.py
+          # ETHER-Host (scripts/host_supervisor.py) is the one writer loop. This job only
+          # makes sure it runs. Inline tick only while ETHER-Host is not installed yet.
+          & $py scripts/host_ctl.py ci
+          $rc = $LASTEXITCODE
+          if ($rc -eq 10) {
+            Write-Host "ETHER-Host not installed: legacy inline tick (transition only)"
+            & $py -u scripts/host_main.py
+          }
           Write-Host "EXIT $LASTEXITCODE"
           Write-Host "--- app_alive ---"
           Get-Content (Join-Path $env:ETHER_ROOT "artifacts\app_alive.json") -ErrorAction SilentlyContinue

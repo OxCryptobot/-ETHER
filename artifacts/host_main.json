@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-19T22:16:54.999351+00:00",
+  "ts": "2026-11-19T22:17:43.819283+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-19T22:17:08.335575+00:00",
+    "ts": "2026-11-19T22:17:56.452591+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-19T22:17:23.948856+00:00",
+    "ts": "2026-11-19T22:18:00.970305+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,10 +25,10 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fecee92090..9eb2299760  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   e675ae9b37..d778abb56b  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-19T22:17:05.108334+00:00",
+    "ts": "2026-11-19T22:17:53.200897+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -69,7 +69,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-19T22:17:06.577762+00:00",
+    "ts": "2026-11-19T22:17:54.547981+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-19T22:17:08.210142+00:00",
+    "updated": "2026-11-19T22:17:56.342477+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -124,13 +124,13 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "describe_parse_fail",
-  "lost_kept": 1,
-  "seed_depth": 58,
+  "next_goal": "describe_loop_bandit_credit",
+  "lost_kept": 0,
+  "seed_depth": 55,
   "sota": {
     "ok": false,
     "honest": false,
-    "goal": "describe_loop_ast_intel",
+    "goal": "describe_loop_bandit_credit",
     "note": "tests failed",
     "learn": {
       "arm": "default",
@@ -141,26 +141,22 @@
         "arm": "default"
       }
     },
-    "batch": [
-      "describe_parse_fail",
-      "describe_loop_agent_loop_path",
-      "describe_loop_agentic"
-    ],
-    "kept_n": 3,
-    "batch_size": 8
+    "batch": [],
+    "kept_n": 0,
+    "batch_size": 6
   },
   "env": {
-    "ts": "2026-11-19T22:17:23.806358+00:00",
+    "ts": "2026-11-19T22:18:00.806180+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 230.8,
+    "disk_free_gb": 230.9,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-19T22:17:08.335575+00:00",
+    "alive_ts": "2026-11-19T22:17:56.452591+00:00",
     "kept": 73,
-    "last_goal": "describe_loop_ast_intel",
+    "last_goal": "describe_loop_bandit_credit",
     "last_kept": false,
-    "batch_size": 3
+    "batch_size": 0
   },
   "agent": {
     "ok": true,

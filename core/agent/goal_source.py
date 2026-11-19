@@ -258,7 +258,7 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
     target, symbol_hint = _target_from_test(root, nodeid)
     if target and symbol_hint:
         return _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import"), "goal"
-    suspect = _sbfl_target(root, nodeid, spectra)
+    suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra)
     if suspect:
         goal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
         if goal is not None:
@@ -271,6 +271,9 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
     if _repo_frames(root, text):
         return None, "no_symbol"
     return None, "no_repo_target"
+
+
+SBFL_MIN = 0.3  # below this the suspect is mostly noise (shared helpers)
 
 
 def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]]) -> Optional[tuple]:
@@ -287,6 +290,8 @@ def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]]) -> 
     imported = {m.replace(".", "/") + ".py" for m in re.findall(r"(?:from|import) ([A-Za-z_][\w.]*)", test_src)}
     best = None
     for score, order, rel, qual in ochiai(spectra, nodeid):
+        if score < SBFL_MIN:
+            break
         if protected(rel) or Path(rel).name.startswith("_") or not (Path(root) / rel).is_file():
             continue
         if qual.count(".") > 1 or not _is_function(root, rel, qual):

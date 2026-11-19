@@ -88,10 +88,12 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
     """next_goal + one honest SOTA batch. Same queue the runtime uses, so the
     reported next_goal is the goal the batch will actually try."""
     try:
-        from core.agent.sota import lost_kept, next_goal
-        nxt = next_goal(root)
+        from core.agent.sota import lost_kept, next_goal as sota_next_goal
+        nxt = sota_next_goal(root)
         row["next_goal"] = nxt["id"] if nxt else "none"
         row["lost_kept"] = len(lost_kept(root))
+        from core.agent.sota import seed_depth
+        row["seed_depth"] = seed_depth(root)
     except Exception as exc:
         row["next_error"] = type(exc).__name__
     try:

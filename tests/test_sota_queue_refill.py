@@ -60,4 +60,25 @@ def test_requeued_goal_that_fails_again_is_not_retried(tmp_path: Path) -> None:
 def test_host_main_reports_the_goal_the_batch_will_try() -> None:
     text = Path("scripts/host_main.py").read_text(encoding="utf-8")
     learn = text.split("def _learn(", 1)[1].split("def tick(", 1)[0]
-    assert "next_goal(root)" in learn and "next_from(" not in learn
+    assert "sota_next_goal(root)" in learn and "next_from(" not in learn
+
+
+def test_ladder_generator_seeds_other_packages_after_kernel(tmp_path: Path) -> None:
+    state = {"goals": FIXED + LADDER_DONE + ["find_add", "next_bug", "describe_context_budget"],
+             "skipped": ["find_clamp"], "lessons": []}
+    budget = BUDGET + "def add_name():\n    return 'add'\n\ndef failing_test():\n    return 'found'\n" \
+        + "def describe():\n    return 'context_budget'\n"
+    root = _repo(tmp_path, state, budget)
+    loop = tmp_path / "core" / "loop"
+    loop.mkdir()
+    (loop / "worktree.py").write_text("X = 1\n", encoding="utf-8")
+    agent = tmp_path / "core" / "agent"
+    agent.mkdir()
+    (agent / "sota.py").write_text("X = 1\n", encoding="utf-8")
+    from core.agent.sota import seed_depth
+
+    assert seed_depth(root) == 1  # core/agent (the writer's brain) is never seeded
+    goal = next_goal(root)
+    assert goal["id"] == "describe_loop_worktree"  # no collision with kernel describe_worktree
+    assert goal["file"] == "core/loop/worktree.py"
+    assert "from core.loop.worktree import describe" in goal["test"]

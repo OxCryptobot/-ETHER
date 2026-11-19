@@ -103,34 +103,59 @@ def recall(root: Path) -> str:
     return lessons[-1] if lessons else ""
 
 
+# Ladder generator: after the fixed list and the learn.py ladder, seed goals from
+# repo state. Each package gets its own id prefix so equal stems never collide.
+# core/agent (the writer's own brain) and scripts/ are never seeded.
+SEED_DIRS = (("core/kernel", "describe_"), ("core/loop", "describe_loop_"), ("core/spine", "describe_spine_"))
+
+
+def describe_goal(rel_dir: str, prefix: str, name: str) -> Dict[str, str]:
+    mod = rel_dir.replace("/", ".") + "." + name
+    return {
+        "id": f"{prefix}{name}",
+        "file": f"{rel_dir}/{name}.py",
+        "symbol": "describe",
+        "test": (
+            f"from {mod} import describe\n"
+            "def test_describe():\n"
+            f"    assert describe() == '{name}'\n"
+        ),
+    }
+
+
 def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
-    """When the fixed list is done, pick the next kernel file that has no describe."""
-    kernel = Path(root) / "core" / "kernel"
-    if not kernel.is_dir():
-        return None
-    for path in sorted(kernel.glob("*.py")):
-        name = path.stem
-        goal_id = f"describe_{name}"
-        if goal_id in done or goal_id in failed or name.startswith("_"):
+    """When the fixed list and the ladder are done, pick the next module with no describe."""
+    for rel_dir, prefix in SEED_DIRS:
+        pkg = Path(root) / rel_dir
+        if not pkg.is_dir():
             continue
-        body = path.read_text(encoding="utf-8", errors="ignore")
-        if "def describe" in body:
-            continue
-        mod = f"core.kernel.{name}"
-        return {
-            "id": goal_id,
-            "file": f"core/kernel/{name}.py",
-            "symbol": "describe",
-            "test": (
-                f"from {mod} import describe\n"
-                "def test_describe():\n"
-                f"    assert describe() == '{name}'\n"
-            ),
-        }
+        for path in sorted(pkg.glob("*.py")):
+            name = path.stem
+            goal_id = f"{prefix}{name}"
+            if goal_id in done or goal_id in failed or name.startswith("_"):
+                continue
+            body = path.read_text(encoding="utf-8", errors="ignore")
+            if "def describe" in body:
+                continue
+            return describe_goal(rel_dir, prefix, name)
     return None
 
 
-DESCRIBE_DIRS = ("core/kernel",)
+def seed_depth(root: Path) -> int:
+    """How many repo-state goals generate() can still hand out (for host_main.json)."""
+    state = load(root)
+    done = {str(item) for item in (state.get("goals") or [])}
+    failed = {str(item) for item in (state.get("skipped") or [])}
+    n = 0
+    for rel_dir, prefix in SEED_DIRS:
+        pkg = Path(root) / rel_dir
+        for path in sorted(pkg.glob("*.py")) if pkg.is_dir() else []:
+            gid = f"{prefix}{path.stem}"
+            if path.stem.startswith("_") or gid in done or gid in failed:
+                continue
+            if "def describe" not in path.read_text(encoding="utf-8", errors="ignore"):
+                n += 1
+    return n
 
 
 def _defines(root: Path, rel: str, symbol: str) -> bool:
@@ -150,11 +175,15 @@ def goal_site(goal_id: str) -> tuple | None:
 
     if goal_id in LADDER:
         return LADDER[goal_id]
-    if goal_id.startswith("describe_"):
-        name = goal_id[len("describe_"):]
-        for base in DESCRIBE_DIRS:
-            rel = f"{base}/{name}.py"
-            return rel, "describe"
+    site = _describe_site(goal_id)
+    return (site[0] + f"/{site[2]}.py", "describe") if site else None
+
+
+def _describe_site(goal_id: str) -> tuple | None:
+    """(rel_dir, prefix, name) for a describe goal id; longest prefix wins."""
+    for rel_dir, prefix in sorted(SEED_DIRS, key=lambda x: -len(x[1])):
+        if goal_id.startswith(prefix) and len(goal_id) > len(prefix):
+            return rel_dir, prefix, goal_id[len(prefix):]
     return None
 
 
@@ -182,19 +211,9 @@ def _requeue(root: Path, goal_id: str) -> Dict[str, str] | None:
     for item in goals():
         if item["id"] == goal_id:
             return item
-    if goal_id.startswith("describe_"):
-        name = goal_id[len("describe_"):]
-        return {
-            "id": goal_id,
-            "file": f"core/kernel/{name}.py",
-            "symbol": "describe",
-            "requeued": "lost_kept",
-            "test": (
-                f"from core.kernel.{name} import describe\n"
-                "def test_describe():\n"
-                f"    assert describe() == '{name}'\n"
-            ),
-        }
+    site = _describe_site(goal_id)
+    if site is not None:
+        return {**describe_goal(*site), "requeued": "lost_kept"}
     return None
 
 

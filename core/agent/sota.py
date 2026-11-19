@@ -146,7 +146,11 @@ def next_goal(root: Path) -> Dict[str, str] | None:
             return item
     from core.agent.learn import next_from
 
-    learned = next_from(root, done)
+    # A skipped rung must not block the rungs after it. Passing only `done`
+    # made next_from return the first skipped rung (find_clamp), which was then
+    # dropped, so the ladder never reached find_add and the tick said
+    # "queue empty" while host_main showed next_goal: find_add.
+    learned = next_from(root, done | failed)
     if learned is not None and learned["id"] not in failed:
         return learned
     return generate(root, done, failed)
@@ -214,7 +218,35 @@ def remember(root: Path, goal: str, lesson: str, *, kept: bool, file: str = "") 
     save(root, state)
 
 
+_INFRA_ERRORS = (ConnectionError, TimeoutError, OSError)
+
+
+def _guard(ask: Callable[..., str], seen: Dict[str, str]) -> Callable[..., str]:
+    """Record an infra outage. An outage is not a lesson and must not skip a goal."""
+
+    def wrapped(prompt: str, n: int = 240) -> str:
+        try:
+            return ask(prompt, n=n)
+        except _INFRA_ERRORS as exc:
+            seen.setdefault("error", type(exc).__name__)
+            raise
+
+    return wrapped
+
+
+def _infra(goal: Dict[str, str], seen: Dict[str, str]) -> Dict[str, Any]:
+    return {
+        "ok": False,
+        "honest": True,
+        "infra": True,
+        "goal": goal["id"],
+        "note": f"infra: {seen.get('error')}",
+    }
+
+
 def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
+    seen: Dict[str, str] = {}
+    ask = _guard(ask, seen)
     goal = next_goal(root)
     if goal is None:
         return {"ok": False, "honest": True, "note": "queue empty"}
@@ -269,18 +301,27 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         text = row.get("text") or ""
         used_tool = bool(row.get("used"))
     except Exception as exc:
+        if seen:
+            return _infra(goal, seen)
         return {"ok": False, "honest": False, "goal": goal["id"], "error": str(exc)[:200]}
+    if seen and not text.strip():
+        return _infra(goal, seen)
     from core.agent.skills import call
 
     tool = call(root, text)
     if tool is not None and tool.get("skill") == "search" and tool.get("hits"):
         used_tool = True
-        hit = tool["hits"][0]
-        if find and hit != goal["file"]:
-            goal = {**goal, "file": hit}
-            path = Path(root) / hit
-            original = path.read_text(encoding="utf-8") if path.is_file() else original
-        text = ask(f"Found {hit}. Write only this:\n{body or ('def ' + goal['symbol'])}\n", n=240)
+        hits = [str(item).replace("\\", "/") for item in tool["hits"]]
+        # The goal's test imports from goal["file"]; editing another file can
+        # never pass. Keep the target and record what the search found.
+        hit = goal["file"] if goal["file"] in hits else hits[0]
+        try:
+            text = ask(
+                f"Found {hit}. Write only this:\n{body or ('def ' + goal['symbol'])}\n", n=240)
+        except Exception:
+            if seen:
+                return _infra(goal, seen)
+            raise
     if text.strip().startswith("READ") or text.strip().startswith("{"):
         try:
             text = ask("Copy this and nothing else:\n" + prompt, n=240)
@@ -297,6 +338,8 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             start = text.find("def ")
             fn = text[start:].strip() if start >= 0 else ""
     if not fn.startswith(f"def {goal['symbol']}"):
+        if seen:
+            return _infra(goal, seen)
         remember(root, goal["id"], "no edit", kept=False)
         return {"ok": False, "honest": False, "goal": goal["id"], "note": "no function", "reply": text[-200:]}
     new = original.rstrip() + "\n\n" + fn + "\n"

@@ -9,16 +9,29 @@ Skill = Callable[..., Dict[str, Any]]
 
 
 def search(root: Path, query: str) -> Dict[str, Any]:
-    """Find a symbol. Returns the first hit, not the file."""
+    """Find a top-level symbol. Exact name, stable order, posix paths.
+
+    A substring match on "def add" hit nested helpers like `def add_lesson` and
+    the ladder's own skeleton strings, and rglob order differs per OS. That sent
+    find_* goals to the wrong file.
+    """
+    import re
+
     root = Path(root)
+    name = str(query or "").strip()
+    if name.startswith("def ") or name.startswith("class "):
+        name = name.split(" ", 1)[1].strip()
+    if not name or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+        return {"ok": False, "skill": "search", "hits": [], "reason": "not a symbol"}
+    pattern = re.compile(rf"^(?:async\s+def|def|class)\s+{re.escape(name)}\b", re.MULTILINE)
     hits = []
-    for path in (root / "core").rglob("*.py"):
+    for path in sorted((root / "core").rglob("*.py")):
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
-        if f"def {query}" in text or f"class {query}" in text:
-            hits.append(str(path.relative_to(root)))
+        if pattern.search(text):
+            hits.append(path.relative_to(root).as_posix())
             if len(hits) >= 3:
                 break
     return {"ok": bool(hits), "skill": "search", "hits": hits}

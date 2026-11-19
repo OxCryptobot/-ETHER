@@ -52,9 +52,6 @@ def fits(text: str) -> bool:
 def packed_count(text: str) -> int:
     return text.count('### ')
 
-def fits(text: str) -> bool:
-    return len(text or '') <= context_char_budget()
-
 def file_count(text: str) -> int:
     return text.count('### ')
 
@@ -99,11 +96,29 @@ def clamp(n: int, lo: int, hi: int) -> int:
     return max(lo, min(hi, n))
 
 
-def slice_to_budget(text: str) -> str:
-    """A 4B cannot hold the repo. Keep the matching lines, not the file."""
-    from core.kernel.context_budget import budget_of
-    cap = budget_of(8192)
+def slice_to_budget(text: str, query: str = "", cap: int | None = None) -> str:
+    """A 4B cannot hold the repo. Keep the matching lines, not the file.
+
+    The cap is the same one is_over() checks (context_char_budget, which honours
+    ETHER_MODEL_CTX). The old fixed budget_of(8192) cap returned 7200 chars even
+    when the host ran a smaller context, so a sliced prompt was still over the cap.
+    """
+    limit = context_char_budget() if cap is None else max(0, int(cap))
     body = text or ""
-    if len(body) <= cap:
+    if len(body) <= limit:
         return body
-    return body[:cap]
+    needle = (query or "").strip().lower()
+    if needle:
+        kept: list[str] = []
+        used = 0
+        for line in body.splitlines():
+            if needle not in line.lower():
+                continue
+            extra = len(line) + (1 if kept else 0)
+            if used + extra > limit:
+                break
+            kept.append(line)
+            used += extra
+        if kept:
+            return "\n".join(kept)
+    return body[:limit]

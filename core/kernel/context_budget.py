@@ -128,3 +128,6 @@ def add_name() -> str:
 
 def failing_test() -> str:
     return 'found'
+
+def clamp_name() -> str:
+    return 'clamp'

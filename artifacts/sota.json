@@ -90,28 +90,28 @@
     "describe_loop_medic",
     "describe_loop_plan_drive",
     "describe_loop_retrieve",
-    "describe_loop_stages"
+    "describe_loop_stages",
+    "find_clamp",
+    "describe_spine_state_io"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_tools_avail: tests failed",
-    "2026-11-19 describe_loop_traces: tests failed",
-    "2026-11-19 describe_loop_verify_legacy: tests failed",
     "2026-11-19 describe_loop_walk_fixture: tests failed",
     "2026-11-19 describe_loop_worktree: tests failed",
     "2026-11-19 describe_extra_tools: tests failed",
     "2026-11-19 describe_loop_worktree_worker: tests failed",
-    "2026-11-19 describe_tombstone: tests failed"
+    "2026-11-19 describe_tombstone: tests failed",
+    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"clamp\"",
+    "2026-11-19 find_clamp: tests passed via tool",
+    "2026-11-19 describe_spine_state_io: tests passed"
   ],
   "last": {
-    "goal": "describe_tombstone",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-19T22:44:02.011149+00:00"
+    "goal": "describe_spine_state_io",
+    "kept": true,
+    "file": "core/spine/state_io.py",
+    "ts": "2026-11-19T22:45:01.500856+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 2,
   "files": [
-    "core/kernel/parse_fail.py",
-    "core/loop/agent_loop_path.py",
     "core/loop/agentic.py",
     "core/loop/fail_run.py",
     "core/loop/finalize_legacy.py",
@@ -129,7 +129,9 @@
     "core/loop/medic.py",
     "core/loop/plan_drive.py",
     "core/loop/retrieve.py",
-    "core/loop/stages.py"
+    "core/loop/stages.py",
+    "core/kernel/context_budget.py",
+    "core/spine/state_io.py"
   ],
   "skipped": [
     "describe_loop_ast_intel",

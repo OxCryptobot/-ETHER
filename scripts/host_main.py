@@ -112,8 +112,9 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
 
         row["sota"] = sota_run(root, _code)
         try:
-            from core.agent.outcome import summary as learn_summary
+            from core.agent.outcome import publish_summary, summary as learn_summary
             row["learning"] = learn_summary(root)
+            row["learning_published"] = publish_summary(root)
         except Exception as exc:
             row["learning_error"] = type(exc).__name__
         from core.agent.env import write as env_write
@@ -205,7 +206,8 @@ def _tick(root: Path) -> Dict[str, Any]:
                 from core.kernel.plan import heartbeat_plan
                 row["plan"] = heartbeat_plan(stale=False, ollama=bool(row.get("ollama")))
             except Exception as exc:
-                row["plan_error"] = type(exc).__name__
+                # Name + message: "ImportError" alone hid a deleted heartbeat_plan for 12 days.
+                row["plan_error"] = f"{type(exc).__name__}: {str(exc)[:160]}"
             try:
                 from scripts.ether_app import mark_alive
                 row["alive"] = mark_alive()

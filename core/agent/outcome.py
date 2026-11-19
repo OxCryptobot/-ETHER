@@ -321,3 +321,90 @@ def summary(root: Path) -> Dict[str, Any]:
         "by_kind": {k: sum(1 for r in graded if (r.get("goal_kind") or "legacy") == k and r.get("kind") == "pass")
                     for k in sorted({(r.get("goal_kind") or "legacy") for r in graded})},
     }
+
+
+# ---------------------------------------------------------------- published summary (batch 3)
+
+SUMMARY_PATH = "artifacts/learning_summary.json"
+SUMMARY_MAX_BYTES = 16384
+SUMMARY_RECENT = 25
+_SAFE_ID = __import__("re").compile(r"[^A-Za-z0-9_.:\-/\[\]]+")
+_SAFE_FIELDS = ("ts", "goal", "arm", "goal_kind", "kind", "reward", "regressions", "prompt_chars", "spoiler",
+                "tests_ok")
+
+
+def _safe(value: Any) -> Any:
+    if isinstance(value, bool) or value is None:
+        return value
+    if isinstance(value, (int, float)):
+        return round(value, 4) if isinstance(value, float) else value
+    return _SAFE_ID.sub("_", str(value))[:80]
+
+
+def summary_doc(root: Path) -> Dict[str, Any]:
+    """Learning, visible from GitHub. Whitelisted fields only: no prompts, replies, paths
+    outside the repo, env, or tokens. memory/ stays private; this is a derived view."""
+    rows = trajectories(root)
+    graded = [r for r in rows if r.get("kind") in ("pass", "fail")]
+    arms: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for r in graded:
+        kind = _safe(r.get("goal_kind") or "legacy")
+        cell = arms.setdefault(kind, {}).setdefault(_safe(r.get("arm") or "?"),
+                                                    {"pulls": 0, "passes": 0, "reward_sum": 0.0, "regressions": 0})
+        cell["pulls"] += 1
+        cell["passes"] += 1 if r.get("kind") == "pass" else 0
+        cell["reward_sum"] += float(r.get("reward") or 0.0)
+        cell["regressions"] += int(r.get("regressions") or 0)
+    for kind in arms.values():
+        for cell in kind.values():
+            cell["pass_rate"] = round(cell["passes"] / cell["pulls"], 3) if cell["pulls"] else None
+            cell["mean_reward"] = round(cell.pop("reward_sum") / cell["pulls"], 3) if cell["pulls"] else None
+    real = [r for r in graded if (r.get("goal_kind") or "legacy") != "legacy"]
+    doc: Dict[str, Any] = {
+        "schema": 1,
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "totals": {
+            "trajectories": len(rows),
+            "graded": len(graded),
+            "passes": sum(1 for r in graded if r.get("kind") == "pass"),
+            "real_graded": len(real),
+            "real_passes": sum(1 for r in real if r.get("kind") == "pass"),
+            "regressions_reverted": sum(1 for r in rows if int(r.get("regressions") or 0) > 0),
+            "spoiler_share": round(sum(1 for r in graded if r.get("spoiler")) / len(graded), 3) if graded else None,
+        },
+        "explore": {"legacy": explore_enabled(), "real": explore_enabled({"kind": "fix_test"})},
+        "promoted": {_safe(k): _safe(v.get("arm") if isinstance(v, dict) else v)
+                     for k, v in list((promoted(root) or {}).items())[:20]},
+        "arms": arms,
+        "recent": [{f: _safe(r.get(f)) for f in _SAFE_FIELDS if f in r} for r in rows[-SUMMARY_RECENT:]],
+    }
+    try:
+        from core.agent import goal_source
+
+        data = goal_source.load_index(root)
+        reasons: Dict[str, int] = {}
+        for why in (data.get("dropped") or {}).values():
+            reasons[_safe(why)] = reasons.get(_safe(why), 0) + 1
+        doc["real_queue"] = {"open": len(goal_source.ranked(root)), "done": len(data.get("done") or []),
+                             "dropped": reasons}
+    except Exception:
+        pass
+    return doc
+
+
+def publish_summary(root: Path) -> Dict[str, Any]:
+    """Write artifacts/learning_summary.json (atomic, <= SUMMARY_MAX_BYTES)."""
+    doc = summary_doc(root)
+    text = json.dumps(doc, indent=1, sort_keys=True)
+    while len(text.encode("utf-8")) > SUMMARY_MAX_BYTES and doc["recent"]:
+        doc["recent"] = doc["recent"][len(doc["recent"]) // 2 + 1:] if len(doc["recent"]) > 1 else []
+        text = json.dumps(doc, indent=1, sort_keys=True)
+    if len(text.encode("utf-8")) > SUMMARY_MAX_BYTES:
+        doc["arms"] = {"truncated": True}
+        text = json.dumps(doc, indent=1, sort_keys=True)
+    path = Path(root) / SUMMARY_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+    return {"ok": True, "bytes": len(text) + 1, "graded": doc["totals"]["graded"]}

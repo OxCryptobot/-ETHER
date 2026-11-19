@@ -6,6 +6,22 @@ from pathlib import Path
 from typing import Any, Dict
 
 
+# Ladder goal -> (file, symbol). Used to check a "kept" goal really landed on disk.
+LADDER = {
+    "same_count": ("core/kernel/context_budget.py", "same_count"),
+    "within_budget": ("core/kernel/context_budget.py", "within_budget"),
+    "count_diff": ("core/kernel/context_budget.py", "count_diff"),
+    "room_left": ("core/kernel/context_budget.py", "room_left"),
+    "find_fits": ("core/kernel/context_budget.py", "fits_name"),
+    "budget_status": ("core/kernel/context_budget.py", "budget_status"),
+    "fix_add": ("core/kernel/context_budget.py", "add"),
+    "fix_clamp": ("core/kernel/context_budget.py", "clamp"),
+    "find_clamp": ("core/kernel/context_budget.py", "clamp_name"),
+    "find_add": ("core/kernel/context_budget.py", "add_name"),
+    "next_bug": ("core/kernel/context_budget.py", "failing_test"),
+}
+
+
 def kept(root: Path) -> list:
     path = Path(root) / "artifacts" / "sota.json"
     if not path.is_file():

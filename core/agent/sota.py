@@ -130,9 +130,78 @@ def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
     return None
 
 
+DESCRIBE_DIRS = ("core/kernel",)
+
+
+def _defines(root: Path, rel: str, symbol: str) -> bool:
+    path = Path(root) / rel
+    if not path.is_file():
+        return False
+    body = path.read_text(encoding="utf-8", errors="ignore")
+    return f"def {symbol}(" in body
+
+
+def goal_site(goal_id: str) -> tuple | None:
+    """(file, symbol) for a known goal id, else None."""
+    for item in goals():
+        if item["id"] == goal_id:
+            return item["file"], item["symbol"]
+    from core.agent.learn import LADDER
+
+    if goal_id in LADDER:
+        return LADDER[goal_id]
+    if goal_id.startswith("describe_"):
+        name = goal_id[len("describe_"):]
+        for base in DESCRIBE_DIRS:
+            rel = f"{base}/{name}.py"
+            return rel, "describe"
+    return None
+
+
+def lost_kept(root: Path, state: Dict[str, Any] | None = None) -> List[str]:
+    """Goals sota.json calls kept whose function is not in the file on disk.
+
+    The honest gate kept them once, but the edit never reached this tree (lost to
+    a reset or a failed publish). They go back in the queue; the gate decides again.
+    """
+    state = state if state is not None else load(root)
+    lost: List[str] = []
+    for goal_id in [str(item) for item in (state.get("goals") or [])]:
+        site = goal_site(goal_id)
+        if site is None:
+            continue
+        rel, symbol = site
+        if not (Path(root) / rel).is_file():
+            continue
+        if not _defines(root, rel, symbol):
+            lost.append(goal_id)
+    return lost
+
+
+def _requeue(root: Path, goal_id: str) -> Dict[str, str] | None:
+    for item in goals():
+        if item["id"] == goal_id:
+            return item
+    if goal_id.startswith("describe_"):
+        name = goal_id[len("describe_"):]
+        return {
+            "id": goal_id,
+            "file": f"core/kernel/{name}.py",
+            "symbol": "describe",
+            "requeued": "lost_kept",
+            "test": (
+                f"from core.kernel.{name} import describe\n"
+                "def test_describe():\n"
+                f"    assert describe() == '{name}'\n"
+            ),
+        }
+    return None
+
+
 def next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
-    done = {str(item) for item in (state.get("goals") or [])}
+    lost = set(lost_kept(root, state))
+    done = {str(item) for item in (state.get("goals") or [])} - lost
     lessons = [str(item) for item in (state.get("lessons") or [])]
     failed = set(str(item) for item in (state.get("skipped") or []))
     failed.discard("find_fits")
@@ -153,6 +222,10 @@ def next_goal(root: Path) -> Dict[str, str] | None:
     learned = next_from(root, done | failed)
     if learned is not None and learned["id"] not in failed:
         return learned
+    for goal_id in sorted(lost - failed):
+        item = _requeue(root, goal_id)
+        if item is not None:
+            return item
     return generate(root, done, failed)
 
 

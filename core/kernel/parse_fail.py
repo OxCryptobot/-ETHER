@@ -4,3 +4,6 @@ from typing import Any, Dict
 
 def parse_fail(reason: str = "unparseable") -> Dict[str, Any]:
     return {"ok": False, "error": "parse_fail", "reason": reason, "tool": None}
+
+def describe() -> str:
+    return 'parse_fail'

@@ -91,20 +91,20 @@
     "describe_loop_plan_drive"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_native_tools: tests failed",
     "2026-11-19 describe_loop_persist_run: tests failed",
     "2026-11-19 describe_loop_pipeline_util: tests failed",
     "2026-11-19 describe_loop_plan_drive: tests passed",
     "2026-11-19 describe_loop_plan_exec: tests failed",
     "2026-11-19 describe_loop_plan_stage: tests failed",
     "2026-11-19 describe_loop_plan_walk: tests failed",
-    "2026-11-19 describe_loop_resume: tests failed"
+    "2026-11-19 describe_loop_resume: tests failed",
+    "2026-11-19 describe_loop_retrieval: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_resume",
+    "goal": "describe_loop_retrieval",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:34:50.196412+00:00"
+    "ts": "2026-11-19T22:35:25.907813+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -158,6 +158,7 @@
     "describe_loop_plan_exec",
     "describe_loop_plan_stage",
     "describe_loop_plan_walk",
-    "describe_loop_resume"
+    "describe_loop_resume",
+    "describe_loop_retrieval"
   ]
 }

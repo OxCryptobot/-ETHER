@@ -89,20 +89,20 @@
     "describe_loop_job_argv"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_generate_fn: tests failed",
     "2026-11-19 describe_loop_generate_retry: tests passed",
     "2026-11-19 describe_loop_generate_retry_loop: tests passed",
     "2026-11-19 describe_loop_git_tools: tests passed",
     "2026-11-19 describe_loop_goal: tests passed",
     "2026-11-19 describe_loop_idle_refill: tests passed",
     "2026-11-19 describe_loop_job_argv: tests passed",
-    "2026-11-19 describe_loop_live_attach: tests failed"
+    "2026-11-19 describe_loop_live_attach: tests failed",
+    "2026-11-19 describe_loop_live_criteria: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_live_attach",
+    "goal": "describe_loop_live_criteria",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:25:24.885990+00:00"
+    "ts": "2026-11-19T22:26:04.546872+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -141,6 +141,7 @@
     "describe_loop_execute_plan",
     "describe_loop_extend_stage",
     "describe_loop_generate_fn",
-    "describe_loop_live_attach"
+    "describe_loop_live_attach",
+    "describe_loop_live_criteria"
   ]
 }

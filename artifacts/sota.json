@@ -76,20 +76,20 @@
     "describe_loop_agentic"
   ],
   "lessons": [
-    "2026-11-19 describe_ownership: tests passed",
     "2026-11-19 describe_parse_fail: tests passed",
     "2026-11-19 describe_loop_agent_loop_path: tests passed",
     "2026-11-19 describe_loop_agentic: tests passed",
     "2026-11-19 describe_loop_ast_intel: tests failed",
     "2026-11-19 describe_loop_bandit_credit: tests failed",
     "2026-11-19 describe_loop_begin: tests failed",
-    "2026-11-19 describe_loop_canned_tools: tests failed"
+    "2026-11-19 describe_loop_canned_tools: tests failed",
+    "2026-11-19 describe_loop_close_run: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_canned_tools",
+    "goal": "describe_loop_close_run",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:19:13.115185+00:00"
+    "ts": "2026-11-19T22:19:50.711501+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -122,6 +122,7 @@
     "describe_loop_ast_intel",
     "describe_loop_bandit_credit",
     "describe_loop_begin",
-    "describe_loop_canned_tools"
+    "describe_loop_canned_tools",
+    "describe_loop_close_run"
   ]
 }

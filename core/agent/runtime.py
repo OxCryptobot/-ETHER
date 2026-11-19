@@ -83,19 +83,8 @@ def next_goal(root: Path) -> Dict[str, str]:
     for item in queue:
         if item["id"] not in done:
             return item
-    for path in sorted((Path(root) / "core" / "kernel").glob("*.py")):
-        if path.name.startswith("_") or path.stem in done or path.stem in failed or path.stem == "context_budget":
-            continue
-        return {
-            "id": path.stem,
-            "file": path.relative_to(root).as_posix(),
-            "symbol": "count_defs",
-            "test": (
-                f"from core.kernel.{path.stem} import count_defs\n"
-                "def test_count():\n"
-                "    assert count_defs() >= 1\n"
-            ),
-        }
+    # Batch 3: the per-module `count_defs() >= 1` goals are gone. They had no real
+    # behaviour to prove and existed only for the injected template stub.
     return queue[0]
 
 
@@ -202,26 +191,21 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     last["kept_n"] = len(kept)
     return last
 def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
+    """Legacy loop (off the live path; host_main runs core.agent.sota).
+
+    Batch 3: no stub injection. Until 2026-11-19 this function wrote its own
+    `def <symbol>() -> int: return max(1, len([... open(__file__) ...]))` or a
+    `fits()` body whenever the model did not, and counted the passing test as a
+    kept edit (the count_defs/fits filler). Now only the model's own edit is
+    applied, it must define the goal symbol, protected paths are refused, and the
+    test decides. No model edit = "no edit", never a PASS.
+    """
+    from core.agent.goal_quality import protected
+
     goal = next_goal(root)
     existing = read(root, goal["file"])
-    if goal["id"] in (load(root).get("goals") or []) and goal["symbol"] not in existing:
-        body = existing
-        new = body.rstrip() + (
-            "\n\ndef fits(text: str) -> bool:\n"
-            "    return len(text or '') <= context_char_budget()\n"
-            if goal["symbol"] == "fits" else
-            f"\n\ndef {goal['symbol']}() -> int:\n"
-            "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
-        )
-        result = edit(root, goal["file"], body, new)
-        if result.get("ok"):
-            checked = test(root, goal["test"])
-            if checked["ok"]:
-                remember(root, goal["id"], "restored", kept=True, file=goal["file"])
-                return {"ok": True, "honest": True, "goal": goal["id"], "file": goal["file"], "tx": ["restore", "promote"], "tests_ok": True}
-            revert(root, goal["file"], body)
     hits = search(root, goal["symbol"])
-    if goal["symbol"] in existing:
+    if f"def {goal['symbol']}" in existing:
         checked = test(root, goal["test"])
         if checked["ok"]:
             remember(root, goal["id"], "already passes", kept=True, file=goal["file"])
@@ -233,6 +217,7 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
                 "tools": ["test"],
                 "tx": ["already"],
                 "tests_ok": True,
+                "note": "already present",
             }
     prompt = (
         f"Goal: add or fix {goal['symbol']} in {goal['file']}.\n"
@@ -241,8 +226,6 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         '{"tool":"edit","args":{"path":"<file>","old":"<exact>","new":"<exact>"}}\n'
     )
     tools: List[str] = []
-    body = ""
-    original = ""
     for _ in range(6):
         try:
             text = ask(prompt, n=240)
@@ -252,61 +235,35 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             action = json.loads(text[text.find("{") : text.rfind("}") + 1])
         except Exception:
             action = {"tool": "read", "args": {"path": goal["file"]}}
+        if not isinstance(action, dict):
+            action = {"tool": "read", "args": {"path": goal["file"]}}
         tool = str(action.get("tool") or "")
         args = action.get("args") if isinstance(action.get("args"), dict) else {}
         tools.append(tool)
         if tool == "search":
             hits = search(root, str(args.get("symbol") or goal["symbol"]))
-            prompt = f"Hits:\n" + "\n".join(hits[:6]) + "\nNext is read.\n"
-            continue
-        if tool == "read" or not body:
-            body = read(root, str(args.get("path") or goal["file"]))
-            original = body
-            if tools.count("read") >= 2 and "def " + goal["symbol"] not in body:
-                new = body.rstrip() + (
-                    f"\n\ndef {goal['symbol']}() -> int:\n"
-                    "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
-                ) if goal["symbol"] != "fits" else body.rstrip() + (
-                    "\n\ndef fits(text: str) -> bool:\n"
-                    "    return len(text or '') <= context_char_budget()\n"
-                )
-                result = edit(root, goal["file"], body, new)
-                if result.get("ok"):
-                    checked = test(root, goal["test"])
-                    if checked["ok"]:
-                        remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
-                        return {
-                            "ok": True,
-                            "honest": True,
-                            "goal": goal["id"],
-                            "file": goal["file"],
-                            "tools": tools + ["edit"],
-                            "tx": ["begin", "promote"],
-                            "tests_ok": True,
-                        }
-                    revert(root, goal["file"], original)
-            prompt = f"File {goal['file']}:\n{body[:1500]}\nEdit it. The test imports {goal['symbol']}.\n"
+            prompt = "Hits:\n" + "\n".join(hits[:6]) + "\nNext is read.\n"
             continue
         if tool == "edit":
             rel = str(args.get("path") or goal["file"])
             old = str(args.get("old") or "")
             new = str(args.get("new") or "")
-            if goal["symbol"] not in new and f"def {goal['symbol']}" not in original:
-                new = (original or body).rstrip() + (
-                    "\n\ndef fits(text: str) -> bool:\n"
-                    "    return len(text or '') <= context_char_budget()\n"
-                    if goal["symbol"] == "fits" else
-                    f"\n\ndef {goal['symbol']}() -> int:\n"
-                    "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
-                )
-                old = original or body
+            if protected(rel):
+                prompt = f"{rel} is protected (tests, the writer loop, the Matrix). Edit {goal['file']}.\n"
+                continue
+            target = Path(root) / rel
+            after = target.read_text(encoding="utf-8").replace(old, new, 1) if target.is_file() and old else ""
+            if f"def {goal['symbol']}" not in new and f"def {goal['symbol']}" not in after:
+                prompt = f"The edit must define `def {goal['symbol']}`. Read {goal['file']} and try once.\n"
+                continue
+            full = target.read_text(encoding="utf-8") if target.is_file() else ""
             result = edit(root, rel, old, new)
             if not result.get("ok"):
                 prompt = f"Patch failed: {result.get('reason')}. Read the file and try once.\n"
                 continue
             checked = test(root, goal["test"])
             if not checked["ok"]:
-                revert(root, rel, original or body)
+                revert(root, rel, full)
                 remember(root, goal["id"], checked["tail"][-160:], kept=False)
                 return {
                     "ok": False,
@@ -330,29 +287,8 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
         if tool == "test":
             checked = test(root, goal["test"])
             prompt = f"Tests {'passed' if checked['ok'] else 'failed'}: {checked['tail'][-200:]}\n"
+            continue
+        body = read(root, str(args.get("path") or goal["file"]))
+        prompt = f"File {goal['file']}:\n{body[:1500]}\nEdit it. The test imports {goal['symbol']}.\n"
     remember(root, goal["id"], "no edit", kept=False)
-    body = read(root, goal["file"])
-    if body and f"def {goal['symbol']}" not in body:
-        new = body.rstrip() + (
-            "\n\ndef fits(text: str) -> bool:\n"
-            "    return len(text or '') <= context_char_budget()\n"
-            if goal["symbol"] == "fits" else
-            f"\n\ndef {goal['symbol']}() -> int:\n"
-            "    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))\n"
-        )
-        result = edit(root, goal["file"], body, new)
-        if result.get("ok"):
-            checked = test(root, goal["test"])
-            if checked["ok"]:
-                remember(root, goal["id"], "tests passed", kept=True, file=goal["file"])
-                return {
-                    "ok": True,
-                    "honest": True,
-                    "goal": goal["id"],
-                    "file": goal["file"],
-                    "tools": tools + ["edit"],
-                    "tx": ["begin", "promote"],
-                    "tests_ok": True,
-                }
-            revert(root, goal["file"], body)
     return {"ok": False, "honest": False, "goal": goal["id"], "tools": tools, "note": "no edit"}

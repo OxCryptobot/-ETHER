@@ -245,6 +245,26 @@ def _infra(goal: Dict[str, str], seen: Dict[str, str]) -> Dict[str, Any]:
 
 
 def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
+    """One attempt. The honest gate's outcome trains the existing bandit."""
+    try:
+        from core.agent.outcome import choose, record
+
+        pick = choose(root)
+    except Exception:
+        pick = None
+    result = _attempt(root, ask, pick)
+    if pick is not None and result.get("note") != "queue empty":
+        try:
+            row = record(root, pick, result)
+            result["learn"] = {"arm": pick.arm, "kind": row.get("kind"), "reward": row.get("reward"),
+                               "promote": row.get("promote")}
+        except Exception as exc:
+            result["learn_error"] = type(exc).__name__
+    return result
+
+
+def _attempt(root: Path, ask: Callable[..., str], pick: Any = None) -> Dict[str, Any]:
+    trace: Dict[str, Any] = pick.trace if pick is not None else {}
     seen: Dict[str, str] = {}
     ask = _guard(ask, seen)
     goal = next_goal(root)
@@ -294,6 +314,9 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             f"Add def {goal['symbol']}. The test is:\n{goal['test']}\n"
             "Reply with the whole function only.\n"
         )
+    if pick is not None and getattr(pick, "addon", ""):
+        prompt = prompt + pick.addon.strip() + "\n"
+    trace["spoiler"] = bool(body)
     try:
         from core.agent.react import react
 
@@ -329,6 +352,8 @@ def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
             pass
     start = text.find("def ")
     fn = text[start:].strip() if start >= 0 else ""
+    trace["tools"] = ["search"] if used_tool else []
+    trace["reply"] = text[-200:]
     if not fn.startswith(f"def {goal['symbol']}"):
         if body:
             try:

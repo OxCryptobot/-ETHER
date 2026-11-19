@@ -30,3 +30,6 @@ def argv_allowed(argv: Sequence[str]) -> bool:
 
 def ready() -> bool:
     return True
+
+def describe() -> str:
+    return 'argv_allow'

@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-19T21:28:59.833928+00:00",
+  "ts": "2026-11-19T22:13:36.196890+00:00",
   "os": "nt",
   "ok": true,
   "armed": true,
@@ -9,7 +9,10 @@
     "ETHER-keepalive": 1,
     "ETHER-keepalive-5m": 1,
     "ETHER-keepalive-boot": 1,
-    "ETHER-Daemon": 1
+    "ETHER-Daemon": 1,
+    "ETHER-Keepalive-Logon": 1,
+    "ETHER-Writer": 1,
+    "ETHER-App": 1
   },
   "installed": [
     "runner_watch.py",

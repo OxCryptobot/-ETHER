@@ -1,5 +1,5 @@
 {
-  "day": "2026-11-10",
+  "day": "2026-11-19",
   "goals": [
     "packed_count",
     "fits_empty",
@@ -69,29 +69,28 @@
     "describe_scale",
     "describe_self_grow",
     "describe_subagent",
-    "describe_worktree"
+    "describe_worktree",
+    "find_add",
+    "next_bug"
   ],
   "lessons": [
-    "2026-11-09 describe_proactive: tests passed",
-    "2026-11-09 describe_product_loop: tests passed",
-    "2026-11-09 describe_read_gate: tests passed",
-    "2026-11-09 describe_repo_fail: tests passed",
-    "2026-11-09 describe_scale: tests passed",
-    "2026-11-09 describe_self_grow: tests passed",
-    "2026-11-09 describe_subagent: tests passed",
-    "2026-11-10 describe_worktree: tests passed"
+    "2026-11-10 describe_worktree: tests passed",
+    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"add\"}}",
+    "2026-11-19 find_add: tests passed via tool",
+    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"def te",
+    "2026-11-19 next_bug: tests passed via tool",
+    "2026-11-19 describe_agent_pass: tests passed",
+    "2026-11-19 describe_argv_allow: tests passed",
+    "2026-11-19 describe_attach: tests passed"
   ],
   "last": {
-    "goal": "describe_worktree",
+    "goal": "describe_attach",
     "kept": true,
-    "file": "core/kernel/worktree.py",
-    "ts": "2026-11-10T15:24:57.476048+00:00"
+    "file": "core/kernel/attach.py",
+    "ts": "2026-11-19T22:14:26.388089+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 5,
   "files": [
-    "core/kernel/select_tests.py",
-    "core/kernel/self_learn.py",
-    "core/kernel/self_state.py",
     "core/kernel/strangle.py",
     "core\\kernel\\context_budget.py",
     "core/kernel/writer.py",
@@ -108,7 +107,10 @@
     "core/kernel/scale.py",
     "core/kernel/self_grow.py",
     "core/kernel/subagent.py",
-    "core/kernel/worktree.py"
+    "core/kernel/worktree.py",
+    "core/kernel/agent_pass.py",
+    "core/kernel/argv_allow.py",
+    "core/kernel/attach.py"
   ],
   "skipped": [
     "describe_extra_tools",

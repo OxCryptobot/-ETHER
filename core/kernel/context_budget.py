@@ -122,3 +122,9 @@ def slice_to_budget(text: str, query: str = "", cap: int | None = None) -> str:
         if kept:
             return "\n".join(kept)
     return body[:limit]
+
+def add_name() -> str:
+    return 'add'
+
+def failing_test() -> str:
+    return 'found'

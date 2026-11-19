@@ -13,3 +13,6 @@ def finalize_coding_result(row: Dict[str, Any], *, path: str) -> Dict[str, Any]:
 
 def ready() -> bool:
     return True
+
+def describe() -> str:
+    return 'agent_pass'

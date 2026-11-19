@@ -32,3 +32,6 @@ def medic_stand_down(status: Dict[str, Any], *, now: Optional[datetime] = None) 
     if age is None:
         return False
     return age <= STALE_SEC
+
+def describe() -> str:
+    return 'medic'

@@ -92,22 +92,22 @@
     "describe_loop_retrieve"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_plan_drive: tests passed",
     "2026-11-19 describe_loop_plan_exec: tests failed",
     "2026-11-19 describe_loop_plan_stage: tests failed",
     "2026-11-19 describe_loop_plan_walk: tests failed",
     "2026-11-19 describe_loop_resume: tests failed",
     "2026-11-19 describe_loop_retrieval: tests failed",
     "2026-11-19 describe_loop_retrieve: tests passed",
-    "2026-11-19 describe_loop_runner: tests failed"
+    "2026-11-19 describe_loop_runner: tests failed",
+    "2026-11-19 describe_loop_shadow_progress: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_runner",
+    "goal": "describe_loop_shadow_progress",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:36:04.522173+00:00"
+    "ts": "2026-11-19T22:36:40.177852+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/kernel/ownership.py",
     "core/kernel/parse_fail.py",
@@ -161,6 +161,7 @@
     "describe_loop_plan_walk",
     "describe_loop_resume",
     "describe_loop_retrieval",
-    "describe_loop_runner"
+    "describe_loop_runner",
+    "describe_loop_shadow_progress"
   ]
 }

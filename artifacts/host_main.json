@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-19T21:27:37.508801+00:00",
+  "ts": "2026-11-19T22:13:23.173831+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-19T21:27:38.111461+00:00",
+    "ts": "2026-11-19T22:13:38.671825+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "ollama": false,
+    "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-19T21:28:17.158341+00:00",
+    "ts": "2026-11-19T22:14:26.628952+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,19 +25,10 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   87053e922a..96133e0c43  HEAD -> main\n"
-  },
-  "reset": "ok",
-  "runner": {
-    "ok": true,
-    "note": "already_actions_runner"
-  },
-  "daemon": {
-    "ok": true,
-    "note": "skipped_in_actions"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   c87ccc0dce..b9747bb323  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-19T21:28:14.145418+00:00",
+    "ts": "2026-11-19T22:13:34.647910+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -47,7 +38,10 @@
       "ETHER-keepalive": 1,
       "ETHER-keepalive-5m": 1,
       "ETHER-keepalive-boot": 1,
-      "ETHER-Daemon": 1
+      "ETHER-Daemon": 1,
+      "ETHER-Keepalive-Logon": 1,
+      "ETHER-Writer": 1,
+      "ETHER-App": 1
     },
     "installed": [
       "runner_watch.py",
@@ -65,31 +59,119 @@
       "runners": 1
     }
   },
-  "keepalive": {
+  "runner": {
     "ok": true,
-    "note": "runner_watch"
+    "task_rc": 1,
+    "spawned_hidden": true
+  },
+  "daemon": {
+    "ok": true,
+    "note": "supervisor_owns_loop"
+  },
+  "keepalive": {
+    "ts": "2026-11-19T22:13:36.196890+00:00",
+    "os": "nt",
+    "ok": true,
+    "armed": true,
+    "note": "runner_watch",
+    "stopped": {
+      "ETHER-Ensure": 1,
+      "ETHER-keepalive": 1,
+      "ETHER-keepalive-5m": 1,
+      "ETHER-keepalive-boot": 1,
+      "ETHER-Daemon": 1,
+      "ETHER-Keepalive-Logon": 1,
+      "ETHER-Writer": 1,
+      "ETHER-App": 1
+    },
+    "installed": [
+      "runner_watch.py",
+      "start_runner.py",
+      "win_quiet.py"
+    ],
+    "watch": {
+      "ok": true,
+      "task": "ETHER-RunnerWatch",
+      "rc": 0
+    },
+    "register": {
+      "ok": true,
+      "note": "already_registered",
+      "runners": 1
+    }
+  },
+  "ollama_start": true,
+  "attach": {
+    "updated": "2026-11-19T22:13:38.547832+00:00",
+    "ok": true,
+    "fast_lane": "matrix-worker",
+    "live_lane": "ollama_4b",
+    "living_ok": true,
+    "ollama": true,
+    "grok_bus": false,
+    "cmd": "attach",
+    "consumed": true,
+    "clobber": false,
+    "note": "Starts ollama serve when binary exists. Else grok_bus.",
+    "writer": "exe",
+    "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE",
+    "path": "C:\\Users\\Otcde\\ETHER\\artifacts\\host_attach.json"
+  },
+  "ollama": true,
+  "plan_error": "ImportError",
+  "live": {
+    "ok": true,
+    "n": 0,
+    "jobs": []
   },
   "next_goal": "find_add",
+  "lost_kept": 20,
+  "seed_depth": 58,
   "sota": {
-    "ok": false,
+    "ok": true,
     "honest": true,
-    "note": "queue empty",
-    "batch": [],
-    "kept_n": 0,
+    "goal": "describe_attach",
+    "file": "core/kernel/attach.py",
+    "tx": [
+      "search",
+      "edit",
+      "test",
+      "check",
+      "promote"
+    ],
+    "tests_ok": true,
+    "checked": true,
+    "learn": {
+      "arm": "default",
+      "kind": "pass",
+      "reward": 0.75,
+      "promote": {
+        "action": "hold",
+        "arm": "default"
+      }
+    },
+    "batch": [
+      "find_add",
+      "next_bug",
+      "describe_agent_pass",
+      "describe_argv_allow",
+      "describe_attach"
+    ],
+    "kept_n": 5,
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-19T21:28:16.922455+00:00",
+    "ts": "2026-11-19T22:14:26.416721+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 228.3,
+    "disk_free_gb": 230.8,
     "disk_total_gb": 475.3,
-    "ollama": false,
-    "alive_ts": "2026-11-19T21:27:38.111461+00:00",
-    "kept": 69,
-    "last_goal": "describe_worktree",
+    "ollama": true,
+    "alive_ts": "2026-11-19T22:13:38.671825+00:00",
+    "kept": 71,
+    "last_goal": "describe_attach",
     "last_kept": true,
-    "batch_size": 0
+    "batch_size": 5
   },
   "agent": {
     "ok": true,
@@ -111,5 +193,9 @@
   "proactive": {
     "ok": true,
     "queued": false
+  },
+  "service": {
+    "ok": true,
+    "note": "listener_already_up"
   }
 }

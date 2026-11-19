@@ -434,11 +434,24 @@ def tractability(root: Path, goal: Dict[str, Any]) -> float:
 LINT_RULES = ("F821", "F811", "F841")
 
 
+def ruff_bin() -> Optional[str]:
+    """ruff on PATH, else next to the interpreter (the host's .venv\\Scripts is not on
+    pythonw's PATH, so lint goals were silently empty there)."""
+    found = shutil.which("ruff")
+    if found:
+        return found
+    for name in ("ruff.exe", "ruff"):
+        cand = Path(sys.executable).with_name(name)
+        if cand.is_file():
+            return str(cand)
+    return None
+
+
 def lint_goals(root: Path) -> List[Dict[str, Any]]:
     """ruff findings that are real bugs (undefined names, shadowed defs). Needs ruff."""
     from core.agent.goal_quality import protected
 
-    ruff = shutil.which("ruff")
+    ruff = ruff_bin()
     if not ruff:
         return []
     try:
@@ -467,7 +480,7 @@ def lint_goals(root: Path) -> List[Dict[str, Any]]:
 
 
 def lint_clear(root: Path, goal: Dict[str, Any]) -> bool:
-    ruff = shutil.which("ruff")
+    ruff = ruff_bin()
     if not ruff:
         return False
     try:

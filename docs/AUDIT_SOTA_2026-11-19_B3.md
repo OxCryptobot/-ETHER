@@ -69,6 +69,7 @@ All of this is the old code: batch 2 is not on origin yet.
 | pass / fail / skip(+xfail) / errors | 1606 / 76 / 88 / 0 | 1629 / 73 / 88 / 0 |
 | passed before, fail now | — | 0 |
 | fixed | — | 3 (test_unison x2, test_publish_sync) |
+| same, with ruff on PATH (5 verifier lint tests stop skipping) | — | 1635 / 72 / 83 / 0 (290 s) |
 | full run time | 302 s | 299 s |
 | dirty paths after full `pytest tests` | 0 | 0 |
 | failing tests that become goals | 21 of 76 (+4 lint = 25 seed) | 51 of 74 (+4 lint = 55 seed); 20 without SBFL |
@@ -101,5 +102,8 @@ heartbeat_plan) and `argv_allow.py` (`-c` hole) — `docs/results/batch3/replay3
 3. **16 failures have no target** (topology/static checks, stage-contract tests): need
    multi-file or file-level edits.
 4. **No real-model numbers.** All replays use a mock model; first hour on the 1650 decides.
-5. **Lint goals need ruff on the host** (`lint_goals` returns nothing without it).
+5. **Lint goals need ruff in the host venv.** `ruff_bin()` now also looks next to the
+   interpreter (pythonw's PATH lacks `.venv\Scripts`), but ruff is only in the `dev` extra;
+   if `.venv\Scripts\ruff.exe` is missing, lint goals stay empty (check `learning_summary.json`
+   `real_queue`).
 6. Windows full-suite time unknown; SBFL overhead measured on Linux only (+50%).

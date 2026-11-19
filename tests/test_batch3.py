@@ -351,3 +351,17 @@ def test_a_cheat_that_passes_one_test_but_not_its_siblings_is_rejected(tmp_path:
     row = sota.run(root, lambda prompt, n=240: PLAN_ORACLE)
     assert row["kept_n"] == 1
     assert gs.load_index(root)["goals"] == {}  # the sibling is resolved by the same edit
+
+
+def test_ruff_is_found_next_to_the_interpreter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    from core.agent import goal_source as gs
+
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    (fake / "python").write_text("", encoding="utf-8")
+    (fake / "ruff").write_text("", encoding="utf-8")
+    monkeypatch.setenv("PATH", str(tmp_path / "nowhere"))
+    monkeypatch.setattr(sys, "executable", str(fake / "python"))
+    assert gs.ruff_bin() == str(fake / "ruff")

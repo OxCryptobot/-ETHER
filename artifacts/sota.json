@@ -93,20 +93,20 @@
     "describe_loop_stages"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_retrieval: tests failed",
     "2026-11-19 describe_loop_retrieve: tests passed",
     "2026-11-19 describe_loop_runner: tests failed",
     "2026-11-19 describe_loop_shadow_progress: tests failed",
     "2026-11-19 describe_loop_stage_mark: tests failed",
     "2026-11-19 describe_loop_stages: tests passed",
     "2026-11-19 describe_loop_stream_obs: tests failed",
-    "2026-11-19 describe_loop_tool_first: tests failed"
+    "2026-11-19 describe_loop_tool_first: tests failed",
+    "2026-11-19 describe_loop_tool_runtime_path: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_tool_first",
+    "goal": "describe_loop_tool_runtime_path",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:38:29.961995+00:00"
+    "ts": "2026-11-19T22:39:06.396041+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -166,6 +166,7 @@
     "describe_loop_shadow_progress",
     "describe_loop_stage_mark",
     "describe_loop_stream_obs",
-    "describe_loop_tool_first"
+    "describe_loop_tool_first",
+    "describe_loop_tool_runtime_path"
   ]
 }

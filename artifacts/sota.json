@@ -74,31 +74,23 @@
     "next_bug"
   ],
   "lessons": [
-    "2026-11-19 describe_autonomy: tests passed",
-    "2026-11-19 describe_cancel: tests passed",
-    "2026-11-19 describe_constitution: tests passed",
-    "2026-11-19 describe_crash: tests passed",
-    "2026-11-19 describe_critique: tests passed",
-    "2026-11-19 describe_dirty: tests passed",
-    "2026-11-19 describe_events: tests passed",
-    "2026-11-19 describe_gc: tests passed"
+    "2026-11-19 describe_honest: tests passed",
+    "2026-11-19 describe_ignore: tests passed",
+    "2026-11-19 describe_job_schema: tests passed",
+    "2026-11-19 describe_lang: tests passed",
+    "2026-11-19 describe_memory_schema: tests passed",
+    "2026-11-19 describe_operator_intent: tests passed",
+    "2026-11-19 describe_ops: tests passed",
+    "2026-11-19 describe_ownership: tests passed"
   ],
   "last": {
-    "goal": "describe_gc",
+    "goal": "describe_ownership",
     "kept": true,
-    "file": "core/kernel/gc.py",
-    "ts": "2026-11-19T22:15:33.970697+00:00"
+    "file": "core/kernel/ownership.py",
+    "ts": "2026-11-19T22:16:35.165883+00:00"
   },
   "kept_n": 8,
   "files": [
-    "core/kernel/edit_memory.py",
-    "core/kernel/proactive.py",
-    "core/kernel/product_loop.py",
-    "core/kernel/read_gate.py",
-    "core/kernel/repo_fail.py",
-    "core/kernel/scale.py",
-    "core/kernel/self_grow.py",
-    "core/kernel/subagent.py",
     "core/kernel/worktree.py",
     "core/kernel/agent_pass.py",
     "core/kernel/argv_allow.py",
@@ -110,7 +102,15 @@
     "core/kernel/critique.py",
     "core/kernel/dirty.py",
     "core/kernel/events.py",
-    "core/kernel/gc.py"
+    "core/kernel/gc.py",
+    "core/kernel/honest.py",
+    "core/kernel/ignore.py",
+    "core/kernel/job_schema.py",
+    "core/kernel/lang.py",
+    "core/kernel/memory_schema.py",
+    "core/kernel/operator_intent.py",
+    "core/kernel/ops.py",
+    "core/kernel/ownership.py"
   ],
   "skipped": [
     "describe_extra_tools",

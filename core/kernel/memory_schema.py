@@ -11,3 +11,6 @@ def stamp(row: Dict[str, Any]) -> Dict[str, Any]:
 
 def accepted(row: Dict[str, Any]) -> bool:
     return str((row or {}).get("schema") or "") == SCHEMA
+
+def describe() -> str:
+    return 'memory_schema'

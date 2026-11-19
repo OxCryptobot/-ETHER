@@ -89,27 +89,27 @@
     "describe_loop_job_argv",
     "describe_loop_medic",
     "describe_loop_plan_drive",
-    "describe_loop_retrieve"
+    "describe_loop_retrieve",
+    "describe_loop_stages"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_plan_stage: tests failed",
-    "2026-11-19 describe_loop_plan_walk: tests failed",
     "2026-11-19 describe_loop_resume: tests failed",
     "2026-11-19 describe_loop_retrieval: tests failed",
     "2026-11-19 describe_loop_retrieve: tests passed",
     "2026-11-19 describe_loop_runner: tests failed",
     "2026-11-19 describe_loop_shadow_progress: tests failed",
-    "2026-11-19 describe_loop_stage_mark: tests failed"
+    "2026-11-19 describe_loop_stage_mark: tests failed",
+    "2026-11-19 describe_loop_stages: tests passed",
+    "2026-11-19 describe_loop_stream_obs: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_stage_mark",
+    "goal": "describe_loop_stream_obs",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:37:15.630116+00:00"
+    "ts": "2026-11-19T22:37:54.525602+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/kernel/ownership.py",
     "core/kernel/parse_fail.py",
     "core/loop/agent_loop_path.py",
     "core/loop/agentic.py",
@@ -128,7 +128,8 @@
     "core/loop/job_argv.py",
     "core/loop/medic.py",
     "core/loop/plan_drive.py",
-    "core/loop/retrieve.py"
+    "core/loop/retrieve.py",
+    "core/loop/stages.py"
   ],
   "skipped": [
     "describe_extra_tools",
@@ -163,6 +164,7 @@
     "describe_loop_retrieval",
     "describe_loop_runner",
     "describe_loop_shadow_progress",
-    "describe_loop_stage_mark"
+    "describe_loop_stage_mark",
+    "describe_loop_stream_obs"
   ]
 }

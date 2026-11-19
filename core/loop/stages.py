@@ -46,3 +46,6 @@ LEGACY_GENERATE_ORDER: Tuple[str, ...] = (
     STAGE_SANDBOX,
     STAGE_AUDIT,
 )
+
+def describe() -> str:
+    return 'stages'

@@ -93,20 +93,20 @@
     "describe_loop_stages"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_tool_first: tests failed",
     "2026-11-19 describe_loop_tool_runtime_path: tests failed",
     "2026-11-19 describe_loop_tools_avail: tests failed",
     "2026-11-19 describe_loop_traces: tests failed",
     "2026-11-19 describe_loop_verify_legacy: tests failed",
     "2026-11-19 describe_loop_walk_fixture: tests failed",
     "2026-11-19 describe_loop_worktree: tests failed",
-    "2026-11-19 describe_extra_tools: tests failed"
+    "2026-11-19 describe_extra_tools: tests failed",
+    "2026-11-19 describe_loop_worktree_worker: tests failed"
   ],
   "last": {
-    "goal": "describe_extra_tools",
+    "goal": "describe_loop_worktree_worker",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:42:47.923209+00:00"
+    "ts": "2026-11-19T22:43:24.940941+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -132,7 +132,6 @@
     "core/loop/stages.py"
   ],
   "skipped": [
-    "describe_tombstone",
     "find_clamp",
     "describe_loop_ast_intel",
     "describe_loop_bandit_credit",
@@ -171,6 +170,7 @@
     "describe_loop_verify_legacy",
     "describe_loop_walk_fixture",
     "describe_loop_worktree",
-    "describe_extra_tools"
+    "describe_extra_tools",
+    "describe_loop_worktree_worker"
   ]
 }

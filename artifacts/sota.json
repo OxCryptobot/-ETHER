@@ -74,31 +74,23 @@
     "next_bug"
   ],
   "lessons": [
-    "2026-11-10 describe_worktree: tests passed",
-    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"add\"}}",
-    "2026-11-19 find_add: tests passed via tool",
-    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"def te",
-    "2026-11-19 next_bug: tests passed via tool",
-    "2026-11-19 describe_agent_pass: tests passed",
-    "2026-11-19 describe_argv_allow: tests passed",
-    "2026-11-19 describe_attach: tests passed"
+    "2026-11-19 describe_autonomy: tests passed",
+    "2026-11-19 describe_cancel: tests passed",
+    "2026-11-19 describe_constitution: tests passed",
+    "2026-11-19 describe_crash: tests passed",
+    "2026-11-19 describe_critique: tests passed",
+    "2026-11-19 describe_dirty: tests passed",
+    "2026-11-19 describe_events: tests passed",
+    "2026-11-19 describe_gc: tests passed"
   ],
   "last": {
-    "goal": "describe_attach",
+    "goal": "describe_gc",
     "kept": true,
-    "file": "core/kernel/attach.py",
-    "ts": "2026-11-19T22:14:26.388089+00:00"
+    "file": "core/kernel/gc.py",
+    "ts": "2026-11-19T22:15:33.970697+00:00"
   },
-  "kept_n": 5,
+  "kept_n": 8,
   "files": [
-    "core/kernel/strangle.py",
-    "core\\kernel\\context_budget.py",
-    "core/kernel/writer.py",
-    "core/kernel/context_budget.py",
-    "core/kernel/agent.py",
-    "core/kernel/agent_prompt.py",
-    "core/kernel/curriculum.py",
-    "core/kernel/day_learn.py",
     "core/kernel/edit_memory.py",
     "core/kernel/proactive.py",
     "core/kernel/product_loop.py",
@@ -110,7 +102,15 @@
     "core/kernel/worktree.py",
     "core/kernel/agent_pass.py",
     "core/kernel/argv_allow.py",
-    "core/kernel/attach.py"
+    "core/kernel/attach.py",
+    "core/kernel/autonomy.py",
+    "core/kernel/cancel.py",
+    "core/kernel/constitution.py",
+    "core/kernel/crash.py",
+    "core/kernel/critique.py",
+    "core/kernel/dirty.py",
+    "core/kernel/events.py",
+    "core/kernel/gc.py"
   ],
   "skipped": [
     "describe_extra_tools",

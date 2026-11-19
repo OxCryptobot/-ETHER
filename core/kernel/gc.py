@@ -12,3 +12,6 @@ def trim_jsonl(path: Path, *, max_lines: int = 400) -> int:
     keep = lines[-max_lines:]
     p.write_text("\n".join(keep) + "\n", encoding="utf-8")
     return len(lines) - len(keep)
+
+def describe() -> str:
+    return 'gc'

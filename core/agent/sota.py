@@ -449,12 +449,14 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         if seen and not text.strip():
             return _infra(goal, seen)
         trace["reply"] = text[-200:]
-        fn = gs.extract_function(text, goal["symbol"])
-        if not fn:
-            feedback = "no complete function `def %s` in the reply" % goal["symbol"].split(".")[-1]
+        edit = gs.extract_edit(text, goal)
+        if not edit["function"] and not edit["assigns"]:
+            want = ("`%s = ...`" if goal.get("symbol_kind") == "assign" else "complete function `def %s`")
+            feedback = "no " + want % goal["symbol"].split(".")[-1] + " in the reply"
             last = {**base, "ok": False, "honest": False, "note": "no function"}
             continue
-        applied = gs.apply_function(root, goal, fn)
+        applied = gs.apply_edit(root, goal, edit)
+        trace["edit_assigns"] = len(applied.get("assigns") or [])
         if not applied.get("ok"):
             feedback = str(applied.get("reason"))
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
@@ -462,6 +464,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         verdict = gs.gate(root, goal, baseline, suite)
         if verdict["ok"]:
             gs.mark(root, goal["id"], kept=True)
+            for sib in [g for g in gs.load_index(root)["goals"].values()
+                        if g.get("nodeid") in set(gs.siblings(root, goal))]:
+                gs.mark(root, sib["id"], kept=True)  # resolved by the same edit
             remember(root, goal["id"], "tests passed, 0 regressions" + (" via tool" if trace.get("tools") else ""),
                      kept=True, file=goal["file"])
             return {**base, "ok": True, "honest": True, "tests_ok": True, "regressions": 0,
@@ -469,8 +474,10 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                     "suite_n": verdict["suite_n"], "checked": True}
         revert(root, goal["file"], applied["original"])
         feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
-        last = {**base, "ok": False, "honest": False, "note": "regression" if verdict["n_regressions"] else "tests failed",
-                "regressions": verdict["n_regressions"]}
+        note = "regression" if verdict["n_regressions"] else (
+            "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        last = {**base, "ok": False, "honest": False, "note": note,
+                "regressions": verdict["n_regressions"], "siblings_failing": len(verdict.get("siblings_failing") or [])}
     gs.mark(root, goal["id"], kept=False)
     remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
     return last

@@ -33,6 +33,7 @@ INFRA = (
 EASY_KINDS = ("ImportError", "NameError", "AttributeError", "TypeError", "KeyError", "IndentationError")
 FRAME = re.compile(r"^([A-Za-z0-9_./\\-]+\.py):(\d+):", re.M)
 IMPORT_NAME = re.compile(r"cannot import name '([A-Za-z_][A-Za-z0-9_]*)' from '([\w.]+)'")
+MODULE_ATTR = re.compile(r"module '([\w.]+)' has no attribute '([A-Za-z_][A-Za-z0-9_]*)'")
 
 
 def _now() -> str:
@@ -41,6 +42,44 @@ def _now() -> str:
 
 def enabled() -> bool:
     return os.getenv("ETHER_GOAL_SOURCE", "1") != "0"
+
+
+def constants_enabled() -> bool:
+    """Batch 3: edits may also replace/add module-level assignments (ETHER_EDIT_CONSTANTS=0 = off)."""
+    return os.getenv("ETHER_EDIT_CONSTANTS", "1") != "0"
+
+
+MAX_ASSIGNS = 4
+MAX_ASSIGN_LINES = 40
+
+
+def _assign_names(node: ast.AST) -> List[str]:
+    if isinstance(node, ast.Assign):
+        return [t.id for t in node.targets if isinstance(t, ast.Name)]
+    if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        return [node.target.id]
+    return []
+
+
+def _assign_span(tree: ast.Module, name: str) -> Optional[tuple]:
+    """(first, last) line of the last top-level `name = ...` (the binding that wins)."""
+    span = None
+    for node in tree.body:
+        if name in _assign_names(node):
+            span = (node.lineno, node.end_lineno or node.lineno)
+    return span
+
+
+def _enclosing_assign(path: Path, line: int) -> str:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))
+    except SyntaxError:
+        return ""
+    for node in tree.body:
+        names = _assign_names(node)
+        if len(names) == 1 and node.lineno <= line <= (node.end_lineno or node.lineno):
+            return names[0]
+    return ""
 
 
 # ---------------------------------------------------------------- pytest runner
@@ -63,17 +102,33 @@ def nodeid_of(root: Path, classname: str, name: str) -> str:
     return f"{classname}::{name}"
 
 
-def run_pytest(root: Path, args: List[str], timeout: int = 180) -> Dict[str, Any]:
-    """Run pytest, return {nodeid: status} plus failure texts. Never writes the repo."""
+def sbfl_enabled() -> bool:
+    """Batch 3: scans profile the test run for fault localisation (ETHER_SBFL=0 = off)."""
+    return os.getenv("ETHER_SBFL", "1") != "0"
+
+
+def run_pytest(root: Path, args: List[str], timeout: int = 180, sbfl: bool = False) -> Dict[str, Any]:
+    """Run pytest, return {nodeid: status} plus failure texts. Never writes the repo.
+
+    sbfl=True also records which repo functions each test entered (core/agent/fault_loc.py)."""
     root = Path(root)
     tmp = Path(tempfile.mkdtemp(prefix="ether_pt_"))
     xml = tmp / "r.xml"
     argv = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=short",
-            "-o", "junit_family=xunit1", f"--junitxml={xml}", "--continue-on-collection-errors", *args]
+            "-o", "junit_family=xunit1", f"--junitxml={xml}", "--continue-on-collection-errors"]
+    env = test_env(root, tmp / "state")
+    spectra_path = tmp / "sbfl.json"
+    if sbfl:
+        shutil.copyfile(Path(__file__).with_name("fault_loc.py"), tmp / "ether_sbfl.py")
+        env["PYTHONPATH"] = str(root) + os.pathsep + str(tmp)
+        env["ETHER_SBFL_OUT"] = str(spectra_path)
+        env["ETHER_SBFL_ROOT"] = str(root)
+        argv += ["-p", "ether_sbfl"]
+    argv += list(args)
     t0 = time.monotonic()
     try:
         proc = subprocess.run(argv, cwd=str(root), capture_output=True, text=True, timeout=timeout,
-                              env=test_env(root, tmp / "state"))
+                              env=env)
         rc = proc.returncode
     except subprocess.TimeoutExpired:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -95,8 +150,16 @@ def run_pytest(root: Path, args: List[str], timeout: int = 180) -> Dict[str, Any
             status[nid] = st
     except Exception:
         pass
+    spectra: Dict[str, Any] = {}
+    if sbfl and spectra_path.is_file():
+        try:
+            raw = json.loads(spectra_path.read_text(encoding="utf-8"))
+            spectra = {"tests": raw.get("tests") or {}}
+        except Exception:
+            spectra = {}
     shutil.rmtree(tmp, ignore_errors=True)
-    return {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1)}
+    return {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1),
+            "spectra": spectra}
 
 
 # ---------------------------------------------------------------- failure -> goal
@@ -123,41 +186,134 @@ def _kind(text: str) -> str:
     return m.group(1) if m else "AssertionError"
 
 
-def goal_from_failure(root: Path, nodeid: str, text: str) -> Optional[Dict[str, Any]]:
+def goal_from_failure(root: Path, nodeid: str, text: str,
+                      spectra: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
     """One failing test -> one goal, or None when the failure is infra or untargetable."""
+    return classify_failure(root, nodeid, text, spectra)[0]
+
+
+DROP_REASONS = (
+    "collection_error", "infra", "protected_target", "source_text_assert", "no_repo_target", "no_symbol",
+)
+SOURCE_TEXT = re.compile(r"""(?:Path\(|open\()\s*["'](?:core|scripts|gems|dashboard|\.github)/""")
+
+
+def _repo_frames(root: Path, text: str) -> List[tuple]:
+    """(rel, line) for every frame in a non-test repo file, deepest last."""
+    out: List[tuple] = []
+    for fm in FRAME.finditer(text or ""):
+        rel = fm.group(1).replace("\\", "/")
+        base = str(root).replace("\\", "/")
+        if rel.startswith(base):
+            rel = rel[len(base) + 1:]
+        if rel.startswith("/") or ":" in rel[:3] or ".." in rel.split("/"):
+            continue
+        if (root / rel).is_file() and not rel.startswith("tests/") and "site-packages" not in rel:
+            out.append((rel, int(fm.group(2))))
+    return out
+
+
+def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[str, Any]] = None) -> tuple:
+    """(goal, reason). reason is "goal" or one of DROP_REASONS (batch 3 coverage report).
+
+    Targets, in order: the missing name of an ImportError; the deepest repo frame
+    that is not protected (its function, or its module-level assignment when
+    ETHER_EDIT_CONSTANTS is on); the function the test imports and calls. The
+    prompt is still built from the error, the test and the current file only.
+    """
     from core.agent.goal_quality import protected
 
     root = Path(root)
-    if nodeid.startswith("::") or any(m in (text or "") for m in INFRA):
-        return None  # collection errors have no test to gate on; infra is not a code goal
+    if nodeid.startswith("::"):
+        return None, "collection_error"  # no test to gate on
+    if any(m in (text or "") for m in INFRA):
+        return None, "infra"
     test_file = nodeid.split("::", 1)[0]
-    target, line, missing = "", 0, ""
-    m = IMPORT_NAME.search(text or "")
-    if m:
-        missing = m.group(1)
-        rel = m.group(2).replace(".", "/") + ".py"
+    saw_protected = False
+    for m in (IMPORT_NAME.search(text or ""), MODULE_ATTR.search(text or "")):
+        if not m:
+            continue
+        name, mod = (m.group(1), m.group(2)) if m.re is IMPORT_NAME else (m.group(2), m.group(1))
+        rel = mod.replace(".", "/") + ".py"
         if (root / rel).is_file():
-            target = rel
-    if not target:
-        for fm in FRAME.finditer(text or ""):
-            rel = fm.group(1).replace("\\", "/")
-            if rel.startswith(str(root).replace("\\", "/")):
-                rel = rel[len(str(root)) + 1:]
-            if rel.startswith("/") or ":" in rel[:3] or ".." in rel.split("/"):
-                continue
-            if (root / rel).is_file() and not rel.startswith("tests/") and "site-packages" not in rel:
-                target, line = rel, int(fm.group(2))
-    if not target:
-        target, symbol_hint = _target_from_test(root, nodeid)
-        if target and symbol_hint:
-            missing = ""
-            return _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import")
-    if not target or protected(target):
+            if protected(rel):
+                saw_protected = True
+            else:
+                return _goal(root, nodeid, test_file, rel, name, True, text, via="import_error"), "goal"
+    for rel, line in reversed(_repo_frames(root, text)):
+        if protected(rel):
+            saw_protected = True
+            continue
+        symbol = _enclosing(root / rel, line)
+        via = "frame"
+        if not symbol and constants_enabled():
+            symbol = _enclosing_assign(root / rel, line)
+            via = "frame_assign"
+        if symbol:
+            goal = _goal(root, nodeid, test_file, rel, symbol, False, text, via=via)
+            if goal is not None:
+                if via == "frame_assign":
+                    goal["symbol_kind"] = "assign"
+                return goal, "goal"
+    target, symbol_hint = _target_from_test(root, nodeid)
+    if target and symbol_hint:
+        return _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import"), "goal"
+    suspect = _sbfl_target(root, nodeid, spectra)
+    if suspect:
+        goal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
+        if goal is not None:
+            goal["suspicion"] = suspect[2]
+            return goal, "goal"
+    if saw_protected or _test_imports_only_protected(root, nodeid):
+        return None, "protected_target"
+    if SOURCE_TEXT.search(_test_source(root, nodeid)):
+        return None, "source_text_assert"
+    if _repo_frames(root, text):
+        return None, "no_symbol"
+    return None, "no_repo_target"
+
+
+def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]]) -> Optional[tuple]:
+    """Most suspicious editable function the failing test entered (Ochiai), or None."""
+    from core.agent.fault_loc import ochiai
+    from core.agent.goal_quality import protected
+
+    if not spectra:
         return None
-    symbol = missing or (_enclosing(root / target, line) if line else "")
-    if not symbol:
-        return None
-    return _goal(root, nodeid, test_file, target, symbol, bool(missing), text, via="frame" if line else "import_error")
+    try:
+        test_src = (Path(root) / nodeid.split("::", 1)[0]).read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        test_src = ""
+    imported = {m.replace(".", "/") + ".py" for m in re.findall(r"(?:from|import) ([A-Za-z_][\w.]*)", test_src)}
+    best = None
+    for score, order, rel, qual in ochiai(spectra, nodeid):
+        if protected(rel) or Path(rel).name.startswith("_") or not (Path(root) / rel).is_file():
+            continue
+        if qual.count(".") > 1 or not _is_function(root, rel, qual):
+            continue
+        key = (score + (0.05 if rel in imported else 0.0), order)
+        if best is None or key > best[0]:
+            best = (key, rel, qual, score)
+    return (best[1], best[2], best[3]) if best else None
+
+
+def _test_imports_only_protected(root: Path, nodeid: str) -> bool:
+    from core.agent.goal_quality import protected
+
+    src = _test_source(root, nodeid)
+    mods = re.findall(r"(?:from|import) ((?:core|scripts|gems|dashboard)[\w.]*)", src)
+    if not mods:
+        try:
+            module_src = (Path(root) / nodeid.split("::", 1)[0]).read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            return False
+        names = set(re.findall(r"\b([A-Za-z_]\w*)\(", src))
+        for mm in re.finditer(r"from ((?:core|scripts|gems|dashboard)[\w.]*) import ([\w, ]+)", module_src):
+            if any(n.strip() in names for n in mm.group(2).split(",")):
+                mods.append(mm.group(1))
+    rels = [m.replace(".", "/") + ".py" for m in mods]
+    rels = [r for r in rels if (Path(root) / r).is_file()]
+    return bool(rels) and all(protected(r) for r in rels)
 
 
 def _is_function(root: Path, rel: str, symbol: str) -> bool:
@@ -177,7 +333,10 @@ def _is_function(root: Path, rel: str, symbol: str) -> bool:
 
 
 def _target_from_test(root: Path, nodeid: str) -> tuple:
-    """No repo frame: the first function the test imports from a non-protected module and calls."""
+    """No repo frame: the first function the test imports and calls, from a non-protected module.
+
+    Handles `from m import f` + `f(`, `import a.b as c` / `from a import b` (module) +
+    `c.f(` (batch 3)."""
     from core.agent.goal_quality import protected
 
     src = _test_source(root, nodeid)
@@ -187,14 +346,35 @@ def _target_from_test(root: Path, nodeid: str) -> tuple:
     except Exception:
         return "", ""
     for text in (src, module_src):
-        for m in re.finditer(r"from ([A-Za-z_][\w.]*) import ([\w, ]+)", text):
+        for m in re.finditer(r"from ([A-Za-z_][\w.]*) import (?:\(([\w, \n]+)\)|([\w, ]+))", text):
             rel = m.group(1).replace(".", "/") + ".py"
-            if not (Path(root) / rel).is_file() or protected(rel):
-                continue
-            for name in [n.strip() for n in m.group(2).split(",") if n.strip()]:
-                if re.search(rf"\b{re.escape(name)}\(", src) and _is_function(root, rel, name):
-                    return rel, name
+            listed = (m.group(2) or m.group(3) or "").replace("\n", ",")
+            names = [n.strip().split(" as ")[0].strip() for n in listed.split(",") if n.strip()]
+            if (Path(root) / rel).is_file() and not protected(rel):
+                for name in names:
+                    if re.search(rf"\b{re.escape(name)}\(", src) and _is_function(root, rel, name):
+                        return rel, name
+            for name in names:  # from pkg import module
+                sub = m.group(1).replace(".", "/") + "/" + name + ".py"
+                if (Path(root) / sub).is_file() and not protected(sub):
+                    hit = _called_attr(root, sub, name, src)
+                    if hit:
+                        return sub, hit
+        for m in re.finditer(r"^\s*import ([A-Za-z_][\w.]*)(?: as (\w+))?", text, re.M):
+            rel = m.group(1).replace(".", "/") + ".py"
+            alias = m.group(2) or m.group(1)
+            if (Path(root) / rel).is_file() and not protected(rel):
+                hit = _called_attr(root, rel, alias, src)
+                if hit:
+                    return rel, hit
     return "", ""
+
+
+def _called_attr(root: Path, rel: str, alias: str, src: str) -> str:
+    for fm in re.finditer(rf"\b{re.escape(alias)}\.([A-Za-z_]\w*)\(", src):
+        if _is_function(root, rel, fm.group(1)):
+            return fm.group(1)
+    return ""
 
 
 def _goal(root: Path, nodeid: str, test_file: str, target: str, symbol: str, missing: bool, text: str,
@@ -228,6 +408,8 @@ def tractability(root: Path, goal: Dict[str, Any]) -> float:
         score += 0.1
     if goal.get("via") == "test_import":
         score -= 0.15  # the failing line is in the test; the culprit may be elsewhere
+    if goal.get("via") == "sbfl":
+        score -= 0.2  # localised by spectrum, not by a frame: least certain target
     try:
         lines = len((Path(root) / goal["file"]).read_text(encoding="utf-8", errors="ignore").splitlines())
     except Exception:
@@ -338,17 +520,18 @@ def scan(root: Path, n_files: int = 8, timeout: int = 240, files: Optional[Itera
         files = (all_files[cur:] + all_files[:cur])[:n_files]
         data["cursor"] = (cur + n_files) % max(1, len(all_files))
     files = list(files)
-    res = run_pytest(root, files, timeout=timeout)
+    res = run_pytest(root, files, timeout=timeout, sbfl=sbfl_enabled())
     goals = data["goals"]
     for gid in [g for g, row in goals.items() if row.get("test_file") in files and row.get("kind") == "fix_test"]:
         if res["status"].get(goals[gid].get("nodeid")) == "pass":
             goals.pop(gid)
     added = 0
     for nid, text in res["fail"].items():
-        goal = goal_from_failure(root, nid, text)
+        goal, reason = classify_failure(root, nid, text, res.get("spectra"))
         if goal is None:
-            data["dropped"][nid] = "infra_or_untargetable"
+            data["dropped"][nid] = reason
             continue
+        data["dropped"].pop(nid, None)
         if goal["id"] not in goals and goal["id"] not in data["done"]:
             added += 1
         goal["tractability"] = tractability(root, goal)
@@ -368,12 +551,23 @@ def ranked(root: Path) -> List[Dict[str, Any]]:
     data = load_index(root)
     rows = [g for g in data["goals"].values() if g.get("id") not in data["done"]]
     tries = data.get("tries") or {}
+    # Batch 3: SBFL can point many failing tests at one function. Failed tries on a
+    # (file, symbol) count against every goal that targets it, so the 1650 does not
+    # spend 20 attempts on one wrong suspect.
+    by_target: Dict[tuple, int] = {}
+    for g in data["goals"].values():
+        key = (g.get("file"), g.get("symbol"))
+        by_target[key] = by_target.get(key, 0) + int(tries.get(g.get("id"), 0))
     for g in rows:
-        g["_rank"] = float(g.get("tractability") or 0) - 0.2 * int(tries.get(g["id"], 0))
+        own = int(tries.get(g["id"], 0))
+        shared = by_target.get((g.get("file"), g.get("symbol")), 0) - own
+        g["_rank"] = float(g.get("tractability") or 0) - 0.2 * own - 0.1 * shared
+        g["_target_tries"] = own + shared
     return sorted(rows, key=lambda g: (-g["_rank"], g["id"]))
 
 
 MAX_TRIES = 3
+MAX_TARGET_TRIES = 6
 
 
 def next_real(root: Path, skip: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
@@ -383,9 +577,12 @@ def next_real(root: Path, skip: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
     for g in ranked(root):
         if g["id"] in skip or int(tries.get(g["id"], 0)) >= MAX_TRIES:
             continue
+        if g.get("via") == "sbfl" and int(g.get("_target_tries") or 0) >= MAX_TARGET_TRIES:
+            continue
         if not (Path(root) / g["file"]).is_file():
             continue
         g.pop("_rank", None)
+        g.pop("_target_tries", None)
         return g
     return None
 
@@ -410,7 +607,7 @@ def _func_source(path: Path, symbol: str) -> str:
         tree = ast.parse(text)
     except Exception:
         return ""
-    span = _span(tree, symbol)
+    span = _span(tree, symbol) or (_assign_span(tree, symbol) if "." not in symbol else None)
     if not span:
         return ""
     lines = text.splitlines()
@@ -452,9 +649,16 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
     test = _test_source(root, goal["nodeid"])[:1400] if goal.get("nodeid") else ""
     use_ctx = getattr(behaviour, "use_workspace_context", True)
     current = _func_source(root / goal["file"], goal["symbol"]) if use_ctx else ""
-    tail = (f"Reply with one complete Python function `def {name}(...)` (no class wrapper, no markdown). "
-            f"It replaces the current one" + (" in its class" if "." in goal["symbol"] else "")
-            + ("; it is missing, so it is added." if goal.get("missing") else ".") + "\n")
+    if goal.get("symbol_kind") == "assign":
+        tail = (f"Reply with the complete new module-level assignment `{name} = ...` (no markdown). "
+                "It replaces the current one.\n")
+    else:
+        tail = (f"Reply with one complete Python function `def {name}(...)` (no class wrapper, no markdown). "
+                f"It replaces the current one" + (" in its class" if "." in goal["symbol"] else "")
+                + ("; it is missing, so it is added." if goal.get("missing") else ".") + "\n")
+        if constants_enabled() and "." not in goal["symbol"]:
+            tail += ("If the fix also needs a module-level constant changed, add the complete new "
+                     "`NAME = ...` line(s) before the function.\n")
     addon = (getattr(behaviour, "prompt_addon", "") or "") + "\n" if behaviour is not None else ""
     parts = [head]
     if test:
@@ -470,6 +674,9 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
             ctx = (sig + "\n\n" + current)[-room:] if current else slice_to_budget(sig, query=name, cap=room)
         elif current and len(current) <= room:
             ctx = current
+            consts = _constants_used(root / goal["file"], current) if constants_enabled() else ""
+            if consts and len(consts) + len(current) + 2 <= room:
+                ctx = consts + "\n\n" + current
         else:
             ctx = slice_to_budget(body, query=name, cap=room)
         parts.append(f"{goal['file']} (current):\n{ctx}\n")
@@ -501,10 +708,11 @@ def extract_function(reply: str, symbol: str) -> str:
     return fn
 
 
-def apply_function(root: Path, goal: Dict[str, Any], fn: str) -> Dict[str, Any]:
+def apply_function(root: Path, goal: Dict[str, Any], fn: str, write: bool = True,
+                   base: Optional[str] = None) -> Dict[str, Any]:
     """Replace (or add) one function. The file must still parse. Returns the original for revert."""
     path = Path(root) / goal["file"]
-    original = path.read_text(encoding="utf-8")
+    original = base if base is not None else path.read_text(encoding="utf-8")
     try:
         tree = ast.parse(original)
     except SyntaxError:
@@ -526,8 +734,140 @@ def apply_function(root: Path, goal: Dict[str, Any], fn: str) -> Dict[str, Any]:
         compile(new, str(path), "exec")
     except SyntaxError as exc:
         return {"ok": False, "reason": f"syntax: {exc.msg}"}
+    if not write:
+        return {"ok": True, "original": original, "new": new}
     path.write_text(new, encoding="utf-8")
     return {"ok": True, "original": original}
+
+
+def _constants_used(path: Path, func_src: str) -> str:
+    """Current source of the module-level assignments the function reads (context, not an answer)."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        tree = ast.parse(text)
+        used = {n.id for n in ast.walk(ast.parse(textwrap_dedent(func_src))) if isinstance(n, ast.Name)}
+    except Exception:
+        return ""
+    lines = text.splitlines()
+    out = []
+    for node in tree.body:
+        names = _assign_names(node)
+        if names and set(names) & used and (node.end_lineno or node.lineno) - node.lineno < MAX_ASSIGN_LINES:
+            out.append("\n".join(lines[node.lineno - 1: node.end_lineno]))
+    return "\n".join(out[:MAX_ASSIGNS])
+
+
+def textwrap_dedent(src: str) -> str:
+    import textwrap
+
+    return textwrap.dedent(src)
+
+
+def extract_assigns(reply: str) -> Dict[str, str]:
+    """Top-level `NAME = ...` / `NAME: T = ...` statements in a reply, by name (last wins)."""
+    text = re.sub(r"```(?:python)?", "", (reply or "").replace("\r\n", "\n"))
+    lines = text.split("\n")
+    out: Dict[str, str] = {}
+    i = 0
+    while i < len(lines):
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^=\n]+)?=(?!=)", lines[i])
+        if not m:
+            i += 1
+            continue
+        for j in range(i, min(len(lines), i + MAX_ASSIGN_LINES)):
+            chunk = "\n".join(lines[i: j + 1])
+            try:
+                tree = ast.parse(chunk)
+            except SyntaxError:
+                continue
+            if len(tree.body) == 1 and _assign_names(tree.body[0]) == [m.group(1)]:
+                if not m.group(1).startswith("__"):
+                    out[m.group(1)] = chunk.rstrip() + "\n"
+                i = j
+                break
+        i += 1
+    return out
+
+
+def extract_edit(reply: str, goal: Dict[str, Any]) -> Dict[str, Any]:
+    """{"function": src or "", "assigns": {name: src}} from a model reply. Empty = nothing usable."""
+    if goal.get("symbol_kind") == "assign":
+        assigns = extract_assigns(reply) if constants_enabled() else {}
+        if goal["symbol"] not in assigns:
+            return {"function": "", "assigns": {}}
+        return {"function": "", "assigns": assigns}
+    fn = extract_function(reply, goal["symbol"])
+    if not fn:
+        return {"function": "", "assigns": {}}
+    assigns = extract_assigns(reply) if constants_enabled() and "." not in goal["symbol"] else {}
+    assigns.pop(goal["symbol"].split(".")[-1], None)
+    return {"function": fn, "assigns": assigns}
+
+
+def apply_edit(root: Path, goal: Dict[str, Any], edit: Dict[str, Any]) -> Dict[str, Any]:
+    """Function replace/add plus module-level assignment replace/add, in one compiled write.
+
+    Allowed assignments: names already bound at module level in the target file, or
+    names the new function reads (added just before it). At most MAX_ASSIGNS, none
+    dunder, each < MAX_ASSIGN_LINES. The target must not be protected."""
+    from core.agent.goal_quality import protected
+
+    if protected(goal.get("file", "")):
+        return {"ok": False, "reason": "protected path"}
+    path = Path(root) / goal["file"]
+    original = path.read_text(encoding="utf-8")
+    assigns = dict(edit.get("assigns") or {})
+    fn = edit.get("function") or ""
+    if not fn and not assigns:
+        return {"ok": False, "reason": "empty edit"}
+    if len(assigns) > MAX_ASSIGNS:
+        return {"ok": False, "reason": f"too many assignments ({len(assigns)} > {MAX_ASSIGNS})"}
+    if fn:
+        res = apply_function(root, goal, fn, write=False, base=original)
+        if not res.get("ok") and not (assigns and res.get("reason") == "no change"):
+            return res
+        text = res.get("new") or original
+    else:
+        text = original
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return {"ok": False, "reason": "target does not parse"}
+    used = set()
+    if fn:
+        used = {n.id for n in ast.walk(ast.parse(fn)) if isinstance(n, ast.Name)}
+    lines = text.splitlines()
+    added: List[str] = []
+    for name in sorted(assigns, key=lambda n: -((_assign_span(tree, n) or (0, 0))[0])):
+        src = assigns[name].rstrip("\n").split("\n")
+        span = _assign_span(tree, name)
+        if span:
+            lines = lines[: span[0] - 1] + src + lines[span[1]:]
+        elif name in used or (goal.get("symbol_kind") == "assign" and name == goal["symbol"]):
+            added.append("\n".join(src))
+        else:
+            return {"ok": False, "reason": f"assignment {name} is new and not used by the edit"}
+    new = "\n".join(lines) + "\n"
+    if added:
+        anchor = None
+        if fn:
+            t2 = ast.parse(new)
+            span = _span(t2, goal["symbol"])
+            anchor = span[0] if span else None
+        block = "\n".join(added)
+        nl = new.splitlines()
+        if anchor:
+            new = "\n".join(nl[: anchor - 1] + block.split("\n") + ["", ""] + nl[anchor - 1:]) + "\n"
+        else:
+            new = new.rstrip() + "\n\n" + block + "\n"
+    if new == original:
+        return {"ok": False, "reason": "no change"}
+    try:
+        compile(new, str(path), "exec")
+    except SyntaxError as exc:
+        return {"ok": False, "reason": f"syntax: {exc.msg}"}
+    path.write_text(new, encoding="utf-8")
+    return {"ok": True, "original": original, "assigns": sorted(assigns), "function": bool(fn)}
 
 
 # ---------------------------------------------------------------- regression guard
@@ -566,15 +906,35 @@ def regressions(before: Dict[str, str], after: Dict[str, str]) -> List[str]:
     return sorted(n for n, s in before.items() if s == "pass" and after.get(n) not in ("pass", "skip"))
 
 
+def siblings(root: Path, goal: Dict[str, Any]) -> List[str]:
+    """Other open failing tests in the same test file that target the same symbol.
+
+    Batch 3: a cheat `heartbeat_plan` passed its one target test while the stronger
+    contract tests in the same file still failed; they had failed before, so the
+    regression guard saw nothing. An edit to a symbol is now judged against every
+    known failing test of that file on that symbol."""
+    if goal.get("kind") != "fix_test":
+        return []
+    data = load_index(root)
+    return sorted(g["nodeid"] for g in data["goals"].values()
+                  if g.get("kind") == "fix_test" and g.get("file") == goal.get("file")
+                  and g.get("symbol") == goal.get("symbol") and g.get("test_file") == goal.get("test_file")
+                  and g.get("nodeid") != goal.get("nodeid") and g.get("id") not in data["done"])
+
+
 def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List[str]) -> Dict[str, Any]:
-    """Target passes and nothing that passed before fails now."""
+    """Target (and its siblings) pass and nothing that passed before fails now."""
     res = run_pytest(root, suite)
     after = res["status"]
+    sibs = [n for n in siblings(root, goal) if n in after]
+    sib_fail = [n for n in sibs if after.get(n) not in ("pass", "skip")]
     if goal.get("kind") == "lint":
         target_ok = lint_clear(root, goal) and any(s == "pass" for s in after.values())
     else:
-        target_ok = after.get(goal["nodeid"]) == "pass"
+        target_ok = after.get(goal["nodeid"]) == "pass" and not sib_fail
     regs = regressions(baseline, after)
+    tail = res["fail"].get(goal.get("nodeid") or "", "") or (res["fail"].get(sib_fail[0], "") if sib_fail else "")
     return {"ok": bool(target_ok and not regs), "target_ok": bool(target_ok), "regressions": regs[:20],
             "n_regressions": len(regs), "suite_n": len(after), "secs": res["secs"],
-            "tail": (res["fail"].get(goal.get("nodeid") or "", "") or "")[-400:]}
+            "target_pass": after.get(goal.get("nodeid") or "") == "pass",
+            "siblings": len(sibs), "siblings_failing": sib_fail[:5], "tail": (tail or "")[-400:]}

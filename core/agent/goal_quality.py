@@ -74,6 +74,12 @@ def spoiled(prompt: str, symbol: str, current: str = "") -> bool:
         for line in (l.strip() for l in block if l.strip()):
             if not any(line in c for c in cur):
                 return True
+    # Batch 3: module-level assignment goals. A `NAME = <value>` line that the file
+    # does not have is the answer too.
+    cur_lines = {l.strip() for l in (current or "").splitlines() if l.strip()}
+    for m in re.finditer(rf"^{re.escape(name)}\s*(?::[^=\n]+)?=(?!=)[^\n]*$", prompt, re.M):
+        if m.group(0).strip() not in cur_lines:
+            return True
     return False
 
 

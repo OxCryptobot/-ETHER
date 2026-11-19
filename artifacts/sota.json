@@ -89,22 +89,22 @@
     "describe_loop_job_argv"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_gems_call: tests passed",
     "2026-11-19 describe_loop_generate_fn: tests failed",
     "2026-11-19 describe_loop_generate_retry: tests passed",
     "2026-11-19 describe_loop_generate_retry_loop: tests passed",
     "2026-11-19 describe_loop_git_tools: tests passed",
     "2026-11-19 describe_loop_goal: tests passed",
     "2026-11-19 describe_loop_idle_refill: tests passed",
-    "2026-11-19 describe_loop_job_argv: tests passed"
+    "2026-11-19 describe_loop_job_argv: tests passed",
+    "2026-11-19 describe_loop_live_attach: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_job_argv",
-    "kept": true,
-    "file": "core/loop/job_argv.py",
-    "ts": "2026-11-19T22:24:45.031616+00:00"
+    "goal": "describe_loop_live_attach",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-19T22:25:24.885990+00:00"
   },
-  "kept_n": 6,
+  "kept_n": 0,
   "files": [
     "core/kernel/memory_schema.py",
     "core/kernel/operator_intent.py",
@@ -140,6 +140,7 @@
     "describe_loop_coord",
     "describe_loop_execute_plan",
     "describe_loop_extend_stage",
-    "describe_loop_generate_fn"
+    "describe_loop_generate_fn",
+    "describe_loop_live_attach"
   ]
 }

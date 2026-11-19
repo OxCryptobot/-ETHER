@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-19T22:15:54.039376+00:00",
+  "ts": "2026-11-19T22:16:54.999351+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-19T22:16:07.231315+00:00",
+    "ts": "2026-11-19T22:17:08.335575+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-19T22:16:35.322094+00:00",
+    "ts": "2026-11-19T22:17:23.948856+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,10 +25,10 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   cb9c2ad544..a469cac4a7  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   fecee92090..9eb2299760  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-19T22:16:03.867726+00:00",
+    "ts": "2026-11-19T22:17:05.108334+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -69,7 +69,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-19T22:16:05.184591+00:00",
+    "ts": "2026-11-19T22:17:06.577762+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-19T22:16:07.059628+00:00",
+    "updated": "2026-11-19T22:17:08.210142+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -124,57 +124,43 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "describe_honest",
-  "lost_kept": 9,
+  "next_goal": "describe_parse_fail",
+  "lost_kept": 1,
   "seed_depth": 58,
   "sota": {
-    "ok": true,
-    "honest": true,
-    "goal": "describe_ownership",
-    "file": "core/kernel/ownership.py",
-    "tx": [
-      "search",
-      "edit",
-      "test",
-      "check",
-      "promote"
-    ],
-    "tests_ok": true,
-    "checked": true,
+    "ok": false,
+    "honest": false,
+    "goal": "describe_loop_ast_intel",
+    "note": "tests failed",
     "learn": {
       "arm": "default",
-      "kind": "pass",
-      "reward": 0.75,
+      "kind": "fail",
+      "reward": -0.9,
       "promote": {
         "action": "hold",
         "arm": "default"
       }
     },
     "batch": [
-      "describe_honest",
-      "describe_ignore",
-      "describe_job_schema",
-      "describe_lang",
-      "describe_memory_schema",
-      "describe_operator_intent",
-      "describe_ops",
-      "describe_ownership"
+      "describe_parse_fail",
+      "describe_loop_agent_loop_path",
+      "describe_loop_agentic"
     ],
-    "kept_n": 8,
+    "kept_n": 3,
     "batch_size": 8
   },
   "env": {
-    "ts": "2026-11-19T22:16:35.197141+00:00",
+    "ts": "2026-11-19T22:17:23.806358+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 230.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-19T22:16:07.231315+00:00",
-    "kept": 71,
-    "last_goal": "describe_ownership",
-    "last_kept": true,
-    "batch_size": 8
+    "alive_ts": "2026-11-19T22:17:08.335575+00:00",
+    "kept": 73,
+    "last_goal": "describe_loop_ast_intel",
+    "last_kept": false,
+    "batch_size": 3
   },
   "agent": {
     "ok": true,

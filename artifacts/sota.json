@@ -76,22 +76,22 @@
     "describe_loop_agentic"
   ],
   "lessons": [
-    "2026-11-19 describe_memory_schema: tests passed",
     "2026-11-19 describe_operator_intent: tests passed",
     "2026-11-19 describe_ops: tests passed",
     "2026-11-19 describe_ownership: tests passed",
     "2026-11-19 describe_parse_fail: tests passed",
     "2026-11-19 describe_loop_agent_loop_path: tests passed",
     "2026-11-19 describe_loop_agentic: tests passed",
-    "2026-11-19 describe_loop_ast_intel: tests failed"
+    "2026-11-19 describe_loop_ast_intel: tests failed",
+    "2026-11-19 describe_loop_bandit_credit: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_ast_intel",
+    "goal": "describe_loop_bandit_credit",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:17:23.781641+00:00"
+    "ts": "2026-11-19T22:18:00.776833+00:00"
   },
-  "kept_n": 3,
+  "kept_n": 0,
   "files": [
     "core/kernel/attach.py",
     "core/kernel/autonomy.py",
@@ -119,6 +119,7 @@
     "find_fits",
     "describe_tombstone",
     "find_clamp",
-    "describe_loop_ast_intel"
+    "describe_loop_ast_intel",
+    "describe_loop_bandit_credit"
   ]
 }

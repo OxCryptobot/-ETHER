@@ -87,27 +87,27 @@
     "describe_loop_goal",
     "describe_loop_idle_refill",
     "describe_loop_job_argv",
-    "describe_loop_medic"
+    "describe_loop_medic",
+    "describe_loop_plan_drive"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_lsp: tests failed",
-    "2026-11-19 describe_loop_lsp_client: tests failed",
     "2026-11-19 describe_loop_mcp_tests: tests failed",
     "2026-11-19 describe_loop_medic: tests passed",
     "2026-11-19 describe_loop_moonshot: tests failed",
     "2026-11-19 describe_loop_native_tools: tests failed",
     "2026-11-19 describe_loop_persist_run: tests failed",
-    "2026-11-19 describe_loop_pipeline_util: tests failed"
+    "2026-11-19 describe_loop_pipeline_util: tests failed",
+    "2026-11-19 describe_loop_plan_drive: tests passed",
+    "2026-11-19 describe_loop_plan_exec: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_pipeline_util",
+    "goal": "describe_loop_plan_exec",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:32:21.701946+00:00"
+    "ts": "2026-11-19T22:33:03.611543+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/kernel/operator_intent.py",
     "core/kernel/ops.py",
     "core/kernel/ownership.py",
     "core/kernel/parse_fail.py",
@@ -126,7 +126,8 @@
     "core/loop/goal.py",
     "core/loop/idle_refill.py",
     "core/loop/job_argv.py",
-    "core/loop/medic.py"
+    "core/loop/medic.py",
+    "core/loop/plan_drive.py"
   ],
   "skipped": [
     "describe_extra_tools",
@@ -153,6 +154,7 @@
     "describe_loop_moonshot",
     "describe_loop_native_tools",
     "describe_loop_persist_run",
-    "describe_loop_pipeline_util"
+    "describe_loop_pipeline_util",
+    "describe_loop_plan_exec"
   ]
 }

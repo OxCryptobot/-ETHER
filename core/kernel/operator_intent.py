@@ -15,6 +15,3 @@ def load(root: Path | None = None) -> dict:
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return {"grok_required": False, "honest_gate": True, "soft_launch": False}
-
-def describe() -> str:
-    return 'operator_intent'

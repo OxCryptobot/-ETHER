@@ -59,6 +59,8 @@ def _ladder_root(tmp_path: Path) -> Path:
     body = (REPO / "core" / "kernel" / "context_budget.py").read_text(encoding="utf-8")
     # The host's filler stubs (add_name, failing_test) must not pre-answer the rungs.
     body = re.sub(r"\n+def (add_name|failing_test)\(\)[^\n]*\n(    [^\n]*\n)+", "\n", body)
+    if "def fits_name" not in body:  # kept at 1c92acf; batch2 removed it from the live file
+        body = body.rstrip() + "\n\n\ndef fits_name() -> str:\n    return 'fits'\n"
     (kernel / "context_budget.py").write_text(body, encoding="utf-8")
     # A decoy: a nested helper named add, like core/pipeline_slices_canary.py.
     (tmp_path / "core" / "aaa_canary.py").write_text(

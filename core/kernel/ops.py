@@ -18,6 +18,3 @@ def tick() -> Dict[str, Any]:
     except Exception:
         pass
     return {"liveness": snap, "pending": n, "sleep": poll_seconds(n), "live_drain": live, "kernel": "phase6"}
-
-def describe() -> str:
-    return 'ops'

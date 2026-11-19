@@ -19,6 +19,3 @@ def messages(prompt: str, edit: bool = False) -> list:
         {"role": "system", "content": EDIT if edit else SYSTEM},
         {"role": "user", "content": prompt},
     ]
-
-def describe() -> str:
-    return 'agent_prompt'

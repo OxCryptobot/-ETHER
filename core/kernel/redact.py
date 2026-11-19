@@ -11,6 +11,3 @@ def redact(text: str) -> str:
     for pat in _PATTERNS:
         out = pat.sub("[REDACTED]", out)
     return out
-
-def describe() -> str:
-    return 'redact'

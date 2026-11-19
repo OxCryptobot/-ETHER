@@ -61,6 +61,3 @@ def act(root: Path) -> Dict[str, Any]:
         row.update({"queued": True, "id": retry_id, "of": jid})
         return row
     return row
-
-def describe() -> str:
-    return 'proactive'

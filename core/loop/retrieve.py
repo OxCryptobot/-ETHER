@@ -88,6 +88,3 @@ def fetch_context(result: Any, objective: str) -> str:
             )
         )
         return ""
-
-def describe() -> str:
-    return 'retrieve'

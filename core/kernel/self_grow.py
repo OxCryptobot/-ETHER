@@ -66,6 +66,3 @@ def greeter_proven(root: Path) -> bool:
     except Exception:
         return False
     return len(data.get("passes") or []) >= 2
-
-def describe() -> str:
-    return 'self_grow'

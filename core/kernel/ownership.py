@@ -38,6 +38,3 @@ def may_write(rel: str, *, writer: str) -> bool:
     if who == "enqueue":
         return writer in {"exe", "grok", "enqueue"}
     return False
-
-def describe() -> str:
-    return 'ownership'

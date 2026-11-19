@@ -108,6 +108,3 @@ def take_read(text: str, allowed: List[str]) -> Optional[str]:
         if path in allowed:
             return path
     return None
-
-def describe() -> str:
-    return 'read_gate'

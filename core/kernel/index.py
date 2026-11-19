@@ -62,9 +62,3 @@ def save_index(root: Path, dest: Path | None = None) -> Path:
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(build_index(root), indent=2) + "\n", encoding="utf-8")
     return dest
-
-def count_defs() -> int:
-    return max(1, len([line for line in open(__file__, encoding='utf-8') if line.startswith('def ')]))
-
-def describe() -> str:
-    return 'index'

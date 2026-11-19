@@ -17,6 +17,3 @@ def detect(root: Path) -> List[str]:
         if any((base / f).is_file() for f in files):
             found.append(name)
     return found or ["unknown"]
-
-def describe() -> str:
-    return 'lang'

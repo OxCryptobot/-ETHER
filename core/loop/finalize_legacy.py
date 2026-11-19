@@ -150,6 +150,3 @@ def finalize_legacy(
         if not result.error:
             detail = (last_err or "").strip()
             result.error = f"sandbox exit {exit_code}" + (f": {detail[:500]}" if detail else "")
-
-def describe() -> str:
-    return 'finalize_legacy'

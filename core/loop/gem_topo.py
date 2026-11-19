@@ -74,6 +74,3 @@ def walk_gems(objective: str = "agentic ping") -> Dict[str, Any]:
         "cycle": "observe-tool-sandbox-critique-memory",
         "note": "ETHER is the gems. This is the topography walk.",
     }
-
-def describe() -> str:
-    return 'gem_topo'

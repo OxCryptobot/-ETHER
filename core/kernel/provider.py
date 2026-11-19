@@ -11,6 +11,3 @@ def classify(exc: BaseException | None = None, text: str = "") -> Dict[str, Any]
     if not (text or "").strip():
         return {"ok": False, "error": "empty_model", "kind": "model"}
     return {"ok": True, "kind": "model", "n": len(text)}
-
-def describe() -> str:
-    return 'provider'

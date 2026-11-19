@@ -47,6 +47,3 @@ def replan_low(plan: PlanGraph, node_id: str, threshold: float = 0.4) -> bool:
     node.status = "open"
     plan._refresh()
     return True
-
-def describe() -> str:
-    return 'plan_store'

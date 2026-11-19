@@ -15,6 +15,3 @@ def allow(tool: str, *, writes_enabled: bool = True, shell_enabled: bool = False
     if name in SHELL:
         return bool(shell_enabled)
     return False
-
-def describe() -> str:
-    return 'permissions'

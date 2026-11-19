@@ -27,6 +27,3 @@ def lesson_from_fail(last: Dict[str, Any] | None) -> Dict[str, Any] | None:
     if not valid_critique(row):
         return None
     return stamp(row)
-
-def describe() -> str:
-    return 'self_learn'

@@ -21,6 +21,3 @@ def annotate_stage(stage: str) -> Dict[str, Optional[str]]:
 
 def annotate_all() -> List[Dict[str, Optional[str]]]:
     return [annotate_stage(stage) for stage in STAGE_GEM]
-
-def describe() -> str:
-    return 'gem_step'

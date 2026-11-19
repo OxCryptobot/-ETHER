@@ -15,6 +15,3 @@ def pending_count(pending: Path | None = None) -> int:
 def poll_seconds(n: int | None = None) -> int:
     count = pending_count() if n is None else int(n)
     return BUSY_SEC if count > 0 else IDLE_SEC
-
-def describe() -> str:
-    return 'poll'

@@ -58,6 +58,3 @@ def execute_fix(objective: str = "fix") -> Dict[str, Any]:
         "ids": [r.get("id") for r in rows],
         "rows": executed,
     }
-
-def describe() -> str:
-    return 'fix_dag'

@@ -81,6 +81,3 @@ def cycle(
     }
     _write(art / "agent.json", row)
     return row
-
-def describe() -> str:
-    return 'agent'

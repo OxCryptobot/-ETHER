@@ -87,6 +87,3 @@ def rose_complete(
     res = registry.execute(req)
     _bump("rose-quartz", str(task_id))
     return req, res
-
-def describe() -> str:
-    return 'gems_call'

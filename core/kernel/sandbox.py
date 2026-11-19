@@ -21,6 +21,3 @@ def allowed(root: Path, rel: str) -> bool:
         return True
     except (ValueError, OSError):
         return False
-
-def describe() -> str:
-    return 'sandbox'

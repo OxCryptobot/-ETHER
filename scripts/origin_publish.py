@@ -183,6 +183,31 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     return row
 
 
+def _blob(runner: Runner, git: str, ref: str, rel: str) -> str:
+    proc = runner([git, "rev-parse", "--verify", "--quiet", f"{ref}:{rel}"])
+    return (proc.stdout or "").strip() if proc.returncode == 0 else ""
+
+
+def code_paths_upstream_changed(git: str, runner: Runner, paths: List[str]) -> List[str]:
+    """Non-artifact paths origin/main changed since this tree forked from it.
+
+    The worktree publish copies whole files. For those paths that would silently
+    revert the upstream change, so they are left for the next rebase instead.
+    """
+    base = runner([git, "merge-base", "HEAD", "origin/main"])
+    mb = (base.stdout or "").strip() if base.returncode == 0 else ""
+    out: List[str] = []
+    for rel in paths:
+        if rel.startswith("artifacts/"):
+            continue
+        upstream = _blob(runner, git, "origin/main", rel)
+        if not upstream:
+            continue
+        if not mb or _blob(runner, git, mb, rel) != upstream:
+            out.append(rel)
+    return out
+
+
 def publish_worktree(root: Path, git: str, runner: Runner, message: str, token: str) -> Dict[str, Any]:
     """Commit the heartbeat files onto origin/main from a clean tree. Never reset --hard."""
     import shutil
@@ -204,6 +229,12 @@ def publish_worktree(root: Path, git: str, runner: Runner, message: str, token: 
         row["note"] = "worktree_failed"
         return row
     try:
+        skipped = code_paths_upstream_changed(git, runner, paths)
+        if skipped:
+            # Copying a whole local file over a newer origin/main version reverted
+            # real fixes (heartbeat_plan 2026-11-07, edit_tx 11-04, argv_allow 11-04).
+            row["skipped_code"] = skipped
+            paths = [rel for rel in paths if rel not in skipped]
         for rel in paths:
             src = root / rel
             dest = wt / rel

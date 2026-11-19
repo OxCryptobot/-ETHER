@@ -48,6 +48,10 @@ def _read_list(path: Path) -> list:
     except Exception:
         return []
     return data if isinstance(data, list) else []
+
+
+def snapshot() -> Dict[str, Any]:
+    """One read-only view for the Matrix face and the host window."""
     root = _root()
     alive = _read(root / "artifacts" / "app_alive.json")
     evolve = _read(root / "artifacts" / "evolve.json")

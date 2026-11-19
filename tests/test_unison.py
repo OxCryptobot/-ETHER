@@ -20,8 +20,8 @@ def test_snapshot_is_read_only(tmp_path, monkeypatch) -> None:
     before = (art / "app_alive.json").read_text(encoding="utf-8")
     row = snapshot()
     assert row["face"] == "matrix"
-    assert row["hands"] == "exe"
-    assert row["writer"] == "exe"
+    assert row["hands"] == "runtime"
+    assert row["writer"] == "runtime"
     assert row["mutates"] is False
     assert row["stale"] is True
     assert row["goal"] == "restore_1650_writer"
@@ -43,7 +43,7 @@ def test_observer_copy_does_not_touch_alive(tmp_path, monkeypatch) -> None:
     from scripts.unison import publish_observer
     row = publish_observer()
     saved = json.loads((art / "unison.json").read_text(encoding="utf-8"))
-    assert saved["writer"] == "exe"
+    assert saved["writer"] == "runtime"
     assert saved["face"] == "matrix"
     assert saved["mutates"] is False
     assert saved == row
@@ -57,7 +57,7 @@ def test_exe_status_uses_the_same_contract(tmp_path, monkeypatch) -> None:
     from scripts.ether_app import dashboard_status
     row = dashboard_status()
     assert row["face"] == "matrix"
-    assert row["hands"] == "exe"
+    assert row["hands"] == "runtime"
     assert row["mutates"] is False
 
 

@@ -156,3 +156,31 @@ def test_function_replace_keeps_the_rest_of_the_file(tmp_path: Path) -> None:
     body = (root / "pkg" / "m.py").read_text(encoding="utf-8")
     assert "def triple" in body and body.count("def double") == 1
     assert gs.extract_function("```python\ndef double(x):\n    return x * 2\n```\nDone.", "double") == GOOD
+
+
+def test_refactor_remove_filler_is_gated_and_flagged(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from core.agent import refactor
+
+    root = _repo(tmp_path)
+    (root / "core").mkdir()
+    (root / "core" / "__init__.py").write_text("", encoding="utf-8")
+    (root / "core" / "k.py").write_text("def real(x):\n    return x + 1\n\n\ndef describe() -> str:\n    return 'k'\n",
+                                        encoding="utf-8")
+    (root / "tests" / "test_k.py").write_text("from core.k import real\n\n\ndef test_real():\n    assert real(1) == 2\n",
+                                              encoding="utf-8")
+    assert refactor.enabled() is False
+    cands = refactor.candidates(root, "remove_filler")
+    assert [c["symbol"] for c in cands] == ["describe"]
+    row = refactor.attempt(root, cands[0])
+    assert row["ok"] and row["regressions"] == 0 and row["policy"] == "tool"
+    assert "describe" not in (root / "core" / "k.py").read_text(encoding="utf-8")
+    assert refactor.arms(root)["remove_filler"] == {"pulls": 1, "kept": 1}
+    # a removal that breaks a passing test is caught and reverted
+    (root / "core" / "k.py").write_text("def real(x):\n    return x + 1\n\n\ndef ready() -> bool:\n    return True\n",
+                                        encoding="utf-8")
+    (root / "tests" / "test_k.py").write_text(
+        "import core.k as k\n\n\ndef test_ready():\n    assert getattr(k, 'rea' + 'dy')() is True\n", encoding="utf-8")
+    cand = refactor._goal("remove_filler", "core/k.py", "ready")
+    row = refactor.attempt(root, cand)
+    assert row["ok"] is False and row["note"] == "regression"
+    assert "def ready" in (root / "core" / "k.py").read_text(encoding="utf-8")

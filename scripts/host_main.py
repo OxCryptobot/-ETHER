@@ -97,6 +97,13 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
     except Exception as exc:
         row["next_error"] = type(exc).__name__
     try:
+        from core.agent import goal_source
+        data = goal_source.load_index(root)
+        row["real_queue"] = {"open": len(goal_source.ranked(root)), "done": len(data.get("done") or []),
+                             "dropped": len(data.get("dropped") or {}), "scan_ts": data.get("scan_ts")}
+    except Exception as exc:
+        row["real_queue_error"] = type(exc).__name__
+    try:
         from core.agent.sota import run as sota_run
         from scripts.live_edit_tx import _ask
 
@@ -104,6 +111,11 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
             return _ask(prompt, n=n, edit=True)
 
         row["sota"] = sota_run(root, _code)
+        try:
+            from core.agent.outcome import summary as learn_summary
+            row["learning"] = learn_summary(root)
+        except Exception as exc:
+            row["learning_error"] = type(exc).__name__
         from core.agent.env import write as env_write
 
         row["env"] = env_write(root)

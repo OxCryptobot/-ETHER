@@ -128,8 +128,8 @@ def goal_from_failure(root: Path, nodeid: str, text: str) -> Optional[Dict[str, 
     from core.agent.goal_quality import protected
 
     root = Path(root)
-    if any(m in (text or "") for m in INFRA):
-        return None
+    if nodeid.startswith("::") or any(m in (text or "") for m in INFRA):
+        return None  # collection errors have no test to gate on; infra is not a code goal
     test_file = nodeid.split("::", 1)[0]
     target, line, missing = "", 0, ""
     m = IMPORT_NAME.search(text or "")

@@ -76,30 +76,30 @@
     "describe_loop_agentic",
     "describe_loop_fail_run",
     "describe_loop_finalize_legacy",
-    "describe_loop_fix_dag"
+    "describe_loop_fix_dag",
+    "describe_loop_flywheel",
+    "describe_loop_gem_step",
+    "describe_loop_gem_topo",
+    "describe_loop_gems_call"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_canned_tools: tests failed",
-    "2026-11-19 describe_loop_close_run: tests failed",
-    "2026-11-19 describe_loop_coord: tests failed",
-    "2026-11-19 describe_loop_execute_plan: tests failed",
-    "2026-11-19 describe_loop_extend_stage: tests failed",
     "2026-11-19 describe_loop_fail_run: tests passed",
     "2026-11-19 describe_loop_finalize_legacy: tests passed",
-    "2026-11-19 describe_loop_fix_dag: tests passed"
+    "2026-11-19 describe_loop_fix_dag: tests passed",
+    "2026-11-19 describe_loop_flywheel: tests passed",
+    "2026-11-19 describe_loop_gem_step: tests passed",
+    "2026-11-19 describe_loop_gem_topo: tests passed",
+    "2026-11-19 describe_loop_gems_call: tests passed",
+    "2026-11-19 describe_loop_generate_fn: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_fix_dag",
-    "kept": true,
-    "file": "core/loop/fix_dag.py",
-    "ts": "2026-11-19T22:22:46.594751+00:00"
+    "goal": "describe_loop_generate_fn",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-19T22:23:42.248032+00:00"
   },
-  "kept_n": 3,
+  "kept_n": 4,
   "files": [
-    "core/kernel/constitution.py",
-    "core/kernel/crash.py",
-    "core/kernel/critique.py",
-    "core/kernel/dirty.py",
     "core/kernel/events.py",
     "core/kernel/gc.py",
     "core/kernel/honest.py",
@@ -115,7 +115,11 @@
     "core/loop/agentic.py",
     "core/loop/fail_run.py",
     "core/loop/finalize_legacy.py",
-    "core/loop/fix_dag.py"
+    "core/loop/fix_dag.py",
+    "core/loop/flywheel.py",
+    "core/loop/gem_step.py",
+    "core/loop/gem_topo.py",
+    "core/loop/gems_call.py"
   ],
   "skipped": [
     "describe_extra_tools",
@@ -129,6 +133,7 @@
     "describe_loop_close_run",
     "describe_loop_coord",
     "describe_loop_execute_plan",
-    "describe_loop_extend_stage"
+    "describe_loop_extend_stage",
+    "describe_loop_generate_fn"
   ]
 }

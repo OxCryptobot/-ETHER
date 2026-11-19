@@ -176,7 +176,12 @@ def status(base: Optional[Path] = None, run: Runner = _run) -> Dict[str, Any]:
         oll = ollama_up()
     except Exception:
         oll = None
-    head = run(["git", "-C", str(base), "rev-parse", "--short", "HEAD"])
+    try:
+        from scripts.host_main import _git
+        git = _git()
+    except Exception:
+        git = "git"
+    head = run([git, "-C", str(base), "rev-parse", "--short", "HEAD"])
     row = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "root": str(base),

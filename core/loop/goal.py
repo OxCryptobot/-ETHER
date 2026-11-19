@@ -68,3 +68,6 @@ def classify_objective(text: str) -> Dict[str, Any]:
     else:
         kind = "general"
     return {"kind": kind, "text": (text or "")[:200], "uses_fix_dag": kind == "fix_dag"}
+
+def describe() -> str:
+    return 'goal'

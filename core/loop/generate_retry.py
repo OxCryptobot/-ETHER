@@ -65,3 +65,6 @@ def retry_prompt(
             + "\nInclude asserts that prove correctness.\n"
         )
     return apply_adapter(prompt)
+
+def describe() -> str:
+    return 'generate_retry'

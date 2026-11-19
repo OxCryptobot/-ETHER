@@ -311,3 +311,6 @@ def run_generate_retry_loop(
     st["sent_prompts"] = sent_prompts
     st["attempts"] = attempts
     return st
+
+def describe() -> str:
+    return 'generate_retry_loop'

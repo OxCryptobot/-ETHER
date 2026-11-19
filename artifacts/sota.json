@@ -80,32 +80,32 @@
     "describe_loop_flywheel",
     "describe_loop_gem_step",
     "describe_loop_gem_topo",
-    "describe_loop_gems_call"
+    "describe_loop_gems_call",
+    "describe_loop_generate_retry",
+    "describe_loop_generate_retry_loop",
+    "describe_loop_git_tools",
+    "describe_loop_goal",
+    "describe_loop_idle_refill",
+    "describe_loop_job_argv"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_fail_run: tests passed",
-    "2026-11-19 describe_loop_finalize_legacy: tests passed",
-    "2026-11-19 describe_loop_fix_dag: tests passed",
-    "2026-11-19 describe_loop_flywheel: tests passed",
-    "2026-11-19 describe_loop_gem_step: tests passed",
-    "2026-11-19 describe_loop_gem_topo: tests passed",
     "2026-11-19 describe_loop_gems_call: tests passed",
-    "2026-11-19 describe_loop_generate_fn: tests failed"
+    "2026-11-19 describe_loop_generate_fn: tests failed",
+    "2026-11-19 describe_loop_generate_retry: tests passed",
+    "2026-11-19 describe_loop_generate_retry_loop: tests passed",
+    "2026-11-19 describe_loop_git_tools: tests passed",
+    "2026-11-19 describe_loop_goal: tests passed",
+    "2026-11-19 describe_loop_idle_refill: tests passed",
+    "2026-11-19 describe_loop_job_argv: tests passed"
   ],
   "last": {
-    "goal": "describe_loop_generate_fn",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-19T22:23:42.248032+00:00"
+    "goal": "describe_loop_job_argv",
+    "kept": true,
+    "file": "core/loop/job_argv.py",
+    "ts": "2026-11-19T22:24:45.031616+00:00"
   },
-  "kept_n": 4,
+  "kept_n": 6,
   "files": [
-    "core/kernel/events.py",
-    "core/kernel/gc.py",
-    "core/kernel/honest.py",
-    "core/kernel/ignore.py",
-    "core/kernel/job_schema.py",
-    "core/kernel/lang.py",
     "core/kernel/memory_schema.py",
     "core/kernel/operator_intent.py",
     "core/kernel/ops.py",
@@ -119,7 +119,13 @@
     "core/loop/flywheel.py",
     "core/loop/gem_step.py",
     "core/loop/gem_topo.py",
-    "core/loop/gems_call.py"
+    "core/loop/gems_call.py",
+    "core/loop/generate_retry.py",
+    "core/loop/generate_retry_loop.py",
+    "core/loop/git_tools.py",
+    "core/loop/goal.py",
+    "core/loop/idle_refill.py",
+    "core/loop/job_argv.py"
   ],
   "skipped": [
     "describe_extra_tools",

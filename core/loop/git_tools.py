@@ -38,3 +38,6 @@ def git_branch() -> Dict[str, Any]:
         "branch": (result.stdout or "").strip(),
         "stderr": (result.stderr or "")[:400],
     }
+
+def describe() -> str:
+    return 'git_tools'

@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-19T22:25:45.056254+00:00",
+  "ts": "2026-11-19T22:26:24.097059+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-19T22:25:59.865952+00:00",
+    "ts": "2026-11-19T22:26:38.024352+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-19T22:26:04.716603+00:00",
+    "ts": "2026-11-19T22:26:42.328977+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 0,
@@ -25,10 +25,10 @@
     },
     "via": "gh_token_url",
     "push_rc": 0,
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   87425e5c24..ebebbfe761  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   2e1647007a..0f68e91130  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-19T22:25:56.135871+00:00",
+    "ts": "2026-11-19T22:26:34.847996+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -69,7 +69,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-19T22:25:57.760086+00:00",
+    "ts": "2026-11-19T22:26:36.210644+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-19T22:25:59.696957+00:00",
+    "updated": "2026-11-19T22:26:37.906749+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -124,13 +124,13 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "describe_loop_live_criteria",
+  "next_goal": "describe_loop_living",
   "lost_kept": 0,
-  "seed_depth": 33,
+  "seed_depth": 32,
   "sota": {
     "ok": false,
     "honest": false,
-    "goal": "describe_loop_live_criteria",
+    "goal": "describe_loop_living",
     "note": "tests failed",
     "learn": {
       "arm": "default",
@@ -146,15 +146,15 @@
     "batch_size": 3
   },
   "env": {
-    "ts": "2026-11-19T22:26:04.580192+00:00",
+    "ts": "2026-11-19T22:26:42.188875+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 228.3,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-19T22:25:59.865952+00:00",
+    "alive_ts": "2026-11-19T22:26:38.024352+00:00",
     "kept": 86,
-    "last_goal": "describe_loop_live_criteria",
+    "last_goal": "describe_loop_living",
     "last_kept": false,
     "batch_size": 0
   },

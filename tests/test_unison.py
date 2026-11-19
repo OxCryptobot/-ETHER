@@ -24,7 +24,14 @@ def test_snapshot_is_read_only(tmp_path, monkeypatch) -> None:
     assert row["writer"] == "runtime"
     assert row["mutates"] is False
     assert row["stale"] is True
-    assert row["goal"] == "restore_1650_writer"
+    # Batch 3: the snapshot names the goal the writer is on. Since 2026-10-30 (one
+    # writer) that is the runtime/self-grow goal when there is one; evolve.json's
+    # goal is the fallback. The old expectation predates that order.
+    from core.kernel.self_grow import next_real
+
+    current = next_real(tmp_path)
+    assert row["goal"] == ((current or {}).get("id") or "restore_1650_writer")
+    assert row["goal"] == row["task"] or not row["task"]
     assert row["generation"] == 3
     assert "app_alive_stale" in row["gaps"]
     assert row["ports"] == {"watch": 7843, "retired": 8787}
@@ -48,7 +55,13 @@ def test_observer_copy_does_not_touch_alive(tmp_path, monkeypatch) -> None:
     assert saved["mutates"] is False
     assert saved == row
     assert (art / "app_alive.json").read_text(encoding="utf-8") == before
-    assert "artifacts/unison.json" not in Path("scripts/origin_publish.py").read_text(encoding="utf-8")
+    # Batch 3: since "the matrix reads the runtime" (5539923a5) the writer publishes
+    # unison.json so the read-only Matrix can show it from GitHub. The observer copy
+    # itself still writes nothing but unison.json.
+    from scripts.origin_publish import PATHS
+
+    assert "artifacts/unison.json" in PATHS
+    assert sorted(p.name for p in art.iterdir()) == ["app_alive.json", "unison.json"]
 
 
 def test_exe_status_uses_the_same_contract(tmp_path, monkeypatch) -> None:

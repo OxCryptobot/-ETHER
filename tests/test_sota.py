@@ -1,10 +1,19 @@
 """The model writes the function. The tests keep it. Nothing is injected."""
 from __future__ import annotations
 
+import pytest
+
 from pathlib import Path
 
 from core.agent.sota import run
 
+
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
 
 def test_the_model_writes_it(tmp_path: Path) -> None:
     src = Path("core/kernel/context_budget.py").read_text(encoding="utf-8")

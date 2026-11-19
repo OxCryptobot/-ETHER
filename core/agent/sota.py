@@ -143,6 +143,8 @@ def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
 
 def seed_depth(root: Path) -> int:
     """How many repo-state goals generate() can still hand out (for host_main.json)."""
+    if not legacy_allowed():
+        return 0
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
     failed = {str(item) for item in (state.get("skipped") or [])}
@@ -195,7 +197,11 @@ def lost_kept(root: Path, state: Dict[str, Any] | None = None) -> List[str]:
     """
     state = state if state is not None else load(root)
     lost: List[str] = []
+    from core.agent.goal_quality import filler_id
+
     for goal_id in [str(item) for item in (state.get("goals") or [])]:
+        if filler_id(goal_id) and not legacy_allowed():
+            continue  # retired filler is never requeued (it would re-add junk)
         site = goal_site(goal_id)
         if site is None:
             continue
@@ -217,7 +223,38 @@ def _requeue(root: Path, goal_id: str) -> Dict[str, str] | None:
     return None
 
 
-def next_goal(root: Path) -> Dict[str, str] | None:
+def legacy_allowed() -> bool:
+    """The fixed list, the learn.py ladder and describe() seeding. Every one of their
+    prompts holds the answer (spoiler) or their test checks a constant, so with the
+    goal-quality guard on (default) they are retired. ETHER_SOTA_LEGACY=1 brings them back."""
+    from core.agent.goal_quality import guard_enabled
+
+    return os.getenv("ETHER_SOTA_LEGACY") == "1" or not guard_enabled()
+
+
+def next_goal(root: Path, skip: Any = ()) -> Dict[str, Any] | None:
+    """Real goals (failing tests, lint) first, then refactors (flag), then legacy (flag)."""
+    from core.agent import goal_source
+
+    if goal_source.enabled():
+        real = goal_source.next_real(root, skip=skip)
+        if real is not None:
+            return real
+    try:
+        from core.agent import refactor
+
+        if refactor.enabled():
+            item = refactor.next_refactor(root, skip=skip)
+            if item is not None:
+                return item
+    except Exception:
+        pass
+    if not legacy_allowed():
+        return None
+    return legacy_next_goal(root)
+
+
+def legacy_next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
     lost = set(lost_kept(root, state))
     done = {str(item) for item in (state.get("goals") or [])} - lost
@@ -336,32 +373,124 @@ def _infra(goal: Dict[str, str], seen: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
-def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
+def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
     """One attempt. The honest gate's outcome trains the existing bandit."""
+    try:
+        goal = next_goal(root, skip=skip)
+    except Exception:
+        goal = None
     try:
         from core.agent.outcome import choose, record
 
-        pick = choose(root)
+        pick = choose(root, goal=goal)
     except Exception:
         pick = None
-    result = _attempt(root, ask, pick)
+    result = _attempt(root, ask, pick, skip, goal=goal)
     if pick is not None and result.get("note") != "queue empty":
         try:
             row = record(root, pick, result)
-            result["learn"] = {"arm": pick.arm, "kind": row.get("kind"), "reward": row.get("reward"),
-                               "promote": row.get("promote")}
+            result["learn"] = {"arm": pick.arm, "bucket": pick.bucket, "kind": row.get("kind"),
+                               "reward": row.get("reward"), "promote": row.get("promote")}
         except Exception as exc:
             result["learn_error"] = type(exc).__name__
     return result
 
 
-def _attempt(root: Path, ask: Callable[..., str], pick: Any = None) -> Dict[str, Any]:
+def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pick: Any,
+                  seen: Dict[str, str]) -> Dict[str, Any]:
+    """Failing test / lint goal. Unspoiled prompt, tool edit, target + regression gate."""
+    from core.agent import goal_source as gs
+    from core.agent.goal_quality import check
+
+    trace: Dict[str, Any] = pick.trace if pick is not None else {}
+    root = Path(root)
+    base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"]}
+    suite = gs.guard_suite(root, goal)
+    before = gs.run_pytest(root, suite)
+    baseline = before["status"]
+    if goal["kind"] == "fix_test" and baseline.get(goal["nodeid"]) == "pass":
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
+    if goal["kind"] == "lint" and gs.lint_clear(root, goal):
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "lint_clear"}
+    try:
+        from core.learning import arm_behaviour
+
+        behaviour = arm_behaviour(pick.arm) if pick is not None else None
+    except Exception:
+        behaviour = None
+    tries = 2 if (pick is not None and pick.arm == "repair_heavy") else 1
+    feedback = ""
+    last: Dict[str, Any] = {}
+    trace["spoiler"] = False
+    for i in range(tries):
+        prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback)
+        try:
+            current = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            current = ""
+        q = check(goal, prompt, current)
+        trace["spoiler"] = trace["spoiler"] or "spoiler" in q["reasons"]
+        trace["prompt_chars"] = len(prompt)
+        if not q["ok"]:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: " + ",".join(q["reasons"])}
+        try:
+            from core.agent.react import react
+
+            row = react(ask, root, prompt, turns=2)
+            text = row.get("text") or ""
+            trace["tools"] = ["search"] if row.get("used") else []
+        except Exception as exc:
+            if seen:
+                return _infra(goal, seen)
+            return {**base, "ok": False, "honest": False, "error": str(exc)[:200]}
+        if seen and not text.strip():
+            return _infra(goal, seen)
+        trace["reply"] = text[-200:]
+        fn = gs.extract_function(text, goal["symbol"])
+        if not fn:
+            feedback = "no complete function `def %s` in the reply" % goal["symbol"].split(".")[-1]
+            last = {**base, "ok": False, "honest": False, "note": "no function"}
+            continue
+        applied = gs.apply_function(root, goal, fn)
+        if not applied.get("ok"):
+            feedback = str(applied.get("reason"))
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
+            continue
+        verdict = gs.gate(root, goal, baseline, suite)
+        if verdict["ok"]:
+            gs.mark(root, goal["id"], kept=True)
+            remember(root, goal["id"], "tests passed, 0 regressions" + (" via tool" if trace.get("tools") else ""),
+                     kept=True, file=goal["file"])
+            return {**base, "ok": True, "honest": True, "tests_ok": True, "regressions": 0,
+                    "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
+                    "suite_n": verdict["suite_n"], "checked": True}
+        revert(root, goal["file"], applied["original"])
+        feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
+        last = {**base, "ok": False, "honest": False, "note": "regression" if verdict["n_regressions"] else "tests failed",
+                "regressions": verdict["n_regressions"]}
+    gs.mark(root, goal["id"], kept=False)
+    remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
+    return last
+
+
+def _attempt(root: Path, ask: Callable[..., str], pick: Any = None, skip: Any = (),
+             goal: Any = None) -> Dict[str, Any]:
     trace: Dict[str, Any] = pick.trace if pick is not None else {}
     seen: Dict[str, str] = {}
     ask = _guard(ask, seen)
-    goal = next_goal(root)
+    if goal is None:
+        goal = next_goal(root, skip=skip)
     if goal is None:
         return {"ok": False, "honest": True, "note": "queue empty"}
+    if goal.get("kind") in ("fix_test", "lint"):
+        return _attempt_real(root, ask, goal, pick, seen)
+    if goal.get("kind") == "refactor":
+        from core.agent import refactor
+
+        return refactor.attempt(root, goal, pick)
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
     from core.agent.skills import route
@@ -485,23 +614,71 @@ def _attempt(root: Path, ask: Callable[..., str], pick: Any = None) -> Dict[str,
 
 
 def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
-    """Adaptive batch. Grows when the last tick kept several. Stops on the first miss."""
+    """Adaptive batch. Real goals: at most ETHER_REAL_PER_TICK attempts, a miss moves on.
+    Legacy goals keep the old rule (stop on the first miss)."""
     from core.agent.learn import batch_size
 
     root = Path(root)
+    scanned = _maybe_scan(root)
     size = batch_size(root)
+    real_cap = int(os.getenv("ETHER_REAL_PER_TICK", "2"))
     kept: List[str] = []
+    tried: List[str] = []
+    real = 0
     last: Dict[str, Any] = {"ok": False, "honest": True, "note": "none"}
     for _ in range(size):
-        last = _one(root, ask)
+        row = _one(root, ask, skip=tried)
+        if row.get("note") == "queue empty" and tried:
+            break  # keep the last real attempt as the tick's result
+        last = row
+        gid = str(last.get("goal") or "")
+        if gid:
+            tried.append(gid)
+        if last.get("kind") in ("fix_test", "lint", "refactor") and last.get("note") != "already present":
+            real += 1
         if last.get("ok"):
-            kept.append(str(last.get("goal") or ""))
+            if last.get("note") != "already present":
+                kept.append(gid)
+            if real >= real_cap:
+                break
             continue
-        break
+        if last.get("infra") or last.get("note") == "queue empty" or not last.get("kind") or real >= real_cap:
+            break
     last["batch"] = kept
+    last["tried"] = tried
     last["kept_n"] = len(kept)
     last["batch_size"] = size
+    if scanned:
+        last["scan"] = scanned
     state = load(root)
     state["kept_n"] = len(kept)
     save(root, state)
     return last
+
+
+SCAN_EVERY_S = int(os.getenv("ETHER_GOAL_SCAN_S", "900"))
+
+
+def _maybe_scan(root: Path) -> Dict[str, Any] | None:
+    """Refresh one shard of the failing-test index when it is stale or the queue is dry."""
+    from core.agent import goal_source as gs
+
+    if not gs.enabled() or os.getenv("ETHER_GOAL_SCAN", "1") == "0":
+        return None
+    data = gs.load_index(root)
+    stale = True
+    try:
+        ts = datetime.fromisoformat(str(data.get("scan_ts")))
+        stale = (datetime.now(timezone.utc) - ts).total_seconds() > SCAN_EVERY_S
+    except Exception:
+        pass
+    if not stale and gs.next_real(root) is not None:
+        return None
+    try:
+        row = gs.scan(root, n_files=int(os.getenv("ETHER_GOAL_SCAN_FILES", "8")))
+        data = gs.load_index(root)
+        data["scan_ts"] = datetime.now(timezone.utc).isoformat()
+        gs.save_index(root, data)
+        return row
+    except Exception as exc:
+        return {"ok": False, "error": type(exc).__name__}

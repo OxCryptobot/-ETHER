@@ -34,8 +34,9 @@ def _dir(root: Path) -> Path:
     return Path(root) / "memory" / "learning"
 
 
-def bandit_path(root: Path) -> Path:
-    return _dir(root) / "bandit.json"
+def bandit_path(root: Path, kind: str = "") -> Path:
+    """One bandit per goal kind: the legacy ladder keeps bandit.json."""
+    return _dir(root) / (f"bandit_{kind}.json" if kind else "bandit.json")
 
 
 def traj_path(root: Path) -> Path:
@@ -46,14 +47,29 @@ def promoted_path(root: Path) -> Path:
     return _dir(root) / "promoted.json"
 
 
-def explore_enabled() -> bool:
-    return os.getenv("ETHER_SOTA_EXPLORE", "0") == "1"
+def explore_enabled(goal: Optional[Dict[str, Any]] = None) -> bool:
+    """Legacy ladder: off unless ETHER_SOTA_EXPLORE=1. Real goals (fix_test/lint/refactor):
+    on unless ETHER_SOTA_EXPLORE=0. Exploring only changes the prompt/context strategy;
+    the honest gate and the regression guard decide every keep, and promotion stays gated."""
+    flag = os.getenv("ETHER_SOTA_EXPLORE")
+    if (goal or {}).get("kind") in ("fix_test", "lint", "refactor"):
+        return flag != "0"
+    return flag == "1"
 
 
-def policy(root: Path):
+def policy(root: Path, kind: str = ""):
     from core.learning import BanditPolicy
 
-    return BanditPolicy(path=bandit_path(root))
+    return BanditPolicy(path=bandit_path(root, kind))
+
+
+def real_kind(goal: Optional[Dict[str, Any]]) -> str:
+    kind = str((goal or {}).get("kind") or "")
+    return kind if kind in ("fix_test", "lint", "refactor") else ""
+
+
+def promo_key(kind: str, bucket: str) -> str:
+    return f"{kind}:{bucket}" if kind else bucket
 
 
 @dataclass
@@ -65,10 +81,17 @@ class Pick:
     bucket: str
     addon: str = ""
     trace: Dict[str, Any] = field(default_factory=dict)
+    kind: str = ""
 
 
-def context_for(root: Path) -> Dict[str, Any]:
-    """phase from the last lesson; the sota ladder is single-file, tier 0."""
+def context_for(root: Path, goal: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """phase from the last lesson; tier 0 = legacy ladder, 1 = lint, 2 = failing test,
+    3 = refactor. Real goal kinds get their own bandit bucket so a promotion learned on
+    one kind never changes another."""
+    tier = {"lint": 1, "fix_test": 2, "refactor": 3}.get(str((goal or {}).get("kind") or ""), 0)
+    if tier:
+        hard = str((goal or {}).get("error_kind") or "") == "AssertionError"
+        return {"tier": tier, "fail_kind": "tests_failed" if hard else "", "multifile": False}
     try:
         from core.agent.sota import load
 
@@ -114,12 +137,14 @@ def promoted(root: Path) -> Dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def choose(root: Path, explore: Optional[bool] = None) -> Pick:
+def choose(root: Path, explore: Optional[bool] = None, goal: Optional[Dict[str, Any]] = None) -> Pick:
     from core.learning import context_key, strategy_prompt_addon
 
-    ctx = context_for(root)
+    ctx = context_for(root, goal)
     bucket = context_key(ctx)
-    explore = explore_enabled() if explore is None else explore
+    kind = real_kind(goal)
+    if explore is None:
+        explore = explore_enabled(goal)
     drawn = None
     if explore:
         from core.agent import evolve_es
@@ -130,23 +155,23 @@ def choose(root: Path, explore: Optional[bool] = None) -> Pick:
         arm, prop = drawn
         reason = "es"
     elif explore:
-        pol = policy(root)
+        pol = policy(root, kind)
         arm = pol.select(ctx)
         reason = str(pol.last_decision.get("reason") or "")
         prop = propensity_of(pol, bucket, arm, reason)
     else:
-        row = promoted(root).get(bucket) or {}
+        row = promoted(root).get(promo_key(kind, bucket)) or {}
         arm = str(row.get("arm") or INCUMBENT)
         reason, prop = ("promoted" if row else "incumbent"), 1.0
     addon = "" if arm == INCUMBENT else strategy_prompt_addon(arm)
-    return Pick(arm=arm, propensity=prop, reason=reason, context=ctx, bucket=bucket, addon=addon)
+    return Pick(arm=arm, propensity=prop, reason=reason, context=ctx, bucket=bucket, addon=addon, kind=kind)
 
 
 def classify(result: Dict[str, Any]) -> str:
     if result.get("infra"):
         return "infra"
     note = str(result.get("note") or "")
-    if note in ("found by search", "already present", "queue empty"):
+    if note in ("found by search", "already present", "queue empty") or note.startswith("rejected"):
         return "no_attempt"
     if result.get("ok") and result.get("tests_ok") is True:
         return "pass"
@@ -206,7 +231,7 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         "ts": datetime.now(timezone.utc).isoformat(),
         "goal": result.get("goal"),
         "arm": pick.arm,
-        "bucket": pick.bucket,
+        "bucket": promo_key(pick.kind, pick.bucket),
         "propensity": round(pick.propensity, 6),
         "reason": pick.reason,
         "kind": kind,
@@ -214,14 +239,17 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         "reward": reward,
         "policy": "model",
         "spoiler": bool(pick.trace.get("spoiler")),
+        "goal_kind": result.get("kind") or "legacy",
+        "regressions": result.get("regressions"),
+        "prompt_chars": pick.trace.get("prompt_chars"),
         "tools": pick.trace.get("tools") or [],
         "reply_tail": str(pick.trace.get("reply") or "")[-160:],
     }
     _append(root, row)
     if reward is not None:
-        pol = policy(root)
+        pol = policy(root, pick.kind)
         pol.update(pick.arm, reward, context=pick.context, extra=None)
-        row["promote"] = maybe_promote(root, pick.bucket, pol)
+        row["promote"] = maybe_promote(root, pick.bucket, pol, kind=pick.kind)
         try:
             from core.agent import evolve_es
 
@@ -237,18 +265,19 @@ def _arm_rows(rows: List[Dict[str, Any]], bucket: str, arm: str) -> List[Dict[st
     return [r for r in rows if r.get("bucket") == bucket and r.get("arm") == arm and r.get("kind") in ("pass", "fail")]
 
 
-def maybe_promote(root: Path, bucket: str, pol=None) -> Dict[str, Any]:
+def maybe_promote(root: Path, bucket: str, pol=None, kind: str = "") -> Dict[str, Any]:
     """Gated promote. Honest-gate passes only; demote after repeated fails."""
-    pol = pol or policy(root)
+    pol = pol or policy(root, kind)
     rows = trajectories(root)
     current = promoted(root)
-    row = current.get(bucket) or {}
+    key = promo_key(kind, bucket)
+    row = current.get(key) or {}
     incumbent = str(row.get("arm") or INCUMBENT)
-    inc_rows = _arm_rows(rows, bucket, incumbent)
+    inc_rows = _arm_rows(rows, key, incumbent)
     if incumbent != INCUMBENT and len(inc_rows) >= DEMOTE_FAILS and all(
         r.get("kind") == "fail" for r in inc_rows[-DEMOTE_FAILS:]
     ):
-        current.pop(bucket, None)
+        current.pop(key, None)
         _write_promoted(root, current)
         return {"action": "demote", "arm": incumbent}
     best: Optional[Dict[str, Any]] = None
@@ -256,7 +285,7 @@ def maybe_promote(root: Path, bucket: str, pol=None) -> Dict[str, Any]:
     for arm in pol.arms:
         if arm == incumbent:
             continue
-        arm_rows = _arm_rows(rows, bucket, arm)
+        arm_rows = _arm_rows(rows, key, arm)
         passes = sum(1 for r in arm_rows if r.get("kind") == "pass" and r.get("tests_ok"))
         if passes < MIN_PASSES or not arm_rows or arm_rows[-1].get("kind") != "pass":
             continue
@@ -267,7 +296,7 @@ def maybe_promote(root: Path, bucket: str, pol=None) -> Dict[str, Any]:
             best = {"arm": arm, "score": round(score, 4), "passes": passes}
     if best is None:
         return {"action": "hold", "arm": incumbent}
-    current[bucket] = {**best, "from": incumbent, "ts": datetime.now(timezone.utc).isoformat()}
+    current[key] = {**best, "from": incumbent, "ts": datetime.now(timezone.utc).isoformat()}
     _write_promoted(root, current)
     return {"action": "promote", **best}
 
@@ -287,5 +316,8 @@ def summary(root: Path) -> Dict[str, Any]:
         "passes": sum(1 for r in graded if r.get("kind") == "pass"),
         "spoiler_share": round(sum(1 for r in graded if r.get("spoiler")) / len(graded), 3) if graded else None,
         "promoted": promoted(root),
-        "explore": explore_enabled(),
+        "explore_legacy": explore_enabled(),
+        "explore_real": explore_enabled({"kind": "fix_test"}),
+        "by_kind": {k: sum(1 for r in graded if (r.get("goal_kind") or "legacy") == k and r.get("kind") == "pass")
+                    for k in sorted({(r.get("goal_kind") or "legacy") for r in graded})},
     }

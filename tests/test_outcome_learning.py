@@ -10,6 +10,13 @@ import pytest
 from core.agent import outcome
 
 
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
+
 def _root(tmp_path: Path) -> Path:
     kernel = tmp_path / "core" / "kernel"
     kernel.mkdir(parents=True)
@@ -124,7 +131,7 @@ def test_explore_logs_a_valid_propensity(tmp_path: Path) -> None:
 def test_queue_empty_is_not_recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from core.agent import sota
 
-    monkeypatch.setattr(sota, "next_goal", lambda root: None)
+    monkeypatch.setattr(sota, "next_goal", lambda root, **kw: None)
     row = sota.run(tmp_path, lambda prompt, n=240: "")
     assert row["note"] == "queue empty"
     assert outcome.trajectories(tmp_path) == []

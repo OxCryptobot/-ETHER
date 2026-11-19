@@ -1,10 +1,19 @@
 """The next goal uses a function that already passed."""
 from __future__ import annotations
 
+import pytest
+
 from pathlib import Path
 
 from core.agent.learn import batch_size, next_from, score
 
+
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
 
 def test_learning_composes_from_kept(tmp_path: Path) -> None:
     art = tmp_path / "artifacts"

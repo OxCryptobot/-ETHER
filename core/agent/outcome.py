@@ -120,7 +120,16 @@ def choose(root: Path, explore: Optional[bool] = None) -> Pick:
     ctx = context_for(root)
     bucket = context_key(ctx)
     explore = explore_enabled() if explore is None else explore
+    drawn = None
     if explore:
+        from core.agent import evolve_es
+
+        if evolve_es.enabled():
+            drawn = evolve_es.sample(root, bucket)
+    if drawn is not None:
+        arm, prop = drawn
+        reason = "es"
+    elif explore:
         pol = policy(root)
         arm = pol.select(ctx)
         reason = str(pol.last_decision.get("reason") or "")
@@ -213,6 +222,14 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         pol = policy(root)
         pol.update(pick.arm, reward, context=pick.context, extra=None)
         row["promote"] = maybe_promote(root, pick.bucket, pol)
+        try:
+            from core.agent import evolve_es
+
+            graded = [r for r in trajectories(root) if r.get("kind") in ("pass", "fail")]
+            if evolve_es.enabled() and graded and len(graded) % 10 == 0:
+                row["es"] = {k: v for k, v in evolve_es.propose(root).items() if k != "policy"}
+        except Exception as exc:
+            row["es_error"] = type(exc).__name__
     return row
 
 

@@ -90,20 +90,20 @@
     "describe_loop_medic"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_lora_pack: tests failed",
     "2026-11-19 describe_loop_lsp: tests failed",
     "2026-11-19 describe_loop_lsp_client: tests failed",
     "2026-11-19 describe_loop_mcp_tests: tests failed",
     "2026-11-19 describe_loop_medic: tests passed",
     "2026-11-19 describe_loop_moonshot: tests failed",
     "2026-11-19 describe_loop_native_tools: tests failed",
-    "2026-11-19 describe_loop_persist_run: tests failed"
+    "2026-11-19 describe_loop_persist_run: tests failed",
+    "2026-11-19 describe_loop_pipeline_util: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_persist_run",
+    "goal": "describe_loop_pipeline_util",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:31:46.117488+00:00"
+    "ts": "2026-11-19T22:32:21.701946+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -152,6 +152,7 @@
     "describe_loop_mcp_tests",
     "describe_loop_moonshot",
     "describe_loop_native_tools",
-    "describe_loop_persist_run"
+    "describe_loop_persist_run",
+    "describe_loop_pipeline_util"
   ]
 }

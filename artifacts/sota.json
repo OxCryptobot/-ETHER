@@ -93,22 +93,22 @@
     "describe_loop_stages"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_resume: tests failed",
     "2026-11-19 describe_loop_retrieval: tests failed",
     "2026-11-19 describe_loop_retrieve: tests passed",
     "2026-11-19 describe_loop_runner: tests failed",
     "2026-11-19 describe_loop_shadow_progress: tests failed",
     "2026-11-19 describe_loop_stage_mark: tests failed",
     "2026-11-19 describe_loop_stages: tests passed",
-    "2026-11-19 describe_loop_stream_obs: tests failed"
+    "2026-11-19 describe_loop_stream_obs: tests failed",
+    "2026-11-19 describe_loop_tool_first: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_stream_obs",
+    "goal": "describe_loop_tool_first",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:37:54.525602+00:00"
+    "ts": "2026-11-19T22:38:29.961995+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/kernel/parse_fail.py",
     "core/loop/agent_loop_path.py",
@@ -165,6 +165,7 @@
     "describe_loop_runner",
     "describe_loop_shadow_progress",
     "describe_loop_stage_mark",
-    "describe_loop_stream_obs"
+    "describe_loop_stream_obs",
+    "describe_loop_tool_first"
   ]
 }

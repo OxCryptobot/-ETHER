@@ -88,27 +88,27 @@
     "describe_loop_idle_refill",
     "describe_loop_job_argv",
     "describe_loop_medic",
-    "describe_loop_plan_drive"
+    "describe_loop_plan_drive",
+    "describe_loop_retrieve"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_persist_run: tests failed",
-    "2026-11-19 describe_loop_pipeline_util: tests failed",
     "2026-11-19 describe_loop_plan_drive: tests passed",
     "2026-11-19 describe_loop_plan_exec: tests failed",
     "2026-11-19 describe_loop_plan_stage: tests failed",
     "2026-11-19 describe_loop_plan_walk: tests failed",
     "2026-11-19 describe_loop_resume: tests failed",
-    "2026-11-19 describe_loop_retrieval: tests failed"
+    "2026-11-19 describe_loop_retrieval: tests failed",
+    "2026-11-19 describe_loop_retrieve: tests passed",
+    "2026-11-19 describe_loop_runner: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_retrieval",
+    "goal": "describe_loop_runner",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:35:25.907813+00:00"
+    "ts": "2026-11-19T22:36:04.522173+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/kernel/ops.py",
     "core/kernel/ownership.py",
     "core/kernel/parse_fail.py",
     "core/loop/agent_loop_path.py",
@@ -127,7 +127,8 @@
     "core/loop/idle_refill.py",
     "core/loop/job_argv.py",
     "core/loop/medic.py",
-    "core/loop/plan_drive.py"
+    "core/loop/plan_drive.py",
+    "core/loop/retrieve.py"
   ],
   "skipped": [
     "describe_extra_tools",
@@ -159,6 +160,7 @@
     "describe_loop_plan_stage",
     "describe_loop_plan_walk",
     "describe_loop_resume",
-    "describe_loop_retrieval"
+    "describe_loop_retrieval",
+    "describe_loop_runner"
   ]
 }

@@ -66,10 +66,14 @@ def spoiled(prompt: str, symbol: str, current: str = "") -> bool:
             if line.strip() and not line[:1].isspace():
                 break
             block.append(line)
-        norm = "\n".join(l.strip() for l in block if l.strip())
-        cur = "\n".join(l.strip() for l in (current or "").splitlines() if l.strip())
-        if not cur or norm not in cur:
+        cur = [l.strip() for l in (current or "").splitlines() if l.strip()]
+        if not cur:
             return True
+        # Every shown line must already be in the file (a slice may skip lines or
+        # cut the last one); a line the file does not have is new code = answer.
+        for line in (l.strip() for l in block if l.strip()):
+            if not any(line in c for c in cur):
+                return True
     return False
 
 

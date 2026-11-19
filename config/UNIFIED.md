@@ -7,8 +7,9 @@ Ubuntu  --FAST-->  origin   (never attach)
 ```
 
 LIVE is **one** function: `scripts.host_main.tick` on the 1650.
-The frozen `ETHER.exe` is a **window**. Writer is detached venv `pythonw` spawned by the exe (`spawn_writer`).
-GitHub `autonomy-host` is optional. Queued Actions is not LIVE.
+There is no `ETHER.exe`. The writer loop is `scripts/host_supervisor.py` (venv `pythonw`), started only by the one
+Scheduled Task `ETHER-Host` (`scripts\install_host.cmd`, control: `scripts\host.cmd start|stop|status`).
+GitHub `autonomy-host` is optional: it only ensures ETHER-Host is running. Queued Actions is not LIVE.
 
 **Never again (Sept 12 class failure):**
 - An open window is not a heartbeat.
@@ -18,4 +19,5 @@ GitHub `autonomy-host` is optional. Queued Actions is not LIVE.
 - Do not freeze the writer inside a PyInstaller binary; always exec disk `host_main.py`.
 
 Verified: Ubuntu observe-only does not write attach.
-Not verified: 1650 `git push` (last exe commit 2026-09-11).
+Verified from origin: the 1650 pushed `1650 host_main` commits on 2026-11-19 (runner path).
+Not verified: the ETHER-Host supervisor on the 1650 (needs `install_host.cmd` run there).

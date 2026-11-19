@@ -1,10 +1,10 @@
 # ETHER
 
-Local-first coding agent. Face is the Control Matrix. Hands are ETHER.exe.
+Local-first coding agent. Face is the Control Matrix. Hands are `scripts/host_main.py` on the 1650, kept alive by the one `ETHER-Host` task (docs/HOST_START.md).
 
 ## Doctrine
 - Matrix is read-only. It does not start Ollama, enqueue jobs, or write attach.
-- ETHER.exe is the only writer (git, Ollama, FIFO, scoreboard, attach).
+- host_main (under ETHER-Host) is the only writer (git, Ollama, FIFO, scoreboard, attach). There is no ETHER.exe.
 - Tool-first. Generate-fallback is never PASS.
 - Read the failing test first. Surgical patch. run_tests. Abort on no-progress.
 - Labradorite critique before a second hypothesis.

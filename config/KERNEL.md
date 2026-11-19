@@ -1,6 +1,6 @@
 # Kernel roadmap — executed status
 
-Wheels ON. Soft launch BLOCKED. Matrix RO. Exe writes.
+Wheels ON. Soft launch BLOCKED. Matrix RO. host_main (ETHER-Host) writes.
 
 ## Contracts landed (FAST-tested)
 1 Critical writer/honest/schema
@@ -15,11 +15,11 @@ Wheels ON. Soft launch BLOCKED. Matrix RO. Exe writes.
 10 Ignore, dirty-tree, memory schema
 11 Plan persist/replan, provider timeout vs empty, lang detect, jsonl GC
 
-## Multitask ops (exe)
+## Multitask ops (host_main)
 attach, pulse, drain LIVE, plan node, retrieve, tool, jail+redact, edit tx, tests, critique, honest score, crash journal, GC.
 
 ## Still open (product)
-1650 exe pulse / ollama=true on origin
+1650 host pulse / ollama=true on origin
 hard LIVE repeatable
 pipeline.py extract
 isolated gem workers

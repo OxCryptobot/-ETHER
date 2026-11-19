@@ -42,7 +42,6 @@ def main() -> int:
     for rel in [
         "scripts/ether_daemon.py",
         "scripts/batch_worker.py",
-        "scripts/install_windows_daemon.ps1",
         "memory/batch_queue.json",
         "DAEMON.md",
     ]:

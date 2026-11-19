@@ -1,5 +1,8 @@
 # @ETHER Intelligence Layer (v2)
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 ## Stack
 
 | Module | Role |
@@ -31,7 +34,7 @@ git reset --hard origin/main
 .\.venv\Scripts\python.exe .\scripts\bench.py
 .\.venv\Scripts\python.exe .\scripts\run_smart_cycle.py
 
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1 -Foreground
+scripts\host.cmd start
 ```
 
 ## Primary metric

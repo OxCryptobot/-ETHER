@@ -23,7 +23,7 @@ def snapshot() -> dict:
         "wheels": "on",
         "landed": list(LANDED),
         "remaining": list(REMAINING_PRODUCT),
-        "blocker": "open existing ETHER.exe on the 1650 so ollama attach is true",
+        "blocker": "run scripts\\install_host.cmd once on the 1650 so ETHER-Host keeps host_main + ollama up",
     }
 
 def describe() -> str:

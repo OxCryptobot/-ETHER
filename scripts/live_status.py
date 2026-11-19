@@ -66,7 +66,7 @@ def write() -> Dict[str, Any]:
         "attach_ollama": attach.get("ollama"),
         "writer": attach.get("writer"),
         "checked_at": datetime.now(timezone.utc).isoformat(),
-        "note": "open exe is not LIVE. stale app_alive is FAIL.",
+        "note": "a running process is not LIVE. stale app_alive is FAIL.",
     })
     out = ROOT / "artifacts" / "live_status.json"
     out.parent.mkdir(parents=True, exist_ok=True)

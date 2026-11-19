@@ -1,29 +1,26 @@
 # Local recovery (Windows)
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 ## Preferred path (host agent live)
 
 When Grok reports **stale heartbeat** or pending jobs not draining:
 
 ```powershell
 cd C:\Users\Otcde\ETHER
-powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1
+scripts\host.cmd restart
 ```
 
 Hard recovery (broken venv / `ModuleNotFoundError`):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1 -Hard
+scripts\host.cmd setup && scripts\host.cmd restart
 ```
 
-What `recover_host.ps1` does:
-
-1. Kill stale `ether_host` / `host_agent` / dashboard python
-2. `git merge --abort` + `fetch` + `reset --hard origin/main`
-3. Quarantine stuck live/ledger jobs from `artifacts/jobs/pending/` → `failed/`
-4. Optional `-Hard`: recreate `.venv` + `pip install -e ".[dev]"`
-5. Hand off to `start_ether_host.ps1` self-healing loop (exit 0 = stop, 42 = reload, other = backoff)
-
-Leave the window open. Do not restart again under normal conditions.
+What `host.cmd restart` does: sticky stop of the ETHER-Host supervisor (graceful, then forced), then start
+through the ETHER-Host task. `host.cmd setup` recreates/repairs the venv. `host.cmd status` prints the
+LIVE verdict (app_alive under 6h AND ollama). No window needs to stay open.
 
 - Dashboard: http://127.0.0.1:8787/agent
 - Model lock: `qwen3.5:4b-q4_K_M` (GTX 1650 4GB)
@@ -49,19 +46,11 @@ Or key=value:
 python tools/persistent/secret_scan.py text=hello
 ```
 
-## Manual nuclear (only if recover_host.ps1 itself is missing)
+## Manual fallback (only if scripts\host.cmd itself is missing)
 
-```powershell
-cd C:\Users\Otcde\ETHER
-Stop-Process -Name python -Force -ErrorAction SilentlyContinue
-git merge --abort 2>$null
-git fetch origin
-git reset --hard origin/main
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-if (Test-Path .\.venv) { Remove-Item -Recurse -Force .\.venv }
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -U pip
-pip install -e ".[dev]"
-powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
+```bat
+cd /d C:\Users\Otcde\ETHER
+git fetch origin && git merge --ff-only origin/main
+.venv\Scripts\python.exe -m pip install -e .
+scripts\install_host.cmd
 ```

@@ -1,6 +1,6 @@
 """Headless host API only. Local Control Matrix HTML is retired.
 
-Face: Grok Control Matrix. Hands: ether_host / ETHER.exe.
+Face: Grok Control Matrix. Hands: scripts/host_main.py under the ETHER-Host supervisor.
 :8787 may stay bound for /api/health. It must not look like a cockpit.
 """
 
@@ -53,7 +53,7 @@ code{color:#e8eaed}
 <h1>Local Control Matrix on :8787 is dead</h1>
 <p>This tab was a second cockpit. It fought the product.</p>
 <p>Face: the Grok Control Matrix (preview / etherbot).</p>
-<p>Hands: <code>ETHER.exe</code> / <code>ether_host</code> — headless writer.</p>
+<p>Hands: <code>scripts/host_main.py</code> under the <code>ETHER-Host</code> task — headless writer.</p>
 <p>Close this tab. Do not bookmark <code>127.0.0.1:8787</code>.</p>
 </div></main>
 </body></html>

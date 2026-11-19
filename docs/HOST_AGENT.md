@@ -1,12 +1,15 @@
 # Host agent — zero-paste loop
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 ## Who does what
 
 | Actor | Action |
 |-------|--------|
-| **You (once)** | Run recovery or start launcher; leave the window open |
+| **You (once)** | Run `scripts\install_host.cmd`; no window to keep open |
 | **Grok** | Pushes job JSON to `artifacts/jobs/pending/` |
-| **ether_host** | Dashboard + host_agent + foreman in one process |
+| **ETHER-Host** | Task -> `host_supervisor.py` -> `host_main.tick` (the only writer) |
 | **Grok** | Reads reports from GitHub; never asks you to paste logs |
 
 ## Start / recover (Windows)
@@ -15,29 +18,30 @@
 
 ```powershell
 cd C:\Users\Otcde\ETHER
-powershell -ExecutionPolicy Bypass -File .\scripts\start_ether_host.ps1
+scripts\host.cmd start
 ```
 
 **Recovery** (stale heartbeat, pending not draining, live spam, or after a long idle):
 
 ```powershell
 cd C:\Users\Otcde\ETHER
-powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1
+scripts\host.cmd restart
 # broken venv / ModuleNotFound → add -Hard
-powershell -ExecutionPolicy Bypass -File .\scripts\recover_host.ps1 -Hard
+scripts\host.cmd setup && scripts\host.cmd restart
 ```
 
-`recover_host.ps1` kills stale host python, aborts MERGE_HEAD, hard-resets to origin/main, quarantines stuck live/ledger pending jobs (FAST-first hygiene), optionally rebuilds `.venv` (`-Hard`), then enters the self-healing launcher loop.
+`host.cmd restart` = sticky stop (waits for the current pass, then forces) + start via the ETHER-Host task.
+`host.cmd setup` rebuilds the venv. No hard reset: host_main's `sync_writer` rebases and keeps unpublished kept edits.
 
-### Launcher exit contract (`start_ether_host.ps1`)
+### Supervisor contract (`scripts/host_supervisor.py`)
 
-| Exit code | Meaning | Action |
-|-----------|---------|--------|
-| 0 | Clean stop (Ctrl+C) | Exit permanently |
-| 42 | Source updated on origin | Restart in 1s |
-| other | Crash | Restart with exponential backoff (3s → 30s max) |
-
-Do **not** ask the user to restart again under normal conditions. One recovery is enough; the launcher keeps the host alive.
+| Event | Action |
+|-------|--------|
+| Each cycle | stale `.git/index.lock` repair -> `git pull --ff-only` -> ensure `ollama serve` -> one `python -m scripts.host_main` pass (timeout 30 min) |
+| Pass crashed / timed out | exponential backoff 15s -> 900s max; reset on next success |
+| Pull changed the supervisor itself | release lock, start a fresh copy, exit |
+| `host.cmd stop` | sticky `artifacts/host.stop`; the 5-min ensure trigger will not undo it |
+| Process died | Task Scheduler: restart-on-failure + 5-min ensure trigger; OS lock means never two copies |
 
 - Dashboard: `http://127.0.0.1:8787/agent`
 - Model lock: `ETHER_PRIMARY_MODEL=qwen3.5:4b-q4_K_M` (host ≤4B)

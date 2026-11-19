@@ -1,12 +1,15 @@
 # @ETHER — one process only
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 You need **1 window max**, not 4.
 
 ## Recommended (always works)
 
 ```powershell
 cd C:\Users\Otcde\ETHER
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1
+scripts\host.cmd start
 ```
 
 - Pulls latest from git
@@ -19,13 +22,13 @@ Dashboard: http://127.0.0.1:8787
 ## Stop
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\stop_daemon.ps1
+scripts\host.cmd stop
 ```
 
 ## Optional background (0 windows)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1 -Background
+scripts\host.cmd start
 ```
 
 If background fails, use the default foreground command above.

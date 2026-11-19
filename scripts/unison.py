@@ -1,4 +1,4 @@
-"""One read model for the Matrix face and the exe window. Writes nothing."""
+"""One read model for the Matrix face and host status. Writes nothing."""
 from __future__ import annotations
 
 import json

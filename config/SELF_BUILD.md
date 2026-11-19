@@ -14,6 +14,6 @@ Do one small step per turn:
 2. Propose ONE change under artifacts/ or scripts/ether_*.py.
 3. Prefer PATH/OLD/NEW. Host runs verify() after the edit.
 4. Do not touch secrets, .git, or files outside the repo root.
-5. Do not write host_attach.json. The exe writer owns that.
+5. Do not write host_attach.json. host_main on the 1650 owns that.
 
 North star: when the host is up, ETHER keeps writing verified slices without Grok.

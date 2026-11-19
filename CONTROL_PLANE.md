@@ -1,5 +1,8 @@
 # Control plane — the real solution
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 ## Problem
 Chat agents cannot open a shell on your Windows PC. Ollama/Docker being up does not change that.
 
@@ -11,10 +14,9 @@ Supports **Windows x64 and Windows ARM64** (Snapdragon / WoA). Install script au
 ```
 Grok / CI  --workflow_dispatch-->  GitHub  -->  self-hosted runner (your PC)
                                                     |-
-                                                    |- ensure_daemon.ps1
-                                                    |- self_test_autonomy.py
-                                                    |- health_check / smart cycle
-                                                    |- starts ETHER daemon if dead
+                                                    |- scripts/host_ctl.py ci
+                                                    |- starts the ETHER-Host task if the supervisor is dead
+                                                    |- (inline host_main tick only before ETHER-Host is installed)
 ```
 
 ## One-time host setup (ARM64 or x64)
@@ -34,7 +36,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install_self_hosted_runner.ps
 Also register OS ensure (daemon survives if Actions is down):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_daemon.ps1
+scripts\install_host.cmd
 ```
 
 ## Notes for ARM64 Windows

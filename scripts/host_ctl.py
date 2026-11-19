@@ -320,7 +320,7 @@ def install(base: Optional[Path] = None, run: Runner = _run, boot_s4u: bool = Fa
         return {**row, "ok": False, "error": "windows_only", "xml_preview": task_xml(base)[:200]}
     if not pythonw(base).is_file():
         return {**row, "ok": False, "error": "no_venv_pythonw",
-                "fix": r"py -3.12 -m venv .venv && .venv\Scripts\python -m pip install -e ."}
+                "fix": r"scripts\host.cmd setup"}
     row["legacy"] = remove_legacy(base, run)
     user = "\\".join(x for x in (os.environ.get("USERDOMAIN", ""), os.environ.get("USERNAME", "")) if x)
     xml = write_task_xml(base, task_xml(base, user=user, boot_s4u=boot_s4u))

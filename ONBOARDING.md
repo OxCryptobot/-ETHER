@@ -1,5 +1,8 @@
 # @ETHER — Onboarding (Linux cousin + Windows partner)
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 > **Before you start: read `docs/FINDINGS.md`.**
 >
 > As of 2026-07-29 the pipeline does **not** beat a bare model (0.292 vs 0.317
@@ -172,7 +175,7 @@ python -m cli.main run "write a python function is_even(n) with assert is_even(4
 
 ```powershell
 $env:ETHER_GIT_RESET_OK = "1"
-powershell -ExecutionPolicy Bypass -File .\scripts\start_daemon.ps1 -Foreground
+scripts\host.cmd start
 ```
 
 Dashboard: http://127.0.0.1:8787

@@ -238,7 +238,7 @@ def _light_paths() -> List[str]:
 
 
 def _commit_and_push(paths: List[str], message: str, label: str) -> bool:
-    """The exe is the only writer. This process must not git commit or push."""
+    """host_main is the only writer. This process must not git commit or push."""
     del paths, message
     log(f"{label} refused: single writer is host_main")
     return False
@@ -327,7 +327,7 @@ def rehydrate_measure() -> None:
 
 
 def git_clean_slate(reason: str, rehydrate: bool = False) -> bool:
-    """The exe owns the worktree. A second process must not reset --hard."""
+    """host_main owns the worktree. A second process must not reset --hard."""
     del rehydrate
     log(f"clean_slate refused ({reason}): single writer is host_main")
     return False
@@ -339,7 +339,7 @@ def git_reset_to_origin(reason: str) -> bool:
 
 
 def git_sync() -> None:
-    """The exe syncs the worktree. This process must not fetch or reset."""
+    """host_main syncs the worktree. This process must not fetch or reset."""
     log("git_sync refused: single writer is host_main")
 
 

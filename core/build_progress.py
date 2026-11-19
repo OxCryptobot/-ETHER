@@ -102,7 +102,7 @@ def compute() -> Dict[str, Any]:
             "done": 0.7,
             "total": 1.0,
             "status": "ADVANCING",
-            "detail": "ETHER.bat → start_ether_host.ps1; host must be running to drain jobs",
+            "detail": "scripts\\host.cmd start (ETHER-Host task); host must be running to drain jobs",
         },
         {
             "id": "soft_launch",
@@ -158,7 +158,7 @@ def compute() -> Dict[str, Any]:
             "Prove ledger LIVE canary (still denied from eligible)",
             "Repeat merge once (p1_248)",
             "Keep Phase 3 operator ticking on idle",
-            "Desktop shortcut must launch start_ether_host.ps1 (already does via ETHER.bat)",
+            "Desktop shortcut, if any, must call scripts\\host.cmd start",
             "Soft launch and LoRA train stay human-gated",
         ],
         "note": (

@@ -32,7 +32,6 @@ KEEP = {
     "measure_tool_runtime.py",
     "pep8_review.py",
     "ether_cli.py",
-    "start_ether_host.ps1",
     "inventory_script_graveyard.py",
 }
 

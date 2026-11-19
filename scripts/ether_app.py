@@ -1,4 +1,4 @@
-"""ETHER host process. One writer: detached venv keepalive spawned by the exe."""
+"""Legacy app helpers (mark_alive, status). The writer loop is scripts/host_supervisor.py (ETHER-Host)."""
 from __future__ import annotations
 
 import json
@@ -47,10 +47,10 @@ def _venv_python() -> Path | None:
 
 
 def spawn_writer() -> Dict[str, Any]:
-    """Single handler: exe starts detached keepalive. Survives window close."""
+    """Legacy entry: start the one supervisor (its OS lock makes a duplicate exit)."""
     if os.name != "nt":
         return {"ok": True, "note": "observe_only"}
-    keep = ROOT / "scripts" / "ether_keepalive.py"
+    keep = ROOT / "scripts" / "host_supervisor.py"
     if not keep.is_file():
         return {"ok": False, "error": "no_keepalive"}
     py = _venv_python()

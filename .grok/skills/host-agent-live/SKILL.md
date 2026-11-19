@@ -5,6 +5,9 @@ metadata:
   version: "3.1"
 ---
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](../../../docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 # Host Agent Live (v3.1 — living-agent lock)
 
 ## v3.1 lock (SOTA audit 2026-08-29)
@@ -42,7 +45,7 @@ The agent is a **consumer**, not a feature branch. Origin always wins.
 | Push report fails | one rebase retry; if still fail → hard reset (do not stay diverged) |
 | `ff-only failed` spam | treat as git divergence, **not** a test failure |
 
-`start_ether_host.ps1` also resets to origin before launch. After a one-time restart onto this version, **do not ask the user to manually reset** again.
+The ETHER-Host supervisor fast-forwards from origin every cycle (`git pull --ff-only`). **Do not ask the user to manually reset**; `scripts\host.cmd status` is the one check.
 
 Do not confuse `push rc=1` or `ff-only failed` with pytest/job failure. Check `JOB END … ok=True/False` only.
 
@@ -53,7 +56,7 @@ cd C:\Users\Otcde\ETHER
 git fetch origin
 git reset --hard origin/main
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\start_ether_host.ps1
+scripts\host.cmd start
 ```
 
 Single console: dashboard thread + host_agent loop + foreman.tick().
@@ -133,7 +136,7 @@ We cannot ship failures. Every non-infra FAIL must produce an exact cause before
 
 ## Repo anchors
 
-- One-window host — `scripts/ether_host.py` + `scripts/start_ether_host.ps1`
+- Host start — `scripts/install_host.cmd` (once) + `scripts/host.cmd start|stop|status` -> `scripts/host_supervisor.py` -> `scripts/host_main.py`
 - Agent — `scripts/host_agent.py`
 - Foreman — `scripts/foreman.py`
 - Train gates — `core/train_gates.py`

@@ -1,5 +1,8 @@
 # @ETHER Local Daemon (24/7 autonomy)
 
+> **2026-11-19:** the only way to start the 1650 writer is `scripts\install_host.cmd` (once) and `scripts\host.cmd start|stop|status`. See [docs/HOST_START.md](docs/HOST_START.md). Older launchers are in `scripts/_graveyard/host_legacy/`.
+
+
 ## Honest boundary
 
 | Layer | Can run without you / chat |
@@ -17,7 +20,7 @@ cd C:\Users\Otcde\ETHER
 git fetch origin
 git reset --hard origin/main
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]" -q
-powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_daemon.ps1
+scripts\install_host.cmd
 schtasks /Run /TN ETHER-Daemon
 ```
 

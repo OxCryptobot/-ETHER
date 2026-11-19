@@ -61,4 +61,4 @@ jobs:
         run: python scripts/drain_fast_fifo.py
       - name: Observe only
         run: |
-          echo "matrix-worker does not commit. the exe is the only writer."
+          echo "matrix-worker does not commit. host_main on the 1650 is the only writer."

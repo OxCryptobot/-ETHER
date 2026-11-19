@@ -84,3 +84,6 @@ def fail_run(
     pipe._persist(result)
     pipe._log(result)
     return result
+
+def describe() -> str:
+    return 'fail_run'

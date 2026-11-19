@@ -73,29 +73,29 @@
     "find_add",
     "next_bug",
     "describe_loop_agent_loop_path",
-    "describe_loop_agentic"
+    "describe_loop_agentic",
+    "describe_loop_fail_run",
+    "describe_loop_finalize_legacy",
+    "describe_loop_fix_dag"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_ast_intel: tests failed",
-    "2026-11-19 describe_loop_bandit_credit: tests failed",
-    "2026-11-19 describe_loop_begin: tests failed",
     "2026-11-19 describe_loop_canned_tools: tests failed",
     "2026-11-19 describe_loop_close_run: tests failed",
     "2026-11-19 describe_loop_coord: tests failed",
     "2026-11-19 describe_loop_execute_plan: tests failed",
-    "2026-11-19 describe_loop_extend_stage: tests failed"
+    "2026-11-19 describe_loop_extend_stage: tests failed",
+    "2026-11-19 describe_loop_fail_run: tests passed",
+    "2026-11-19 describe_loop_finalize_legacy: tests passed",
+    "2026-11-19 describe_loop_fix_dag: tests passed"
   ],
   "last": {
-    "goal": "describe_loop_extend_stage",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-19T22:21:52.155875+00:00"
+    "goal": "describe_loop_fix_dag",
+    "kept": true,
+    "file": "core/loop/fix_dag.py",
+    "ts": "2026-11-19T22:22:46.594751+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 3,
   "files": [
-    "core/kernel/attach.py",
-    "core/kernel/autonomy.py",
-    "core/kernel/cancel.py",
     "core/kernel/constitution.py",
     "core/kernel/crash.py",
     "core/kernel/critique.py",
@@ -112,7 +112,10 @@
     "core/kernel/ownership.py",
     "core/kernel/parse_fail.py",
     "core/loop/agent_loop_path.py",
-    "core/loop/agentic.py"
+    "core/loop/agentic.py",
+    "core/loop/fail_run.py",
+    "core/loop/finalize_legacy.py",
+    "core/loop/fix_dag.py"
   ],
   "skipped": [
     "describe_extra_tools",

@@ -90,22 +90,22 @@
     "describe_loop_medic"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_living: tests failed",
     "2026-11-19 describe_loop_log_run: tests failed",
     "2026-11-19 describe_loop_lora_pack: tests failed",
     "2026-11-19 describe_loop_lsp: tests failed",
     "2026-11-19 describe_loop_lsp_client: tests failed",
     "2026-11-19 describe_loop_mcp_tests: tests failed",
     "2026-11-19 describe_loop_medic: tests passed",
-    "2026-11-19 describe_loop_moonshot: tests failed"
+    "2026-11-19 describe_loop_moonshot: tests failed",
+    "2026-11-19 describe_loop_native_tools: tests failed"
   ],
   "last": {
-    "goal": "describe_loop_moonshot",
+    "goal": "describe_loop_native_tools",
     "kept": false,
     "file": "",
-    "ts": "2026-11-19T22:30:31.746731+00:00"
+    "ts": "2026-11-19T22:31:10.390520+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/kernel/operator_intent.py",
     "core/kernel/ops.py",
@@ -150,6 +150,7 @@
     "describe_loop_lsp",
     "describe_loop_lsp_client",
     "describe_loop_mcp_tests",
-    "describe_loop_moonshot"
+    "describe_loop_moonshot",
+    "describe_loop_native_tools"
   ]
 }

@@ -40,3 +40,38 @@ def test_upstream_change_is_never_copied_over(tmp_path: Path) -> None:
     _git(a, "commit", "-qam", "local"); _git(a, "fetch", "-q", "origin")
     skipped = code_paths_upstream_changed("git", _runner(a), ["core/plan.py", "core/mine.py", "artifacts/x.json"])
     assert skipped == ["core/plan.py"]
+
+
+def test_heartbeat_publish_is_throttled_but_a_kept_edit_is_not() -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from scripts.origin_publish import throttled
+
+    now = datetime(2026, 11, 19, 22, 30, tzinfo=timezone.utc)
+    recent = (now - timedelta(seconds=60)).isoformat()
+    old = (now - timedelta(seconds=900)).isoformat()
+    assert throttled(recent, urgent=False, now=now, min_s=300) is True
+    assert throttled(recent, urgent=True, now=now, min_s=300) is False
+    assert throttled(old, urgent=False, now=now, min_s=300) is False
+    assert throttled("", urgent=False, now=now, min_s=300) is False
+
+
+def test_supervisor_backs_off_when_the_queue_is_empty(tmp_path: Path) -> None:
+    from scripts.host_supervisor import Supervisor, dry_backoff_s
+
+    waits = []
+    sup = Supervisor(tmp_path, pull=lambda b: {"ok": True}, run=lambda b: {"ok": True, "rc": 0},
+                     ollama=lambda: {"ok": True}, changed=lambda *a: False, relaunch=lambda b: {},
+                     sleep=lambda s: None, idle=lambda: 12.0, max_cycles=4, work=lambda b: False)
+    orig = sup.nap
+    sup.nap = lambda secs: (waits.append(secs), orig(0))[1]
+    assert sup.loop() == 0
+    assert waits == [60.0, 120.0, 240.0]
+    assert dry_backoff_s(10) == 900.0
+    busy = Supervisor(tmp_path / "b", pull=lambda b: {"ok": True}, run=lambda b: {"ok": True, "rc": 0},
+                      ollama=lambda: {"ok": True}, changed=lambda *a: False, relaunch=lambda b: {},
+                      sleep=lambda s: None, idle=lambda: 12.0, max_cycles=2, work=lambda b: True)
+    seen = []
+    busy.nap = lambda secs: seen.append(secs)
+    busy.loop()
+    assert seen == [12.0]

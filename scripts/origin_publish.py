@@ -143,13 +143,7 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
         if not stashed:
             row["note"] = "stash_failed"
             return row
-    if ahead > 100:
-        reset = runner([git, "reset", "--hard", "origin/main"])
-        if reset.returncode == 0:
-            row["ok"] = True
-            row["note"] = "reset_far"
-            row["hard_reset"] = True
-            return row
+    # No reset_far: a hard reset of a tree >100 ahead discarded kept edits. Rebase only.
     if ahead:
         rebase = runner([git, "rebase", "origin/main"])
         if rebase.returncode != 0:
@@ -370,6 +364,14 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             row["note"] = "nothing_to_add"
             (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
             return row
+        prev = _last_push(art)
+        code = [p for p in paths if not p.startswith("artifacts/")]
+        urgent = bool(code) and bool((run([git, "status", "--porcelain", "--", *code]).stdout or "").strip())
+        if throttled(prev, urgent=urgent):
+            # Heartbeat-only commits at most every ETHER_PUBLISH_MIN_S; a kept edit goes out now.
+            row.update({"ok": True, "note": "throttled", "last_push_ts": prev})
+            (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+            return row
         run([git, "fetch", "origin", "main"])
         ahead = _int_stdout(run([git, "rev-list", "--count", "origin/main..HEAD"]))
         row["ahead"] = ahead
@@ -414,5 +416,33 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
                             row["stderr"] = via["stderr"]
     except Exception as exc:
         row["error"] = type(exc).__name__
+    if row.get("ok") and row.get("push_rc") == 0:
+        row["last_push_ts"] = row["ts"]
+    elif "last_push_ts" not in row:
+        row["last_push_ts"] = _last_push(art)
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+
+PUBLISH_MIN_S = float(os.environ.get("ETHER_PUBLISH_MIN_S", "300"))
+
+
+def _last_push(art: Path) -> str:
+    try:
+        data = json.loads((art / "git_push.json").read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    return str(data.get("last_push_ts") or (data.get("ts") if data.get("push_rc") == 0 else "") or "")
+
+
+def throttled(last_push_ts: str, *, urgent: bool, now: datetime | None = None,
+              min_s: float | None = None) -> bool:
+    """True when a heartbeat-only publish should wait (batch artifact commits)."""
+    if urgent or not last_push_ts:
+        return False
+    try:
+        last = datetime.fromisoformat(last_push_ts)
+    except ValueError:
+        return False
+    gap = ((now or datetime.now(timezone.utc)) - last).total_seconds()
+    return 0 <= gap < (PUBLISH_MIN_S if min_s is None else min_s)

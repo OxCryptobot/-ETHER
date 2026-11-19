@@ -38,6 +38,7 @@ TICK_TIMEOUT_S = int(os.environ.get("ETHER_TICK_TIMEOUT_S", "1800"))
 BACKOFF_BASE_S = float(os.environ.get("ETHER_BACKOFF_BASE_S", "15"))
 BACKOFF_MAX_S = float(os.environ.get("ETHER_BACKOFF_MAX_S", "900"))
 IDLE_S = 60.0
+IDLE_MAX_S = float(os.environ.get("ETHER_IDLE_MAX_S", "900"))
 SELF_FILES = ("scripts/host_supervisor.py", "scripts/host_lock.py")
 
 
@@ -86,6 +87,25 @@ def idle_s() -> float:
         return float(poll_seconds(pending_count()))
     except Exception:
         return IDLE_S
+
+
+def pass_had_work(base: Path) -> Optional[bool]:
+    """False when the last writer pass found nothing to do (queue empty, nothing kept)."""
+    try:
+        row = json.loads((Path(base) / "artifacts" / "host_main.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    sota = row.get("sota") if isinstance(row, dict) else None
+    if not isinstance(sota, dict):
+        return None
+    if int(sota.get("kept_n") or 0) > 0 or sota.get("tried"):
+        return True
+    return sota.get("note") != "queue empty"
+
+
+def dry_backoff_s(streak: int, base: float = IDLE_S, cap: float = IDLE_MAX_S) -> float:
+    """Empty queue: 60 s, 120 s, 240 s ... capped (no tight loop, no publish churn)."""
+    return float(min(cap, base * (2 ** max(0, streak - 1))))
 
 
 def _quiet_env(base: Path) -> Dict[str, str]:
@@ -232,6 +252,7 @@ class Supervisor:
         sleep: Optional[Callable[[float], None]] = None,
         idle: Optional[Callable[[], float]] = None,
         max_cycles: Optional[int] = None,
+        work: Optional[Callable[[Path], Optional[bool]]] = None,
     ) -> None:
         self.base = Path(base)
         self.p = paths(self.base)
@@ -244,6 +265,8 @@ class Supervisor:
         self._sleep = sleep or time.sleep
         self.idle = idle or idle_s
         self.max_cycles = max_cycles
+        self.work = work or pass_had_work
+        self.dry = 0
         self.failures = 0
         self.cycle = 0
         self.stopping = False
@@ -308,8 +331,14 @@ class Supervisor:
                     self.lock.release()
                     self.relaunch(self.base)
                     return 0
-                wait = backoff_s(self.failures) if self.failures else self.idle()
-                self.write_state("backoff" if self.failures else "running", {"last": row, "next_in_s": wait})
+                if self.failures:
+                    wait = backoff_s(self.failures)
+                else:
+                    had = self.work(self.base)
+                    self.dry = self.dry + 1 if had is False else 0
+                    wait = dry_backoff_s(self.dry) if self.dry else self.idle()
+                self.write_state("backoff" if self.failures else ("idle" if self.dry else "running"),
+                                 {"last": row, "next_in_s": wait, "dry_streak": self.dry})
                 if self.max_cycles is not None and self.cycle >= self.max_cycles:
                     break
                 self.nap(wait)

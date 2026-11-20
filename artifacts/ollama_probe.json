@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-20T07:19:54.343774+00:00",
+  "ts": "2026-11-20T07:20:05.626664+00:00",
   "up": true,
   "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE",
   "models": [
@@ -12,6 +12,6 @@
   "target": "qwen3.5:4b-q4_K_M",
   "has_target": true,
   "writer": "exe",
-  "started": false,
-  "reason": "already_up"
+  "attach": "write",
+  "ollama": true
 }

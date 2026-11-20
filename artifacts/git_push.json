@@ -1,18 +1,18 @@
 {
-  "ts": "2026-11-20T21:21:47.232096+00:00",
+  "ts": "2026-11-20T21:21:58.899860+00:00",
   "os": "nt",
   "ok": true,
   "ahead": 0,
   "add_rc": 0,
   "commit_rc": 0,
   "sync": {
-    "ok": true,
+    "ok": false,
     "hard_reset": false,
     "ahead": 1,
     "dirty": true,
-    "note": "stash_rebase"
+    "note": "stash_failed"
   },
   "via": "gh_token_url",
   "push_rc": 0,
-  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   7ad5cf0c7d..f630cf42cc  HEAD -> main\n"
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   f630cf42cc..84a73167e4  HEAD -> main\n"
 }

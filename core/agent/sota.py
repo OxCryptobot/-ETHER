@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List
@@ -385,7 +386,10 @@ def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
         pick = choose(root, goal=goal)
     except Exception:
         pick = None
+    t0 = time.monotonic()
     result = _attempt(root, ask, pick, skip, goal=goal)
+    if pick is not None:
+        pick.trace["secs"] = round(time.monotonic() - t0, 2)  # wall time: guard runs + model calls
     if pick is not None and result.get("note") != "queue empty":
         try:
             row = record(root, pick, result)
@@ -415,12 +419,18 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "lint_clear"}
     try:
+        from core.agent.bandit import factored_behaviour
         from core.learning import arm_behaviour
 
-        behaviour = arm_behaviour(pick.arm) if pick is not None else None
+        behaviour = (factored_behaviour(pick.arm) or arm_behaviour(pick.arm)) if pick is not None else None
     except Exception:
         behaviour = None
-    tries = 2 if (pick is not None and pick.arm == "repair_heavy") else 1
+    try:
+        from core.agent.bandit import tries_for
+
+        tries = tries_for(pick.arm) if pick is not None else 1
+    except Exception:
+        tries = 2 if (pick is not None and pick.arm == "repair_heavy") else 1
     feedback = ""
     last: Dict[str, Any] = {}
     trace["spoiler"] = False
@@ -439,7 +449,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         try:
             from core.agent.react import react
 
-            row = react(ask, root, prompt, turns=2)
+            n_reply = gs.reply_tokens(root, goal)
+            trace["reply_cap"] = n_reply
+            row = react(ask, root, prompt, turns=2, n=n_reply)
             text = row.get("text") or ""
             trace["tools"] = ["search"] if row.get("used") else []
         except Exception as exc:

@@ -28,6 +28,7 @@ MARGIN = 0.05
 DEMOTE_FAILS = 3
 MAX_TRAJ = 2000
 INCUMBENT = "default"
+DEFAULT_PROMOTE_RULE = "posterior"
 
 
 def _dir(root: Path) -> Path:
@@ -138,7 +139,7 @@ def promoted(root: Path) -> Dict[str, Any]:
 
 
 def choose(root: Path, explore: Optional[bool] = None, goal: Optional[Dict[str, Any]] = None) -> Pick:
-    from core.learning import context_key, strategy_prompt_addon
+    from core.learning import context_key
 
     ctx = context_for(root, goal)
     bucket = context_key(ctx)
@@ -154,6 +155,15 @@ def choose(root: Path, explore: Optional[bool] = None, goal: Optional[Dict[str, 
     if drawn is not None:
         arm, prop = drawn
         reason = "es"
+    elif explore and kind and _bandit_algo(kind) != "egreedy":
+        from core.agent import bandit
+
+        arm, prop, reason, btrace = bandit.choose(root, kind, bucket, goal=goal, tries=_tries(root, goal))
+        pick = Pick(arm=arm, propensity=prop, reason=reason, context=ctx, bucket=bucket,
+                    addon="" if arm == INCUMBENT else _addon(arm), kind=kind)
+        pick.trace["bandit"] = btrace
+        pick.trace["goal"] = {k: (goal or {}).get(k) for k in ("via", "error_kind", "kind", "tractability")}
+        return pick
     elif explore:
         pol = policy(root, kind)
         arm = pol.select(ctx)
@@ -163,8 +173,43 @@ def choose(root: Path, explore: Optional[bool] = None, goal: Optional[Dict[str, 
         row = promoted(root).get(promo_key(kind, bucket)) or {}
         arm = str(row.get("arm") or INCUMBENT)
         reason, prop = ("promoted" if row else "incumbent"), 1.0
-    addon = "" if arm == INCUMBENT else strategy_prompt_addon(arm)
+    addon = "" if arm == INCUMBENT else _addon(arm)
     return Pick(arm=arm, propensity=prop, reason=reason, context=ctx, bucket=bucket, addon=addon, kind=kind)
+
+
+def _bandit_algo(kind: str) -> str:
+    from core.agent import bandit
+
+    return bandit.algo(kind)
+
+
+def _addon(arm: str) -> str:
+    from core.agent import bandit
+    from core.learning import strategy_prompt_addon
+
+    fb = bandit.factored_behaviour(arm)
+    return fb.prompt_addon if fb is not None else strategy_prompt_addon(arm)
+
+
+def _tries(root: Path, goal: Optional[Dict[str, Any]]) -> int:
+    if not goal or not goal.get("id"):
+        return 0
+    try:
+        from core.agent import goal_source
+
+        return int((goal_source.load_index(root).get("tries") or {}).get(goal["id"], 0))
+    except Exception:
+        return 0
+
+
+def reward01(kind: str, result: Dict[str, Any]) -> Optional[int]:
+    """Honest-gate reward on a 0/1 scale: 1 = target passed with 0 regressions (gate kept the
+    edit), 0 = the model produced something the gate refused. None = not a model outcome."""
+    if kind == "pass":
+        return 1 if result.get("tests_ok") is True and not int(result.get("regressions") or 0) else 0
+    if kind == "fail":
+        return 0
+    return None
 
 
 def classify(result: Dict[str, Any]) -> str:
@@ -173,6 +218,8 @@ def classify(result: Dict[str, Any]) -> str:
     note = str(result.get("note") or "")
     if note in ("found by search", "already present", "queue empty") or note.startswith("rejected"):
         return "no_attempt"
+    if result.get("policy") == "tool":
+        return "tool"  # rule-based edit (refactor): no model call, credits its own strategy table
     if result.get("ok") and result.get("tests_ok") is True:
         return "pass"
     return "fail"
@@ -237,19 +284,38 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         "kind": kind,
         "tests_ok": bool(result.get("tests_ok")),
         "reward": reward,
-        "policy": "model",
+        "policy": "tool" if kind == "tool" else "model",
+        "secs": round(float(pick.trace.get("secs") or 0.0), 1),
+        "algo": (pick.trace.get("bandit") or {}).get("algo") or ("egreedy" if pick.reason in
+                                                                ("cover", "explore", "exploit") else pick.reason),
         "spoiler": bool(pick.trace.get("spoiler")),
         "goal_kind": result.get("kind") or "legacy",
         "regressions": result.get("regressions"),
         "prompt_chars": pick.trace.get("prompt_chars"),
         "tools": pick.trace.get("tools") or [],
         "reply_tail": str(pick.trace.get("reply") or "")[-160:],
+        "note": str(result.get("note") or "")[:60],
+        "via": (pick.trace.get("goal") or {}).get("via"),
+        "reply_cap": pick.trace.get("reply_cap"),
     }
+    r01 = reward01(kind, result) if pick.kind in ("fix_test", "lint") else None
+    if r01 is not None:
+        row["reward01"] = r01
     _append(root, row)
-    if reward is not None:
+    if r01 is not None:
+        try:
+            from core.agent import bandit
+
+            row["bandit4"] = bandit.record(root, pick.kind, pick.bucket, pick.arm, r01,
+                                           secs=float(pick.trace.get("secs") or 0.0), goal=pick.trace.get("goal"))
+        except Exception as exc:
+            row["bandit4_error"] = type(exc).__name__
+    if reward is not None and not pick.arm.startswith("f:"):
         pol = policy(root, pick.kind)
         pol.update(pick.arm, reward, context=pick.context, extra=None)
         row["promote"] = maybe_promote(root, pick.bucket, pol, kind=pick.kind)
+        if (row["promote"] or {}).get("action") in ("promote", "demote"):
+            _log_promotion(root, pick, row["promote"])
         try:
             from core.agent import evolve_es
 
@@ -259,6 +325,40 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         except Exception as exc:
             row["es_error"] = type(exc).__name__
     return row
+
+
+def promotions_path(root: Path) -> Path:
+    return _dir(root) / "promotions.jsonl"
+
+
+def _log_promotion(root: Path, pick: Pick, verdict: Dict[str, Any]) -> None:
+    """Promotion / demotion events, capped like trajectories (published as counts)."""
+    from core.spine.state_io import append_jsonl
+
+    path = promotions_path(root)
+    append_jsonl(path, {"ts": datetime.now(timezone.utc).isoformat(), "key": promo_key(pick.kind, pick.bucket),
+                        "action": verdict.get("action"), "arm": verdict.get("arm"), "from": verdict.get("from")})
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if len(lines) > 200:
+            tmp = path.with_name(path.name + ".trim")
+            tmp.write_text("\n".join(lines[-200:]) + "\n", encoding="utf-8")
+            os.replace(tmp, path)
+    except Exception:
+        pass
+
+
+def promotions(root: Path) -> List[Dict[str, Any]]:
+    path = promotions_path(root)
+    if not path.is_file():
+        return []
+    out = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            out.append(json.loads(line))
+        except Exception:
+            continue
+    return out
 
 
 def _arm_rows(rows: List[Dict[str, Any]], bucket: str, arm: str) -> List[Dict[str, Any]]:
@@ -282,6 +382,11 @@ def maybe_promote(root: Path, bucket: str, pol=None, kind: str = "") -> Dict[str
         return {"action": "demote", "arm": incumbent}
     best: Optional[Dict[str, Any]] = None
     inc_score = pol.score(bucket, incumbent)
+    posterior = promote_rule(kind) == "posterior"
+    if posterior:
+        from core.agent import bandit
+
+        stats4 = (bandit.load(root, kind).get("buckets") or {}).get(bucket) or {}
     for arm in pol.arms:
         if arm == incumbent:
             continue
@@ -289,9 +394,14 @@ def maybe_promote(root: Path, bucket: str, pol=None, kind: str = "") -> Dict[str
         passes = sum(1 for r in arm_rows if r.get("kind") == "pass" and r.get("tests_ok"))
         if passes < MIN_PASSES or not arm_rows or arm_rows[-1].get("kind") != "pass":
             continue
-        score = pol.score(bucket, arm)
-        if score <= inc_score + MARGIN:
-            continue
+        if posterior:
+            score = bandit.prob_better(stats4, arm, incumbent, seed=len(rows))
+            if score < bandit.PROMOTE_PROB:
+                continue
+        else:
+            score = pol.score(bucket, arm)
+            if score <= inc_score + MARGIN:
+                continue
         if best is None or score > best["score"]:
             best = {"arm": arm, "score": round(score, 4), "passes": passes}
     if best is None:
@@ -299,6 +409,15 @@ def maybe_promote(root: Path, bucket: str, pol=None, kind: str = "") -> Dict[str
     current[key] = {**best, "from": incumbent, "ts": datetime.now(timezone.utc).isoformat()}
     _write_promoted(root, current)
     return {"action": "promote", **best}
+
+
+def promote_rule(kind: str = "") -> str:
+    """Batch 4: "posterior" = >= MIN_PASSES and P(arm beats incumbent) >= 0.9 under the 0/1 Beta
+    posteriors (real kinds only); "score" = batch-2 rule (score > incumbent + MARGIN)."""
+    if kind not in ("fix_test", "lint"):
+        return "score"
+    rule = os.getenv("ETHER_PROMOTE_RULE", DEFAULT_PROMOTE_RULE).strip().lower()
+    return rule if rule in ("score", "posterior") else DEFAULT_PROMOTE_RULE
 
 
 def _write_promoted(root: Path, data: Dict[str, Any]) -> None:
@@ -330,7 +449,7 @@ SUMMARY_MAX_BYTES = 16384
 SUMMARY_RECENT = 25
 _SAFE_ID = __import__("re").compile(r"[^A-Za-z0-9_.:\-/\[\]]+")
 _SAFE_FIELDS = ("ts", "goal", "arm", "goal_kind", "kind", "reward", "regressions", "prompt_chars", "spoiler",
-                "tests_ok")
+                "tests_ok", "reward01", "secs", "algo", "note", "via")
 
 
 def _safe(value: Any) -> Any:
@@ -339,6 +458,68 @@ def _safe(value: Any) -> Any:
     if isinstance(value, (int, float)):
         return round(value, 4) if isinstance(value, float) else value
     return _SAFE_ID.sub("_", str(value))[:80]
+
+
+REVERT_NOTES = ("regression", "tests failed", "siblings failed")
+
+
+def _entropy(counts: Dict[str, int]) -> float:
+    import math
+
+    tot = sum(counts.values())
+    return round(-sum((n / tot) * math.log2(n / tot) for n in counts.values() if n), 4) if tot else 0.0
+
+
+def metrics(root: Path, rows: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Batch-4 improvement metrics, all from honest-gate trajectories (docs/BANDITS.md).
+
+    kept = a model edit the gate kept (tests_ok, 0 regressions). A session is one UTC day
+    of host ticks. GPU-hours are the wall seconds of graded model attempts (guard runs
+    included, so this undercounts kept/GPU-hour slightly)."""
+    from core.agent.goal_quality import filler_id
+
+    rows = trajectories(root) if rows is None else rows
+    graded = [r for r in rows if r.get("kind") in ("pass", "fail") and (r.get("goal_kind") or "legacy") != "legacy"]
+    kept = [r for r in graded if r.get("kind") == "pass" and r.get("tests_ok") and not int(r.get("regressions") or 0)]
+    secs = sum(float(r.get("secs") or 0.0) for r in graded)
+    days: Dict[str, Dict[str, int]] = {}
+    for r in graded:
+        d = str(r.get("ts") or "")[:10] or "?"
+        cell = days.setdefault(d, {"attempts": 0, "kept": 0})
+        cell["attempts"] += 1
+        cell["kept"] += 1 if r in kept else 0
+    reverted = [r for r in graded if r.get("kind") == "fail" and str(r.get("note") or "") in REVERT_NOTES]
+    by_kind: Dict[str, Dict[str, int]] = {}
+    for r in graded:
+        k = _safe(r.get("goal_kind"))
+        by_kind.setdefault(k, {})
+        a = _safe(r.get("arm") or "?")
+        by_kind[k][a] = by_kind[k].get(a, 0) + 1
+    by_via: Dict[str, Dict[str, int]] = {}
+    for r in graded:
+        cell = by_via.setdefault(_safe(r.get("via") or r.get("goal_kind")), {"attempts": 0, "kept": 0})
+        cell["attempts"] += 1
+        cell["kept"] += 1 if r in kept else 0
+    events = promotions(root)
+    all_kept = [r for r in rows if r.get("kind") == "pass"]
+    return {
+        "attempts": len(graded),
+        "kept": len(kept),
+        "kept_per_attempt": round(len(kept) / len(graded), 4) if graded else None,
+        "gpu_hours": round(secs / 3600.0, 3),
+        "kept_per_gpu_hour": round(len(kept) / (secs / 3600.0), 3) if secs > 0 else None,
+        "sessions": {d: days[d] for d in sorted(days)[-7:]},
+        "kept_per_session": round(len(kept) / len(days), 3) if days else None,
+        "filler_rate": round(sum(1 for r in all_kept if filler_id(str(r.get("goal") or ""))) / len(all_kept), 4)
+        if all_kept else 0.0,
+        "revert_rate": round(len(reverted) / len(graded), 4) if graded else None,
+        "regressions_caught": sum(1 for r in rows if int(r.get("regressions") or 0) > 0),
+        "promotions": sum(1 for e in events if e.get("action") == "promote"),
+        "demotions": sum(1 for e in events if e.get("action") == "demote"),
+        "arm_entropy_bits": {k: _entropy(v) for k, v in sorted(by_kind.items())},
+        "tool_edits": sum(1 for r in rows if r.get("kind") == "tool"),
+        "by_via": by_via,  # decides when per-via (contextual) arms are worth turning on
+    }
 
 
 def summary_doc(root: Path) -> Dict[str, Any]:
@@ -361,7 +542,7 @@ def summary_doc(root: Path) -> Dict[str, Any]:
             cell["mean_reward"] = round(cell.pop("reward_sum") / cell["pulls"], 3) if cell["pulls"] else None
     real = [r for r in graded if (r.get("goal_kind") or "legacy") != "legacy"]
     doc: Dict[str, Any] = {
-        "schema": 1,
+        "schema": 2,
         "generated": datetime.now(timezone.utc).isoformat(),
         "totals": {
             "trajectories": len(rows),
@@ -378,6 +559,16 @@ def summary_doc(root: Path) -> Dict[str, Any]:
         "arms": arms,
         "recent": [{f: _safe(r.get(f)) for f in _SAFE_FIELDS if f in r} for r in rows[-SUMMARY_RECENT:]],
     }
+    try:
+        doc["metrics"] = metrics(root, rows)
+    except Exception as exc:
+        doc["metrics"] = {"error": type(exc).__name__}
+    try:
+        from core.agent import bandit
+
+        doc["bandit"] = bandit.summary(root)
+    except Exception as exc:
+        doc["bandit"] = {"error": type(exc).__name__}
     try:
         from core.agent import goal_source
 
@@ -401,6 +592,10 @@ def publish_summary(root: Path) -> Dict[str, Any]:
         text = json.dumps(doc, indent=1, sort_keys=True)
     if len(text.encode("utf-8")) > SUMMARY_MAX_BYTES:
         doc["arms"] = {"truncated": True}
+        text = json.dumps(doc, indent=1, sort_keys=True)
+    if len(text.encode("utf-8")) > SUMMARY_MAX_BYTES:
+        doc["bandit"] = {"truncated": True, "algo": (doc.get("bandit") or {}).get("algo")}
+        (doc.get("metrics") or {}).pop("sessions", None)
         text = json.dumps(doc, indent=1, sort_keys=True)
     path = Path(root) / SUMMARY_PATH
     path.parent.mkdir(parents=True, exist_ok=True)

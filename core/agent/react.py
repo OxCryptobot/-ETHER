@@ -12,15 +12,15 @@ def _key(text: str) -> str:
     return text[start : end + 1] if start >= 0 and end > start else text[:80]
 
 
-def react(ask: Callable[..., str], root, prompt: str, turns: int = 3) -> Dict[str, Any]:
-    """Reason, act, observe. Cap at three turns. Same tool twice stops."""
+def react(ask: Callable[..., str], root, prompt: str, turns: int = 3, n: int = 240) -> Dict[str, Any]:
+    """Reason, act, observe. Cap at three turns. Same tool twice stops. n = reply token cap."""
     scratch = ""
     seen: List[str] = []
     used = False
     last = ""
     for _ in range(max(1, turns)):
         try:
-            text = ask(prompt + scratch, n=240)
+            text = ask(prompt + scratch, n=n)
         except Exception as exc:
             return {"ok": False, "text": last, "used": used, "error": str(exc)[:120]}
         last = text

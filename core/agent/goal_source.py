@@ -194,7 +194,42 @@ def goal_from_failure(root: Path, nodeid: str, text: str,
 
 DROP_REASONS = (
     "collection_error", "infra", "protected_target", "source_text_assert", "no_repo_target", "no_symbol",
+    "too_large",
 )
+
+# Batch 4: the 4B replies with the whole function, capped by num_predict. Batch 3 used 240
+# tokens for every goal, so 13 of the 50 seed targets could never be written out in full.
+# The reply cap now follows the target's size up to REPLY_MAX; bigger targets are dropped
+# ("too_large") or, for SBFL, skipped for the next suspect.
+REPLY_MIN = 240
+CHARS_PER_TOKEN = 3.3
+
+
+def reply_max() -> int:
+    try:
+        return max(REPLY_MIN, int(os.getenv("ETHER_REPLY_MAX", "768")))
+    except ValueError:
+        return 768
+
+
+def est_tokens(text: str) -> int:
+    return int(len(text or "") / CHARS_PER_TOKEN) + 1
+
+
+def reply_tokens(root: Path, goal: Dict[str, Any]) -> int:
+    """num_predict for a real goal: room for the whole current function (+25% and a margin)."""
+    if goal.get("kind") == "lint" or goal.get("missing") or goal.get("symbol_kind") == "assign":
+        cur = _func_source(Path(root) / goal["file"], goal["symbol"]) if goal.get("symbol_kind") == "assign" else ""
+        return max(REPLY_MIN, min(reply_max(), est_tokens(cur) * 2 + 64)) if cur else REPLY_MIN
+    cur = _func_source(Path(root) / goal["file"], goal["symbol"])
+    return max(REPLY_MIN, min(reply_max(), int(est_tokens(cur) * 1.25) + 64))
+
+
+def fits_reply(root: Path, goal: Dict[str, Any]) -> bool:
+    if goal.get("missing") or goal.get("kind") == "lint":
+        return True
+    cur = _func_source(Path(root) / goal["file"], goal["symbol"])
+    return not cur or int(est_tokens(cur) * 1.1) <= reply_max()
 SOURCE_TEXT = re.compile(r"""(?:Path\(|open\()\s*["'](?:core|scripts|gems|dashboard|\.github)/""")
 
 
@@ -258,7 +293,7 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
     target, symbol_hint = _target_from_test(root, nodeid)
     if target and symbol_hint:
         return _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import"), "goal"
-    suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra)
+    suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra, text)
     if suspect:
         goal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
         if goal is not None:
@@ -276,9 +311,14 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
 SBFL_MIN = 0.3  # below this the suspect is mostly noise (shared helpers)
 
 
-def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]]) -> Optional[tuple]:
+def sbfl_rank() -> str:
+    """Batch 4: "hub" (default) = Ochiai with hub demotion + error-text tokens; "ochiai" = batch 3."""
+    return "ochiai" if os.getenv("ETHER_SBFL_RANK", "hub").strip().lower() == "ochiai" else "hub"
+
+
+def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], text: str = "") -> Optional[tuple]:
     """Most suspicious editable function the failing test entered (Ochiai), or None."""
-    from core.agent.fault_loc import ochiai
+    from core.agent.fault_loc import ochiai, rank
     from core.agent.goal_quality import protected
 
     if not spectra:
@@ -289,13 +329,17 @@ def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]]) -> 
         test_src = ""
     imported = {m.replace(".", "/") + ".py" for m in re.findall(r"(?:from|import) ([A-Za-z_][\w.]*)", test_src)}
     best = None
-    for score, order, rel, qual in ochiai(spectra, nodeid):
+    ranked_calls = (rank(spectra, nodeid, hint=(text or "") + "\n" + _test_source(root, nodeid))
+                    if sbfl_rank() == "hub" else ochiai(spectra, nodeid))
+    for score, order, rel, qual in ranked_calls:
         if score < SBFL_MIN:
             break
         if protected(rel) or Path(rel).name.startswith("_") or not (Path(root) / rel).is_file():
             continue
         if qual.count(".") > 1 or not _is_function(root, rel, qual):
             continue
+        if not fits_reply(root, {"file": rel, "symbol": qual}):
+            continue  # cannot be written out in one reply: try the next suspect
         key = (score + (0.05 if rel in imported else 0.0), order)
         if best is None or key > best[0]:
             best = (key, rel, qual, score)
@@ -546,6 +590,8 @@ def scan(root: Path, n_files: int = 8, timeout: int = 240, files: Optional[Itera
     added = 0
     for nid, text in res["fail"].items():
         goal, reason = classify_failure(root, nid, text, res.get("spectra"))
+        if goal is not None and not fits_reply(root, goal):
+            goal, reason = None, "too_large"
         if goal is None:
             data["dropped"][nid] = reason
             continue

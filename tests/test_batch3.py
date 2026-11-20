@@ -201,7 +201,7 @@ def test_sbfl_localises_a_bare_assert_failure(tmp_path: Path, monkeypatch: pytes
     gs.scan(root, n_files=5)
     goal = gs.next_real(root)
     assert goal and goal["via"] == "sbfl" and goal["symbol"] == "total" and goal["file"] == "pkg/calc.py"
-    assert goal["suspicion"] == 1.0
+    assert goal["suspicion"] >= 1.0  # batch 4: hub-aware rank adds the error-text token bonus
     assert "+ 1" not in gs.build_prompt(root, goal).split("(current)")[0]  # the error/test part has no code
 
 

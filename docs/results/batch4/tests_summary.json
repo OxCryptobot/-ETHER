@@ -1,0 +1,8 @@
+{
+ "command": "python -m pytest tests -q -p no:cacheprovider --junitxml=...",
+ "before": {"ref": "batch3 rebased on origin/main 745eb3266 (e68b580dd)", "pass": 1636, "fail": 72, "error": 0, "skip": 83},
+ "after": {"ref": "ether-batch4", "pass": 1661, "fail": 72, "error": 0, "skip": 83},
+ "new_tests": 25,
+ "new_failures": 0,
+ "dirty_paths_from_test_run": 0
+}

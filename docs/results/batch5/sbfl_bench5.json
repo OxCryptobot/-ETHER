@@ -1,0 +1,2593 @@
+{
+ "source": "batch5 sbfl_bench5",
+ "ts": "2026-11-21 11:54:57 -0500",
+ "live": {
+  "ochiai": {
+   "failing": 74,
+   "goals": 47,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 31,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 47,
+    "protected_target": 4,
+    "no_repo_target": 14,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 31,
+   "distinct_sbfl_targets": 4,
+   "largest_target_share": 0.774,
+   "registry_execute_share": 0.774,
+   "sbfl_targets": {
+    "core/registry.py::GemRegistry.execute": 24,
+    "core/experience.py::experience_enabled": 4,
+    "core/learning.py::compute_reward": 2,
+    "core/checkpoint.py::AgentCheckpoint.to_dict": 1
+   }
+  },
+  "hub": {
+   "failing": 74,
+   "goals": 47,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 31,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 47,
+    "protected_target": 4,
+    "no_repo_target": 14,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 31,
+   "distinct_sbfl_targets": 10,
+   "largest_target_share": 0.355,
+   "registry_execute_share": 0.355,
+   "sbfl_targets": {
+    "core/registry.py::GemRegistry.execute": 11,
+    "core/pipeline.py::Pipeline._fail": 4,
+    "core/pipeline.py::Pipeline.__init__": 4,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/registry.py::GemRegistry.register": 2,
+    "core/checkpoint.py::checkpoint_step": 1,
+    "gems/runtime.py::gem_for_stage": 1
+   }
+  },
+  "b5": {
+   "failing": 74,
+   "goals": 47,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 31,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 47,
+    "protected_target": 4,
+    "no_repo_target": 14,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 31,
+   "distinct_sbfl_targets": 13,
+   "largest_target_share": 0.29,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/registry.py::GemRegistry.register": 9,
+    "core/pipeline_context.py::bandit_context": 2,
+    "core/pipeline_select.py::select_strategy_with_context": 2,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/failure_graph.py::template_for": 2,
+    "core/pipeline.py::Pipeline.__init__": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/loop/bandit_credit.py::policy_update": 2,
+    "core/pipeline.py::Pipeline._fail": 2,
+    "core/tool_runtime.py::ToolRuntime._execute": 1,
+    "core/tool_runtime.py::run_if_enabled": 1
+   }
+  },
+  "b5_fanout": {
+   "failing": 74,
+   "goals": 47,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 31,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 47,
+    "protected_target": 4,
+    "no_repo_target": 14,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 31,
+   "distinct_sbfl_targets": 12,
+   "largest_target_share": 0.258,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/registry.py::GemRegistry.register": 8,
+    "core/learning.py::strategy_prompt_addon": 6,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/failure_graph.py::template_for": 2,
+    "core/pipeline.py::Pipeline.__init__": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/loop/bandit_credit.py::policy_update": 2,
+    "core/pipeline.py::Pipeline._fail": 2,
+    "core/pipeline_context.py::bandit_context": 1,
+    "core/tool_runtime.py::ToolRuntime._execute": 1,
+    "core/loop/retrieval.py::make_lazy_blocks": 1
+   }
+  },
+  "b5_noev": {
+   "failing": 74,
+   "goals": 47,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 31,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 47,
+    "protected_target": 4,
+    "no_repo_target": 14,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 31,
+   "distinct_sbfl_targets": 10,
+   "largest_target_share": 0.355,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/registry.py::GemRegistry.register": 11,
+    "core/pipeline.py::Pipeline._fail": 4,
+    "core/pipeline.py::Pipeline.__init__": 4,
+    "core/pipeline_context.py::bandit_context": 2,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/checkpoint.py::checkpoint_step": 1,
+    "gems/runtime.py::gem_for_stage": 1
+   }
+  }
+ },
+ "live_secs": 64.0,
+ "mutants_F": {
+  "tried": 123,
+  "with_sbfl_tests": 40,
+  "ochiai": {
+   "n_tests": 66,
+   "top1": 0.606,
+   "top3": 0.879,
+   "found": 0.955,
+   "mean_rank_when_found": 2.57
+  },
+  "hub": {
+   "n_tests": 66,
+   "top1": 0.788,
+   "top3": 0.864,
+   "found": 0.97,
+   "mean_rank_when_found": 1.92
+  },
+  "b5": {
+   "n_tests": 66,
+   "top1": 0.818,
+   "top3": 0.894,
+   "found": 0.985,
+   "mean_rank_when_found": 1.46
+  },
+  "b5_fanout": {
+   "n_tests": 66,
+   "top1": 0.818,
+   "top3": 0.894,
+   "found": 0.97,
+   "mean_rank_when_found": 1.39
+  },
+  "b5_noev": {
+   "n_tests": 66,
+   "top1": 0.788,
+   "top3": 0.864,
+   "found": 0.97,
+   "mean_rank_when_found": 1.92
+  },
+  "rows": [
+   {
+    "target": "core/loop/job_argv.py::argv_ok",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_findings_batch.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/index.py::build_index",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase6.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/index.py::format_hits",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase6.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/improvement_proposal.py::make_proposal",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_self_improve.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/pep8_loop.py::review",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p2_pep8_resume_plan.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 6,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/phase4_swarm_plan.py::plan",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p3_60_coord.py",
+     "tests/test_p3_67_git_observe.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/tool_runtime_kernel.py::wrap_system_prompt",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase4.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/context_budget.py::slice_to_budget",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_context_cap.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/phase3_complete.py::compute",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_langchain_adapter.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/retrieval.py::make_lazy_blocks",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_extend_retrieval.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/win_quiet.py::hidden_kwargs",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_win_quiet.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/self_improve_versions.py::snapshot",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_self_improve_research.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/gem_energy.py::publish",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_gem_energy.py",
+     "tests/test_moonshots.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/living.py::save_lesson",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p3_73_living_batch.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/day_learn.py::learn",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_day_learn.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/self_improve_research.py::research",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_self_improve_research.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/self_learn.py::lesson_from_fail",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase13.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/plan_stage.py::apply_plan_skip",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p2_pep8_resume_plan.py",
+     "tests/test_plan_stage.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/patch_loop.py::_diff_paths",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_patch_loop_containment.py"
+    ],
+    "newly_failing": 3,
+    "sbfl_tests": 3,
+    "ranks": [
+     {
+      "ochiai": 3,
+      "hub": 2,
+      "b5": 2,
+      "b5_fanout": 2,
+      "b5_noev": 2
+     },
+     {
+      "ochiai": 3,
+      "hub": 2,
+      "b5": 2,
+      "b5_fanout": 2,
+      "b5_noev": 2
+     },
+     {
+      "ochiai": 3,
+      "hub": 2,
+      "b5": 2,
+      "b5_fanout": 2,
+      "b5_noev": 2
+     }
+    ]
+   },
+   {
+    "target": "core/loop/gem_topo.py::walk_gems",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_gem_topo.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/traces.py::critique_from_trace",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p3_71_buildout.py",
+     "tests/test_p4_02_labradorite_traces.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/measure_tick_fast.py::run_fast",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_measure_tick_fast.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/honest.py::is_honest_tool_path_pass",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase1.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/provider.py::classify",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase11.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/autonomy.py::ensure_assert_objective",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_autonomy.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/context_budget.py::measure",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_moonshots.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ether_app.py::_git",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_ether_app_writer.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/lora_dry_tick.py::dry_tick",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_lora_dry_tick.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/assert_audit.py::count_real_asserts",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_assert_audit.py",
+     "tests/test_bench_integrity.py",
+     "tests/test_calibrated_suite.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": null,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/ether_daemon.py::publish_host",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/writer.py::allow_attach_write",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase1.py",
+     "tests/test_kernel_phase5.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/git_tools.py::git_branch",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p6_01_git_worktree.py",
+     "tests/test_phase6_intel.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/plan_state.py::plan_from_failure",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_plan_state.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/improvement_proposal.py::write_allowed",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_self_improve.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/score_write.py::write_result",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase2.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ether_app.py::dashboard_status",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_ether_app_writer.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/prompt_guard.py::scrub",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_prompt_guard.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 29,
+      "hub": 29,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 29
+     }
+    ]
+   },
+   {
+    "target": "core/assert_harness.py::has_self_check",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_sandbox_prep.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": null,
+      "hub": null,
+      "b5": null,
+      "b5_fanout": null,
+      "b5_noev": null
+     },
+     {
+      "ochiai": null,
+      "hub": null,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": null
+     }
+    ]
+   },
+   {
+    "target": "core/loop/plan_exec.py::execute_tool",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p3_71_buildout.py",
+     "tests/test_p3_73_living_batch.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 4,
+      "hub": 4,
+      "b5": 2,
+      "b5_fanout": 2,
+      "b5_noev": 4
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/plan_store.py::save",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase11.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/burst_policy.py::should_force_burst",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_burst_policy.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/multifile.py::extract_file_blocks",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_multifile_ast_tx.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/traces.py::last_tool_trace",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p3_71_buildout.py",
+     "tests/test_p4_02_labradorite_traces.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/resume.py::skipped_stages",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p2_01_resume_skip.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/checkpoint.py::save_checkpoint",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p2_01_resume_skip.py",
+     "tests/test_p3_53_resume.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/argv_allow.py::argv_allowed",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase7.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/ether_tools.py::run_allowlisted",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_ether_tools.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/live_host.py::start_ollama",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_live_host.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/medic.py::medic_stand_down",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p1_medic_fifo.py",
+     "tests/test_p1_medic_idle.py",
+     "tests/test_p3_61_seven_slice.py"
+    ],
+    "newly_failing": 3,
+    "sbfl_tests": 3,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/checkpoint.py::checkpoint_pipeline",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_p3_32_checkpoint_pipeline.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/poll.py::pending_count",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase3.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ether_app.py::disk_tick",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_disk_tick.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/queue_governor.py::classify_bucket",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_critical_ops.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/live_attach.py::publish",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_live_attach.py",
+     "tests/test_living_contract.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 16,
+      "hub": 9,
+      "b5": 8,
+      "b5_fanout": 8,
+      "b5_noev": 9
+     }
+    ]
+   },
+   {
+    "target": "scripts/ether_protocol.py::parse_target",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_ether_protocol.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/retrieve.py::fetch_context",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_fail_retrieve.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/execute_plan.py::execute_selenite_plan",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_close_run.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/model_router.py::select_backend",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_generate_retry.py",
+     "tests/test_leftover_gate.py",
+     "tests/test_leftover_wire.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/curriculum.py::mark_passed",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_curriculum.py"
+    ],
+    "newly_failing": 3,
+    "sbfl_tests": 3,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/writer.py::liveness",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase1.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/begin.py::start_resume_gems",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_begin.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/memory_stack.py::lora_status",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_memory_stack.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/shadow_tag.py::compute",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_moonshots.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/living.py::run_pack_plus",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_leftover_wire.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/plan_exec.py::execute_dispatched",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p3_71_buildout.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/curriculum.py::check_task_leakage",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_bench_integrity.py",
+     "tests/test_calibrated_suite.py",
+     "tests/test_curriculum_holdout.py"
+    ],
+    "newly_failing": 7,
+    "sbfl_tests": 7,
+    "ranks": [
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 3,
+      "hub": 4,
+      "b5": 4,
+      "b5_fanout": 4,
+      "b5_noev": 4
+     },
+     {
+      "ochiai": 3,
+      "hub": 4,
+      "b5": 4,
+      "b5_fanout": 4,
+      "b5_noev": 4
+     },
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/honest_sparkline.py::compute",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_moonshots.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ether_evolve.py::cycle",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_evolve.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/mutate_doctrine.py::apply",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_hard_live_boot_force.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/langchain_adapter.py::snapshot",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_langchain_adapter.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/drain_fast_fifo.py::_rewrite_argv",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_drain_fast_fifo.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/honest_live.py::compute_rates",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_honest_live_critique_context.py",
+     "tests/test_phase3_snapshot.py"
+    ],
+    "newly_failing": 3,
+    "sbfl_tests": 3,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 6,
+      "b5": 6,
+      "b5_fanout": 5,
+      "b5_noev": 6
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/subagent.py::isolate",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_product_loop.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/worktree.py::add_worktree",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_p6_01_git_worktree.py",
+     "tests/test_phase6_intel.py",
+     "tests/test_remaining_34.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/ether_role.py::tick",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_ether_role.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/flywheel.py::lesson_from_trace",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_up_01_flywheel.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/health_check.py::check_python",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_health_check.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ether_evolve.py::record",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_ether_evolve.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/drain_live_fifo.py::writer_ok",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase3.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/tool_runtime.py::_ast_reject_py",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_tool_runtime_ast_gate.py"
+    ],
+    "newly_failing": 2,
+    "sbfl_tests": 2,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 2,
+      "b5": 4,
+      "b5_fanout": 4,
+      "b5_noev": 2
+     }
+    ]
+   },
+   {
+    "target": "core/loop/agentic.py::is_agentic_pass",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_agentic.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/health_check.py::run_health_checks",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_health_check.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/drain_fast_fifo.py::is_fast",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_drain_fast_fifo.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/extra_tools.py::grep",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase8.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/kernel/curriculum.py::next_task",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_curriculum.py"
+    ],
+    "newly_failing": 5,
+    "sbfl_tests": 5,
+    "ranks": [
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 3,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/live_generate_probe.py::function_ok",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_live_generate_probe.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 2,
+      "b5": 2,
+      "b5_fanout": 2,
+      "b5_noev": 2
+     }
+    ]
+   },
+   {
+    "target": "core/queue_governor.py::may_enqueue_steady",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_moonshots.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/kernel/extra_tools.py::dispatch",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase8.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/retrieve.py::needs_repo_context",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_fail_retrieve.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "core/loop/pipeline_util.py::looks_multifile",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_pipeline_util.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/start_runner.py::start_runner",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 1,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "scripts/ether_cowork.py::add",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_ether_cowork.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/phase3_snapshot.py::build_snapshot",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_snapshot.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 19,
+      "hub": 5,
+      "b5": 5,
+      "b5_fanout": null,
+      "b5_noev": 5
+     }
+    ]
+   }
+  ]
+ },
+ "mutants_M": {
+  "tried": 25,
+  "with_sbfl_tests": 2,
+  "ochiai": {
+   "n_tests": 8,
+   "top1": 0.0,
+   "top3": 0.875,
+   "found": 1.0,
+   "mean_rank_when_found": 7.5
+  },
+  "hub": {
+   "n_tests": 8,
+   "top1": 0.875,
+   "top3": 0.875,
+   "found": 1.0,
+   "mean_rank_when_found": 7.0
+  },
+  "b5": {
+   "n_tests": 8,
+   "top1": 0.875,
+   "top3": 0.875,
+   "found": 1.0,
+   "mean_rank_when_found": 7.5
+  },
+  "b5_fanout": {
+   "n_tests": 8,
+   "top1": 0.875,
+   "top3": 0.875,
+   "found": 1.0,
+   "mean_rank_when_found": 7.38
+  },
+  "b5_noev": {
+   "n_tests": 8,
+   "top1": 0.875,
+   "top3": 0.875,
+   "found": 1.0,
+   "mean_rank_when_found": 7.0
+  },
+  "rows": [
+   {
+    "target": "core/schemas.py::ResponseEnvelope.xor_error_and_payload",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine._connect",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/amethyst/evolution.py::Amethyst._log",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.health",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_mcp_citrine.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz._count_tests",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "scripts/ablation.py::Ablation.run",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_ablation.py"
+    ],
+    "newly_failing": 7,
+    "sbfl_tests": 7,
+    "ranks": [
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     },
+     {
+      "ochiai": 2,
+      "hub": 1,
+      "b5": 1,
+      "b5_fanout": 1,
+      "b5_noev": 1
+     }
+    ]
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite._extract_lessons",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite.execute",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz._static_analysis",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 46,
+      "hub": 49,
+      "b5": 53,
+      "b5_fanout": 52,
+      "b5_noev": 49
+     }
+    ]
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite._detect_tool_intent",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/amethyst/evolution.py::Amethyst.execute",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/registry.py::GemRegistry.execute",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/black_tourmaline/security.py::BlackTourmaline._scan",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/loop/handlers/tool_runtime_gate.py::ToolRuntimeGateHandler.run",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_pipeline_terminal_canary.py",
+     "tests/test_phase2a_status.py",
+     "tests/test_phase6_complete.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz._run_local",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite._create_plan",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.client",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_generate_retry.py",
+     "tests/test_self_improve.py",
+     "tests/test_mcp_citrine.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/black_tourmaline/security.py::BlackTourmaline.execute",
+    "op": "int_plus_one",
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/rose_quartz/router.py::RoseQuartz.__init__",
+    "op": "flip_compare",
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   }
+  ],
+  "candidates": 25
+ },
+ "mutants_D": {
+  "tried": 32,
+  "with_sbfl_tests": 3,
+  "ochiai": {
+   "n_tests": 3,
+   "top1": 0.0,
+   "top3": 0.0,
+   "found": 1.0,
+   "mean_rank_when_found": 49.67
+  },
+  "hub": {
+   "n_tests": 3,
+   "top1": 0.0,
+   "top3": 0.0,
+   "found": 1.0,
+   "mean_rank_when_found": 53.33
+  },
+  "b5": {
+   "n_tests": 3,
+   "top1": 0.0,
+   "top3": 0.0,
+   "found": 1.0,
+   "mean_rank_when_found": 22.67
+  },
+  "b5_fanout": {
+   "n_tests": 3,
+   "top1": 0.0,
+   "top3": 0.0,
+   "found": 1.0,
+   "mean_rank_when_found": 21.67
+  },
+  "b5_noev": {
+   "n_tests": 3,
+   "top1": 0.0,
+   "top3": 0.0,
+   "found": 1.0,
+   "mean_rank_when_found": 53.33
+  },
+  "rows": [
+   {
+    "target": "gems/amethyst/evolution.py::Amethyst.execute",
+    "op": "flip_compare",
+    "k": 0,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.execute",
+    "op": "flip_compare",
+    "k": 0,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 56,
+      "hub": 59,
+      "b5": 11,
+      "b5_fanout": 10,
+      "b5_noev": 59
+     }
+    ]
+   },
+   {
+    "target": "gems/labradorite/profiler.py::Labradorite.execute",
+    "op": "int_plus_one",
+    "k": 0,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/schemas.py::ResponseEnvelope.xor_error_and_payload",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite.execute",
+    "op": "int_plus_one",
+    "k": 0,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+    "op": "int_plus_one",
+    "k": 2,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/labradorite/profiler.py::Labradorite.execute",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/black_tourmaline/security.py::BlackTourmaline.execute",
+    "op": "int_plus_one",
+    "k": 0,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/amethyst/evolution.py::Amethyst.execute",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.execute",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 56,
+      "hub": 59,
+      "b5": 11,
+      "b5_fanout": 10,
+      "b5_noev": 59
+     }
+    ]
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.execute",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite.execute",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/schemas.py::ResponseEnvelope.xor_error_and_payload",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/amethyst/evolution.py::Amethyst.execute",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/schemas.py::ResponseEnvelope.xor_error_and_payload",
+    "op": "flip_compare",
+    "k": 1,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/citrine/memory.py::Citrine.execute",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "core/schemas.py::ResponseEnvelope.xor_error_and_payload",
+    "op": "flip_compare",
+    "k": 0,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite.execute",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+    "op": "flip_compare",
+    "k": 0,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/selenite/planner.py::Selenite.execute",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_phase3_idle.py",
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/labradorite/profiler.py::Labradorite.execute",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+    "op": "flip_compare",
+    "k": 2,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 1,
+    "sbfl_tests": 1,
+    "ranks": [
+     {
+      "ochiai": 37,
+      "hub": 42,
+      "b5": 46,
+      "b5_fanout": 45,
+      "b5_noev": 42
+     }
+    ]
+   },
+   {
+    "target": "gems/labradorite/profiler.py::Labradorite.execute",
+    "op": "int_plus_one",
+    "k": 1,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+    "op": "flip_compare",
+    "k": 3,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   },
+   {
+    "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+    "op": "flip_compare",
+    "k": 0,
+    "files": [
+     "tests/test_kernel_phase14.py",
+     "tests/test_host_restore.py",
+     "tests/test_daemon_publish.py"
+    ],
+    "newly_failing": 0,
+    "sbfl_tests": 0,
+    "ranks": []
+   }
+  ],
+  "candidates": 32,
+  "note": "all newly failing tests ranked (frames ignored)"
+ },
+ "live_run2": {
+  "ochiai": {
+   "failing": 76,
+   "goals": 46,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 30,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 46,
+    "protected_target": 5,
+    "no_repo_target": 16,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 30,
+   "distinct_sbfl_targets": 5,
+   "largest_target_share": 0.467,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/pipeline.py::Pipeline._log": 14,
+    "core/fail_streak.py::_save": 10,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/learning.py::compute_reward": 2
+   }
+  },
+  "hub": {
+   "failing": 76,
+   "goals": 46,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 30,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 46,
+    "protected_target": 5,
+    "no_repo_target": 16,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 30,
+   "distinct_sbfl_targets": 8,
+   "largest_target_share": 0.433,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/pipeline.py::Pipeline._persist": 13,
+    "core/pipeline.py::Pipeline._fail": 4,
+    "core/pipeline.py::Pipeline.__init__": 4,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/loop/bandit_credit.py::policy_update": 1
+   }
+  },
+  "b5": {
+   "failing": 76,
+   "goals": 46,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 30,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 46,
+    "protected_target": 5,
+    "no_repo_target": 16,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 30,
+   "distinct_sbfl_targets": 11,
+   "largest_target_share": 0.333,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/pipeline.py::Pipeline._persist": 10,
+    "core/loop/bandit_credit.py::policy_update": 3,
+    "core/pipeline_select.py::select_strategy_with_context": 2,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/failure_graph.py::template_for": 2,
+    "core/pipeline.py::Pipeline.__init__": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/pipeline.py::Pipeline._fail": 2,
+    "core/tool_runtime.py::run_if_enabled": 1
+   }
+  },
+  "b5_fanout": {
+   "failing": 76,
+   "goals": 46,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 30,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 46,
+    "protected_target": 5,
+    "no_repo_target": 16,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 30,
+   "distinct_sbfl_targets": 11,
+   "largest_target_share": 0.267,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/pipeline.py::Pipeline._persist": 8,
+    "core/learning.py::strategy_prompt_addon": 6,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/failure_graph.py::template_for": 2,
+    "core/pipeline.py::Pipeline.__init__": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/loop/bandit_credit.py::policy_update": 2,
+    "core/pipeline.py::Pipeline._fail": 2,
+    "core/train_gates.py::classify_fail_kind": 1,
+    "core/loop/retrieval.py::make_lazy_blocks": 1
+   }
+  },
+  "b5_noev": {
+   "failing": 76,
+   "goals": 46,
+   "vias": {
+    "test_import": 15,
+    "sbfl": 30,
+    "import_error": 1
+   },
+   "reasons": {
+    "goal": 46,
+    "protected_target": 5,
+    "no_repo_target": 16,
+    "too_large": 6,
+    "source_text_assert": 2,
+    "infra": 1
+   },
+   "sbfl_goals": 30,
+   "distinct_sbfl_targets": 8,
+   "largest_target_share": 0.433,
+   "registry_execute_share": 0.0,
+   "sbfl_targets": {
+    "core/pipeline.py::Pipeline._persist": 13,
+    "core/pipeline.py::Pipeline._fail": 4,
+    "core/pipeline.py::Pipeline.__init__": 4,
+    "core/pipeline.py::Pipeline._credit_attempts": 2,
+    "core/experience.py::experience_enabled": 2,
+    "core/experience.py::_rotate": 2,
+    "core/learning.py::compute_reward": 2,
+    "core/loop/bandit_credit.py::policy_update": 1
+   }
+  }
+ },
+ "live_run2_note": "second live scan ran concurrently with the full pytest suite (76 failing vs 74 on the quiet run); run 1 is the reference"
+}

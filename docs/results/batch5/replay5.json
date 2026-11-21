@@ -1,0 +1,60 @@
+{
+ "rows": [
+  {
+   "scenario": "oracle (2 files)",
+   "single_try_kept": 0,
+   "kept": 1,
+   "note": null,
+   "regressions": 0,
+   "files_changed_after": [
+    "pkg/api.py",
+    "pkg/store.py"
+   ]
+  },
+  {
+   "scenario": "cheat: constants pass target",
+   "single_try_kept": 0,
+   "kept": 0,
+   "note": "regression",
+   "regressions": 2,
+   "files_changed_after": []
+  },
+  {
+   "scenario": "cheat: edits the test file",
+   "single_try_kept": 0,
+   "kept": 0,
+   "note": "no edit: path not in the goal: tests/test_two.py",
+   "regressions": null,
+   "files_changed_after": []
+  },
+  {
+   "scenario": "half fix (1 of 2 files)",
+   "single_try_kept": 0,
+   "kept": 0,
+   "note": "tests failed",
+   "regressions": 0,
+   "files_changed_after": []
+  },
+  {
+   "scenario": "new module: correct",
+   "kept": 1,
+   "note": null,
+   "new_file_exists": true,
+   "files_changed_after": []
+  },
+  {
+   "scenario": "new module: wrong",
+   "kept": 0,
+   "note": "tests failed",
+   "new_file_exists": false,
+   "files_changed_after": []
+  },
+  {
+   "scenario": "new module: also writes a test",
+   "kept": 0,
+   "note": "no edit: path not in the goal: tests/test_new.py",
+   "new_file_exists": false,
+   "files_changed_after": []
+  }
+ ]
+}

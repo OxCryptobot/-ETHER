@@ -369,7 +369,8 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             return row
         prev = _last_push(art)
         code = [p for p in paths if not p.startswith("artifacts/")]
-        urgent = bool(code) and bool((run([git, "status", "--porcelain", "--", *code]).stdout or "").strip())
+        urgent = bool(publishable_code(root, git, run, code))
+        row["urgent"] = urgent
         if throttled(prev, urgent=urgent):
             # Heartbeat-only commits at most every ETHER_PUBLISH_MIN_S; a kept edit goes out now.
             row.update({"ok": True, "note": "throttled", "last_push_ts": prev})
@@ -378,7 +379,14 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
         run([git, "fetch", "origin", "main"])
         ahead = _int_stdout(run([git, "rev-list", "--count", "origin/main..HEAD"]))
         row["ahead"] = ahead
-        if publish_plan(ahead) == "worktree":
+        try:
+            from scripts.host_pin import pinned
+            pin_on = pinned(root)
+        except Exception:
+            pin_on = False
+        if pin_on:
+            row["pinned"] = True  # rolled back locally: publish from origin/main, never rebase onto bad
+        if pin_on or publish_plan(ahead) == "worktree":
             via = publish_worktree(root, git, run, message, token)
             row["worktree"] = via
             row["push_rc"] = via.get("push_rc", 0 if via.get("ok") else 1)
@@ -428,6 +436,31 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
 
 
 PUBLISH_MIN_S = float(os.environ.get("ETHER_PUBLISH_MIN_S", "300"))
+
+
+def publishable_code(root: Path, git: str, runner: Runner, code: List[str]) -> List[str]:
+    """Code paths a publish would really change on origin (batch 5).
+
+    Batch 2 bypassed the throttle whenever `git status` showed any listed code path
+    dirty. A kept file that stays dirty locally (worktree publish, or upstream changed
+    it so the copy is skipped) made *every* tick urgent: heartbeat commits every pass
+    again. Urgent now means: the local file differs from origin/main's blob and
+    origin/main has not changed that path since the merge base (so the copy is allowed)."""
+    if not code:
+        return []
+    dirty = (runner([git, "status", "--porcelain", "--", *code]).stdout or "").strip()
+    if not dirty:
+        return []
+    out = []
+    skip = set(code_paths_upstream_changed(git, runner, code))
+    for rel in code:
+        if rel in skip or not (Path(root) / rel).is_file():
+            continue
+        local = runner([git, "hash-object", "--", rel])
+        mine = (local.stdout or "").strip() if local.returncode == 0 else ""
+        if mine and mine != _blob(runner, git, "origin/main", rel):
+            out.append(rel)
+    return out
 
 
 def _last_push(art: Path) -> str:

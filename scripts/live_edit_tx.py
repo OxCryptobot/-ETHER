@@ -12,6 +12,18 @@ ROOT = Path(os.environ.get("ETHER_ROOT") or Path(__file__).resolve().parents[1])
 OUT = ROOT / "artifacts" / "live_edit_tx.json"
 
 
+def num_ctx() -> int:
+    """Context window sent to Ollama (batch 5). Without it Ollama used its own default
+    (2048 on older builds) while prompts were budgeted for ETHER_MODEL_CTX=8192: a 7200-char
+    prompt + a 768-token reply could be cut from the front silently. 4096 holds the largest
+    budgeted prompt (~2200 tokens) + reply cap + system text, and is fixed so Ollama never
+    reloads the model between calls. ETHER_NUM_CTX overrides."""
+    try:
+        return max(2048, int(os.getenv("ETHER_NUM_CTX", "4096")))
+    except ValueError:
+        return 4096
+
+
 def _ask(prompt: str, temperature: float = 0, n: int = 220, edit: bool = False) -> str:
     from scripts.live_generate_probe import pick_model
 
@@ -23,7 +35,7 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220, edit: bool = False) 
         "messages": messages(prompt, edit=edit),
         "stream": False,
         "think": False,
-        "options": {"temperature": temperature, "num_predict": n},
+        "options": {"temperature": temperature, "num_predict": n, "num_ctx": num_ctx()},
     }).encode()
     req = urllib.request.Request(
         "http://127.0.0.1:11434/api/chat",
@@ -31,7 +43,8 @@ def _ask(prompt: str, temperature: float = 0, n: int = 220, edit: bool = False) 
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    # 768-token replies on the 1650 can take >120 s; scale the wait with the reply cap.
+    with urllib.request.urlopen(req, timeout=max(120, int(n * 0.25) + 60)) as resp:
         raw = resp.read().decode()
     try:
         payload = json.loads(raw)

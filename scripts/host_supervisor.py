@@ -81,10 +81,27 @@ def backoff_s(failures: int, base: float = BACKOFF_BASE_S, cap: float = BACKOFF_
     return float(min(cap, base * (2 ** (failures - 1))))
 
 
+def drainable_count(base: Optional[Path] = None) -> int:
+    """Pending jobs the host pass will actually run (live edit jobs; drain_live_fifo).
+
+    Batch 5: idle_s counted *every* file in artifacts/jobs/pending. 31 medic_hb /
+    gem_energy_publish jobs (Matrix/Actions enqueues, oldest 2026-10-12) are not drained
+    by any host-path drainer, so the supervisor polled at BUSY 12 s forever: one pass
+    every ~32 s and, without the publish throttle, ~230 artifact commits an hour."""
+    try:
+        from scripts.drain_live_fifo import _edit_job
+        from core.kernel.queue import PENDING_DIR
+
+        d = Path(base or os.environ.get("ETHER_ROOT") or ROOT_HERE) / PENDING_DIR
+        return sum(1 for p in d.glob("*.json") if p.name != ".gitkeep" and _edit_job(p))
+    except Exception:
+        return 0
+
+
 def idle_s() -> float:
     try:
-        from core.kernel.poll import pending_count, poll_seconds
-        return float(poll_seconds(pending_count()))
+        from core.kernel.poll import poll_seconds
+        return float(poll_seconds(drainable_count()))
     except Exception:
         return IDLE_S
 
@@ -157,13 +174,37 @@ def clear_stale_git_lock(base: Path, now: Optional[float] = None) -> bool:
         return False
 
 
+def _git_run(base: Path) -> Callable[[List[str]], subprocess.CompletedProcess]:
+    def run(argv: List[str]) -> subprocess.CompletedProcess:
+        return subprocess.run([argv[0], "-C", str(base), *argv[1:]], timeout=120,
+                              env=_quiet_env(base), **_run_kwargs())
+    return run
+
+
 def git_pull(base: Path) -> Dict[str, Any]:
-    """Fast-forward only. A diverged tree is left for host_main's publish sync."""
+    """Fast-forward only. A diverged tree is left for host_main's publish sync.
+
+    Batch 5: while a rollback pin is set, a tip whose code equals the pinned bad commit
+    (artifact-only commits on top) is not pulled again; a new code change clears the pin
+    and goes through the post-pull smoke like any other pull."""
     from scripts.host_main import _git
+    from scripts import host_pin
     if not (Path(base) / ".git").exists():
         return {"ok": False, "note": "no_git"}
     cleared = clear_stale_git_lock(base)
     before = git_head(base)
+    pin = host_pin.pin(base)
+    if pin.get("bad"):
+        run = _git_run(base)
+        try:
+            run([_git(), "fetch", "--quiet", "origin", "main"])
+            moved = host_pin.code_moved_since(run, _git(), str(pin["bad"]))
+        except Exception as exc:
+            return {"ok": False, "error": type(exc).__name__, "before": before, "pinned": pin}
+        if not moved:
+            return {"ok": True, "note": "pinned", "before": before, "after": before, "moved": False,
+                    "pinned": pin}
+        host_pin.clear_pin(base)
     try:
         p = subprocess.run(
             [_git(), "-C", str(base), "pull", "--ff-only", "--quiet", "origin", "main"],
@@ -213,6 +254,47 @@ def run_pass(base: Path, timeout: int = TICK_TIMEOUT_S) -> Dict[str, Any]:
     return {"rc": rc, "ok": rc == 0, "secs": round(time.monotonic() - t0, 1), "err_tail": tail if rc else ""}
 
 
+SMOKE_TIMEOUT_S = int(os.environ.get("ETHER_SMOKE_TIMEOUT_S", "300"))
+
+
+def run_smoke(base: Path, timeout: int = SMOKE_TIMEOUT_S) -> Dict[str, Any]:
+    """Post-pull smoke in a child process (fresh interpreter, new code from disk)."""
+    argv = [venv_python(base), "-m", "scripts.host_selfcheck", "--smoke"]
+    try:
+        p = subprocess.run(argv, cwd=str(base), timeout=timeout, env=_quiet_env(base), **_run_kwargs())
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "smoke timeout"}
+    except Exception as exc:
+        return {"ok": False, "error": type(exc).__name__}
+    try:
+        row = json.loads((p.stdout or "").strip().splitlines()[-1])
+    except Exception:
+        row = {"error": ((p.stderr or "") + (p.stdout or ""))[-300:] or f"rc={p.returncode}"}
+    row["ok"] = p.returncode == 0 and bool(row.get("ok", True))
+    row["rc"] = p.returncode
+    return row
+
+
+def after_pull(base: Path, pull: Dict[str, Any], smoke: Callable[[Path], Dict[str, Any]],
+               rollback: Optional[Callable[..., Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Smoke-test a pull that moved HEAD; on failure (ETHER_PULL_ROLLBACK=1) roll back locally."""
+    from scripts import host_pin
+    from scripts.host_main import _git
+
+    row = smoke(base)
+    if row.get("ok"):
+        host_pin.record_good(base, str(pull.get("after") or ""))
+        return {"smoke": row}
+    out: Dict[str, Any] = {"smoke": row}
+    if host_pin.rollback_enabled():
+        good = host_pin.last_good(base) or str(pull.get("before") or "")
+        rb = rollback or host_pin.rollback
+        out["rollback"] = rb(base, _git_run(base), _git(), good, str(pull.get("after") or ""), row)
+    else:
+        out["rollback"] = {"ok": False, "note": "ETHER_PULL_ROLLBACK off: running the new code anyway"}
+    return out
+
+
 def ensure_ollama() -> Dict[str, Any]:
     """Start `ollama serve` from the long-lived supervisor so it outlives each pass."""
     if os.name != "nt" and os.environ.get("ETHER_SUPERVISOR_OLLAMA") != "1":
@@ -253,6 +335,7 @@ class Supervisor:
         idle: Optional[Callable[[], float]] = None,
         max_cycles: Optional[int] = None,
         work: Optional[Callable[[Path], Optional[bool]]] = None,
+        smoke: Optional[Callable[[Path], Dict[str, Any]]] = None,
     ) -> None:
         self.base = Path(base)
         self.p = paths(self.base)
@@ -266,6 +349,7 @@ class Supervisor:
         self.idle = idle or idle_s
         self.max_cycles = max_cycles
         self.work = work or pass_had_work
+        self.smoke = smoke or run_smoke
         self.dry = 0
         self.failures = 0
         self.cycle = 0
@@ -306,6 +390,10 @@ class Supervisor:
     def once(self) -> Dict[str, Any]:
         self.cycle += 1
         pull = self.pull(self.base)
+        if pull.get("moved") and os.environ.get("ETHER_SMOKE", "1") != "0":
+            pull.update(after_pull(self.base, pull, self.smoke))
+            if (pull.get("rollback") or {}).get("ok"):
+                pull["after"] = str(pull["rollback"].get("good") or pull.get("before") or "")
         if pull.get("moved") and self.changed(self.base, str(pull.get("before") or ""), str(pull.get("after") or "")):
             return {"cycle": self.cycle, "pull": pull, "reload": True}
         oll = self.ollama()

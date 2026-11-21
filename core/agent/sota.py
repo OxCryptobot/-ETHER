@@ -475,9 +475,11 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             return _infra(goal, seen)
         trace["reply"] = text[-200:]
         edit = gs.extract_edit(text, goal)
-        if not edit["function"] and not edit["assigns"]:
+        if not edit["function"] and not edit["assigns"] and not edit.get("span"):
             want = ("`%s = ...`" if goal.get("symbol_kind") == "assign" else "complete function `def %s`")
             feedback = "no " + want % goal["symbol"].split(".")[-1] + " in the reply"
+            if goal.get("span"):
+                feedback = "no replacement lines for the marked window in the reply"
             last = {**base, "ok": False, "honest": False, "note": "no function"}
             continue
         applied = gs.apply_edit(root, goal, edit)

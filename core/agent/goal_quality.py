@@ -18,6 +18,7 @@ PROTECTED_PREFIXES = (
     "tests/", "core/agent/", "scripts/host_", "scripts/origin_publish.py",
     "scripts/self_heal.py", "dashboard/", "matrix/",
 )
+SPAN_MARKS = ("# >>> EDIT START", "# <<< EDIT END")
 FILLER_PREFIXES = ("describe_", "describe_loop_", "describe_spine_")
 FILLER_IDS = frozenset({"find_add", "next_bug", "find_fits", "find_clamp"})
 
@@ -72,6 +73,8 @@ def spoiled(prompt: str, symbol: str, current: str = "") -> bool:
         # Every shown line must already be in the file (a slice may skip lines or
         # cut the last one); a line the file does not have is new code = answer.
         for line in (l.strip() for l in block if l.strip()):
+            if line == "..." or line.startswith(SPAN_MARKS):
+                continue  # batch 6: span-goal elision and window markers are not code
             if not any(line in c for c in cur):
                 return True
     # Batch 3: module-level assignment goals. A `NAME = <value>` line that the file

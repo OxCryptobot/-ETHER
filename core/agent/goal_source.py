@@ -117,11 +117,50 @@ def sbfl_enabled() -> bool:
     return os.getenv("ETHER_SBFL", "1") != "0"
 
 
+BYTECODE_WINDOW_S = 300
+_SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "artifacts", "out"}
+
+
+def drop_recent_bytecode(root: Path, window_s: int = BYTECODE_WINDOW_S) -> int:
+    """Batch 6: delete cached bytecode of .py files written in the last window_s seconds.
+
+    CPython validates a .pyc by the source's mtime (whole seconds) and size. An edit, a revert
+    and a second edit of the same length inside one second left the first edit's bytecode
+    in __pycache__, so the gate tested the wrong code (seen as a flaky new-module test: a
+    correct `return 2 * x` judged with the reverted `return x + 2`). Cheap: one stat per file."""
+    now = time.time()
+    n = 0
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS and not d.startswith(".")]
+        for f in filenames:
+            if not f.endswith(".py"):
+                continue
+            path = os.path.join(dirpath, f)
+            try:
+                if now - os.stat(path).st_mtime > window_s:
+                    continue
+            except OSError:
+                continue
+            cache = os.path.join(dirpath, "__pycache__")
+            if not os.path.isdir(cache):
+                continue
+            stem = f[:-3] + "."
+            for c in os.listdir(cache):
+                if c.startswith(stem) and c.endswith(".pyc"):
+                    try:
+                        os.remove(os.path.join(cache, c))
+                        n += 1
+                    except OSError:
+                        pass
+    return n
+
+
 def run_pytest(root: Path, args: List[str], timeout: int = 180, sbfl: bool = False) -> Dict[str, Any]:
     """Run pytest, return {nodeid: status} plus failure texts. Never writes the repo.
 
     sbfl=True also records which repo functions each test entered (core/agent/fault_loc.py)."""
     root = Path(root)
+    drop_recent_bytecode(root)
     tmp = Path(tempfile.mkdtemp(prefix="ether_pt_"))
     xml = tmp / "r.xml"
     argv = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=short",
@@ -204,7 +243,7 @@ def goal_from_failure(root: Path, nodeid: str, text: str,
 
 DROP_REASONS = (
     "collection_error", "infra", "protected_target", "source_text_assert", "no_repo_target", "no_symbol",
-    "too_large", "too_many_sites",
+    "too_large", "too_many_sites", "test_bug",
 )
 
 
@@ -233,6 +272,10 @@ def est_tokens(text: str) -> int:
 
 def reply_tokens(root: Path, goal: Dict[str, Any]) -> int:
     """num_predict for a real goal: room for the whole current function (+25% and a margin)."""
+    if goal.get("span"):
+        from core.agent import span_edit
+
+        return max(REPLY_MIN, min(reply_max(), int(est_tokens(span_edit.span_text(root, goal)) * 1.25) + 64))
     if goal.get("kind") == "lint" or goal.get("missing") or goal.get("symbol_kind") == "assign":
         cur = _func_source(Path(root) / goal["file"], goal["symbol"]) if goal.get("symbol_kind") == "assign" else ""
         return max(REPLY_MIN, min(reply_max(), est_tokens(cur) * 2 + 64)) if cur else REPLY_MIN
@@ -247,9 +290,17 @@ def fits_reply(root: Path, goal: Dict[str, Any]) -> bool:
         return multi_edit.fits(root, goal["targets"])
     if goal.get("missing") or goal.get("kind") == "lint":
         return True
+    if goal.get("span"):
+        from core.agent import span_edit
+
+        return span_edit.fits(root, goal, reply_max(), est_tokens)
     cur = _func_source(Path(root) / goal["file"], goal["symbol"])
     return not cur or int(est_tokens(cur) * 1.1) <= reply_max()
-SOURCE_TEXT = re.compile(r"""(?:Path\(|open\()\s*["'](?:core|scripts|gems|dashboard|\.github)/""")
+SOURCE_TEXT = re.compile(r"""(?:Path\(|open\()\s*["'](?:core|scripts|gems|dashboard|\.github)/"""
+                         r"""|inspect\.getsource\(|/\s*["'](?:core|scripts|gems|dashboard|\.github)["']\s*/""")
+# Batch 6: a NameError raised in the test file itself for a name some repo module defines is a
+# test bug (missing import in the test); the host may not edit tests, so it is not a goal.
+TEST_NAME_ERROR = re.compile(r"^(tests/[\w/]+\.py):\d+: in \w+\n(?:.*\n){0,3}?E\s+NameError: name '(\w+)' is not defined", re.M)
 
 
 def _repo_frames(root: Path, text: str) -> List[tuple]:
@@ -312,6 +363,8 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
             via = "frame_assign"
         if symbol:
             goal = _goal(root, nodeid, test_file, rel, symbol, False, text, via=via)
+            if goal is not None and via == "frame" and not fits_reply(root, goal):
+                goal = _fit_large(root, goal, nodeid, text, frame_line=line)
             if goal is not None:
                 if via == "frame_assign":
                     goal["symbol_kind"] = "assign"
@@ -325,6 +378,24 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
     target, symbol_hint = _target_from_test(root, nodeid)
     if target and symbol_hint:
         goal = _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import")
+        if goal is not None and not fits_reply(root, goal):
+            # Batch 6: too large to rewrite. A window the failing assert's own literal points at
+            # (e.g. the "resolved" list main() writes), else a fitting spectrum suspect, else a
+            # window on any evidence.
+            from core.agent import span_edit
+
+            strong = span_edit.make_span(root, goal, text, words=span_edit.assert_words(root, nodeid, text),
+                                         min_score=2.0, cap_tokens=reply_max())
+            if strong is not None and fits_reply(root, strong):
+                return strong, "goal"
+            suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra, text)
+            if suspect:
+                sgoal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
+                if sgoal is not None:
+                    sgoal["suspicion"] = suspect[2]
+                    sgoal["large_target"] = f"{target}::{symbol_hint}"
+                    return sgoal, "goal"
+            goal = _fit_large(root, goal, nodeid, text)
         if goal is not None and _multi_on():
             from core.agent import multi_edit
 
@@ -332,7 +403,17 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
             if alts:
                 goal["alt_targets"] = alts
         return goal, "goal"
-    suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra, text)
+    large: list = []
+    suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra, text, large)
+    if large and (suspect is None or large[0][2] > SPAN_MARGIN * suspect[2]):
+        # Batch 6: the most suspicious function is too large to rewrite -> a window in it,
+        # anchored on the failure's evidence (else fall back to the best fitting suspect).
+        lgoal = _goal(root, nodeid, test_file, large[0][0], large[0][1], False, text, via="sbfl")
+        if lgoal is not None:
+            sgoal = _fit_large(root, lgoal, nodeid, text, min_score=2.0)
+            if sgoal.get("span"):
+                sgoal["suspicion"] = large[0][2]
+                return sgoal, "goal"
     if suspect:
         goal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
         if goal is not None:
@@ -355,8 +436,20 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
             return None, "too_large"
         if multi_reason == "too_many_sites":
             return None, "too_many_sites"
+    if _is_test_bug(root, text):
+        return None, "test_bug"
+    agoal = _assign_from_test(root, nodeid, text)
+    if agoal is not None:
+        if not fits_reply(root, agoal):
+            agoal = _fit_large(root, agoal, nodeid, text)
+        return agoal, "goal"
     if saw_protected or _test_imports_only_protected(root, nodeid):
         return None, "protected_target"
+    if not _multi_on():
+        from core.agent import multi_edit
+
+        if len(set(multi_edit.SITE.findall(text or ""))) > multi_edit.MAX_TARGETS:
+            return None, "too_many_sites"
     if SOURCE_TEXT.search(_test_source(root, nodeid)):
         return None, "source_text_assert"
     if _repo_frames(root, text):
@@ -374,8 +467,12 @@ def sbfl_rank() -> str:
     return mode if mode in ("ochiai", "hub") else "b5"
 
 
-def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], text: str = "") -> Optional[tuple]:
-    """Most suspicious editable function the failing test entered (Ochiai), or None."""
+def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], text: str = "",
+                 large: Optional[list] = None) -> Optional[tuple]:
+    """Most suspicious editable function the failing test entered, or None.
+
+    Batch 6: when `large` is a list, the best-ranked suspect that is too large to rewrite is
+    appended to it as (rel, qual, score, key) so the caller can offer it as a span goal."""
     from core.agent.goal_quality import protected
 
     if not spectra:
@@ -394,9 +491,11 @@ def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], tex
             continue
         if qual.count(".") > 1 or not _is_function(root, rel, qual):
             continue
-        if not fits_reply(root, {"file": rel, "symbol": qual}):
-            continue  # cannot be written out in one reply: try the next suspect
         key = (score + (0.05 if rel in imported else 0.0), order)
+        if not fits_reply(root, {"file": rel, "symbol": qual}):
+            if large is not None and (not large or key > large[0][3]):
+                large[:] = [(rel, qual, score, key)]
+            continue  # cannot be written out in one reply: try the next suspect
         if best is None or key > best[0]:
             best = (key, rel, qual, score)
     return (best[1], best[2], best[3]) if best else None
@@ -486,6 +585,83 @@ def _target_from_test(root: Path, nodeid: str) -> tuple:
                 if hit:
                     return rel, hit
     return "", ""
+
+
+SPAN_MARGIN = 1.1  # a too-large SBFL suspect must outrank the best fitting one by 10% to win a span
+
+
+def _fit_large(root: Path, goal: Dict[str, Any], nodeid: str, text: str,
+               frame_line: Optional[int] = None, min_score: float = 1.0) -> Dict[str, Any]:
+    """Batch 6: a too-large function becomes a span goal when evidence anchors a window."""
+    from core.agent import span_edit
+
+    sgoal = span_edit.make_span(root, goal, text, _test_source(root, nodeid), frame_line=frame_line,
+                                cap_tokens=reply_max(), min_score=min_score)
+    return sgoal if sgoal is not None and fits_reply(root, sgoal) else goal
+
+
+def _is_test_bug(root: Path, text: str) -> bool:
+    m = TEST_NAME_ERROR.search(text or "")
+    if not m:
+        return False
+    name = m.group(2)
+    pat = re.compile(rf"^(?:{re.escape(name)}\s*[:=]|def {re.escape(name)}\b|class {re.escape(name)}\b)", re.M)
+    for d in ("core", "scripts", "gems"):
+        for p in (Path(root) / d).rglob("*.py"):
+            try:
+                if pat.search(p.read_text(encoding="utf-8", errors="ignore")):
+                    return True
+            except Exception:
+                continue
+    return False
+
+
+MAX_ASSIGN_GOAL_LINES = 80
+
+
+def _assign_from_test(root: Path, nodeid: str, text: str) -> Optional[Dict[str, Any]]:
+    """Batch 6: the test imports a module-level CONSTANT and its failing assert reads it -> assign goal.
+
+    Only with ETHER_EDIT_CONSTANTS on, only UPPER_CASE names bound once at module level in a
+    non-protected repo file, at most MAX_ASSIGN_GOAL_LINES long, and only when the error text
+    or the test's assert lines mention it."""
+    from core.agent.goal_quality import protected
+
+    if not constants_enabled():
+        return None
+    src = _test_source(root, nodeid)
+    rel_test = nodeid.split("::", 1)[0]
+    try:
+        module_src = (Path(root) / rel_test).read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return None
+    err_idents = set(re.findall(r"\b[A-Za-z_]\w*\b", "\n".join(
+        ln for ln in (text or "").splitlines() if ln.lstrip().startswith(("E ", "assert")))))
+    # lines of the test that the failing assert reads: the assert itself, or `x = ...` feeding it
+    feeds = [ln for ln in src.splitlines() if re.match(r"\s*(\w+)\s*=", ln) and
+             re.match(r"\s*(\w+)\s*=", ln).group(1) in err_idents]
+    asserts = "\n".join(feeds + [ln for ln in (text or "").splitlines() if ln.lstrip().startswith(("E ", "assert"))])
+    for m in re.finditer(r"from ([A-Za-z_][\w.]*) import (?:\(([\w, \n]+)\)|([\w, ]+))", module_src + "\n" + src):
+        rel = mod_rel(root, m.group(1))
+        if not (Path(root) / rel).is_file() or protected(rel):
+            continue
+        listed = (m.group(2) or m.group(3) or "").replace("\n", ",")
+        for name in [n.strip().split(" as ")[0].strip() for n in listed.split(",") if n.strip()]:
+            if not re.fullmatch(r"[A-Z][A-Z0-9_]+", name) or not re.search(rf"\b{name}\b", asserts):
+                continue
+            try:
+                tree = ast.parse((Path(root) / rel).read_text(encoding="utf-8", errors="ignore"))
+            except SyntaxError:
+                continue
+            span = _assign_span(tree, name)
+            if not span or span[1] - span[0] + 1 > MAX_ASSIGN_GOAL_LINES:
+                continue
+            goal = _goal(root, nodeid, rel_test, rel, name, False, text, via="test_import_assign")
+            if goal is None:
+                continue
+            goal["symbol_kind"] = "assign"
+            return goal
+    return None
 
 
 def _called_attr(root: Path, rel: str, alias: str, src: str) -> str:
@@ -785,7 +961,12 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
     test = _test_source(root, goal["nodeid"])[:1400] if goal.get("nodeid") else ""
     use_ctx = getattr(behaviour, "use_workspace_context", True)
     current = _func_source(root / goal["file"], goal["symbol"]) if use_ctx else ""
-    if goal.get("symbol_kind") == "assign":
+    if goal.get("span"):
+        from core.agent import span_edit
+
+        current = span_edit.context_block(root, goal)
+        tail = span_edit.prompt_tail(goal)
+    elif goal.get("symbol_kind") == "assign":
         tail = (f"Reply with the complete new module-level assignment `{name} = ...` (no markdown). "
                 "It replaces the current one.\n")
     else:
@@ -808,6 +989,8 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
         if getattr(behaviour, "force_repo_map", False):
             sig = "\n".join(l for l in body.splitlines() if l.startswith(("def ", "class ", "import ", "from ")))
             ctx = (sig + "\n\n" + current)[-room:] if current else slice_to_budget(sig, query=name, cap=room)
+        elif goal.get("span"):
+            ctx = current[-room:]
         elif current and len(current) <= room:
             ctx = current
             consts = _constants_used(root / goal["file"], current) if constants_enabled() else ""
@@ -927,6 +1110,10 @@ def extract_assigns(reply: str) -> Dict[str, str]:
 
 def extract_edit(reply: str, goal: Dict[str, Any]) -> Dict[str, Any]:
     """{"function": src or "", "assigns": {name: src}} from a model reply. Empty = nothing usable."""
+    if goal.get("span"):
+        from core.agent import span_edit
+
+        return {"function": "", "assigns": {}, "span": span_edit.extract(reply)}
     if goal.get("symbol_kind") == "assign":
         assigns = extract_assigns(reply) if constants_enabled() else {}
         if goal["symbol"] not in assigns:
@@ -950,6 +1137,10 @@ def apply_edit(root: Path, goal: Dict[str, Any], edit: Dict[str, Any]) -> Dict[s
 
     if protected(goal.get("file", "")):
         return {"ok": False, "reason": "protected path"}
+    if goal.get("span"):
+        from core.agent import span_edit
+
+        return span_edit.apply(root, goal, edit.get("span") or "")
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8")
     assigns = dict(edit.get("assigns") or {})

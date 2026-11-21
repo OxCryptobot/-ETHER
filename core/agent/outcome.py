@@ -298,6 +298,10 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         "via": (pick.trace.get("goal") or {}).get("via"),
         "reply_cap": pick.trace.get("reply_cap"),
     }
+    if pick.trace.get("exemplar"):
+        row["exemplar"] = pick.trace.get("exemplar")  # batch 7: which kept edit was shown
+    if "exemplar_eligible" in (pick.trace.get("bandit") or {}):
+        row["exemplar_eligible"] = bool(pick.trace["bandit"]["exemplar_eligible"])
     r01 = reward01(kind, result) if pick.kind in ("fix_test", "lint") else None
     if r01 is not None:
         row["reward01"] = r01
@@ -449,7 +453,7 @@ SUMMARY_MAX_BYTES = 16384
 SUMMARY_RECENT = 25
 _SAFE_ID = __import__("re").compile(r"[^A-Za-z0-9_.:\-/\[\]]+")
 _SAFE_FIELDS = ("ts", "goal", "arm", "goal_kind", "kind", "reward", "regressions", "prompt_chars", "spoiler",
-                "tests_ok", "reward01", "secs", "algo", "note", "via")
+                "tests_ok", "reward01", "secs", "algo", "note", "via", "exemplar")
 
 
 def _safe(value: Any) -> Any:
@@ -569,6 +573,13 @@ def summary_doc(root: Path) -> Dict[str, Any]:
         doc["bandit"] = bandit.summary(root)
     except Exception as exc:
         doc["bandit"] = {"error": type(exc).__name__}
+    try:
+        from core.agent import exemplars
+
+        if exemplars.mode() != "0":  # batch 7: library size + reuse (counts only, no diffs published)
+            doc["exemplars"] = {k: _safe(v) for k, v in exemplars.summary(root, rows).items()}
+    except Exception as exc:
+        doc["exemplars"] = {"error": type(exc).__name__}
     try:
         from core.agent import goal_source
 

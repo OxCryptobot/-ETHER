@@ -949,7 +949,11 @@ def _test_source(root: Path, nodeid: str) -> str:
     return src
 
 
-def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedback: str = "") -> str:
+EXEMPLAR_HEAD = "A different fix that passed this repo's tests before"
+
+
+def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedback: str = "",
+                 exemplar: Optional[List[Dict[str, Any]]] = None) -> str:
     """Error + test + file-local slice. Never the answer. Capped by the model's context."""
     from core.kernel.context_budget import context_char_budget, slice_to_budget
 
@@ -982,6 +986,14 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
         parts.append(f"Test:\n{test}\n")
     if feedback:
         parts.append(f"Your last try failed:\n{feedback[-400:]}\n")
+    if exemplar and getattr(behaviour, "use_exemplars", False):
+        from core.agent import exemplars as _ex  # batch 7: one gate-kept diff, never this goal's
+
+        # The code context (span window / target function) keeps its room; the hint takes what is left.
+        keep = min(len(current or ""), budget // 2) if (use_ctx or goal.get("span")) else 0
+        hint = _ex.block(exemplar, budget - sum(len(p) for p in parts) - len(tail) - len(addon) - keep - 40)
+        if hint:
+            parts.append(hint)
     fixed = sum(len(p) for p in parts) + len(tail) + len(addon) + 40
     room = max(200, budget - fixed)
     if use_ctx or goal.get("span"):

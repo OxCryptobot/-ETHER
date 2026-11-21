@@ -436,8 +436,20 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         from core.learning import arm_behaviour
 
         behaviour = (factored_behaviour(pick.arm) or arm_behaviour(pick.arm)) if pick is not None else None
+        if pick is not None and pick.arm == "exemplar":
+            from core.agent import exemplars
+
+            behaviour = exemplars.behaviour()
     except Exception:
         behaviour = None
+    shown: List[Dict[str, Any]] = []
+    if getattr(behaviour, "use_exemplars", False):
+        try:
+            from core.agent import exemplars
+
+            shown = exemplars.retrieve(root, goal, k=1)
+        except Exception:
+            shown = []
     try:
         from core.agent.bandit import tries_for
 
@@ -448,7 +460,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
     last: Dict[str, Any] = {}
     trace["spoiler"] = False
     for i in range(tries):
-        prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback)
+        prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback, exemplar=shown)
+        if shown and gs.EXEMPLAR_HEAD in prompt:
+            trace["exemplar"] = shown[0].get("id")
         try:
             current = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
         except Exception:
@@ -490,6 +504,16 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             continue
         verdict = gs.gate(root, goal, baseline, suite)
         if verdict["ok"]:
+            try:
+                from core.agent import exemplars
+
+                if exemplars.recording():
+                    after = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
+                    exemplars.record_kept(root, goal, applied["original"], after, verdict)
+                    if trace.get("exemplar"):
+                        exemplars.note_use(root, str(trace["exemplar"]))
+            except Exception as exc:
+                trace["exemplar_error"] = type(exc).__name__
             gs.mark(root, goal["id"], kept=True)
             for sib in [g for g in gs.load_index(root)["goals"].values()
                         if g.get("nodeid") in set(gs.siblings(root, goal))]:

@@ -99,7 +99,8 @@ def learning_view(ls: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             "revert_rate": m.get("revert_rate"), "regressions_caught": m.get("regressions_caught"),
             "spoiler_share": t.get("spoiler_share"), "filler_rate": m.get("filler_rate"),
             "tool_edits": m.get("tool_edits"), "by_via": m.get("by_via") or {}, "by_kind_recent": by_kind,
-            "arms": arms, "promoted": ls.get("promoted"), "real_queue": ls.get("real_queue")}
+            "arms": arms, "promoted": ls.get("promoted"), "real_queue": ls.get("real_queue"),
+            "exemplars": ls.get("exemplars")}
 
 
 def commits_view(ref: Optional[str], since: str, root: Path = ROOT) -> Dict[str, Any]:
@@ -158,6 +159,11 @@ def render(doc: Dict[str, Any]) -> str:
                              for arm, n in sorted(a["pulls"].items(), key=lambda kv: -kv[1]))
             out.append(f"  arms[{kind}]: used {a['arms_used']}  entropy {a['entropy_bits']} bits  "
                        f"top share {_fmt(a['top_share'])}  | {arms}")
+        ex = ls.get("exemplars") or {}
+        if ex and "error" not in ex:  # batch 7 (ETHER_EXEMPLARS=record|1)
+            out.append(f"  exemplars[{_fmt(ex.get('mode'))}]: library {_fmt(ex.get('library'))}  shown {_fmt(ex.get('shown'))}  "
+                       f"kept/attempt shown {_fmt(ex.get('kept_per_attempt_shown'))} vs other "
+                       f"{_fmt(ex.get('kept_per_attempt_other'))}  reuse {_fmt(ex.get('reuse_rate'))}")
     out.append(f"commits: {c['n']} in {_fmt(c.get('window_h'))} h = {c['per_hour']}/h  "
                f"(host_main {c.get('host_main', 0)}, other {c.get('other', 0)})  authors {c.get('by_author', {})}")
     return "\n".join(out)

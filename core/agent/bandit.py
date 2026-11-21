@@ -89,7 +89,15 @@ def arms() -> List[str]:
     raw = os.getenv("ETHER_BANDIT_ARMS", "")
     names = [a.strip() for a in raw.split(",") if a.strip()] if raw else list(REAL_ARMS)
     names = [a for a in names if a in STRATEGY_BEHAVIOUR]
-    return names or list(REAL_ARMS)
+    names = names or list(REAL_ARMS)
+    try:
+        from core.agent import exemplars
+
+        if exemplars.arm_on() and exemplars.ARM not in names:
+            names.append(exemplars.ARM)  # batch 7: ETHER_EXEMPLARS=1
+    except Exception:
+        pass
+    return names
 
 
 # ---------------------------------------------------------------- pure algorithms (shared with the simulator)
@@ -349,6 +357,16 @@ def choose(root: Path, kind: str, bucket: str, goal: Optional[Dict[str, Any]] = 
     data = load(root, kind)
     arm_list = arms()
     trace: Dict[str, Any] = {"algo": name}
+    if "exemplar" in arm_list:
+        try:
+            from core.agent import exemplars
+
+            eligible = exemplars.available(root, goal)
+        except Exception:
+            eligible = False
+        trace["exemplar_eligible"] = eligible  # A/B: compare arms only on attempts where both could run
+        if not eligible:
+            arm_list = [a for a in arm_list if a != "exemplar"]  # no candidate: do not waste the pull
     if factored():
         stats = data["fact"].setdefault(bucket, {})
         arm = factored_select(stats, rng)

@@ -32,6 +32,12 @@ _cache: Dict[Any, Optional[Tuple[str, str]]] = {}
 _tests: Dict[str, Dict[str, Any]] = {}
 _cur: List[Tuple[str, str]] = []
 _seen: set = set()
+# Batch 5: caller -> callee edges (repo caller; callee is a repo function or a test-file stub,
+# marked "~"). A dispatcher (GemRegistry.execute) is then resolved to the handler the failing
+# test actually reached, or to its repo caller when the handler is a test stub.
+MAX_EDGES = 1200
+_edges: set = set()
+_kind_cache: Dict[Any, int] = {}  # 0 = outside the repo, 1 = repo function, 2 = test-file function
 
 
 def _key(code: Any) -> Optional[Tuple[str, str]]:
@@ -53,13 +59,52 @@ def _key(code: Any) -> Optional[Tuple[str, str]]:
     return key
 
 
+def _stub_key(code: Any) -> Optional[Tuple[str, str]]:
+    """("~tests/x.py", qual) for a function defined in a test file under the root, else None."""
+    fn = os.path.realpath(code.co_filename or "")
+    if not fn.startswith(_ROOT + os.sep) or not fn.endswith(".py"):
+        return None
+    rel = fn[len(_ROOT) + 1:].replace(os.sep, "/")
+    if "site-packages" in rel or rel.split("/", 1)[0] in (".venv", "venv"):
+        return None
+    qual = getattr(code, "co_qualname", code.co_name).split(".<locals>", 1)[0]
+    return None if qual.startswith("<") else ("~" + rel, qual)
+
+
+def _kind(code: Any) -> int:
+    hit = _kind_cache.get(code)
+    if hit is None:
+        hit = 1 if _key(code) is not None else (2 if _stub_key(code) is not None else 0)
+        _kind_cache[code] = hit
+    return hit
+
+
+def _parent(frame: Any) -> Optional[Tuple[str, str]]:
+    f = frame.f_back
+    for _ in range(40):
+        if f is None:
+            return None
+        if _kind(f.f_code) == 1:
+            return _key(f.f_code)
+        f = f.f_back
+    return None
+
+
 def _prof(frame: Any, event: str, arg: Any) -> None:
     if event != "call":
         return
-    key = _key(frame.f_code)
-    if key is not None and key not in _seen and len(_cur) < MAX_CALLS:
+    code = frame.f_code
+    kind = _kind(code)
+    if kind == 0:
+        return
+    key = _key(code) if kind == 1 else _stub_key(code)
+    if kind == 1 and key not in _seen and len(_cur) < MAX_CALLS:
         _seen.add(key)
         _cur.append(key)
+    if len(_edges) < MAX_EDGES:
+        parent = _parent(frame)
+        if parent is not None and parent != key:
+            _edges.add((parent, key))
 
 
 try:
@@ -69,12 +114,15 @@ try:
     def pytest_runtest_call(item: Any):  # noqa: D401 - pytest hook
         _cur.clear()
         _seen.clear()
+        _edges.clear()
         sys.setprofile(_prof)
         try:
             yield
         finally:
             sys.setprofile(None)
-            _tests.setdefault(item.nodeid, {})["calls"] = [list(k) for k in _cur]
+            row = _tests.setdefault(item.nodeid, {})
+            row["calls"] = [list(k) for k in _cur]
+            row["edges"] = sorted([list(a), list(b)] for a, b in _edges)
 
     def pytest_runtest_logreport(report: Any) -> None:
         row = _tests.setdefault(report.nodeid, {})
@@ -179,5 +227,169 @@ def rank(spectra: Dict[str, Any], nodeid: str, hint: str = "") -> List[Tuple[flo
         if words and name_tokens:
             score += TOKEN_BONUS * len(name_tokens & words) / len(name_tokens)
         out.append((round(score, 4), order, key[0], key[1]))
+    out.sort(key=lambda r: (-r[0], -r[1]))
+    return out
+
+
+# ---------------------------------------------------------------- batch 5: dispatch + evidence
+
+DISPATCH_FACTOR = 0.2   # a dispatcher only forwards; its own score counts a fifth
+DISPATCH_INHERIT = 0.9  # the handler the failing test reached inherits most of it
+CALLER_INHERIT = 0.5    # handler is a test stub: the repo caller that built/consumed it gets half
+DISPATCH_FANOUT = 10 ** 9  # fan-out-only rule off by default (measured worse: docs/results/batch5)
+WHERE_BONUS = 0.35      # pytest "where X = f()" names the function whose value failed
+LITERAL_BONUS = 0.3     # a string literal from the error is produced by this function
+FRAME_BONUS = 0.25      # a traceback frame points inside this function
+_WHERE = None
+_LIT = None
+
+
+def _re():
+    global _WHERE, _LIT
+    if _WHERE is None:
+        import re
+
+        _WHERE = re.compile(r"where .*?=\s*(?:<(?:function|bound method) ([\w.]+)[^>]*>|(?:<[^>]*>\.)?([A-Za-z_][\w.]*))\(")
+        _LIT = re.compile(r"""(?:'([^'\n]{6,120})'|"([^"\n]{6,120})")""")
+    return _WHERE, _LIT
+
+
+def dispatchers(spectra: Dict[str, Any]) -> Dict[Tuple[str, str], set]:
+    """{caller: callees} for callers that look like dispatchers across the whole run.
+
+    A dispatcher forwards to a handler picked at run time: the registry's `execute`
+    calling `<gem>.execute`. Signal: a method with >= 2 distinct callee *methods* of its
+    own name (polymorphic dispatch; dunders excluded). DISPATCH_FANOUT (off by default)
+    would also count plain fan-out; on the live suite that marked 99 orchestrators."""
+    fan: Dict[Tuple[str, str], set] = {}
+    for t in ((spectra or {}).get("tests") or {}).values():
+        for a, b in t.get("edges") or []:
+            fan.setdefault(tuple(a), set()).add(tuple(b))
+    out = {}
+    for caller, callees in fan.items():
+        leaf = caller[1].split(".")[-1]
+        if "." not in caller[1] or leaf.startswith("__"):
+            same: set = set()  # plain functions / constructors chaining super().__init__ are not dispatch
+        else:
+            same = {c for c in callees if "." in c[1] and c[1].split(".")[-1] == leaf}
+        if len(same) >= 2 or len(callees) >= DISPATCH_FANOUT:
+            out[caller] = callees
+    return out
+
+
+def evidence(text: str) -> Dict[str, Any]:
+    """Names and literals the failure text points at (never sent to the model; ranking only)."""
+    where_re, lit_re = _re()
+    names = set()
+    for m in where_re.finditer(text or ""):
+        names.add((m.group(1) or m.group(2)).split(".")[-1])
+    lits = set()
+    for line in (text or "").splitlines():
+        s = line.strip()
+        if s.startswith(("E ", "AssertionError", "assert ")) or "Error:" in s:
+            for m in lit_re.finditer(s):
+                lit = (m.group(1) or m.group(2) or "").strip()
+                if len(lit) >= 6 and not lit.startswith(("/", "tests/")) and " object at 0x" not in lit:
+                    lits.add(lit)
+    frames = []
+    import re
+
+    for fm in re.finditer(r"^([A-Za-z0-9_./\\-]+\.py):(\d+):", text or "", re.M):
+        frames.append((fm.group(1).replace("\\", "/"), int(fm.group(2))))
+    for fm in re.finditer(r'File "([^"]+\.py)", line (\d+)', text or ""):
+        frames.append((fm.group(1).replace("\\", "/"), int(fm.group(2))))
+    return {"names": names, "literals": sorted(lits)[:12], "frames": frames}
+
+
+_SPANS: Dict[str, Dict[str, Tuple[int, int, str]]] = {}
+
+
+def _spans(root: str, rel: str) -> Dict[str, Tuple[int, int, str]]:
+    """qualname -> (start, end, source) for functions and methods (cached per file)."""
+    key = os.path.join(root, rel)
+    hit = _SPANS.get(key)
+    if hit is not None:
+        return hit
+    import ast
+
+    out: Dict[str, Tuple[int, int, str]] = {}
+    try:
+        text = open(key, encoding="utf-8", errors="ignore").read()
+        tree = ast.parse(text)
+        lines = text.splitlines()
+
+        def walk(body: Any, prefix: str) -> None:
+            for node in body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    q = prefix + node.name
+                    out[q] = (node.lineno, node.end_lineno or node.lineno,
+                              "\n".join(lines[node.lineno - 1: node.end_lineno]))
+                elif isinstance(node, ast.ClassDef):
+                    walk(node.body, prefix + node.name + ".")
+
+        walk(tree.body, "")
+    except Exception:
+        pass
+    _SPANS[key] = out
+    return out
+
+
+def _literal_hit(src: str, lit: str) -> bool:
+    if lit in src:
+        return True
+    # f-strings / %-format: the constant head of the message ("risk=" in "risk=0.4")
+    head = lit.split("{")[0].split("%")[0]
+    for sep in (": ", "=", " ("):
+        if sep in head:
+            head = head.split(sep)[0] + sep.rstrip()
+            break
+    return len(head) >= 8 and head in src
+
+
+def rank5(spectra: Dict[str, Any], nodeid: str, hint: str = "", root: Optional[str] = None,
+          text: str = "") -> List[Tuple[float, int, str, str]]:
+    """Batch-4 hub rank, then (1) dispatchers resolved to the handler the failing test
+    reached (or to the repo caller when that handler is a test stub) and (2) evidence from
+    the failure text: pytest `where X = f()` names, string literals the function produces,
+    traceback frames inside it. Same tuple shape. Diagnosis only; the prompt is unchanged."""
+    base = rank(spectra, nodeid, hint)
+    if not base:
+        return base
+    tests = (spectra or {}).get("tests") or {}
+    row = tests.get(nodeid) or {}
+    score = {(r[2], r[3]): r[0] for r in base}
+    order = {(r[2], r[3]): r[1] for r in base}
+    edges = [(tuple(a), tuple(b)) for a, b in row.get("edges") or []]
+    disp = dispatchers(spectra) if edges else {}
+    for d in [k for k in score if k in disp]:
+        raw = score[d]
+        score[d] = raw * DISPATCH_FACTOR
+        leaf = d[1].split(".")[-1]
+        reached = [b for a, b in edges if a == d]
+        same = [b for b in reached if b[1].split(".")[-1] == leaf] or reached
+        handlers = [b for b in same if not b[0].startswith("~") and b in score]
+        if handlers:
+            for h in handlers:
+                score[h] = max(score[h], raw * DISPATCH_INHERIT)
+        else:
+            for a, b in edges:
+                if b == d and a in score and a not in disp:
+                    score[a] = max(score[a], raw * CALLER_INHERIT)
+    ev = evidence(text or "")
+    if root and (ev["names"] or ev["literals"] or ev["frames"]):
+        for key in list(score):
+            rel, qual = key
+            leaf = qual.split(".")[-1]
+            bonus = 0.0
+            if leaf in ev["names"]:
+                bonus += WHERE_BONUS
+            span = _spans(root, rel).get(qual)
+            if span is not None:
+                if ev["literals"] and any(_literal_hit(span[2], lit) for lit in ev["literals"]):
+                    bonus += LITERAL_BONUS
+                if any((f == rel or f.endswith("/" + rel)) and span[0] <= ln <= span[1] for f, ln in ev["frames"]):
+                    bonus += FRAME_BONUS
+            score[key] += bonus
+    out = [(round(s, 4), order[k], k[0], k[1]) for k, s in score.items()]
     out.sort(key=lambda r: (-r[0], -r[1]))
     return out

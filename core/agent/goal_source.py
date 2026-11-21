@@ -92,6 +92,16 @@ def test_env(root: Path, state: Optional[Path] = None) -> Dict[str, str]:
     return env
 
 
+def mod_rel(root: Path, dotted: str) -> str:
+    """Dotted module -> repo path: a/b.py, or a/b/__init__.py for a package (batch 5:
+    `from core.loop import loop_runner_enabled` was untargetable because core/loop.py
+    does not exist; 2 failing tests were dropped as no_repo_target)."""
+    base = dotted.replace(".", "/")
+    if not (Path(root) / (base + ".py")).is_file() and (Path(root) / base / "__init__.py").is_file():
+        return base + "/__init__.py"
+    return base + ".py"
+
+
 def nodeid_of(root: Path, classname: str, name: str) -> str:
     parts = (classname or "").split(".")
     for cut in range(len(parts), 0, -1):
@@ -194,8 +204,13 @@ def goal_from_failure(root: Path, nodeid: str, text: str,
 
 DROP_REASONS = (
     "collection_error", "infra", "protected_target", "source_text_assert", "no_repo_target", "no_symbol",
-    "too_large",
+    "too_large", "too_many_sites",
 )
+
+
+def _multi_on() -> bool:
+    """Batch 5: ETHER_MULTI_EDIT=1 adds multi-target / new-file goals (core/agent/multi_edit.py)."""
+    return os.getenv("ETHER_MULTI_EDIT", "0") == "1"
 
 # Batch 4: the 4B replies with the whole function, capped by num_predict. Batch 3 used 240
 # tokens for every goal, so 13 of the 50 seed targets could never be written out in full.
@@ -226,6 +241,10 @@ def reply_tokens(root: Path, goal: Dict[str, Any]) -> int:
 
 
 def fits_reply(root: Path, goal: Dict[str, Any]) -> bool:
+    if goal.get("targets"):
+        from core.agent import multi_edit
+
+        return multi_edit.fits(root, goal["targets"])
     if goal.get("missing") or goal.get("kind") == "lint":
         return True
     cur = _func_source(Path(root) / goal["file"], goal["symbol"])
@@ -262,14 +281,21 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
     if nodeid.startswith("::"):
         return None, "collection_error"  # no test to gate on
     if any(m in (text or "") for m in INFRA):
-        return None, "infra"
+        repo_module = False
+        if _multi_on():  # batch 5: a missing *repo* module is a new-file goal, not infra
+            from core.agent import multi_edit
+
+            repo_module = multi_edit.new_module_target(root, text) is not None and \
+                not any(m in (text or "") for m in INFRA if not m.startswith("ModuleNotFoundError"))
+        if not repo_module:
+            return None, "infra"
     test_file = nodeid.split("::", 1)[0]
     saw_protected = False
     for m in (IMPORT_NAME.search(text or ""), MODULE_ATTR.search(text or "")):
         if not m:
             continue
         name, mod = (m.group(1), m.group(2)) if m.re is IMPORT_NAME else (m.group(2), m.group(1))
-        rel = mod.replace(".", "/") + ".py"
+        rel = mod_rel(root, mod)
         if (root / rel).is_file():
             if protected(rel):
                 saw_protected = True
@@ -289,16 +315,46 @@ def classify_failure(root: Path, nodeid: str, text: str, spectra: Optional[Dict[
             if goal is not None:
                 if via == "frame_assign":
                     goal["symbol_kind"] = "assign"
+                elif _multi_on():
+                    from core.agent import multi_edit
+
+                    alts = multi_edit.frame_alts(root, text, (rel, symbol))
+                    if alts:
+                        goal["alt_targets"] = alts
                 return goal, "goal"
     target, symbol_hint = _target_from_test(root, nodeid)
     if target and symbol_hint:
-        return _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import"), "goal"
+        goal = _goal(root, nodeid, test_file, target, symbol_hint, False, text, via="test_import")
+        if goal is not None and _multi_on():
+            from core.agent import multi_edit
+
+            alts = multi_edit.test_alts(root, nodeid, (target, symbol_hint))
+            if alts:
+                goal["alt_targets"] = alts
+        return goal, "goal"
     suspect = None if _test_imports_only_protected(root, nodeid) else _sbfl_target(root, nodeid, spectra, text)
     if suspect:
         goal = _goal(root, nodeid, test_file, suspect[0], suspect[1], False, text, via="sbfl")
         if goal is not None:
             goal["suspicion"] = suspect[2]
+            if _multi_on():
+                from core.agent import multi_edit
+
+                alts = multi_edit.sbfl_alts(root, nodeid, spectra, text, (suspect[0], suspect[1]))
+                if alts:
+                    goal["alt_targets"] = alts
             return goal, "goal"
+    multi_reason = ""
+    if _multi_on():
+        from core.agent import multi_edit
+
+        mgoal, multi_reason = multi_edit.classify(root, nodeid, text)
+        if mgoal is not None:
+            if multi_edit.fits(root, mgoal["targets"]):
+                return mgoal, "goal"
+            return None, "too_large"
+        if multi_reason == "too_many_sites":
+            return None, "too_many_sites"
     if saw_protected or _test_imports_only_protected(root, nodeid):
         return None, "protected_target"
     if SOURCE_TEXT.search(_test_source(root, nodeid)):
@@ -312,13 +368,14 @@ SBFL_MIN = 0.3  # below this the suspect is mostly noise (shared helpers)
 
 
 def sbfl_rank() -> str:
-    """Batch 4: "hub" (default) = Ochiai with hub demotion + error-text tokens; "ochiai" = batch 3."""
-    return "ochiai" if os.getenv("ETHER_SBFL_RANK", "hub").strip().lower() == "ochiai" else "hub"
+    """ETHER_SBFL_RANK: "b5" (default, batch 5) = hub + dispatcher resolution + failure-text
+    evidence; "hub" = batch 4 (Ochiai, hub demotion, error-text tokens); "ochiai" = batch 3."""
+    mode = os.getenv("ETHER_SBFL_RANK", "b5").strip().lower()
+    return mode if mode in ("ochiai", "hub") else "b5"
 
 
 def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], text: str = "") -> Optional[tuple]:
     """Most suspicious editable function the failing test entered (Ochiai), or None."""
-    from core.agent.fault_loc import ochiai, rank
     from core.agent.goal_quality import protected
 
     if not spectra:
@@ -327,10 +384,9 @@ def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], tex
         test_src = (Path(root) / nodeid.split("::", 1)[0]).read_text(encoding="utf-8", errors="ignore")
     except Exception:
         test_src = ""
-    imported = {m.replace(".", "/") + ".py" for m in re.findall(r"(?:from|import) ([A-Za-z_][\w.]*)", test_src)}
+    imported = {mod_rel(root, m) for m in re.findall(r"(?:from|import) ([A-Za-z_][\w.]*)", test_src)}
     best = None
-    ranked_calls = (rank(spectra, nodeid, hint=(text or "") + "\n" + _test_source(root, nodeid))
-                    if sbfl_rank() == "hub" else ochiai(spectra, nodeid))
+    ranked_calls = sbfl_ranked(root, nodeid, spectra, text)
     for score, order, rel, qual in ranked_calls:
         if score < SBFL_MIN:
             break
@@ -344,6 +400,19 @@ def _sbfl_target(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], tex
         if best is None or key > best[0]:
             best = (key, rel, qual, score)
     return (best[1], best[2], best[3]) if best else None
+
+
+def sbfl_ranked(root: Path, nodeid: str, spectra: Optional[Dict[str, Any]], text: str = "") -> list:
+    """Ranked suspects under the configured ranker (see sbfl_rank)."""
+    from core.agent.fault_loc import ochiai, rank, rank5
+
+    mode = sbfl_rank()
+    if mode == "ochiai":
+        return ochiai(spectra or {}, nodeid)
+    hint = (text or "") + "\n" + _test_source(root, nodeid)
+    if mode == "hub":
+        return rank(spectra or {}, nodeid, hint=hint)
+    return rank5(spectra or {}, nodeid, hint=hint, root=str(root), text=text or "")
 
 
 def _test_imports_only_protected(root: Path, nodeid: str) -> bool:
@@ -360,7 +429,7 @@ def _test_imports_only_protected(root: Path, nodeid: str) -> bool:
         for mm in re.finditer(r"from ((?:core|scripts|gems|dashboard)[\w.]*) import ([\w, ]+)", module_src):
             if any(n.strip() in names for n in mm.group(2).split(",")):
                 mods.append(mm.group(1))
-    rels = [m.replace(".", "/") + ".py" for m in mods]
+    rels = [mod_rel(root, m) for m in mods]
     rels = [r for r in rels if (Path(root) / r).is_file()]
     return bool(rels) and all(protected(r) for r in rels)
 
@@ -396,7 +465,7 @@ def _target_from_test(root: Path, nodeid: str) -> tuple:
         return "", ""
     for text in (src, module_src):
         for m in re.finditer(r"from ([A-Za-z_][\w.]*) import (?:\(([\w, \n]+)\)|([\w, ]+))", text):
-            rel = m.group(1).replace(".", "/") + ".py"
+            rel = mod_rel(root, m.group(1))
             listed = (m.group(2) or m.group(3) or "").replace("\n", ",")
             names = [n.strip().split(" as ")[0].strip() for n in listed.split(",") if n.strip()]
             if (Path(root) / rel).is_file() and not protected(rel):
@@ -410,7 +479,7 @@ def _target_from_test(root: Path, nodeid: str) -> tuple:
                     if hit:
                         return sub, hit
         for m in re.finditer(r"^\s*import ([A-Za-z_][\w.]*)(?: as (\w+))?", text, re.M):
-            rel = m.group(1).replace(".", "/") + ".py"
+            rel = mod_rel(root, m.group(1))
             alias = m.group(2) or m.group(1)
             if (Path(root) / rel).is_file() and not protected(rel):
                 hit = _called_attr(root, rel, alias, src)
@@ -641,9 +710,12 @@ def next_real(root: Path, skip: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
     for g in ranked(root):
         if g["id"] in skip or int(tries.get(g["id"], 0)) >= MAX_TRIES:
             continue
+        if g.get("targets") and not _multi_on():
+            continue  # multi-place goal from a run with ETHER_MULTI_EDIT=1; skipped while it is off
         if g.get("via") == "sbfl" and int(g.get("_target_tries") or 0) >= MAX_TARGET_TRIES:
             continue
-        if not (Path(root) / g["file"]).is_file():
+        if not (Path(root) / g["file"]).is_file() and not any(
+                t.get("kind") == "new_file" for t in g.get("targets") or []):
             continue
         g.pop("_rank", None)
         g.pop("_target_tries", None)

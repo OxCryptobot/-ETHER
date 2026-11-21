@@ -409,6 +409,19 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
     trace: Dict[str, Any] = pick.trace if pick is not None else {}
     root = Path(root)
     base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"]}
+    if goal["kind"] == "fix_test" and (goal.get("targets") or goal.get("alt_targets")):
+        from core.agent import multi_edit
+
+        if multi_edit.enabled():
+            tries_so_far = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
+            places = multi_edit.trim_to_fit(root, goal, multi_edit.targets_of(goal, tries_so_far))
+            if places:
+                return _attempt_multi(root, ask, goal, pick, seen, places)
+            if goal.get("targets"):
+                gs.mark(root, goal["id"], kept=False)
+                return {**base, "ok": False, "honest": True, "note": "rejected: places exceed the reply cap"}
+        elif goal.get("targets"):
+            return {**base, "ok": False, "honest": True, "note": "multi goal: ETHER_MULTI_EDIT off"}
     suite = gs.guard_suite(root, goal)
     before = gs.run_pytest(root, suite)
     baseline = before["status"]
@@ -490,6 +503,95 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
         last = {**base, "ok": False, "honest": False, "note": note,
                 "regressions": verdict["n_regressions"], "siblings_failing": len(verdict.get("siblings_failing") or [])}
+    gs.mark(root, goal["id"], kept=False)
+    remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
+    return last
+
+
+def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pick: Any,
+                   seen: Dict[str, str], places: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Batch 5 (ETHER_MULTI_EDIT=1): 2-3 places in one FileTx; target + siblings + regression gate."""
+    from core.agent import goal_source as gs
+    from core.agent import multi_edit
+    from core.agent.goal_quality import check
+
+    trace: Dict[str, Any] = pick.trace if pick is not None else {}
+    base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"], "multi": len(places)}
+    suite = multi_edit.guard_suite(root, goal, places)
+    baseline = gs.run_pytest(root, suite)["status"]
+    if baseline.get(goal["nodeid"]) == "pass":
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
+    try:
+        from core.agent.bandit import factored_behaviour, tries_for
+        from core.learning import arm_behaviour
+
+        behaviour = (factored_behaviour(pick.arm) or arm_behaviour(pick.arm)) if pick is not None else None
+        tries = tries_for(pick.arm) if pick is not None else 1
+    except Exception:
+        behaviour, tries = None, 1
+    feedback = ""
+    last: Dict[str, Any] = {**base, "ok": False, "honest": False, "note": "no edit"}
+    trace["spoiler"] = False
+    trace["multi"] = len(places)
+    for i in range(tries):
+        prompt, kept_places = multi_edit.build_prompt(root, goal, places, behaviour, feedback=feedback)
+        if not prompt:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: places do not fit the context"}
+        current = "\n".join((root / t["file"]).read_text(encoding="utf-8", errors="ignore")
+                            for t in kept_places if (root / t["file"]).is_file())
+        q = check(goal, prompt, current)
+        trace["spoiler"] = trace["spoiler"] or "spoiler" in q["reasons"]
+        trace["prompt_chars"] = len(prompt)
+        if not q["ok"]:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: " + ",".join(q["reasons"])}
+        try:
+            from core.agent.react import react
+
+            n_reply = min(gs.reply_max(), max(gs.REPLY_MIN, multi_edit.reply_tokens(root, kept_places)))
+            trace["reply_cap"] = n_reply
+            row = react(ask, root, prompt, turns=2, n=n_reply)
+            text = row.get("text") or ""
+            trace["tools"] = ["search"] if row.get("used") else []
+        except Exception as exc:
+            if seen:
+                return _infra(goal, seen)
+            return {**base, "ok": False, "honest": False, "error": str(exc)[:200]}
+        if seen and not text.strip():
+            return _infra(goal, seen)
+        trace["reply"] = text[-200:]
+        edits, why = multi_edit.extract(text, kept_places)
+        if not edits:
+            feedback = why
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + why}
+            continue
+        applied = multi_edit.apply(root, edits)
+        if not applied.get("ok"):
+            feedback = str(applied.get("reason"))
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
+            continue
+        tx = applied["tx"]
+        verdict = gs.gate(root, goal, baseline, suite)
+        if verdict["ok"]:
+            tx.commit()
+            gs.mark(root, goal["id"], kept=True)
+            for sib in [g for g in gs.load_index(root)["goals"].values()
+                        if g.get("nodeid") in set(gs.siblings(root, goal))]:
+                gs.mark(root, sib["id"], kept=True)
+            for rel in applied["files"]:
+                remember(root, goal["id"], f"tests passed, 0 regressions, {len(applied['files'])} files",
+                         kept=True, file=rel)
+            return {**base, "ok": True, "honest": True, "tests_ok": True, "regressions": 0,
+                    "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
+                    "files": applied["files"], "suite_n": verdict["suite_n"], "checked": True}
+        tx.revert()
+        feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
+        note = "regression" if verdict["n_regressions"] else (
+            "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        last = {**base, "ok": False, "honest": False, "note": note, "regressions": verdict["n_regressions"],
+                "reverted": applied["files"]}
     gs.mark(root, goal["id"], kept=False)
     remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
     return last

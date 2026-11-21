@@ -169,10 +169,17 @@ def fits(root: Path, goal: Dict[str, Any], reply_max: int, est_tokens) -> bool:
     return bool(cur) and int(est_tokens(cur) * 1.1) <= reply_max
 
 
-def context_block(root: Path, goal: Dict[str, Any]) -> str:
-    """def line, read-only lines around the window, and the window between markers."""
+def context_block(root: Path, goal: Dict[str, Any], bare: bool = False) -> str:
+    """def line, read-only lines around the window, and the window between markers.
+
+    bare=True (the no_context arm): only the marked window. The window is the edit target, not
+    workspace context, so an ablation arm must never hide it (else no reply can be applied).
+    """
     sp = goal["span"]
     lines = (Path(root) / goal["file"]).read_text(encoding="utf-8").splitlines()
+    if bare:
+        return "\n".join([MARK_START + f" (lines {sp['start']}-{sp['end']})"] +
+                         lines[sp["start"] - 1: sp["end"]] + [MARK_END])
     head = lines[sp["func_start"] - 1]
     before = lines[max(sp["func_start"], sp["start"] - 1 - CONTEXT_LINES): sp["start"] - 1]
     after = lines[sp["end"]: min(sp["func_end"], sp["end"] + CONTEXT_LINES)]

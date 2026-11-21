@@ -964,7 +964,7 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
     if goal.get("span"):
         from core.agent import span_edit
 
-        current = span_edit.context_block(root, goal)
+        current = span_edit.context_block(root, goal, bare=not use_ctx)
         tail = span_edit.prompt_tail(goal)
     elif goal.get("symbol_kind") == "assign":
         tail = (f"Reply with the complete new module-level assignment `{name} = ...` (no markdown). "
@@ -984,9 +984,9 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
         parts.append(f"Your last try failed:\n{feedback[-400:]}\n")
     fixed = sum(len(p) for p in parts) + len(tail) + len(addon) + 40
     room = max(200, budget - fixed)
-    if use_ctx:
+    if use_ctx or goal.get("span"):
         body = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
-        if getattr(behaviour, "force_repo_map", False):
+        if use_ctx and getattr(behaviour, "force_repo_map", False):
             sig = "\n".join(l for l in body.splitlines() if l.startswith(("def ", "class ", "import ", "from ")))
             ctx = (sig + "\n\n" + current)[-room:] if current else slice_to_budget(sig, query=name, cap=room)
         elif goal.get("span"):

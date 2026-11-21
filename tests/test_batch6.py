@@ -98,7 +98,7 @@ def test_span_edit_kept_only_when_tests_pass(tmp_path, monkeypatch):
     data["tries"] = {}
     gs.save_index(root, data)
     row = sota.run(root, _add_host_first)
-    assert row["kept_n"] == 1
+    assert row["kept_n"] == 1, __import__("json").dumps(row, default=str)[:3000]
     from importlib import util
 
     spec = util.spec_from_file_location("big_after", root / "pkg/big.py")
@@ -358,3 +358,21 @@ def test_gate_never_tests_stale_bytecode_after_a_same_size_rewrite(tmp_path):
     os.utime(mod, (st.st_atime, st.st_mtime))  # same mtime: the worst case CPython cannot see
     second = gs.run_pytest(root, ["tests/test_d.py"])["status"]
     assert first == {"tests/test_d.py::test_d": "fail"} and second == {"tests/test_d.py::test_d": "pass"}
+
+
+def test_span_window_survives_the_no_context_arm(tmp_path, monkeypatch):
+    """Found in batch 6: the no_context ablation arm hid the span window, so a span goal could never be
+    answered under that arm (note 'no function'; the span-kept test flaked ~1 in 3 on the arm draw)."""
+    from types import SimpleNamespace
+
+    from core.agent import goal_source as gs
+    from core.agent import span_edit
+
+    root = _span_repo(tmp_path, monkeypatch)
+    goal = gs.next_real(root)
+    bare = gs.build_prompt(root, goal, SimpleNamespace(use_workspace_context=False, prompt_addon=""))
+    full = gs.build_prompt(root, goal, SimpleNamespace(use_workspace_context=True, prompt_addon=""))
+    window = span_edit.span_text(root, goal)
+    for prompt in (bare, full):
+        assert span_edit.MARK_START in prompt and span_edit.MARK_END in prompt and window in prompt
+    assert "def report" not in bare and "def report" in full  # no_context still drops the surroundings

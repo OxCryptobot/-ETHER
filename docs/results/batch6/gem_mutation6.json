@@ -1,0 +1,2253 @@
+{
+ "source": "docs/results/batch6/gem_mutation6.py",
+ "ts": "2026-11-21T13:12:01-0500",
+ "contract_tests": 67,
+ "secs": 927.0,
+ "all": {
+  "mutants": 63,
+  "killed_before": 8,
+  "kill_rate_before": 0.127,
+  "killed_after": 43,
+  "kill_rate_after": 0.683,
+  "hub_top1": 0.418,
+  "hub_top3": 0.719,
+  "b5_top1": 0.671,
+  "b5_top3": 0.904,
+  "loc_tests": 146,
+  "host_target_ok": 0.562
+ },
+ "d_set": {
+  "mutants": 24,
+  "killed_before": 6,
+  "kill_rate_before": 0.25,
+  "killed_after": 16,
+  "kill_rate_after": 0.667,
+  "hub_top1": 0.379,
+  "hub_top3": 0.727,
+  "b5_top1": 0.621,
+  "b5_top3": 0.924,
+  "loc_tests": 66,
+  "host_target_ok": 0.394
+ },
+ "per_handler": {
+  "ClearQuartz.execute": {
+   "mutants": 7,
+   "killed_before": 4,
+   "kill_rate_before": 0.571,
+   "killed_after": 4,
+   "kill_rate_after": 0.571,
+   "hub_top1": 0.0,
+   "hub_top3": 0.0,
+   "b5_top1": 0.3,
+   "b5_top3": 0.9,
+   "loc_tests": 10,
+   "host_target_ok": 0.3
+  },
+  "RoseQuartz.execute": {
+   "mutants": 13,
+   "killed_before": 0,
+   "kill_rate_before": 0.0,
+   "killed_after": 5,
+   "kill_rate_after": 0.385,
+   "hub_top1": 0.0,
+   "hub_top3": 0.0,
+   "b5_top1": 0.0,
+   "b5_top3": 0.0,
+   "loc_tests": 5,
+   "host_target_ok": 0.0
+  },
+  "Selenite.execute": {
+   "mutants": 5,
+   "killed_before": 1,
+   "kill_rate_before": 0.2,
+   "killed_after": 1,
+   "kill_rate_after": 0.2,
+   "hub_top1": 0.0,
+   "hub_top3": 1.0,
+   "b5_top1": 0.5,
+   "b5_top3": 1.0,
+   "loc_tests": 14,
+   "host_target_ok": 0.5
+  },
+  "BlackTourmaline.execute": {
+   "mutants": 1,
+   "killed_before": 0,
+   "kill_rate_before": 0.0,
+   "killed_after": 0,
+   "kill_rate_after": 0.0,
+   "hub_top1": null,
+   "hub_top3": null,
+   "b5_top1": null,
+   "b5_top3": null,
+   "loc_tests": 0,
+   "host_target_ok": null
+  },
+  "Labradorite.execute": {
+   "mutants": 19,
+   "killed_before": 0,
+   "kill_rate_before": 0.0,
+   "killed_after": 17,
+   "kill_rate_after": 0.895,
+   "hub_top1": 0.62,
+   "hub_top3": 0.62,
+   "b5_top1": 0.92,
+   "b5_top3": 0.92,
+   "loc_tests": 50,
+   "host_target_ok": 0.92
+  },
+  "Amethyst.execute": {
+   "mutants": 3,
+   "killed_before": 0,
+   "kill_rate_before": 0.0,
+   "killed_after": 3,
+   "kill_rate_after": 1.0,
+   "hub_top1": 0.556,
+   "hub_top3": 0.889,
+   "b5_top1": 0.667,
+   "b5_top3": 0.889,
+   "loc_tests": 9,
+   "host_target_ok": 0.444
+  },
+  "Grandidierite.execute": {
+   "mutants": 9,
+   "killed_before": 1,
+   "kill_rate_before": 0.111,
+   "killed_after": 7,
+   "kill_rate_after": 0.778,
+   "hub_top1": 0.7,
+   "hub_top3": 0.967,
+   "b5_top1": 0.733,
+   "b5_top3": 1.0,
+   "loc_tests": 30,
+   "host_target_ok": 0.633
+  },
+  "Citrine.execute": {
+   "mutants": 6,
+   "killed_before": 2,
+   "kill_rate_before": 0.333,
+   "killed_after": 6,
+   "kill_rate_after": 1.0,
+   "hub_top1": 0.143,
+   "hub_top3": 0.821,
+   "b5_top1": 0.5,
+   "b5_top3": 0.893,
+   "loc_tests": 28,
+   "host_target_ok": 0.107
+  }
+ },
+ "selected_before": {
+  "ClearQuartz.execute": 100,
+  "RoseQuartz.execute": 0,
+  "Selenite.execute": 12,
+  "BlackTourmaline.execute": 25,
+  "Labradorite.execute": 16,
+  "Amethyst.execute": 11,
+  "Grandidierite.execute": 8,
+  "Citrine.execute": 14
+ },
+ "rows": [
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 0,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 100,
+    "newly": 1
+   },
+   "after": {
+    "killed": true,
+    "selected": 167,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 100,
+    "newly": 2
+   },
+   "after": {
+    "killed": true,
+    "selected": 167,
+    "newly": 3
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 2,
+   "op": "int_plus_one",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 100,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 167,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 100,
+    "newly": 3
+   },
+   "after": {
+    "killed": true,
+    "selected": 167,
+    "newly": 4
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 4,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 100,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 167,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 5,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": true,
+    "selected": 100,
+    "newly": 1
+   },
+   "after": {
+    "killed": true,
+    "selected": 167,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz._run",
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/clear_quartz/sandbox.py::ClearQuartz.execute",
+   "k": 6,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 100,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 167,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 0,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 4,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 67,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": 6,
+     "b5": 6,
+     "host_goal": "sbfl",
+     "host_target": "gems/rose_quartz/router.py::RoseQuartz._burst",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 5,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 6,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 67,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": 6,
+     "b5": 6,
+     "host_goal": "sbfl",
+     "host_target": "gems/rose_quartz/router.py::RoseQuartz._burst",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 7,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 8,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 67,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": 6,
+     "b5": 6,
+     "host_goal": "sbfl",
+     "host_target": "gems/rose_quartz/router.py::RoseQuartz._burst",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 9,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 67,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": 6,
+     "b5": 6,
+     "host_goal": "sbfl",
+     "host_target": "gems/rose_quartz/router.py::RoseQuartz._burst",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 10,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 67,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": 6,
+     "b5": 6,
+     "host_goal": "sbfl",
+     "host_target": "gems/rose_quartz/router.py::RoseQuartz._burst",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 11,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/rose_quartz/router.py::RoseQuartz.execute",
+   "k": 12,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 67,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/selenite/planner.py::Selenite.execute",
+   "k": 0,
+   "op": "int_plus_one",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 12,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 79,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/selenite/planner.py::Selenite.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 12,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 79,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/selenite/planner.py::Selenite.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 12,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 79,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/selenite/planner.py::Selenite.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 12,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 79,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/selenite/planner.py::Selenite.execute",
+   "k": 4,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": true,
+    "selected": 12,
+    "newly": 4
+   },
+   "after": {
+    "killed": true,
+    "selected": 79,
+    "newly": 14
+   },
+   "loc": [
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_daemon.py::publish_host",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite._detect_tool_intent",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite._extract_lessons",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "test_import",
+     "host_target": "core/loop/fix_dag.py::fix_plan",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite._extract_lessons",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite._detect_tool_intent",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/selenite/planner.py::Selenite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/black_tourmaline/security.py::BlackTourmaline.execute",
+   "k": 0,
+   "op": "int_plus_one",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 25,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 92,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 0,
+   "op": "int_plus_one",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "no_repo_target",
+     "host_target": null,
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 1,
+   "op": "int_plus_one",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 6
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 4,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 6
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 5,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "no_repo_target",
+     "host_target": null,
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 6,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 7,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 8,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 9,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 7
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 10,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 11,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 12,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 5
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 13,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 7
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 14,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 15,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "no_repo_target",
+     "host_target": null,
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 16,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 83,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 17,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 83,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/labradorite/profiler.py::Labradorite.execute",
+   "k": 18,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 16,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 83,
+    "newly": 3
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "no_repo_target",
+     "host_target": null,
+     "host_target_ok": false
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/labradorite/profiler.py::Labradorite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/amethyst/evolution.py::Amethyst.execute",
+   "k": 0,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 11,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 78,
+    "newly": 5
+   },
+   "loc": [
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "core/learning.py::learning_enabled",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "core/learning.py::learning_enabled",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "core/learning.py::learning_enabled",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/amethyst/evolution.py::Amethyst.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 11,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 78,
+    "newly": 3
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.__init__",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/amethyst/evolution.py::Amethyst.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 11,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 78,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "sbfl",
+     "host_target": "gems/amethyst/evolution.py::Amethyst.__init__",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 0,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 75,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": false,
+    "selected": 75,
+    "newly": 0
+   }
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 8,
+    "newly": 3
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 9
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_daemon.py::publish_host",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 5
+   },
+   "loc": [
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/registry.py::resolve_tool",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/registry.py::resolve_tool",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/registry.py::resolve_tool",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/registry.py::resolve_tool",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 4,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 1
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 5,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 4
+   },
+   "loc": [
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::_sanitize_name",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::_sanitize_name",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::_sanitize_name",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::_sanitize_name",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 6,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 4
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 7,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 3
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/grandidierite/extension.py::Grandidierite.execute",
+   "k": 8,
+   "op": "int_plus_one",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 8,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 75,
+    "newly": 4
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/grandidierite/extension.py::Grandidierite.execute",
+     "host_target_ok": true
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 0,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 14,
+    "newly": 4
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 6
+   },
+   "loc": [
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._connect",
+     "host_target_ok": false
+    },
+    {
+     "hub": 4,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_daemon.py::publish_host",
+     "host_target_ok": false
+    },
+    {
+     "hub": 4,
+     "b5": 5,
+     "host_goal": "sbfl",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 4,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.__init__",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 1,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": true,
+    "selected": 14,
+    "newly": 4
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 6
+   },
+   "loc": [
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._connect",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_daemon.py::publish_host",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 4,
+     "host_goal": "sbfl",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 1,
+     "host_goal": "test_import",
+     "host_target": "scripts/ether_evolve.py::cycle",
+     "host_target_ok": false
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": 1,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.__init__",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 2,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 14,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 6
+   },
+   "loc": [
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 3,
+   "op": "flip_compare",
+   "d_set": true,
+   "before": {
+    "killed": false,
+    "selected": 14,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 5
+   },
+   "loc": [
+    {
+     "hub": 3,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._search",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._search",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._search",
+     "host_target_ok": false
+    },
+    {
+     "hub": 2,
+     "b5": 2,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 4,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 14,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 3
+   },
+   "loc": [
+    {
+     "hub": 2,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.client",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._add",
+     "host_target_ok": false
+    },
+    {
+     "hub": 3,
+     "b5": 3,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine._add",
+     "host_target_ok": false
+    }
+   ]
+  },
+  {
+   "target": "gems/citrine/memory.py::Citrine.execute",
+   "k": 5,
+   "op": "flip_compare",
+   "d_set": false,
+   "before": {
+    "killed": false,
+    "selected": 14,
+    "newly": 0
+   },
+   "after": {
+    "killed": true,
+    "selected": 81,
+    "newly": 2
+   },
+   "loc": [
+    {
+     "hub": null,
+     "b5": 1,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.execute",
+     "host_target_ok": true
+    },
+    {
+     "hub": null,
+     "b5": null,
+     "host_goal": "sbfl",
+     "host_target": "gems/citrine/memory.py::Citrine.health",
+     "host_target_ok": false
+    }
+   ]
+  }
+ ]
+}

@@ -8,6 +8,17 @@ Strategies (one bandit arm each, memory/learning/refactor_arms.json):
   nowhere else in the repo (vulture-style, AST + whole-repo name scan).
 - ruff_safe: `ruff check --fix` with a safe rule set on one file (F401 outside
   __init__.py, F541, UP034). Skipped when ruff is not installed.
+- dedent_snippet (batch 6): a .py file that does not parse but parses after
+  textwrap.dedent (method bodies pasted at class indent, e.g. scripts/_obs_snippet.py).
+  These break every AST scan over the tree (tests/test_topology.py D3).
+- state_writer (batch 6): route a direct memory/ state write through the single-writer
+  kernel (core/spine/state_io.py), equivalence-preserving rewrites only:
+  `P.write_text(json.dumps(X, indent=2), encoding="utf-8")` -> `write_json(P, X)` (same
+  JSON, indent 2, plus atomic replace and parent mkdir), and
+  `str(X.relative_to(R)).replace("\\", "/")` -> `X.relative_to(R).as_posix()` (identical
+  string for a Path; the `.replace` read as an atomic-rename write site). core/ and scripts/
+  only: gems may not import core beyond the leaf contracts (D1). The gate also requires
+  the site to be gone from the D3 detector.
 
 Gate for every strategy: the file still compiles, every test in the guard suite
 that passed before still passes (affected tests + smoke; ETHER_GUARD_SUITE=full runs
@@ -26,7 +37,10 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-STRATEGIES = ("remove_filler", "dead_code", "ruff_safe")
+STRATEGIES = ("remove_filler", "dead_code", "ruff_safe", "dedent_snippet", "state_writer")
+STATE_HINTS = ("memory", "MEMORY", "vault", "ledger", "failure_graph", "GRAPH_PATH", "STATE_PATH", "curriculum",
+               "runs", "quiz", "VAULT", "LEDGER", "GRAPH", "STATE")
+STATE_WRITER_DIRS = ("core", "scripts")
 FILLER_NAMES = frozenset({"describe", "add_name", "failing_test", "fits_name", "clamp_name", "ready", "count_defs"})
 COUNT_DEFS_TEMPLATE = "max(1, len([line for line in open(__file__"
 SCAN_DIRS = ("core", "scripts", "gems")
@@ -111,7 +125,11 @@ def candidates(root: Path, strategy: Optional[str] = None) -> List[Dict[str, Any
         try:
             tree = ast.parse(text)
         except SyntaxError:
+            if "dedent_snippet" in want and dedent_fixes(text):
+                out.append(_goal("dedent_snippet", rel, ""))
             continue
+        if "state_writer" in want and rel.split("/")[0] in STATE_WRITER_DIRS and state_sites(tree):
+            out.append(_goal("state_writer", rel, ""))
         for node in tree.body:
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
@@ -147,6 +165,82 @@ def ruff_files(root: Path) -> List[str]:
     return sorted(files)
 
 
+def dedent_fixes(text: str) -> bool:
+    import textwrap
+
+    new = textwrap.dedent(text)
+    if new == text:
+        return False
+    try:
+        ast.parse(new)
+    except SyntaxError:
+        return False
+    return True
+
+
+def _hint(node: ast.AST) -> bool:
+    dump = ast.dump(node)
+    return any(h in dump for h in STATE_HINTS)
+
+
+def _is_json_dumps(node: ast.AST) -> bool:
+    return (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "dumps"
+            and isinstance(node.func.value, ast.Name) and node.func.value.id == "json" and len(node.args) == 1)
+
+
+def state_sites(tree: ast.Module) -> List[Dict[str, Any]]:
+    """Rewritable direct state writes: [{"kind": "write_json"|"as_posix", "node": ...}], innermost first."""
+    out: List[Dict[str, Any]] = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Attribute) and node.value.func.attr == "write_text"):
+            call = node.value
+            target = call.func.value
+            if not isinstance(target, (ast.Name, ast.Attribute)) or not _hint(target):
+                continue
+            if len(call.args) != 1 or not _is_json_dumps(call.args[0]):
+                continue
+            dumps = call.args[0]
+            kw = {k.arg: k.value for k in dumps.keywords}
+            if set(kw) - {"indent"} or ("indent" in kw and not (isinstance(kw["indent"], ast.Constant)
+                                                                and kw["indent"].value == 2)):
+                continue
+            enc = {k.arg: k.value for k in call.keywords}
+            if set(enc) - {"encoding"} or ("encoding" in enc and not (isinstance(enc["encoding"], ast.Constant)
+                                                                      and enc["encoding"].value in ("utf-8", "utf8"))):
+                continue
+            out.append({"kind": "write_json", "node": node, "target": target, "data": dumps.args[0]})
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "replace"
+              and len(node.args) == 2 and all(isinstance(a, ast.Constant) for a in node.args)
+              and [a.value for a in node.args] == ["\\", "/"] and isinstance(node.func.value, ast.Call)
+              and isinstance(node.func.value.func, ast.Name) and node.func.value.func.id == "str"
+              and len(node.func.value.args) == 1 and isinstance(node.func.value.args[0], ast.Call)
+              and isinstance(node.func.value.args[0].func, ast.Attribute)
+              and node.func.value.args[0].func.attr == "relative_to" and _hint(node)
+              and node.lineno == node.end_lineno):
+            out.append({"kind": "as_posix", "node": node, "path": node.func.value.args[0]})
+    return out
+
+
+def rewrite_state_writes(text: str) -> str:
+    tree = ast.parse(text)
+    lines = text.splitlines()
+    sites = sorted(state_sites(tree), key=lambda s: (s["node"].lineno, s["node"].col_offset), reverse=True)
+    for site in sites:
+        node = site["node"]
+        if site["kind"] == "write_json":
+            first = lines[node.lineno - 1]
+            ind = first[: len(first) - len(first.lstrip())]
+            new = [ind + "from core.spine.state_io import write_json",
+                   ind + f"write_json({ast.unparse(site['target'])}, {ast.unparse(site['data'])})"]
+            lines[node.lineno - 1: node.end_lineno] = new
+        else:
+            ln = lines[node.lineno - 1]
+            repl = ast.unparse(site["path"]) + ".as_posix()"
+            lines[node.lineno - 1] = ln[: node.col_offset] + repl + ln[node.end_col_offset:]
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
 def remove_function(text: str, name: str) -> str:
     tree = ast.parse(text)
     lines = text.splitlines()
@@ -166,6 +260,15 @@ def apply(root: Path, goal: Dict[str, Any]) -> Dict[str, Any]:
     original = path.read_text(encoding="utf-8")
     if goal["strategy"] in ("remove_filler", "dead_code"):
         new = remove_function(original, goal["symbol"])
+    elif goal["strategy"] == "dedent_snippet":
+        import textwrap
+
+        new = textwrap.dedent(original)
+    elif goal["strategy"] == "state_writer":
+        try:
+            new = rewrite_state_writes(original)
+        except SyntaxError:
+            return {"ok": False, "reason": "target does not parse"}
     elif goal["strategy"] == "ruff_safe":
         rules = RUFF_SAFE if not goal["file"].endswith("__init__.py") else "F541,UP034"
         subprocess.run([shutil.which("ruff") or "ruff", "check", goal["file"], "--select", rules, "--fix",
@@ -181,6 +284,8 @@ def apply(root: Path, goal: Dict[str, Any]) -> Dict[str, Any]:
     except SyntaxError as exc:
         path.write_text(original, encoding="utf-8")
         return {"ok": False, "reason": f"syntax: {exc.msg}"}
+    if goal["strategy"] == "state_writer" and state_sites(ast.parse(new)):
+        return {"ok": False, "reason": "state write site still present"}
     path.write_text(new, encoding="utf-8")
     return {"ok": True, "original": original, "removed": len(original.splitlines()) - len(new.splitlines())}
 

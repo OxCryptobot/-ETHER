@@ -244,6 +244,8 @@ def test_hub_rank_demotes_a_dispatcher_every_test_enters() -> None:
 def test_sbfl_rank_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     from core.agent import goal_source as gs
 
+    assert gs.sbfl_rank() == "b5"  # batch 5 default: hub + dispatcher resolution + failure-text evidence
+    monkeypatch.setenv("ETHER_SBFL_RANK", "hub")
     assert gs.sbfl_rank() == "hub"
     monkeypatch.setenv("ETHER_SBFL_RANK", "ochiai")
     assert gs.sbfl_rank() == "ochiai"

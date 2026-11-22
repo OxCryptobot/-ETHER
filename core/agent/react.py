@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List
 
-from core.agent.skills import call
+from core.agent.skills import MODEL_SKILLS, call
 
 
 def _key(text: str) -> str:
@@ -12,8 +12,12 @@ def _key(text: str) -> str:
     return text[start : end + 1] if start >= 0 and end > start else text[:80]
 
 
-def react(ask: Callable[..., str], root, prompt: str, turns: int = 3, n: int = 240) -> Dict[str, Any]:
-    """Reason, act, observe. Cap at three turns. Same tool twice stops. n = reply token cap."""
+def react(ask: Callable[..., str], root, prompt: str, turns: int = 3, n: int = 240,
+          allowed: Any = MODEL_SKILLS) -> Dict[str, Any]:
+    """Reason, act, observe. Cap at three turns. Same tool twice stops. n = reply token cap.
+
+    Batch 9: only read-only skills (`allowed`, default MODEL_SKILLS = search, read) run from a
+    reply; a denied call is an observation, never a write."""
     scratch = ""
     seen: List[str] = []
     used = False
@@ -35,7 +39,7 @@ def react(ask: Callable[..., str], root, prompt: str, turns: int = 3, n: int = 2
                 return {"ok": False, "text": text, "used": used, "note": "blocked"}
         except Exception:
             pass
-        tool = call(root, text)
+        tool = call(root, text, allowed=allowed)
         if tool is None:
             return {"ok": True, "text": last, "used": used}
         used = True

@@ -468,6 +468,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
     from core.agent import sampling
 
     tries_before = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
+    from core.agent.tree_guard import TreeGuard
+
+    tree = TreeGuard(root).begin()  # batch 9: every path the attempt touches is checked and restored
     for i in range(tries):
         prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback, exemplar=shown)
         if shown and gs.EXEMPLAR_HEAD in prompt:
@@ -523,6 +526,10 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
             continue
         verdict = gs.gate(root, goal, baseline, suite)
+        touched = tree.violations([goal["file"]])
+        if touched:
+            # batch 9 (W1): a diff outside the goal file (tests/ always) is never kept, whatever the tests say
+            verdict = {**verdict, "ok": False, "outside": touched}
         if verdict["ok"]:
             try:
                 from core.agent import exemplars
@@ -544,11 +551,19 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                     "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
                     "suite_n": verdict["suite_n"], "checked": True}
         revert(root, goal["file"], applied["original"])
+        restored = tree.restore()  # batch 9: ALL touched paths, not only goal['file']
         feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
         note = "regression" if verdict["n_regressions"] else (
             "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        if verdict.get("outside"):
+            note = "rejected: touched " + ", ".join(verdict["outside"][:3])
+            feedback = "edit only the target function in " + goal["file"]
         last = {**base, "ok": False, "honest": False, "note": note,
                 "regressions": verdict["n_regressions"], "siblings_failing": len(verdict.get("siblings_failing") or [])}
+        if restored:
+            last["restored"] = restored
+        if verdict.get("outside"):
+            last["outside"] = verdict["outside"][:10]
     gs.mark(root, goal["id"], kept=False)
     remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
     return last
@@ -564,7 +579,8 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
     trace: Dict[str, Any] = pick.trace if pick is not None else {}
     base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"], "multi": len(places)}
     suite = multi_edit.guard_suite(root, goal, places)
-    baseline = gs.run_pytest(root, suite)["status"]
+    before = gs.run_pytest(root, suite)
+    baseline = before["status"]
     if baseline.get(goal["nodeid"]) == "pass":
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
@@ -580,6 +596,9 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
     last: Dict[str, Any] = {**base, "ok": False, "honest": False, "note": "no edit"}
     trace["spoiler"] = False
     trace["multi"] = len(places)
+    from core.agent.tree_guard import TreeGuard
+
+    tree = TreeGuard(root).begin()  # batch 9
     for i in range(tries):
         prompt, kept_places = multi_edit.build_prompt(root, goal, places, behaviour, feedback=feedback)
         if not prompt:
@@ -620,6 +639,9 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
             continue
         tx = applied["tx"]
         verdict = gs.gate(root, goal, baseline, suite)
+        touched = tree.violations(applied["files"])
+        if touched:
+            verdict = {**verdict, "ok": False, "outside": touched}
         if verdict["ok"]:
             tx.commit()
             gs.mark(root, goal["id"], kept=True)
@@ -633,11 +655,14 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
                     "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
                     "files": applied["files"], "suite_n": verdict["suite_n"], "checked": True}
         tx.revert()
+        restored = tree.restore()
         feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
         note = "regression" if verdict["n_regressions"] else (
             "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        if verdict.get("outside"):
+            note = "rejected: touched " + ", ".join(verdict["outside"][:3])
         last = {**base, "ok": False, "honest": False, "note": note, "regressions": verdict["n_regressions"],
-                "reverted": applied["files"]}
+                "reverted": sorted(set(applied["files"]) | set(restored))}
     gs.mark(root, goal["id"], kept=False)
     remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
     return last

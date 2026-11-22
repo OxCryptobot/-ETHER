@@ -1,13 +1,13 @@
 {
-  "ts": "2026-11-22T22:37:45.583040+00:00",
+  "ts": "2026-11-22T22:38:25.315399+00:00",
   "state": "running",
   "pid": 18116,
   "started": "2026-11-19T22:13:21.489648+00:00",
-  "cycle": 8410,
+  "cycle": 8411,
   "failures": 0,
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json",
   "last": {
-    "cycle": 8410,
+    "cycle": 8411,
     "pull": {
       "ok": false,
       "rc": 128,
@@ -22,7 +22,7 @@
     "pass": {
       "rc": 0,
       "ok": true,
-      "secs": 24.9,
+      "secs": 26.4,
       "err_tail": ""
     }
   },

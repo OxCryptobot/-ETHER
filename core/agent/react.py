@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List
 
-from core.agent.skills import MODEL_SKILLS, call
+from core.agent.skills import MODEL_SKILLS, call, model_skills
+
+_DEFAULT = object()
 
 
 def _key(text: str) -> str:
@@ -13,11 +15,14 @@ def _key(text: str) -> str:
 
 
 def react(ask: Callable[..., str], root, prompt: str, turns: int = 3, n: int = 240,
-          allowed: Any = MODEL_SKILLS) -> Dict[str, Any]:
+          allowed: Any = _DEFAULT) -> Dict[str, Any]:
     """Reason, act, observe. Cap at three turns. Same tool twice stops. n = reply token cap.
 
     Batch 9: only read-only skills (`allowed`, default MODEL_SKILLS = search, read) run from a
-    reply; a denied call is an observation, never a write."""
+    reply; a denied call is an observation, never a write. Batch 10: the default is model_skills(),
+    which adds read-only skills (batch 10: `mcp`, `lsp`) only when their flags are on."""
+    if allowed is _DEFAULT:
+        allowed = model_skills()
     scratch = ""
     seen: List[str] = []
     used = False

@@ -96,12 +96,21 @@ def test_fn(root: Path, code: str) -> Dict[str, Any]:
     return row
 
 
+def mcp_fn(root: Path, server: str = "", call: str = "", arguments: Any = None) -> Dict[str, Any]:
+    """Batch 10: one allowlisted read-only MCP tool (core/agent/mcp_stdio.py). Off unless ETHER_MCP=1.
+    Reply form: {"tool": "mcp", "args": {"server": s, "call": tool_name, "arguments": {...}}}."""
+    from core.agent.mcp_stdio import call_read_only
+
+    return call_read_only(root, server=server, name=call, arguments=arguments)
+
+
 SKILLS: Dict[str, Skill] = {
     "search": search,
     "read": read,
     "remember": remember,
     "edit": edit_fn,
     "test": test_fn,
+    "mcp": mcp_fn,
 }
 
 
@@ -110,6 +119,38 @@ SKILLS: Dict[str, Skill] = {
 # Python with the writer's full environment. Code still reaches them through route(); model text
 # reaches them only when a caller passes `allowed` explicitly. The real-goal path never does.
 MODEL_SKILLS = ("search", "read")
+
+
+def model_skills() -> tuple:
+    """Batch 10: read-only skills a reply may call right now. MODEL_SKILLS plus `mcp` (ETHER_MCP=1).
+    Read-only by construction; `edit` / `test` never appear."""
+    import os
+
+    out = tuple(MODEL_SKILLS)
+    if os.getenv("ETHER_MCP", "0") == "1":
+        out += ("mcp",)
+    return out
+
+
+def tool_hint(root: Path, goal: Dict[str, Any]) -> str:
+    """One prompt line naming the extra read-only tools; '' when the flags are off (prompt unchanged)."""
+    import os
+
+    lines = []
+    if os.getenv("ETHER_MCP", "0") == "1":
+        try:
+            from core.agent.mcp_stdio import catalog
+
+            names = catalog(root, limit=4)
+        except Exception:
+            names = []
+        if names:
+            srv, _, tname = names[0].partition(".")
+            lines.append('{"tool":"mcp","args":{"server":"%s","call":"%s","arguments":{}}} (allowed: %s)'
+                         % (srv, tname, ", ".join(names)))
+    if not lines:
+        return ""
+    return "Optional: before the fix you may reply with ONE read-only tool call, e.g. " + " or ".join(lines) + "\n"
 
 
 def list_skills() -> list:

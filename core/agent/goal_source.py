@@ -1037,6 +1037,12 @@ def build_prompt(root: Path, goal: Dict[str, Any], behaviour: Any = None, feedba
             tail += ("If the fix also needs a module-level constant changed, add the complete new "
                      "`NAME = ...` line(s) before the function.\n")
     addon = (getattr(behaviour, "prompt_addon", "") or "") + "\n" if behaviour is not None else ""
+    try:  # batch 10: extra read-only tools (ETHER_MCP / ETHER_LSP); '' when both are off
+        from core.agent.skills import tool_hint
+
+        addon += tool_hint(root, goal)
+    except Exception:
+        pass
     parts = [head]
     if test:
         parts.append(f"Test:\n{test}\n")

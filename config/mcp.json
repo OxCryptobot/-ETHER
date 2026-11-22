@@ -1,0 +1,10 @@
+{
+  "_doc": "Batch 10 MCP servers for the writer (core/agent/mcp_stdio.py). Model calls need ETHER_MCP=1 and the tool in read_only. memory/mcp.json (local, never published) overrides this file.",
+  "servers": {
+    "ether-status": {
+      "command": ["python", "-m", "scripts.mcp_status_server"],
+      "read_only": ["ether_health", "ether_learning", "ether_sota"],
+      "timeout_s": 10
+    }
+  }
+}

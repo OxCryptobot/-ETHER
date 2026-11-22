@@ -1,32 +1,23 @@
 {
-  "ts": "2026-11-22T22:46:20.680796+00:00",
+  "ts": "2026-11-22T22:46:58.336747+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-22T22:46:36.127363+00:00",
+    "ts": "2026-11-22T22:47:13.871785+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-22T22:46:36.375985+00:00",
+    "ts": "2026-11-22T22:47:14.158832+00:00",
     "os": "nt",
-    "ok": true,
+    "ok": false,
     "ahead": 1,
-    "worktree": {
-      "ok": true,
-      "hard_reset": false,
-      "note": "worktree_push",
-      "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   9768a93ffe..af745db621  HEAD -> main\n"
-    },
-    "push_rc": 0,
-    "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   9768a93ffe..af745db621  HEAD -> main\n"
+    "error": "TimeoutExpired"
   },
   "heal": {
-    "ts": "2026-11-22T22:46:33.279287+00:00",
+    "ts": "2026-11-22T22:47:10.945757+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +58,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-22T22:46:34.341608+00:00",
+    "ts": "2026-11-22T22:47:12.093936+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +91,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-22T22:46:35.991916+00:00",
+    "updated": "2026-11-22T22:47:13.717333+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -134,13 +125,13 @@
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-22T22:46:36.230653+00:00",
+    "ts": "2026-11-22T22:47:13.996107+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 225.4,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-22T22:46:36.127363+00:00",
+    "alive_ts": "2026-11-22T22:47:13.871785+00:00",
     "kept": 92,
     "last_goal": "describe_spine_state_io",
     "last_kept": true,

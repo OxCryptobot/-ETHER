@@ -1,21 +1,509 @@
 {
   "face": "matrix",
-  "hands": "exe",
-  "writer": "exe",
+  "hands": "runtime",
+  "writer": "runtime",
   "mutates": false,
   "ports": {
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-09-30T20:27:25.459719+00:00",
+  "app_alive_ts": "2026-11-22T23:53:10.440767+00:00",
   "ollama": true,
-  "stale": true,
-  "goal": "restore_1650_writer",
-  "generation": 1602,
+  "stale": false,
+  "goal": "index",
+  "generation": 1770,
   "walk_ok": true,
   "gaps": [
-    "app_alive_stale",
     "runner_count_unknown"
   ],
-  "learn": "infra"
+  "learn": "infra",
+  "task": "index",
+  "honest": true,
+  "file": "core/kernel/index.py",
+  "assertion": "assert fits('x' * cap) is True",
+  "growth_done": [
+    "fits",
+    "budget_cap",
+    "slice",
+    "agent_pass",
+    "argv_allow",
+    "attach",
+    "autonomy",
+    "briefing",
+    "cancel",
+    "constitution",
+    "contract",
+    "crash",
+    "critique",
+    "dirty",
+    "edit_tx",
+    "events",
+    "gc",
+    "honest",
+    "hooks",
+    "ignore",
+    "index"
+  ],
+  "growth_queue": [
+    "fits",
+    "budget_cap",
+    "slice",
+    "agent_pass",
+    "argv_allow",
+    "attach",
+    "autonomy",
+    "briefing",
+    "cancel",
+    "constitution",
+    "contract",
+    "crash",
+    "critique",
+    "dirty",
+    "edit_tx",
+    "events",
+    "gc",
+    "honest",
+    "hooks",
+    "ignore",
+    "index"
+  ],
+  "lessons": [
+    "2026-11-05 honest: tests passed",
+    "2026-11-05 hooks: tests passed",
+    "2026-11-05 ignore: tests passed",
+    "2026-11-05 index: tests passed"
+  ],
+  "sota_goal": "lint_F821_product_loop_extract_functions",
+  "sota_kept": false,
+  "sota_goals": [
+    "packed_count",
+    "fits_empty",
+    "file_count",
+    "is_over",
+    "budget_of",
+    "describe_agent_pass",
+    "describe_argv_allow",
+    "describe_attach",
+    "describe_autonomy",
+    "describe_briefing",
+    "same_count",
+    "describe_cancel",
+    "describe_constitution",
+    "describe_context_budget",
+    "describe_contract",
+    "within_budget",
+    "describe_crash",
+    "describe_critique",
+    "describe_dirty",
+    "describe_edit_tx",
+    "describe_events",
+    "describe_gc",
+    "describe_honest",
+    "describe_hooks",
+    "describe_ignore",
+    "describe_index",
+    "describe_job_schema",
+    "describe_lang",
+    "describe_loop_guard",
+    "count_diff",
+    "room_left",
+    "describe_memory_schema",
+    "describe_operator_intent",
+    "describe_ops",
+    "describe_ownership",
+    "describe_parse_fail",
+    "describe_permissions",
+    "describe_plan",
+    "describe_plan_store",
+    "describe_poll",
+    "describe_progress",
+    "describe_provider",
+    "describe_queue",
+    "describe_redact",
+    "describe_sandbox",
+    "describe_score_write",
+    "describe_secret_scan",
+    "describe_select_tests",
+    "describe_self_learn",
+    "describe_self_state",
+    "describe_strangle",
+    "find_fits",
+    "describe_writer",
+    "budget_status",
+    "fix_add",
+    "fix_clamp",
+    "describe_agent",
+    "describe_agent_prompt",
+    "describe_curriculum",
+    "describe_day_learn",
+    "describe_edit_memory",
+    "describe_proactive",
+    "describe_product_loop",
+    "describe_read_gate",
+    "describe_repo_fail",
+    "describe_scale",
+    "describe_self_grow",
+    "describe_subagent",
+    "describe_worktree",
+    "find_add",
+    "next_bug",
+    "describe_loop_agent_loop_path",
+    "describe_loop_agentic",
+    "describe_loop_fail_run",
+    "describe_loop_finalize_legacy",
+    "describe_loop_fix_dag",
+    "describe_loop_flywheel",
+    "describe_loop_gem_step",
+    "describe_loop_gem_topo",
+    "describe_loop_gems_call",
+    "describe_loop_generate_retry",
+    "describe_loop_generate_retry_loop",
+    "describe_loop_git_tools",
+    "describe_loop_goal",
+    "describe_loop_idle_refill",
+    "describe_loop_job_argv",
+    "describe_loop_medic",
+    "describe_loop_plan_drive",
+    "describe_loop_retrieve",
+    "describe_loop_stages",
+    "find_clamp",
+    "describe_spine_state_io"
+  ],
+  "env_kept": 92,
+  "env_disk": 222.7,
+  "env_history": [
+    {
+      "ts": "2026-11-22T22:57:06.664661+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T22:57:43.701539+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T22:58:20.387677+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T22:58:57.337565+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T22:59:34.188903+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:00:16.326085+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:00:52.777143+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:01:29.613845+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:02:06.663445+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:02:43.318820+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:03:20.017106+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:03:56.566958+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:04:34.201904+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:05:10.452891+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:05:47.287588+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:06:23.905517+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:07:00.630543+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:07:37.644581+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:08:14.544780+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:08:51.394073+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:09:28.395458+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:10:05.496814+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:10:42.231531+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:11:18.804237+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:11:55.422880+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:12:32.689258+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:13:10.173906+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:13:48.409207+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:14:25.373773+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:15:01.834434+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:15:38.168795+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:16:15.510996+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:16:52.378758+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:17:29.655041+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:18:07.038397+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:18:43.583058+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:19:22.518823+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:20:00.189944+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:20:36.416855+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:21:05.443336+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:21:43.080342+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:22:19.942557+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:22:56.103193+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:23:31.699928+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:24:09.955824+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:24:47.122896+00:00",
+      "kept": 92,
+      "disk": 225.4
+    },
+    {
+      "ts": "2026-11-22T23:47:36.113529+00:00",
+      "kept": 92,
+      "disk": 221.8
+    },
+    {
+      "ts": "2026-11-22T23:54:38.819583+00:00",
+      "kept": 92,
+      "disk": 222.7
+    }
+  ],
+  "skills": [
+    "search",
+    "read"
+  ],
+  "learning": {
+    "present": true,
+    "schema": 2,
+    "generated": "2026-11-22T23:54:38.791356+00:00",
+    "stale": false,
+    "attempts": 4,
+    "kept": 0,
+    "kept_per_attempt": 0.0,
+    "kept_per_gpu_hour": 0.0,
+    "revert_rate": 0.0,
+    "dup_share": null,
+    "filler_rate": 1.0,
+    "regressions_caught": 0,
+    "arms": {
+      "fix_test": {
+        "default": {
+          "pulls": 1,
+          "pass_rate": 0.0
+        }
+      },
+      "legacy": {
+        "default": {
+          "pulls": 83,
+          "pass_rate": 0.518
+        }
+      },
+      "lint": {
+        "default": {
+          "pulls": 1,
+          "pass_rate": 0.0
+        },
+        "repair_heavy": {
+          "pulls": 1,
+          "pass_rate": 0.0
+        },
+        "repo_map_on": {
+          "pulls": 1,
+          "pass_rate": 0.0
+        }
+      }
+    },
+    "top_arm_share": 0.954,
+    "bandit_algo": {
+      "fix_test": "thompson",
+      "lint": "thompson"
+    },
+    "real_queue": {
+      "done": 0,
+      "dropped": {
+        "infra": 1,
+        "no_repo_target": 3,
+        "protected_target": 4,
+        "source_text_assert": 8,
+        "test_bug": 1,
+        "too_many_sites": 3
+      },
+      "open": 62
+    },
+    "exemplars": {
+      "kept_per_attempt_other": 0.0,
+      "kept_per_attempt_shown": null,
+      "kept_when_shown": 0,
+      "library": 0,
+      "mode": "record",
+      "reuse_rate": null,
+      "shown": 0
+    }
+  },
+  "health": {
+    "health": "ok",
+    "supervisor": "ok",
+    "host": "ok",
+    "worst": null,
+    "pull_failures": 0,
+    "pull_fix": null,
+    "supervisor_ts": "2026-11-22T23:47:37.579146+00:00",
+    "supervisor_stale": false
+  },
+  "capabilities": {
+    "mcp": "built, not on the real path",
+    "lsp": "stub",
+    "swarm": "plan-only (owner decision open)",
+    "web": "absent",
+    "gate_sandbox": true,
+    "planted_goals": false,
+    "live_only_goals": false,
+    "exemplars": "record",
+    "sample_temp": []
+  }
 }

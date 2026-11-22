@@ -1,5 +1,5 @@
 {
-  "day": "2026-11-19",
+  "day": "2026-11-22",
   "goals": [
     "packed_count",
     "fits_empty",
@@ -95,20 +95,20 @@
     "describe_spine_state_io"
   ],
   "lessons": [
-    "2026-11-19 describe_loop_walk_fixture: tests failed",
     "2026-11-19 describe_loop_worktree: tests failed",
     "2026-11-19 describe_extra_tools: tests failed",
     "2026-11-19 describe_loop_worktree_worker: tests failed",
     "2026-11-19 describe_tombstone: tests failed",
     "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"clamp\"",
     "2026-11-19 find_clamp: tests passed via tool",
-    "2026-11-19 describe_spine_state_io: tests passed"
+    "2026-11-19 describe_spine_state_io: tests passed",
+    "2026-11-22 lint_F821_product_loop_extract_functions: no function"
   ],
   "last": {
-    "goal": "describe_spine_state_io",
-    "kept": true,
-    "file": "core/spine/state_io.py",
-    "ts": "2026-11-19T22:45:01.500856+00:00"
+    "goal": "lint_F821_product_loop_extract_functions",
+    "kept": false,
+    "file": "",
+    "ts": "2026-11-22T23:54:38.748045+00:00"
   },
   "kept_n": 0,
   "files": [

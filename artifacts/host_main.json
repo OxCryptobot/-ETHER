@@ -1,32 +1,32 @@
 {
-  "ts": "2026-11-22T23:23:54.938063+00:00",
+  "ts": "2026-11-22T23:48:39.095629+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
+  "selfcheck": {
+    "ok": true,
+    "checked": 224,
+    "modules": 52,
+    "broken": [],
+    "n_broken": 0,
+    "ruff": true
+  },
   "alive": {
     "alive": true,
-    "ts": "2026-11-22T23:24:09.837222+00:00",
+    "ts": "2026-11-22T23:48:46.815003+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-22T23:24:10.116655+00:00",
+    "ts": "2026-11-22T23:48:39.914903+00:00",
     "os": "nt",
     "ok": true,
-    "ahead": 1,
-    "worktree": {
-      "ok": true,
-      "hard_reset": false,
-      "note": "worktree_push",
-      "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   74bd0e8013..3c6343e0d2  HEAD -> main\n"
-    },
-    "push_rc": 0,
-    "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   74bd0e8013..3c6343e0d2  HEAD -> main\n"
+    "urgent": false,
+    "note": "throttled",
+    "last_push_ts": "2026-11-22T23:24:32.183920+00:00"
   },
   "heal": {
-    "ts": "2026-11-22T23:24:07.041131+00:00",
+    "ts": "2026-11-22T23:48:44.325406+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-22T23:24:08.116652+00:00",
+    "ts": "2026-11-22T23:48:45.450367+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-22T23:24:09.690992+00:00",
+    "updated": "2026-11-22T23:48:46.701168+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -116,34 +116,80 @@
     "path": "C:\\Users\\Otcde\\ETHER\\artifacts\\host_attach.json"
   },
   "ollama": true,
-  "plan_error": "ImportError",
+  "plan": {
+    "next": "edit",
+    "stale": false,
+    "ollama": true
+  },
   "live": {
     "ok": true,
     "n": 0,
     "jobs": []
   },
-  "next_goal": "none",
+  "next_goal": "lint_F821_repo_fail__fixture_stamp",
   "lost_kept": 0,
   "seed_depth": 0,
+  "real_queue": {
+    "open": 62,
+    "done": 0,
+    "dropped": 20,
+    "scan_ts": "2026-11-22T23:40:48.735734+00:00"
+  },
   "sota": {
+    "goal": "lint_F821_product_loop_extract_functions",
+    "kind": "lint",
+    "file": "core/kernel/product_loop.py",
     "ok": false,
-    "honest": true,
-    "note": "queue empty",
+    "honest": false,
+    "note": "no function",
+    "learn": {
+      "arm": "repo_map_on",
+      "bucket": "gen|simple",
+      "kind": "fail",
+      "reward": -0.9,
+      "promote": {
+        "action": "hold",
+        "arm": "default"
+      }
+    },
     "batch": [],
+    "tried": [
+      "lint_F821_repo_fail__fixture_stamp",
+      "lint_F821_product_loop_extract_functions"
+    ],
     "kept_n": 0,
-    "batch_size": 5
+    "batch_size": 3
+  },
+  "learning": {
+    "trajectories": 87,
+    "graded": 87,
+    "passes": 43,
+    "spoiler_share": 0.954,
+    "promoted": {},
+    "explore_legacy": false,
+    "explore_real": true,
+    "by_kind": {
+      "fix_test": 0,
+      "legacy": 43,
+      "lint": 0
+    }
+  },
+  "learning_published": {
+    "ok": true,
+    "bytes": 8682,
+    "graded": 87
   },
   "env": {
-    "ts": "2026-11-22T23:24:09.955824+00:00",
+    "ts": "2026-11-22T23:54:38.819583+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 225.4,
+    "disk_free_gb": 222.7,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-22T23:24:09.837222+00:00",
+    "alive_ts": "2026-11-22T23:53:10.440767+00:00",
     "kept": 92,
-    "last_goal": "describe_spine_state_io",
-    "last_kept": true,
+    "last_goal": "lint_F821_product_loop_extract_functions",
+    "last_kept": false,
     "batch_size": 0
   },
   "agent": {
@@ -170,5 +216,11 @@
   "service": {
     "ok": true,
     "note": "listener_already_up"
-  }
+  },
+  "unison": {
+    "ok": true
+  },
+  "health": "ok",
+  "health_worst": null,
+  "health_signals": []
 }

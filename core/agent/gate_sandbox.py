@@ -43,6 +43,7 @@ SECRET_PREFIXES = ("GH_", "GITHUB_", "GIT_ASKPASS", "SSH_", "AWS_", "AZURE_", "G
 PROXY_VARS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
 DEAD_PROXY = "http://127.0.0.1:9"
 MIRROR_KEEP = 12
+MIRROR_BUSY_S = 3600
 MIRROR_MAX_AGE_S = 2 * 86400
 
 
@@ -113,7 +114,10 @@ def _prune(base: Path, keep: Path) -> None:
             old = now - d.stat().st_mtime > MIRROR_MAX_AGE_S
         except OSError:
             continue
-        if old or i < len(dirs) - MIRROR_KEEP:
+        # over the count limit only drops mirrors idle for an hour: a concurrent gate (another clone, a test
+        # run) is never pulled out from under its pytest
+        idle = now - d.stat().st_mtime > MIRROR_BUSY_S if d.exists() else False
+        if old or (i < len(dirs) - MIRROR_KEEP and idle):
             shutil.rmtree(d, ignore_errors=True)
 
 
@@ -122,6 +126,7 @@ def sync(root: Path) -> Dict[str, object]:
     root = Path(root).resolve()
     dst = mirror_dir(root)
     dst.mkdir(parents=True, exist_ok=True)
+    os.utime(dst)  # in use now: _prune of another root must not take it
     _prune(dst.parent, dst)
     src_files = _walk(root)
     dst_files = _walk(dst)

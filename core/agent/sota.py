@@ -480,6 +480,7 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
 
     tries_before = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
     from core.agent.tree_guard import TreeGuard
+    from core.agent import pillars
 
     tree = TreeGuard(root).begin()  # batch 9: every path the attempt touches is checked and restored
     for i in range(tries):
@@ -536,6 +537,19 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             feedback = str(applied.get("reason"))
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
             continue
+        if pillars.pregate_on():
+            try:
+                after_text = (root / goal["file"]).read_text(encoding="utf-8")
+            except OSError:
+                after_text = ""
+            pg = pillars.pregate(applied.get("original") or "", after_text)
+            trace["pregate"] = pg
+            if not pg["ok"]:
+                # batch 9 item 9: the security gem rejects before the gate runs; nothing is kept
+                tree.restore()
+                feedback = "the edit adds " + ", ".join(pg["added"]) + "; fix the function without it"
+                last = {**base, "ok": False, "honest": False, "note": "gem blocked: " + ", ".join(pg["added"])}
+                continue
         verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
         touched = tree.violations([goal["file"]])
         if touched:

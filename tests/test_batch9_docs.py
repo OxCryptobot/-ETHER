@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-BATCH9_MODULES = ("core/agent/gate_sandbox.py", "core/agent/planted.py", "core/agent/goal_source.py",
+BATCH9_MODULES = ("core/agent/gate_sandbox.py", "core/agent/planted.py", "core/agent/pillars.py", "core/agent/goal_source.py",
                   "scripts/host_signals.py", "scripts/origin_publish.py", "dashboard/app.py", "core/agent/tree_guard.py")
 OPERATIONAL_DOCS = ("DAEMON.md", "OPS.md", "RECOVERY.md", "ONBOARDING.md", "docs/HOST_AGENT.md", "docs/PHASE_G.md")
 

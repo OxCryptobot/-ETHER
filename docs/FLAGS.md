@@ -54,6 +54,7 @@ Legend: **on/off** = default; *gate* = only makes the honest gate stricter (defa
 | `ETHER_PLANTED_CANDIDATES` | `4` | 9 | budget | Candidate bugs validated per generation round. |
 | `ETHER_PLANTED_DIR` | tempdir/ether_planted | 9 | infra | Scratch workspace for planted goals (never inside the repo). |
 | `ETHER_GOAL_LIVE_ONLY` | `0` | 9 | outcome | Drop real goals (and new seeds) whose target the writer never imports (35 of the 56 failing-test seed goals). |
+| `ETHER_GEM_PREGATE` | `0` | 9 | outcome | Black Tourmaline (security gem) rejects an edit that adds subprocess/os.system/eval/exec/`__import__`/socket/rmtree/import_module to the goal file before the gate runs (restored, reward as any failed reply). Can only reject. |
 | `ETHER_DASHBOARD_WRITE` + `ETHER_DASHBOARD_TOKEN` | unset | 9 | security | Retired dashboard refuses all writes unless both are set (token >= 16 chars, localhost only). |
 
 Always on in batch 9 (security, stricter only, no flag): model replies can call only `search` and

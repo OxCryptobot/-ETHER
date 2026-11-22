@@ -431,6 +431,12 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
     suite = gs.guard_suite(root, goal)
     before = gs.run_pytest(root, suite)
     baseline = before["status"]
+    aborted = gs.baseline_abort(before)
+    if aborted:
+        # batch 9 (W6): an empty or timed-out baseline used to switch the regression check off
+        # (regressions({}, after) == []). Abort instead: reward 0, nothing kept, no model call.
+        gs.mark(root, goal["id"], kept=False)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
     if goal["kind"] == "fix_test" and baseline.get(goal["nodeid"]) == "pass":
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
@@ -525,7 +531,7 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             feedback = str(applied.get("reason"))
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
             continue
-        verdict = gs.gate(root, goal, baseline, suite)
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
         touched = tree.violations([goal["file"]])
         if touched:
             # batch 9 (W1): a diff outside the goal file (tests/ always) is never kept, whatever the tests say
@@ -558,6 +564,8 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
         if verdict.get("outside"):
             note = "rejected: touched " + ", ".join(verdict["outside"][:3])
             feedback = "edit only the target function in " + goal["file"]
+        elif verdict.get("abort"):
+            note = "gate aborted: " + str(verdict["abort"])
         last = {**base, "ok": False, "honest": False, "note": note,
                 "regressions": verdict["n_regressions"], "siblings_failing": len(verdict.get("siblings_failing") or [])}
         if restored:
@@ -581,6 +589,10 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
     suite = multi_edit.guard_suite(root, goal, places)
     before = gs.run_pytest(root, suite)
     baseline = before["status"]
+    aborted = gs.baseline_abort(before)
+    if aborted:
+        gs.mark(root, goal["id"], kept=False)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
     if baseline.get(goal["nodeid"]) == "pass":
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
@@ -638,7 +650,7 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
             continue
         tx = applied["tx"]
-        verdict = gs.gate(root, goal, baseline, suite)
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
         touched = tree.violations(applied["files"])
         if touched:
             verdict = {**verdict, "ok": False, "outside": touched}
@@ -661,6 +673,8 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
             "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
         if verdict.get("outside"):
             note = "rejected: touched " + ", ".join(verdict["outside"][:3])
+        elif verdict.get("abort"):
+            note = "gate aborted: " + str(verdict["abort"])
         last = {**base, "ok": False, "honest": False, "note": note, "regressions": verdict["n_regressions"],
                 "reverted": sorted(set(applied["files"]) | set(restored))}
     gs.mark(root, goal["id"], kept=False)

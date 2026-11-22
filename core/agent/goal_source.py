@@ -11,6 +11,7 @@ tick stays short on the 1650.
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import os
 import re
@@ -85,7 +86,10 @@ def _enclosing_assign(path: Path, line: int) -> str:
 # ---------------------------------------------------------------- pytest runner
 
 def test_env(root: Path, state: Optional[Path] = None) -> Dict[str, str]:
-    env = dict(os.environ)
+    """Batch 9: credentials and proxies are scrubbed from every gate / scan run (audit W35)."""
+    from core.agent.gate_sandbox import scrub_env
+
+    env = scrub_env()
     env["PYTHONPATH"] = str(root)
     env["ETHER_TEST_STATE_ROOT"] = str(state or Path(tempfile.mkdtemp(prefix="ether_state_")))
     env.pop("ETHER_SUPERVISOR", None)
@@ -155,12 +159,34 @@ def drop_recent_bytecode(root: Path, window_s: int = BYTECODE_WINDOW_S) -> int:
     return n
 
 
-def run_pytest(root: Path, args: List[str], timeout: int = 180, sbfl: bool = False) -> Dict[str, Any]:
+GATE_TIMEOUT_S = int(os.getenv("ETHER_GATE_TIMEOUT_S", "180"))
+
+
+def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl: bool = False,
+               sandbox: Optional[bool] = None) -> Dict[str, Any]:
     """Run pytest, return {nodeid: status} plus failure texts. Never writes the repo.
 
-    sbfl=True also records which repo functions each test entered (core/agent/fault_loc.py)."""
-    root = Path(root)
-    drop_recent_bytecode(root)
+    sbfl=True also records which repo functions each test entered (core/agent/fault_loc.py).
+    Batch 9: by default the run happens in a synced sandbox copy (core/agent/gate_sandbox.py)
+    with a scrubbed environment; `tamper` lists copy files the run changed; `rc == -9` and
+    `timeout: True` mark a run that did not finish (callers must abort, not compare)."""
+    from core.agent import gate_sandbox
+
+    real_root = Path(root)
+    timeout = GATE_TIMEOUT_S if timeout is None else timeout
+    use_box = gate_sandbox.enabled() if sandbox is None else bool(sandbox)
+    drop_recent_bytecode(real_root)
+    box: Dict[str, Any] = {}
+    if use_box:
+        try:
+            box = gate_sandbox.sync(real_root)
+            root = Path(str(box["dir"]))
+            drop_recent_bytecode(root)
+        except Exception as exc:  # never fall back silently to an unscrubbed in-place run
+            return {"ok": False, "rc": -8, "status": {}, "fail": {}, "secs": 0.0, "spectra": {},
+                    "sandbox_error": f"{type(exc).__name__}: {str(exc)[:160]}"}
+    else:
+        root = real_root
     tmp = Path(tempfile.mkdtemp(prefix="ether_pt_"))
     xml = tmp / "r.xml"
     argv = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=short",
@@ -181,7 +207,8 @@ def run_pytest(root: Path, args: List[str], timeout: int = 180, sbfl: bool = Fal
         rc = proc.returncode
     except subprocess.TimeoutExpired:
         shutil.rmtree(tmp, ignore_errors=True)
-        return {"ok": False, "rc": -9, "status": {}, "fail": {}, "secs": round(time.monotonic() - t0, 1)}
+        return {"ok": False, "rc": -9, "status": {}, "fail": {}, "secs": round(time.monotonic() - t0, 1),
+                "timeout": True, "spectra": {}}
     status: Dict[str, str] = {}
     fail: Dict[str, str] = {}
     try:
@@ -207,8 +234,26 @@ def run_pytest(root: Path, args: List[str], timeout: int = 180, sbfl: bool = Fal
         except Exception:
             spectra = {}
     shutil.rmtree(tmp, ignore_errors=True)
-    return {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1),
-            "spectra": spectra}
+    row = {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1),
+           "spectra": spectra}
+    if use_box:
+        row["sandbox"] = True
+        try:
+            row["tamper"] = gate_sandbox.tamper(real_root, root)
+        except Exception as exc:
+            row["tamper"] = [f"<tamper check failed: {type(exc).__name__}>"]
+    return row
+
+
+def baseline_abort(res: Dict[str, Any]) -> str:
+    """Batch 9 (audit W6): why a baseline run cannot be compared against, or ''."""
+    if res.get("timeout") or res.get("rc") == -9:
+        return "baseline timeout"
+    if res.get("sandbox_error"):
+        return "sandbox error: " + str(res["sandbox_error"])[:120]
+    if not res.get("status"):
+        return "baseline produced no test results"
+    return ""
 
 
 # ---------------------------------------------------------------- failure -> goal
@@ -1230,12 +1275,147 @@ def affected_tests(root: Path, rel: str, limit: int = MAX_AFFECTED) -> List[str]
     return hits[:limit]
 
 
+# Batch 9 (audit W5): the guard ran the target file + <= 6 direct importers + 2 smoke files
+# (36-79 of 1,947 tests). It now also runs tests that import a module importing the target
+# (transitively, ETHER_GUARD_DEPTH levels), plus a fixed per-goal random sample of small test
+# files, inside a file budget sized for the 1650 (each gate run stays under ETHER_GATE_TIMEOUT_S;
+# a run that does not finish aborts the attempt). ETHER_GUARD_TRANSITIVE=0 = batch 8 selection.
+_IMPORT_RE = re.compile(r"^[ \t]*(?:from[ \t]+([\w.]+)[ \t]+import[ \t]+\(?([\w ,\t*]+)|import[ \t]+([\w., \t]+))", re.M)
+_GRAPH_CACHE: Dict[str, Any] = {}
+
+
+def _guard_int(name: str, default: int) -> int:
+    try:
+        return max(0, int(os.getenv(name, str(default))))
+    except ValueError:
+        return default
+
+
+def _imports_of(text: str) -> set:
+    out = set()
+    for frm, names, plain in _IMPORT_RE.findall(text):
+        if frm:
+            out.add(frm)
+            for n in names.replace("(", " ").split(","):
+                n = n.strip().split(" ")[0]
+                if n and n != "*":
+                    out.add(f"{frm}.{n}")
+        else:
+            for n in plain.split(","):
+                n = n.strip().split(" ")[0]
+                if n:
+                    out.add(n)
+    return out
+
+
+def _dotted(rel: str) -> str:
+    mod = rel[:-3].replace("/", ".")
+    return mod[: -len(".__init__")] if mod.endswith(".__init__") else mod
+
+
+def import_graph(root: Path) -> Dict[str, set]:
+    """{module: repo modules it imports}, non-test code only; cached on the tree's .py stats."""
+    root = Path(root)
+    files = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS and not d.startswith(".") and d != "tests"]
+        for f in filenames:
+            if f.endswith(".py"):
+                files.append(os.path.join(dirpath, f))
+    sig_parts = []
+    for f in files:
+        try:
+            st = os.stat(f)
+            sig_parts.append((f, st.st_size, st.st_mtime_ns))
+        except OSError:
+            continue
+    sig = hashlib.sha1(repr(sorted(sig_parts)).encode("utf-8")).hexdigest()
+    hit = _GRAPH_CACHE.get(str(root))
+    if hit and hit[0] == sig:
+        return hit[1]
+    mods = {_dotted(Path(f).relative_to(root).as_posix()): f for f, _, _ in sig_parts}
+    graph: Dict[str, set] = {}
+    for mod, f in mods.items():
+        try:
+            text = Path(f).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        graph[mod] = {m for m in _imports_of(text) if m in mods and m != mod}
+    _GRAPH_CACHE[str(root)] = (sig, graph)
+    return graph
+
+
+def importer_closure(root: Path, rel: str, depth: int) -> Dict[str, int]:
+    """{module: distance} for the target and every module importing it within `depth` hops."""
+    graph = import_graph(root)
+    rev: Dict[str, set] = {}
+    for mod, deps in graph.items():
+        for d in deps:
+            rev.setdefault(d, set()).add(mod)
+    start = _dotted(rel)
+    dist = {start: 0}
+    frontier = [start]
+    for level in range(1, depth + 1):
+        nxt = []
+        for m in frontier:
+            for imp in rev.get(m, ()):
+                if imp not in dist:
+                    dist[imp] = level
+                    nxt.append(imp)
+        frontier = nxt
+    return dist
+
+
+def transitive_tests(root: Path, rel: str, limit: int, depth: int) -> List[str]:
+    dist = importer_closure(root, rel, depth)
+    scored = []
+    for t in test_files(root):
+        try:
+            names = _imports_of((Path(root) / t).read_text(encoding="utf-8", errors="ignore"))
+        except OSError:
+            continue
+        hit = [dist[n] for n in names if n in dist]
+        if hit:
+            scored.append((min(hit), (Path(root) / t).stat().st_size, t))
+    scored.sort()
+    return [t for _, _, t in scored[:limit]]
+
+
+def sample_tests(root: Path, goal: Dict[str, Any], k: int, exclude: Iterable[str]) -> List[str]:
+    """A fixed random sample: same goal, same files (seeded by the goal id), small files only."""
+    if k <= 0:
+        return []
+    cap = _guard_int("ETHER_GUARD_SAMPLE_MAX_BYTES", 24000)
+    skip = set(exclude)
+    seed = str(goal.get("id") or goal.get("file") or "")
+    pool = []
+    for t in test_files(root):
+        if t in skip:
+            continue
+        try:
+            if (Path(root) / t).stat().st_size > cap:
+                continue
+        except OSError:
+            continue
+        pool.append((hashlib.sha1(f"{seed}|{t}".encode("utf-8")).hexdigest(), t))
+    return [t for _, t in sorted(pool)[:k]]
+
+
 def guard_suite(root: Path, goal: Dict[str, Any]) -> List[str]:
     files = []
     if goal.get("test_file"):
         files.append(goal["test_file"])
-    files += [t for t in affected_tests(root, goal["file"]) if t not in files]
+    if os.getenv("ETHER_GUARD_TRANSITIVE", "1") == "0":
+        files += [t for t in affected_tests(root, goal["file"]) if t not in files]
+    else:
+        limit = _guard_int("ETHER_GUARD_MAX_AFFECTED", 10)
+        depth = _guard_int("ETHER_GUARD_DEPTH", 2)
+        direct = affected_tests(root, goal["file"])
+        files += [t for t in direct if t not in files]
+        files += [t for t in transitive_tests(root, goal["file"], limit, depth) if t not in files][: max(0, limit - len(direct))]
     files += [t for t in SMOKE if (Path(root) / t).is_file() and t not in files]
+    if os.getenv("ETHER_GUARD_TRANSITIVE", "1") != "0":
+        files += sample_tests(root, goal, _guard_int("ETHER_GUARD_SAMPLE", 3), files)
     if os.getenv("ETHER_GUARD_SUITE") == "full":
         files = ["tests"]
     return files
@@ -1261,10 +1441,30 @@ def siblings(root: Path, goal: Dict[str, Any]) -> List[str]:
                   and g.get("nodeid") != goal.get("nodeid") and g.get("id") not in data["done"])
 
 
-def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List[str]) -> Dict[str, Any]:
-    """Target (and its siblings) pass and nothing that passed before fails now."""
+def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List[str],
+         base_tamper: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Target (and its siblings) pass and nothing that passed before fails now.
+
+    Batch 9: an empty baseline, a timed-out / empty after-run, or a run that tampered with the
+    sandbox copy beyond what the baseline run did is never a pass (`abort` / `tamper` say why)."""
+    if not baseline:
+        return {"ok": False, "target_ok": False, "regressions": [], "n_regressions": 0, "suite_n": 0, "secs": 0.0,
+                "target_pass": False, "siblings": 0, "siblings_failing": [], "tail": "", "abort": "empty baseline"}
     res = run_pytest(root, suite)
     after = res["status"]
+    why = ""
+    if res.get("timeout") or res.get("rc") == -9:
+        why = "after-run timeout"
+    elif res.get("sandbox_error"):
+        why = "sandbox error"
+    elif not after:
+        why = "after-run produced no test results"
+    if why:
+        return {"ok": False, "target_ok": False, "regressions": [], "n_regressions": 0, "suite_n": 0,
+                "secs": res.get("secs", 0.0), "target_pass": False, "siblings": 0, "siblings_failing": [],
+                "tail": why, "abort": why}
+    goal_files = {goal.get("file") or ""} | {t.get("file") for t in (goal.get("targets") or []) if isinstance(t, dict)}
+    new_tamper = sorted(set(res.get("tamper") or []) - set(base_tamper or []) - goal_files)
     sibs = [n for n in siblings(root, goal) if n in after]
     sib_fail = [n for n in sibs if after.get(n) not in ("pass", "skip")]
     if goal.get("kind") == "lint":
@@ -1273,6 +1473,11 @@ def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List
         target_ok = after.get(goal["nodeid"]) == "pass" and not sib_fail
     regs = regressions(baseline, after)
     tail = res["fail"].get(goal.get("nodeid") or "", "") or (res["fail"].get(sib_fail[0], "") if sib_fail else "")
+    if new_tamper:
+        return {"ok": False, "target_ok": bool(target_ok), "regressions": regs[:20], "n_regressions": len(regs),
+                "suite_n": len(after), "secs": res["secs"], "target_pass": after.get(goal.get("nodeid") or "") == "pass",
+                "siblings": len(sibs), "siblings_failing": sib_fail[:5], "outside": new_tamper[:10],
+                "tail": "the test run changed " + ", ".join(new_tamper[:3])}
     return {"ok": bool(target_ok and not regs), "target_ok": bool(target_ok), "regressions": regs[:20],
             "n_regressions": len(regs), "suite_n": len(after), "secs": res["secs"],
             "target_pass": after.get(goal.get("nodeid") or "") == "pass",

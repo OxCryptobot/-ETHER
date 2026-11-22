@@ -19,40 +19,44 @@ def redact(text: str, token: str) -> str:
     return text.replace(token, "***")
 
 
-PATHS = [
+# Batch 9 (audit W17, W61): git was the telemetry bus, 5,452 commits in 24 h (origin, 2026-11-22).
+# Origin now gets an explicit whitelist: what the Matrix read model and the owner need, nothing
+# else. Every other artifact stays local. Stale exe_* entries (ETHER.exe is retired) are gone.
+# ETHER_PUBLISH_PATHS=legacy restores the batch 8 list (minus exe_*) for one-off debugging.
+TELEMETRY_PATHS = [
     "artifacts/app_alive.json",
+    "artifacts/host_main.json",
+    "artifacts/supervisor.json",
+    "artifacts/git_push.json",
+    "artifacts/sota.json",
+    "artifacts/learning_summary.json",
+    "artifacts/unison.json",
+    "artifacts/env.json",
+    "artifacts/edit_memory.json",
+    "artifacts/pull_diverged.json",
+]
+LEGACY_PATHS = TELEMETRY_PATHS + [
     "artifacts/host_attach.json",
     "artifacts/ollama_probe.json",
-    "artifacts/exe_pulse.json",
-    "artifacts/git_push.json",
-    "artifacts/host_main.json",
-    "artifacts/exe_loop.json",
     "artifacts/self_heal.json",
     "artifacts/runner_watch.json",
-    "artifacts/supervisor.json",
-    "artifacts/exe_writer.json",
     "artifacts/keepalive_error.json",
     "artifacts/live_generate_probe.json",
     "artifacts/live_edit_tx.json",
     "artifacts/agent.json",
     "artifacts/runtime.json",
-    "artifacts/sota.json",
-    "artifacts/env.json",
     "artifacts/env_history.json",
-    "artifacts/unison.json",
     "artifacts/growth.json",
     "artifacts/scale.json",
     "artifacts/honest_history.json",
     "artifacts/gem_check.json",
-    "artifacts/agent.json",
     "artifacts/curriculum.json",
-    "artifacts/edit_memory.json",
     "artifacts/agent_bench.json",
     "artifacts/repo_fail.json",
     "artifacts/goal_index.json",
     "artifacts/refactor_done.json",
-    "artifacts/learning_summary.json",
 ]
+PATHS = LEGACY_PATHS if os.environ.get("ETHER_PUBLISH_PATHS") == "legacy" else TELEMETRY_PATHS
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]
 
@@ -435,7 +439,9 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
     return row
 
 
-PUBLISH_MIN_S = float(os.environ.get("ETHER_PUBLISH_MIN_S", "300"))
+# Batch 9: heartbeat-only commits at most every 30 min (was 5 min): <= 48 a day. A kept code
+# edit is still urgent and goes out at once.
+PUBLISH_MIN_S = float(os.environ.get("ETHER_PUBLISH_MIN_S", "1800"))
 
 
 def publishable_code(root: Path, git: str, runner: Runner, code: List[str]) -> List[str]:

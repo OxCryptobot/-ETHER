@@ -74,6 +74,9 @@ def host_signals(host: Dict[str, Any], *, base: Optional[Path] = None, now: Opti
     for key in ("plan_error", "runtime_error", "next_error", "learning_error", "real_queue_error"):
         if host.get(key):
             out.append(_sig(key, "degraded", str(host[key])))
+    jail = (host.get("selfcheck") or {}).get("gate_jail") if isinstance(host.get("selfcheck"), dict) else None
+    if isinstance(jail, dict) and jail.get("mode") == "on" and jail.get("backend") in (None, "", "none"):
+        out.append(_sig("gate_jail", "degraded", "ETHER_GATE_JAIL=1 but no jail backend passed the probe: every gate run is refused"))
     sota = host.get("sota") if isinstance(host.get("sota"), dict) else {}
     if sota.get("note") == "queue empty" or host.get("next_goal") == "none":
         out.append(_sig("queue", "degraded", "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"))

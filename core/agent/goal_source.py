@@ -201,14 +201,19 @@ def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl:
         argv += ["-p", "ether_sbfl"]
     argv += list(args)
     t0 = time.monotonic()
-    try:
-        proc = subprocess.run(argv, cwd=str(root), capture_output=True, text=True, timeout=timeout,
-                              env=env)
-        rc = proc.returncode
-    except subprocess.TimeoutExpired:
+    from core.agent import gate_jail
+
+    # batch 10: OS-level jail (ETHER_GATE_JAIL, default auto = strongest backend that passes a probe)
+    proc = gate_jail.run(argv, cwd=str(root), env=env, timeout=timeout, writable=(str(tmp),))
+    rc = proc.returncode
+    if proc.timed_out:
         shutil.rmtree(tmp, ignore_errors=True)
         return {"ok": False, "rc": -9, "status": {}, "fail": {}, "secs": round(time.monotonic() - t0, 1),
-                "timeout": True, "spectra": {}}
+                "timeout": True, "spectra": {}, "jail": proc.jail}
+    if rc == -7 and proc.jail == "refused":
+        shutil.rmtree(tmp, ignore_errors=True)
+        return {"ok": False, "rc": -7, "status": {}, "fail": {}, "secs": 0.0, "spectra": {}, "jail": proc.jail,
+                "sandbox_error": "gate jail refused: " + proc.stderr[:120]}
     status: Dict[str, str] = {}
     fail: Dict[str, str] = {}
     try:
@@ -235,7 +240,7 @@ def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl:
             spectra = {}
     shutil.rmtree(tmp, ignore_errors=True)
     row = {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1),
-           "spectra": spectra}
+           "spectra": spectra, "jail": proc.jail}
     if use_box:
         row["sandbox"] = True
         try:

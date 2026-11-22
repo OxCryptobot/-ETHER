@@ -56,6 +56,14 @@ def _selfcheck(root: Path, row: Dict[str, Any]) -> None:
         chk["ruff"] = bool(ruff_bin())
     except Exception:
         chk["ruff"] = False
+    try:  # batch 10: which OS jail the honest gate gets on this machine (probe runs a trivial child once)
+        from core.agent.gate_jail import probe
+
+        pj = probe()
+        chk["gate_jail"] = {"mode": pj.get("mode"), "backend": pj.get("backend") or "none",
+                            "net": next((t.get("net") for t in pj.get("tried") or [] if t.get("ok")), "")}
+    except Exception as exc:
+        chk["gate_jail"] = {"error": _e(exc)}
     row["selfcheck"] = chk
     if not chk.get("ok"):
         row["health"] = "degraded"

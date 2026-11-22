@@ -142,8 +142,9 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
         from core.agent.sota import run as sota_run
         from scripts.live_edit_tx import _ask
 
-        def _code(prompt: str, n: int = 240) -> str:
-            return _ask(prompt, n=n, edit=True)
+        def _code(prompt: str, n: int = 240, temperature: float = 0.0) -> str:
+            # batch 8: temperature only moves off 0 when ETHER_SAMPLE_TEMP is set (core/agent/sampling.py)
+            return _ask(prompt, n=n, edit=True, temperature=temperature)
 
         row["sota"] = sota_run(root, _code)
         try:

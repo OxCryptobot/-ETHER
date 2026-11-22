@@ -354,13 +354,19 @@ _INFRA_ERRORS = (ConnectionError, TimeoutError, OSError)
 def _guard(ask: Callable[..., str], seen: Dict[str, str]) -> Callable[..., str]:
     """Record an infra outage. An outage is not a lesson and must not skip a goal."""
 
-    def wrapped(prompt: str, n: int = 240) -> str:
+    def wrapped(prompt: str, n: int = 240, **kw: Any) -> str:
         try:
-            return ask(prompt, n=n)
+            return ask(prompt, n=n, **kw)
         except _INFRA_ERRORS as exc:
             seen.setdefault("error", type(exc).__name__)
             raise
 
+    try:
+        from core.agent.sampling import accepts_temperature
+
+        wrapped.accepts_temperature = accepts_temperature(ask)  # type: ignore[attr-defined]
+    except Exception:
+        wrapped.accepts_temperature = False  # type: ignore[attr-defined]
     return wrapped
 
 
@@ -459,6 +465,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
     feedback = ""
     last: Dict[str, Any] = {}
     trace["spoiler"] = False
+    from core.agent import sampling
+
+    tries_before = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
     for i in range(tries):
         prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback, exemplar=shown)
         if shown and gs.EXEMPLAR_HEAD in prompt:
@@ -478,7 +487,10 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
 
             n_reply = gs.reply_tokens(root, goal)
             trace["reply_cap"] = n_reply
-            row = react(ask, root, prompt, turns=2, n=n_reply)
+            temp = sampling.temp_for(tries_before + i)  # 0.0 unless ETHER_SAMPLE_TEMP is set
+            ask_i = sampling.with_temp(ask, temp)
+            trace["temp"] = temp if ask_i is not ask else 0.0
+            row = react(ask_i, root, prompt, turns=2, n=n_reply)
             text = row.get("text") or ""
             trace["tools"] = ["search"] if row.get("used") else []
         except Exception as exc:
@@ -495,6 +507,14 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             if goal.get("span"):
                 feedback = "no replacement lines for the marked window in the reply"
             last = {**base, "ok": False, "honest": False, "note": "no function"}
+            continue
+        trace["reply_hash"] = sampling.edit_hash(edit)
+        trace["file_hash"] = sampling.file_hash(current, baseline)
+        if sampling.dedup_on() and sampling.reverted_before(root, goal["id"], trace["reply_hash"], trace["file_hash"]):
+            # the gate already reverted this exact edit on this exact file: reuse its verdict, skip the run
+            trace["dedup_skipped"] = True
+            feedback = "your reply repeated an edit that already failed the tests; write a different fix"
+            last = {**base, "ok": False, "honest": False, "note": "duplicate reply"}
             continue
         applied = gs.apply_edit(root, goal, edit)
         trace["edit_assigns"] = len(applied.get("assigns") or [])

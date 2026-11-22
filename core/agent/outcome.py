@@ -300,6 +300,17 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
     }
     if pick.trace.get("exemplar"):
         row["exemplar"] = pick.trace.get("exemplar")  # batch 7: which kept edit was shown
+    if pick.trace.get("reply_hash"):  # batch 8: duplicate-reply measurement (decisions unchanged)
+        from core.agent.sampling import seen_before
+
+        prior = trajectories(root)
+        row["reply_hash"] = pick.trace["reply_hash"]
+        row["file_hash"] = pick.trace.get("file_hash")
+        row["dup"] = seen_before(prior, str(result.get("goal") or ""), pick.trace["reply_hash"])
+    if "temp" in pick.trace:
+        row["temp"] = pick.trace.get("temp")
+    if pick.trace.get("dedup_skipped"):
+        row["dedup_skipped_from_cache"] = True
     if "exemplar_eligible" in (pick.trace.get("bandit") or {}):
         row["exemplar_eligible"] = bool(pick.trace["bandit"]["exemplar_eligible"])
     r01 = reward01(kind, result) if pick.kind in ("fix_test", "lint") else None
@@ -453,7 +464,7 @@ SUMMARY_MAX_BYTES = 16384
 SUMMARY_RECENT = 25
 _SAFE_ID = __import__("re").compile(r"[^A-Za-z0-9_.:\-/\[\]]+")
 _SAFE_FIELDS = ("ts", "goal", "arm", "goal_kind", "kind", "reward", "regressions", "prompt_chars", "spoiler",
-                "tests_ok", "reward01", "secs", "algo", "note", "via", "exemplar")
+                "tests_ok", "reward01", "secs", "algo", "note", "via", "exemplar", "temp", "dup")
 
 
 def _safe(value: Any) -> Any:
@@ -523,7 +534,23 @@ def metrics(root: Path, rows: Optional[List[Dict[str, Any]]] = None) -> Dict[str
         "arm_entropy_bits": {k: _entropy(v) for k, v in sorted(by_kind.items())},
         "tool_edits": sum(1 for r in rows if r.get("kind") == "tool"),
         "by_via": by_via,  # decides when per-via (contextual) arms are worth turning on
+        # batch 8: share of graded attempts whose edit repeated one already tried on the same goal,
+        # and kept/attempts by sampling temperature (decides ETHER_SAMPLE_TEMP / ETHER_DEDUP_REPLY)
+        "dup_share": (round(sum(1 for r in graded if r.get("dup")) / len([r for r in graded if "dup" in r]), 4)
+                      if any("dup" in r for r in graded) else None),
+        "by_temp": _by_temp(graded, kept),
     }
+
+
+def _by_temp(graded: List[Dict[str, Any]], kept: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
+    out: Dict[str, Dict[str, int]] = {}
+    for r in graded:
+        if "temp" not in r:
+            continue
+        cell = out.setdefault(str(r.get("temp")), {"attempts": 0, "kept": 0})
+        cell["attempts"] += 1
+        cell["kept"] += 1 if r in kept else 0
+    return out
 
 
 def summary_doc(root: Path) -> Dict[str, Any]:

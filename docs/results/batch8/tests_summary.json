@@ -1,0 +1,27 @@
+{
+ "before_b7": {
+  "tests": 1947,
+  "pass": 1790,
+  "fail": 74,
+  "skip": 83
+ },
+ "after_b8": {
+  "tests": 1957,
+  "pass": 1800,
+  "fail": 74,
+  "skip": 83
+ },
+ "new_failures": [],
+ "new_tests": [
+  "tests.test_batch8_sampling::test_ask_without_temperature_still_works_with_the_flag",
+  "tests.test_batch8_sampling::test_dedup_off_by_default_gates_every_reply",
+  "tests.test_batch8_sampling::test_dedup_reuses_the_gates_own_refusal_and_never_keeps",
+  "tests.test_batch8_sampling::test_dedup_still_gates_a_different_reply_and_a_changed_state",
+  "tests.test_batch8_sampling::test_duplicate_replies_are_measured",
+  "tests.test_batch8_sampling::test_first_hour_report_prints_duplicates_and_temperature",
+  "tests.test_batch8_sampling::test_flag_off_never_passes_a_temperature",
+  "tests.test_batch8_sampling::test_host_code_forwards_temperature",
+  "tests.test_batch8_sampling::test_schedule_parsing_and_defaults",
+  "tests.test_batch8_sampling::test_schedule_samples_only_after_the_first_attempt"
+ ]
+}

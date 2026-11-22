@@ -100,7 +100,7 @@ def learning_view(ls: Optional[Dict[str, Any]]) -> Dict[str, Any]:
             "spoiler_share": t.get("spoiler_share"), "filler_rate": m.get("filler_rate"),
             "tool_edits": m.get("tool_edits"), "by_via": m.get("by_via") or {}, "by_kind_recent": by_kind,
             "arms": arms, "promoted": ls.get("promoted"), "real_queue": ls.get("real_queue"),
-            "exemplars": ls.get("exemplars")}
+            "exemplars": ls.get("exemplars"), "dup_share": m.get("dup_share"), "by_temp": m.get("by_temp") or {}}
 
 
 def commits_view(ref: Optional[str], since: str, root: Path = ROOT) -> Dict[str, Any]:
@@ -159,6 +159,10 @@ def render(doc: Dict[str, Any]) -> str:
                              for arm, n in sorted(a["pulls"].items(), key=lambda kv: -kv[1]))
             out.append(f"  arms[{kind}]: used {a['arms_used']}  entropy {a['entropy_bits']} bits  "
                        f"top share {_fmt(a['top_share'])}  | {arms}")
+        if ls.get("dup_share") is not None or ls.get("by_temp"):  # batch 8
+            out.append(f"  duplicate replies {_fmt(ls.get('dup_share'))}  kept by temperature: " + (", ".join(
+                f"T={k} {v.get('kept', 0)}/{v.get('attempts', 0)}" for k, v in sorted((ls.get('by_temp') or {}).items()))
+                or "-"))
         ex = ls.get("exemplars") or {}
         if ex and "error" not in ex:  # batch 7 (ETHER_EXEMPLARS=record|1)
             out.append(f"  exemplars[{_fmt(ex.get('mode'))}]: library {_fmt(ex.get('library'))}  shown {_fmt(ex.get('shown'))}  "

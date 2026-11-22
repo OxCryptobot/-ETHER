@@ -17,7 +17,7 @@ generate-fallback is never a pass. GTX 1650 + `qwen3.5:4b`, NUM_CTX 4096. No sec
 - 9: closes the audit's critical gaps: read-only model tools + whole-tree gate check (test-weakening route
   closed), sandboxed + scrubbed gate runs, timeout aborts, wider regression guard, worst-signal health and a
   pull-diverged detector, telemetry whitelist + 30 min throttle, planted-bug goals (off), Matrix learning
-  view, read-only dashboard, two gem bugs fixed. Details: `docs/BATCH9.md`. Flags: `docs/FLAGS.md`.
+  view, read-only dashboard, two gem bugs fixed, security-gem pre-gate (off). Details: `docs/BATCH9.md`. Flags: `docs/FLAGS.md`.
 
 ## Open owner decisions
 - Swarm vs `PRODUCT.md` ("Not this product: ... a swarm"): open; no swarm code was written.

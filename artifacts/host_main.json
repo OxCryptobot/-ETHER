@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-22T20:13:10.348164+00:00",
+  "ts": "2026-11-22T20:13:45.184653+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-22T20:13:23.739374+00:00",
+    "ts": "2026-11-22T20:13:58.544590+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-22T20:13:23.970601+00:00",
+    "ts": "2026-11-22T20:13:58.776524+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 1,
@@ -19,14 +19,14 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   045ba2fb70..edbf9ffa81  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   1a0d010c59..2c0cf7da3e  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   045ba2fb70..edbf9ffa81  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   1a0d010c59..2c0cf7da3e  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-22T20:13:20.956812+00:00",
+    "ts": "2026-11-22T20:13:55.787678+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-22T20:13:22.020083+00:00",
+    "ts": "2026-11-22T20:13:56.871671+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-22T20:13:23.590865+00:00",
+    "updated": "2026-11-22T20:13:58.421973+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -134,13 +134,13 @@
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-22T20:13:23.834920+00:00",
+    "ts": "2026-11-22T20:13:58.650134+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 225.4,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-22T20:13:23.739374+00:00",
+    "alive_ts": "2026-11-22T20:13:58.544590+00:00",
     "kept": 92,
     "last_goal": "describe_spine_state_io",
     "last_kept": true,

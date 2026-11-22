@@ -443,7 +443,7 @@ Each entry: severity · priority · eng time · difficulty; impact (labelled); l
 - **Subsystem:** 20 Competitive Gap · **Severity:** high · **Priority:** P2 · **Eng time:** n/a · **Difficulty:** high
 - **Impact:** Estimate: frontier-model agents report 60-75% on SWE-bench Verified; small local models report far lower; ETHER has no number.
 - **Likelihood:** certain
-- **Root cause:** No benchmark (W22).
+- **Root cause:** No benchmark (W20).
 - **Failure scenario:** Roadmap cannot be prioritised by gap size.
 - **Fix:** Run the micro-benchmark (I-list) with the same harness for ETHER and an Aider baseline on qwen3.5:4b.
 - **Expected improvement:** Honest gap estimate.
@@ -632,7 +632,7 @@ Each entry: severity · priority · eng time · difficulty; impact (labelled); l
 - **Likelihood:** low
 - **Root cause:** tick.lock assumed sufficient.
 - **Failure scenario:** Concurrent tick from the Actions path corrupts the index; load_index falls back and goals reset.
-- **Fix:** Atomic save, schema version, and the index in the episodic DB (W35).
+- **Fix:** Atomic save, schema version, and the index in the episodic DB (W44).
 - **Expected improvement:** No lost progress.
 - **Evidence:** `core/agent/goal_source.py:790-815,902-911`
 
@@ -786,7 +786,7 @@ Each entry: severity · priority · eng time · difficulty; impact (labelled); l
 - **Likelihood:** certain
 - **Root cause:** Artifacts are the Matrix feed.
 - **Failure scenario:** Rebase aborts and stashes pile up on the writer; root of divergence.
-- **Fix:** Untrack all but a small published set; publish via the telemetry channel (W18).
+- **Fix:** Untrack all but a small published set; publish via the telemetry channel (W17).
 - **Expected improvement:** Fewer conflicts.
 - **Evidence:** git ls-files (this audit); scripts/origin_publish.py:111-180
 
@@ -797,7 +797,7 @@ Each entry: severity · priority · eng time · difficulty; impact (labelled); l
 - **Likelihood:** medium
 - **Root cause:** Convenience.
 - **Failure scenario:** A compromised host pushes code to main.
-- **Fix:** Protect main for non-artifact paths; host pushes code to host/kept (W43).
+- **Fix:** Protect main for non-artifact paths; host pushes code to host/kept (W36).
 - **Expected improvement:** Smaller blast radius.
 - **Evidence:** scripts/origin_publish.py; .github/workflows/live-host.yml:6-7
 

@@ -211,11 +211,16 @@ def git_pull(base: Path) -> Dict[str, Any]:
             timeout=120, env=_quiet_env(base), **_run_kwargs(),
         )
         rc = p.returncode
+        err = (p.stderr or "") if rc else ""
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__, "before": before}
     after = git_head(base)
-    return {"ok": rc == 0, "rc": rc, "before": before, "after": after,
-            "moved": bool(before and after and before != after), "cleared_index_lock": cleared}
+    row = {"ok": rc == 0, "rc": rc, "before": before, "after": after,
+           "moved": bool(before and after and before != after), "cleared_index_lock": cleared}
+    if rc:
+        from scripts.host_signals import redact
+        row["err"] = redact(err.strip())[-300:]  # batch 9: say why (rc 128 alone hid a diverged clone)
+    return row
 
 
 def self_changed(base: Path, before: str, after: str) -> bool:
@@ -336,6 +341,7 @@ class Supervisor:
         max_cycles: Optional[int] = None,
         work: Optional[Callable[[Path], Optional[bool]]] = None,
         smoke: Optional[Callable[[Path], Dict[str, Any]]] = None,
+        diverge: Optional[Callable[[Path], Dict[str, Any]]] = None,
     ) -> None:
         self.base = Path(base)
         self.p = paths(self.base)
@@ -350,6 +356,11 @@ class Supervisor:
         self.max_cycles = max_cycles
         self.work = work or pass_had_work
         self.smoke = smoke or run_smoke
+        if diverge is None:
+            from scripts.host_signals import diverged as diverge
+        self.diverge = diverge
+        self.pull_failures = 0  # batch 9: consecutive failed pulls (counted toward health)
+        self.health: Dict[str, Any] = {"health": "ok", "worst": None, "signals": [], "n_bad": 0}
         self.dry = 0
         self.failures = 0
         self.cycle = 0
@@ -368,7 +379,11 @@ class Supervisor:
             "started": self.started,
             "cycle": self.cycle,
             "failures": self.failures,
-            "note": "supervisor heartbeat only; LIVE is judged from app_alive.json",
+            "pull_failures": self.pull_failures,
+            "health": self.health.get("health"),
+            "health_worst": self.health.get("worst"),
+            "health_signals": self.health.get("signals") or [],
+            "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
         }
         if extra:
             row.update(extra)
@@ -387,9 +402,47 @@ class Supervisor:
                 return
             self._sleep(min(1.0, left))
 
+    def _pull_health(self, pull: Dict[str, Any]) -> None:
+        """Batch 9: a failed pull counts; a diverged clone gets an actionable (manual) fix. No reset."""
+        from scripts.host_signals import write_diverged
+
+        if pull.get("ok", True) or pull.get("note") == "no_git":
+            self.pull_failures = 0
+            try:
+                write_diverged(self.base, None)
+            except Exception:
+                pass
+            return
+        self.pull_failures += 1
+        try:
+            info = self.diverge(self.base)
+        except Exception as exc:
+            info = {"ok": False, "error": type(exc).__name__}
+        pull["diverged"] = info
+        try:
+            write_diverged(self.base, {"pull": {k: pull.get(k) for k in ("rc", "err", "error", "before")},
+                                       "streak": self.pull_failures, **(info or {})})
+        except Exception:
+            pass
+
+    def _health(self, pull: Dict[str, Any], res: Dict[str, Any]) -> Dict[str, Any]:
+        from scripts.host_signals import host_signals, pass_signals, pull_signals, worst
+
+        sigs = pull_signals(pull, self.pull_failures) + pass_signals(res)
+        host_path = self.p["art"] / "host_main.json"
+        if host_path.is_file():
+            try:
+                host = json.loads(host_path.read_text(encoding="utf-8"))
+            except Exception:
+                host = {}
+            sigs += host_signals(host if isinstance(host, dict) else {}, base=self.base, check_age=True)
+        self.health = worst(sigs)
+        return self.health
+
     def once(self) -> Dict[str, Any]:
         self.cycle += 1
         pull = self.pull(self.base)
+        self._pull_health(pull)
         if pull.get("moved") and os.environ.get("ETHER_SMOKE", "1") != "0":
             pull.update(after_pull(self.base, pull, self.smoke))
             if (pull.get("rollback") or {}).get("ok"):
@@ -399,7 +452,8 @@ class Supervisor:
         oll = self.ollama()
         res = self.run(self.base)
         self.failures = 0 if res.get("ok") else self.failures + 1
-        row = {"cycle": self.cycle, "pull": pull, "ollama": oll, "pass": res}
+        row = {"cycle": self.cycle, "pull": pull, "ollama": oll, "pass": res,
+               "health": self._health(pull, res).get("health")}
         self.history.append(row)
         return row
 

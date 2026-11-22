@@ -290,7 +290,24 @@ def _tick(root: Path) -> Dict[str, Any]:
     return row
 
 
+def _worst(root: Path, row: Dict[str, Any]) -> None:
+    """Batch 9: host_main.json health = worst signal of this pass (never upgraded past selfcheck)."""
+    try:
+        from scripts.host_signals import LEVELS, host_signals, worst
+        w = worst(host_signals(row, base=root))
+    except Exception as exc:
+        row["health"] = "degraded"
+        row["health_worst"] = f"host_signals: {_e(exc)}"
+        return
+    have = row.get("health") if row.get("health") in LEVELS else "ok"
+    row["health"] = w["health"] if LEVELS[w["health"]] >= LEVELS[have] else have
+    row["health_worst"] = w["worst"]
+    row["health_signals"] = w["signals"]
+
+
 def _write_row(root: Path, row: Dict[str, Any]) -> None:
+    if "health_signals" not in row:
+        _worst(root, row)
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
     tmp = art / "host_main.json.tmp"

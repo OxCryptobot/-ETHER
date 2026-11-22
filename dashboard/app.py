@@ -7,14 +7,16 @@ Face: Grok Control Matrix. Hands: scripts/host_main.py under the ETHER-Host supe
 from __future__ import annotations
 
 import asyncio
+import hmac
+import os
 import re
 import shutil
 import traceback
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -25,6 +27,38 @@ PERSISTENT = ROOT / "tools" / "persistent"
 UPLOADS = ROOT / "artifacts" / "uploads"
 
 app = FastAPI(title="ETHER headless host API", version="0.8.0-retired-ui")
+
+# Batch 9 (audit W18): the retired app kept 10 unauthenticated POST routes (/api/promote,
+# /api/reconcile-tools, /api/test, /api/upload, /api/chat, ...). A web page could POST to
+# 127.0.0.1 (CSRF / DNS rebinding). The Matrix is read-only, so every write method is refused
+# unless the owner opts in for one session: ETHER_DASHBOARD_WRITE=1 and a >= 16 char
+# ETHER_DASHBOARD_TOKEN sent as the X-Ether-Token header, from a localhost Host/Origin.
+WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_LOCAL_ORIGIN = re.compile(r"^https?://(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
+
+
+def write_allowed(method: str, headers) -> bool:
+    if method.upper() not in WRITE_METHODS:
+        return True
+    if os.environ.get("ETHER_DASHBOARD_WRITE") != "1":
+        return False
+    token = os.environ.get("ETHER_DASHBOARD_TOKEN") or ""
+    if len(token) < 16 or not hmac.compare_digest(str(headers.get("x-ether-token") or ""), token):
+        return False
+    origin = headers.get("origin")
+    if origin and not _LOCAL_ORIGIN.match(str(origin)):
+        return False
+    host = str(headers.get("host") or "").rsplit(":", 1)[0].strip("[]")
+    return host in ("127.0.0.1", "localhost", "::1", "testserver")
+
+
+@app.middleware("http")
+async def _read_only(request: Request, call_next):
+    if not write_allowed(request.method, request.headers):
+        return JSONResponse({"ok": False, "error": "read_only",
+                             "note": "the Matrix is read-only; writes need ETHER_DASHBOARD_WRITE=1 + X-Ether-Token"},
+                            status_code=403)
+    return await call_next(request)
 
 if STATIC.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

@@ -39,6 +39,3 @@ def validate_job(job: Dict[str, Any]) -> Tuple[bool, List[str]]:
             except (TypeError, ValueError):
                 errors.append(f"step_{i}_timeout")
     return (len(errors) == 0), errors
-
-def describe() -> str:
-    return 'job_schema'

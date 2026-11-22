@@ -22,7 +22,7 @@ What `host.cmd restart` does: sticky stop of the ETHER-Host supervisor (graceful
 through the ETHER-Host task. `host.cmd setup` recreates/repairs the venv. `host.cmd status` prints the
 LIVE verdict (app_alive under 6h AND ollama). No window needs to stay open.
 
-- Dashboard: http://127.0.0.1:8787/agent
+- Status: the Grok Control Matrix (read-only) reads `artifacts/unison.json`, `supervisor.json` and `learning_summary.json` from origin; locally `scripts/ether_app.py` serves a read-only watch page on http://127.0.0.1:7843/. The old :8787 dashboard is retired (writes refused, batch 9).
 - Model lock: `qwen3.5:4b-q4_K_M` (GTX 1650 4GB)
 
 ## Classic symptoms (still valid)

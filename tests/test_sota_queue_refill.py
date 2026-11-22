@@ -1,11 +1,20 @@
 """SOTA queue: a failed rung must not stall the ladder; kept-but-missing edits are requeued."""
 from __future__ import annotations
 
+import pytest
+
 import json
 from pathlib import Path
 
 from core.agent.sota import lost_kept, next_goal
 
+
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
 
 def _repo(tmp_path: Path, state: dict, budget: str, kernel: dict | None = None) -> Path:
     (tmp_path / "artifacts").mkdir()

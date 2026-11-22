@@ -1,0 +1,60 @@
+{
+ "summary": {
+  "mode": "fn_only",
+  "goals": 4,
+  "ticks": 1,
+  "kept": 1,
+  "rejected": 1,
+  "notes": [
+   "tests failed"
+  ],
+  "argv_hole_closed": false,
+  "plan_restored": true,
+  "files_failing_after": [
+   "tests/test_kernel_phase7.py::test_argv_is_only_the_edit_or_pytest"
+  ],
+  "max_prompt_chars": 3377,
+  "secs": 22.4
+ },
+ "goals": {
+  "fix_test_argv_is_only_the_edit_or_pytest": {
+   "file": "core/kernel/argv_allow.py",
+   "symbol": "argv_allowed",
+   "via": "test_import",
+   "nodeid": "tests/test_kernel_phase7.py::test_argv_is_only_the_edit_or_pytest"
+  },
+  "fix_test_heartbeat_plan_follows_the_graph": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_heartbeat_plan_follows_the_graph"
+  },
+  "fix_test_heartbeat_plan_full_contract": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_heartbeat_plan_full_contract"
+  },
+  "fix_test_stale_plan_does_not_edit": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_stale_plan_does_not_edit"
+  }
+ },
+ "rows": [
+  {
+   "goal": "fix_test_argv_is_only_the_edit_or_pytest",
+   "tried": [
+    "fix_test_heartbeat_plan_follows_the_graph",
+    "fix_test_argv_is_only_the_edit_or_pytest"
+   ],
+   "ok": false,
+   "note": "tests failed",
+   "regressions": 0,
+   "kept_n": 1,
+   "siblings_failing": 0,
+   "file": "core/kernel/argv_allow.py"
+  }
+ ]
+}

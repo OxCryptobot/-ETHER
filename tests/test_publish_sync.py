@@ -182,9 +182,15 @@ def test_heartbeat_publishes_before_slow_work() -> None:
     tick = Path("scripts/host_main.py").read_text(encoding="utf-8")
     assert "already_actions_runner" in tick
     actions = tick.split('GITHUB_ACTIONS") == "true"', 1)[1].split("else:", 1)[0]
-    assert "core.kernel.agent" in actions
+    # Batch 3: the Actions branch runs the same learner as the host (_learn ->
+    # core.agent.sota); core.kernel.agent was retired with the one start path.
+    assert "_learn(root, row)" in actions
+    assert "core.kernel.agent" not in actions
     assert "start_ollama" not in actions
-    assert "self_heal" not in actions
+    # self_heal.arm is allowed here since 684bfbc9c (2026-10-10, "arm a hidden watch
+    # that restarts the runner"); the Actions tick still starts no ollama, no runner,
+    # no keepalive and drains nothing.
+    assert "start_runner" not in actions and "ensure_keepalive" not in actions
     assert "drain_live" not in actions
 
 

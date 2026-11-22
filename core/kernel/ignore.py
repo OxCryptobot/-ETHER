@@ -7,6 +7,3 @@ SKIP = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "dist"
 def ignored(path: Path | str) -> bool:
     parts = Path(str(path)).parts
     return any(p in SKIP for p in parts)
-
-def describe() -> str:
-    return 'ignore'

@@ -97,6 +97,20 @@ Options 3 and 4 trigger the same ETHER-Host task. They are switches, not extra w
 - A stale `.git\index.lock` (over 10 min old) is removed before each pull.
 - There is no `git reset --hard` in host_main. `sync_writer` rebases and keeps unpublished kept edits.
 
+## Cadence and publish (batch 2)
+
+- Empty queue: the supervisor backs off 60 s, 120 s, 240 s ... up to
+  `ETHER_IDLE_MAX_S` (900 s) instead of re-running a pass every 12 s.
+  `artifacts/supervisor.json` shows `state: idle` and `dry_streak`.
+- Heartbeat-only publishes go out at most every `ETHER_PUBLISH_MIN_S` (300 s).
+  A kept edit (a dirty code path in the publish set) is pushed at once.
+  Before batch 2 the host pushed a commit roughly every 20 s (116 commits
+  17:13-17:51 ET on 2026-11-19).
+- The worktree publish never copies a code file over a newer origin/main
+  version (`skipped_code` in `git_push.json`); this used to revert real fixes.
+- The supervisor reloads itself when `scripts/host_supervisor.py` changes on
+  pull, so batch 2 needs no reinstall.
+
 ## Verified on Linux vs needs the 1650
 
 Verified on Linux (pytest):

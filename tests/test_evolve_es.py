@@ -10,6 +10,13 @@ import pytest
 from core.agent import evolve_es, outcome
 
 
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
+
 def test_snips_matches_hand_math() -> None:
     data = [("b", "x", 0.5, 1.0), ("b", "y", 0.5, 0.0)]
     value, ess = evolve_es.snips({"b": {"x": 1.0, "y": 0.0}}, data)

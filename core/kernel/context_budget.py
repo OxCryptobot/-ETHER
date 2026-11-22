@@ -67,8 +67,6 @@ def same_count(text: str) -> bool:
     from core.kernel.context_budget import packed_count, file_count
     return packed_count(text) == file_count(text)
 
-def describe() -> str:
-    return 'context_budget'
 
 def within_budget(text: str) -> bool:
     from core.kernel.context_budget import fits
@@ -82,8 +80,6 @@ def room_left(text: str) -> int:
     from core.kernel.context_budget import budget_of
     return budget_of(8192) - len(text or '')
 
-def fits_name() -> str:
-    return 'fits'
 
 def budget_status(text: str) -> dict:
     from core.kernel.context_budget import is_over, room_left
@@ -122,12 +118,3 @@ def slice_to_budget(text: str, query: str = "", cap: int | None = None) -> str:
         if kept:
             return "\n".join(kept)
     return body[:limit]
-
-def add_name() -> str:
-    return 'add'
-
-def failing_test() -> str:
-    return 'found'
-
-def clamp_name() -> str:
-    return 'clamp'

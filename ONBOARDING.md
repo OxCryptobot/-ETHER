@@ -178,7 +178,7 @@ $env:ETHER_GIT_RESET_OK = "1"
 scripts\host.cmd start
 ```
 
-Dashboard: http://127.0.0.1:8787
+Status: the Grok Control Matrix (read-only) reads `artifacts/unison.json`, `supervisor.json` and `learning_summary.json` from origin; locally `scripts/ether_app.py` serves a read-only watch page on http://127.0.0.1:7843/. The old :8787 dashboard is retired (writes refused, batch 9).
 
 ---
 

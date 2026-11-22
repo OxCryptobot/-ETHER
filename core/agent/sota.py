@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List
@@ -143,6 +144,8 @@ def generate(root: Path, done: set, failed: set) -> Dict[str, str] | None:
 
 def seed_depth(root: Path) -> int:
     """How many repo-state goals generate() can still hand out (for host_main.json)."""
+    if not legacy_allowed():
+        return 0
     state = load(root)
     done = {str(item) for item in (state.get("goals") or [])}
     failed = {str(item) for item in (state.get("skipped") or [])}
@@ -195,7 +198,11 @@ def lost_kept(root: Path, state: Dict[str, Any] | None = None) -> List[str]:
     """
     state = state if state is not None else load(root)
     lost: List[str] = []
+    from core.agent.goal_quality import filler_id
+
     for goal_id in [str(item) for item in (state.get("goals") or [])]:
+        if filler_id(goal_id) and not legacy_allowed():
+            continue  # retired filler is never requeued (it would re-add junk)
         site = goal_site(goal_id)
         if site is None:
             continue
@@ -217,7 +224,38 @@ def _requeue(root: Path, goal_id: str) -> Dict[str, str] | None:
     return None
 
 
-def next_goal(root: Path) -> Dict[str, str] | None:
+def legacy_allowed() -> bool:
+    """The fixed list, the learn.py ladder and describe() seeding. Every one of their
+    prompts holds the answer (spoiler) or their test checks a constant, so with the
+    goal-quality guard on (default) they are retired. ETHER_SOTA_LEGACY=1 brings them back."""
+    from core.agent.goal_quality import guard_enabled
+
+    return os.getenv("ETHER_SOTA_LEGACY") == "1" or not guard_enabled()
+
+
+def next_goal(root: Path, skip: Any = ()) -> Dict[str, Any] | None:
+    """Real goals (failing tests, lint) first, then refactors (flag), then legacy (flag)."""
+    from core.agent import goal_source
+
+    if goal_source.enabled():
+        real = goal_source.next_real(root, skip=skip)
+        if real is not None:
+            return real
+    try:
+        from core.agent import refactor
+
+        if refactor.enabled():
+            item = refactor.next_refactor(root, skip=skip)
+            if item is not None:
+                return item
+    except Exception:
+        pass
+    if not legacy_allowed():
+        return None
+    return legacy_next_goal(root)
+
+
+def legacy_next_goal(root: Path) -> Dict[str, str] | None:
     state = load(root)
     lost = set(lost_kept(root, state))
     done = {str(item) for item in (state.get("goals") or [])} - lost
@@ -316,13 +354,19 @@ _INFRA_ERRORS = (ConnectionError, TimeoutError, OSError)
 def _guard(ask: Callable[..., str], seen: Dict[str, str]) -> Callable[..., str]:
     """Record an infra outage. An outage is not a lesson and must not skip a goal."""
 
-    def wrapped(prompt: str, n: int = 240) -> str:
+    def wrapped(prompt: str, n: int = 240, **kw: Any) -> str:
         try:
-            return ask(prompt, n=n)
+            return ask(prompt, n=n, **kw)
         except _INFRA_ERRORS as exc:
             seen.setdefault("error", type(exc).__name__)
             raise
 
+    try:
+        from core.agent.sampling import accepts_temperature
+
+        wrapped.accepts_temperature = accepts_temperature(ask)  # type: ignore[attr-defined]
+    except Exception:
+        wrapped.accepts_temperature = False  # type: ignore[attr-defined]
     return wrapped
 
 
@@ -336,32 +380,342 @@ def _infra(goal: Dict[str, str], seen: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
-def _one(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
+def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
     """One attempt. The honest gate's outcome trains the existing bandit."""
+    try:
+        goal = next_goal(root, skip=skip)
+    except Exception:
+        goal = None
+    if goal is None:
+        from core.agent import planted
+
+        if planted.enabled():  # batch 9: real pool dry -> one validated planted bug, scratch copy only
+            return planted.attempt(root, ask)
     try:
         from core.agent.outcome import choose, record
 
-        pick = choose(root)
+        pick = choose(root, goal=goal)
     except Exception:
         pick = None
-    result = _attempt(root, ask, pick)
+    t0 = time.monotonic()
+    result = _attempt(root, ask, pick, skip, goal=goal)
+    if pick is not None:
+        pick.trace["secs"] = round(time.monotonic() - t0, 2)  # wall time: guard runs + model calls
     if pick is not None and result.get("note") != "queue empty":
         try:
             row = record(root, pick, result)
-            result["learn"] = {"arm": pick.arm, "kind": row.get("kind"), "reward": row.get("reward"),
-                               "promote": row.get("promote")}
+            result["learn"] = {"arm": pick.arm, "bucket": pick.bucket, "kind": row.get("kind"),
+                               "reward": row.get("reward"), "promote": row.get("promote")}
         except Exception as exc:
             result["learn_error"] = type(exc).__name__
     return result
 
 
-def _attempt(root: Path, ask: Callable[..., str], pick: Any = None) -> Dict[str, Any]:
+def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pick: Any,
+                  seen: Dict[str, str]) -> Dict[str, Any]:
+    """Failing test / lint goal. Unspoiled prompt, tool edit, target + regression gate."""
+    from core.agent import goal_source as gs
+    from core.agent.goal_quality import check
+
+    trace: Dict[str, Any] = pick.trace if pick is not None else {}
+    root = Path(root)
+    base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"]}
+    if goal["kind"] == "fix_test" and (goal.get("targets") or goal.get("alt_targets")):
+        from core.agent import multi_edit
+
+        if multi_edit.enabled():
+            tries_so_far = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
+            places = multi_edit.trim_to_fit(root, goal, multi_edit.targets_of(goal, tries_so_far))
+            if places:
+                return _attempt_multi(root, ask, goal, pick, seen, places)
+            if goal.get("targets"):
+                gs.mark(root, goal["id"], kept=False)
+                return {**base, "ok": False, "honest": True, "note": "rejected: places exceed the reply cap"}
+        elif goal.get("targets"):
+            return {**base, "ok": False, "honest": True, "note": "multi goal: ETHER_MULTI_EDIT off"}
+    suite = gs.guard_suite(root, goal)
+    before = gs.run_pytest(root, suite)
+    baseline = before["status"]
+    aborted = gs.baseline_abort(before)
+    if aborted:
+        # batch 9 (W6): an empty or timed-out baseline used to switch the regression check off
+        # (regressions({}, after) == []). Abort instead: reward 0, nothing kept, no model call.
+        gs.mark(root, goal["id"], kept=False)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
+    if goal["kind"] == "fix_test" and baseline.get(goal["nodeid"]) == "pass":
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
+    if goal["kind"] == "lint" and gs.lint_clear(root, goal):
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "lint_clear"}
+    try:
+        from core.agent.bandit import factored_behaviour
+        from core.learning import arm_behaviour
+
+        behaviour = (factored_behaviour(pick.arm) or arm_behaviour(pick.arm)) if pick is not None else None
+        if pick is not None and pick.arm == "exemplar":
+            from core.agent import exemplars
+
+            behaviour = exemplars.behaviour()
+    except Exception:
+        behaviour = None
+    shown: List[Dict[str, Any]] = []
+    if getattr(behaviour, "use_exemplars", False):
+        try:
+            from core.agent import exemplars
+
+            shown = exemplars.retrieve(root, goal, k=1)
+        except Exception:
+            shown = []
+    try:
+        from core.agent.bandit import tries_for
+
+        tries = tries_for(pick.arm) if pick is not None else 1
+    except Exception:
+        tries = 2 if (pick is not None and pick.arm == "repair_heavy") else 1
+    feedback = ""
+    last: Dict[str, Any] = {}
+    trace["spoiler"] = False
+    from core.agent import sampling
+
+    tries_before = int((gs.load_index(root).get("tries") or {}).get(goal["id"], 0))
+    from core.agent.tree_guard import TreeGuard
+    from core.agent import pillars
+
+    tree = TreeGuard(root).begin()  # batch 9: every path the attempt touches is checked and restored
+    for i in range(tries):
+        prompt = gs.build_prompt(root, goal, behaviour, feedback=feedback, exemplar=shown)
+        if shown and gs.EXEMPLAR_HEAD in prompt:
+            trace["exemplar"] = shown[0].get("id")
+        try:
+            current = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            current = ""
+        q = check(goal, prompt, current)
+        trace["spoiler"] = trace["spoiler"] or "spoiler" in q["reasons"]
+        trace["prompt_chars"] = len(prompt)
+        if not q["ok"]:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: " + ",".join(q["reasons"])}
+        try:
+            from core.agent.react import react
+
+            n_reply = gs.reply_tokens(root, goal)
+            trace["reply_cap"] = n_reply
+            temp = sampling.temp_for(tries_before + i)  # 0.0 unless ETHER_SAMPLE_TEMP is set
+            ask_i = sampling.with_temp(ask, temp)
+            trace["temp"] = temp if ask_i is not ask else 0.0
+            row = react(ask_i, root, prompt, turns=2, n=n_reply)
+            text = row.get("text") or ""
+            trace["tools"] = ["search"] if row.get("used") else []
+        except Exception as exc:
+            if seen:
+                return _infra(goal, seen)
+            return {**base, "ok": False, "honest": False, "error": str(exc)[:200]}
+        if seen and not text.strip():
+            return _infra(goal, seen)
+        trace["reply"] = text[-200:]
+        edit = gs.extract_edit(text, goal)
+        if not edit["function"] and not edit["assigns"] and not edit.get("span"):
+            want = ("`%s = ...`" if goal.get("symbol_kind") == "assign" else "complete function `def %s`")
+            feedback = "no " + want % goal["symbol"].split(".")[-1] + " in the reply"
+            if goal.get("span"):
+                feedback = "no replacement lines for the marked window in the reply"
+            last = {**base, "ok": False, "honest": False, "note": "no function"}
+            continue
+        trace["reply_hash"] = sampling.edit_hash(edit)
+        trace["file_hash"] = sampling.file_hash(current, baseline)
+        if sampling.dedup_on() and sampling.reverted_before(root, goal["id"], trace["reply_hash"], trace["file_hash"]):
+            # the gate already reverted this exact edit on this exact file: reuse its verdict, skip the run
+            trace["dedup_skipped"] = True
+            feedback = "your reply repeated an edit that already failed the tests; write a different fix"
+            last = {**base, "ok": False, "honest": False, "note": "duplicate reply"}
+            continue
+        applied = gs.apply_edit(root, goal, edit)
+        trace["edit_assigns"] = len(applied.get("assigns") or [])
+        if not applied.get("ok"):
+            feedback = str(applied.get("reason"))
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
+            continue
+        if pillars.pregate_on():
+            try:
+                after_text = (root / goal["file"]).read_text(encoding="utf-8")
+            except OSError:
+                after_text = ""
+            pg = pillars.pregate(applied.get("original") or "", after_text)
+            trace["pregate"] = pg
+            if not pg["ok"]:
+                # batch 9 item 9: the security gem rejects before the gate runs; nothing is kept
+                tree.restore()
+                feedback = "the edit adds " + ", ".join(pg["added"]) + "; fix the function without it"
+                last = {**base, "ok": False, "honest": False, "note": "gem blocked: " + ", ".join(pg["added"])}
+                continue
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
+        touched = tree.violations([goal["file"]])
+        if touched:
+            # batch 9 (W1): a diff outside the goal file (tests/ always) is never kept, whatever the tests say
+            verdict = {**verdict, "ok": False, "outside": touched}
+        if verdict["ok"]:
+            try:
+                from core.agent import exemplars
+
+                if exemplars.recording():
+                    after = (root / goal["file"]).read_text(encoding="utf-8", errors="ignore")
+                    exemplars.record_kept(root, goal, applied["original"], after, verdict)
+                    if trace.get("exemplar"):
+                        exemplars.note_use(root, str(trace["exemplar"]))
+            except Exception as exc:
+                trace["exemplar_error"] = type(exc).__name__
+            gs.mark(root, goal["id"], kept=True)
+            for sib in [g for g in gs.load_index(root)["goals"].values()
+                        if g.get("nodeid") in set(gs.siblings(root, goal))]:
+                gs.mark(root, sib["id"], kept=True)  # resolved by the same edit
+            remember(root, goal["id"], "tests passed, 0 regressions" + (" via tool" if trace.get("tools") else ""),
+                     kept=True, file=goal["file"])
+            return {**base, "ok": True, "honest": True, "tests_ok": True, "regressions": 0,
+                    "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
+                    "suite_n": verdict["suite_n"], "checked": True}
+        revert(root, goal["file"], applied["original"])
+        restored = tree.restore()  # batch 9: ALL touched paths, not only goal['file']
+        feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
+        note = "regression" if verdict["n_regressions"] else (
+            "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        if verdict.get("outside"):
+            note = "rejected: touched " + ", ".join(verdict["outside"][:3])
+            feedback = "edit only the target function in " + goal["file"]
+        elif verdict.get("abort"):
+            note = "gate aborted: " + str(verdict["abort"])
+        last = {**base, "ok": False, "honest": False, "note": note,
+                "regressions": verdict["n_regressions"], "siblings_failing": len(verdict.get("siblings_failing") or [])}
+        if restored:
+            last["restored"] = restored
+        if verdict.get("outside"):
+            last["outside"] = verdict["outside"][:10]
+    gs.mark(root, goal["id"], kept=False)
+    remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
+    return last
+
+
+def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pick: Any,
+                   seen: Dict[str, str], places: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Batch 5 (ETHER_MULTI_EDIT=1): 2-3 places in one FileTx; target + siblings + regression gate."""
+    from core.agent import goal_source as gs
+    from core.agent import multi_edit
+    from core.agent.goal_quality import check
+
+    trace: Dict[str, Any] = pick.trace if pick is not None else {}
+    base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"], "multi": len(places)}
+    suite = multi_edit.guard_suite(root, goal, places)
+    before = gs.run_pytest(root, suite)
+    baseline = before["status"]
+    aborted = gs.baseline_abort(before)
+    if aborted:
+        gs.mark(root, goal["id"], kept=False)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
+    if baseline.get(goal["nodeid"]) == "pass":
+        gs.mark(root, goal["id"], kept=True)
+        return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
+    try:
+        from core.agent.bandit import factored_behaviour, tries_for
+        from core.learning import arm_behaviour
+
+        behaviour = (factored_behaviour(pick.arm) or arm_behaviour(pick.arm)) if pick is not None else None
+        tries = tries_for(pick.arm) if pick is not None else 1
+    except Exception:
+        behaviour, tries = None, 1
+    feedback = ""
+    last: Dict[str, Any] = {**base, "ok": False, "honest": False, "note": "no edit"}
+    trace["spoiler"] = False
+    trace["multi"] = len(places)
+    from core.agent.tree_guard import TreeGuard
+
+    tree = TreeGuard(root).begin()  # batch 9
+    for i in range(tries):
+        prompt, kept_places = multi_edit.build_prompt(root, goal, places, behaviour, feedback=feedback)
+        if not prompt:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: places do not fit the context"}
+        current = "\n".join((root / t["file"]).read_text(encoding="utf-8", errors="ignore")
+                            for t in kept_places if (root / t["file"]).is_file())
+        q = check(goal, prompt, current)
+        trace["spoiler"] = trace["spoiler"] or "spoiler" in q["reasons"]
+        trace["prompt_chars"] = len(prompt)
+        if not q["ok"]:
+            gs.mark(root, goal["id"], kept=False)
+            return {**base, "ok": False, "honest": True, "note": "rejected: " + ",".join(q["reasons"])}
+        try:
+            from core.agent.react import react
+
+            n_reply = min(gs.reply_max(), max(gs.REPLY_MIN, multi_edit.reply_tokens(root, kept_places)))
+            trace["reply_cap"] = n_reply
+            row = react(ask, root, prompt, turns=2, n=n_reply)
+            text = row.get("text") or ""
+            trace["tools"] = ["search"] if row.get("used") else []
+        except Exception as exc:
+            if seen:
+                return _infra(goal, seen)
+            return {**base, "ok": False, "honest": False, "error": str(exc)[:200]}
+        if seen and not text.strip():
+            return _infra(goal, seen)
+        trace["reply"] = text[-200:]
+        edits, why = multi_edit.extract(text, kept_places)
+        if not edits:
+            feedback = why
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + why}
+            continue
+        applied = multi_edit.apply(root, edits)
+        if not applied.get("ok"):
+            feedback = str(applied.get("reason"))
+            last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
+            continue
+        tx = applied["tx"]
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
+        touched = tree.violations(applied["files"])
+        if touched:
+            verdict = {**verdict, "ok": False, "outside": touched}
+        if verdict["ok"]:
+            tx.commit()
+            gs.mark(root, goal["id"], kept=True)
+            for sib in [g for g in gs.load_index(root)["goals"].values()
+                        if g.get("nodeid") in set(gs.siblings(root, goal))]:
+                gs.mark(root, sib["id"], kept=True)
+            for rel in applied["files"]:
+                remember(root, goal["id"], f"tests passed, 0 regressions, {len(applied['files'])} files",
+                         kept=True, file=rel)
+            return {**base, "ok": True, "honest": True, "tests_ok": True, "regressions": 0,
+                    "tx": ["read", "edit", "test", "guard", "promote"], "attempt": i + 1,
+                    "files": applied["files"], "suite_n": verdict["suite_n"], "checked": True}
+        tx.revert()
+        restored = tree.restore()
+        feedback = ("regressed: " + ", ".join(verdict["regressions"][:3])) if verdict["n_regressions"] else verdict["tail"]
+        note = "regression" if verdict["n_regressions"] else (
+            "siblings failed" if verdict.get("target_pass") and verdict.get("siblings_failing") else "tests failed")
+        if verdict.get("outside"):
+            note = "rejected: touched " + ", ".join(verdict["outside"][:3])
+        elif verdict.get("abort"):
+            note = "gate aborted: " + str(verdict["abort"])
+        last = {**base, "ok": False, "honest": False, "note": note, "regressions": verdict["n_regressions"],
+                "reverted": sorted(set(applied["files"]) | set(restored))}
+    gs.mark(root, goal["id"], kept=False)
+    remember(root, goal["id"], str(last.get("note") or "tests failed"), kept=False)
+    return last
+
+
+def _attempt(root: Path, ask: Callable[..., str], pick: Any = None, skip: Any = (),
+             goal: Any = None) -> Dict[str, Any]:
     trace: Dict[str, Any] = pick.trace if pick is not None else {}
     seen: Dict[str, str] = {}
     ask = _guard(ask, seen)
-    goal = next_goal(root)
+    if goal is None:
+        goal = next_goal(root, skip=skip)
     if goal is None:
         return {"ok": False, "honest": True, "note": "queue empty"}
+    if goal.get("kind") in ("fix_test", "lint"):
+        return _attempt_real(root, ask, goal, pick, seen)
+    if goal.get("kind") == "refactor":
+        from core.agent import refactor
+
+        return refactor.attempt(root, goal, pick)
     path = Path(root) / goal["file"]
     original = path.read_text(encoding="utf-8") if path.is_file() else ""
     from core.agent.skills import route
@@ -485,23 +839,71 @@ def _attempt(root: Path, ask: Callable[..., str], pick: Any = None) -> Dict[str,
 
 
 def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
-    """Adaptive batch. Grows when the last tick kept several. Stops on the first miss."""
+    """Adaptive batch. Real goals: at most ETHER_REAL_PER_TICK attempts, a miss moves on.
+    Legacy goals keep the old rule (stop on the first miss)."""
     from core.agent.learn import batch_size
 
     root = Path(root)
+    scanned = _maybe_scan(root)
     size = batch_size(root)
+    real_cap = int(os.getenv("ETHER_REAL_PER_TICK", "2"))
     kept: List[str] = []
+    tried: List[str] = []
+    real = 0
     last: Dict[str, Any] = {"ok": False, "honest": True, "note": "none"}
     for _ in range(size):
-        last = _one(root, ask)
+        row = _one(root, ask, skip=tried)
+        if row.get("note") == "queue empty" and tried:
+            break  # keep the last real attempt as the tick's result
+        last = row
+        gid = str(last.get("goal") or "")
+        if gid:
+            tried.append(gid)
+        if last.get("kind") in ("fix_test", "lint", "refactor") and last.get("note") != "already present":
+            real += 1
         if last.get("ok"):
-            kept.append(str(last.get("goal") or ""))
+            if last.get("note") != "already present":
+                kept.append(gid)
+            if real >= real_cap:
+                break
             continue
-        break
+        if last.get("infra") or last.get("note") == "queue empty" or not last.get("kind") or real >= real_cap:
+            break
     last["batch"] = kept
+    last["tried"] = tried
     last["kept_n"] = len(kept)
     last["batch_size"] = size
+    if scanned:
+        last["scan"] = scanned
     state = load(root)
     state["kept_n"] = len(kept)
     save(root, state)
     return last
+
+
+SCAN_EVERY_S = int(os.getenv("ETHER_GOAL_SCAN_S", "900"))
+
+
+def _maybe_scan(root: Path) -> Dict[str, Any] | None:
+    """Refresh one shard of the failing-test index when it is stale or the queue is dry."""
+    from core.agent import goal_source as gs
+
+    if not gs.enabled() or os.getenv("ETHER_GOAL_SCAN", "1") == "0":
+        return None
+    data = gs.load_index(root)
+    stale = True
+    try:
+        ts = datetime.fromisoformat(str(data.get("scan_ts")))
+        stale = (datetime.now(timezone.utc) - ts).total_seconds() > SCAN_EVERY_S
+    except Exception:
+        pass
+    if not stale and gs.next_real(root) is not None:
+        return None
+    try:
+        row = gs.scan(root, n_files=int(os.getenv("ETHER_GOAL_SCAN_FILES", "8")))
+        data = gs.load_index(root)
+        data["scan_ts"] = datetime.now(timezone.utc).isoformat()
+        gs.save_index(root, data)
+        return row
+    except Exception as exc:
+        return {"ok": False, "error": type(exc).__name__}

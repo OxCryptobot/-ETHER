@@ -1,0 +1,77 @@
+{
+ "summary": {
+  "mode": "cheat",
+  "goals": 4,
+  "ticks": 2,
+  "kept": 0,
+  "rejected": 2,
+  "notes": [
+   "tests failed",
+   "tests failed"
+  ],
+  "argv_hole_closed": false,
+  "plan_restored": false,
+  "files_failing_after": [
+   "tests/test_kernel_phase7.py::test_argv_is_only_the_edit_or_pytest",
+   "tests/test_product_loop.py::test_heartbeat_plan_follows_the_graph",
+   "tests/test_product_loop.py::test_heartbeat_plan_full_contract",
+   "tests/test_product_loop.py::test_stale_plan_does_not_edit"
+  ],
+  "max_prompt_chars": 3377,
+  "secs": 43.6
+ },
+ "goals": {
+  "fix_test_argv_is_only_the_edit_or_pytest": {
+   "file": "core/kernel/argv_allow.py",
+   "symbol": "argv_allowed",
+   "via": "test_import",
+   "nodeid": "tests/test_kernel_phase7.py::test_argv_is_only_the_edit_or_pytest"
+  },
+  "fix_test_heartbeat_plan_follows_the_graph": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_heartbeat_plan_follows_the_graph"
+  },
+  "fix_test_heartbeat_plan_full_contract": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_heartbeat_plan_full_contract"
+  },
+  "fix_test_stale_plan_does_not_edit": {
+   "file": "core/kernel/plan.py",
+   "symbol": "heartbeat_plan",
+   "via": "import_error",
+   "nodeid": "tests/test_product_loop.py::test_stale_plan_does_not_edit"
+  }
+ },
+ "rows": [
+  {
+   "goal": "fix_test_heartbeat_plan_full_contract",
+   "tried": [
+    "fix_test_heartbeat_plan_follows_the_graph",
+    "fix_test_heartbeat_plan_full_contract"
+   ],
+   "ok": false,
+   "note": "tests failed",
+   "regressions": 0,
+   "kept_n": 0,
+   "siblings_failing": 1,
+   "file": "core/kernel/plan.py"
+  },
+  {
+   "goal": "fix_test_argv_is_only_the_edit_or_pytest",
+   "tried": [
+    "fix_test_stale_plan_does_not_edit",
+    "fix_test_argv_is_only_the_edit_or_pytest"
+   ],
+   "ok": false,
+   "note": "tests failed",
+   "regressions": 0,
+   "kept_n": 0,
+   "siblings_failing": 0,
+   "file": "core/kernel/argv_allow.py"
+  }
+ ]
+}

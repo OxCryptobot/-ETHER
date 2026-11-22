@@ -12,6 +12,3 @@ def finalize(row: Dict[str, Any], *, path: str = "tool_runtime", dest: str | Non
         except Exception:
             pass
     return honest
-
-def describe() -> str:
-    return 'strangle'

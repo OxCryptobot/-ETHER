@@ -1,0 +1,27 @@
+{
+ "before": {
+  "tests": 1848,
+  "pass": 1692,
+  "fail": 73,
+  "skip": 83
+ },
+ "after": {
+  "tests": 1935,
+  "pass": 1778,
+  "fail": 74,
+  "skip": 83
+ },
+ "new_failures": [
+  "tests.test_gem_contracts::test_grandidierite_generate_scaffolds_into_quarantine",
+  "tests.test_gem_contracts::test_rose_quartz_stream_empty_content_is_an_error"
+ ],
+ "new_failures_are_deliberate_real_bug_tests": true,
+ "fixed": [
+  "tests.test_batch5::test_new_module_goal_creates_a_small_file_and_reverts_a_wrong_one"
+ ],
+ "new_tests": 87,
+ "removed_tests": [],
+ "dirty_paths_after": 0,
+ "cmd": "pytest tests -q -p no:cacheprovider",
+ "secs_after": 302
+}

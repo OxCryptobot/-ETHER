@@ -25,6 +25,3 @@ def snapshot() -> dict:
         "remaining": list(REMAINING_PRODUCT),
         "blocker": "run scripts\\install_host.cmd once on the 1650 so ETHER-Host keeps host_main + ollama up",
     }
-
-def describe() -> str:
-    return 'progress'

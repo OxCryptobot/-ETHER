@@ -1,0 +1,142 @@
+{
+ "source": "docs/results/batch6/topology6.py",
+ "ts": "2026-11-21T12:49:54-0500",
+ "before": {
+  "d1_new": 18,
+  "d1_line_drift": 10,
+  "d1_truly_new": [
+   "gems/clear_quartz/sandbox.py:150 core.multifile",
+   "gems/clear_quartz/sandbox.py:323 core.repo_oracle",
+   "gems/grandidierite/fabricate.py:226 core.tool_reconcile",
+   "gems/grandidierite/fabricate.py:247 core.patterns",
+   "gems/rose_quartz/router.py:106 core.model_select",
+   "gems/rose_quartz/router.py:134 core.model_router",
+   "gems/selenite/planner.py:183 core.loop.fix_dag",
+   "gems/selenite/planner.py:86 core.memory_bus"
+  ],
+  "d2_new": 20,
+  "d2_hard": 14,
+  "d3_unparsable": [
+   "scripts/_cq_multifile_snip.py",
+   "scripts/_obs_snippet.py"
+  ],
+  "d3_new_sites": [
+   "core/memory_stack.py:47",
+   "core/playbook_limiter.py:30",
+   "core/queue_governor.py:39",
+   "gems/rose_quartz/burst.py:47",
+   "scripts/foreman.py:193",
+   "scripts/foreman.py:196"
+  ]
+ },
+ "before_failing": [
+  "tests/test_topology.py::test_d1_gems_do_not_import_core_beyond_leaf_contracts",
+  "tests/test_topology.py::test_d2_core_does_not_import_gems",
+  "tests/test_topology.py::test_d2_hard_zero_new_layers",
+  "tests/test_topology.py::test_d3_no_new_state_writers",
+  "tests/test_topology.py::test_new_modules_importable"
+ ],
+ "attempts": [
+  {
+   "strategy": "dedent_snippet",
+   "file": "scripts/_cq_multifile_snip.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 20,
+   "secs": 10.6
+  },
+  {
+   "strategy": "dedent_snippet",
+   "file": "scripts/_obs_snippet.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 20,
+   "secs": 10.3
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/autonomy.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 72,
+   "secs": 11.1
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/curriculum.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 333,
+   "secs": 13.4
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/fail_streak.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 55,
+   "secs": 11.4
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/failure_graph.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 20,
+   "secs": 10.6
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/memory_stack.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 25,
+   "secs": 11.7
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/playbook_limiter.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 29,
+   "secs": 11.5
+  },
+  {
+   "strategy": "state_writer",
+   "file": "core/queue_governor.py",
+   "kept": true,
+   "note": null,
+   "suite_n": 40,
+   "secs": 38.2
+  }
+ ],
+ "after": {
+  "d1_new": 18,
+  "d1_line_drift": 10,
+  "d1_truly_new": [
+   "gems/clear_quartz/sandbox.py:150 core.multifile",
+   "gems/clear_quartz/sandbox.py:323 core.repo_oracle",
+   "gems/grandidierite/fabricate.py:226 core.tool_reconcile",
+   "gems/grandidierite/fabricate.py:247 core.patterns",
+   "gems/rose_quartz/router.py:106 core.model_select",
+   "gems/rose_quartz/router.py:134 core.model_router",
+   "gems/selenite/planner.py:183 core.loop.fix_dag",
+   "gems/selenite/planner.py:86 core.memory_bus"
+  ],
+  "d2_new": 20,
+  "d2_hard": 14,
+  "d3_unparsable": [],
+  "d3_new_sites": [
+   "gems/rose_quartz/burst.py:47",
+   "scripts/foreman.py:193",
+   "scripts/foreman.py:196"
+  ]
+ },
+ "after_failing": [
+  "tests/test_topology.py::test_d1_gems_do_not_import_core_beyond_leaf_contracts",
+  "tests/test_topology.py::test_d2_core_does_not_import_gems",
+  "tests/test_topology.py::test_d2_hard_zero_new_layers",
+  "tests/test_topology.py::test_d3_no_new_state_writers",
+  "tests/test_topology.py::test_new_modules_importable"
+ ]
+}

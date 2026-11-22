@@ -108,3 +108,87 @@ def isolate_persistent_state(monkeypatch, tmp_path):
         yield
     finally:
         shutil.rmtree(sandbox_root, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# Batch 2: a test run must leave the live state exactly as it found it.
+# A full `pytest tests` used to leave 156 dirty paths under artifacts/ (chat
+# files, critiques, KPI json, a 100 MB log append). On the 1650 the honest gate
+# runs pytest inside the live checkout, so those writes landed in the next
+# publish. Snapshot artifacts/ and memory/ at session start; at the end restore
+# changed files, delete new ones, and truncate append-only big files.
+_SANDBOX_DIRS = ("artifacts", "memory")
+_BIG = 1 << 20
+
+
+def _walk(base: Path):
+    for p in base.rglob("*"):
+        if p.is_file() and ".git" not in p.parts:
+            yield p
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _live_state_sandbox(tmp_path_factory):
+    import os
+    import shutil
+
+    if os.environ.get("ETHER_TEST_KEEP_ARTIFACTS") == "1":
+        yield
+        return
+    backup = tmp_path_factory.mktemp("live_state")
+    seen = {}
+    for name in _SANDBOX_DIRS:
+        base = ROOT / name
+        if not base.is_dir():
+            continue
+        for p in _walk(base):
+            try:
+                st = p.stat()
+            except OSError:
+                continue
+            rel = p.relative_to(ROOT)
+            seen[rel] = (st.st_size, st.st_mtime_ns)
+            if st.st_size <= _BIG:
+                dest = backup / rel
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    shutil.copy2(p, dest)
+                except OSError:
+                    pass
+    dirs = {d.relative_to(ROOT) for name in _SANDBOX_DIRS if (ROOT / name).is_dir()
+            for d in (ROOT / name).rglob("*") if d.is_dir()}
+    yield
+    for name in _SANDBOX_DIRS:
+        base = ROOT / name
+        if not base.is_dir():
+            continue
+        for p in list(_walk(base)):
+            rel = p.relative_to(ROOT)
+            try:
+                st = p.stat()
+            except OSError:
+                continue
+            if rel not in seen:
+                p.unlink(missing_ok=True)
+                continue
+            size, mtime = seen[rel]
+            if (st.st_size, st.st_mtime_ns) == (size, mtime):
+                continue
+            saved = backup / rel
+            if saved.is_file():
+                shutil.copy2(saved, p)
+            elif st.st_size > size:
+                with open(p, "r+b") as fh:
+                    fh.truncate(size)
+                os.utime(p, ns=(mtime, mtime))
+        for d in sorted((x for x in base.rglob("*") if x.is_dir()), key=lambda x: -len(x.parts)):
+            if d.relative_to(ROOT) not in dirs:
+                try:
+                    d.rmdir()
+                except OSError:
+                    pass
+    for rel, _ in seen.items():
+        p = ROOT / rel
+        if not p.exists() and (backup / rel).is_file():
+            p.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(backup / rel, p)

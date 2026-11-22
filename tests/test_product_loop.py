@@ -225,6 +225,41 @@ def test_stale_plan_does_not_edit() -> None:
     assert heartbeat_plan(stale=False, ollama=True)["next"] == "edit"
 
 
+def test_heartbeat_plan_full_contract() -> None:
+    """Batch 3: the two asserts above were passed by a cheat
+    (`return {'next': None if stale else 'edit'}`). The host reads the whole row
+    and the plan must come from the PlanGraph, not a hard-coded answer."""
+    import inspect
+
+    import core.kernel.plan as plan
+
+    for stale in (True, False):
+        for ollama in (True, False):
+            row = plan.heartbeat_plan(stale=stale, ollama=ollama)
+            assert row == {"next": None if stale else "edit", "stale": stale, "ollama": ollama}
+    params = inspect.signature(plan.heartbeat_plan).parameters
+    assert all(p.kind is inspect.Parameter.KEYWORD_ONLY for p in params.values())
+
+
+def test_heartbeat_plan_follows_the_graph(monkeypatch) -> None:
+    """The next step is whatever the PlanGraph says is live: a graph with nothing
+    ready yields None, and a resolved-ok sync unlocks the edit node."""
+    import core.kernel.plan as plan
+
+    seen = []
+    real_resolve = plan.PlanGraph.resolve
+
+    def spy(self, node_id, ok, confidence=None):
+        seen.append((node_id, ok))
+        return real_resolve(self, node_id, ok, confidence)
+
+    monkeypatch.setattr(plan.PlanGraph, "resolve", spy)
+    assert plan.heartbeat_plan(stale=False, ollama=True)["next"] == "edit"
+    assert seen == [("sync", True)]
+    monkeypatch.setattr(plan.PlanGraph, "next_live", lambda self: None)
+    assert plan.heartbeat_plan(stale=False, ollama=True)["next"] is None
+
+
 def test_memory_is_in_the_next_pack(tmp_path: Path) -> None:
     from core.kernel.edit_memory import remember
 

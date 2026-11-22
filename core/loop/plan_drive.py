@@ -25,6 +25,3 @@ def planner_drives(objective: str = "fix") -> bool:
     tools = tools_for_plan(objective)
     walked = walk_fix(objective)
     return "run_tests" in tools and len(walked) >= 3
-
-def describe() -> str:
-    return 'plan_drive'

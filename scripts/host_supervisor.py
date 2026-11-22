@@ -38,6 +38,7 @@ TICK_TIMEOUT_S = int(os.environ.get("ETHER_TICK_TIMEOUT_S", "1800"))
 BACKOFF_BASE_S = float(os.environ.get("ETHER_BACKOFF_BASE_S", "15"))
 BACKOFF_MAX_S = float(os.environ.get("ETHER_BACKOFF_MAX_S", "900"))
 IDLE_S = 60.0
+IDLE_MAX_S = float(os.environ.get("ETHER_IDLE_MAX_S", "900"))
 SELF_FILES = ("scripts/host_supervisor.py", "scripts/host_lock.py")
 
 
@@ -80,12 +81,48 @@ def backoff_s(failures: int, base: float = BACKOFF_BASE_S, cap: float = BACKOFF_
     return float(min(cap, base * (2 ** (failures - 1))))
 
 
+def drainable_count(base: Optional[Path] = None) -> int:
+    """Pending jobs the host pass will actually run (live edit jobs; drain_live_fifo).
+
+    Batch 5: idle_s counted *every* file in artifacts/jobs/pending. 31 medic_hb /
+    gem_energy_publish jobs (Matrix/Actions enqueues, oldest 2026-10-12) are not drained
+    by any host-path drainer, so the supervisor polled at BUSY 12 s forever: one pass
+    every ~32 s and, without the publish throttle, ~230 artifact commits an hour."""
+    try:
+        from scripts.drain_live_fifo import _edit_job
+        from core.kernel.queue import PENDING_DIR
+
+        d = Path(base or os.environ.get("ETHER_ROOT") or ROOT_HERE) / PENDING_DIR
+        return sum(1 for p in d.glob("*.json") if p.name != ".gitkeep" and _edit_job(p))
+    except Exception:
+        return 0
+
+
 def idle_s() -> float:
     try:
-        from core.kernel.poll import pending_count, poll_seconds
-        return float(poll_seconds(pending_count()))
+        from core.kernel.poll import poll_seconds
+        return float(poll_seconds(drainable_count()))
     except Exception:
         return IDLE_S
+
+
+def pass_had_work(base: Path) -> Optional[bool]:
+    """False when the last writer pass found nothing to do (queue empty, nothing kept)."""
+    try:
+        row = json.loads((Path(base) / "artifacts" / "host_main.json").read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    sota = row.get("sota") if isinstance(row, dict) else None
+    if not isinstance(sota, dict):
+        return None
+    if int(sota.get("kept_n") or 0) > 0 or sota.get("tried"):
+        return True
+    return sota.get("note") != "queue empty"
+
+
+def dry_backoff_s(streak: int, base: float = IDLE_S, cap: float = IDLE_MAX_S) -> float:
+    """Empty queue: 60 s, 120 s, 240 s ... capped (no tight loop, no publish churn)."""
+    return float(min(cap, base * (2 ** max(0, streak - 1))))
 
 
 def _quiet_env(base: Path) -> Dict[str, str]:
@@ -137,24 +174,53 @@ def clear_stale_git_lock(base: Path, now: Optional[float] = None) -> bool:
         return False
 
 
+def _git_run(base: Path) -> Callable[[List[str]], subprocess.CompletedProcess]:
+    def run(argv: List[str]) -> subprocess.CompletedProcess:
+        return subprocess.run([argv[0], "-C", str(base), *argv[1:]], timeout=120,
+                              env=_quiet_env(base), **_run_kwargs())
+    return run
+
+
 def git_pull(base: Path) -> Dict[str, Any]:
-    """Fast-forward only. A diverged tree is left for host_main's publish sync."""
+    """Fast-forward only. A diverged tree is left for host_main's publish sync.
+
+    Batch 5: while a rollback pin is set, a tip whose code equals the pinned bad commit
+    (artifact-only commits on top) is not pulled again; a new code change clears the pin
+    and goes through the post-pull smoke like any other pull."""
     from scripts.host_main import _git
+    from scripts import host_pin
     if not (Path(base) / ".git").exists():
         return {"ok": False, "note": "no_git"}
     cleared = clear_stale_git_lock(base)
     before = git_head(base)
+    pin = host_pin.pin(base)
+    if pin.get("bad"):
+        run = _git_run(base)
+        try:
+            run([_git(), "fetch", "--quiet", "origin", "main"])
+            moved = host_pin.code_moved_since(run, _git(), str(pin["bad"]))
+        except Exception as exc:
+            return {"ok": False, "error": type(exc).__name__, "before": before, "pinned": pin}
+        if not moved:
+            return {"ok": True, "note": "pinned", "before": before, "after": before, "moved": False,
+                    "pinned": pin}
+        host_pin.clear_pin(base)
     try:
         p = subprocess.run(
             [_git(), "-C", str(base), "pull", "--ff-only", "--quiet", "origin", "main"],
             timeout=120, env=_quiet_env(base), **_run_kwargs(),
         )
         rc = p.returncode
+        err = (p.stderr or "") if rc else ""
     except Exception as exc:
         return {"ok": False, "error": type(exc).__name__, "before": before}
     after = git_head(base)
-    return {"ok": rc == 0, "rc": rc, "before": before, "after": after,
-            "moved": bool(before and after and before != after), "cleared_index_lock": cleared}
+    row = {"ok": rc == 0, "rc": rc, "before": before, "after": after,
+           "moved": bool(before and after and before != after), "cleared_index_lock": cleared}
+    if rc:
+        from scripts.host_signals import redact
+        row["err"] = redact(err.strip())[-300:]  # batch 9: say why (rc 128 alone hid a diverged clone)
+    return row
 
 
 def self_changed(base: Path, before: str, after: str) -> bool:
@@ -191,6 +257,47 @@ def run_pass(base: Path, timeout: int = TICK_TIMEOUT_S) -> Dict[str, Any]:
     except Exception as exc:
         rc, tail = -1, type(exc).__name__
     return {"rc": rc, "ok": rc == 0, "secs": round(time.monotonic() - t0, 1), "err_tail": tail if rc else ""}
+
+
+SMOKE_TIMEOUT_S = int(os.environ.get("ETHER_SMOKE_TIMEOUT_S", "300"))
+
+
+def run_smoke(base: Path, timeout: int = SMOKE_TIMEOUT_S) -> Dict[str, Any]:
+    """Post-pull smoke in a child process (fresh interpreter, new code from disk)."""
+    argv = [venv_python(base), "-m", "scripts.host_selfcheck", "--smoke"]
+    try:
+        p = subprocess.run(argv, cwd=str(base), timeout=timeout, env=_quiet_env(base), **_run_kwargs())
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "smoke timeout"}
+    except Exception as exc:
+        return {"ok": False, "error": type(exc).__name__}
+    try:
+        row = json.loads((p.stdout or "").strip().splitlines()[-1])
+    except Exception:
+        row = {"error": ((p.stderr or "") + (p.stdout or ""))[-300:] or f"rc={p.returncode}"}
+    row["ok"] = p.returncode == 0 and bool(row.get("ok", True))
+    row["rc"] = p.returncode
+    return row
+
+
+def after_pull(base: Path, pull: Dict[str, Any], smoke: Callable[[Path], Dict[str, Any]],
+               rollback: Optional[Callable[..., Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Smoke-test a pull that moved HEAD; on failure (ETHER_PULL_ROLLBACK=1) roll back locally."""
+    from scripts import host_pin
+    from scripts.host_main import _git
+
+    row = smoke(base)
+    if row.get("ok"):
+        host_pin.record_good(base, str(pull.get("after") or ""))
+        return {"smoke": row}
+    out: Dict[str, Any] = {"smoke": row}
+    if host_pin.rollback_enabled():
+        good = host_pin.last_good(base) or str(pull.get("before") or "")
+        rb = rollback or host_pin.rollback
+        out["rollback"] = rb(base, _git_run(base), _git(), good, str(pull.get("after") or ""), row)
+    else:
+        out["rollback"] = {"ok": False, "note": "ETHER_PULL_ROLLBACK off: running the new code anyway"}
+    return out
 
 
 def ensure_ollama() -> Dict[str, Any]:
@@ -232,6 +339,9 @@ class Supervisor:
         sleep: Optional[Callable[[float], None]] = None,
         idle: Optional[Callable[[], float]] = None,
         max_cycles: Optional[int] = None,
+        work: Optional[Callable[[Path], Optional[bool]]] = None,
+        smoke: Optional[Callable[[Path], Dict[str, Any]]] = None,
+        diverge: Optional[Callable[[Path], Dict[str, Any]]] = None,
     ) -> None:
         self.base = Path(base)
         self.p = paths(self.base)
@@ -244,6 +354,14 @@ class Supervisor:
         self._sleep = sleep or time.sleep
         self.idle = idle or idle_s
         self.max_cycles = max_cycles
+        self.work = work or pass_had_work
+        self.smoke = smoke or run_smoke
+        if diverge is None:
+            from scripts.host_signals import diverged as diverge
+        self.diverge = diverge
+        self.pull_failures = 0  # batch 9: consecutive failed pulls (counted toward health)
+        self.health: Dict[str, Any] = {"health": "ok", "worst": None, "signals": [], "n_bad": 0}
+        self.dry = 0
         self.failures = 0
         self.cycle = 0
         self.stopping = False
@@ -261,7 +379,11 @@ class Supervisor:
             "started": self.started,
             "cycle": self.cycle,
             "failures": self.failures,
-            "note": "supervisor heartbeat only; LIVE is judged from app_alive.json",
+            "pull_failures": self.pull_failures,
+            "health": self.health.get("health"),
+            "health_worst": self.health.get("worst"),
+            "health_signals": self.health.get("signals") or [],
+            "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
         }
         if extra:
             row.update(extra)
@@ -280,15 +402,58 @@ class Supervisor:
                 return
             self._sleep(min(1.0, left))
 
+    def _pull_health(self, pull: Dict[str, Any]) -> None:
+        """Batch 9: a failed pull counts; a diverged clone gets an actionable (manual) fix. No reset."""
+        from scripts.host_signals import write_diverged
+
+        if pull.get("ok", True) or pull.get("note") == "no_git":
+            self.pull_failures = 0
+            try:
+                write_diverged(self.base, None)
+            except Exception:
+                pass
+            return
+        self.pull_failures += 1
+        try:
+            info = self.diverge(self.base)
+        except Exception as exc:
+            info = {"ok": False, "error": type(exc).__name__}
+        pull["diverged"] = info
+        try:
+            write_diverged(self.base, {"pull": {k: pull.get(k) for k in ("rc", "err", "error", "before")},
+                                       "streak": self.pull_failures, **(info or {})})
+        except Exception:
+            pass
+
+    def _health(self, pull: Dict[str, Any], res: Dict[str, Any]) -> Dict[str, Any]:
+        from scripts.host_signals import host_signals, pass_signals, pull_signals, worst
+
+        sigs = pull_signals(pull, self.pull_failures) + pass_signals(res)
+        host_path = self.p["art"] / "host_main.json"
+        if host_path.is_file():
+            try:
+                host = json.loads(host_path.read_text(encoding="utf-8"))
+            except Exception:
+                host = {}
+            sigs += host_signals(host if isinstance(host, dict) else {}, base=self.base, check_age=True)
+        self.health = worst(sigs)
+        return self.health
+
     def once(self) -> Dict[str, Any]:
         self.cycle += 1
         pull = self.pull(self.base)
+        self._pull_health(pull)
+        if pull.get("moved") and os.environ.get("ETHER_SMOKE", "1") != "0":
+            pull.update(after_pull(self.base, pull, self.smoke))
+            if (pull.get("rollback") or {}).get("ok"):
+                pull["after"] = str(pull["rollback"].get("good") or pull.get("before") or "")
         if pull.get("moved") and self.changed(self.base, str(pull.get("before") or ""), str(pull.get("after") or "")):
             return {"cycle": self.cycle, "pull": pull, "reload": True}
         oll = self.ollama()
         res = self.run(self.base)
         self.failures = 0 if res.get("ok") else self.failures + 1
-        row = {"cycle": self.cycle, "pull": pull, "ollama": oll, "pass": res}
+        row = {"cycle": self.cycle, "pull": pull, "ollama": oll, "pass": res,
+               "health": self._health(pull, res).get("health")}
         self.history.append(row)
         return row
 
@@ -308,8 +473,14 @@ class Supervisor:
                     self.lock.release()
                     self.relaunch(self.base)
                     return 0
-                wait = backoff_s(self.failures) if self.failures else self.idle()
-                self.write_state("backoff" if self.failures else "running", {"last": row, "next_in_s": wait})
+                if self.failures:
+                    wait = backoff_s(self.failures)
+                else:
+                    had = self.work(self.base)
+                    self.dry = self.dry + 1 if had is False else 0
+                    wait = dry_backoff_s(self.dry) if self.dry else self.idle()
+                self.write_state("backoff" if self.failures else ("idle" if self.dry else "running"),
+                                 {"last": row, "next_in_s": wait, "dry_streak": self.dry})
                 if self.max_cycles is not None and self.cycle >= self.max_cycles:
                     break
                 self.nap(wait)

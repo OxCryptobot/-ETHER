@@ -140,6 +140,3 @@ def append_jsonl(path: Path, record: Dict[str, Any], lock_path: Optional[Path] =
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, default=str) + "\n")
-
-def describe() -> str:
-    return 'state_io'

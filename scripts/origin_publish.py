@@ -19,37 +19,44 @@ def redact(text: str, token: str) -> str:
     return text.replace(token, "***")
 
 
-PATHS = [
+# Batch 9 (audit W17, W61): git was the telemetry bus, 5,452 commits in 24 h (origin, 2026-11-22).
+# Origin now gets an explicit whitelist: what the Matrix read model and the owner need, nothing
+# else. Every other artifact stays local. Stale exe_* entries (ETHER.exe is retired) are gone.
+# ETHER_PUBLISH_PATHS=legacy restores the batch 8 list (minus exe_*) for one-off debugging.
+TELEMETRY_PATHS = [
     "artifacts/app_alive.json",
+    "artifacts/host_main.json",
+    "artifacts/supervisor.json",
+    "artifacts/git_push.json",
+    "artifacts/sota.json",
+    "artifacts/learning_summary.json",
+    "artifacts/unison.json",
+    "artifacts/env.json",
+    "artifacts/edit_memory.json",
+    "artifacts/pull_diverged.json",
+]
+LEGACY_PATHS = TELEMETRY_PATHS + [
     "artifacts/host_attach.json",
     "artifacts/ollama_probe.json",
-    "artifacts/exe_pulse.json",
-    "artifacts/git_push.json",
-    "artifacts/host_main.json",
-    "artifacts/exe_loop.json",
     "artifacts/self_heal.json",
     "artifacts/runner_watch.json",
-    "artifacts/supervisor.json",
-    "artifacts/exe_writer.json",
     "artifacts/keepalive_error.json",
     "artifacts/live_generate_probe.json",
     "artifacts/live_edit_tx.json",
     "artifacts/agent.json",
     "artifacts/runtime.json",
-    "artifacts/sota.json",
-    "artifacts/env.json",
     "artifacts/env_history.json",
-    "artifacts/unison.json",
     "artifacts/growth.json",
     "artifacts/scale.json",
     "artifacts/honest_history.json",
     "artifacts/gem_check.json",
-    "artifacts/agent.json",
     "artifacts/curriculum.json",
-    "artifacts/edit_memory.json",
     "artifacts/agent_bench.json",
     "artifacts/repo_fail.json",
+    "artifacts/goal_index.json",
+    "artifacts/refactor_done.json",
 ]
+PATHS = LEGACY_PATHS if os.environ.get("ETHER_PUBLISH_PATHS") == "legacy" else TELEMETRY_PATHS
 
 Runner = Callable[[List[str]], subprocess.CompletedProcess]
 
@@ -143,13 +150,7 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
         if not stashed:
             row["note"] = "stash_failed"
             return row
-    if ahead > 100:
-        reset = runner([git, "reset", "--hard", "origin/main"])
-        if reset.returncode == 0:
-            row["ok"] = True
-            row["note"] = "reset_far"
-            row["hard_reset"] = True
-            return row
+    # No reset_far: a hard reset of a tree >100 ahead discarded kept edits. Rebase only.
     if ahead:
         rebase = runner([git, "rebase", "origin/main"])
         if rebase.returncode != 0:
@@ -183,6 +184,31 @@ def sync_writer(root: Path, git: str, runner: Runner) -> Dict[str, Any]:
     return row
 
 
+def _blob(runner: Runner, git: str, ref: str, rel: str) -> str:
+    proc = runner([git, "rev-parse", "--verify", "--quiet", f"{ref}:{rel}"])
+    return (proc.stdout or "").strip() if proc.returncode == 0 else ""
+
+
+def code_paths_upstream_changed(git: str, runner: Runner, paths: List[str]) -> List[str]:
+    """Non-artifact paths origin/main changed since this tree forked from it.
+
+    The worktree publish copies whole files. For those paths that would silently
+    revert the upstream change, so they are left for the next rebase instead.
+    """
+    base = runner([git, "merge-base", "HEAD", "origin/main"])
+    mb = (base.stdout or "").strip() if base.returncode == 0 else ""
+    out: List[str] = []
+    for rel in paths:
+        if rel.startswith("artifacts/"):
+            continue
+        upstream = _blob(runner, git, "origin/main", rel)
+        if not upstream:
+            continue
+        if not mb or _blob(runner, git, mb, rel) != upstream:
+            out.append(rel)
+    return out
+
+
 def publish_worktree(root: Path, git: str, runner: Runner, message: str, token: str) -> Dict[str, Any]:
     """Commit the heartbeat files onto origin/main from a clean tree. Never reset --hard."""
     import shutil
@@ -204,6 +230,12 @@ def publish_worktree(root: Path, git: str, runner: Runner, message: str, token: 
         row["note"] = "worktree_failed"
         return row
     try:
+        skipped = code_paths_upstream_changed(git, runner, paths)
+        if skipped:
+            # Copying a whole local file over a newer origin/main version reverted
+            # real fixes (heartbeat_plan 2026-11-07, edit_tx 11-04, argv_allow 11-04).
+            row["skipped_code"] = skipped
+            paths = [rel for rel in paths if rel not in skipped]
         for rel in paths:
             src = root / rel
             dest = wt / rel
@@ -339,10 +371,26 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
             row["note"] = "nothing_to_add"
             (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
             return row
+        prev = _last_push(art)
+        code = [p for p in paths if not p.startswith("artifacts/")]
+        urgent = bool(publishable_code(root, git, run, code))
+        row["urgent"] = urgent
+        if throttled(prev, urgent=urgent):
+            # Heartbeat-only commits at most every ETHER_PUBLISH_MIN_S; a kept edit goes out now.
+            row.update({"ok": True, "note": "throttled", "last_push_ts": prev})
+            (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
+            return row
         run([git, "fetch", "origin", "main"])
         ahead = _int_stdout(run([git, "rev-list", "--count", "origin/main..HEAD"]))
         row["ahead"] = ahead
-        if publish_plan(ahead) == "worktree":
+        try:
+            from scripts.host_pin import pinned
+            pin_on = pinned(root)
+        except Exception:
+            pin_on = False
+        if pin_on:
+            row["pinned"] = True  # rolled back locally: publish from origin/main, never rebase onto bad
+        if pin_on or publish_plan(ahead) == "worktree":
             via = publish_worktree(root, git, run, message, token)
             row["worktree"] = via
             row["push_rc"] = via.get("push_rc", 0 if via.get("ok") else 1)
@@ -383,5 +431,60 @@ def publish(root: Path, *, message: str = "1650 exe pulse") -> Dict[str, Any]:
                             row["stderr"] = via["stderr"]
     except Exception as exc:
         row["error"] = type(exc).__name__
+    if row.get("ok") and row.get("push_rc") == 0:
+        row["last_push_ts"] = row["ts"]
+    elif "last_push_ts" not in row:
+        row["last_push_ts"] = _last_push(art)
     (art / "git_push.json").write_text(json.dumps(row, indent=2) + "\n", encoding="utf-8")
     return row
+
+
+# Batch 9: heartbeat-only commits at most every 30 min (was 5 min): <= 48 a day. A kept code
+# edit is still urgent and goes out at once.
+PUBLISH_MIN_S = float(os.environ.get("ETHER_PUBLISH_MIN_S", "1800"))
+
+
+def publishable_code(root: Path, git: str, runner: Runner, code: List[str]) -> List[str]:
+    """Code paths a publish would really change on origin (batch 5).
+
+    Batch 2 bypassed the throttle whenever `git status` showed any listed code path
+    dirty. A kept file that stays dirty locally (worktree publish, or upstream changed
+    it so the copy is skipped) made *every* tick urgent: heartbeat commits every pass
+    again. Urgent now means: the local file differs from origin/main's blob and
+    origin/main has not changed that path since the merge base (so the copy is allowed)."""
+    if not code:
+        return []
+    dirty = (runner([git, "status", "--porcelain", "--", *code]).stdout or "").strip()
+    if not dirty:
+        return []
+    out = []
+    skip = set(code_paths_upstream_changed(git, runner, code))
+    for rel in code:
+        if rel in skip or not (Path(root) / rel).is_file():
+            continue
+        local = runner([git, "hash-object", "--", rel])
+        mine = (local.stdout or "").strip() if local.returncode == 0 else ""
+        if mine and mine != _blob(runner, git, "origin/main", rel):
+            out.append(rel)
+    return out
+
+
+def _last_push(art: Path) -> str:
+    try:
+        data = json.loads((art / "git_push.json").read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    return str(data.get("last_push_ts") or (data.get("ts") if data.get("push_rc") == 0 else "") or "")
+
+
+def throttled(last_push_ts: str, *, urgent: bool, now: datetime | None = None,
+              min_s: float | None = None) -> bool:
+    """True when a heartbeat-only publish should wait (batch artifact commits)."""
+    if urgent or not last_push_ts:
+        return False
+    try:
+        last = datetime.fromisoformat(last_push_ts)
+    except ValueError:
+        return False
+    gap = ((now or datetime.now(timezone.utc)) - last).total_seconds()
+    return 0 <= gap < (PUBLISH_MIN_S if min_s is None else min_s)

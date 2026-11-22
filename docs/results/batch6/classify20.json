@@ -1,0 +1,162 @@
+[
+ {
+  "test": "tests/test_dashboard_panels.py::test_holdout_wiring_reflects_curriculum_coverage",
+  "b5": "no_repo_target",
+  "b6": "no_repo_target",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_dashboard_panels.py::test_posture_is_quiet_when_everything_is_off",
+  "b5": "no_repo_target",
+  "b6": "no_repo_target",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_doctor_push_hygiene.py::test_doctor_mentions_hygiene",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "scripts/ether_cli.py::cmd_doctor",
+  "via": "sbfl",
+  "span": null
+ },
+ {
+  "test": "tests/test_foreman_microbench_slot.py::test_whats_next_signals",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "scripts/write_whats_next.py::main",
+  "via": "test_import",
+  "span": "113-142 (assert_literal)"
+ },
+ {
+  "test": "tests/test_p3_32_checkpoint_pipeline.py::test_pipeline_run_shadows_write_progress",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_p3_58_pipeline_gems.py::test_pipeline_run_source_calls_annotate_all",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_p3_59_plan_walk.py::test_pipeline_run_walks_plan",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_p3_61_seven_slice.py::test_pipeline_source_resume_and_dispatch",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_p3_70_launch_loop.py::test_host_agent_stand_down_wired",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_p3_71_buildout.py::test_pipeline_executes_dispatched",
+  "b5": "no_repo_target",
+  "b6": "source_text_assert",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_phase1d_batch.py::test_whats_next_no_dual_dashboard_blocker",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "scripts/write_whats_next.py::main",
+  "via": "test_import",
+  "span": "113-142 (assert_literal)"
+ },
+ {
+  "test": "tests/test_phase3_complete.py::test_phase3_canaries",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "core/agent_state.py::AgentState.__init__",
+  "via": "sbfl",
+  "span": null
+ },
+ {
+  "test": "tests/test_phase3_snapshot.py::test_steady_has_phase3_templates",
+  "b5": "no_repo_target",
+  "b6": "goal",
+  "target": "scripts/foreman.py::STEADY_TEMPLATES",
+  "via": "test_import_assign",
+  "span": "105-134 (evidence)"
+ },
+ {
+  "test": "tests/test_pipeline_orchestration_slice.py::test_stage_contract_stable",
+  "b5": "no_repo_target",
+  "b6": "test_bug",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_sandbox_prep.py::test_grading_does_not_write_to_the_host",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "core/holdout.py::grade_against_holdout",
+  "via": "test_import",
+  "span": "69-98 (assert_literal)"
+ },
+ {
+  "test": "tests/test_sandbox_prep.py::test_grading_runs_the_code_it_was_given",
+  "b5": "too_large",
+  "b6": "goal",
+  "target": "core/holdout.py::grade_against_holdout",
+  "via": "test_import",
+  "span": "141-170 (assert_literal)"
+ },
+ {
+  "test": "tests/test_topology.py::test_d1_gems_do_not_import_core_beyond_leaf_contracts",
+  "b5": "no_repo_target",
+  "b6": "too_many_sites",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_topology.py::test_d2_core_does_not_import_gems",
+  "b5": "no_repo_target",
+  "b6": "too_many_sites",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_topology.py::test_d2_hard_zero_new_layers",
+  "b5": "no_repo_target",
+  "b6": "too_many_sites",
+  "target": null,
+  "via": null,
+  "span": null
+ },
+ {
+  "test": "tests/test_topology.py::test_d3_no_new_state_writers",
+  "b5": "no_repo_target",
+  "b6": "no_repo_target",
+  "target": null,
+  "via": null,
+  "span": null
+ }
+]

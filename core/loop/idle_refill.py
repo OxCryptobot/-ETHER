@@ -76,6 +76,3 @@ def propose() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     print(json.dumps(propose(), indent=2))
-
-def describe() -> str:
-    return 'idle_refill'

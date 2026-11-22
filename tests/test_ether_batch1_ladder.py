@@ -8,6 +8,13 @@ from pathlib import Path
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _legacy_ladder(monkeypatch):
+    """These tests pin the legacy ladder (retired by default in batch 2)."""
+    monkeypatch.setenv("ETHER_SOTA_LEGACY", "1")
+    monkeypatch.setenv("ETHER_GOAL_SOURCE", "0")
+
 REPO = Path(__file__).resolve().parents[1]
 
 
@@ -42,12 +49,19 @@ def _ladder_root(tmp_path: Path) -> Path:
     """A copy of the published state where every rung up to find_clamp is done
     and find_clamp is skipped. This is the host state at 1c92acf."""
     (tmp_path / "artifacts").mkdir()
-    shutil.copy(REPO / "artifacts" / "sota.json", tmp_path / "artifacts" / "sota.json")
+    shutil.copy(REPO / "tests" / "fixtures" / "sota_1c92acf.json", tmp_path / "artifacts" / "sota.json")
     kernel = tmp_path / "core" / "kernel"
     kernel.mkdir(parents=True)
     (tmp_path / "core" / "__init__.py").write_text("", encoding="utf-8")
     (kernel / "__init__.py").write_text("", encoding="utf-8")
-    shutil.copy(REPO / "core" / "kernel" / "context_budget.py", kernel / "context_budget.py")
+    import re
+
+    body = (REPO / "core" / "kernel" / "context_budget.py").read_text(encoding="utf-8")
+    # The host's filler stubs (add_name, failing_test) must not pre-answer the rungs.
+    body = re.sub(r"\n+def (add_name|failing_test)\(\)[^\n]*\n(    [^\n]*\n)+", "\n", body)
+    if "def fits_name" not in body:  # kept at 1c92acf; batch2 removed it from the live file
+        body = body.rstrip() + "\n\n\ndef fits_name() -> str:\n    return 'fits'\n"
+    (kernel / "context_budget.py").write_text(body, encoding="utf-8")
     # A decoy: a nested helper named add, like core/pipeline_slices_canary.py.
     (tmp_path / "core" / "aaa_canary.py").write_text(
         "def run():\n    def add(name, ok):\n        return None\n", encoding="utf-8"

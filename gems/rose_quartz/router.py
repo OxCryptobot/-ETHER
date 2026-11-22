@@ -288,11 +288,24 @@ class RoseQuartz:
                 tokens += int(chunk.get("eval_count") or 0)
                 if chunk.get("done"):
                     break
+        content = "".join(parts)
+        if not content.strip():
+            # Batch 9: same rule as the non-stream path; an empty stream is a failed generation.
+            return ResponseEnvelope(
+                task_id=task_id,
+                source_gem="rose-quartz",
+                error=GemError(
+                    type=GemErrorType.RUNTIME,
+                    message=f"Model {model} returned empty content (stream)",
+                    recoverable=True,
+                    suggested_action="Retry, or check the model is loaded and the prompt is not over its context limit",
+                ),
+            )
         return ResponseEnvelope(
             task_id=task_id,
             source_gem="rose-quartz",
             payload=RoseQuartzResponse(
-                content="".join(parts),
+                content=content,
                 model_used=model,
                 tokens=tokens,
                 confidence_score=0.8,

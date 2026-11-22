@@ -83,6 +83,3 @@ def daily_scoreboard(scoreboards: List[Dict[str, Any]]) -> Dict[str, Any]:
         "median_s": round(median, 1),
         "tape": f"{ok}/{n} unaided · run_tests {tests}/{n} · median {round(median, 1)}s",
     }
-
-def describe() -> str:
-    return 'flywheel'

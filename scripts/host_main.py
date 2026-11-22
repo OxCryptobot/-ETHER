@@ -39,9 +39,44 @@ def _pid_alive(pid: int) -> bool:
     except Exception:
         return False
 
+def _e(exc: BaseException) -> str:
+    """Name + message (batch 5): a bare type name hid the deleted heartbeat_plan for 12 days."""
+    return f"{type(exc).__name__}: {str(exc)[:160]}"
+
+
+def _selfcheck(root: Path, row: Dict[str, Any]) -> None:
+    """Batch 5: every lazy import on the writer path resolves, or host_main.json says which does not."""
+    try:
+        from scripts.host_selfcheck import check_imports
+        chk = check_imports(root)
+    except Exception as exc:
+        chk = {"ok": False, "broken": [f"scripts.host_selfcheck: {_e(exc)}"], "n_broken": 1}
+    try:  # non-fatal tool check: without ruff the lint goal source stays empty on the host
+        from core.agent.goal_source import ruff_bin
+        chk["ruff"] = bool(ruff_bin())
+    except Exception:
+        chk["ruff"] = False
+    row["selfcheck"] = chk
+    if not chk.get("ok"):
+        row["health"] = "degraded"
+        row["selfcheck_error"] = "; ".join(chk.get("broken") or [])[:600]
+        try:
+            art = root / "artifacts"
+            art.mkdir(parents=True, exist_ok=True)
+            (art / "host_main.json").write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
+        except Exception:
+            pass
+
+
 def _pull(root: Path) -> None:
     if os.name != "nt":
         return
+    try:
+        from scripts.host_pin import pinned
+        if pinned(root):
+            return  # rolled back locally: do not rebase onto the bad commit (host_pin.py)
+    except Exception:
+        pass
     from scripts.origin_publish import make_runner, sync_writer
     try:
         git, runner, _token = make_runner(root)
@@ -95,20 +130,34 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
         from core.agent.sota import seed_depth
         row["seed_depth"] = seed_depth(root)
     except Exception as exc:
-        row["next_error"] = type(exc).__name__
+        row["next_error"] = _e(exc)
+    try:
+        from core.agent import goal_source
+        data = goal_source.load_index(root)
+        row["real_queue"] = {"open": len(goal_source.ranked(root)), "done": len(data.get("done") or []),
+                             "dropped": len(data.get("dropped") or {}), "scan_ts": data.get("scan_ts")}
+    except Exception as exc:
+        row["real_queue_error"] = _e(exc)
     try:
         from core.agent.sota import run as sota_run
         from scripts.live_edit_tx import _ask
 
-        def _code(prompt: str, n: int = 240) -> str:
-            return _ask(prompt, n=n, edit=True)
+        def _code(prompt: str, n: int = 240, temperature: float = 0.0) -> str:
+            # batch 8: temperature only moves off 0 when ETHER_SAMPLE_TEMP is set (core/agent/sampling.py)
+            return _ask(prompt, n=n, edit=True, temperature=temperature)
 
         row["sota"] = sota_run(root, _code)
+        try:
+            from core.agent.outcome import publish_summary, summary as learn_summary
+            row["learning"] = learn_summary(root)
+            row["learning_published"] = publish_summary(root)
+        except Exception as exc:
+            row["learning_error"] = _e(exc)
         from core.agent.env import write as env_write
 
         row["env"] = env_write(root)
     except Exception as exc:
-        row["runtime_error"] = type(exc).__name__
+        row["runtime_error"] = _e(exc)
     row["agent"] = {"ok": True, "note": "runtime owns the edit"}
 
 
@@ -134,6 +183,7 @@ def tick() -> Dict[str, Any]:
 def _tick(root: Path) -> Dict[str, Any]:
     os.environ["ETHER_ROOT"] = str(root)
     row: Dict[str, Any] = {"ts": datetime.now(timezone.utc).isoformat(), "root": str(root), "os": os.name}
+    _selfcheck(root, row)
     if os.name == "nt":
         try:
             from scripts.origin_publish import silence_git
@@ -144,12 +194,12 @@ def _tick(root: Path) -> Dict[str, Any]:
             from scripts.ether_app import mark_alive
             row["alive"] = mark_alive()
         except Exception as exc:
-            row["alive_error"] = type(exc).__name__
+            row["alive_error"] = _e(exc)
         try:
             from scripts.origin_publish import publish
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
-            row["publish_error"] = type(exc).__name__
+            row["publish_error"] = _e(exc)
         if os.environ.get("GITHUB_ACTIONS") == "true":
             _pull(root)
             # No hard reset: sync_writer (in _pull) rebases and never discards a kept
@@ -161,7 +211,7 @@ def _tick(root: Path) -> Dict[str, Any]:
                 from scripts.self_heal import arm
                 row["heal"] = arm()
             except Exception as exc:
-                row["heal_error"] = type(exc).__name__
+                row["heal_error"] = _e(exc)
             row["keepalive"] = {"ok": True, "note": "runner_watch"}
             _learn(root, row)
         else:
@@ -170,73 +220,105 @@ def _tick(root: Path) -> Dict[str, Any]:
                 from scripts.self_heal import arm
                 row["heal"] = arm()
             except Exception as exc:
-                row["heal_error"] = type(exc).__name__
+                row["heal_error"] = _e(exc)
             try:
                 from scripts.start_runner import start_runner
                 row["runner"] = start_runner()
             except Exception as exc:
-                row["runner_error"] = type(exc).__name__
+                row["runner_error"] = _e(exc)
             row["daemon"] = _ensure_daemon(root)
             try:
                 from scripts.app_keepalive import ensure_keepalive
                 row["keepalive"] = ensure_keepalive(root)
             except Exception as exc:
-                row["keepalive_error"] = type(exc).__name__
+                row["keepalive_error"] = _e(exc)
             try:
                 from scripts.live_host import start_ollama, consume, ollama_up
                 row["ollama_start"] = start_ollama()
                 row["attach"] = consume({"cmd": "attach"})
                 row["ollama"] = ollama_up()
             except Exception as exc:
-                row["attach_error"] = type(exc).__name__
+                row["attach_error"] = _e(exc)
             try:
                 from core.kernel.plan import heartbeat_plan
                 row["plan"] = heartbeat_plan(stale=False, ollama=bool(row.get("ollama")))
             except Exception as exc:
-                row["plan_error"] = type(exc).__name__
+                # Name + message: "ImportError" alone hid a deleted heartbeat_plan for 12 days.
+                row["plan_error"] = _e(exc)
             try:
                 from scripts.ether_app import mark_alive
                 row["alive"] = mark_alive()
             except Exception as exc:
-                row["alive_error"] = type(exc).__name__
+                row["alive_error"] = _e(exc)
             try:
                 from scripts.drain_live_fifo import drain as drain_live
                 row["live"] = drain_live(max_jobs=1)
             except Exception as exc:
-                row["live_error"] = type(exc).__name__
+                row["live_error"] = _e(exc)
             _learn(root, row)
         try:
             from core.kernel.day_learn import learn
             row["day_learn"] = learn(root)
         except Exception as exc:
-            row["day_learn_error"] = type(exc).__name__
+            row["day_learn_error"] = _e(exc)
         try:
             from core.kernel.proactive import act
             row["proactive"] = act(root)
         except Exception as exc:
-            row["proactive_error"] = type(exc).__name__
+            row["proactive_error"] = _e(exc)
         if os.environ.get("GITHUB_ACTIONS") != "true":
             try:
                 from scripts.runner_service import ensure_service
                 row["service"] = ensure_service()
             except Exception as exc:
-                row["service_error"] = type(exc).__name__
+                row["service_error"] = _e(exc)
+        try:  # batch 9 (W19): refresh the Matrix read model on the 1650 (only ever ran off-Windows)
+            from scripts.unison import publish_observer
+            publish_observer()
+            row["unison"] = {"ok": True}
+        except Exception as exc:
+            row["unison_error"] = _e(exc)
+        # Batch 5: write the row before the final publish so origin shows this tick, not the last one.
+        _write_row(root, row)
         try:
             from scripts.origin_publish import publish
             row["publish"] = publish(root, message="1650 host_main")
         except Exception as exc:
-            row["publish_error"] = type(exc).__name__
+            row["publish_error"] = _e(exc)
     else:
         try:
             from scripts.ether_evolve import cycle
             row["evolve"] = cycle()
         except Exception as exc:
-            row["evolve_error"] = type(exc).__name__
+            row["evolve_error"] = _e(exc)
         row["note"] = "observe_only"
+    _write_row(root, row)
+    return row
+
+
+def _worst(root: Path, row: Dict[str, Any]) -> None:
+    """Batch 9: host_main.json health = worst signal of this pass (never upgraded past selfcheck)."""
+    try:
+        from scripts.host_signals import LEVELS, host_signals, worst
+        w = worst(host_signals(row, base=root))
+    except Exception as exc:
+        row["health"] = "degraded"
+        row["health_worst"] = f"host_signals: {_e(exc)}"
+        return
+    have = row.get("health") if row.get("health") in LEVELS else "ok"
+    row["health"] = w["health"] if LEVELS[w["health"]] >= LEVELS[have] else have
+    row["health_worst"] = w["worst"]
+    row["health_signals"] = w["signals"]
+
+
+def _write_row(root: Path, row: Dict[str, Any]) -> None:
+    if "health_signals" not in row:
+        _worst(root, row)
     art = root / "artifacts"
     art.mkdir(parents=True, exist_ok=True)
-    (art / "host_main.json").write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
-    return row
+    tmp = art / "host_main.json.tmp"
+    tmp.write_text(json.dumps(row, indent=2, default=str) + "\n", encoding="utf-8")
+    os.replace(tmp, art / "host_main.json")
 
 if __name__ == "__main__":
     print(json.dumps(tick(), default=str))

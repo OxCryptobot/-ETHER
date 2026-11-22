@@ -38,6 +38,3 @@ def reject_generate_pass(result: Dict[str, Any]) -> Dict[str, Any]:
     else:
         row["honest"] = True
     return row
-
-def describe() -> str:
-    return 'honest'

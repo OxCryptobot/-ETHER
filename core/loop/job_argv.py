@@ -41,6 +41,3 @@ def argv_ok(argv: Iterable[str]) -> bool:
         if i + 1 < len(args) and args[i + 1] not in ALLOWED_MODS and not args[i + 1].startswith("scripts."):
             return False
     return True
-
-def describe() -> str:
-    return 'job_argv'

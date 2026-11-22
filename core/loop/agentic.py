@@ -39,6 +39,3 @@ def classify_cycle(row: Dict[str, Any]) -> str:
     if row.get("ok") is True:
         return "ok_not_agentic"
     return "agentic_fail"
-
-def describe() -> str:
-    return 'agentic'

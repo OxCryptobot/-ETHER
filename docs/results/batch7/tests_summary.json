@@ -1,0 +1,21 @@
+{
+ "before": {
+  "tests": 1935,
+  "pass": 1778,
+  "fail": 74,
+  "skip": 83
+ },
+ "after": {
+  "tests": 1947,
+  "pass": 1790,
+  "fail": 74,
+  "skip": 83
+ },
+ "new_failures": [],
+ "fixed": [],
+ "removed": [],
+ "new_tests": 12,
+ "cmd": "pytest tests -q -p no:cacheprovider",
+ "base": "ether-batch6 c5148abe93",
+ "dirty_paths_after": 0
+}

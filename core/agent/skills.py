@@ -37,9 +37,28 @@ def search(root: Path, query: str) -> Dict[str, Any]:
     return {"ok": bool(hits), "skill": "search", "hits": hits}
 
 
+SECRET_PARTS = (".git/", ".env", "memory/vault", ".ssh/", "id_rsa", ".pem", "credentials", "git-credentials")
+
+
+def _inside(root: Path, rel: str) -> Path | None:
+    """Resolve rel under root; None for anything outside it or for secret-looking paths (batch 9)."""
+    try:
+        base = Path(root).resolve()
+        path = (base / str(rel or "")).resolve()
+        path.relative_to(base)
+    except (ValueError, OSError):
+        return None
+    low = path.relative_to(base).as_posix().lower()
+    if any(part in low for part in SECRET_PARTS):
+        return None
+    return path
+
+
 def read(root: Path, rel: str) -> Dict[str, Any]:
-    """A slice of one file. Capped so a 4B can hold it."""
-    path = Path(root) / rel
+    """A slice of one file. Capped so a 4B can hold it. Repo-confined, no secrets (batch 9)."""
+    path = _inside(root, rel)
+    if path is None:
+        return {"ok": False, "skill": "read", "reason": "outside the repo or secret"}
     if not path.is_file():
         return {"ok": False, "skill": "read", "reason": "missing"}
     body = path.read_text(encoding="utf-8", errors="ignore")[:600]
@@ -55,8 +74,13 @@ def remember(root: Path, note: str) -> Dict[str, Any]:
 
 
 def edit_fn(root: Path, rel: str, old: str, new: str) -> Dict[str, Any]:
-    """One replace. The caller reverts if the test fails."""
+    """One replace. Never callable from model text (MODEL_SKILLS); never a protected path (batch 9)."""
+    from core.agent.goal_quality import protected
     from core.agent.sota import edit as apply
+    from core.agent.tree_guard import immutable
+
+    if protected(rel) or immutable(rel):
+        return {"ok": False, "skill": "edit", "reason": "protected path"}
 
     row = apply(root, rel, old, new)
     row["skill"] = "edit"
@@ -81,12 +105,19 @@ SKILLS: Dict[str, Skill] = {
 }
 
 
+# Batch 9 (audit W1): the only skills a model reply may trigger. `edit` wrote any repo path
+# (tests/ included, and the revert restored only the goal file) and `test` ran model-written
+# Python with the writer's full environment. Code still reaches them through route(); model text
+# reaches them only when a caller passes `allowed` explicitly. The real-goal path never does.
+MODEL_SKILLS = ("search", "read")
+
+
 def list_skills() -> list:
     return sorted(SKILLS)
 
 
-def call(root: Path, text: str) -> Dict[str, Any] | None:
-    """If the model replied with a tool call, run it. Otherwise None."""
+def call(root: Path, text: str, allowed: Any = MODEL_SKILLS) -> Dict[str, Any] | None:
+    """If the model replied with a tool call, run it (only skills in `allowed`). Otherwise None."""
     import json
 
     start = text.find("{")
@@ -101,6 +132,8 @@ def call(root: Path, text: str) -> Dict[str, Any] | None:
         return None
     name = str(data.get("tool") or "")
     args = data.get("args") if isinstance(data.get("args"), dict) else {}
+    if allowed is not None and name not in tuple(allowed):
+        return {"ok": False, "skill": name, "reason": "denied: not a model-callable skill"}
     return route(root, name, **args)
 
 

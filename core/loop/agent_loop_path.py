@@ -71,6 +71,3 @@ def run_agent_loop_path(
         "generated": generated,
         "max_attempts": max_attempts,
     }
-
-def describe() -> str:
-    return 'agent_loop_path'

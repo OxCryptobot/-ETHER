@@ -1,18 +1,18 @@
 {
-  "ts": "2026-11-22T11:54:18.741290+00:00",
+  "ts": "2026-11-22T11:54:49.327071+00:00",
   "state": "running",
   "pid": 18116,
   "started": "2026-11-19T22:13:21.489648+00:00",
-  "cycle": 7311,
+  "cycle": 7312,
   "failures": 0,
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json",
   "last": {
-    "cycle": 7311,
+    "cycle": 7312,
     "pull": {
       "ok": true,
       "rc": 0,
-      "before": "5da4c4da07cc3dd33f05a32f60b3deb40805749c",
-      "after": "5da4c4da07cc3dd33f05a32f60b3deb40805749c",
+      "before": "140f682ce4230581dbf1e300f8f59c3216ef0086",
+      "after": "140f682ce4230581dbf1e300f8f59c3216ef0086",
       "moved": false,
       "cleared_index_lock": false
     },

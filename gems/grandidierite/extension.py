@@ -28,6 +28,8 @@ def _sanitize_name(name: str) -> str:
 
 
 class Grandidierite:
+    # Batch 9: templates go through str.format, so literal braces are doubled. The stub's
+    # `{"ok": False, ...}` raised KeyError('"ok"') and every scaffold failed (batch 6 contract test).
     TEMPLATES = {
         "basic_python_tool": '''#!/usr/bin/env python3
 """{docstring}"""
@@ -39,7 +41,7 @@ from _lib import emit, read_input
 
 def {name}({args}):
     """{docstring}"""
-    return {"ok": False, "error": "stub", "tool": "{name}"}
+    return {{"ok": False, "error": "stub", "tool": "{name}"}}
 
 def main() -> None:
     inp = read_input()

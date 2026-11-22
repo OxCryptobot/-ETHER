@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-22T12:17:26.732072+00:00",
+  "ts": "2026-11-22T12:21:17.614677+00:00",
   "os": "nt",
   "ok": true,
   "armed": true,
@@ -25,8 +25,8 @@
     "rc": 0
   },
   "register": {
-    "ok": true,
-    "note": "already_registered",
-    "runners": 1
+    "ok": false,
+    "error": "no_token",
+    "runners": null
   }
 }

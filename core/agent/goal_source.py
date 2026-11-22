@@ -907,7 +907,7 @@ def ranked(root: Path) -> List[Dict[str, Any]]:
     from core.agent import planted
 
     if planted.live_only():
-        # batch 9 (audit W10): 36 of 60 seed goals targeted modules the writer never imports
+        # batch 9 (audit W10): 35 of 56 failing-test seed goals target modules the writer never imports
         live = planted.live_files(root)
         rows = [g for g in rows if g.get("kind") != "fix_test" or g.get("file") in live]
     tries = data.get("tries") or {}

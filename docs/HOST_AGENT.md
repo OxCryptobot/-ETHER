@@ -43,7 +43,7 @@ scripts\host.cmd setup && scripts\host.cmd restart
 | `host.cmd stop` | sticky `artifacts/host.stop`; the 5-min ensure trigger will not undo it |
 | Process died | Task Scheduler: restart-on-failure + 5-min ensure trigger; OS lock means never two copies |
 
-- Dashboard: `http://127.0.0.1:8787/agent`
+- Status: the Grok Control Matrix (read-only) reads `artifacts/unison.json`, `supervisor.json` and `learning_summary.json` from origin; locally `scripts/ether_app.py` serves a read-only watch page on http://127.0.0.1:7843/. The old :8787 dashboard is retired (writes refused, batch 9).
 - Model lock: `ETHER_PRIMARY_MODEL=qwen3.5:4b-q4_K_M` (host ≤4B)
 
 ## Job format

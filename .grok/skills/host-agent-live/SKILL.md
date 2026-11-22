@@ -68,7 +68,7 @@ Single console: dashboard thread + host_agent loop + foreman.tick().
 
 You start it once. After that the launcher keeps it alive. Do not ask the user to restart again under normal conditions.
 
-- URL — `http://127.0.0.1:8787/agent`
+- Status: the Grok Control Matrix (read-only) reads `artifacts/unison.json`, `supervisor.json` and `learning_summary.json` from origin; locally `scripts/ether_app.py` serves a read-only watch page on http://127.0.0.1:7843/. The old :8787 dashboard is retired (writes refused, batch 9).
 - API — `GET /api/host-agent` (queue, log, foreman cursor, apprentice lessons, RLHF, gems)
 
 ## Hard rules for Grok (this skill)

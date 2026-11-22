@@ -55,7 +55,7 @@ def live_files(root: Path, entry: Tuple[str, ...] = ENTRY) -> Set[str]:
 
     Re-exports in package __init__ files are not followed: importing anything under core/ executes
     core/__init__.py, which imports the legacy pipeline/orchestrator, but the writer never calls
-    into them. With that rule 145 files are live and 35 of the 60 seed goals target dead code
+    into them. With that rule 145 files are live and 35 of the 56 failing-test seed goals target dead code
     (the audit measured 36); following __init__ re-exports would call 216 files live."""
     from core.agent import goal_source as gs
 

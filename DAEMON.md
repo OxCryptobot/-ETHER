@@ -28,7 +28,7 @@ schtasks /Run /TN ETHER-Daemon
 
 1. **Flywheel** every `ETHER_DAEMON_INTERVAL` (default 900s): pull, test, agentic sandbox, gated push  
 2. **Batch worker** every `ETHER_BATCH_INTERVAL` (default 1800s): next item in `memory/batch_queue.json`  
-3. **Dashboard** on `:8787` if `ETHER_DAEMON_DASHBOARD=1`  
+3. ~~Dashboard~~ retired (batch 9). Status: the Grok Control Matrix (read-only) reads `artifacts/unison.json`, `supervisor.json` and `learning_summary.json` from origin; locally `scripts/ether_app.py` serves a read-only watch page on http://127.0.0.1:7843/. The old :8787 dashboard is retired (writes refused, batch 9).  
 
 ## Control
 

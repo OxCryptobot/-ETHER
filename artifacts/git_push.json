@@ -1,13 +1,16 @@
 {
-  "ts": "2026-11-22T12:22:17.743698+00:00",
+  "ts": "2026-11-22T12:22:31.722426+00:00",
   "os": "nt",
-  "ok": false,
+  "ok": true,
   "ahead": 1,
   "worktree": {
-    "ok": false,
+    "ok": true,
     "hard_reset": false,
-    "note": "fetch_failed"
+    "note": "worktree_push",
+    "push_rc": 0,
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   0bb9238012..b46b9a290d  HEAD -> main\n"
   },
-  "push_rc": 1,
-  "note": "fetch_failed"
+  "push_rc": 0,
+  "note": "worktree_push",
+  "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   0bb9238012..b46b9a290d  HEAD -> main\n"
 }

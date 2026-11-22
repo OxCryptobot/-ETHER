@@ -15,7 +15,10 @@ from pathlib import Path
 def build(root: Path, xml: Path) -> dict:
     from core.agent import goal_source as gs
 
+    from core.agent import planted
+
     goals, dropped = {}, {}
+    live = planted.live_files(root) if planted.live_only() else None  # batch 9: no seeds on dead code
     tree = ET.parse(xml).getroot()
     for tc in tree.iter("testcase"):
         for tag in ("failure", "error"):
@@ -27,6 +30,9 @@ def build(root: Path, xml: Path) -> dict:
             goal = gs.goal_from_failure(root, nid, text)
             if goal is None:
                 dropped[nid] = "infra_or_untargetable"
+                continue
+            if live is not None and goal.get("file") not in live:
+                dropped[nid] = "dead_code"
                 continue
             goal["tractability"] = gs.tractability(root, goal)
             goals[goal["id"]] = goal

@@ -386,6 +386,11 @@ def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
         goal = next_goal(root, skip=skip)
     except Exception:
         goal = None
+    if goal is None:
+        from core.agent import planted
+
+        if planted.enabled():  # batch 9: real pool dry -> one validated planted bug, scratch copy only
+            return planted.attempt(root, ask)
     try:
         from core.agent.outcome import choose, record
 

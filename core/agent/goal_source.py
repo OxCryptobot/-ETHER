@@ -904,6 +904,12 @@ def scan(root: Path, n_files: int = 8, timeout: int = 240, files: Optional[Itera
 def ranked(root: Path) -> List[Dict[str, Any]]:
     data = load_index(root)
     rows = [g for g in data["goals"].values() if g.get("id") not in data["done"]]
+    from core.agent import planted
+
+    if planted.live_only():
+        # batch 9 (audit W10): 36 of 60 seed goals targeted modules the writer never imports
+        live = planted.live_files(root)
+        rows = [g for g in rows if g.get("kind") != "fix_test" or g.get("file") in live]
     tries = data.get("tries") or {}
     # Batch 3: SBFL can point many failing tests at one function. Failed tries on a
     # (file, symbol) count against every goal that targets it, so the 1650 does not

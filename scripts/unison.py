@@ -113,8 +113,97 @@ def snapshot() -> Dict[str, Any]:
         "env_kept": int((_read(root / "artifacts" / "env.json") or {}).get("kept") or 0),
         "env_disk": (_read(root / "artifacts" / "env.json") or {}).get("disk_free_gb"),
         "env_history": _read_list(root / "artifacts" / "env_history.json"),
-        "skills": ["search", "read", "remember", "edit", "test"],
+        "skills": _model_skills(),
+        "learning": learning_view(root),
+        "health": health_view(root),
+        "capabilities": capabilities(),
     }
+
+
+def _model_skills() -> list:
+    """What a model reply can actually call (batch 9: read-only)."""
+    try:
+        from core.agent.skills import MODEL_SKILLS
+        return list(MODEL_SKILLS)
+    except Exception:
+        return []
+
+
+def learning_view(root: Path) -> Dict[str, Any]:
+    """Batch 9 (audit W19): the Face reads learning_summary.json. Counts only, no prompts or diffs."""
+    ls = _read(root / "artifacts" / "learning_summary.json")
+    if not ls:
+        return {"present": False}
+    m = ls.get("metrics") if isinstance(ls.get("metrics"), dict) else {}
+    arms_in = ls.get("arms") if isinstance(ls.get("arms"), dict) else {}
+    arms: Dict[str, Dict[str, Any]] = {}
+    for kind, cells in arms_in.items():
+        if not isinstance(cells, dict):
+            continue
+        for arm, cell in cells.items():
+            if isinstance(cell, dict):
+                arms.setdefault(str(kind), {})[str(arm)] = {"pulls": cell.get("pulls"), "pass_rate": cell.get("pass_rate")}
+    pulls = [c.get("pulls") or 0 for cs in arms.values() for c in cs.values()]
+    bandit = ls.get("bandit") if isinstance(ls.get("bandit"), dict) else {}
+    gen = str(ls.get("generated") or "")
+    return {
+        "present": True,
+        "schema": ls.get("schema"),
+        "generated": gen or None,
+        "stale": _stale(gen),
+        "attempts": m.get("attempts"),
+        "kept": m.get("kept"),
+        "kept_per_attempt": m.get("kept_per_attempt"),
+        "kept_per_gpu_hour": m.get("kept_per_gpu_hour"),
+        "revert_rate": m.get("revert_rate"),
+        "dup_share": m.get("dup_share"),
+        "filler_rate": m.get("filler_rate"),
+        "regressions_caught": m.get("regressions_caught"),
+        "arms": arms,
+        "top_arm_share": round(max(pulls) / sum(pulls), 3) if pulls and sum(pulls) else None,
+        "bandit_algo": bandit.get("algo"),
+        "real_queue": ls.get("real_queue") if isinstance(ls.get("real_queue"), dict) else None,
+        "exemplars": ls.get("exemplars") if isinstance(ls.get("exemplars"), dict) else None,
+    }
+
+
+def health_view(root: Path) -> Dict[str, Any]:
+    """Batch 9: worst signal from supervisor.json / host_main.json, plus the pull-diverged fix."""
+    sup = _read(root / "artifacts" / "supervisor.json")
+    host = _read(root / "artifacts" / "host_main.json")
+    div = _read(root / "artifacts" / "pull_diverged.json")
+    order = {"ok": 0, "degraded": 1, "failing": 2}
+    levels = [h for h in (sup.get("health"), host.get("health")) if h in order]
+    return {
+        "health": max(levels, key=lambda h: order[h]) if levels else "unknown",
+        "supervisor": sup.get("health"),
+        "host": host.get("health"),
+        "worst": sup.get("health_worst") or host.get("health_worst"),
+        "pull_failures": sup.get("pull_failures"),
+        "pull_fix": div.get("fix") if div else None,
+        "supervisor_ts": sup.get("ts"),
+        "supervisor_stale": _stale(str(sup.get("ts") or "")) if sup else True,
+    }
+
+
+def capabilities() -> Dict[str, Any]:
+    """An honest truth table for the Face (what runs on the live path today)."""
+    row: Dict[str, Any] = {"mcp": "built, not on the real path", "lsp": "stub", "swarm": "plan-only (owner decision open)",
+                           "web": "absent"}
+    try:
+        from core.agent import gate_sandbox, planted
+        row["gate_sandbox"] = gate_sandbox.enabled()
+        row["planted_goals"] = planted.enabled()
+        row["live_only_goals"] = planted.live_only()
+    except Exception:
+        pass
+    try:
+        from core.agent import exemplars, sampling
+        row["exemplars"] = exemplars.mode()
+        row["sample_temp"] = sampling.schedule()
+    except Exception:
+        pass
+    return row
 
 
 def publish_observer() -> Dict[str, Any]:

@@ -272,6 +272,12 @@ def _tick(root: Path) -> Dict[str, Any]:
                 row["service"] = ensure_service()
             except Exception as exc:
                 row["service_error"] = _e(exc)
+        try:  # batch 9 (W19): refresh the Matrix read model on the 1650 (only ever ran off-Windows)
+            from scripts.unison import publish_observer
+            publish_observer()
+            row["unison"] = {"ok": True}
+        except Exception as exc:
+            row["unison_error"] = _e(exc)
         # Batch 5: write the row before the final publish so origin shows this tick, not the last one.
         _write_row(root, row)
         try:

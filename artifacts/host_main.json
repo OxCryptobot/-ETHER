@@ -1,16 +1,16 @@
 {
-  "ts": "2026-11-22T13:36:44.620071+00:00",
+  "ts": "2026-11-22T13:37:34.387939+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "alive": {
     "alive": true,
-    "ts": "2026-11-22T13:37:13.236915+00:00",
+    "ts": "2026-11-22T13:37:47.302526+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-22T13:37:13.490785+00:00",
+    "ts": "2026-11-22T13:37:47.574240+00:00",
     "os": "nt",
     "ok": true,
     "ahead": 1,
@@ -19,14 +19,14 @@
       "hard_reset": false,
       "note": "worktree_push",
       "push_rc": 0,
-      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   4259d383b8..bd9162b565  HEAD -> main\n"
+      "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   6eaba9f634..58b1891904  HEAD -> main\n"
     },
     "push_rc": 0,
     "note": "worktree_push",
-    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   4259d383b8..bd9162b565  HEAD -> main\n"
+    "stderr": "To https://github.com/OxCryptobot/-ETHER.git\n   6eaba9f634..58b1891904  HEAD -> main\n"
   },
   "heal": {
-    "ts": "2026-11-22T13:36:57.842171+00:00",
+    "ts": "2026-11-22T13:37:44.615056+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -52,10 +52,9 @@
       "rc": 0
     },
     "register": {
-      "ok": false,
-      "rc": 1,
-      "runners": null,
-      "stderr": "                     Self-hosted runner registration                        |\n|                                                                              |\n--------------------------------------------------------------------------------\n"
+      "ok": true,
+      "note": "already_registered",
+      "runners": 1
     }
   },
   "runner": {
@@ -68,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-22T13:37:11.589415+00:00",
+    "ts": "2026-11-22T13:37:45.724017+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -101,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-22T13:37:13.111874+00:00",
+    "updated": "2026-11-22T13:37:47.152929+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -135,13 +134,13 @@
     "batch_size": 5
   },
   "env": {
-    "ts": "2026-11-22T13:37:13.339488+00:00",
+    "ts": "2026-11-22T13:37:47.406973+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
     "disk_free_gb": 225.7,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-22T13:37:13.236915+00:00",
+    "alive_ts": "2026-11-22T13:37:47.302526+00:00",
     "kept": 92,
     "last_goal": "describe_spine_state_io",
     "last_kept": true,

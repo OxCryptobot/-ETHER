@@ -96,20 +96,20 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "lessons": [
-    "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed",
-    "2026-11-23 fix_test_context_over_budget_without_compress: tests failed",
     "2026-11-23 fix_test_infrastructure_outages_are_not_stored_as_code_failures_: no edit: no change",
     "2026-11-23 fix_test_same_objective_different_code_is_kept: tests failed",
     "2026-11-23 fix_test_flex_replace_exact_and_stripped: tests failed",
     "2026-11-23 fix_test_verify_solvable_reports_a_holdout_that_cannot_fail: no edit: no change",
     "2026-11-23 fix_test_loop_runner_default_off_backward_compatible: regression",
-    "2026-11-23 fix_test_rewrite_windows_python: tests failed"
+    "2026-11-23 fix_test_rewrite_windows_python: tests failed",
+    "2026-11-23 fix_test_steady_has_phase3_templates: no edit: syntax: closing parenthesis '}' does not match opening parenthesis '[' on line 104",
+    "2026-11-23 fix_test_auto_fabricate_on_fail_path_reports_gem_error: gate aborted: after-run timeout"
   ],
   "last": {
-    "goal": "fix_test_rewrite_windows_python",
+    "goal": "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T07:17:51.322402+00:00"
+    "ts": "2026-11-23T07:55:32.058894+00:00"
   },
   "kept_n": 0,
   "files": [

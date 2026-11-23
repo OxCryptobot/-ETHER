@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T07:10:54.008081+00:00",
+  "ts": "2026-11-23T07:45:07.871932+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T07:11:01.082517+00:00",
+    "ts": "2026-11-23T07:45:14.397258+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T07:10:54.844339+00:00",
+    "ts": "2026-11-23T07:45:08.633385+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T06:49:46.646089+00:00"
+    "last_push_ts": "2026-11-23T07:20:54.254919+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T07:10:58.480143+00:00",
+    "ts": "2026-11-23T07:45:11.664536+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T07:10:59.631029+00:00",
+    "ts": "2026-11-23T07:45:12.932328+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T07:11:00.946158+00:00",
+    "updated": "2026-11-23T07:45:14.249338+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,19 +126,19 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_rewrite_windows_python",
+  "next_goal": "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 73,
     "done": 2,
     "dropped": 25,
-    "scan_ts": "2026-11-23T07:02:07.419012+00:00"
+    "scan_ts": "2026-11-23T07:23:05.160159+00:00"
   },
   "sota": {
-    "goal": "fix_test_whats_next_no_dual_dashboard_blocker",
+    "goal": "fix_test_correct_code_passes_holdout",
     "kind": "fix_test",
-    "file": "scripts/write_whats_next.py",
+    "file": "gems/clear_quartz/sandbox.py",
     "ok": false,
     "honest": true,
     "note": "gate aborted: baseline timeout",
@@ -155,17 +155,25 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_rewrite_windows_python",
-      "fix_test_whats_next_no_dual_dashboard_blocker"
+      "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
+      "fix_test_correct_code_passes_holdout"
     ],
     "kept_n": 0,
-    "batch_size": 3
+    "batch_size": 3,
+    "scan": {
+      "ok": true,
+      "files": 8,
+      "failing": 1,
+      "added": 0,
+      "goals": 73,
+      "secs": 22.3
+    }
   },
   "learning": {
-    "trajectories": 167,
-    "graded": 166,
+    "trajectories": 175,
+    "graded": 174,
     "passes": 44,
-    "spoiler_share": 0.5,
+    "spoiler_share": 0.477,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -177,19 +185,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16157,
-    "graded": 166
+    "bytes": 16255,
+    "graded": 174
   },
   "env": {
-    "ts": "2026-11-23T07:20:53.976838+00:00",
+    "ts": "2026-11-23T07:58:35.583594+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 220.4,
+    "disk_free_gb": 216.4,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T07:11:01.082517+00:00",
+    "alive_ts": "2026-11-23T07:45:14.397258+00:00",
     "kept": 93,
-    "last_goal": "fix_test_rewrite_windows_python",
+    "last_goal": "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
     "last_kept": false,
     "batch_size": 0
   },

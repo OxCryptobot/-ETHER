@@ -12,21 +12,21 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 1,
+    "pulls": 3,
     "regressions": 0
    },
    "no_context": {
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 3,
+    "pulls": 4,
     "regressions": 0
    },
    "repair_heavy": {
-    "mean_reward": 0.75,
-    "pass_rate": 1.0,
+    "mean_reward": -0.35,
+    "pass_rate": 0.333,
     "passes": 1,
-    "pulls": 1,
+    "pulls": 3,
     "regressions": 0
    },
    "repo_map_on": {
@@ -58,7 +58,7 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 1,
+    "pulls": 2,
     "regressions": 0
    },
    "no_context": {
@@ -107,6 +107,12 @@
       "post_mean": 0.333,
       "secs_per_pull": 183.8
      },
+     "minimal": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 183.1
+     },
      "no_context": {
       "n": 2,
       "passes": 0,
@@ -120,11 +126,12 @@
       "secs_per_pull": 187.9
      }
     },
-    "entropy_bits": 1.5,
+    "entropy_bits": 1.9219,
     "p_best": {
-     "default": 0.355,
-     "no_context": 0.302,
-     "repo_map_on": 0.343
+     "default": 0.278,
+     "minimal": 0.235,
+     "no_context": 0.207,
+     "repo_map_on": 0.28
     }
    },
    "repair_logic|complex": {
@@ -136,22 +143,22 @@
       "secs_per_pull": 115.1
      },
      "minimal": {
-      "n": 1,
+      "n": 2,
       "passes": 0,
-      "post_mean": 0.333,
-      "secs_per_pull": 208.6
+      "post_mean": 0.25,
+      "secs_per_pull": 196.3
      },
      "no_context": {
-      "n": 1,
+      "n": 2,
       "passes": 0,
-      "post_mean": 0.333,
-      "secs_per_pull": 181.7
+      "post_mean": 0.25,
+      "secs_per_pull": 199.2
      },
      "repair_heavy": {
-      "n": 1,
+      "n": 3,
       "passes": 1,
-      "post_mean": 0.667,
-      "secs_per_pull": 495.9
+      "post_mean": 0.4,
+      "secs_per_pull": 450.9
      },
      "repo_map_on": {
       "n": 1,
@@ -160,13 +167,13 @@
       "secs_per_pull": 265.9
      }
     },
-    "entropy_bits": 2.3219,
+    "entropy_bits": 2.1972,
     "p_best": {
-     "default": 0.1,
-     "minimal": 0.09,
-     "no_context": 0.085,
-     "repair_heavy": 0.637,
-     "repo_map_on": 0.087
+     "default": 0.152,
+     "minimal": 0.08,
+     "no_context": 0.113,
+     "repair_heavy": 0.497,
+     "repo_map_on": 0.158
     }
    }
   },
@@ -181,10 +188,10 @@
       "secs_per_pull": 193.2
      },
      "minimal": {
-      "n": 1,
+      "n": 2,
       "passes": 0,
-      "post_mean": 0.333,
-      "secs_per_pull": 182.1
+      "post_mean": 0.25,
+      "secs_per_pull": 182.5
      },
      "no_context": {
       "n": 2,
@@ -205,19 +212,19 @@
       "secs_per_pull": 169.0
      }
     },
-    "entropy_bits": 2.2359,
+    "entropy_bits": 2.25,
     "p_best": {
-     "default": 0.155,
-     "minimal": 0.23,
-     "no_context": 0.172,
-     "repair_heavy": 0.237,
-     "repo_map_on": 0.205
+     "default": 0.18,
+     "minimal": 0.195,
+     "no_context": 0.188,
+     "repair_heavy": 0.225,
+     "repo_map_on": 0.212
     }
    }
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.0625,
+  "kept_per_attempt_other": 0.0455,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 1,
@@ -229,16 +236,16 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T00:54:33.223180+00:00",
+ "generated": "2026-11-23T01:26:28.973782+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 2.1972,
-   "lint": 2.2359
+   "fix_test": 2.2709,
+   "lint": 2.25
   },
-  "attempts": 16,
+  "attempts": 22,
   "by_temp": {
    "0.0": {
-    "attempts": 8,
+    "attempts": 11,
     "kept": 1
    }
   },
@@ -248,32 +255,36 @@
     "kept": 0
    },
    "lint": {
-    "attempts": 7,
+    "attempts": 8,
+    "kept": 0
+   },
+   "sbfl": {
+    "attempts": 2,
     "kept": 0
    },
    "test_import": {
-    "attempts": 6,
+    "attempts": 9,
     "kept": 1
    }
   },
   "demotions": 0,
   "dup_share": 0.0,
   "filler_rate": 0.9773,
-  "gpu_hours": 0.929,
+  "gpu_hours": 1.38,
   "kept": 1,
-  "kept_per_attempt": 0.0625,
-  "kept_per_gpu_hour": 1.076,
+  "kept_per_attempt": 0.0455,
+  "kept_per_gpu_hour": 0.724,
   "kept_per_session": 0.5,
   "promotions": 0,
   "regressions_caught": 1,
-  "revert_rate": 0.125,
+  "revert_rate": 0.0909,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 12,
+    "attempts": 18,
     "kept": 1
    }
   },
@@ -290,63 +301,9 @@
    "test_bug": 1,
    "too_many_sites": 3
   },
-  "open": 62
+  "open": 64
  },
  "recent": [
-  {
-   "arm": "default",
-   "goal": "describe_loop_traces",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:40:18.907514_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_verify_legacy",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:40:55.096887_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_walk_fixture",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:41:32.464985_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_worktree",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:42:10.766999_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_extra_tools",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:42:47.923209_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_worktree_worker",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:43:24.940941_00:00"
-  },
   {
    "arm": "default",
    "goal": "describe_tombstone",
@@ -656,16 +613,124 @@
    "tests_ok": true,
    "ts": "2026-11-23T00:54:33.172795_00:00",
    "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": false,
+   "goal": "fix_test_context_over_budget_without_compress",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_edit:_assignment_TOKENS_PER_BLOCK_is_new_and_not_used_by_",
+   "prompt_chars": 1221,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 216.8,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:59:29.964271_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "goal": "fix_test_every_arm_produces_a_distinguishable_prompt",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T01:02:33.121879_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_retry_reward_is_credited_to_the_arm_that_produced_it",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_after-run_timeout",
+   "prompt_chars": 2611,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 602.6,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T01:14:57.952158_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "goal": "lint_F841_fabricate_sandbox_selftest",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T01:18:00.978429_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_flex_replace_exact_and_stripped",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_edit:_no_change",
+   "prompt_chars": 2582,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 254.3,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T01:23:24.772299_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "goal": "fix_test_grading_does_not_write_to_the_host",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 184.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T01:26:28.948595_00:00",
+   "via": "test_import"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 99,
+  "graded": 105,
   "passes": 44,
-  "real_graded": 16,
+  "real_graded": 22,
   "real_passes": 1,
   "regressions_reverted": 1,
-  "spoiler_share": 0.838,
-  "trajectories": 99
+  "spoiler_share": 0.79,
+  "trajectories": 105
  }
 }

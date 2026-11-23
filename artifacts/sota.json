@@ -97,20 +97,20 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "lessons": [
-    "2026-11-23 fix_test_raw_request_skips_prep: tests failed",
-    "2026-11-23 fix_test_identical_runs_are_deduplicated: regression",
     "2026-11-23 fix_test_loop_runner_default_off_backward_compatible: regression",
     "2026-11-23 fix_test_grading_does_not_synthesize_or_harness: regression",
     "2026-11-23 fix_test_infrastructure_outages_are_not_stored_as_code_failures_: regression",
     "2026-11-23 fix_test_retry_reward_is_credited_to_the_arm_that_produced_it: gate aborted: after-run timeout",
     "2026-11-23 fix_test_same_objective_different_code_is_kept: regression",
-    "2026-11-23 fix_test_doctor_mentions_hygiene: regression"
+    "2026-11-23 fix_test_doctor_mentions_hygiene: regression",
+    "2026-11-23 fix_test_new_modules_importable: no edit: assignment ETHER_LOOP_RUNNER_ENABLED is new and not used by the edit",
+    "2026-11-23 fix_test_auto_fabricate_on_fail_path_reports_success_when_it_wor: regression"
   ],
   "last": {
-    "goal": "fix_test_doctor_mentions_hygiene",
+    "goal": "fix_test_auto_fabricate_on_fail_path_reports_success_when_it_wor",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T16:16:16.901692+00:00"
+    "ts": "2026-11-23T17:34:18.272880+00:00"
   },
   "kept_n": 0,
   "files": [

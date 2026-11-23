@@ -92,27 +92,27 @@
     "describe_loop_retrieve",
     "describe_loop_stages",
     "find_clamp",
-    "describe_spine_state_io"
+    "describe_spine_state_io",
+    "fix_test_dispatch_walked_marks_run_tests"
   ],
   "lessons": [
-    "2026-11-19 describe_tombstone: tests failed",
-    "2026-11-19 trace: search {\"tool\":\"search\",\"args\":{\"query\":\"clamp\"",
-    "2026-11-19 find_clamp: tests passed via tool",
     "2026-11-19 describe_spine_state_io: tests passed",
     "2026-11-22 lint_F821_product_loop_extract_functions: no function",
     "2026-11-23 lint_F821_product_loop_extract_functions: no function",
     "2026-11-23 lint_F841_pipeline_Pipeline_run: no function",
-    "2026-11-23 fix_test_loop_runner_default_off_backward_compatible: regression"
+    "2026-11-23 fix_test_loop_runner_default_off_backward_compatible: regression",
+    "2026-11-23 fix_test_grandidierite_gated: no function",
+    "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed",
+    "2026-11-23 fix_test_dispatch_walked_marks_run_tests: tests passed, 0 regressions"
   ],
   "last": {
-    "goal": "fix_test_loop_runner_default_off_backward_compatible",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-23T00:32:32.661993+00:00"
+    "goal": "fix_test_dispatch_walked_marks_run_tests",
+    "kept": true,
+    "file": "core/loop/plan_exec.py",
+    "ts": "2026-11-23T00:54:33.172795+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/loop/agentic.py",
     "core/loop/fail_run.py",
     "core/loop/finalize_legacy.py",
     "core/loop/fix_dag.py",
@@ -131,10 +131,10 @@
     "core/loop/retrieve.py",
     "core/loop/stages.py",
     "core/kernel/context_budget.py",
-    "core/spine/state_io.py"
+    "core/spine/state_io.py",
+    "core/loop/plan_exec.py"
   ],
   "skipped": [
-    "describe_loop_ast_intel",
     "describe_loop_bandit_credit",
     "describe_loop_begin",
     "describe_loop_canned_tools",
@@ -173,6 +173,7 @@
     "describe_loop_worktree",
     "describe_extra_tools",
     "describe_loop_worktree_worker",
-    "describe_tombstone"
+    "describe_tombstone",
+    "fix_test_auto_fabricate_success_and_failure_paths_agree"
   ]
 }

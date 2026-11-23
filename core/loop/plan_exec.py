@@ -37,7 +37,12 @@ def dispatch_walked(rows: List[Dict[str, Optional[str]]]) -> List[Dict[str, Opti
         tool = tool_for_step(row)
         item = dict(row)
         item["tool"] = tool
-        item["dispatched"] = tool or "record"
+        # If the step action is 'generate', dispatch to 'record'.
+        # Otherwise, use the tool name or default to 'record'.
+        if row.get("action") == "generate":
+            item["dispatched"] = "record"
+        else:
+            item["dispatched"] = tool or "record"
         out.append(item)
     return out
 

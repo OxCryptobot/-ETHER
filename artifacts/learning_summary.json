@@ -5,6 +5,13 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
+    "pulls": 2,
+    "regressions": 0
+   },
+   "minimal": {
+    "mean_reward": -0.9,
+    "pass_rate": 0.0,
+    "passes": 0,
     "pulls": 1,
     "regressions": 0
    },
@@ -12,7 +19,14 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 2,
+    "pulls": 3,
+    "regressions": 0
+   },
+   "repair_heavy": {
+    "mean_reward": 0.75,
+    "pass_rate": 1.0,
+    "passes": 1,
+    "pulls": 1,
     "regressions": 0
    },
    "repo_map_on": {
@@ -115,6 +129,30 @@
    },
    "repair_logic|complex": {
     "arms": {
+     "default": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 115.1
+     },
+     "minimal": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 208.6
+     },
+     "no_context": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 181.7
+     },
+     "repair_heavy": {
+      "n": 1,
+      "passes": 1,
+      "post_mean": 0.667,
+      "secs_per_pull": 495.9
+     },
      "repo_map_on": {
       "n": 1,
       "passes": 0,
@@ -122,7 +160,14 @@
       "secs_per_pull": 265.9
      }
     },
-    "entropy_bits": -0.0
+    "entropy_bits": 2.3219,
+    "p_best": {
+     "default": 0.1,
+     "minimal": 0.09,
+     "no_context": 0.085,
+     "repair_heavy": 0.637,
+     "repo_map_on": 0.087
+    }
    }
   },
   "gamma": 1.0,
@@ -172,29 +217,29 @@
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.0,
+  "kept_per_attempt_other": 0.0625,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
-  "library": 0,
+  "library": 1,
   "mode": "record",
-  "reuse_rate": null,
+  "reuse_rate": 0.0,
   "shown": 0
  },
  "explore": {
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T00:32:32.716950+00:00",
+ "generated": "2026-11-23T00:54:33.223180+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 1.5219,
+   "fix_test": 2.1972,
    "lint": 2.2359
   },
-  "attempts": 12,
+  "attempts": 16,
   "by_temp": {
    "0.0": {
-    "attempts": 5,
-    "kept": 0
+    "attempts": 8,
+    "kept": 1
    }
   },
   "by_via": {
@@ -207,36 +252,36 @@
     "kept": 0
    },
    "test_import": {
-    "attempts": 2,
-    "kept": 0
+    "attempts": 6,
+    "kept": 1
    }
   },
   "demotions": 0,
   "dup_share": 0.0,
-  "filler_rate": 1.0,
-  "gpu_hours": 0.651,
-  "kept": 0,
-  "kept_per_attempt": 0.0,
-  "kept_per_gpu_hour": 0.0,
-  "kept_per_session": 0.0,
+  "filler_rate": 0.9773,
+  "gpu_hours": 0.929,
+  "kept": 1,
+  "kept_per_attempt": 0.0625,
+  "kept_per_gpu_hour": 1.076,
+  "kept_per_session": 0.5,
   "promotions": 0,
   "regressions_caught": 1,
-  "revert_rate": 0.0833,
+  "revert_rate": 0.125,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 8,
-    "kept": 0
+    "attempts": 12,
+    "kept": 1
    }
   },
   "tool_edits": 0
  },
  "promoted": {},
  "real_queue": {
-  "done": 0,
+  "done": 1,
   "dropped": {
    "infra": 1,
    "no_repo_target": 3,
@@ -248,42 +293,6 @@
   "open": 62
  },
  "recent": [
-  {
-   "arm": "default",
-   "goal": "describe_loop_stream_obs",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:37:54.525602_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_tool_first",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:38:29.962991_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_tool_runtime_path",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:39:06.396041_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_tools_avail",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:39:42.887649_00:00"
-  },
   {
    "arm": "default",
    "goal": "describe_loop_traces",
@@ -574,16 +583,89 @@
    "tests_ok": false,
    "ts": "2026-11-23T00:32:32.661993_00:00",
    "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "default",
+   "goal": "fix_test_grandidierite_gated",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_function",
+   "prompt_chars": 1643,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 115.1,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:35:43.526426_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_honest_gate_rejects_generate_fallback",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 181.7,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:38:45.265001_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "dup": false,
+   "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "tests_failed",
+   "prompt_chars": 1946,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 208.6,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:46:17.220192_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_dispatch_walked_marks_run_tests",
+   "goal_kind": "fix_test",
+   "kind": "pass",
+   "note": "",
+   "prompt_chars": 1854,
+   "regressions": 0,
+   "reward": 0.75,
+   "reward01": 1,
+   "secs": 495.9,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": true,
+   "ts": "2026-11-23T00:54:33.172795_00:00",
+   "via": "test_import"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 95,
-  "passes": 43,
-  "real_graded": 12,
-  "real_passes": 0,
+  "graded": 99,
+  "passes": 44,
+  "real_graded": 16,
+  "real_passes": 1,
   "regressions_reverted": 1,
-  "spoiler_share": 0.874,
-  "trajectories": 95
+  "spoiler_share": 0.838,
+  "trajectories": 99
  }
 }

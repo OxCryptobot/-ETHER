@@ -96,20 +96,20 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "lessons": [
-    "2026-11-23 fix_test_steady_has_phase3_templates: no edit: syntax: closing parenthesis '}' does not match opening parenthesis '[' on line 104",
     "2026-11-23 fix_test_status_is_complete_on_a_clean_run: gate aborted: after-run timeout",
     "2026-11-23 fix_test_rewrite_windows_python: tests failed",
     "2026-11-23 lint_F841_pipeline_Pipeline_run: no function",
     "2026-11-23 fix_test_grandidierite_gated: regression",
     "2026-11-23 fix_test_identical_runs_are_deduplicated: regression",
     "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed",
-    "2026-11-23 fix_test_context_over_budget_without_compress: tests failed"
+    "2026-11-23 fix_test_context_over_budget_without_compress: tests failed",
+    "2026-11-23 fix_test_infrastructure_outages_are_not_stored_as_code_failures_: no edit: no change"
   ],
   "last": {
-    "goal": "fix_test_context_over_budget_without_compress",
+    "goal": "fix_test_infrastructure_outages_are_not_stored_as_code_failures_",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T04:23:49.984564+00:00"
+    "ts": "2026-11-23T05:03:25.194905+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -135,7 +135,6 @@
     "core/loop/plan_exec.py"
   ],
   "skipped": [
-    "describe_loop_execute_plan",
     "describe_loop_extend_stage",
     "describe_loop_generate_fn",
     "describe_loop_live_attach",
@@ -174,6 +173,7 @@
     "fix_test_flex_replace_exact_and_stripped",
     "fix_test_new_modules_importable",
     "fix_test_steady_has_phase3_templates",
-    "fix_test_rewrite_windows_python"
+    "fix_test_rewrite_windows_python",
+    "fix_test_infrastructure_outages_are_not_stored_as_code_failures_"
   ]
 }

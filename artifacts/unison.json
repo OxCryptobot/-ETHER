@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-23T04:28:02.064792+00:00",
+  "app_alive_ts": "2026-11-23T05:07:05.237101+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_context_over_budget_without_compress",
+  "sota_goal": "fix_test_infrastructure_outages_are_not_stored_as_code_failures_",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -171,28 +171,8 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "env_kept": 93,
-  "env_disk": 222.5,
+  "env_disk": 216.6,
   "env_history": [
-    {
-      "ts": "2026-11-22T23:13:48.409207+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:14:25.373773+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:15:01.834434+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:15:38.168795+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:16:15.510996+00:00",
       "kept": 92,
@@ -412,6 +392,26 @@
       "ts": "2026-11-23T04:37:43.194881+00:00",
       "kept": 93,
       "disk": 222.5
+    },
+    {
+      "ts": "2026-11-23T04:45:02.707728+00:00",
+      "kept": 93,
+      "disk": 222.4
+    },
+    {
+      "ts": "2026-11-23T04:52:17.013157+00:00",
+      "kept": 93,
+      "disk": 222.4
+    },
+    {
+      "ts": "2026-11-23T05:03:25.403573+00:00",
+      "kept": 93,
+      "disk": 216.6
+    },
+    {
+      "ts": "2026-11-23T05:10:42.656578+00:00",
+      "kept": 93,
+      "disk": 216.6
     }
   ],
   "skills": [
@@ -421,14 +421,14 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-23T04:37:43.095015+00:00",
+    "generated": "2026-11-23T05:10:42.530275+00:00",
     "stale": false,
-    "attempts": 58,
+    "attempts": 65,
     "kept": 1,
-    "kept_per_attempt": 0.0172,
-    "kept_per_gpu_hour": 0.273,
-    "revert_rate": 0.1552,
-    "dup_share": 0.0667,
+    "kept_per_attempt": 0.0154,
+    "kept_per_gpu_hour": 0.247,
+    "revert_rate": 0.1385,
+    "dup_share": 0.0625,
     "filler_rate": 0.9773,
     "regressions_caught": 4,
     "arms": {
@@ -438,7 +438,7 @@
           "pass_rate": 0.0
         },
         "minimal": {
-          "pulls": 9,
+          "pulls": 10,
           "pass_rate": 0.0
         },
         "no_context": {
@@ -446,8 +446,8 @@
           "pass_rate": 0.0
         },
         "repair_heavy": {
-          "pulls": 20,
-          "pass_rate": 0.05
+          "pulls": 26,
+          "pass_rate": 0.038
         },
         "repo_map_on": {
           "pulls": 5,
@@ -483,7 +483,7 @@
         }
       }
     },
-    "top_arm_share": 0.589,
+    "top_arm_share": 0.561,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -493,7 +493,7 @@
       "dropped": {
         "infra": 1,
         "no_repo_target": 4,
-        "protected_target": 5,
+        "protected_target": 6,
         "source_text_assert": 9,
         "test_bug": 1,
         "too_many_sites": 3
@@ -501,7 +501,7 @@
       "open": 74
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0172,
+      "kept_per_attempt_other": 0.0154,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 1,
@@ -517,7 +517,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-23T04:12:56.219391+00:00",
+    "supervisor_ts": "2026-11-23T05:03:26.325316+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

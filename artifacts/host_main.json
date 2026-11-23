@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T13:26:49.157862+00:00",
+  "ts": "2026-11-23T13:53:19.842897+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T13:26:58.776852+00:00",
+    "ts": "2026-11-23T13:53:30.152566+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T13:26:49.975270+00:00",
+    "ts": "2026-11-23T13:53:20.804934+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T13:03:33.336066+00:00"
+    "last_push_ts": "2026-11-23T13:34:48.158990+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T13:26:57.631574+00:00",
+    "ts": "2026-11-23T13:53:29.029360+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T13:26:58.053813+00:00",
+    "ts": "2026-11-23T13:53:29.434816+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T13:26:58.629370+00:00",
+    "updated": "2026-11-23T13:53:30.018204+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -128,27 +128,23 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_phase3_canaries",
+  "next_goal": "fix_test_loop_runner_default_off_backward_compatible",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 95,
     "done": 3,
     "dropped": 27,
-    "scan_ts": "2026-11-23T13:16:12.458555+00:00"
+    "scan_ts": "2026-11-23T13:38:27.663035+00:00"
   },
   "sota": {
-    "goal": "fix_test_identical_runs_are_deduplicated",
+    "goal": "fix_test_honest_gate_rejects_generate_fallback",
     "kind": "fix_test",
-    "file": "core/train_gates.py",
+    "file": "core/loop/handlers/tool_runtime_gate.py",
     "ok": false,
-    "honest": false,
-    "note": "regression",
-    "regressions": 5,
-    "siblings_failing": 2,
-    "restored": [
-      "core/train_gates.py"
-    ],
+    "honest": true,
+    "note": "gate aborted: baseline timeout",
+    "gate_abort": "baseline timeout",
     "learn": {
       "arm": "no_context",
       "bucket": "repair_logic|complex",
@@ -161,17 +157,25 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_phase3_canaries",
-      "fix_test_identical_runs_are_deduplicated"
+      "fix_test_loop_runner_default_off_backward_compatible",
+      "fix_test_honest_gate_rejects_generate_fallback"
     ],
     "kept_n": 0,
-    "batch_size": 3
+    "batch_size": 3,
+    "scan": {
+      "ok": true,
+      "files": 8,
+      "failing": 0,
+      "added": 0,
+      "goals": 95,
+      "secs": 240.0
+    }
   },
   "learning": {
-    "trajectories": 237,
-    "graded": 236,
+    "trajectories": 243,
+    "graded": 242,
     "passes": 45,
-    "spoiler_share": 0.352,
+    "spoiler_share": 0.343,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -183,19 +187,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16357,
-    "graded": 236
+    "bytes": 16302,
+    "graded": 242
   },
   "env": {
-    "ts": "2026-11-23T13:34:47.889091+00:00",
+    "ts": "2026-11-23T14:04:52.425663+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 210.6,
+    "disk_free_gb": 214.9,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T13:26:58.776852+00:00",
+    "alive_ts": "2026-11-23T13:53:30.152566+00:00",
     "kept": 94,
-    "last_goal": "fix_test_identical_runs_are_deduplicated",
+    "last_goal": "fix_test_loop_runner_default_off_backward_compatible",
     "last_kept": false,
     "batch_size": 0
   },

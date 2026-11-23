@@ -5,28 +5,28 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 4,
+    "pulls": 5,
     "regressions": 0
    },
    "minimal": {
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 6,
+    "pulls": 8,
     "regressions": 0
    },
    "no_context": {
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 7,
+    "pulls": 9,
     "regressions": 15
    },
    "repair_heavy": {
-    "mean_reward": -0.782,
-    "pass_rate": 0.071,
+    "mean_reward": -0.797,
+    "pass_rate": 0.062,
     "passes": 1,
-    "pulls": 14,
+    "pulls": 16,
     "regressions": 1
    },
    "repo_map_on": {
@@ -144,28 +144,28 @@
    "repair_logic|complex": {
     "arms": {
      "default": {
-      "n": 3,
-      "passes": 0,
-      "post_mean": 0.2,
-      "secs_per_pull": 159.7
-     },
-     "minimal": {
       "n": 4,
       "passes": 0,
       "post_mean": 0.167,
-      "secs_per_pull": 238.4
+      "secs_per_pull": 165.5
+     },
+     "minimal": {
+      "n": 6,
+      "passes": 0,
+      "post_mean": 0.125,
+      "secs_per_pull": 224.3
      },
      "no_context": {
-      "n": 5,
+      "n": 7,
       "passes": 0,
-      "post_mean": 0.143,
-      "secs_per_pull": 252.7
+      "post_mean": 0.111,
+      "secs_per_pull": 232.6
      },
      "repair_heavy": {
-      "n": 12,
+      "n": 14,
       "passes": 1,
-      "post_mean": 0.143,
-      "secs_per_pull": 306.6
+      "post_mean": 0.125,
+      "secs_per_pull": 289.2
      },
      "repo_map_on": {
       "n": 3,
@@ -174,13 +174,13 @@
       "secs_per_pull": 210.6
      }
     },
-    "entropy_bits": 2.0831,
+    "entropy_bits": 2.1104,
     "p_best": {
-     "default": 0.125,
-     "minimal": 0.105,
-     "no_context": 0.07,
-     "repair_heavy": 0.605,
-     "repo_map_on": 0.095
+     "default": 0.095,
+     "minimal": 0.072,
+     "no_context": 0.072,
+     "repair_heavy": 0.65,
+     "repo_map_on": 0.11
     }
    }
   },
@@ -231,7 +231,7 @@
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.0217,
+  "kept_per_attempt_other": 0.0189,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 1,
@@ -243,16 +243,16 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T03:33:13.010473+00:00",
+ "generated": "2026-11-23T04:04:53.892537+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 2.1679,
+   "fix_test": 2.1763,
    "lint": 2.2464
   },
-  "attempts": 46,
+  "attempts": 53,
   "by_temp": {
    "0.0": {
-    "attempts": 19,
+    "attempts": 20,
     "kept": 1
    }
   },
@@ -266,11 +266,11 @@
     "kept": 0
    },
    "sbfl": {
-    "attempts": 13,
+    "attempts": 16,
     "kept": 0
    },
    "test_import": {
-    "attempts": 19,
+    "attempts": 23,
     "kept": 1
    },
    "test_import_assign": {
@@ -279,23 +279,23 @@
    }
   },
   "demotions": 0,
-  "dup_share": 0.0,
+  "dup_share": 0.0714,
   "filler_rate": 0.9773,
-  "gpu_hours": 2.936,
+  "gpu_hours": 3.3,
   "kept": 1,
-  "kept_per_attempt": 0.0217,
-  "kept_per_gpu_hour": 0.341,
+  "kept_per_attempt": 0.0189,
+  "kept_per_gpu_hour": 0.303,
   "kept_per_session": 0.5,
   "promotions": 0,
   "regressions_caught": 4,
-  "revert_rate": 0.1522,
+  "revert_rate": 0.1509,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 42,
+    "attempts": 49,
     "kept": 1
    }
   },
@@ -312,132 +312,9 @@
    "test_bug": 1,
    "too_many_sites": 3
   },
-  "open": 70
+  "open": 69
  },
  "recent": [
-  {
-   "algo": "thompson",
-   "arm": "minimal",
-   "goal": "fix_test_grading_does_not_write_to_the_host",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 184.1,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:26:28.948595_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "dup": false,
-   "goal": "fix_test_pipeline_happy_path_mocked",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "regression",
-   "prompt_chars": 1239,
-   "regressions": 1,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 410.4,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:35:48.506810_00:00",
-   "via": "sbfl"
-  },
-  {
-   "algo": "thompson",
-   "arm": "minimal",
-   "goal": "fix_test_flag_on_routes_verify_via_loop_runner",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 182.5,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:38:51.065073_00:00",
-   "via": "sbfl"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "dup": false,
-   "goal": "fix_test_new_modules_importable",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "tests_failed",
-   "prompt_chars": 2005,
-   "regressions": 0,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 292.3,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:44:53.616490_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_flag_off_uses_finalize_legacy",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 181.9,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:47:55.645739_00:00",
-   "via": "sbfl"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_whats_next_no_dual_dashboard_blocker",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 184.5,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:53:26.708964_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repo_map_on",
-   "goal": "fix_test_template_has_main_and_no_raise",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 181.8,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T01:56:28.573621_00:00",
-   "via": "test_import"
-  },
   {
    "algo": "thompson",
    "arm": "repair_heavy",
@@ -754,16 +631,137 @@
    "tests_ok": false,
    "ts": "2026-11-23T03:33:12.944439_00:00",
    "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_list_tree",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T03:37:31.647952_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "default",
+   "goal": "fix_test_pipeline_reselects_the_arm_on_retry_with_the_observed_f",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.8,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T03:40:34.478453_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_correct_code_passes_the_gate",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 187.3,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T03:46:55.243475_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_whats_next_signals",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T03:49:57.414744_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "dup": true,
+   "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "tests_failed",
+   "prompt_chars": 1946,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 203.3,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T03:54:30.295865_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_spawn_writer_observe",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.4,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T04:01:45.129669_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "goal": "fix_test_grading_runs_the_code_it_was_given",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 188.7,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T04:04:53.871841_00:00",
+   "via": "test_import"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 129,
+  "graded": 136,
   "passes": 44,
-  "real_graded": 46,
+  "real_graded": 53,
   "real_passes": 1,
   "regressions_reverted": 4,
-  "spoiler_share": 0.643,
-  "trajectories": 129
+  "spoiler_share": 0.61,
+  "trajectories": 136
  }
 }

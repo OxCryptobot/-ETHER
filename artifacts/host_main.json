@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T19:17:11.012601+00:00",
+  "ts": "2026-11-23T19:48:56.927625+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T19:17:22.645967+00:00",
+    "ts": "2026-11-23T19:49:07.135134+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T19:17:12.084404+00:00",
+    "ts": "2026-11-23T19:51:47.416398+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T18:48:38.651781+00:00"
+    "last_push_ts": "2026-11-23T19:23:38.799058+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T19:17:21.436882+00:00",
+    "ts": "2026-11-23T19:49:06.008924+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T19:17:21.881353+00:00",
+    "ts": "2026-11-23T19:49:06.413436+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T19:17:22.516038+00:00",
+    "updated": "2026-11-23T19:49:06.994379+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -128,46 +128,37 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_handler_scan_dirty_and_audit_rejected_clamps",
+  "next_goal": "none",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 94,
     "done": 3,
     "dropped": 27,
-    "scan_ts": "2026-11-23T19:09:38.107377+00:00"
+    "scan_ts": "2026-11-23T19:47:49.994815+00:00"
   },
   "sota": {
-    "goal": "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
-    "kind": "fix_test",
-    "file": "core/pipeline.py",
     "ok": false,
     "honest": true,
-    "note": "gate aborted: baseline timeout",
-    "gate_abort": "baseline timeout",
-    "learn": {
-      "arm": "repo_map_on",
-      "bucket": "repair_logic|complex",
-      "kind": "fail",
-      "reward": -0.9,
-      "promote": {
-        "action": "hold",
-        "arm": "default"
-      }
-    },
+    "note": "queue empty",
     "batch": [],
-    "tried": [
-      "fix_test_handler_scan_dirty_and_audit_rejected_clamps",
-      "fix_test_auto_fabricate_on_fail_path_reports_gem_error"
-    ],
+    "tried": [],
     "kept_n": 0,
-    "batch_size": 3
+    "batch_size": 3,
+    "scan": {
+      "ok": true,
+      "files": 8,
+      "failing": 0,
+      "added": 0,
+      "goals": 95,
+      "secs": 153.7
+    }
   },
   "learning": {
-    "trajectories": 298,
-    "graded": 297,
+    "trajectories": 302,
+    "graded": 301,
     "passes": 45,
-    "spoiler_share": 0.279,
+    "spoiler_share": 0.276,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -179,19 +170,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 10882,
-    "graded": 297
+    "bytes": 10933,
+    "graded": 301
   },
   "env": {
-    "ts": "2026-11-23T19:23:38.609147+00:00",
+    "ts": "2026-11-23T19:51:47.246847+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 210.9,
+    "disk_free_gb": 210.6,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T19:17:22.645967+00:00",
+    "alive_ts": "2026-11-23T19:49:07.135134+00:00",
     "kept": 94,
-    "last_goal": "fix_test_grading_does_not_write_to_the_host",
+    "last_goal": "fix_test_auto_fabricate_on_fail_path_reports_success_when_it_wor",
     "last_kept": false,
     "batch_size": 0
   },
@@ -223,7 +214,13 @@
   "unison": {
     "ok": true
   },
-  "health": "ok",
-  "health_worst": null,
-  "health_signals": []
+  "health": "degraded",
+  "health_worst": "queue: goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)",
+  "health_signals": [
+    {
+      "name": "queue",
+      "level": "degraded",
+      "detail": "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"
+    }
+  ]
 }

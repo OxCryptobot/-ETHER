@@ -97,22 +97,22 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "lessons": [
-    "2026-11-23 fix_test_new_modules_importable: tests failed",
-    "2026-11-23 fix_test_grandidierite_gated: no function",
-    "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: no edit: no change",
     "2026-11-23 fix_test_infrastructure_outages_are_not_stored_as_code_failures_: no edit: no change",
     "2026-11-23 fix_test_flex_replace_exact_and_stripped: no edit: no change",
     "2026-11-23 fix_test_doctor_mentions_hygiene: tests failed",
     "2026-11-23 fix_test_offbox_register_does_not_stamp_alive: tests passed, 0 regressions",
-    "2026-11-23 fix_test_grading_does_not_synthesize_or_harness: regression"
+    "2026-11-23 fix_test_grading_does_not_synthesize_or_harness: regression",
+    "2026-11-23 fix_test_correct_code_is_not_failed_by_argument_guessing_annotat: no function",
+    "2026-11-23 fix_test_raw_request_skips_prep: regression",
+    "2026-11-23 fix_test_verify_solvable_reports_a_holdout_that_cannot_fail: no edit: no change"
   ],
   "last": {
-    "goal": "fix_test_grading_does_not_synthesize_or_harness",
+    "goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T11:44:41.882201+00:00"
+    "ts": "2026-11-23T12:18:19.141281+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/loop/finalize_legacy.py",
     "core/loop/fix_dag.py",

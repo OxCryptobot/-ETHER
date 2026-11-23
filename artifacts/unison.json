@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-23T05:11:59.537762+00:00",
+  "app_alive_ts": "2026-11-23T06:11:21.349615+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_same_objective_different_code_is_kept",
+  "sota_goal": "fix_test_flex_replace_exact_and_stripped",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -171,13 +171,8 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "env_kept": 93,
-  "env_disk": 222.0,
+  "env_disk": 215.8,
   "env_history": [
-    {
-      "ts": "2026-11-22T23:16:52.378758+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:17:29.655041+00:00",
       "kept": 92,
@@ -412,6 +407,11 @@
       "ts": "2026-11-23T05:23:25.504173+00:00",
       "kept": 93,
       "disk": 222.0
+    },
+    {
+      "ts": "2026-11-23T06:13:31.355460+00:00",
+      "kept": 93,
+      "disk": 215.8
     }
   ],
   "skills": [
@@ -421,14 +421,14 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-23T05:23:25.403351+00:00",
+    "generated": "2026-11-23T06:13:31.244847+00:00",
     "stale": false,
-    "attempts": 67,
+    "attempts": 72,
     "kept": 1,
-    "kept_per_attempt": 0.0149,
-    "kept_per_gpu_hour": 0.237,
-    "revert_rate": 0.1493,
-    "dup_share": 0.0588,
+    "kept_per_attempt": 0.0139,
+    "kept_per_gpu_hour": 0.221,
+    "revert_rate": 0.1528,
+    "dup_share": 0.0556,
     "filler_rate": 0.9773,
     "regressions_caught": 4,
     "arms": {
@@ -446,11 +446,11 @@
           "pass_rate": 0.0
         },
         "repair_heavy": {
-          "pulls": 27,
-          "pass_rate": 0.037
+          "pulls": 31,
+          "pass_rate": 0.032
         },
         "repo_map_on": {
-          "pulls": 5,
+          "pulls": 6,
           "pass_rate": 0.0
         }
       },
@@ -483,7 +483,7 @@
         }
       }
     },
-    "top_arm_share": 0.553,
+    "top_arm_share": 0.535,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -501,7 +501,7 @@
       "open": 74
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0149,
+      "kept_per_attempt_other": 0.0139,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 1,
@@ -516,8 +516,8 @@
     "host": "ok",
     "worst": null,
     "pull_failures": 0,
-    "pull_fix": null,
-    "supervisor_ts": "2026-11-23T05:10:51.132703+00:00",
+    "pull_fix": "Local branch is 1 commit(s) ahead / 2 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-23T05:23:26.160698+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

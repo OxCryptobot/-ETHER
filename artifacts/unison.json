@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-23T16:22:09.030631+00:00",
+  "app_alive_ts": "2026-11-23T16:53:21.643937+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,28 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 212.8,
+  "env_disk": 207.8,
   "env_history": [
-    {
-      "ts": "2026-11-23T08:32:39.619728+00:00",
-      "kept": 93,
-      "disk": 219.6
-    },
-    {
-      "ts": "2026-11-23T08:47:58.887904+00:00",
-      "kept": 93,
-      "disk": 214.9
-    },
-    {
-      "ts": "2026-11-23T08:55:15.839864+00:00",
-      "kept": 93,
-      "disk": 219.4
-    },
-    {
-      "ts": "2026-11-23T09:04:11.385860+00:00",
-      "kept": 93,
-      "disk": 213.7
-    },
     {
       "ts": "2026-11-23T09:11:44.244518+00:00",
       "kept": 93,
@@ -413,6 +393,26 @@
       "ts": "2026-11-23T16:26:50.341299+00:00",
       "kept": 94,
       "disk": 212.8
+    },
+    {
+      "ts": "2026-11-23T16:34:23.457326+00:00",
+      "kept": 94,
+      "disk": 208.1
+    },
+    {
+      "ts": "2026-11-23T16:43:41.851683+00:00",
+      "kept": 94,
+      "disk": 208.0
+    },
+    {
+      "ts": "2026-11-23T16:51:13.336669+00:00",
+      "kept": 94,
+      "disk": 208.9
+    },
+    {
+      "ts": "2026-11-23T16:58:40.740718+00:00",
+      "kept": 94,
+      "disk": 207.8
     }
   ],
   "skills": [
@@ -422,20 +422,20 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-23T16:26:50.221773+00:00",
+    "generated": "2026-11-23T16:58:40.630208+00:00",
     "stale": false,
-    "attempts": 182,
+    "attempts": 187,
     "kept": 2,
-    "kept_per_attempt": 0.011,
-    "kept_per_gpu_hour": 0.175,
-    "revert_rate": 0.1648,
+    "kept_per_attempt": 0.0107,
+    "kept_per_gpu_hour": 0.171,
+    "revert_rate": 0.1604,
     "dup_share": 0.1633,
     "filler_rate": 0.9556,
     "regressions_caught": 15,
     "arms": {
       "fix_test": {
         "default": {
-          "pulls": 11,
+          "pulls": 12,
           "pass_rate": 0.0
         },
         "minimal": {
@@ -443,12 +443,12 @@
           "pass_rate": 0.0
         },
         "no_context": {
-          "pulls": 44,
-          "pass_rate": 0.023
+          "pulls": 45,
+          "pass_rate": 0.022
         },
         "repair_heavy": {
-          "pulls": 80,
-          "pass_rate": 0.013
+          "pulls": 83,
+          "pass_rate": 0.012
         },
         "repo_map_on": {
           "pulls": 17,
@@ -484,7 +484,7 @@
         }
       }
     },
-    "top_arm_share": 0.313,
+    "top_arm_share": 0.307,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -498,10 +498,10 @@
         "source_text_assert": 9,
         "too_many_sites": 3
       },
-      "open": 95
+      "open": 94
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.011,
+      "kept_per_attempt_other": 0.0107,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "ok",
-    "worst": "pull: git pull failed (rc 128), 67 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 22 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset -",
-    "pull_failures": 67,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 22 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-23T16:16:21.695439+00:00",
+    "worst": "pull: git pull failed (rc 128), 71 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 23 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset -",
+    "pull_failures": 71,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 23 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-23T16:51:17.752515+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

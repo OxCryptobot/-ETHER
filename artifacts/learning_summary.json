@@ -5,7 +5,7 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 11,
+    "pulls": 12,
     "regressions": 0
    },
    "minimal": {
@@ -16,17 +16,17 @@
     "regressions": 1
    },
    "no_context": {
-    "mean_reward": -0.862,
-    "pass_rate": 0.023,
+    "mean_reward": -0.863,
+    "pass_rate": 0.022,
     "passes": 1,
-    "pulls": 44,
+    "pulls": 45,
     "regressions": 50
    },
    "repair_heavy": {
-    "mean_reward": -0.879,
-    "pass_rate": 0.013,
+    "mean_reward": -0.88,
+    "pass_rate": 0.012,
     "passes": 1,
-    "pulls": 80,
+    "pulls": 83,
     "regressions": 2
    },
    "repo_map_on": {
@@ -102,9 +102,9 @@
    "gen|complex": {
     "arms": {
      "default": {
-      "n": 1,
+      "n": 2,
       "passes": 0,
-      "post_mean": 0.333,
+      "post_mean": 0.25,
       "secs_per_pull": 183.8
      },
      "minimal": {
@@ -132,13 +132,13 @@
       "secs_per_pull": 197.5
      }
     },
-    "entropy_bits": 2.166,
+    "entropy_bits": 2.2438,
     "p_best": {
-     "default": 0.237,
-     "minimal": 0.203,
-     "no_context": 0.19,
+     "default": 0.212,
+     "minimal": 0.19,
+     "no_context": 0.203,
      "repair_heavy": 0.172,
-     "repo_map_on": 0.198
+     "repo_map_on": 0.223
     }
    },
    "repair_logic|complex": {
@@ -156,16 +156,16 @@
       "secs_per_pull": 208.6
      },
      "no_context": {
-      "n": 39,
+      "n": 40,
       "passes": 1,
-      "post_mean": 0.049,
-      "secs_per_pull": 226.6
+      "post_mean": 0.048,
+      "secs_per_pull": 225.6
      },
      "repair_heavy": {
-      "n": 74,
+      "n": 77,
       "passes": 1,
-      "post_mean": 0.026,
-      "secs_per_pull": 254.8
+      "post_mean": 0.025,
+      "secs_per_pull": 252.1
      },
      "repo_map_on": {
       "n": 13,
@@ -174,12 +174,12 @@
       "secs_per_pull": 190.7
      }
     },
-    "entropy_bits": 1.8938,
+    "entropy_bits": 1.8769,
     "p_best": {
      "default": 0.025,
      "minimal": 0.03,
-     "no_context": 0.605,
-     "repair_heavy": 0.302,
+     "no_context": 0.608,
+     "repair_heavy": 0.3,
      "repo_map_on": 0.037
     }
    }
@@ -231,7 +231,7 @@
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.011,
+  "kept_per_attempt_other": 0.0107,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 2,
@@ -243,13 +243,13 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T16:26:50.221773+00:00",
+ "generated": "2026-11-23T16:58:40.630208+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 1.9472,
+   "fix_test": 1.9436,
    "lint": 2.2925
   },
-  "attempts": 182,
+  "attempts": 187,
   "by_temp": {
    "0.0": {
     "attempts": 59,
@@ -266,11 +266,11 @@
     "kept": 0
    },
    "sbfl": {
-    "attempts": 85,
+    "attempts": 87,
     "kept": 0
    },
    "test_import": {
-    "attempts": 79,
+    "attempts": 82,
     "kept": 2
    },
    "test_import_assign": {
@@ -281,21 +281,21 @@
   "demotions": 0,
   "dup_share": 0.1633,
   "filler_rate": 0.9556,
-  "gpu_hours": 11.428,
+  "gpu_hours": 11.685,
   "kept": 2,
-  "kept_per_attempt": 0.011,
-  "kept_per_gpu_hour": 0.175,
+  "kept_per_attempt": 0.0107,
+  "kept_per_gpu_hour": 0.171,
   "kept_per_session": 1.0,
   "promotions": 0,
   "regressions_caught": 15,
-  "revert_rate": 0.1648,
+  "revert_rate": 0.1604,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 178,
+    "attempts": 183,
     "kept": 2
    }
   },
@@ -311,98 +311,9 @@
    "source_text_assert": 9,
    "too_many_sites": 3
   },
-  "open": 95
+  "open": 94
  },
  "recent": [
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "dup": false,
-   "goal": "fix_test_loop_runner_default_off_backward_compatible",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "regression",
-   "prompt_chars": 1093,
-   "regressions": 1,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 255.4,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-23T14:01:49.715158_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "goal": "fix_test_honest_gate_rejects_generate_fallback",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 182.4,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T14:04:52.237229_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "dup": false,
-   "goal": "fix_test_grading_does_not_synthesize_or_harness",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "regression",
-   "prompt_chars": 1451,
-   "regressions": 1,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 477.0,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-23T14:14:15.435171_00:00",
-   "via": "sbfl"
-  },
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "goal": "fix_test_bench_holdouts_discriminate",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 182.4,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T14:17:17.918213_00:00",
-   "via": "sbfl"
-  },
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "goal": "fix_test_spawn_writer_observe",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 181.8,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T14:24:52.035854_00:00",
-   "via": "test_import"
-  },
   {
    "algo": "thompson",
    "arm": "repair_heavy",
@@ -750,16 +661,101 @@
    "tests_ok": false,
    "ts": "2026-11-23T16:26:50.167314_00:00",
    "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_finalize_paths_equivalent",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.2,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T16:34:23.279945_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_disk_tick_observe",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 187.5,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T16:40:37.662157_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_verify_paths_equivalent",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 184.0,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T16:43:41.690191_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "default",
+   "goal": "fix_test_flag_on_routes_verify_via_loop_runner",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T16:51:13.185381_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_flag_off_uses_finalize_legacy",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.7,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T16:58:40.564216_00:00",
+   "via": "sbfl"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 265,
+  "graded": 270,
   "passes": 45,
-  "real_graded": 182,
+  "real_graded": 187,
   "real_passes": 2,
   "regressions_reverted": 15,
-  "spoiler_share": 0.313,
-  "trajectories": 266
+  "spoiler_share": 0.307,
+  "trajectories": 271
  }
 }

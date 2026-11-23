@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T16:17:23.721203+00:00",
+  "ts": "2026-11-23T16:52:20.012206+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T16:17:32.979627+00:00",
+    "ts": "2026-11-23T16:52:29.994179+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T16:17:24.546980+00:00",
+    "ts": "2026-11-23T16:52:21.005459+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T15:47:49.041788+00:00"
+    "last_push_ts": "2026-11-23T16:26:50.572182+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T16:17:31.922785+00:00",
+    "ts": "2026-11-23T16:52:28.787563+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T16:17:32.285642+00:00",
+    "ts": "2026-11-23T16:52:29.208892+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T16:17:32.865262+00:00",
+    "updated": "2026-11-23T16:52:29.848865+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -132,15 +132,15 @@
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
-    "open": 95,
+    "open": 94,
     "done": 3,
     "dropped": 27,
-    "scan_ts": "2026-11-23T16:00:59.247964+00:00"
+    "scan_ts": "2026-11-23T16:37:30.106029+00:00"
   },
   "sota": {
-    "goal": "fix_test_arm_set_is_small_and_every_arm_has_a_behaviour",
+    "goal": "fix_test_flag_off_uses_finalize_legacy",
     "kind": "fix_test",
-    "file": "core/learning.py",
+    "file": "core/failure_graph.py",
     "ok": false,
     "honest": true,
     "note": "gate aborted: baseline timeout",
@@ -158,24 +158,16 @@
     "batch": [],
     "tried": [
       "fix_test_disk_tick_observe",
-      "fix_test_arm_set_is_small_and_every_arm_has_a_behaviour"
+      "fix_test_flag_off_uses_finalize_legacy"
     ],
     "kept_n": 0,
-    "batch_size": 3,
-    "scan": {
-      "ok": true,
-      "files": 8,
-      "failing": 1,
-      "added": 0,
-      "goals": 96,
-      "secs": 179.4
-    }
+    "batch_size": 3
   },
   "learning": {
-    "trajectories": 266,
-    "graded": 265,
+    "trajectories": 271,
+    "graded": 270,
     "passes": 45,
-    "spoiler_share": 0.313,
+    "spoiler_share": 0.307,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -187,17 +179,17 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16350,
-    "graded": 265
+    "bytes": 16296,
+    "graded": 270
   },
   "env": {
-    "ts": "2026-11-23T16:26:50.341299+00:00",
+    "ts": "2026-11-23T16:58:40.740718+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 212.8,
+    "disk_free_gb": 207.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T16:22:09.030631+00:00",
+    "alive_ts": "2026-11-23T16:53:21.643937+00:00",
     "kept": 94,
     "last_goal": "fix_test_doctor_mentions_hygiene",
     "last_kept": false,

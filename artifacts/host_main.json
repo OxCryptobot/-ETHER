@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T10:10:34.869130+00:00",
+  "ts": "2026-11-23T10:35:03.973350+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T10:10:42.199726+00:00",
+    "ts": "2026-11-23T10:35:11.567596+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T10:10:35.999043+00:00",
+    "ts": "2026-11-23T10:41:24.653191+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T09:43:06.577889+00:00"
+    "last_push_ts": "2026-11-23T10:17:02.771395+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T10:10:39.482314+00:00",
+    "ts": "2026-11-23T10:35:08.582615+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T10:10:40.724881+00:00",
+    "ts": "2026-11-23T10:35:09.773419+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T10:10:42.038733+00:00",
+    "updated": "2026-11-23T10:35:11.431105+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,25 +126,24 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_list_tree",
+  "next_goal": "fix_test_infrastructure_outages_are_not_stored_as_code_failures_",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 72,
     "done": 2,
     "dropped": 25,
-    "scan_ts": "2026-11-23T09:55:54.402628+00:00"
+    "scan_ts": "2026-11-23T10:20:36.741099+00:00"
   },
   "sota": {
-    "goal": "fix_test_ungraded_result_falls_back_to_real_grading",
+    "goal": "fix_test_flex_replace_exact_and_stripped",
     "kind": "fix_test",
-    "file": "scripts/bench.py",
+    "file": "core/hard_live_tools.py",
     "ok": false,
-    "honest": true,
-    "note": "gate aborted: baseline timeout",
-    "gate_abort": "baseline timeout",
+    "honest": false,
+    "note": "no edit: no change",
     "learn": {
-      "arm": "repo_map_on",
+      "arm": "default",
       "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
@@ -155,17 +154,17 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_list_tree",
-      "fix_test_ungraded_result_falls_back_to_real_grading"
+      "fix_test_infrastructure_outages_are_not_stored_as_code_failures_",
+      "fix_test_flex_replace_exact_and_stripped"
     ],
     "kept_n": 0,
     "batch_size": 3
   },
   "learning": {
-    "trajectories": 201,
-    "graded": 200,
+    "trajectories": 206,
+    "graded": 205,
     "passes": 44,
-    "spoiler_share": 0.415,
+    "spoiler_share": 0.405,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -177,19 +176,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16209,
-    "graded": 200
+    "bytes": 16218,
+    "graded": 205
   },
   "env": {
-    "ts": "2026-11-23T10:17:02.513845+00:00",
+    "ts": "2026-11-23T10:41:24.395404+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 212.8,
+    "disk_free_gb": 213.4,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T10:10:42.199726+00:00",
+    "alive_ts": "2026-11-23T10:35:11.567596+00:00",
     "kept": 93,
-    "last_goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
+    "last_goal": "fix_test_flex_replace_exact_and_stripped",
     "last_kept": false,
     "batch_size": 0
   },

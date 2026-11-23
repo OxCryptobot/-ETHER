@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-23T11:16:18.833579+00:00",
+  "app_alive_ts": "2026-11-23T11:34:09.186189+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_flex_replace_exact_and_stripped",
+  "sota_goal": "fix_test_grading_does_not_synthesize_or_harness",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -168,21 +168,12 @@
     "describe_loop_stages",
     "find_clamp",
     "describe_spine_state_io",
-    "fix_test_dispatch_walked_marks_run_tests"
+    "fix_test_dispatch_walked_marks_run_tests",
+    "fix_test_offbox_register_does_not_stamp_alive"
   ],
-  "env_kept": 93,
-  "env_disk": 212.9,
+  "env_kept": 94,
+  "env_disk": 211.7,
   "env_history": [
-    {
-      "ts": "2026-11-23T02:04:56.271902+00:00",
-      "kept": 93,
-      "disk": 218.5
-    },
-    {
-      "ts": "2026-11-23T02:13:10.972086+00:00",
-      "kept": 93,
-      "disk": 224.0
-    },
     {
       "ts": "2026-11-23T02:20:24.043518+00:00",
       "kept": 93,
@@ -412,6 +403,16 @@
       "ts": "2026-11-23T11:21:49.642110+00:00",
       "kept": 93,
       "disk": 212.9
+    },
+    {
+      "ts": "2026-11-23T11:32:58.511289+00:00",
+      "kept": 93,
+      "disk": 211.8
+    },
+    {
+      "ts": "2026-11-23T11:44:42.059013+00:00",
+      "kept": 94,
+      "disk": 211.7
     }
   ],
   "skills": [
@@ -421,16 +422,16 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-23T11:21:49.541198+00:00",
+    "generated": "2026-11-23T11:44:41.943996+00:00",
     "stale": false,
-    "attempts": 127,
-    "kept": 1,
-    "kept_per_attempt": 0.0079,
-    "kept_per_gpu_hour": 0.127,
-    "revert_rate": 0.1339,
-    "dup_share": 0.1613,
-    "filler_rate": 0.9773,
-    "regressions_caught": 6,
+    "attempts": 131,
+    "kept": 2,
+    "kept_per_attempt": 0.0153,
+    "kept_per_gpu_hour": 0.243,
+    "revert_rate": 0.145,
+    "dup_share": 0.1471,
+    "filler_rate": 0.9556,
+    "regressions_caught": 7,
     "arms": {
       "fix_test": {
         "default": {
@@ -442,15 +443,15 @@
           "pass_rate": 0.0
         },
         "no_context": {
-          "pulls": 14,
-          "pass_rate": 0.0
+          "pulls": 16,
+          "pass_rate": 0.062
         },
         "repair_heavy": {
-          "pulls": 66,
+          "pulls": 67,
           "pass_rate": 0.015
         },
         "repo_map_on": {
-          "pulls": 12,
+          "pulls": 13,
           "pass_rate": 0.0
         }
       },
@@ -483,13 +484,13 @@
         }
       }
     },
-    "top_arm_share": 0.395,
+    "top_arm_share": 0.388,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
     },
     "real_queue": {
-      "done": 2,
+      "done": 3,
       "dropped": {
         "infra": 1,
         "no_repo_target": 5,
@@ -497,13 +498,13 @@
         "source_text_assert": 9,
         "too_many_sites": 3
       },
-      "open": 72
+      "open": 95
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0079,
+      "kept_per_attempt_other": 0.0153,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
-      "library": 1,
+      "library": 2,
       "mode": "record",
       "reuse_rate": 0.0,
       "shown": 0
@@ -513,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "ok",
-    "worst": "pull: git pull failed (rc 128), 36 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 12 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset -",
-    "pull_failures": 36,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 12 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-23T11:14:23.248973+00:00",
+    "worst": "pull: git pull failed (rc 128), 38 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 13 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset -",
+    "pull_failures": 38,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 13 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-23T11:32:59.653323+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

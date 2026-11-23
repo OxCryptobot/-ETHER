@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T11:15:24.861856+00:00",
+  "ts": "2026-11-23T11:34:01.937315+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T11:15:32.226752+00:00",
+    "ts": "2026-11-23T11:34:09.186189+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T11:15:25.883435+00:00",
+    "ts": "2026-11-23T11:34:02.765354+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T10:50:13.767156+00:00"
+    "last_push_ts": "2026-11-23T11:21:49.818793+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T11:15:29.572580+00:00",
+    "ts": "2026-11-23T11:34:06.448223+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T11:15:30.734312+00:00",
+    "ts": "2026-11-23T11:34:07.647633+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T11:15:32.095742+00:00",
+    "updated": "2026-11-23T11:34:09.060778+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,7 +126,7 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_no_packed_self_update",
+  "next_goal": "fix_test_finalize_paths_equivalent",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
@@ -136,15 +136,16 @@
     "scan_ts": "2026-11-23T11:08:11.794931+00:00"
   },
   "sota": {
-    "goal": "fix_test_correct_code_passes_the_gate",
+    "goal": "fix_test_grading_does_not_synthesize_or_harness",
     "kind": "fix_test",
-    "file": "core/pipeline_prep.py",
+    "file": "core/schemas.py",
     "ok": false,
-    "honest": true,
-    "note": "gate aborted: baseline timeout",
-    "gate_abort": "baseline timeout",
+    "honest": false,
+    "note": "regression",
+    "regressions": 1,
+    "siblings_failing": 0,
     "learn": {
-      "arm": "repair_heavy",
+      "arm": "no_context",
       "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
@@ -153,45 +154,55 @@
         "arm": "default"
       }
     },
-    "batch": [],
-    "tried": [
-      "fix_test_no_packed_self_update",
-      "fix_test_correct_code_passes_the_gate"
+    "batch": [
+      "fix_test_offbox_register_does_not_stamp_alive"
     ],
-    "kept_n": 0,
-    "batch_size": 3
+    "tried": [
+      "fix_test_offbox_register_does_not_stamp_alive",
+      "fix_test_grading_does_not_synthesize_or_harness"
+    ],
+    "kept_n": 1,
+    "batch_size": 3,
+    "scan": {
+      "ok": true,
+      "files": 8,
+      "failing": 27,
+      "added": 24,
+      "goals": 96,
+      "secs": 72.8
+    }
   },
   "learning": {
-    "trajectories": 211,
-    "graded": 210,
-    "passes": 44,
-    "spoiler_share": 0.395,
+    "trajectories": 215,
+    "graded": 214,
+    "passes": 45,
+    "spoiler_share": 0.388,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
     "by_kind": {
-      "fix_test": 1,
+      "fix_test": 2,
       "legacy": 43,
       "lint": 0
     }
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16211,
-    "graded": 210
+    "bytes": 16262,
+    "graded": 214
   },
   "env": {
-    "ts": "2026-11-23T11:21:49.642110+00:00",
+    "ts": "2026-11-23T11:44:42.059013+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 212.9,
+    "disk_free_gb": 211.7,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T11:16:18.833579+00:00",
-    "kept": 93,
-    "last_goal": "fix_test_flex_replace_exact_and_stripped",
+    "alive_ts": "2026-11-23T11:34:09.186189+00:00",
+    "kept": 94,
+    "last_goal": "fix_test_grading_does_not_synthesize_or_harness",
     "last_kept": false,
-    "batch_size": 0
+    "batch_size": 1
   },
   "agent": {
     "ok": true,

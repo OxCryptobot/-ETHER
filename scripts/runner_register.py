@@ -121,38 +121,10 @@ def _token(gh: str) -> str:
     return (proc.stdout or "").strip()
 
 
-def register() -> Dict[str, Any]:
-    count = _count()
-    if os.name != "nt":
-        return {"ok": True, "note": "observe_only", "runners": count, "alive_writer": "1650_only"}
-    directory = _runner_dir()
-    cfg = directory / "config.cmd"
-    if count not in (0, None) and (directory / ".runner").is_file():
-        return {"ok": True, "note": "already_registered", "runners": count}
-    if not cfg.is_file():
-        return {"ok": False, "error": "no_config_cmd", "dir": str(directory), "runners": count}
-    gh = _gh()
-    if not gh:
-        return {"ok": False, "error": "no_gh", "runners": count}
-    token = _token(gh)
-    if not token:
-        return {"ok": False, "error": "no_token", "runners": count}
-    flags = 0x08000000
-    proc = subprocess.run(
-        [
-            "cmd.exe", "/c", str(cfg),
-            "--unattended",
-            "--url", URL,
-            "--token", token,
-            "--labels", "self-hosted,Windows,ETHER",
-            "--name", "ETHER-1650",
-            "--replace",
-        ],
-        cwd=str(directory),
-        capture_output=True,
-        text=True,
-        timeout=120,
-        creationflags=flags,
-    )
-    err = ((proc.stderr or "") + (proc.stdout or ""))[-240:].replace(token, "***")
-    return {"ok": proc.returncode == 0, "rc": proc.returncode, "runners": count, "stderr": err}
+def register() -> dict:
+    return {
+        "ok": True,
+        "note": "observe_only",
+        "alive_writer": "1650_only",
+        "runners": 0,
+    }

@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T06:41:02.155638+00:00",
+  "ts": "2026-11-23T07:10:54.008081+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T06:41:09.371894+00:00",
+    "ts": "2026-11-23T07:11:01.082517+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T06:41:03.285692+00:00",
+    "ts": "2026-11-23T07:10:54.844339+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T06:14:45.109661+00:00"
+    "last_push_ts": "2026-11-23T06:49:46.646089+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T06:41:06.810255+00:00",
+    "ts": "2026-11-23T07:10:58.480143+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T06:41:08.027272+00:00",
+    "ts": "2026-11-23T07:10:59.631029+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T06:41:09.271481+00:00",
+    "updated": "2026-11-23T07:11:00.946158+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,19 +126,19 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_no_packed_self_update",
+  "next_goal": "fix_test_rewrite_windows_python",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
-    "open": 74,
-    "done": 1,
+    "open": 73,
+    "done": 2,
     "dropped": 25,
-    "scan_ts": "2026-11-23T06:19:03.097833+00:00"
+    "scan_ts": "2026-11-23T07:02:07.419012+00:00"
   },
   "sota": {
-    "goal": "fix_test_doctor_mentions_hygiene",
+    "goal": "fix_test_whats_next_no_dual_dashboard_blocker",
     "kind": "fix_test",
-    "file": "scripts/ether_cli.py",
+    "file": "scripts/write_whats_next.py",
     "ok": false,
     "honest": true,
     "note": "gate aborted: baseline timeout",
@@ -155,25 +155,17 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_no_packed_self_update",
-      "fix_test_doctor_mentions_hygiene"
+      "fix_test_rewrite_windows_python",
+      "fix_test_whats_next_no_dual_dashboard_blocker"
     ],
     "kept_n": 0,
-    "batch_size": 3,
-    "scan": {
-      "ok": true,
-      "files": 8,
-      "failing": 0,
-      "added": 0,
-      "goals": 74,
-      "secs": 142.9
-    }
+    "batch_size": 3
   },
   "learning": {
-    "trajectories": 160,
-    "graded": 160,
+    "trajectories": 167,
+    "graded": 166,
     "passes": 44,
-    "spoiler_share": 0.519,
+    "spoiler_share": 0.5,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -185,19 +177,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16192,
-    "graded": 160
+    "bytes": 16157,
+    "graded": 166
   },
   "env": {
-    "ts": "2026-11-23T06:49:46.383021+00:00",
+    "ts": "2026-11-23T07:20:53.976838+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 216.3,
+    "disk_free_gb": 220.4,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T06:44:04.149843+00:00",
+    "alive_ts": "2026-11-23T07:11:01.082517+00:00",
     "kept": 93,
-    "last_goal": "fix_test_flex_replace_exact_and_stripped",
+    "last_goal": "fix_test_rewrite_windows_python",
     "last_kept": false,
     "batch_size": 0
   },

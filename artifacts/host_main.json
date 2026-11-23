@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T12:14:16.928009+00:00",
+  "ts": "2026-11-23T12:50:27.481632+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T12:14:25.658656+00:00",
+    "ts": "2026-11-23T12:50:36.121107+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T12:14:17.674823+00:00",
+    "ts": "2026-11-23T12:50:28.298589+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T11:44:42.299202+00:00"
+    "last_push_ts": "2026-11-23T12:21:23.828222+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T12:14:24.491912+00:00",
+    "ts": "2026-11-23T12:50:35.062301+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T12:14:24.871872+00:00",
+    "ts": "2026-11-23T12:50:35.440928+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T12:14:25.514743+00:00",
+    "updated": "2026-11-23T12:50:35.998896+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -128,25 +128,24 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
+  "next_goal": "fix_test_code_that_always_crashes_exits_non_zero_async_only_",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 95,
     "done": 3,
     "dropped": 25,
-    "scan_ts": "2026-11-23T11:57:40.265868+00:00"
+    "scan_ts": "2026-11-23T12:35:18.191298+00:00"
   },
   "sota": {
-    "goal": "fix_test_flag_on_routes_via_loop_runner",
+    "goal": "fix_test_correct_code_is_not_failed_by_argument_guessing_default",
     "kind": "fix_test",
-    "file": "core/pipeline.py",
+    "file": "gems/clear_quartz/sandbox.py",
     "ok": false,
-    "honest": true,
-    "note": "gate aborted: baseline timeout",
-    "gate_abort": "baseline timeout",
+    "honest": false,
+    "note": "no edit: no change",
     "learn": {
-      "arm": "minimal",
+      "arm": "repo_map_on",
       "bucket": "gen|complex",
       "kind": "fail",
       "reward": -0.9,
@@ -157,25 +156,25 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
-      "fix_test_flag_on_routes_via_loop_runner"
+      "fix_test_code_that_always_crashes_exits_non_zero_async_only_",
+      "fix_test_correct_code_is_not_failed_by_argument_guessing_default"
     ],
     "kept_n": 0,
     "batch_size": 3,
     "scan": {
       "ok": true,
       "files": 8,
-      "failing": 0,
+      "failing": 2,
       "added": 0,
       "goals": 95,
-      "secs": 30.8
+      "secs": 79.6
     }
   },
   "learning": {
-    "trajectories": 223,
-    "graded": 222,
+    "trajectories": 231,
+    "graded": 230,
     "passes": 45,
-    "spoiler_share": 0.374,
+    "spoiler_share": 0.361,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -187,19 +186,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16313,
-    "graded": 222
+    "bytes": 16334,
+    "graded": 230
   },
   "env": {
-    "ts": "2026-11-23T12:21:23.590708+00:00",
+    "ts": "2026-11-23T13:03:33.088922+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 212.5,
+    "disk_free_gb": 210.1,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T12:14:25.658656+00:00",
+    "alive_ts": "2026-11-23T12:50:36.121107+00:00",
     "kept": 94,
-    "last_goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
+    "last_goal": "fix_test_correct_code_is_not_failed_by_argument_guessing_default",
     "last_kept": false,
     "batch_size": 0
   },

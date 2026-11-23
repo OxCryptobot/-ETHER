@@ -97,20 +97,20 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "lessons": [
-    "2026-11-23 fix_test_pipeline_reselects_the_arm_on_retry_with_the_observed_f: no function",
-    "2026-11-23 fix_test_code_that_always_crashes_exits_non_zero_async_only_: no edit: no change",
-    "2026-11-23 fix_test_correct_code_is_not_failed_by_argument_guessing_default: no edit: no change",
     "2026-11-23 fix_test_correct_implementation_is_scored_a_pass: tests failed",
     "2026-11-23 fix_test_raw_request_skips_prep: tests failed",
     "2026-11-23 fix_test_identical_runs_are_deduplicated: regression",
     "2026-11-23 fix_test_loop_runner_default_off_backward_compatible: regression",
-    "2026-11-23 fix_test_grading_does_not_synthesize_or_harness: regression"
+    "2026-11-23 fix_test_grading_does_not_synthesize_or_harness: regression",
+    "2026-11-23 fix_test_infrastructure_outages_are_not_stored_as_code_failures_: regression",
+    "2026-11-23 fix_test_retry_reward_is_credited_to_the_arm_that_produced_it: gate aborted: after-run timeout",
+    "2026-11-23 fix_test_same_objective_different_code_is_kept: regression"
   ],
   "last": {
-    "goal": "fix_test_grading_does_not_synthesize_or_harness",
+    "goal": "fix_test_same_objective_different_code_is_kept",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T14:14:15.425657+00:00"
+    "ts": "2026-11-23T15:47:48.587328+00:00"
   },
   "kept_n": 0,
   "files": [

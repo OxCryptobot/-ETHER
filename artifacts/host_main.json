@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T15:00:57.084717+00:00",
+  "ts": "2026-11-23T15:34:40.233524+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T15:01:06.928153+00:00",
+    "ts": "2026-11-23T15:34:49.869045+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T15:00:57.893839+00:00",
+    "ts": "2026-11-23T15:34:41.208156+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T14:35:29.774969+00:00"
+    "last_push_ts": "2026-11-23T15:08:27.925733+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T15:01:05.777333+00:00",
+    "ts": "2026-11-23T15:34:48.667371+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T15:01:06.196247+00:00",
+    "ts": "2026-11-23T15:34:49.070190+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T15:01:06.736626+00:00",
+    "updated": "2026-11-23T15:34:49.752174+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -128,26 +128,30 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_spawn_writer_observe",
+  "next_goal": "fix_test_retry_reward_is_credited_to_the_arm_that_produced_it",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 95,
     "done": 3,
     "dropped": 27,
-    "scan_ts": "2026-11-23T14:38:39.978228+00:00"
+    "scan_ts": "2026-11-23T15:18:14.239301+00:00"
   },
   "sota": {
-    "goal": "fix_test_correct_code_is_not_failed_by_argument_guessing_helper_",
+    "goal": "fix_test_same_objective_different_code_is_kept",
     "kind": "fix_test",
-    "file": "gems/clear_quartz/sandbox.py",
+    "file": "core/train_gates.py",
     "ok": false,
-    "honest": true,
-    "note": "gate aborted: baseline timeout",
-    "gate_abort": "baseline timeout",
+    "honest": false,
+    "note": "regression",
+    "regressions": 5,
+    "siblings_failing": 2,
+    "restored": [
+      "core/train_gates.py"
+    ],
     "learn": {
-      "arm": "minimal",
-      "bucket": "gen|complex",
+      "arm": "no_context",
+      "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
       "promote": {
@@ -157,25 +161,25 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_spawn_writer_observe",
-      "fix_test_correct_code_is_not_failed_by_argument_guessing_helper_"
+      "fix_test_retry_reward_is_credited_to_the_arm_that_produced_it",
+      "fix_test_same_objective_different_code_is_kept"
     ],
     "kept_n": 0,
     "batch_size": 3,
     "scan": {
       "ok": true,
       "files": 8,
-      "failing": 0,
+      "failing": 3,
       "added": 0,
-      "goals": 95,
-      "secs": 63.6
+      "goals": 96,
+      "secs": 82.8
     }
   },
   "learning": {
-    "trajectories": 254,
-    "graded": 253,
+    "trajectories": 262,
+    "graded": 261,
     "passes": 45,
-    "spoiler_share": 0.328,
+    "spoiler_share": 0.318,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -187,19 +191,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16307,
-    "graded": 253
+    "bytes": 16324,
+    "graded": 261
   },
   "env": {
-    "ts": "2026-11-23T15:08:27.657911+00:00",
+    "ts": "2026-11-23T15:47:48.789137+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 209.4,
+    "disk_free_gb": 209.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T15:02:44.840448+00:00",
+    "alive_ts": "2026-11-23T15:34:49.869045+00:00",
     "kept": 94,
-    "last_goal": "fix_test_grading_does_not_synthesize_or_harness",
+    "last_goal": "fix_test_same_objective_different_code_is_kept",
     "last_kept": false,
     "batch_size": 0
   },

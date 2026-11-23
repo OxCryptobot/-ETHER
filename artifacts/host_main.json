@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T09:31:47.953085+00:00",
+  "ts": "2026-11-23T10:10:34.869130+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T09:31:57.181344+00:00",
+    "ts": "2026-11-23T10:10:42.199726+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T09:31:49.090595+00:00",
+    "ts": "2026-11-23T10:10:35.999043+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T09:04:11.649313+00:00"
+    "last_push_ts": "2026-11-23T09:43:06.577889+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T09:31:54.417062+00:00",
+    "ts": "2026-11-23T10:10:39.482314+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T09:31:55.590612+00:00",
+    "ts": "2026-11-23T10:10:40.724881+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T09:31:57.060602+00:00",
+    "updated": "2026-11-23T10:10:42.038733+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,24 +126,25 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_honest_gate_unchanged",
+  "next_goal": "fix_test_list_tree",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 72,
     "done": 2,
     "dropped": 25,
-    "scan_ts": "2026-11-23T09:16:14.473798+00:00"
+    "scan_ts": "2026-11-23T09:55:54.402628+00:00"
   },
   "sota": {
-    "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
+    "goal": "fix_test_ungraded_result_falls_back_to_real_grading",
     "kind": "fix_test",
-    "file": "core/fail_streak.py",
+    "file": "scripts/bench.py",
     "ok": false,
-    "honest": false,
-    "note": "no edit: no change",
+    "honest": true,
+    "note": "gate aborted: baseline timeout",
+    "gate_abort": "baseline timeout",
     "learn": {
-      "arm": "repair_heavy",
+      "arm": "repo_map_on",
       "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
@@ -154,25 +155,17 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_honest_gate_unchanged",
-      "fix_test_auto_fabricate_success_and_failure_paths_agree"
+      "fix_test_list_tree",
+      "fix_test_ungraded_result_falls_back_to_real_grading"
     ],
     "kept_n": 0,
-    "batch_size": 3,
-    "scan": {
-      "ok": true,
-      "files": 8,
-      "failing": 2,
-      "added": 0,
-      "goals": 72,
-      "secs": 237.8
-    }
+    "batch_size": 3
   },
   "learning": {
-    "trajectories": 195,
-    "graded": 194,
+    "trajectories": 201,
+    "graded": 200,
     "passes": 44,
-    "spoiler_share": 0.428,
+    "spoiler_share": 0.415,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -184,17 +177,17 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16257,
-    "graded": 194
+    "bytes": 16209,
+    "graded": 200
   },
   "env": {
-    "ts": "2026-11-23T09:43:06.250199+00:00",
+    "ts": "2026-11-23T10:17:02.513845+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 214.3,
+    "disk_free_gb": 212.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T09:31:57.181344+00:00",
+    "alive_ts": "2026-11-23T10:10:42.199726+00:00",
     "kept": 93,
     "last_goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
     "last_kept": false,

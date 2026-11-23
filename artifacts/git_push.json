@@ -1,8 +1,15 @@
 {
-  "ts": "2026-11-23T15:34:41.208156+00:00",
+  "ts": "2026-11-23T16:22:09.067249+00:00",
   "os": "nt",
-  "ok": true,
+  "ok": false,
   "urgent": false,
-  "note": "throttled",
-  "last_push_ts": "2026-11-23T15:08:27.925733+00:00"
+  "ahead": 1,
+  "worktree": {
+    "ok": false,
+    "hard_reset": false,
+    "note": "fetch_failed"
+  },
+  "push_rc": 1,
+  "note": "fetch_failed",
+  "last_push_ts": "2026-11-23T15:47:49.041788+00:00"
 }

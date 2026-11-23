@@ -23,10 +23,10 @@
     "regressions": 20
    },
    "repair_heavy": {
-    "mean_reward": -0.868,
-    "pass_rate": 0.02,
+    "mean_reward": -0.872,
+    "pass_rate": 0.017,
     "passes": 1,
-    "pulls": 51,
+    "pulls": 59,
     "regressions": 1
    },
    "repo_map_on": {
@@ -162,10 +162,10 @@
       "secs_per_pull": 218.8
      },
      "repair_heavy": {
-      "n": 48,
+      "n": 56,
       "passes": 1,
-      "post_mean": 0.04,
-      "secs_per_pull": 269.9
+      "post_mean": 0.034,
+      "secs_per_pull": 259.8
      },
      "repo_map_on": {
       "n": 6,
@@ -174,13 +174,13 @@
       "secs_per_pull": 198.0
      }
     },
-    "entropy_bits": 1.7527,
+    "entropy_bits": 1.6564,
     "p_best": {
      "default": 0.09,
      "minimal": 0.048,
-     "no_context": 0.075,
-     "repair_heavy": 0.698,
-     "repo_map_on": 0.09
+     "no_context": 0.07,
+     "repair_heavy": 0.71,
+     "repo_map_on": 0.083
     }
    }
   },
@@ -231,7 +231,7 @@
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.0097,
+  "kept_per_attempt_other": 0.009,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 1,
@@ -243,16 +243,16 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T09:04:11.268718+00:00",
+ "generated": "2026-11-23T09:43:06.098588+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 1.8477,
+   "fix_test": 1.7622,
    "lint": 2.2925
   },
-  "attempts": 103,
+  "attempts": 111,
   "by_temp": {
    "0.0": {
-    "attempts": 34,
+    "attempts": 37,
     "kept": 1
    }
   },
@@ -266,11 +266,11 @@
     "kept": 0
    },
    "sbfl": {
-    "attempts": 39,
+    "attempts": 42,
     "kept": 0
    },
    "test_import": {
-    "attempts": 47,
+    "attempts": 52,
     "kept": 1
    },
    "test_import_assign": {
@@ -279,23 +279,23 @@
    }
   },
   "demotions": 0,
-  "dup_share": 0.0741,
+  "dup_share": 0.1034,
   "filler_rate": 0.9773,
-  "gpu_hours": 6.628,
+  "gpu_hours": 7.071,
   "kept": 1,
-  "kept_per_attempt": 0.0097,
-  "kept_per_gpu_hour": 0.151,
+  "kept_per_attempt": 0.009,
+  "kept_per_gpu_hour": 0.141,
   "kept_per_session": 0.5,
   "promotions": 0,
   "regressions_caught": 6,
-  "revert_rate": 0.1553,
+  "revert_rate": 0.1532,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 99,
+    "attempts": 107,
     "kept": 1
    }
   },
@@ -315,6 +315,93 @@
   "open": 72
  },
  "recent": [
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_good_self_assert_still_passes",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.6,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T07:36:48.007006_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_audit_rejection_path_is_unchanged",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 186.2,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T07:41:04.033542_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_handler_scan_dirty_and_audit_rejected_clamps",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 181.7,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T07:44:05.754089_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_auto_fabricate_on_fail_path_reports_gem_error",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_after-run_timeout",
+   "prompt_chars": 1574,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 591.9,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T07:55:32.058894_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_correct_code_passes_holdout",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.2,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T07:58:35.379644_00:00",
+   "via": "sbfl"
+  },
   {
    "algo": "thompson",
    "arm": "repair_heavy",
@@ -527,16 +614,157 @@
    "tests_ok": false,
    "ts": "2026-11-23T09:04:11.243531_00:00",
    "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_one_experience_row_per_attempt",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 189.8,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:08:41.940141_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_phase3_canaries",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:11:44.123334_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": true,
+   "goal": "fix_test_new_modules_importable",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "tests_failed",
+   "prompt_chars": 2005,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 288.7,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:21:03.169385_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_runner_service_is_not_started_off_windows",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.5,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:24:05.718180_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_flag_off_uses_finalize_legacy",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 189.2,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:28:25.682547_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_grandidierite_gated",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_function",
+   "prompt_chars": 1728,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 138.6,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:30:44.284049_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_honest_gate_unchanged",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 188.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:39:10.982255_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_edit:_no_change",
+   "prompt_chars": 2366,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 235.0,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T09:43:06.020190_00:00",
+   "via": "test_import"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 186,
+  "graded": 194,
   "passes": 44,
-  "real_graded": 103,
+  "real_graded": 111,
   "real_passes": 1,
   "regressions_reverted": 6,
-  "spoiler_share": 0.446,
-  "trajectories": 187
+  "spoiler_share": 0.428,
+  "trajectories": 195
  }
 }

@@ -96,20 +96,20 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "lessons": [
-    "2026-11-23 fix_test_rewrite_windows_python: tests failed",
-    "2026-11-23 fix_test_steady_has_phase3_templates: no edit: syntax: closing parenthesis '}' does not match opening parenthesis '[' on line 104",
-    "2026-11-23 fix_test_auto_fabricate_on_fail_path_reports_gem_error: gate aborted: after-run timeout",
     "2026-11-23 fix_test_correct_implementation_is_scored_a_pass: tests failed",
     "2026-11-23 fix_test_retry_reward_is_credited_to_the_arm_that_produced_it: gate aborted: after-run timeout",
     "2026-11-23 fix_test_vault_is_bounded: regression",
     "2026-11-23 fix_test_pipeline_happy_path_mocked: tests failed",
-    "2026-11-23 lint_F841_pipeline_Pipeline_run: no function"
+    "2026-11-23 lint_F841_pipeline_Pipeline_run: no function",
+    "2026-11-23 fix_test_new_modules_importable: tests failed",
+    "2026-11-23 fix_test_grandidierite_gated: no function",
+    "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: no edit: no change"
   ],
   "last": {
-    "goal": "lint_F841_pipeline_Pipeline_run",
+    "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T09:01:06.286829+00:00"
+    "ts": "2026-11-23T09:43:06.004563+00:00"
   },
   "kept_n": 0,
   "files": [

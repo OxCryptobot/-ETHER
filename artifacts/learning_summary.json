@@ -7,6 +7,20 @@
     "passes": 0,
     "pulls": 1,
     "regressions": 0
+   },
+   "no_context": {
+    "mean_reward": -0.9,
+    "pass_rate": 0.0,
+    "passes": 0,
+    "pulls": 2,
+    "regressions": 0
+   },
+   "repo_map_on": {
+    "mean_reward": -0.9,
+    "pass_rate": 0.0,
+    "passes": 0,
+    "pulls": 2,
+    "regressions": 1
    }
   },
   "legacy": {
@@ -23,7 +37,21 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
+    "pulls": 2,
+    "regressions": 0
+   },
+   "minimal": {
+    "mean_reward": -0.9,
+    "pass_rate": 0.0,
+    "passes": 0,
     "pulls": 1,
+    "regressions": 0
+   },
+   "no_context": {
+    "mean_reward": -0.9,
+    "pass_rate": 0.0,
+    "passes": 0,
+    "pulls": 2,
     "regressions": 0
    },
    "repair_heavy": {
@@ -64,6 +92,34 @@
       "passes": 0,
       "post_mean": 0.333,
       "secs_per_pull": 183.8
+     },
+     "no_context": {
+      "n": 2,
+      "passes": 0,
+      "post_mean": 0.25,
+      "secs_per_pull": 182.9
+     },
+     "repo_map_on": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 187.9
+     }
+    },
+    "entropy_bits": 1.5,
+    "p_best": {
+     "default": 0.355,
+     "no_context": 0.302,
+     "repo_map_on": 0.343
+    }
+   },
+   "repair_logic|complex": {
+    "arms": {
+     "repo_map_on": {
+      "n": 1,
+      "passes": 0,
+      "post_mean": 0.333,
+      "secs_per_pull": 265.9
      }
     },
     "entropy_bits": -0.0
@@ -74,10 +130,22 @@
    "gen|simple": {
     "arms": {
      "default": {
+      "n": 2,
+      "passes": 0,
+      "post_mean": 0.25,
+      "secs_per_pull": 193.2
+     },
+     "minimal": {
       "n": 1,
       "passes": 0,
       "post_mean": 0.333,
-      "secs_per_pull": 182.8
+      "secs_per_pull": 182.1
+     },
+     "no_context": {
+      "n": 2,
+      "passes": 0,
+      "post_mean": 0.25,
+      "secs_per_pull": 189.8
      },
      "repair_heavy": {
       "n": 1,
@@ -92,11 +160,13 @@
       "secs_per_pull": 169.0
      }
     },
-    "entropy_bits": 1.585,
+    "entropy_bits": 2.2359,
     "p_best": {
-     "default": 0.34,
-     "repair_heavy": 0.315,
-     "repo_map_on": 0.345
+     "default": 0.155,
+     "minimal": 0.23,
+     "no_context": 0.172,
+     "repair_heavy": 0.237,
+     "repo_map_on": 0.205
     }
    }
   }
@@ -114,43 +184,51 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-22T23:54:38.791356+00:00",
+ "generated": "2026-11-23T00:32:32.716950+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": -0.0,
-   "lint": 1.585
+   "fix_test": 1.5219,
+   "lint": 2.2359
   },
-  "attempts": 4,
+  "attempts": 12,
   "by_temp": {
    "0.0": {
-    "attempts": 2,
+    "attempts": 5,
     "kept": 0
    }
   },
   "by_via": {
    "import_error": {
-    "attempts": 1,
+    "attempts": 3,
     "kept": 0
    },
    "lint": {
-    "attempts": 3,
+    "attempts": 7,
+    "kept": 0
+   },
+   "test_import": {
+    "attempts": 2,
     "kept": 0
    }
   },
   "demotions": 0,
-  "dup_share": null,
+  "dup_share": 0.0,
   "filler_rate": 1.0,
-  "gpu_hours": 0.211,
+  "gpu_hours": 0.651,
   "kept": 0,
   "kept_per_attempt": 0.0,
   "kept_per_gpu_hour": 0.0,
   "kept_per_session": 0.0,
   "promotions": 0,
-  "regressions_caught": 0,
-  "revert_rate": 0.0,
+  "regressions_caught": 1,
+  "revert_rate": 0.0833,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
+    "kept": 0
+   },
+   "2026-11-23": {
+    "attempts": 8,
     "kept": 0
    }
   },
@@ -170,78 +248,6 @@
   "open": 62
  },
  "recent": [
-  {
-   "arm": "default",
-   "goal": "describe_loop_plan_walk",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:34:14.787092_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_resume",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:34:50.196412_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_retrieval",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:35:25.907813_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_retrieve",
-   "kind": "pass",
-   "reward": 0.75,
-   "spoiler": true,
-   "tests_ok": true,
-   "ts": "2026-11-19T22:36:00.923313_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_runner",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:36:04.522173_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_shadow_progress",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:36:40.177852_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_stage_mark",
-   "kind": "fail",
-   "reward": -0.9,
-   "spoiler": true,
-   "tests_ok": false,
-   "ts": "2026-11-19T22:37:15.630116_00:00"
-  },
-  {
-   "arm": "default",
-   "goal": "describe_loop_stages",
-   "kind": "pass",
-   "reward": 0.75,
-   "spoiler": true,
-   "tests_ok": true,
-   "ts": "2026-11-19T22:37:50.700347_00:00"
-  },
   {
    "arm": "default",
    "goal": "describe_loop_stream_obs",
@@ -428,16 +434,156 @@
    "tests_ok": false,
    "ts": "2026-11-22T23:54:38.748045_00:00",
    "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "repo_map_on",
+   "goal": "fix_test_eligible_rates_separates_raw_and_eligible",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 187.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:01:41.924838_00:00",
+   "via": "import_error"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "goal": "lint_F841_fabricate_sandbox_selftest",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:04:44.080555_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_template_has_main_and_no_raise",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.1,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:08:55.116268_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "lint_F821_repo_fail__fixture_stamp",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.3,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:11:57.443534_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "lint_F821_product_loop_extract_functions",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "no_function",
+   "prompt_chars": 433,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 197.4,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:16:25.845366_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "goal": "fix_test_eligible_rates_separates_raw_and_eligible",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 183.7,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:19:29.642019_00:00",
+   "via": "import_error"
+  },
+  {
+   "algo": "thompson",
+   "arm": "default",
+   "goal": "lint_F841_pipeline_Pipeline_run",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "no_function",
+   "prompt_chars": 2120,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 203.7,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:28:06.649429_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "repo_map_on",
+   "dup": false,
+   "goal": "fix_test_loop_runner_default_off_backward_compatible",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 1522,
+   "regressions": 1,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 265.9,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T00:32:32.661993_00:00",
+   "via": "test_import"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 87,
+  "graded": 95,
   "passes": 43,
-  "real_graded": 4,
+  "real_graded": 12,
   "real_passes": 0,
-  "regressions_reverted": 0,
-  "spoiler_share": 0.954,
-  "trajectories": 87
+  "regressions_reverted": 1,
+  "spoiler_share": 0.874,
+  "trajectories": 95
  }
 }

@@ -7,11 +7,11 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-22T23:53:10.440767+00:00",
+  "app_alive_ts": "2026-11-23T00:20:40.121113+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
-  "generation": 1770,
+  "generation": 1772,
   "walk_ok": true,
   "gaps": [
     "runner_count_unknown"
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "lint_F821_product_loop_extract_functions",
+  "sota_goal": "fix_test_loop_runner_default_off_backward_compatible",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -170,28 +170,8 @@
     "describe_spine_state_io"
   ],
   "env_kept": 92,
-  "env_disk": 222.7,
+  "env_disk": 220.1,
   "env_history": [
-    {
-      "ts": "2026-11-22T22:57:06.664661+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:57:43.701539+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:58:20.387677+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:58:57.337565+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T22:59:34.188903+00:00",
       "kept": 92,
@@ -411,6 +391,26 @@
       "ts": "2026-11-22T23:54:38.819583+00:00",
       "kept": 92,
       "disk": 222.7
+    },
+    {
+      "ts": "2026-11-23T00:04:44.174949+00:00",
+      "kept": 92,
+      "disk": 225.1
+    },
+    {
+      "ts": "2026-11-23T00:11:57.519580+00:00",
+      "kept": 92,
+      "disk": 225.0
+    },
+    {
+      "ts": "2026-11-23T00:19:29.739553+00:00",
+      "kept": 92,
+      "disk": 221.6
+    },
+    {
+      "ts": "2026-11-23T00:32:32.772632+00:00",
+      "kept": 92,
+      "disk": 220.1
     }
   ],
   "skills": [
@@ -420,20 +420,28 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-22T23:54:38.791356+00:00",
+    "generated": "2026-11-23T00:32:32.716950+00:00",
     "stale": false,
-    "attempts": 4,
+    "attempts": 12,
     "kept": 0,
     "kept_per_attempt": 0.0,
     "kept_per_gpu_hour": 0.0,
-    "revert_rate": 0.0,
-    "dup_share": null,
+    "revert_rate": 0.0833,
+    "dup_share": 0.0,
     "filler_rate": 1.0,
-    "regressions_caught": 0,
+    "regressions_caught": 1,
     "arms": {
       "fix_test": {
         "default": {
           "pulls": 1,
+          "pass_rate": 0.0
+        },
+        "no_context": {
+          "pulls": 2,
+          "pass_rate": 0.0
+        },
+        "repo_map_on": {
+          "pulls": 2,
           "pass_rate": 0.0
         }
       },
@@ -445,7 +453,15 @@
       },
       "lint": {
         "default": {
+          "pulls": 2,
+          "pass_rate": 0.0
+        },
+        "minimal": {
           "pulls": 1,
+          "pass_rate": 0.0
+        },
+        "no_context": {
+          "pulls": 2,
           "pass_rate": 0.0
         },
         "repair_heavy": {
@@ -458,7 +474,7 @@
         }
       }
     },
-    "top_arm_share": 0.954,
+    "top_arm_share": 0.874,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -492,7 +508,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-22T23:47:37.579146+00:00",
+    "supervisor_ts": "2026-11-23T00:19:30.497508+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

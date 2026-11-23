@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-22T23:48:39.095629+00:00",
+  "ts": "2026-11-23T00:20:31.984640+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-22T23:48:46.815003+00:00",
+    "ts": "2026-11-23T00:20:40.121113+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-22T23:48:39.914903+00:00",
+    "ts": "2026-11-23T00:20:33.045831+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-22T23:24:32.183920+00:00"
+    "last_push_ts": "2026-11-22T23:54:39.002330+00:00"
   },
   "heal": {
-    "ts": "2026-11-22T23:48:44.325406+00:00",
+    "ts": "2026-11-23T00:20:37.471810+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-22T23:48:45.450367+00:00",
+    "ts": "2026-11-23T00:20:38.614649+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-22T23:48:46.701168+00:00",
+    "updated": "2026-11-23T00:20:39.969025+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,25 +126,30 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "lint_F821_repo_fail__fixture_stamp",
+  "next_goal": "lint_F841_pipeline_Pipeline_run",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 62,
     "done": 0,
     "dropped": 20,
-    "scan_ts": "2026-11-22T23:40:48.735734+00:00"
+    "scan_ts": "2026-11-22T23:58:33.959935+00:00"
   },
   "sota": {
-    "goal": "lint_F821_product_loop_extract_functions",
-    "kind": "lint",
-    "file": "core/kernel/product_loop.py",
+    "goal": "fix_test_loop_runner_default_off_backward_compatible",
+    "kind": "fix_test",
+    "file": "core/loop/__init__.py",
     "ok": false,
     "honest": false,
-    "note": "no function",
+    "note": "regression",
+    "regressions": 1,
+    "siblings_failing": 0,
+    "restored": [
+      "core/loop/__init__.py"
+    ],
     "learn": {
       "arm": "repo_map_on",
-      "bucket": "gen|simple",
+      "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
       "promote": {
@@ -154,17 +159,25 @@
     },
     "batch": [],
     "tried": [
-      "lint_F821_repo_fail__fixture_stamp",
-      "lint_F821_product_loop_extract_functions"
+      "lint_F841_pipeline_Pipeline_run",
+      "fix_test_loop_runner_default_off_backward_compatible"
     ],
     "kept_n": 0,
-    "batch_size": 3
+    "batch_size": 3,
+    "scan": {
+      "ok": true,
+      "files": 8,
+      "failing": 0,
+      "added": 0,
+      "goals": 62,
+      "secs": 240.0
+    }
   },
   "learning": {
-    "trajectories": 87,
-    "graded": 87,
+    "trajectories": 95,
+    "graded": 95,
     "passes": 43,
-    "spoiler_share": 0.954,
+    "spoiler_share": 0.874,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -176,19 +189,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 8682,
-    "graded": 87
+    "bytes": 11898,
+    "graded": 95
   },
   "env": {
-    "ts": "2026-11-22T23:54:38.819583+00:00",
+    "ts": "2026-11-23T00:32:32.772632+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 222.7,
+    "disk_free_gb": 220.1,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-22T23:53:10.440767+00:00",
+    "alive_ts": "2026-11-23T00:20:40.121113+00:00",
     "kept": 92,
-    "last_goal": "lint_F821_product_loop_extract_functions",
+    "last_goal": "fix_test_loop_runner_default_off_backward_compatible",
     "last_kept": false,
     "batch_size": 0
   },
@@ -199,7 +212,7 @@
   "day_learn": {
     "ok": true,
     "skipped": true,
-    "day": "2026-11-22",
+    "day": "2026-11-23",
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",

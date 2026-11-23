@@ -1,8 +1,32 @@
 {
-  "ts": "2026-11-23T05:07:05.285642+00:00",
+  "ts": "2026-11-23T05:40:50.698204+00:00",
   "os": "nt",
-  "ok": true,
+  "ok": false,
   "urgent": false,
-  "note": "throttled",
-  "last_push_ts": "2026-11-23T04:37:43.347674+00:00"
+  "ahead": 0,
+  "add_rc": 0,
+  "commit_rc": 0,
+  "sync": {
+    "ok": true,
+    "hard_reset": false,
+    "ahead": 1,
+    "dirty": true,
+    "note": "stash_rebase"
+  },
+  "via": "gh_token_url",
+  "push_rc": 128,
+  "stderr": "fatal: unable to access 'https://github.com/OxCryptobot/-ETHER.git/': Failed to connect to github.com:443 over proxy 127.0.0.1 after 2055 ms: Could not connect to server\n",
+  "sync_retry": {
+    "ok": true,
+    "hard_reset": false,
+    "ahead": 1,
+    "dirty": true,
+    "note": "stash_rebase"
+  },
+  "worktree": {
+    "ok": false,
+    "hard_reset": false,
+    "note": "fetch_failed"
+  },
+  "last_push_ts": "2026-11-23T05:10:42.902193+00:00"
 }

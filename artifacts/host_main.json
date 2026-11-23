@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-23T01:48:58.328222+00:00",
+  "ts": "2026-11-23T02:21:25.788658+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-23T01:49:05.466074+00:00",
+    "ts": "2026-11-23T02:21:32.635203+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-23T01:56:28.839450+00:00",
+    "ts": "2026-11-23T02:21:26.517628+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T01:26:29.340925+00:00"
+    "last_push_ts": "2026-11-23T01:57:31.092460+00:00"
   },
   "heal": {
-    "ts": "2026-11-23T01:49:02.912643+00:00",
+    "ts": "2026-11-23T02:21:30.136114+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -67,7 +67,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-23T01:49:04.002203+00:00",
+    "ts": "2026-11-23T02:21:31.200657+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -100,7 +100,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-23T01:49:05.305144+00:00",
+    "updated": "2026-11-23T02:21:32.504511+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -126,26 +126,26 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_whats_next_no_dual_dashboard_blocker",
+  "next_goal": "fix_test_status_is_complete_on_a_clean_run",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
-    "open": 64,
+    "open": 67,
     "done": 1,
     "dropped": 20,
-    "scan_ts": "2026-11-23T01:28:58.113724+00:00"
+    "scan_ts": "2026-11-23T02:07:02.505403+00:00"
   },
   "sota": {
-    "goal": "fix_test_template_has_main_and_no_raise",
+    "goal": "fix_test_arm_set_is_small_and_every_arm_has_a_behaviour",
     "kind": "fix_test",
-    "file": "gems/grandidierite/fabricate.py",
+    "file": "core/learning.py",
     "ok": false,
     "honest": true,
     "note": "gate aborted: baseline timeout",
     "gate_abort": "baseline timeout",
     "learn": {
       "arm": "repo_map_on",
-      "bucket": "gen|complex",
+      "bucket": "repair_logic|complex",
       "kind": "fail",
       "reward": -0.9,
       "promote": {
@@ -155,25 +155,17 @@
     },
     "batch": [],
     "tried": [
-      "fix_test_whats_next_no_dual_dashboard_blocker",
-      "fix_test_template_has_main_and_no_raise"
+      "fix_test_status_is_complete_on_a_clean_run",
+      "fix_test_arm_set_is_small_and_every_arm_has_a_behaviour"
     ],
     "kept_n": 0,
-    "batch_size": 3,
-    "scan": {
-      "ok": true,
-      "files": 8,
-      "failing": 4,
-      "added": 0,
-      "goals": 64,
-      "secs": 72.3
-    }
+    "batch_size": 3
   },
   "learning": {
-    "trajectories": 111,
-    "graded": 111,
+    "trajectories": 119,
+    "graded": 119,
     "passes": 44,
-    "spoiler_share": 0.748,
+    "spoiler_share": 0.697,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -185,19 +177,19 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 16075,
-    "graded": 111
+    "bytes": 10861,
+    "graded": 119
   },
   "env": {
-    "ts": "2026-11-23T01:56:28.678556+00:00",
+    "ts": "2026-11-23T02:30:53.860890+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 224.2,
+    "disk_free_gb": 223.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-23T01:49:05.466074+00:00",
+    "alive_ts": "2026-11-23T02:21:32.635203+00:00",
     "kept": 93,
-    "last_goal": "fix_test_new_modules_importable",
+    "last_goal": "fix_test_status_is_complete_on_a_clean_run",
     "last_kept": false,
     "batch_size": 0
   },

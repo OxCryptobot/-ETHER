@@ -96,20 +96,20 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "lessons": [
-    "2026-11-23 fix_test_grandidierite_gated: no function",
-    "2026-11-23 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed",
     "2026-11-23 fix_test_dispatch_walked_marks_run_tests: tests passed, 0 regressions",
     "2026-11-23 fix_test_context_over_budget_without_compress: no edit: assignment TOKENS_PER_BLOCK is new and not used by the edit",
     "2026-11-23 fix_test_retry_reward_is_credited_to_the_arm_that_produced_it: gate aborted: after-run timeout",
     "2026-11-23 fix_test_flex_replace_exact_and_stripped: no edit: no change",
     "2026-11-23 fix_test_pipeline_happy_path_mocked: regression",
-    "2026-11-23 fix_test_new_modules_importable: tests failed"
+    "2026-11-23 fix_test_new_modules_importable: tests failed",
+    "2026-11-23 fix_test_steady_has_phase3_templates: no edit: syntax: closing parenthesis '}' does not match opening parenthesis '[' on line 104",
+    "2026-11-23 fix_test_status_is_complete_on_a_clean_run: gate aborted: after-run timeout"
   ],
   "last": {
-    "goal": "fix_test_new_modules_importable",
+    "goal": "fix_test_status_is_complete_on_a_clean_run",
     "kept": false,
     "file": "",
-    "ts": "2026-11-23T01:44:53.616490+00:00"
+    "ts": "2026-11-23T02:27:50.332247+00:00"
   },
   "kept_n": 0,
   "files": [
@@ -135,7 +135,6 @@
     "core/loop/plan_exec.py"
   ],
   "skipped": [
-    "describe_loop_close_run",
     "describe_loop_coord",
     "describe_loop_execute_plan",
     "describe_loop_extend_stage",
@@ -174,6 +173,7 @@
     "fix_test_auto_fabricate_success_and_failure_paths_agree",
     "fix_test_context_over_budget_without_compress",
     "fix_test_flex_replace_exact_and_stripped",
-    "fix_test_new_modules_importable"
+    "fix_test_new_modules_importable",
+    "fix_test_steady_has_phase3_templates"
   ]
 }

@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-23T01:49:05.466074+00:00",
+  "app_alive_ts": "2026-11-23T02:21:32.635203+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_new_modules_importable",
+  "sota_goal": "fix_test_status_is_complete_on_a_clean_run",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -171,28 +171,8 @@
     "fix_test_dispatch_walked_marks_run_tests"
   ],
   "env_kept": 93,
-  "env_disk": 224.2,
+  "env_disk": 223.8,
   "env_history": [
-    {
-      "ts": "2026-11-22T23:04:34.201904+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:05:10.452891+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:05:47.287588+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:06:23.905517+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:07:00.630543+00:00",
       "kept": 92,
@@ -412,6 +392,26 @@
       "ts": "2026-11-23T01:56:28.678556+00:00",
       "kept": 93,
       "disk": 224.2
+    },
+    {
+      "ts": "2026-11-23T02:04:56.271902+00:00",
+      "kept": 93,
+      "disk": 218.5
+    },
+    {
+      "ts": "2026-11-23T02:13:10.972086+00:00",
+      "kept": 93,
+      "disk": 224.0
+    },
+    {
+      "ts": "2026-11-23T02:20:24.043518+00:00",
+      "kept": 93,
+      "disk": 223.8
+    },
+    {
+      "ts": "2026-11-23T02:30:53.860890+00:00",
+      "kept": 93,
+      "disk": 223.8
     }
   ],
   "skills": [
@@ -421,36 +421,36 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-23T01:56:28.600444+00:00",
+    "generated": "2026-11-23T02:30:53.744561+00:00",
     "stale": false,
-    "attempts": 28,
+    "attempts": 36,
     "kept": 1,
-    "kept_per_attempt": 0.0357,
-    "kept_per_gpu_hour": 0.562,
-    "revert_rate": 0.1429,
+    "kept_per_attempt": 0.0278,
+    "kept_per_gpu_hour": 0.443,
+    "revert_rate": 0.1111,
     "dup_share": 0.0,
     "filler_rate": 0.9773,
     "regressions_caught": 2,
     "arms": {
       "fix_test": {
         "default": {
-          "pulls": 2,
+          "pulls": 3,
           "pass_rate": 0.0
         },
         "minimal": {
-          "pulls": 4,
-          "pass_rate": 0.0
-        },
-        "no_context": {
           "pulls": 5,
           "pass_rate": 0.0
         },
-        "repair_heavy": {
+        "no_context": {
           "pulls": 6,
-          "pass_rate": 0.167
+          "pass_rate": 0.0
+        },
+        "repair_heavy": {
+          "pulls": 9,
+          "pass_rate": 0.111
         },
         "repo_map_on": {
-          "pulls": 3,
+          "pulls": 4,
           "pass_rate": 0.0
         }
       },
@@ -466,7 +466,7 @@
           "pass_rate": 0.0
         },
         "minimal": {
-          "pulls": 2,
+          "pulls": 3,
           "pass_rate": 0.0
         },
         "no_context": {
@@ -483,7 +483,7 @@
         }
       }
     },
-    "top_arm_share": 0.748,
+    "top_arm_share": 0.697,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -498,10 +498,10 @@
         "test_bug": 1,
         "too_many_sites": 3
       },
-      "open": 64
+      "open": 67
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0357,
+      "kept_per_attempt_other": 0.0278,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 1,
@@ -517,7 +517,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-23T01:47:56.610669+00:00",
+    "supervisor_ts": "2026-11-23T02:20:24.452529+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

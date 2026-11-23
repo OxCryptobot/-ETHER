@@ -19,21 +19,21 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 12,
-    "regressions": 15
+    "pulls": 13,
+    "regressions": 20
    },
    "repair_heavy": {
-    "mean_reward": -0.861,
-    "pass_rate": 0.024,
+    "mean_reward": -0.864,
+    "pass_rate": 0.022,
     "passes": 1,
-    "pulls": 42,
+    "pulls": 46,
     "regressions": 1
    },
    "repo_map_on": {
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 7,
+    "pulls": 8,
     "regressions": 1
    }
   },
@@ -156,30 +156,30 @@
       "secs_per_pull": 217.0
      },
      "no_context": {
-      "n": 9,
+      "n": 10,
       "passes": 0,
-      "post_mean": 0.091,
-      "secs_per_pull": 221.5
+      "post_mean": 0.083,
+      "secs_per_pull": 218.8
      },
      "repair_heavy": {
-      "n": 40,
+      "n": 44,
       "passes": 1,
-      "post_mean": 0.048,
-      "secs_per_pull": 260.7
+      "post_mean": 0.043,
+      "secs_per_pull": 268.4
      },
      "repo_map_on": {
-      "n": 5,
+      "n": 6,
       "passes": 0,
-      "post_mean": 0.143,
-      "secs_per_pull": 201.0
+      "post_mean": 0.125,
+      "secs_per_pull": 198.0
      }
     },
-    "entropy_bits": 1.8186,
+    "entropy_bits": 1.8049,
     "p_best": {
-     "default": 0.075,
-     "minimal": 0.06,
-     "no_context": 0.055,
-     "repair_heavy": 0.718,
+     "default": 0.087,
+     "minimal": 0.05,
+     "no_context": 0.075,
+     "repair_heavy": 0.695,
      "repo_map_on": 0.092
     }
    }
@@ -231,7 +231,7 @@
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.011,
+  "kept_per_attempt_other": 0.0103,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 1,
@@ -243,16 +243,16 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-23T07:58:35.443390+00:00",
+ "generated": "2026-11-23T08:32:39.528371+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 1.9242,
+   "fix_test": 1.9046,
    "lint": 2.2313
   },
-  "attempts": 91,
+  "attempts": 97,
   "by_temp": {
    "0.0": {
-    "attempts": 29,
+    "attempts": 32,
     "kept": 1
    }
   },
@@ -266,7 +266,7 @@
     "kept": 0
    },
    "sbfl": {
-    "attempts": 30,
+    "attempts": 36,
     "kept": 0
    },
    "test_import": {
@@ -279,23 +279,23 @@
    }
   },
   "demotions": 0,
-  "dup_share": 0.0435,
+  "dup_share": 0.0769,
   "filler_rate": 0.9773,
-  "gpu_hours": 5.711,
+  "gpu_hours": 6.199,
   "kept": 1,
-  "kept_per_attempt": 0.011,
-  "kept_per_gpu_hour": 0.175,
+  "kept_per_attempt": 0.0103,
+  "kept_per_gpu_hour": 0.161,
   "kept_per_session": 0.5,
   "promotions": 0,
-  "regressions_caught": 5,
-  "revert_rate": 0.1429,
+  "regressions_caught": 6,
+  "revert_rate": 0.1546,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
     "kept": 0
    },
    "2026-11-23": {
-    "attempts": 87,
+    "attempts": 93,
     "kept": 1
    }
   },
@@ -315,110 +315,6 @@
   "open": 73
  },
  "recent": [
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "dup": false,
-   "goal": "fix_test_flex_replace_exact_and_stripped",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "tests_failed",
-   "prompt_chars": 2582,
-   "regressions": 0,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 353.3,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-23T05:30:28.934718_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_disk_tick_observe",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 186.1,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T05:39:11.579396_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_disk_tick_observe",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 187.7,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T05:55:48.886189_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repo_map_on",
-   "goal": "fix_test_disk_tick_observe",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 189.3,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T06:03:11.915190_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_no_packed_self_update",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 182.7,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T06:13:31.204015_00:00",
-   "via": "test_import"
-  },
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "fix_test_disk_tick_observe",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "gate_aborted:_baseline_timeout",
-   "prompt_chars": null,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 189.2,
-   "spoiler": false,
-   "tests_ok": false,
-   "ts": "2026-11-23T06:29:27.336998_00:00",
-   "via": "test_import"
-  },
   {
    "algo": "thompson",
    "arm": "repair_heavy",
@@ -750,16 +646,124 @@
    "tests_ok": false,
    "ts": "2026-11-23T07:58:35.379644_00:00",
    "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": false,
+   "goal": "fix_test_correct_implementation_is_scored_a_pass",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "tests_failed",
+   "prompt_chars": 2545,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 413.3,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:06:52.687163_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_end_to_end_flag_parity",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 181.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:09:54.680694_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "dup": true,
+   "goal": "fix_test_retry_reward_is_credited_to_the_arm_that_produced_it",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_after-run_timeout",
+   "prompt_chars": 2611,
+   "regressions": 0,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 602.2,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:22:09.245210_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": false,
+   "goal": "fix_test_vault_is_bounded",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 1263,
+   "regressions": 5,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 194.0,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:25:23.339775_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repo_map_on",
+   "goal": "fix_test_whats_next_signals",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:29:36.548911_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "fix_test_bad_self_assert_does_not_fail_a_correct_implementation",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "gate_aborted:_baseline_timeout",
+   "prompt_chars": null,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 182.9,
+   "spoiler": false,
+   "tests_ok": false,
+   "ts": "2026-11-23T08:32:39.489716_00:00",
+   "via": "sbfl"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 174,
+  "graded": 180,
   "passes": 44,
-  "real_graded": 91,
+  "real_graded": 97,
   "real_passes": 1,
-  "regressions_reverted": 5,
-  "spoiler_share": 0.477,
-  "trajectories": 175
+  "regressions_reverted": 6,
+  "spoiler_share": 0.461,
+  "trajectories": 181
  }
 }

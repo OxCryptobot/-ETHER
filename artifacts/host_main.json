@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-24T06:26:23.932791+00:00",
+  "ts": "2026-11-24T07:02:17.229275+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-24T06:26:33.713934+00:00",
+    "ts": "2026-11-24T07:02:27.918865+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-24T06:27:38.964166+00:00",
+    "ts": "2026-11-24T07:06:33.746210+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-24T06:10:09.066373+00:00"
+    "last_push_ts": "2026-11-24T06:42:45.771941+00:00"
   },
   "heal": {
-    "ts": "2026-11-24T06:26:31.827073+00:00",
+    "ts": "2026-11-24T07:02:25.993303+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-24T06:26:32.976006+00:00",
+    "ts": "2026-11-24T07:02:27.179943+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-24T06:26:33.597137+00:00",
+    "updated": "2026-11-24T07:02:27.757034+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -135,7 +135,7 @@
     "open": 95,
     "done": 3,
     "dropped": 28,
-    "scan_ts": "2026-11-24T06:11:18.146463+00:00"
+    "scan_ts": "2026-11-24T06:47:11.074809+00:00"
   },
   "sota": {
     "ok": false,
@@ -148,10 +148,10 @@
     "scan": {
       "ok": true,
       "files": 8,
-      "failing": 2,
+      "failing": 0,
       "added": 0,
       "goals": 96,
-      "secs": 60.3
+      "secs": 240.0
     }
   },
   "learning": {
@@ -174,13 +174,13 @@
     "graded": 307
   },
   "env": {
-    "ts": "2026-11-24T06:27:38.812430+00:00",
+    "ts": "2026-11-24T07:06:33.553685+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 206.9,
+    "disk_free_gb": 206.6,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-24T06:26:33.713934+00:00",
+    "alive_ts": "2026-11-24T07:02:27.918865+00:00",
     "kept": 94,
     "last_goal": "fix_test_scripted_replace_once_fixes_ledger",
     "last_kept": false,

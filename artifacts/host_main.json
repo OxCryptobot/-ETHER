@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-24T00:08:41.817637+00:00",
+  "ts": "2026-11-24T00:54:22.992663+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-24T00:08:52.378963+00:00",
+    "ts": "2026-11-24T00:54:33.065948+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-24T00:10:44.506450+00:00",
+    "ts": "2026-11-24T00:54:23.774769+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-23T23:50:59.125289+00:00"
+    "last_push_ts": "2026-11-24T00:25:50.959073+00:00"
   },
   "heal": {
-    "ts": "2026-11-24T00:08:50.477754+00:00",
+    "ts": "2026-11-24T00:54:31.151133+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-24T00:08:51.721878+00:00",
+    "ts": "2026-11-24T00:54:32.308179+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-24T00:08:52.244197+00:00",
+    "updated": "2026-11-24T00:54:32.914398+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -128,37 +128,45 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "none",
+  "next_goal": "fix_test_one_experience_row_per_attempt",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
     "open": 94,
     "done": 3,
     "dropped": 27,
-    "scan_ts": "2026-11-23T23:53:35.671142+00:00"
+    "scan_ts": "2026-11-24T00:47:05.186557+00:00"
   },
   "sota": {
+    "goal": "fix_test_one_experience_row_per_attempt",
+    "kind": "fix_test",
+    "file": "core/pipeline_context.py",
     "ok": false,
     "honest": true,
-    "note": "queue empty",
+    "note": "gate aborted: baseline timeout",
+    "gate_abort": "baseline timeout",
+    "learn": {
+      "arm": "no_context",
+      "bucket": "repair_logic|complex",
+      "kind": "fail",
+      "reward": -0.9,
+      "promote": {
+        "action": "hold",
+        "arm": "default"
+      }
+    },
     "batch": [],
-    "tried": [],
+    "tried": [
+      "fix_test_one_experience_row_per_attempt"
+    ],
     "kept_n": 0,
-    "batch_size": 3,
-    "scan": {
-      "ok": true,
-      "files": 8,
-      "failing": 2,
-      "added": 0,
-      "goals": 95,
-      "secs": 105.4
-    }
+    "batch_size": 3
   },
   "learning": {
-    "trajectories": 302,
-    "graded": 301,
+    "trajectories": 305,
+    "graded": 304,
     "passes": 45,
-    "spoiler_share": 0.276,
+    "spoiler_share": 0.273,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -170,17 +178,17 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 10933,
-    "graded": 301
+    "bytes": 10947,
+    "graded": 304
   },
   "env": {
-    "ts": "2026-11-24T00:10:44.355491+00:00",
+    "ts": "2026-11-24T00:57:40.183450+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 209.2,
+    "disk_free_gb": 208.9,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-24T00:08:52.378963+00:00",
+    "alive_ts": "2026-11-24T00:54:33.065948+00:00",
     "kept": 94,
     "last_goal": "fix_test_auto_fabricate_on_fail_path_reports_success_when_it_wor",
     "last_kept": false,
@@ -192,16 +200,8 @@
   },
   "day_learn": {
     "ok": true,
+    "skipped": true,
     "day": "2026-11-24",
-    "skipped": false,
-    "lesson": {
-      "root_cause": "unknown",
-      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
-      "smallest_experiment": "re-run targeted kernel pytest after one surgical patch",
-      "confidence": 0.45,
-      "job_id": "live_generate_probe_20261002",
-      "schema": "ether_mem_v1"
-    },
     "preserved": {
       "root_cause": "unknown",
       "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
@@ -209,12 +209,6 @@
       "confidence": 0.45,
       "job_id": "live_generate_probe_20261002",
       "schema": "ether_mem_v1"
-    },
-    "thinking": {
-      "before_action": "re-run targeted kernel pytest after one surgical patch",
-      "evidence": "{\"ts\": \"2026-10-02T19:42:55.580534+00:00\", \"model\": \"qwen3.5:4b-q4_K_M\", \"ok\": false, \"honest\": false, \"note\": \"smoke only. generate is not an honest tool-path PASS\", \"response_tail\": \"\"}\n",
-      "root_cause": "unknown",
-      "kept": false
     }
   },
   "proactive": {
@@ -228,13 +222,7 @@
   "unison": {
     "ok": true
   },
-  "health": "degraded",
-  "health_worst": "queue: goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)",
-  "health_signals": [
-    {
-      "name": "queue",
-      "level": "degraded",
-      "detail": "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"
-    }
-  ]
+  "health": "ok",
+  "health_worst": null,
+  "health_signals": []
 }

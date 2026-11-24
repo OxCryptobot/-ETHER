@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-24T00:08:52.378963+00:00",
+  "app_alive_ts": "2026-11-24T00:54:33.065948+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,23 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 209.2,
+  "env_disk": 208.9,
   "env_history": [
-    {
-      "ts": "2026-11-23T15:08:27.657911+00:00",
-      "kept": 94,
-      "disk": 209.4
-    },
-    {
-      "ts": "2026-11-23T15:16:09.689111+00:00",
-      "kept": 94,
-      "disk": 209.3
-    },
-    {
-      "ts": "2026-11-23T15:26:06.290142+00:00",
-      "kept": 94,
-      "disk": 209.2
-    },
     {
       "ts": "2026-11-23T15:33:33.488595+00:00",
       "kept": 94,
@@ -413,6 +398,21 @@
       "ts": "2026-11-24T00:10:44.355491+00:00",
       "kept": 94,
       "disk": 209.2
+    },
+    {
+      "ts": "2026-11-24T00:27:56.247479+00:00",
+      "kept": 94,
+      "disk": 209.1
+    },
+    {
+      "ts": "2026-11-24T00:53:16.511646+00:00",
+      "kept": 94,
+      "disk": 209.0
+    },
+    {
+      "ts": "2026-11-24T00:57:40.183450+00:00",
+      "kept": 94,
+      "disk": 208.9
     }
   ],
   "skills": [
@@ -422,13 +422,13 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-24T00:10:44.254354+00:00",
+    "generated": "2026-11-24T00:57:40.107605+00:00",
     "stale": false,
-    "attempts": 218,
+    "attempts": 221,
     "kept": 2,
-    "kept_per_attempt": 0.0092,
-    "kept_per_gpu_hour": 0.145,
-    "revert_rate": 0.1651,
+    "kept_per_attempt": 0.009,
+    "kept_per_gpu_hour": 0.143,
+    "revert_rate": 0.1629,
     "dup_share": 0.1639,
     "filler_rate": 0.9556,
     "regressions_caught": 18,
@@ -443,11 +443,11 @@
           "pass_rate": 0.0
         },
         "no_context": {
-          "pulls": 57,
-          "pass_rate": 0.018
+          "pulls": 58,
+          "pass_rate": 0.017
         },
         "repair_heavy": {
-          "pulls": 96,
+          "pulls": 98,
           "pass_rate": 0.01
         },
         "repo_map_on": {
@@ -484,7 +484,7 @@
         }
       }
     },
-    "top_arm_share": 0.319,
+    "top_arm_share": 0.322,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -501,7 +501,7 @@
       "open": 94
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0092,
+      "kept_per_attempt_other": 0.009,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "degraded",
-    "worst": "pull: git pull failed (rc 128), 106 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 35 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
-    "pull_failures": 106,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 36 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-23T23:53:40.072356+00:00",
+    "worst": "pull: git pull failed (rc 128), 109 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 37 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+    "pull_failures": 109,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 37 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-24T00:53:21.339993+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

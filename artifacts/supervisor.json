@@ -1,18 +1,18 @@
 {
-  "ts": "2026-11-24T19:54:34.891506+00:00",
+  "ts": "2026-11-24T20:13:53.513431+00:00",
   "state": "idle",
   "pid": 21316,
   "started": "2026-11-22T23:35:55.807172+00:00",
-  "cycle": 237,
+  "cycle": 238,
   "failures": 0,
-  "pull_failures": 199,
+  "pull_failures": 200,
   "health": "failing",
-  "health_worst": "pull: git pull failed (rc 128), 199 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+  "health_worst": "pull: git pull failed (rc 128), 200 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
   "health_signals": [
     {
       "name": "pull",
       "level": "failing",
-      "detail": "git pull failed (rc 128), 199 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset "
+      "detail": "git pull failed (rc 128), 200 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset "
     },
     {
       "name": "queue",
@@ -22,7 +22,7 @@
   ],
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
   "last": {
-    "cycle": 237,
+    "cycle": 238,
     "pull": {
       "ok": false,
       "rc": 128,
@@ -59,11 +59,11 @@
     "pass": {
       "rc": 0,
       "ok": true,
-      "secs": 57.0,
+      "secs": 257.2,
       "err_tail": ""
     },
     "health": "failing"
   },
   "next_in_s": 900.0,
-  "dry_streak": 16
+  "dry_streak": 17
 }

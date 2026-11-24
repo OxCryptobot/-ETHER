@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-24T19:53:47.742259+00:00",
+  "app_alive_ts": "2026-11-24T20:13:38.818769+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,13 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 201.5,
+  "env_disk": 195.9,
   "env_history": [
-    {
-      "ts": "2026-11-24T08:19:39.976321+00:00",
-      "kept": 94,
-      "disk": 206.3
-    },
     {
       "ts": "2026-11-24T08:26:07.070886+00:00",
       "kept": 94,
@@ -413,6 +408,11 @@
       "ts": "2026-11-24T19:54:30.764611+00:00",
       "kept": 94,
       "disk": 201.5
+    },
+    {
+      "ts": "2026-11-24T20:13:49.022568+00:00",
+      "kept": 94,
+      "disk": 195.9
     }
   ],
   "skills": [
@@ -422,7 +422,7 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-24T19:54:30.669522+00:00",
+    "generated": "2026-11-24T20:13:48.915162+00:00",
     "stale": false,
     "attempts": 237,
     "kept": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "degraded",
-    "worst": "pull: git pull failed (rc 128), 198 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 70 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
-    "pull_failures": 198,
+    "worst": "pull: git pull failed (rc 128), 199 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+    "pull_failures": 199,
     "pull_fix": "Local branch is 1 commit(s) ahead / 71 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-24T19:38:36.272170+00:00",
+    "supervisor_ts": "2026-11-24T19:54:34.891506+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

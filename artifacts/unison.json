@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-24T04:31:21.572886+00:00",
+  "app_alive_ts": "2026-11-24T04:49:16.372175+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,13 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 207.4,
+  "env_disk": 207.3,
   "env_history": [
-    {
-      "ts": "2026-11-23T18:36:29.901767+00:00",
-      "kept": 94,
-      "disk": 211.4
-    },
     {
       "ts": "2026-11-23T18:48:38.399845+00:00",
       "kept": 94,
@@ -413,6 +408,11 @@
       "ts": "2026-11-24T04:33:51.227232+00:00",
       "kept": 94,
       "disk": 207.4
+    },
+    {
+      "ts": "2026-11-24T04:51:22.516294+00:00",
+      "kept": 94,
+      "disk": 207.3
     }
   ],
   "skills": [
@@ -422,7 +422,7 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-24T04:33:51.134766+00:00",
+    "generated": "2026-11-24T04:51:22.426980+00:00",
     "stale": false,
     "attempts": 224,
     "kept": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "degraded",
-    "worst": "pull: git pull failed (rc 128), 129 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 43 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
-    "pull_failures": 129,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 43 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-24T04:16:10.514577+00:00",
+    "worst": "pull: git pull failed (rc 128), 130 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 43 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+    "pull_failures": 130,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 44 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-24T04:34:05.003587+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

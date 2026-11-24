@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-24T08:21:55.349136+00:00",
+  "app_alive_ts": "2026-11-24T08:55:10.265742+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,33 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 206.1,
+  "env_disk": 205.8,
   "env_history": [
-    {
-      "ts": "2026-11-23T23:03:34.797433+00:00",
-      "kept": 94,
-      "disk": 209.5
-    },
-    {
-      "ts": "2026-11-23T23:19:47.091780+00:00",
-      "kept": 94,
-      "disk": 209.4
-    },
-    {
-      "ts": "2026-11-23T23:35:52.629856+00:00",
-      "kept": 94,
-      "disk": 209.4
-    },
-    {
-      "ts": "2026-11-23T23:53:35.788019+00:00",
-      "kept": 94,
-      "disk": 209.3
-    },
-    {
-      "ts": "2026-11-24T00:10:44.355491+00:00",
-      "kept": 94,
-      "disk": 209.2
-    },
     {
       "ts": "2026-11-24T00:27:56.247479+00:00",
       "kept": 94,
@@ -413,6 +388,31 @@
       "ts": "2026-11-24T08:26:07.070886+00:00",
       "kept": 94,
       "disk": 206.1
+    },
+    {
+      "ts": "2026-11-24T08:30:12.274811+00:00",
+      "kept": 94,
+      "disk": 202.5
+    },
+    {
+      "ts": "2026-11-24T08:34:12.227627+00:00",
+      "kept": 94,
+      "disk": 201.4
+    },
+    {
+      "ts": "2026-11-24T08:40:33.869056+00:00",
+      "kept": 94,
+      "disk": 205.8
+    },
+    {
+      "ts": "2026-11-24T08:46:54.815319+00:00",
+      "kept": 94,
+      "disk": 205.8
+    },
+    {
+      "ts": "2026-11-24T08:56:03.616120+00:00",
+      "kept": 94,
+      "disk": 205.8
     }
   ],
   "skills": [
@@ -422,7 +422,7 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-24T08:26:06.966844+00:00",
+    "generated": "2026-11-24T08:56:03.527789+00:00",
     "stale": false,
     "attempts": 234,
     "kept": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "degraded",
-    "worst": "pull: git pull failed (rc 128), 151 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 50 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
-    "pull_failures": 151,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 50 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-24T08:19:44.078502+00:00",
+    "worst": "pull: git pull failed (rc 128), 156 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 51 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+    "pull_failures": 156,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 51 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-24T08:46:58.923930+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

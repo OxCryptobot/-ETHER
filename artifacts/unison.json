@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-24T02:37:41.644657+00:00",
+  "app_alive_ts": "2026-11-24T03:15:03.685242+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,18 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 203.9,
+  "env_disk": 206.7,
   "env_history": [
-    {
-      "ts": "2026-11-23T16:51:13.336669+00:00",
-      "kept": 94,
-      "disk": 208.9
-    },
-    {
-      "ts": "2026-11-23T16:58:40.740718+00:00",
-      "kept": 94,
-      "disk": 207.8
-    },
     {
       "ts": "2026-11-23T17:08:07.753231+00:00",
       "kept": 94,
@@ -413,6 +403,16 @@
       "ts": "2026-11-24T02:41:46.625459+00:00",
       "kept": 94,
       "disk": 203.9
+    },
+    {
+      "ts": "2026-11-24T02:59:46.592879+00:00",
+      "kept": 94,
+      "disk": 208.3
+    },
+    {
+      "ts": "2026-11-24T03:16:06.983740+00:00",
+      "kept": 94,
+      "disk": 206.7
     }
   ],
   "skills": [
@@ -422,7 +422,7 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-24T02:41:46.530273+00:00",
+    "generated": "2026-11-24T03:16:06.874889+00:00",
     "stale": false,
     "attempts": 221,
     "kept": 2,
@@ -514,10 +514,10 @@
     "health": "failing",
     "supervisor": "failing",
     "host": "degraded",
-    "worst": "pull: git pull failed (rc 128), 118 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 39 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
-    "pull_failures": 118,
-    "pull_fix": "Local branch is 1 commit(s) ahead / 40 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
-    "supervisor_ts": "2026-11-24T02:22:28.859591+00:00",
+    "worst": "pull: git pull failed (rc 128), 120 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 40 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+    "pull_failures": 120,
+    "pull_fix": "Local branch is 1 commit(s) ahead / 41 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`.",
+    "supervisor_ts": "2026-11-24T02:59:51.457595+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

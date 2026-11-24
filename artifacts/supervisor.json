@@ -1,18 +1,18 @@
 {
-  "ts": "2026-11-24T04:51:26.845918+00:00",
+  "ts": "2026-11-24T05:23:08.021735+00:00",
   "state": "idle",
   "pid": 21316,
   "started": "2026-11-22T23:35:55.807172+00:00",
-  "cycle": 169,
+  "cycle": 171,
   "failures": 0,
-  "pull_failures": 131,
+  "pull_failures": 133,
   "health": "failing",
-  "health_worst": "pull: git pull failed (rc 128), 131 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 44 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
+  "health_worst": "pull: git pull failed (rc 128), 133 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 45 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset ",
   "health_signals": [
     {
       "name": "pull",
       "level": "failing",
-      "detail": "git pull failed (rc 128), 131 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 44 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset "
+      "detail": "git pull failed (rc 128), 133 cycle(s) in a row; the host is not receiving updates. Local branch is 1 commit(s) ahead / 45 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset "
     },
     {
       "name": "queue",
@@ -22,7 +22,7 @@
   ],
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
   "last": {
-    "cycle": 169,
+    "cycle": 171,
     "pull": {
       "ok": false,
       "rc": 128,
@@ -34,7 +34,7 @@
       "diverged": {
         "ok": true,
         "ahead": 1,
-        "behind": 44,
+        "behind": 45,
         "diverged": true,
         "local_only_commits": [
           "b58b0ce781 1650 app attach"
@@ -50,7 +50,7 @@
           "artifacts/unison.json"
         ],
         "artifacts_only": true,
-        "fix": "Local branch is 1 commit(s) ahead / 44 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`."
+        "fix": "Local branch is 1 commit(s) ahead / 45 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`."
       }
     },
     "ollama": {
@@ -59,11 +59,11 @@
     "pass": {
       "rc": 0,
       "ok": true,
-      "secs": 140.4,
+      "secs": 41.3,
       "err_tail": ""
     },
     "health": "failing"
   },
   "next_in_s": 900.0,
-  "dry_streak": 7
+  "dry_streak": 9
 }

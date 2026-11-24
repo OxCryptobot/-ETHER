@@ -97,20 +97,20 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "lessons": [
-    "2026-11-23 fix_test_status_is_complete_on_a_clean_run: no edit: no change",
     "2026-11-23 fix_test_pipeline_reselects_the_arm_on_retry_with_the_observed_f: regression",
     "2026-11-23 fix_test_code_that_always_crashes_exits_non_zero_function_no_arg: regression",
     "2026-11-23 fix_test_correct_code_is_not_failed_by_argument_guessing_two_dic: gate aborted: after-run timeout",
     "2026-11-23 fix_test_grading_does_not_write_to_the_host: no edit: stale span",
     "2026-11-23 fix_test_grading_runs_the_code_it_was_given: no edit: stale span",
     "2026-11-23 fix_test_auto_fabricate_on_fail_path_reports_success_when_it_wor: no function",
-    "2026-11-24 fix_test_scripted_replace_once_fixes_ledger: regression"
+    "2026-11-24 fix_test_scripted_replace_once_fixes_ledger: regression",
+    "2026-11-24 fix_test_audit_gem_outage_produces_an_explicit_failed_stage: no function"
   ],
   "last": {
-    "goal": "fix_test_scripted_replace_once_fixes_ledger",
+    "goal": "fix_test_audit_gem_outage_produces_an_explicit_failed_stage",
     "kept": false,
     "file": "",
-    "ts": "2026-11-24T03:49:27.367516+00:00"
+    "ts": "2026-11-24T16:15:51.410075+00:00"
   },
   "kept_n": 0,
   "files": [

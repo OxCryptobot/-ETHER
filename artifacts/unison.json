@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-25T12:42:46.341523+00:00",
+  "app_alive_ts": "2026-11-25T13:15:23.492382+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -172,18 +172,8 @@
     "fix_test_offbox_register_does_not_stamp_alive"
   ],
   "env_kept": 94,
-  "env_disk": 196.7,
+  "env_disk": 196.5,
   "env_history": [
-    {
-      "ts": "2026-11-22T22:58:57.337565+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:59:34.188903+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:00:16.326085+00:00",
       "kept": 92,
@@ -413,6 +403,16 @@
       "ts": "2026-11-25T12:44:02.453925+00:00",
       "kept": 94,
       "disk": 196.7
+    },
+    {
+      "ts": "2026-11-25T13:00:14.790439+00:00",
+      "kept": 94,
+      "disk": 196.8
+    },
+    {
+      "ts": "2026-11-25T13:16:20.261778+00:00",
+      "kept": 94,
+      "disk": 196.5
     }
   ],
   "skills": [
@@ -422,7 +422,7 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-25T12:44:02.358324+00:00",
+    "generated": "2026-11-25T13:16:20.171565+00:00",
     "stale": false,
     "attempts": 238,
     "kept": 2,
@@ -517,7 +517,7 @@
     "worst": "queue: goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)",
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-25T12:34:38.112339+00:00",
+    "supervisor_ts": "2026-11-25T13:00:15.268141+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

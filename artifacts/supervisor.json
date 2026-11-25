@@ -1,13 +1,47 @@
 {
-  "ts": "2026-11-25T12:18:17.966356+00:00",
-  "state": "running",
+  "ts": "2026-11-25T12:44:02.969390+00:00",
+  "state": "idle",
   "pid": 13616,
   "started": "2026-11-25T12:18:17.958358+00:00",
-  "cycle": 0,
+  "cycle": 5,
   "failures": 0,
   "pull_failures": 0,
-  "health": "ok",
-  "health_worst": null,
-  "health_signals": [],
-  "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal"
+  "health": "degraded",
+  "health_worst": "queue: goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)",
+  "health_signals": [
+    {
+      "name": "queue",
+      "level": "degraded",
+      "detail": "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"
+    },
+    {
+      "name": "sota_stale",
+      "level": "degraded",
+      "detail": "no learning attempt recorded for 55770 s (sota.json last.ts)"
+    }
+  ],
+  "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
+  "last": {
+    "cycle": 5,
+    "pull": {
+      "ok": true,
+      "rc": 0,
+      "before": "f5e79848c81f2b785de38ba4589afff6485200eb",
+      "after": "f5e79848c81f2b785de38ba4589afff6485200eb",
+      "moved": false,
+      "cleared_index_lock": false
+    },
+    "ollama": {
+      "ok": true
+    },
+    "pass": {
+      "rc": 0,
+      "ok": true,
+      "secs": 83.5,
+      "err_tail": ""
+    },
+    "health": "degraded"
+  },
+  "next_in_s": 900.0,
+  "dry_streak": 5
 }

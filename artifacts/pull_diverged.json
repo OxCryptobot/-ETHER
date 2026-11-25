@@ -1,15 +1,15 @@
 {
-  "ts": "2026-11-25T04:52:08.294760+00:00",
+  "ts": "2026-11-25T05:28:11.756334+00:00",
   "pull": {
     "rc": 128,
     "err": "hint: Diverging branches can't be fast-forwarded, you need to either:\nhint:\nhint: \tgit merge --no-ff\nhint:\nhint: or:\nhint:\nhint: \tgit rebase\nhint:\nhint: Disable this message with \"git config set advice.diverging false\"\nfatal: Not possible to fast-forward, aborting.",
     "error": null,
     "before": "b58b0ce7810019435dbb0cf08e70bc9baa81f3be"
   },
-  "streak": 233,
+  "streak": 235,
   "ok": true,
   "ahead": 1,
-  "behind": 86,
+  "behind": 87,
   "diverged": true,
   "local_only_commits": [
     "b58b0ce781 1650 app attach"
@@ -25,5 +25,5 @@
     "artifacts/unison.json"
   ],
   "artifacts_only": true,
-  "fix": "Local branch is 1 commit(s) ahead / 86 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`."
+  "fix": "Local branch is 1 commit(s) ahead / 87 behind origin/main and the local-only commits touch only artifacts/. Manual fix on the host (not automatic): `git log origin/main..HEAD --name-only` to confirm, then `git reset --keep origin/main`."
 }

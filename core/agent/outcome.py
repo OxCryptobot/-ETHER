@@ -313,6 +313,8 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         row["dup"] = seen_before(prior, str(result.get("goal") or ""), pick.trace["reply_hash"])
     if "temp" in pick.trace:
         row["temp"] = pick.trace.get("temp")
+    if result.get("planted") or row.get("via") == "planted":
+        row["planted"] = True  # batch 10 item 5d: planted keeps are curriculum, not product progress
     if isinstance(pick.trace.get("swarm_shadow"), dict):  # batch 10 item 5c: ETHER_SWARM=record
         row["shadow_would_reject"] = bool(pick.trace["swarm_shadow"].get("would_reject"))
         row["shadow_why"] = str(pick.trace["swarm_shadow"].get("why") or "")[:60]
@@ -550,6 +552,27 @@ def metrics(root: Path, rows: Optional[List[Dict[str, Any]]] = None) -> Dict[str
                       if any("dup" in r for r in graded) else None),
         "by_temp": _by_temp(graded, kept),
         **_swarm_metrics(graded, kept),
+        **_real_vs_planted(graded, kept, filler_id),
+    }
+
+
+def _is_planted(r: Dict[str, Any]) -> bool:
+    return bool(r.get("planted")) or r.get("via") == "planted"
+
+
+def _real_vs_planted(graded: List[Dict[str, Any]], kept: List[Dict[str, Any]], filler_id: Any) -> Dict[str, Any]:
+    """Batch 10 item 5d: real_kept (failing-test / lint goals of this repo), planted_kept (validated
+    planted bugs in scratch copies) and filler_rate_real = filler share of real keeps only (the live
+    filler_rate 0.9556 is legacy-ladder keeps, which say nothing about real goals)."""
+    real = [r for r in kept if not _is_planted(r)]
+    real_graded = [r for r in graded if not _is_planted(r)]
+    return {
+        "real_attempts": len(real_graded),
+        "real_kept": len(real),
+        "planted_attempts": len(graded) - len(real_graded),
+        "planted_kept": len(kept) - len(real),
+        "filler_rate_real": round(sum(1 for r in real if filler_id(str(r.get("goal") or ""))) / len(real), 4)
+        if real else 0.0,
     }
 
 

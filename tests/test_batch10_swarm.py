@@ -36,8 +36,9 @@ def _repo(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_off_by_default() -> None:
+def test_off_by_default_and_k_is_two() -> None:
     assert swarm.enabled() is False
+    assert swarm.k() == 2  # SWARM_DESIGN phase B starts at best-of-2
 
 
 def test_model_calls_never_overlap_and_screening_overlaps_generation(tmp_path, monkeypatch) -> None:

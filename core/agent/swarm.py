@@ -1,7 +1,7 @@
 """Batch 10 item 5: a 1650-safe proposer swarm. ETHER_SWARM=1 (default off).
 
 Doctrine (PRODUCT.md: one writer, one model, 4 GB): this is not a multi-writer swarm.
-  * K proposers share the ONE loaded model. Every model call goes through `model_lock()`
+  * K proposers (ETHER_SWARM_K, default 2) share the ONE loaded model. Every model call goes through `model_lock()`
     (a process lock plus a cross-process lock file), so there is never more than one
     generation on the GPU at a time, whoever calls.
   * CPU workers (ETHER_SWARM_WORKERS, default 2) screen each reply while the next one is being
@@ -40,7 +40,7 @@ def _int(name: str, default: int, lo: int, hi: int) -> int:
 
 
 def k() -> int:
-    return _int("ETHER_SWARM_K", 3, 1, 4)
+    return _int("ETHER_SWARM_K", 2, 1, 4)  # SWARM_DESIGN: start at best-of-2; 3 only after a green A/B
 
 
 def workers() -> int:

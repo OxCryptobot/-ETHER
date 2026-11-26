@@ -528,9 +528,23 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
             temp = sampling.temp_for(tries_before + i)  # 0.0 unless ETHER_SAMPLE_TEMP is set
             ask_i = sampling.with_temp(ask, temp)
             trace["temp"] = temp if ask_i is not ask else 0.0
-            row = react(ask_i, root, prompt, turns=2, n=n_reply)
-            text = row.get("text") or ""
-            trace["tools"] = ["search"] if row.get("used") else []
+            from core.agent import swarm
+
+            if swarm.enabled():
+                # batch 10 item 5: K serialized proposals, CPU-screened in parallel; the best one is gated
+                def _gen(a: Callable[..., str], p: str, m: int) -> str:
+                    r = react(a, root, p, turns=2, n=m)
+                    trace["tools"] = ["search"] if r.get("used") else trace.get("tools", [])
+                    return r.get("text") or ""
+
+                trace["tools"] = []
+                sw = swarm.propose(root, goal, ask, prompt, n_reply, temp, current, baseline, generate=_gen)
+                text = sw["text"]
+                trace["swarm"] = sw["trace"]
+            else:
+                row = react(ask_i, root, prompt, turns=2, n=n_reply)
+                text = row.get("text") or ""
+                trace["tools"] = ["search"] if row.get("used") else []
         except Exception as exc:
             if seen:
                 return _infra(goal, seen)

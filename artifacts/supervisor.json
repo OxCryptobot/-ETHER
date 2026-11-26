@@ -1,9 +1,9 @@
 {
-  "ts": "2026-11-26T15:00:53.284856+00:00",
+  "ts": "2026-11-26T16:18:16.895827+00:00",
   "state": "idle",
   "pid": 19940,
   "started": "2026-11-25T15:48:08.135735+00:00",
-  "cycle": 83,
+  "cycle": 87,
   "failures": 0,
   "pull_failures": 0,
   "health": "degraded",
@@ -17,35 +17,19 @@
     {
       "name": "sota_stale",
       "level": "degraded",
-      "detail": "no learning attempt recorded for 150380 s (sota.json last.ts)"
+      "detail": "no learning attempt recorded for 155024 s (sota.json last.ts)"
     }
   ],
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
   "last": {
-    "cycle": 83,
+    "cycle": 87,
     "pull": {
       "ok": true,
       "rc": 0,
-      "before": "0b3cadb6192f325680cbcb759a616d452b1849b9",
-      "after": "4e8a87661023256c151119c109c5b9d08a60da30",
-      "moved": true,
-      "cleared_index_lock": false,
-      "smoke": {
-        "ok": true,
-        "compile": {
-          "ok": true,
-          "files": 55,
-          "bad": []
-        },
-        "imports": {
-          "ok": true,
-          "checked": 224,
-          "modules": 52,
-          "broken": [],
-          "n_broken": 0
-        },
-        "rc": 0
-      }
+      "before": "22d7c1180bf94c801c6b91d1cf283c799cdb70bd",
+      "after": "22d7c1180bf94c801c6b91d1cf283c799cdb70bd",
+      "moved": false,
+      "cleared_index_lock": false
     },
     "ollama": {
       "ok": true
@@ -53,11 +37,11 @@
     "pass": {
       "rc": 0,
       "ok": true,
-      "secs": 122.9,
+      "secs": 263.4,
       "err_tail": ""
     },
     "health": "degraded"
   },
   "next_in_s": 900.0,
-  "dry_streak": 83
+  "dry_streak": 87
 }

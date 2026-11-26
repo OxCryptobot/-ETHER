@@ -130,3 +130,12 @@ pushes (interactive credential prompt allowed), starts the host and prints `supe
 - `goal_index.json` has no cross-process lock (W47); batch 10 writes more fields into it.
 - Owner decisions: swarm default, reviewed host/kept branch (W36/D2), evolution pillar (D4), the rest of the
   quarantine list.
+
+## Test results
+Full suite on `origin/main` (3eb62be522) merged with `ether-batch10`, compared test by test with the batch 9
+baseline (2011 tests / 1857 pass / 71 fail / 83 skip):
+**2085 tests / 1931 pass / 70 fail / 84 skip, 0 new failures.** Fixed: `test_p3_61_seven_slice::test_dispatch_walked_marks_run_tests`.
+Removed: the 15 tests of the 6 test files moved to `attic/` with the code they covered (item 1). The extra skip
+is the real-pylsp LSP test (no pylsp on that interpreter's PATH; it passes with pylsp installed).
+Two batch 9 tests were updated on purpose: `test_batch9_sandbox` (a baseline-timeout abort is no longer graded
+and spends no try) and `test_batch9_docs` (PRODUCT.md swarm wording); `test_batch3` stamps its tries.

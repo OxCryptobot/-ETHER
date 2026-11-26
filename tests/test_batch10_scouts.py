@@ -83,3 +83,25 @@ def test_sota_run_calls_refill_only_when_enabled(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ETHER_GOAL_SCOUTS", "1")
     row = sota.run(root, lambda p, n=240: "")
     assert calls == [1] and row["scouts"] == {"ran": False, "why": "enough"}
+
+
+def test_planted_only_when_real_selectable_is_zero(tmp_path, monkeypatch) -> None:
+    """Batch 10 item 5f: a goal skipped this tick is still selectable, so no planted bug is served."""
+    from core.agent import goal_source as gs
+    from core.agent import planted, sota
+
+    root = _repo(tmp_path)
+    gs.scan(root, n_files=10)
+    gid = gs.next_real(root)["id"]
+    monkeypatch.setenv("ETHER_PLANTED_GOALS", "1")
+    served = []
+    monkeypatch.setattr(planted, "attempt", lambda r, a: served.append(1) or {"ok": False, "note": "planted"})
+    row = sota._one(root, lambda p, n=240: "", skip=[gid])
+    assert served == [] and row["note"] == "queue empty"
+    data = gs.load_index(root)
+    data["tries"] = {gid: 3}
+    data["tries_ts"] = {gid: gs._now()}
+    gs.save_index(root, data)
+    assert sota._real_dry(root)
+    sota._one(root, lambda p, n=240: "")
+    assert served == [1]

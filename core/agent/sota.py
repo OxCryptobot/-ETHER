@@ -380,6 +380,20 @@ def _infra(goal: Dict[str, str], seen: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
+def _real_dry(root: Path) -> bool:
+    """Batch 10 item 5f: planted goals only when no real goal is selectable at all (ignoring this
+    tick's skip list). A planted mix while real goals remain lowers real kept per GPU-hour
+    (docs/SWARM_DESIGN.md option 5)."""
+    from core.agent import goal_source as gs
+
+    if not gs.enabled():
+        return True
+    try:
+        return int(gs.why_blocked(root).get("selectable") or 0) == 0
+    except Exception:
+        return False
+
+
 def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
     """One attempt. The honest gate's outcome trains the existing bandit."""
     try:
@@ -389,7 +403,7 @@ def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
     if goal is None:
         from core.agent import planted
 
-        if planted.enabled():  # batch 9: real pool dry -> one validated planted bug, scratch copy only
+        if planted.enabled() and _real_dry(root):  # batch 9: real pool dry -> one validated planted bug, scratch copy only
             return planted.attempt(root, ask)
     try:
         from core.agent.outcome import choose, record

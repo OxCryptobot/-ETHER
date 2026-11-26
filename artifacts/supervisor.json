@@ -1,9 +1,9 @@
 {
-  "ts": "2026-11-26T06:01:47.393252+00:00",
+  "ts": "2026-11-26T06:35:44.934666+00:00",
   "state": "idle",
   "pid": 19940,
   "started": "2026-11-25T15:48:08.135735+00:00",
-  "cycle": 52,
+  "cycle": 54,
   "failures": 0,
   "pull_failures": 0,
   "health": "degraded",
@@ -17,17 +17,17 @@
     {
       "name": "sota_stale",
       "level": "degraded",
-      "detail": "no learning attempt recorded for 118034 s (sota.json last.ts)"
+      "detail": "no learning attempt recorded for 120072 s (sota.json last.ts)"
     }
   ],
   "note": "supervisor heartbeat only; LIVE is judged from app_alive.json; health = worst signal",
   "last": {
-    "cycle": 52,
+    "cycle": 54,
     "pull": {
       "ok": true,
       "rc": 0,
-      "before": "71d38cb7c3f535948ea688f66d3cc1e77b565b3a",
-      "after": "71d38cb7c3f535948ea688f66d3cc1e77b565b3a",
+      "before": "6d8cfa5ac6182abe6d91b45e819621581df7b3d9",
+      "after": "6d8cfa5ac6182abe6d91b45e819621581df7b3d9",
       "moved": false,
       "cleared_index_lock": false
     },
@@ -37,11 +37,11 @@
     "pass": {
       "rc": 0,
       "ok": true,
-      "secs": 162.4,
+      "secs": 70.0,
       "err_tail": ""
     },
     "health": "degraded"
   },
   "next_in_s": 900.0,
-  "dry_streak": 52
+  "dry_streak": 54
 }

@@ -68,8 +68,11 @@ Legend: **on/off** = default; *gate* = only makes the honest gate stricter (defa
 | `ETHER_MCP` / `ETHER_MCP_TIMEOUT_S` / `ETHER_MCP_MAX_CHARS` | `0` / `15` / `1200` | 10.3 | outcome | Read-only `mcp` skill for the model (stdio JSON-RPC client; `scripts/mcp_status_server.py` = ETHER status server). |
 | `ETHER_LSP` / `ETHER_LSP_CMD` / `ETHER_LSP_TIMEOUT_S` | `0` / auto / `20` | 10.4 | outcome | Read-only `lsp` skill (diagnostics / definition / references); server: `ETHER_LSP_CMD` > pyright-langserver > pylsp > jedi-language-server. |
 | `ETHER_LSP_PREGATE` | `0` | 10.4 | outcome | Reject (restore, no gate run) an edit that adds error diagnostics to the goal file. No server / timeout = skipped. Can only reject. |
-| `ETHER_SWARM` | `0` | 10.5 | outcome | Proposer swarm: K candidates from the one model (serialized), screened by CPU workers in parallel, best one gated. Costs K model calls per try. |
-| `ETHER_SWARM_K` / `ETHER_SWARM_TEMP` / `ETHER_SWARM_WORKERS` / `ETHER_SWARM_LOCKFILE` | `3` / `0.7` / `2` / `1` | 10.5 | outcome | Candidates per try (max 4), temperature of candidates 2..K, CPU screen workers, cross-process `artifacts/model.lock`. |
+| `ETHER_SWARM` | `0` | 10.5 | outcome | `0` off; `record` = shadow: the swarm's CPU critics judge the one normal reply and log `shadow_would_reject`, nothing changes; `1` = K serial proposals from the one model, screened by CPU workers in parallel, best one gated (K model calls per try). |
+| `ETHER_SWARM_K` / `ETHER_SWARM_TEMP` / `ETHER_SWARM_WORKERS` / `ETHER_SWARM_LOCKFILE` | **`2`** / `0.7` / `2` / `1` | 10.5 | outcome | Candidates per try (max 4; raise to 3 only after a green K=2 A/B), temperature of candidates 2..K, CPU screen workers, cross-process `artifacts/model.lock`. |
+| `ETHER_SWARM_AST` | `1` | 10.5 | outcome | Swarm/record critic: target must stay a real function (no pass / ... / NotImplementedError) and ruff F821/F811/F823 must not grow. LSP critic per candidate follows `ETHER_LSP_PREGATE`. |
+| `ETHER_GOAL_SCOUTS` | `0` | 10.5 | outcome | Goal-flow scouts, no model calls: weighted round robin by source (test_import first, SBFL never starved) and a CPU refill (failing-test shard + lint) when few goals are selectable. |
+| `ETHER_SCOUT_PATTERN` / `ETHER_SCOUT_MIN_SELECTABLE` / `ETHER_SCOUT_EVERY_S` / `ETHER_SCOUT_FILES` | `test_import,test_import,sbfl,import_error,test_import_assign,lint` / `3` / `600` / `16` | 10.5 | outcome | Scout order, refill threshold, refill cooldown, test files per refill shard. |
 
 Always on in batch 9 (security, stricter only, no flag): model replies can call only `search` and
 `read`; the gate rejects any diff outside the goal file (tests/ immutable) and restores every
@@ -80,8 +83,19 @@ other outcome flag at its default until `first_hour_report` at +1 h and +6 h say
 (dup-reply >= 15% -> `ETHER_SAMPLE_TEMP=0,0.7`; queue empty -> `ETHER_PLANTED_GOALS=1` and
 `ETHER_GOAL_LIVE_ONLY=1`).
 
-Batch 10 (after it lands): the idle-host fix (10.0) is on by default and needs no flag. Recommended:
-keep `ETHER_EXEMPLARS=record`; `ETHER_SAMPLE_TEMP=0,0.7` + `ETHER_DEDUP_REPLY=1` (live dup_share 18.5 % is over
-the 15 % rule); after the first kept-rate reading, try `ETHER_LSP_PREGATE=1` (needs pylsp or pyright on the
-1650) and `ETHER_PLANTED_GOALS=1` + `ETHER_GOAL_LIVE_ONLY=1` if `real_queue.selectable` reaches 0 again.
-`ETHER_SWARM=1` triples model time per try: only after the per-attempt time is known.
+## Batch 10 rollout (docs/SWARM_DESIGN.md)
+
+Item 0 (idle-host fix) is on by default and needs no flag. Planted goals are served only when real
+`selectable` is 0 (batch 10, no flag). Measure with `first_hour_report` and `learning_summary.metrics`
+(`real_kept`, `planted_kept`, `filler_rate_real`, `kept_per_gpu_hour`, `swarm_shadow`).
+
+- **Phase A** (right after the merge): pregates `ETHER_GEM_PREGATE=1` and `ETHER_LSP_PREGATE=1` (pylsp or
+  pyright in the host venv; without a server it is a no-op), dry-only planted goals `ETHER_PLANTED_GOALS=1`
+  (+ `ETHER_GOAL_LIVE_ONLY=1`), scouts `ETHER_GOAL_SCOUTS=1`, `ETHER_SAMPLE_TEMP=0,0.7` and
+  `ETHER_DEDUP_REPLY=1`. Optional: `ETHER_SWARM=record` (shadow critics, no extra model call). Keep
+  `ETHER_EXEMPLARS=record`.
+- **Phase B**: `ETHER_SWARM=1` with `ETHER_SWARM_K=2`, only after Phase A has been green for 6 hours or
+  100 real attempts (queue flowing, health never "empty" with open goals, `swarm_shadow.would_reject_kept`
+  = 0, kept/attempt not below the Phase A rate).
+- **Kill**: turn the last flag off again if real kept per GPU-hour drops by more than 10 % against the
+  previous phase (or any would-reject turns out to be a keep).

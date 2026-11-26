@@ -23,12 +23,14 @@ generate-fallback is never a pass. GTX 1650 + `qwen3.5:4b`, NUM_CTX 4096. No sec
   guard on the 1650) spent tries without a model call until every open goal was exhausted, while health said
   "queue empty" next to 95 open goals. Fixed: aborts spend no try (backoff + trimmed guard), the gate timeout
   follows measured time, exhausted goals are re-admitted, health names why goals are skipped. Also: OS jail
-  for gate runs (auto), MCP + LSP clients (off), proposer swarm (off), 44 dead files to `attic/`,
+  for gate runs (auto), MCP + LSP clients (off), swarm: critics, shadow mode, K=2 proposers and goal-flow
+  scouts (all off; planted goals only when the real queue is dry), 44 dead files to `attic/`,
   `docs/AUDIT_TODO.md`. Details: `docs/BATCH10.md`.
 
 ## Open owner decisions
-- Swarm vs `PRODUCT.md`: batch 10 built the doctrine-compatible version (one model, serialized calls, CPU screens, one writer),
-  `ETHER_SWARM` default off. Turning it on, and whether `PRODUCT.md` needs a wording change, is open.
+- Swarm vs `PRODUCT.md`: decided 2026-11-22 (audit D1) as opt-in, single-writer, one 4B call at a time;
+  `PRODUCT.md` now says so. Batch 10 built it off by default (`ETHER_SWARM=0|record|1`, K=2, scouts
+  `ETHER_GOAL_SCOUTS`). Rollout Phase A / B / kill rule: `docs/FLAGS.md`.
 - Dead code: 44 provably unreachable files moved to `attic/` (batch 10, reversible); the larger candidate list in
   `docs/QUARANTINE_CANDIDATES.md` is still an owner decision.
 - Host/kept branch for reviewed pushes of kept edits (audit W36): open.

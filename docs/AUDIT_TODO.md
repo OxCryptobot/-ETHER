@@ -8,7 +8,7 @@ Status is code-verified for the batch that is named; an item without a named bat
 * `partial`: part of the item exists; the note says what is missing.
 * `open`: not built.  `owner`: needs an owner decision.
 
-**Totals (481):** done 36, done-flag 19, open 345, owner 10, partial 71
+**Totals (481):** done 36, done-flag 20, open 345, owner 9, partial 71
 
 
 Weaknesses (sec. 5): done 12, done-flag 3, open 59, owner 2, partial 24
@@ -23,10 +23,10 @@ Weaknesses (sec. 5): done 12, done-flag 3, open 59, owner 2, partial 24
 | W4 | 'Verified Execution: every artifact sandboxed' is false on the live path (audit line 155) | partial | batch 9 mirror + scrubbed env; batch 10 item 2 OS jail (bwrap/unshare/rlimits, Windows Job Object); no network block on Windows |
 | W5 | Regression guard sees 2-4% of the suite (audit line 166) | done | batch 9 |
 | W6 | A baseline timeout silently turns the regression gate off (audit line 177) | done | batch 9 abort; batch 10 item 0: abort no longer burns tries, timeout scales with measured time |
-| W7 | Finite curriculum: the goal pool runs dry in hours (audit line 188) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1); batch 10 item 0 re-admits exhausted goals |
+| W7 | Finite curriculum: the goal pool runs dry in hours (audit line 188) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1, batch 10: only when real selectable is 0); batch 10 item 0 re-admits exhausted goals; ETHER_GOAL_SCOUTS refill |
 | W8 | Every real attempt is greedy (temperature 0) (audit line 199) | done-flag | batch 8 ETHER_SAMPLE_TEMP + dedup; batch 10 swarm samples K candidates (ETHER_SWARM=1) |
 | W9 | Kept edits are forgotten: no memory on the real path (audit line 210) | partial | batch 7 exemplars, mode=record; A/B not started |
-| W10 | 60% of goals target code the writer never runs (audit line 221) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1 |
+| W10 | 60% of goals target code the writer never runs (audit line 221) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1; batch 10 scouts rank by source |
 | W11 | 73% of the codebase is unreachable from the writer (audit line 232) | partial | batch 10 item 1: 44 files / 4,158 lines to attic/ (of 56.6k unreachable); 100+ doubtful modules left in place |
 | W12 | Prompt stack is two hard-coded strings (audit line 243) | partial | arm behaviours (batches 2-8); prompt registry open |
 | W13 | Live tool surface is 5 toy skills (audit line 254) | partial | batch 9 read-only search/read; batch 10 MCP (item 3) + LSP (item 4) skills, flag-off |
@@ -131,7 +131,7 @@ Improvements (sec. 6): done 10, done-flag 3, open 70, owner 2, partial 15
 | I5 | Try-indexed temperature + duplicate-reply skip (audit line 1232) | done-flag | batch 8 ETHER_SAMPLE_TEMP + dedup; batch 10 swarm samples K candidates (ETHER_SWARM=1) |
 | I6 | Exemplars record now, A/B on at week 1 (audit line 1233) | partial | batch 7 exemplars, mode=record; A/B not started |
 | I7 | Health = worst-of signals (audit line 1234) | done | batch 9 |
-| I8 | Weight goals by reachability (audit line 1235) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1 |
+| I8 | Weight goals by reachability (audit line 1235) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1; batch 10 scouts rank by source |
 | I9 | Matrix read model for learning (audit line 1236) | done | batch 9 |
 | I10 | Delete dashboard POST routes (audit line 1237) | open |  |
 | I11 | Atomic edit/revert with journal (audit line 1238) | partial | batch 9 TreeGuard/FileTx; no journal |
@@ -162,7 +162,7 @@ Improvements (sec. 6): done 10, done-flag 3, open 70, owner 2, partial 15
 | I36 | Persist SBFL coverage map (audit line 1263) | open |  |
 | I37 | Kept-rate canary dashboard for each batch (audit line 1264) | open |  |
 | I38 | Transitive affected-test selection (audit line 1265) | done | batch 9 |
-| I39 | Planted-bug goal generator (audit line 1266) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1); batch 10 item 0 re-admits exhausted goals |
+| I39 | Planted-bug goal generator (audit line 1266) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1, batch 10: only when real selectable is 0); batch 10 item 0 re-admits exhausted goals; ETHER_GOAL_SCOUTS refill |
 | I40 | Per-attempt disposable worktree (audit line 1267) | open |  |
 | I41 | Nightly micro-benchmark (SWE-style + held-out planted bugs) (audit line 1268) | open |  |
 | I42 | Kept edits to host/kept branch; nightly full suite fast-forwards main (audit line 1269) | owner | reviewed host/kept branch: not built |
@@ -232,9 +232,9 @@ Missing features (sec. 7): done 1, done-flag 4, open 33, partial 12
 | id | item | status | evidence / batch |
 |---|---|---|---|
 | F1 | Sandboxed execution runtime for every attempt (audit line 1333) | partial | batch 9 mirror + scrubbed env; batch 10 item 2 OS jail (bwrap/unshare/rlimits, Windows Job Object); no network block on Windows |
-| F2 | Repeated sampling + test-based selection (audit line 1334) | partial | batch 10 swarm: K samples, static screen, best one gated; no test-based ranking among candidates |
+| F2 | Repeated sampling + test-based selection (audit line 1334) | partial | batch 10 swarm: K=2 samples, CPU critics (gem/AST/lint/LSP), best one gated; no test-based ranking among candidates |
 | F3 | Episodic memory of solved tasks (audit line 1335) | partial | batch 7 exemplars, mode=record; A/B not started |
-| F4 | Automatic task generation (audit line 1336) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1); batch 10 item 0 re-admits exhausted goals |
+| F4 | Automatic task generation (audit line 1336) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1, batch 10: only when real selectable is 0); batch 10 item 0 re-admits exhausted goals; ETHER_GOAL_SCOUTS refill |
 | F5 | Secret scrubbing for tool subprocesses (audit line 1337) | done | batch 9 |
 | F6 | Prompt-injection defences for tool calls (audit line 1338) | partial | batch 9 model-callable skills are read-only; no strict envelope |
 | F7 | Capability truth table (audit line 1339) | open |  |
@@ -256,7 +256,7 @@ Missing features (sec. 7): done 1, done-flag 4, open 33, partial 12
 | F23 | Policy / permission file (audit line 1355) | open |  |
 | F24 | Held-out tests against overfitting (audit line 1356) | open |  |
 | F25 | Prefix/KV cache reuse (audit line 1357) | open |  |
-| F26 | Parallel candidate generation (audit line 1358) | partial | batch 10 swarm: K samples, static screen, best one gated; no test-based ranking among candidates |
+| F26 | Parallel candidate generation (audit line 1358) | partial | batch 10 swarm: K=2 samples, CPU critics (gem/AST/lint/LSP), best one gated; no test-based ranking among candidates |
 | F27 | Multi-file edits by default (audit line 1359) | done-flag | batch 5 ETHER_MULTI_EDIT=1 |
 | F28 | Planning with explicit task list (audit line 1360) | open |  |
 | F29 | Reflection / self-critique between tries (audit line 1361) | open |  |
@@ -386,13 +386,13 @@ Planner (sec. 11): done-flag 3, open 20, partial 2
 |---|---|---|---|
 | PL1 | Hierarchical localisation (Agentless) (audit line 1581) | open |  |
 | PL2 | Hypothesis list per goal (audit line 1582) | open |  |
-| PL3 | Candidate generation + test selection (audit line 1583) | partial | batch 10 swarm: K samples, static screen, best one gated; no test-based ranking among candidates |
+| PL3 | Candidate generation + test selection (audit line 1583) | partial | batch 10 swarm: K=2 samples, CPU critics (gem/AST/lint/LSP), best one gated; no test-based ranking among candidates |
 | PL4 | Duplicate-AST pruning (audit line 1584) | open |  |
 | PL5 | Posterior stopping rule (audit line 1585) | open |  |
 | PL6 | Learning-progress curriculum (audit line 1586) | open |  |
-| PL7 | Reachability-weighted ranking (audit line 1587) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1 |
+| PL7 | Reachability-weighted ranking (audit line 1587) | done-flag | batch 9 ETHER_GOAL_LIVE_ONLY=1; batch 10 scouts rank by source |
 | PL8 | Failure clustering (audit line 1588) | open |  |
-| PL9 | Planted-bug generator (audit line 1589) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1); batch 10 item 0 re-admits exhausted goals |
+| PL9 | Planted-bug generator (audit line 1589) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1, batch 10: only when real selectable is 0); batch 10 item 0 re-admits exhausted goals; ETHER_GOAL_SCOUTS refill |
 | PL10 | Difficulty ladder from planted bugs (audit line 1590) | open |  |
 | PL11 | Multi-site plans (audit line 1591) | done-flag | batch 5 ETHER_MULTI_EDIT=1 |
 | PL12 | Retarget after wrong-target reverts (audit line 1592) | open |  |
@@ -544,7 +544,7 @@ Moonshots (sec. 16): done-flag 1, open 24
 
 | id | item | status | evidence / batch |
 |---|---|---|---|
-| M1 | Self-play bug planting and fixing (SWE-smith on itself) (audit line 1723) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1); batch 10 item 0 re-admits exhausted goals |
+| M1 | Self-play bug planting and fixing (SWE-smith on itself) (audit line 1723) | done-flag | batch 9 planted goals (ETHER_PLANTED_GOALS=1, batch 10: only when real selectable is 0); batch 10 item 0 re-admits exhausted goals; ETHER_GOAL_SCOUTS refill |
 | M2 | Overnight local distillation (audit line 1724) | open |  |
 | M3 | MAP-Elites archive of prompts and pipelines (audit line 1725) | open |  |
 | M4 | GEPA-style reflective prompt evolution (audit line 1726) | open |  |
@@ -570,13 +570,13 @@ Moonshots (sec. 16): done-flag 1, open 24
 | M24 | Hardware-adaptive model choice (audit line 1746) | open |  |
 | M25 | Living roadmap (audit line 1747) | open |  |
 
-Owner decisions (sec. 19): owner 5, partial 1
+Owner decisions (sec. 19): done-flag 1, owner 4, partial 1
 
 ## Owner decisions (sec. 19)
 
 | id | item | status | evidence / batch |
 |---|---|---|---|
-| D1 | Agent swarm: CPU workers that never write (doctrine-compatible) vs a GPU multi-agent swarm (doctrine change, n (audit line 1894) | owner | batch 10 built the doctrine-compatible reading (one model, serialized calls, CPU screens, one writer), ETHER_SWARM default off; default-on is the owner's call |
+| D1 | Agent swarm: CPU workers that never write (doctrine-compatible) vs a GPU multi-agent swarm (doctrine change, n (audit line 1894) | done-flag | decided 2026-11-22: opt-in, single-writer, one 4B call at a time (PRODUCT.md, batch 10); ETHER_SWARM=0|record|1, K=2, scouts; rollout in FLAGS.md |
 | D2 | Kept code edits go to `host/kept` and reach `main` only after a nightly full suite (keeps single writer; chang (audit line 1895) | owner | reviewed host/kept branch: not built |
 | D3 | Delete vs quarantine the 73% unreachable code. (audit line 1896) | partial | batch 10 item 1: 44 files / 4,158 lines to attic/ (of 56.6k unreachable); 100+ doubtful modules left in place |
 | D4 | Retire or rebuild the evolution pillar with an honest gate. (audit line 1897) | owner | evolution pillar: retire or rebuild |

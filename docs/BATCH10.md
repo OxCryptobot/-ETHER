@@ -81,25 +81,43 @@ Real stdio JSON-RPC 2.0 client (`core/agent/mcp_stdio.py`) and a read-only ETHER
 `core/agent/lsp_client.py`: stdio LSP client (pyright / pylsp / jedi). Read-only `lsp` skill and a pre-gate that
 rejects edits adding error diagnostics (no gate run spent; no server = skipped). Tested against a real pylsp.
 
-## 5. Proposer swarm — done, off (`ETHER_SWARM=1`)
-Doctrine-compatible reading of the owner's swarm (audit D1): one model, K serialized proposals, CPU workers
-screening in parallel while the next proposal generates, one writer, one unchanged honest gate run per try.
-`PRODUCT.md` is unchanged ("not a swarm" meant multiple writers/models); turning it on is the owner's call and
-costs K model calls per try on the 1650.
+## 5. Swarm — done, off (`ETHER_SWARM=0|record|1`, `ETHER_GOAL_SCOUTS=1`)
+Design study: `docs/SWARM_DESIGN.md` (seven designs ranked for one 4B on the 1650, live-calibrated simulation
+`scripts/swarm_sim.py`, results in `docs/results/swarm/`, `tests/test_swarm_sim.py`). Verdict: zero-extra-call
+critics + goal-flow scouts first, best-of-2 second; debate / MoA / population rejected.
+- Proposer swarm (`core/agent/swarm.py`): one model, K serialized proposals (`model_lock`), CPU workers
+  screening in parallel while the next proposal generates, one writer, one unchanged honest gate run per try.
+  Default `ETHER_SWARM_K` is **2** (5a).
+- Critics in `swarm.screen` (5b): extract, compile, security gem, AST (target must stay a real function, not a
+  stub), ruff F821/F811/F823 must not grow, and item 4's LSP diagnostics when `ETHER_LSP_PREGATE=1`.
+- `ETHER_SWARM=record` (5c): shadow mode; the critics judge the one normal reply, the same reply is gated, and
+  the trajectory records `shadow_would_reject`. `learning_summary.metrics.swarm_shadow.would_reject_kept` > 0
+  means a critic would have thrown away a keep.
+- Telemetry (5d): `real_kept`, `planted_kept`, `filler_rate_real` (and `real_attempts`, `planted_attempts`,
+  `swarm.model_calls`) in `learning_summary.metrics`.
+- Goal-flow scouts (5e, `core/agent/scouts.py`, `ETHER_GOAL_SCOUTS=1`): no model calls; weighted round robin by
+  source (test_import first, SBFL still gets a slot every cycle), CPU refill (one failing-test shard + lint)
+  when fewer than 3 goals are selectable, at most every 10 min.
+- Planted goals only when real `selectable` is 0 (5f, no flag).
+- `PRODUCT.md`: swarm wording added (opt-in, single-writer, one 4B call at a time; owner decision 2026-11-22,
+  audit D1). "Not this product" now names a GPU fan-out swarm and a second writer.
 
 ## 6. `docs/AUDIT_TODO.md` — done
-All 481 audit items with a status: done 36, done-flag 19, partial 71, open 345, owner 10.
+All 481 audit items with a status: done 36, done-flag 20, partial 71, open 345, owner 9.
 
 ## 7. Docs — done
 This file, `docs/FLAGS.md` (batch 10 rows), `STATUS.md`.
 
-## Flags to set on the PC
-- None needed for the idle-host fix (on by default).
-- Keep `ETHER_EXEMPLARS=record`.
-- `ETHER_SAMPLE_TEMP=0,0.7` and `ETHER_DEDUP_REPLY=1`: live `dup_share` is 18.5 %, over the batch 8 rule (15 %).
-- Later, one at a time with a kept-rate reading in between: `ETHER_LSP_PREGATE=1` (install pylsp or pyright in the
-  host venv first), `ETHER_PLANTED_GOALS=1` + `ETHER_GOAL_LIVE_ONLY=1` if `real_queue.selectable` hits 0 again,
-  `ETHER_SWARM=1` only once per-attempt time is known.
+## Flags to set on the PC (rollout, docs/SWARM_DESIGN.md)
+- Nothing is needed for the idle-host fix (on by default). Keep `ETHER_EXEMPLARS=record`.
+- **Phase A** (right after the merge): pregates `ETHER_GEM_PREGATE=1`, `ETHER_LSP_PREGATE=1` (install pylsp or
+  pyright in the host venv; no server = no-op); dry-only planted goals `ETHER_PLANTED_GOALS=1` (+
+  `ETHER_GOAL_LIVE_ONLY=1`); scouts `ETHER_GOAL_SCOUTS=1`; `ETHER_SAMPLE_TEMP=0,0.7` and `ETHER_DEDUP_REPLY=1`
+  (live dup_share 18.5 %). Optional `ETHER_SWARM=record` (no extra model call).
+- **Phase B**: `ETHER_SWARM=1` with `ETHER_SWARM_K=2`, only after Phase A has been green for 6 hours or 100 real
+  attempts.
+- **Kill**: undo the last step if real kept per GPU-hour drops by more than 10 % (or
+  `swarm_shadow.would_reject_kept` > 0).
 
 ## Apply on the PC
 `out/apply-batch10.ps1` (run from the ETHER checkout with the bundle path):

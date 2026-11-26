@@ -28,4 +28,7 @@ def test_operational_docs_do_not_point_at_the_retired_dashboard():
 def test_status_names_the_open_owner_decisions_and_product_md_is_untouched():
     status = Path("STATUS.md").read_text(encoding="utf-8")
     assert "Swarm vs `PRODUCT.md`" in status and "2026-11-22" in status
-    assert "a swarm" in Path("PRODUCT.md").read_text(encoding="utf-8")  # owner decision: unchanged
+    product = Path("PRODUCT.md").read_text(encoding="utf-8")
+    # batch 10: owner decision 2026-11-22 (audit D1): opt-in, single-writer, one 4B call at a time
+    assert "a second writer" in product and "GPU fan-out swarm" in product
+    assert "single-writer" in product and "one 4B" in product and "2026-11-22" in product

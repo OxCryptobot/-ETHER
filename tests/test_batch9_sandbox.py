@@ -97,7 +97,10 @@ def test_baseline_timeout_aborts_without_a_model_call_and_reward_zero(tmp_path, 
     assert calls == []
     assert "return value\n" in (root / "pkg/b.py").read_text(encoding="utf-8")
     traj = [t for t in trajectories(root) if t.get("goal") == gid]
-    assert traj and traj[-1]["reward01"] == 0
+    # batch 10 item 0: no model call was made, so the abort is not graded (it was reward01 0 in batch 9
+    # and fed the bandit a failure) and spends no try
+    assert traj and traj[-1].get("reward01") is None and traj[-1].get("kind") == "no_attempt"
+    assert int((gs.load_index(root).get("tries") or {}).get(gid, 0)) == 0
 
 
 def test_after_run_timeout_is_never_a_pass(tmp_path, monkeypatch):

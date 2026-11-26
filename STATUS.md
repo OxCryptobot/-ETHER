@@ -8,7 +8,8 @@ not the live host. Live truth: `artifacts/supervisor.json` (health = worst signa
 Single writer: `scripts/host_main.py` under `scripts/host_supervisor.py` (no ETHER.exe). The Grok Control
 Matrix is read-only. Tool-first. Honest gate only: tool edit + target test pass + 0 regressions; a
 generate-fallback is never a pass. GTX 1650 + `qwen3.5:4b`, NUM_CTX 4096. No second installer; updates by
-`git pull`. Learning only from the honest gate's 0/1 reward.
+`git pull`. Learning only from the honest gate's 0/1 reward. Source audit: `docs/AUDIT_FULL_2026-11-22.md`
+(status of every item: `docs/AUDIT_TODO.md`).
 
 ## What batches 2–10 changed (2–9 live; 10 unpushed until the owner applies it)
 - 2–3: real goals from failing tests + lint; filler retired; regression revert; publish clobber guard.
@@ -26,7 +27,7 @@ generate-fallback is never a pass. GTX 1650 + `qwen3.5:4b`, NUM_CTX 4096. No sec
   `docs/AUDIT_TODO.md`. Details: `docs/BATCH10.md`.
 
 ## Open owner decisions
-- Swarm: batch 10 built the doctrine-compatible version (one model, serialized calls, CPU screens, one writer),
+- Swarm vs `PRODUCT.md`: batch 10 built the doctrine-compatible version (one model, serialized calls, CPU screens, one writer),
   `ETHER_SWARM` default off. Turning it on, and whether `PRODUCT.md` needs a wording change, is open.
 - Dead code: 44 provably unreachable files moved to `attic/` (batch 10, reversible); the larger candidate list in
   `docs/QUARANTINE_CANDIDATES.md` is still an owner decision.

@@ -1,7 +1,7 @@
-# ETHER writer flags (batches 2–9)
+# ETHER writer flags (batches 2–10)
 
-One table for every environment flag added or changed in batches 2–9 (branch `ether-batch9-gaps`,
-base `origin/main` @ `c8dde296ea`). Defaults are the code's defaults: a flag you do not set keeps
+One table for every environment flag added or changed in batches 2–10 (branch `ether-batch10` on top of
+`ether-batch9-gaps`; batch 9 is live on `origin/main`). Defaults are the code's defaults: a flag you do not set keeps
 the safe choice. Set flags in the host environment that `scripts\host.cmd start` inherits (user
 environment variables on the 1650), then restart the supervisor.
 
@@ -56,6 +56,20 @@ Legend: **on/off** = default; *gate* = only makes the honest gate stricter (defa
 | `ETHER_GOAL_LIVE_ONLY` | `0` | 9 | outcome | Drop real goals (and new seeds) whose target the writer never imports (35 of the 56 failing-test seed goals). |
 | `ETHER_GEM_PREGATE` | `0` | 9 | outcome | Black Tourmaline (security gem) rejects an edit that adds subprocess/os.system/eval/exec/`__import__`/socket/rmtree/import_module to the goal file before the gate runs (restored, reward as any failed reply). Can only reject. |
 | `ETHER_DASHBOARD_WRITE` + `ETHER_DASHBOARD_TOKEN` | unset | 9 | security | Retired dashboard refuses all writes unless both are set (token >= 16 chars, localhost only). |
+| `ETHER_GATE_TIMEOUT_SCALE` | `1` | 10.0 | gate/budget | Gate/baseline timeout = max(`ETHER_GATE_TIMEOUT_S`, margin x measured secs per test file x files) x 1.5 per earlier baseline abort of the goal. `0` = fixed 180 s (batch 9). Measurements: `artifacts/gate_timing.json`. |
+| `ETHER_GATE_TIMEOUT_MARGIN` / `ETHER_GATE_TIMEOUT_MAX_S` | `2.0` / `900` | 10.0 | gate/budget | Safety margin over the measured time; hard cap per pytest run. |
+| `ETHER_ABORT_BACKOFF_S` / `ETHER_ABORT_MAX` | `1800` / `6` | 10.0 | outcome | A baseline that cannot run (timeout, sandbox error, no results) spends no try; the goal waits 1800 s x 2^(n-1) (max 24 h) and is parked after 6 aborts (shown in health). |
+| `ETHER_GUARD_TRIM` | `1` | 10.0 | gate/budget | After a baseline abort the goal's guard keeps its test file + direct importers and halves the transitive/smoke/sample extras per abort. `0` = never trim. |
+| `ETHER_GOAL_RETRY_S` / `ETHER_GOAL_MAX_ROUNDS` | `172800` / `2` | 10.0 | outcome | An exhausted goal (MAX_TRIES, or its SBFL cluster at MAX_TARGET_TRIES) gets a fresh round after 48 h x 2^round, at most 2 extra rounds. Pre-batch-10 tries carry no timestamp and are re-admitted once. `ETHER_GOAL_RETRY_S=0` = never (batch 9). |
+| `ETHER_GATE_JAIL` | `auto` | 10.2 | gate | OS jail for gate/scan pytest: Linux bwrap > unshare > rlimits; Windows Job Object. `1` = required (refuse the run if no backend), `0` = off. |
+| `ETHER_GATE_JAIL_MEM_MB` / `ETHER_GATE_JAIL_PROCS` / `ETHER_GATE_JAIL_CPU_S` | `4096` / `64` / from timeout | 10.2 | gate | Jail caps: address space / job memory, active processes, CPU seconds. |
+| `ETHER_GATE_JAIL_NET` | `0` | 10.2 | gate | `1` lets jailed runs use the network (default: none where the backend can block it; Windows cannot). |
+| `ETHER_GATE_PYTHON` | unset | 10.2 | gate | Dedicated interpreter for gate runs (pair with the optional `scripts/gate_firewall.ps1` rule). |
+| `ETHER_MCP` / `ETHER_MCP_TIMEOUT_S` / `ETHER_MCP_MAX_CHARS` | `0` / `15` / `1200` | 10.3 | outcome | Read-only `mcp` skill for the model (stdio JSON-RPC client; `scripts/mcp_status_server.py` = ETHER status server). |
+| `ETHER_LSP` / `ETHER_LSP_CMD` / `ETHER_LSP_TIMEOUT_S` | `0` / auto / `20` | 10.4 | outcome | Read-only `lsp` skill (diagnostics / definition / references); server: `ETHER_LSP_CMD` > pyright-langserver > pylsp > jedi-language-server. |
+| `ETHER_LSP_PREGATE` | `0` | 10.4 | outcome | Reject (restore, no gate run) an edit that adds error diagnostics to the goal file. No server / timeout = skipped. Can only reject. |
+| `ETHER_SWARM` | `0` | 10.5 | outcome | Proposer swarm: K candidates from the one model (serialized), screened by CPU workers in parallel, best one gated. Costs K model calls per try. |
+| `ETHER_SWARM_K` / `ETHER_SWARM_TEMP` / `ETHER_SWARM_WORKERS` / `ETHER_SWARM_LOCKFILE` | `3` / `0.7` / `2` / `1` | 10.5 | outcome | Candidates per try (max 4), temperature of candidates 2..K, CPU screen workers, cross-process `artifacts/model.lock`. |
 
 Always on in batch 9 (security, stricter only, no flag): model replies can call only `search` and
 `read`; the gate rejects any diff outside the goal file (tests/ immutable) and restores every
@@ -65,3 +79,9 @@ Recommended host start (Phase 0, after the batch 9 push): `ETHER_EXEMPLARS=recor
 other outcome flag at its default until `first_hour_report` at +1 h and +6 h says otherwise
 (dup-reply >= 15% -> `ETHER_SAMPLE_TEMP=0,0.7`; queue empty -> `ETHER_PLANTED_GOALS=1` and
 `ETHER_GOAL_LIVE_ONLY=1`).
+
+Batch 10 (after it lands): the idle-host fix (10.0) is on by default and needs no flag. Recommended:
+keep `ETHER_EXEMPLARS=record`; `ETHER_SAMPLE_TEMP=0,0.7` + `ETHER_DEDUP_REPLY=1` (live dup_share 18.5 % is over
+the 15 % rule); after the first kept-rate reading, try `ETHER_LSP_PREGATE=1` (needs pylsp or pyright on the
+1650) and `ETHER_PLANTED_GOALS=1` + `ETHER_GOAL_LIVE_ONLY=1` if `real_queue.selectable` reaches 0 again.
+`ETHER_SWARM=1` triples model time per try: only after the per-attempt time is known.

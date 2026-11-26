@@ -104,6 +104,13 @@ def mcp_fn(root: Path, server: str = "", call: str = "", arguments: Any = None) 
     return call_read_only(root, server=server, name=call, arguments=arguments)
 
 
+def lsp_fn(root: Path, **args: Any) -> Dict[str, Any]:
+    """Batch 10: language-server diagnostics / definition / references (read-only). Off unless ETHER_LSP=1."""
+    from core.agent.lsp_client import tool
+
+    return tool(root, **args)
+
+
 SKILLS: Dict[str, Skill] = {
     "search": search,
     "read": read,
@@ -111,6 +118,7 @@ SKILLS: Dict[str, Skill] = {
     "edit": edit_fn,
     "test": test_fn,
     "mcp": mcp_fn,
+    "lsp": lsp_fn,
 }
 
 
@@ -122,21 +130,26 @@ MODEL_SKILLS = ("search", "read")
 
 
 def model_skills() -> tuple:
-    """Batch 10: read-only skills a reply may call right now. MODEL_SKILLS plus `mcp` (ETHER_MCP=1).
-    Read-only by construction; `edit` / `test` never appear."""
+    """Batch 10: read-only skills a reply may call right now. MODEL_SKILLS plus `mcp` (ETHER_MCP=1)
+    and `lsp` (ETHER_LSP=1). Both are read-only by construction; `edit` / `test` never appear."""
     import os
 
     out = tuple(MODEL_SKILLS)
     if os.getenv("ETHER_MCP", "0") == "1":
         out += ("mcp",)
+    if os.getenv("ETHER_LSP", "0") == "1":
+        out += ("lsp",)
     return out
 
 
 def tool_hint(root: Path, goal: Dict[str, Any]) -> str:
-    """One prompt line naming the extra read-only tools; '' when the flags are off (prompt unchanged)."""
+    """One prompt line naming the extra read-only tools; '' when both flags are off (prompt unchanged)."""
     import os
 
     lines = []
+    if os.getenv("ETHER_LSP", "0") == "1":
+        sym = str(goal.get("symbol") or "name").split(".")[-1]
+        lines.append('{"tool":"lsp","args":{"op":"references","file":"%s","symbol":"%s"}}' % (goal.get("file", ""), sym))
     if os.getenv("ETHER_MCP", "0") == "1":
         try:
             from core.agent.mcp_stdio import catalog

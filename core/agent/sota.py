@@ -411,6 +411,23 @@ def _one(root: Path, ask: Callable[..., str], skip: Any = ()) -> Dict[str, Any]:
     return result
 
 
+def _lsp_pregate(root: Path, goal: Dict[str, Any], applied: Dict[str, Any], trace: Dict[str, Any]) -> List[str]:
+    """Batch 10 item 4 (ETHER_LSP_PREGATE=1): error diagnostics the edit adds, [] = go to the gate.
+    No server / timeout / any failure = [] (the honest gate decides). Default off."""
+    try:
+        from core.agent import lsp_client
+
+        if not lsp_client.pregate_on():
+            return []
+        after_text = (Path(root) / goal["file"]).read_text(encoding="utf-8")
+        res = lsp_client.pregate(root, goal["file"], applied.get("original") or "", after_text)
+        trace["lsp_pregate"] = {k: res.get(k) for k in ("ok", "skipped", "n_before", "n_after") if k in res}
+        return [] if res.get("ok", True) else [str(a) for a in (res.get("added") or ["error diagnostics"])]
+    except Exception as exc:
+        trace["lsp_pregate"] = {"ok": True, "skipped": type(exc).__name__}
+        return []
+
+
 def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pick: Any,
                   seen: Dict[str, str]) -> Dict[str, Any]:
     """Failing test / lint goal. Unspoiled prompt, tool edit, target + regression gate."""
@@ -556,6 +573,13 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                 feedback = "the edit adds " + ", ".join(pg["added"]) + "; fix the function without it"
                 last = {**base, "ok": False, "honest": False, "note": "gem blocked: " + ", ".join(pg["added"])}
                 continue
+        lsp_block = _lsp_pregate(root, goal, applied, trace)
+        if lsp_block:
+            # batch 10 item 4: the edit adds error diagnostics; rejected before a gate run is spent
+            tree.restore()
+            feedback = "the edit adds errors: " + "; ".join(lsp_block) + ". Fix the function without them"
+            last = {**base, "ok": False, "honest": False, "note": "lsp blocked: " + "; ".join(lsp_block)[:160]}
+            continue
         verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"), aborts=n_aborts)
         touched = tree.violations([goal["file"]])
         if touched:

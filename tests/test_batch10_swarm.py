@@ -182,3 +182,44 @@ def test_screen_lsp_critic_only_with_pregate_flag(tmp_path, monkeypatch) -> None
     assert not v["ok"] and v["why"].startswith("lsp: E: undefined name") and calls == ["pkg/m.py"]
     monkeypatch.setattr(lsp_client, "pregate", lambda *a: {"ok": True, "skipped": "no language server"})
     assert swarm.screen(root, goal, GOOD, BUGGY, {})["ok"]
+
+
+def test_record_mode_is_shadow_only(tmp_path, monkeypatch) -> None:
+    """ETHER_SWARM=record: one model call, the same reply is gated, the trajectory says what the critics thought."""
+    from core.agent import goal_source as gs
+    from core.agent import outcome, sota
+
+    monkeypatch.setenv("ETHER_SWARM", "record")
+    assert swarm.mode() == "record" and not swarm.enabled() and swarm.record_on()
+    root = _repo(tmp_path)
+    gs.scan(root, n_files=10)
+    calls = []
+    stub = "def double(x):\n    pass\n"
+    row = sota.run(root, lambda p, n=240, temperature=0.0: calls.append(temperature) or stub)
+    assert row["kept_n"] == 0 and len(calls) == 1  # no extra model call; the stub still went to the gate
+    assert row.get("note") in ("tests failed", "regression"), row
+    data = gs.load_index(root)
+    data["tries"] = {}
+    gs.save_index(root, data)
+    row = sota.run(root, lambda p, n=240, temperature=0.0: calls.append(temperature) or GOOD)
+    assert row["kept_n"] == 1 and len(calls) == 2
+    rows = [r for r in outcome.trajectories(root) if "shadow_would_reject" in r]
+    assert [r["shadow_would_reject"] for r in rows] == [True, False]
+    assert rows[0]["shadow_why"] == "ast: double is a stub"
+    m = outcome.metrics(root)
+    assert m["swarm_shadow"] == {"n": 2, "would_reject": 1, "would_reject_kept": 0}
+
+
+def test_unknown_mode_is_off(monkeypatch) -> None:
+    monkeypatch.setenv("ETHER_SWARM", "yes")
+    assert swarm.mode() == "0" and not swarm.enabled() and not swarm.record_on()
+
+
+def test_swarm_metrics_counts_a_shadow_reject_that_was_kept() -> None:
+    from core.agent.outcome import _swarm_metrics
+
+    graded = [{"kind": "pass", "shadow_would_reject": True}, {"kind": "fail", "shadow_would_reject": True},
+              {"kind": "fail", "swarm_k": 2, "swarm_valid": 1}]
+    out = _swarm_metrics(graded, [graded[0]])
+    assert out["swarm_shadow"] == {"n": 2, "would_reject": 2, "would_reject_kept": 1}
+    assert out["swarm"] == {"attempts": 1, "model_calls": 2, "valid": 1}

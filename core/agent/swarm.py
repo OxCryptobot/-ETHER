@@ -32,8 +32,31 @@ _LOCK = threading.Lock()
 LOCK_FILE = "artifacts/model.lock"
 
 
+def mode() -> str:
+    """ETHER_SWARM: '0' (default) off, 'record' shadow (screen the one normal reply, log what the swarm
+    critics would do, change nothing), '1' K serialized proposals with the best one gated."""
+    raw = os.getenv("ETHER_SWARM", "0").strip().lower()
+    return raw if raw in ("1", "record") else "0"
+
+
 def enabled() -> bool:
-    return os.getenv("ETHER_SWARM", "0") == "1"
+    return mode() == "1"
+
+
+def record_on() -> bool:
+    return mode() == "record"
+
+
+def shadow(root: Path, goal: Dict[str, Any], text: str, current: str, baseline: Dict[str, str]) -> Dict[str, Any]:
+    """Batch 10 item 5c (ETHER_SWARM=record): run the swarm's CPU critics on the reply that is about to be
+    gated anyway. No extra model call, no write, and the gate still runs on this reply whatever the
+    verdict: the trajectory gets would_reject so a later keep shows a critic that would have been wrong."""
+    t0 = time.monotonic()
+    try:
+        v = screen(root, goal, text, current, baseline)
+    except Exception as exc:
+        v = {"ok": True, "why": f"screen error: {type(exc).__name__}", "hash": ""}
+    return {"would_reject": not v["ok"], "why": v["why"], "secs": round(time.monotonic() - t0, 2)}
 
 
 def _int(name: str, default: int, lo: int, hi: int) -> int:

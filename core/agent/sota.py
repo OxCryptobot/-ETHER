@@ -545,6 +545,9 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                 row = react(ask_i, root, prompt, turns=2, n=n_reply)
                 text = row.get("text") or ""
                 trace["tools"] = ["search"] if row.get("used") else []
+                if swarm.record_on() and text.strip():
+                    # batch 10 item 5c: shadow critics; the same reply goes to the gate regardless
+                    trace["swarm_shadow"] = swarm.shadow(root, goal, text, current, baseline)
         except Exception as exc:
             if seen:
                 return _infra(goal, seen)

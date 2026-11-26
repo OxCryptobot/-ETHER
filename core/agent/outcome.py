@@ -313,6 +313,12 @@ def record(root: Path, pick: Pick, result: Dict[str, Any]) -> Dict[str, Any]:
         row["dup"] = seen_before(prior, str(result.get("goal") or ""), pick.trace["reply_hash"])
     if "temp" in pick.trace:
         row["temp"] = pick.trace.get("temp")
+    if isinstance(pick.trace.get("swarm_shadow"), dict):  # batch 10 item 5c: ETHER_SWARM=record
+        row["shadow_would_reject"] = bool(pick.trace["swarm_shadow"].get("would_reject"))
+        row["shadow_why"] = str(pick.trace["swarm_shadow"].get("why") or "")[:60]
+    if isinstance(pick.trace.get("swarm"), dict):  # batch 10 item 5: ETHER_SWARM=1 model calls / survivors
+        row["swarm_k"] = int(pick.trace["swarm"].get("k") or 0)
+        row["swarm_valid"] = int(pick.trace["swarm"].get("valid") or 0)
     if pick.trace.get("dedup_skipped"):
         row["dedup_skipped_from_cache"] = True
     if "exemplar_eligible" in (pick.trace.get("bandit") or {}):
@@ -543,7 +549,23 @@ def metrics(root: Path, rows: Optional[List[Dict[str, Any]]] = None) -> Dict[str
         "dup_share": (round(sum(1 for r in graded if r.get("dup")) / len([r for r in graded if "dup" in r]), 4)
                       if any("dup" in r for r in graded) else None),
         "by_temp": _by_temp(graded, kept),
+        **_swarm_metrics(graded, kept),
     }
+
+
+def _swarm_metrics(graded: List[Dict[str, Any]], kept: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Batch 10 item 5c: ETHER_SWARM=record shadow verdicts (would_reject_kept > 0 = a critic would have
+    thrown away a keep: kill signal) and ETHER_SWARM=1 model calls / survivors."""
+    out: Dict[str, Any] = {}
+    sh = [r for r in graded if "shadow_would_reject" in r]
+    if sh:
+        out["swarm_shadow"] = {"n": len(sh), "would_reject": sum(1 for r in sh if r["shadow_would_reject"]),
+                               "would_reject_kept": sum(1 for r in sh if r["shadow_would_reject"] and r in kept)}
+    sw = [r for r in graded if "swarm_k" in r]
+    if sw:
+        out["swarm"] = {"attempts": len(sw), "model_calls": sum(int(r.get("swarm_k") or 0) for r in sw),
+                        "valid": sum(int(r.get("swarm_valid") or 0) for r in sw)}
+    return out
 
 
 def _by_temp(graded: List[Dict[str, Any]], kept: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:

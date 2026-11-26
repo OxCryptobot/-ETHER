@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-26T20:40:43.076893+00:00",
+  "ts": "2026-11-26T21:13:15.090702+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-26T20:40:49.595612+00:00",
+    "ts": "2026-11-26T21:13:21.592921+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-26T20:41:33.928125+00:00",
+    "ts": "2026-11-26T21:14:46.467682+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-26T20:24:04.694841+00:00"
+    "last_push_ts": "2026-11-26T20:56:36.730409+00:00"
   },
   "heal": {
-    "ts": "2026-11-26T20:40:48.478594+00:00",
+    "ts": "2026-11-26T21:13:20.454072+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-26T20:40:48.845056+00:00",
+    "ts": "2026-11-26T21:13:20.835965+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-26T20:40:49.464566+00:00",
+    "updated": "2026-11-26T21:13:21.444040+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -135,7 +135,7 @@
     "open": 95,
     "done": 3,
     "dropped": 28,
-    "scan_ts": "2026-11-26T20:25:41.129914+00:00"
+    "scan_ts": "2026-11-26T20:58:13.043879+00:00"
   },
   "sota": {
     "ok": false,
@@ -151,7 +151,7 @@
       "failing": 1,
       "added": 0,
       "goals": 96,
-      "secs": 34.8
+      "secs": 76.8
     }
   },
   "learning": {
@@ -174,13 +174,13 @@
     "graded": 321
   },
   "env": {
-    "ts": "2026-11-26T20:41:33.742398+00:00",
+    "ts": "2026-11-26T21:14:46.292899+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 194.1,
+    "disk_free_gb": 193.9,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-26T20:40:49.595612+00:00",
+    "alive_ts": "2026-11-26T21:13:21.592921+00:00",
     "kept": 94,
     "last_goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
     "last_kept": false,
@@ -225,7 +225,7 @@
     {
       "name": "sota_stale",
       "level": "degraded",
-      "detail": "no learning attempt recorded for 170821 s (sota.json last.ts)"
+      "detail": "no learning attempt recorded for 172813 s (sota.json last.ts)"
     }
   ]
 }

@@ -1,0 +1,273 @@
+{
+ "batch": "10 item 1",
+ "moved": [
+  {
+   "from": "core/build_progress.py",
+   "to": "attic/core/build_progress.py",
+   "lines": 176,
+   "kind": "module"
+  },
+  {
+   "from": "core/failure_types.py",
+   "to": "attic/core/failure_types.py",
+   "lines": 68,
+   "kind": "module"
+  },
+  {
+   "from": "core/kernel/ops.py",
+   "to": "attic/core/kernel/ops.py",
+   "lines": 20,
+   "kind": "module"
+  },
+  {
+   "from": "core/loop/worktree_worker.py",
+   "to": "attic/core/loop/worktree_worker.py",
+   "lines": 28,
+   "kind": "module"
+  },
+  {
+   "from": "core/lora_prep.py",
+   "to": "attic/core/lora_prep.py",
+   "lines": 193,
+   "kind": "module"
+  },
+  {
+   "from": "core/operator_answers.py",
+   "to": "attic/core/operator_answers.py",
+   "lines": 67,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase3_idle.py",
+   "to": "attic/core/phase3_idle.py",
+   "lines": 33,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase5_lessons.py",
+   "to": "attic/core/phase5_lessons.py",
+   "lines": 53,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase5_moonshots.py",
+   "to": "attic/core/phase5_moonshots.py",
+   "lines": 73,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase5_research_flags.py",
+   "to": "attic/core/phase5_research_flags.py",
+   "lines": 57,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase5_status.py",
+   "to": "attic/core/phase5_status.py",
+   "lines": 138,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase6_host_heal.py",
+   "to": "attic/core/phase6_host_heal.py",
+   "lines": 68,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase6_operator.py",
+   "to": "attic/core/phase6_operator.py",
+   "lines": 61,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase6_phase_board.py",
+   "to": "attic/core/phase6_phase_board.py",
+   "lines": 128,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase6_status.py",
+   "to": "attic/core/phase6_status.py",
+   "lines": 115,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase7_living_checklist.py",
+   "to": "attic/core/phase7_living_checklist.py",
+   "lines": 145,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase7_pillars.py",
+   "to": "attic/core/phase7_pillars.py",
+   "lines": 123,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase7_roadmap.py",
+   "to": "attic/core/phase7_roadmap.py",
+   "lines": 85,
+   "kind": "module"
+  },
+  {
+   "from": "core/phase7_status.py",
+   "to": "attic/core/phase7_status.py",
+   "lines": 131,
+   "kind": "module"
+  },
+  {
+   "from": "gems/selenite/langgraph_skeleton.py",
+   "to": "attic/gems/selenite/langgraph_skeleton.py",
+   "lines": 52,
+   "kind": "module"
+  },
+  {
+   "from": "patches/apply_pipeline_81.py",
+   "to": "attic/patches/apply_pipeline_81.py",
+   "lines": 53,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_clearquartz_import_fix.py",
+   "to": "attic/scripts/_graveyard/apply_clearquartz_import_fix.py",
+   "lines": 32,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_findings_phase_d.py",
+   "to": "attic/scripts/_graveyard/apply_findings_phase_d.py",
+   "lines": 46,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_findings_phase_e.py",
+   "to": "attic/scripts/_graveyard/apply_findings_phase_e.py",
+   "lines": 35,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_ledger_nudge.py",
+   "to": "attic/scripts/_graveyard/apply_ledger_nudge.py",
+   "lines": 51,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_parse_fix.py",
+   "to": "attic/scripts/_graveyard/apply_parse_fix.py",
+   "lines": 66,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phasec_slice3.py",
+   "to": "attic/scripts/_graveyard/apply_phasec_slice3.py",
+   "lines": 189,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1.py",
+   "lines": 67,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b.py",
+   "lines": 171,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b_filescope.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b_filescope.py",
+   "lines": 119,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b_fix.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b_fix.py",
+   "lines": 101,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b_same_workspace.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b_same_workspace.py",
+   "lines": 195,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b_shortcircuit.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b_shortcircuit.py",
+   "lines": 120,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/apply_phased_slice1b_stabilize.py",
+   "to": "attic/scripts/_graveyard/apply_phased_slice1b_stabilize.py",
+   "lines": 167,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/host_legacy/ether_host.py",
+   "to": "attic/scripts/_graveyard/host_legacy/ether_host.py",
+   "lines": 357,
+   "kind": "module"
+  },
+  {
+   "from": "scripts/_graveyard/host_legacy/host_tick.py",
+   "to": "attic/scripts/_graveyard/host_legacy/host_tick.py",
+   "lines": 27,
+   "kind": "module"
+  },
+  {
+   "from": "tools/audit/alerts.py",
+   "to": "attic/tools/audit/alerts.py",
+   "lines": 214,
+   "kind": "module"
+  },
+  {
+   "from": "tools/audit/fp_feedback.py",
+   "to": "attic/tools/audit/fp_feedback.py",
+   "lines": 188,
+   "kind": "module"
+  },
+  {
+   "from": "tests/test_build_progress.py",
+   "to": "attic/tests/test_build_progress.py",
+   "lines": 16,
+   "kind": "test"
+  },
+  {
+   "from": "tests/test_langgraph_skeleton.py",
+   "to": "attic/tests/test_langgraph_skeleton.py",
+   "lines": 9,
+   "kind": "test"
+  },
+  {
+   "from": "tests/test_phase3_idle.py",
+   "to": "attic/tests/test_phase3_idle.py",
+   "lines": 10,
+   "kind": "test"
+  },
+  {
+   "from": "tests/test_phase5_complete.py",
+   "to": "attic/tests/test_phase5_complete.py",
+   "lines": 38,
+   "kind": "test"
+  },
+  {
+   "from": "tests/test_phase6_complete.py",
+   "to": "attic/tests/test_phase6_complete.py",
+   "lines": 35,
+   "kind": "test"
+  },
+  {
+   "from": "tests/test_phase7_complete.py",
+   "to": "attic/tests/test_phase7_complete.py",
+   "lines": 38,
+   "kind": "test"
+  }
+ ],
+ "n_modules": 38,
+ "n_tests": 6,
+ "lines": 4158,
+ "method": "import-graph reachability from 177 entry roots (scripts, host entry points, tests that also cover live code kept), plus a text search of every dotted name / path outside the moved set; 'kept_doubt' modules (named anywhere operational) were NOT moved"
+}

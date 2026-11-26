@@ -56,7 +56,7 @@ def _py_files(root: Path, dirs: Iterable[str] = SCAN_DIRS) -> List[Path]:
     for d in dirs:
         base = Path(root) / d
         if base.is_dir():
-            out += [p for p in sorted(base.rglob("*.py")) if "_graveyard" not in p.parts and "__pycache__" not in p.parts]
+            out += [p for p in sorted(base.rglob("*.py")) if "_graveyard" not in p.parts and "attic" not in p.parts and "__pycache__" not in p.parts]
     return out
 
 

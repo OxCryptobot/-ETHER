@@ -2,7 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 
-SKIP = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "dist", "build", "_graveyard"}
+SKIP = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "dist", "build", "_graveyard", "attic"}
 
 def ignored(path: Path | str) -> bool:
     parts = Path(str(path)).parts

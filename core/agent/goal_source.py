@@ -122,7 +122,7 @@ def sbfl_enabled() -> bool:
 
 
 BYTECODE_WINDOW_S = 300
-_SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "artifacts", "out"}
+_SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "memory", "artifacts", "out", "attic"}
 
 
 def drop_recent_bytecode(root: Path, window_s: int = BYTECODE_WINDOW_S) -> int:

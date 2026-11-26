@@ -894,6 +894,14 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
 
     root = Path(root)
     scanned = _maybe_scan(root)
+    scouted = None
+    try:
+        from core.agent import scouts
+
+        if scouts.enabled():
+            scouted = scouts.refill(root)  # batch 10 item 5e: CPU-only refill when selectable is low
+    except Exception as exc:
+        scouted = {"ran": False, "error": type(exc).__name__}
     size = batch_size(root)
     real_cap = int(os.getenv("ETHER_REAL_PER_TICK", "2"))
     kept: List[str] = []
@@ -924,6 +932,8 @@ def run(root: Path, ask: Callable[..., str]) -> Dict[str, Any]:
     last["batch_size"] = size
     if scanned:
         last["scan"] = scanned
+    if scouted:
+        last["scouts"] = scouted
     state = load(root)
     state["kept_n"] = len(kept)
     save(root, state)

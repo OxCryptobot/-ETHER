@@ -997,7 +997,12 @@ def ranked(root: Path) -> List[Dict[str, Any]]:
         shared = by_target.get((g.get("file"), g.get("symbol")), 0) - own
         g["_rank"] = float(g.get("tractability") or 0) - 0.2 * own - 0.1 * shared
         g["_target_tries"] = own + shared
-    return sorted(rows, key=lambda g: (-g["_rank"], g["id"]))
+    rows = sorted(rows, key=lambda g: (-g["_rank"], g["id"]))
+    from core.agent import scouts
+
+    if scouts.enabled():  # batch 10 item 5e: weighted round robin by source, test_import first
+        rows = scouts.interleave(rows)
+    return rows
 
 
 MAX_TRIES = 3

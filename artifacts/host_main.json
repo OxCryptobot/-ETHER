@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-26T21:46:13.999084+00:00",
+  "ts": "2026-11-26T22:24:47.858931+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-26T21:46:21.304737+00:00",
+    "ts": "2026-11-26T22:24:55.273295+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-26T21:50:29.968941+00:00",
+    "ts": "2026-11-26T22:29:01.953092+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-26T21:29:48.688807+00:00"
+    "last_push_ts": "2026-11-26T22:05:32.656208+00:00"
   },
   "heal": {
-    "ts": "2026-11-26T21:46:20.166253+00:00",
+    "ts": "2026-11-26T22:24:54.027469+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-26T21:46:20.604357+00:00",
+    "ts": "2026-11-26T22:24:54.396848+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-26T21:46:21.174443+00:00",
+    "updated": "2026-11-26T22:24:55.016440+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -135,7 +135,7 @@
     "open": 95,
     "done": 3,
     "dropped": 28,
-    "scan_ts": "2026-11-26T21:31:12.143728+00:00"
+    "scan_ts": "2026-11-26T22:09:45.778398+00:00"
   },
   "sota": {
     "ok": false,
@@ -174,13 +174,13 @@
     "graded": 321
   },
   "env": {
-    "ts": "2026-11-26T21:50:29.765030+00:00",
+    "ts": "2026-11-26T22:29:01.767436+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 193.7,
+    "disk_free_gb": 193.6,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-26T21:46:21.304737+00:00",
+    "alive_ts": "2026-11-26T22:24:55.273295+00:00",
     "kept": 94,
     "last_goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
     "last_kept": false,
@@ -225,7 +225,7 @@
     {
       "name": "sota_stale",
       "level": "degraded",
-      "detail": "no learning attempt recorded for 174957 s (sota.json last.ts)"
+      "detail": "no learning attempt recorded for 177269 s (sota.json last.ts)"
     }
   ]
 }

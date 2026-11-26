@@ -140,3 +140,45 @@ def test_end_to_end_swarm_finds_the_fix_the_greedy_reply_missed(tmp_path, monkey
     row = sota.run(root, ask)
     assert row["kept_n"] == 1 and row.get("regressions", 0) == 0
     assert "return x * 2\n" in (root / "pkg" / "m.py").read_text(encoding="utf-8")
+
+
+def test_screen_ast_critic_rejects_stubs_and_missing_target(tmp_path, monkeypatch) -> None:
+    root = _repo(tmp_path)
+    goal = {"id": "g", "file": "pkg/m.py", "symbol": "double", "kind": "fix_test"}
+    for stub in ("def double(x):\n    pass\n", "def double(x):\n    \"\"\"todo\"\"\"\n    ...\n",
+                 "def double(x):\n    raise NotImplementedError\n"):
+        v = swarm.screen(root, goal, stub, BUGGY, {})
+        assert not v["ok"] and v["why"] == "ast: double is a stub", (stub, v)
+    assert swarm.ast_check(goal, BUGGY, "def other(x):\n    return x\n") == "ast: double missing"
+    assert swarm.ast_check(goal, BUGGY, BUGGY.replace("+ 1", "")) == ""
+    monkeypatch.setenv("ETHER_SWARM_AST", "0")
+    assert swarm.screen(root, goal, "def double(x):\n    pass\n", BUGGY, {})["ok"]
+
+
+def test_screen_lint_critic_rejects_added_undefined_names(tmp_path) -> None:
+    from core.agent import goal_source as gs
+
+    if not gs.ruff_bin():
+        pytest.skip("ruff not installed")
+    root = _repo(tmp_path)
+    goal = {"id": "g", "file": "pkg/m.py", "symbol": "double", "kind": "fix_test"}
+    v = swarm.screen(root, goal, "def double(x):\n    return helper(x) * 2\n", BUGGY, {})
+    assert not v["ok"] and v["why"].startswith("lint: F821")
+    assert swarm.screen(root, goal, GOOD, BUGGY, {})["ok"]
+
+
+def test_screen_lsp_critic_only_with_pregate_flag(tmp_path, monkeypatch) -> None:
+    from core.agent import lsp_client
+
+    root = _repo(tmp_path)
+    goal = {"id": "g", "file": "pkg/m.py", "symbol": "double", "kind": "fix_test"}
+    calls = []
+    monkeypatch.setattr(lsp_client, "pregate", lambda r, rel, b, a: calls.append(rel) or
+                        {"ok": False, "added": ["E: undefined name"]})
+    monkeypatch.delenv("ETHER_LSP_PREGATE", raising=False)
+    assert swarm.screen(root, goal, GOOD, BUGGY, {})["ok"] and calls == []
+    monkeypatch.setenv("ETHER_LSP_PREGATE", "1")
+    v = swarm.screen(root, goal, GOOD, BUGGY, {})
+    assert not v["ok"] and v["why"].startswith("lsp: E: undefined name") and calls == ["pkg/m.py"]
+    monkeypatch.setattr(lsp_client, "pregate", lambda *a: {"ok": True, "skipped": "no language server"})
+    assert swarm.screen(root, goal, GOOD, BUGGY, {})["ok"]

@@ -6,7 +6,8 @@ Doctrine (PRODUCT.md: one writer, one model, 4 GB): this is not a multi-writer s
     generation on the GPU at a time, whoever calls.
   * CPU workers (ETHER_SWARM_WORKERS, default 2) screen each reply while the next one is being
     generated: extract the edit, build the new file text in memory (never written), compile it,
-    run the security gem pre-check, and drop replies the gate already reverted or that repeat
+    run the security gem pre-check, the AST/lint critic and (ETHER_LSP_PREGATE=1) the LSP
+    diagnostics critic, and drop replies the gate already reverted or that repeat
     another candidate. Workers never touch the repo.
   * The single writer (sota._attempt_real) applies only the best surviving candidate and sends it
     through the unchanged honest gate. One gate run per try, as before; the swarm only spends extra
@@ -16,8 +17,11 @@ ETHER_SWARM_TEMP) when the model client accepts one; otherwise K=1 (identical re
 """
 from __future__ import annotations
 
+import ast
 import concurrent.futures as cf
+import json
 import os
+import subprocess
 import threading
 import time
 from contextlib import contextmanager
@@ -127,7 +131,91 @@ def screen(root: Path, goal: Dict[str, Any], text: str, current: str, baseline: 
                 return {"ok": False, "why": "gem: " + ",".join(pg.get("added") or []), "hash": h}
         except Exception:
             pass
+        why = ast_check(goal, current, res["new"])  # batch 10 item 5b: AST + lint critic
+        if why:
+            return {"ok": False, "why": why, "hash": h}
+        why = lsp_check(root, goal, current, res["new"])  # batch 10 item 5b: LSP diagnostics critic
+        if why:
+            return {"ok": False, "why": why, "hash": h}
     return {"ok": True, "why": "", "hash": h}
+
+
+def _is_stub(fn: ast.AST) -> bool:
+    body = list(getattr(fn, "body", []))
+    if body and isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant) \
+            and isinstance(body[0].value.value, str):
+        body = body[1:]  # docstring
+    if not body:
+        return True
+    if len(body) != 1:
+        return False
+    st = body[0]
+    if isinstance(st, ast.Pass):
+        return True
+    if isinstance(st, ast.Expr) and isinstance(getattr(st, "value", None), ast.Constant) and st.value.value is Ellipsis:
+        return True
+    if isinstance(st, ast.Raise):
+        exc = st.exc
+        name = getattr(exc, "id", None) or getattr(getattr(exc, "func", None), "id", None)
+        return name == "NotImplementedError"
+    return False
+
+
+def lint_errors(text: str) -> Optional[List[str]]:
+    """ruff F821 (undefined name) / F811 (redefinition) / F823, as 'code:message' keys; None = no ruff."""
+    from core.agent import goal_source as gs
+
+    ruff = gs.ruff_bin()
+    if not ruff:
+        return None
+    try:
+        proc = subprocess.run([ruff, "check", "--select", "F821,F811,F823", "--output-format", "json", "--exit-zero",
+                               "--no-cache", "--stdin-filename", "candidate.py", "-"],
+                              input=text, capture_output=True, text=True, timeout=20)
+        rows = json.loads(proc.stdout or "[]")
+    except Exception:
+        return None
+    return [f"{r.get('code')}:{r.get('message')}" for r in rows]
+
+
+def ast_check(goal: Dict[str, Any], current: str, new: str) -> str:
+    """CPU critic, no model call: '' = fine, else why the gate would be wasted. The target must still be
+    one real function (not pass / ... / raise NotImplementedError), and the edit must not add undefined
+    names or redefinitions (ruff, when installed). ETHER_SWARM_AST=0 turns it off."""
+    if os.getenv("ETHER_SWARM_AST", "1") == "0":
+        return ""
+    try:
+        tree = ast.parse(new)
+    except SyntaxError as exc:
+        return f"ast: syntax {exc.msg}"
+    name = str(goal.get("symbol") or "").split(".")[-1]
+    if name and goal.get("symbol_kind") != "assign":
+        defs = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == name]
+        if not defs:
+            return f"ast: {name} missing"
+        if all(_is_stub(d) for d in defs):
+            return f"ast: {name} is a stub"
+    before, after = lint_errors(current), lint_errors(new)
+    if before is not None and after is not None:
+        added = sorted(set(after) - set(before))
+        if added:
+            return "lint: " + "; ".join(added[:3])
+    return ""
+
+
+def lsp_check(root: Path, goal: Dict[str, Any], current: str, new: str) -> str:
+    """Item 4's LSP pre-gate applied to every candidate (only when ETHER_LSP_PREGATE=1; no server = skip)."""
+    try:
+        from core.agent import lsp_client
+
+        if not lsp_client.pregate_on():
+            return ""
+        res = lsp_client.pregate(root, goal["file"], current, new)
+        if res.get("ok", True):
+            return ""
+        return "lsp: " + "; ".join(str(a) for a in (res.get("added") or ["error diagnostics"]))[:160]
+    except Exception:
+        return ""
 
 
 def propose(root: Path, goal: Dict[str, Any], ask: Callable[..., str], prompt: str, n: int,

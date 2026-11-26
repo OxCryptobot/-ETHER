@@ -433,15 +433,21 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                 return {**base, "ok": False, "honest": True, "note": "rejected: places exceed the reply cap"}
         elif goal.get("targets"):
             return {**base, "ok": False, "honest": True, "note": "multi goal: ETHER_MULTI_EDIT off"}
-    suite = gs.guard_suite(root, goal)
-    before = gs.run_pytest(root, suite)
+    n_aborts = gs.aborts_of(root, goal["id"])
+    full = gs.guard_suite(root, goal)
+    suite = gs.trim_suite(root, goal, full, n_aborts)
+    if len(suite) < len(full):
+        trace["suite_trimmed"] = [len(full), len(suite)]
+    before = gs.run_pytest(root, suite, aborts=n_aborts)
     baseline = before["status"]
     aborted = gs.baseline_abort(before)
     if aborted:
         # batch 9 (W6): an empty or timed-out baseline used to switch the regression check off
-        # (regressions({}, after) == []). Abort instead: reward 0, nothing kept, no model call.
-        gs.mark(root, goal["id"], kept=False)
-        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
+        # (regressions({}, after) == []). Abort instead: nothing kept, no model call.
+        # batch 10 item 0: not a model attempt -> no try spent, backoff + longer timeout + trimmed suite next time.
+        row = gs.mark_abort(root, goal["id"], aborted, before)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted,
+                "abort_n": row["n"], "timeout_s": before.get("timeout_s"), "suite_n_files": len(suite)}
     if goal["kind"] == "fix_test" and baseline.get(goal["nodeid"]) == "pass":
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
@@ -550,7 +556,7 @@ def _attempt_real(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pic
                 feedback = "the edit adds " + ", ".join(pg["added"]) + "; fix the function without it"
                 last = {**base, "ok": False, "honest": False, "note": "gem blocked: " + ", ".join(pg["added"])}
                 continue
-        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"), aborts=n_aborts)
         touched = tree.violations([goal["file"]])
         if touched:
             # batch 9 (W1): a diff outside the goal file (tests/ always) is never kept, whatever the tests say
@@ -605,13 +611,15 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
 
     trace: Dict[str, Any] = pick.trace if pick is not None else {}
     base = {"goal": goal["id"], "kind": goal["kind"], "file": goal["file"], "multi": len(places)}
-    suite = multi_edit.guard_suite(root, goal, places)
-    before = gs.run_pytest(root, suite)
+    n_aborts = gs.aborts_of(root, goal["id"])
+    suite = gs.trim_suite(root, goal, multi_edit.guard_suite(root, goal, places), n_aborts)
+    before = gs.run_pytest(root, suite, aborts=n_aborts)
     baseline = before["status"]
     aborted = gs.baseline_abort(before)
     if aborted:
-        gs.mark(root, goal["id"], kept=False)
-        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted}
+        row = gs.mark_abort(root, goal["id"], aborted, before)
+        return {**base, "ok": False, "honest": True, "note": "gate aborted: " + aborted, "gate_abort": aborted,
+                "abort_n": row["n"], "timeout_s": before.get("timeout_s"), "suite_n_files": len(suite)}
     if baseline.get(goal["nodeid"]) == "pass":
         gs.mark(root, goal["id"], kept=True)
         return {**base, "ok": True, "honest": True, "note": "already present", "resolved": "already_passing"}
@@ -669,7 +677,7 @@ def _attempt_multi(root: Path, ask: Callable[..., str], goal: Dict[str, Any], pi
             last = {**base, "ok": False, "honest": False, "note": "no edit: " + feedback}
             continue
         tx = applied["tx"]
-        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"))
+        verdict = gs.gate(root, goal, baseline, suite, base_tamper=before.get("tamper"), aborts=n_aborts)
         touched = tree.violations(applied["files"])
         if touched:
             verdict = {**verdict, "ok": False, "outside": touched}

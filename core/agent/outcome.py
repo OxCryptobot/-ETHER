@@ -215,6 +215,10 @@ def reward01(kind: str, result: Dict[str, Any]) -> Optional[int]:
 def classify(result: Dict[str, Any]) -> str:
     if result.get("infra"):
         return "infra"
+    if result.get("gate_abort"):
+        # batch 10 item 0: the baseline never ran, no model call was made. 18 of the last 25
+        # recorded attempts on the host were these, graded as model failures (reward -0.9).
+        return "no_attempt"
     note = str(result.get("note") or "")
     if note in ("found by search", "already present", "queue empty") or note.startswith("rejected"):
         return "no_attempt"
@@ -616,6 +620,9 @@ def summary_doc(root: Path) -> Dict[str, Any]:
             reasons[_safe(why)] = reasons.get(_safe(why), 0) + 1
         doc["real_queue"] = {"open": len(goal_source.ranked(root)), "done": len(data.get("done") or []),
                              "dropped": reasons}
+        why = goal_source.why_blocked(root)  # batch 10 item 0: open != selectable; say why
+        doc["real_queue"].update({"selectable": why.get("selectable"), "blocked": why.get("blocked"),
+                                  "next_retry": why.get("next_retry")})
     except Exception:
         pass
     return doc

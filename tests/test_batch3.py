@@ -232,8 +232,10 @@ def test_sbfl_target_tries_are_shared(tmp_path: Path) -> None:
     goals = {f"fix_{i}": {"id": f"fix_{i}", "kind": "fix_test", "file": "pkg/m.py", "symbol": "f", "via": "sbfl",
                           "nodeid": f"tests/test_m.py::t{i}", "tractability": 0.3} for i in range(4)}
     gs.save_index(root, {"goals": goals, "done": [], "dropped": {}, "cursor": 0,
-                         "tries": {"fix_0": 2, "fix_1": 2, "fix_2": 2}})
-    assert gs.next_real(root) is None  # 6 failed tries on pkg/m.py::f retire the whole cluster
+                         "tries": {"fix_0": 2, "fix_1": 2, "fix_2": 2},
+                         # batch 10 item 0: tries carry a timestamp; untimed (pre-batch-10) tries are re-admitted
+                         "tries_ts": {f"fix_{i}": gs._now() for i in range(3)}})
+    assert gs.next_real(root) is None  # 6 failed tries on pkg/m.py::f retire the whole cluster (until the retry cooldown)
 
 
 # ---------------------------------------------------------------- learning summary (gap 6)

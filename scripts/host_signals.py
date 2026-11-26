@@ -62,6 +62,30 @@ def _read(path: Path) -> Dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def queue_detail(host: Dict[str, Any]) -> str:
+    """Batch 10 item 0: 'queue empty' must agree with real_queue. With open real goals, say how
+    many are selectable and why the rest are skipped instead of claiming the queue is empty."""
+    rq = host.get("real_queue") if isinstance(host.get("real_queue"), dict) else {}
+    try:
+        open_n = int(rq.get("open") or 0)
+    except (TypeError, ValueError):
+        open_n = 0
+    if open_n <= 0:
+        return "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"
+    blocked = rq.get("blocked") if isinstance(rq.get("blocked"), dict) else None
+    if blocked is None:
+        return (f"{open_n} open real goals but none selected (no skip reasons published; "
+                "host runs pre-batch-10 code: tries exhausted by MAX_TRIES/MAX_TARGET_TRIES is the likely cause)")
+    parts = ", ".join(f"{k} {v}" for k, v in sorted(blocked.items(), key=lambda kv: -kv[1]))
+    text = f"{open_n} open real goals, {rq.get('selectable', 0)} selectable; skipped: {parts or 'none'}"
+    if rq.get("next_retry"):
+        text += f"; next retry {rq['next_retry']}"
+    if isinstance(rq.get("abort_reasons"), dict) and rq["abort_reasons"]:
+        top = sorted(rq["abort_reasons"].items(), key=lambda kv: -kv[1])[0]
+        text += f"; top abort: {top[0]} x{top[1]}"
+    return text
+
+
 def host_signals(host: Dict[str, Any], *, base: Optional[Path] = None, now: Optional[datetime] = None,
                  check_age: bool = False) -> List[Dict[str, str]]:
     """Signals readable from one host_main.json row (plus sota.json when base is given)."""
@@ -79,7 +103,7 @@ def host_signals(host: Dict[str, Any], *, base: Optional[Path] = None, now: Opti
         out.append(_sig("gate_jail", "degraded", "ETHER_GATE_JAIL=1 but no jail backend passed the probe: every gate run is refused"))
     sota = host.get("sota") if isinstance(host.get("sota"), dict) else {}
     if sota.get("note") == "queue empty" or host.get("next_goal") == "none":
-        out.append(_sig("queue", "degraded", "goal queue empty: nothing to learn from (planted goals: ETHER_PLANTED_GOALS)"))
+        out.append(_sig("queue", "degraded", queue_detail(host)))
     if check_age:
         age = _age_s(host.get("ts"), now)
         if age is None or age > HOST_STALE_S:

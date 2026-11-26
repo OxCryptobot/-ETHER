@@ -160,10 +160,72 @@ def drop_recent_bytecode(root: Path, window_s: int = BYTECODE_WINDOW_S) -> int:
 
 
 GATE_TIMEOUT_S = int(os.getenv("ETHER_GATE_TIMEOUT_S", "180"))
+TIMING = "artifacts/gate_timing.json"
+
+
+# Batch 10 item 0: the host went idle on Nov 24 because every guard-suite baseline on the 1650
+# ran past the fixed 180 s timeout (18 of the last 25 attempts: 'gate aborted: baseline timeout',
+# secs 182-193), each abort counted as a try, and after MAX_TRIES / MAX_TARGET_TRIES every open
+# goal was unselectable while real_queue still showed 95 open. The gate timeout now follows the
+# measured seconds per test file (EWMA of completed runs; a timeout raises the estimate), and a
+# per-goal boost after each baseline abort. ETHER_GATE_TIMEOUT_SCALE=0 = fixed ETHER_GATE_TIMEOUT_S.
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
+def load_timing(root: Path) -> Dict[str, Any]:
+    try:
+        data = json.loads((Path(root) / TIMING).read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def record_timing(root: Path, n_files: int, secs: float, timed_out: bool = False) -> Dict[str, Any]:
+    """EWMA of seconds per test file over gate/baseline runs. A timeout is a lower bound."""
+    if n_files <= 0 or secs <= 0:
+        return {}
+    data = load_timing(root)
+    per = float(secs) / n_files
+    cur = float(data.get("secs_per_file") or 0.0)
+    if timed_out:
+        new = max(cur, per * 1.25)  # it needed more than `secs`; never lower the estimate on a timeout
+        data["timeouts"] = int(data.get("timeouts") or 0) + 1
+    else:
+        new = per if cur <= 0 else 0.7 * cur + 0.3 * per
+        data["runs"] = int(data.get("runs") or 0) + 1
+    data.update({"secs_per_file": round(new, 3), "last": {"files": n_files, "secs": round(float(secs), 1),
+                                                          "timeout": bool(timed_out), "ts": _now()}})
+    try:
+        path = Path(root) / TIMING
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        pass
+    return data
+
+
+def gate_timeout(root: Path, n_files: int, aborts: int = 0) -> int:
+    """Seconds allowed for one guard-suite run: max(base, margin x measured secs/file x files),
+    times 1.5 per earlier baseline abort of this goal, capped at ETHER_GATE_TIMEOUT_MAX_S."""
+    base = GATE_TIMEOUT_S
+    if os.getenv("ETHER_GATE_TIMEOUT_SCALE", "1") == "0":
+        return base
+    cap = max(base, int(_env_float("ETHER_GATE_TIMEOUT_MAX_S", 900)))
+    margin = max(1.0, _env_float("ETHER_GATE_TIMEOUT_MARGIN", 2.0))
+    per = float(load_timing(root).get("secs_per_file") or 0.0)
+    want = max(float(base), margin * per * max(1, n_files))
+    want *= 1.5 ** max(0, min(int(aborts), 6))
+    return int(min(cap, round(want)))
 
 
 def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl: bool = False,
-               sandbox: Optional[bool] = None) -> Dict[str, Any]:
+               sandbox: Optional[bool] = None, aborts: int = 0) -> Dict[str, Any]:
     """Run pytest, return {nodeid: status} plus failure texts. Never writes the repo.
 
     sbfl=True also records which repo functions each test entered (core/agent/fault_loc.py).
@@ -173,7 +235,9 @@ def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl:
     from core.agent import gate_sandbox
 
     real_root = Path(root)
-    timeout = GATE_TIMEOUT_S if timeout is None else timeout
+    measured = timeout is None and list(args) != ["tests"]
+    if timeout is None:
+        timeout = gate_timeout(real_root, len(args), aborts) if measured else GATE_TIMEOUT_S
     use_box = gate_sandbox.enabled() if sandbox is None else bool(sandbox)
     drop_recent_bytecode(real_root)
     box: Dict[str, Any] = {}
@@ -208,8 +272,11 @@ def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl:
     rc = proc.returncode
     if proc.timed_out:
         shutil.rmtree(tmp, ignore_errors=True)
-        return {"ok": False, "rc": -9, "status": {}, "fail": {}, "secs": round(time.monotonic() - t0, 1),
-                "timeout": True, "spectra": {}, "jail": proc.jail}
+        secs = round(time.monotonic() - t0, 1)
+        if measured:
+            record_timing(real_root, len(args), max(secs, float(timeout)), timed_out=True)
+        return {"ok": False, "rc": -9, "status": {}, "fail": {}, "secs": secs,
+                "timeout": True, "timeout_s": timeout, "spectra": {}, "jail": proc.jail}
     if rc == -7 and proc.jail == "refused":
         shutil.rmtree(tmp, ignore_errors=True)
         return {"ok": False, "rc": -7, "status": {}, "fail": {}, "secs": 0.0, "spectra": {}, "jail": proc.jail,
@@ -240,7 +307,9 @@ def run_pytest(root: Path, args: List[str], timeout: Optional[int] = None, sbfl:
             spectra = {}
     shutil.rmtree(tmp, ignore_errors=True)
     row = {"ok": rc == 0, "rc": rc, "status": status, "fail": fail, "secs": round(time.monotonic() - t0, 1),
-           "spectra": spectra, "jail": proc.jail}
+           "spectra": spectra, "jail": proc.jail, "timeout_s": timeout}
+    if status and list(args) != ["tests"] and not sbfl:
+        record_timing(real_root, len(args), row["secs"])
     if use_box:
         row["sandbox"] = True
         try:
@@ -935,24 +1004,146 @@ MAX_TRIES = 3
 MAX_TARGET_TRIES = 6
 
 
-def next_real(root: Path, skip: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
-    data = load_index(root)
+def _ts(value: Any) -> Optional[float]:
+    try:
+        dt = datetime.fromisoformat(str(value))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.timestamp()
+    except Exception:
+        return None
+
+
+def abort_backoff_s(n: int) -> float:
+    """Seconds a goal waits after its n-th baseline abort (n >= 1)."""
+    base = max(0.0, _env_float("ETHER_ABORT_BACKOFF_S", 1800))
+    return min(86400.0, base * 2 ** max(0, int(n) - 1))
+
+
+def abort_max() -> int:
+    return max(1, int(_env_float("ETHER_ABORT_MAX", 6)))
+
+
+def retry_after_s(rounds: int) -> float:
+    """Batch 10 item 0: an exhausted goal (MAX_TRIES failed model attempts) comes back after
+    ETHER_GOAL_RETRY_S x 2^rounds, at most ETHER_GOAL_MAX_ROUNDS times. 0 = never (batch 9)."""
+    return max(0.0, _env_float("ETHER_GOAL_RETRY_S", 172800)) * 2 ** max(0, int(rounds))
+
+
+def _blocked(root: Path, g: Dict[str, Any], data: Dict[str, Any], now: float) -> str:
+    """Why next_real would not pick g ('' = selectable). One reason, the first that applies."""
     tries = data.get("tries") or {}
+    aborts = (data.get("aborts") or {}).get(g["id"]) or {}
+    if int(tries.get(g["id"], 0)) >= MAX_TRIES:
+        return "exhausted"
+    if g.get("targets") and not _multi_on():
+        return "multi_off"
+    if g.get("via") == "sbfl" and int(g.get("_target_tries") or 0) >= MAX_TARGET_TRIES:
+        return "target_exhausted"
+    if not (Path(root) / g["file"]).is_file() and not any(
+            t.get("kind") == "new_file" for t in g.get("targets") or []):
+        return "missing_file"
+    n = int(aborts.get("n") or 0)
+    if n >= abort_max():
+        return "abort_parked"
+    if n:
+        last = _ts(aborts.get("ts"))
+        if last is not None and now - last < abort_backoff_s(n):
+            return "abort_backoff"
+    return ""
+
+
+def readmit(root: Path, now: Optional[float] = None) -> List[str]:
+    """Give exhausted goals a fresh round of MAX_TRIES once their cooldown has passed.
+    Tries recorded before batch 10 carry no timestamp (many were baseline-timeout aborts that
+    never reached the model) and are re-admitted on the first call."""
+    if os.getenv("ETHER_GOAL_RETRY_S", "") == "0":
+        return []
+    now = time.time() if now is None else now
+    max_rounds = max(0, int(_env_float("ETHER_GOAL_MAX_ROUNDS", 2)))
+    data = load_index(root)
+    tries = data.setdefault("tries", {})
+    rounds = data.setdefault("rounds", {})
+    when = data.setdefault("tries_ts", {})
+    hist = data.setdefault("tries_hist", {})
+    by_target: Dict[tuple, int] = {}
+    for g in data["goals"].values():
+        key = (g.get("file"), g.get("symbol"))
+        by_target[key] = by_target.get(key, 0) + int(tries.get(g.get("id"), 0))
+    back = []
+    for gid, row in data["goals"].items():
+        own = int(tries.get(gid, 0))
+        if gid in data["done"] or own <= 0:
+            continue
+        cluster = row.get("via") == "sbfl" and by_target.get((row.get("file"), row.get("symbol")), 0) >= MAX_TARGET_TRIES
+        if own < MAX_TRIES and not cluster:
+            continue
+        r = int(rounds.get(gid, 0))
+        if r >= max_rounds:
+            continue
+        last = _ts(when.get(gid))
+        if last is not None and now - last < retry_after_s(r):
+            continue
+        hist[gid] = int(hist.get(gid, 0)) + int(tries.get(gid, 0))
+        tries[gid] = 0
+        rounds[gid] = r + 1
+        back.append(gid)
+    if back:
+        data["readmitted"] = {"ts": _now(), "n": len(back)}
+        save_index(root, data)
+    return back
+
+
+def next_real(root: Path, skip: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
     skip = set(skip)
-    for g in ranked(root):
-        if g["id"] in skip or int(tries.get(g["id"], 0)) >= MAX_TRIES:
-            continue
-        if g.get("targets") and not _multi_on():
-            continue  # multi-place goal from a run with ETHER_MULTI_EDIT=1; skipped while it is off
-        if g.get("via") == "sbfl" and int(g.get("_target_tries") or 0) >= MAX_TARGET_TRIES:
-            continue
-        if not (Path(root) / g["file"]).is_file() and not any(
-                t.get("kind") == "new_file" for t in g.get("targets") or []):
-            continue
-        g.pop("_rank", None)
-        g.pop("_target_tries", None)
-        return g
+    for attempt in (0, 1):
+        data = load_index(root)
+        now = time.time()
+        for g in ranked(root):
+            if g["id"] in skip or _blocked(root, g, data, now):
+                continue
+            g.pop("_rank", None)
+            g.pop("_target_tries", None)
+            return g
+        if attempt == 0 and not readmit(root):
+            break
     return None
+
+
+def why_blocked(root: Path, skip: Iterable[str] = ()) -> Dict[str, Any]:
+    """Batch 10 item 0: open real goals by the reason next_real skips them, for health."""
+    data = load_index(root)
+    now = time.time()
+    counts: Dict[str, int] = {}
+    selectable = 0
+    soonest: Optional[float] = None
+    skip = set(skip)
+    rows = ranked(root)
+    for g in rows:
+        why = "skipped_this_tick" if g["id"] in skip else _blocked(root, g, data, now)
+        if not why:
+            selectable += 1
+            continue
+        counts[why] = counts.get(why, 0) + 1
+        if why == "abort_backoff":
+            a = (data.get("aborts") or {}).get(g["id"]) or {}
+            t = (_ts(a.get("ts")) or now) + abort_backoff_s(int(a.get("n") or 1))
+            soonest = t if soonest is None else min(soonest, t)
+        elif why == "exhausted":
+            r = int((data.get("rounds") or {}).get(g["id"], 0))
+            if os.getenv("ETHER_GOAL_RETRY_S", "") != "0" and r < max(0, int(_env_float("ETHER_GOAL_MAX_ROUNDS", 2))):
+                last = _ts((data.get("tries_ts") or {}).get(g["id"]))
+                t = (last or now) + retry_after_s(r)
+                soonest = t if soonest is None else min(soonest, t)
+    reasons: Dict[str, int] = {}
+    for a in (data.get("aborts") or {}).values():
+        key = str(a.get("reason") or "?")[:40]
+        reasons[key] = reasons.get(key, 0) + 1
+    out: Dict[str, Any] = {"open": len(rows), "selectable": selectable, "blocked": counts,
+                           "abort_reasons": reasons, "secs_per_file": load_timing(root).get("secs_per_file")}
+    if soonest is not None:
+        out["next_retry"] = datetime.fromtimestamp(soonest, timezone.utc).isoformat(timespec="seconds")
+    return out
 
 
 def mark(root: Path, goal_id: str, kept: bool) -> None:
@@ -961,13 +1152,45 @@ def mark(root: Path, goal_id: str, kept: bool) -> None:
         if goal_id not in data["done"]:
             data["done"].append(goal_id)
         data["goals"].pop(goal_id, None)
+        (data.get("aborts") or {}).pop(goal_id, None)
     else:
         tries = data.setdefault("tries", {})
         tries[goal_id] = int(tries.get(goal_id, 0)) + 1
+        data.setdefault("tries_ts", {})[goal_id] = _now()
     save_index(root, data)
 
 
-# ---------------------------------------------------------------- prompt + edit
+def mark_abort(root: Path, goal_id: str, reason: str, res: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Batch 10 item 0: a baseline that could not run (timeout, sandbox error, no results) is
+    not a model attempt. It does not spend a try; the goal waits ETHER_ABORT_BACKOFF_S x 2^(n-1),
+    its next run gets a longer timeout and a trimmed guard suite, and after ETHER_ABORT_MAX
+    aborts it is parked (reported in health, never silently)."""
+    data = load_index(root)
+    aborts = data.setdefault("aborts", {})
+    row = aborts.get(goal_id) or {}
+    row = {"n": int(row.get("n") or 0) + 1, "ts": _now(), "reason": str(reason)[:120],
+           "timeout_s": (res or {}).get("timeout_s"), "secs": (res or {}).get("secs")}
+    aborts[goal_id] = row
+    save_index(root, data)
+    return row
+
+
+def aborts_of(root: Path, goal_id: str) -> int:
+    return int(((load_index(root).get("aborts") or {}).get(goal_id) or {}).get("n") or 0)
+
+
+def trim_suite(root: Path, goal: Dict[str, Any], suite: List[str], aborts: int) -> List[str]:
+    """Per-goal guard trimming after baseline aborts: the target's test file and direct importers
+    always stay (the batch 8 guard); transitive / smoke / sampled files halve per abort.
+    ETHER_GUARD_TRIM=0 keeps the full suite."""
+    if aborts <= 0 or os.getenv("ETHER_GUARD_TRIM", "1") == "0" or suite == ["tests"]:
+        return list(suite)
+    core = [goal["test_file"]] if goal.get("test_file") else []
+    core += [t for t in affected_tests(root, goal["file"]) if t not in core] if goal.get("file") else []
+    keep_core = [t for t in suite if t in core]
+    extras = [t for t in suite if t not in core]
+    return keep_core + extras[: len(extras) >> min(aborts, 8)]
+
 
 def _func_source(path: Path, symbol: str) -> str:
     try:
@@ -1459,7 +1682,7 @@ def siblings(root: Path, goal: Dict[str, Any]) -> List[str]:
 
 
 def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List[str],
-         base_tamper: Optional[List[str]] = None) -> Dict[str, Any]:
+         base_tamper: Optional[List[str]] = None, aborts: int = 0) -> Dict[str, Any]:
     """Target (and its siblings) pass and nothing that passed before fails now.
 
     Batch 9: an empty baseline, a timed-out / empty after-run, or a run that tampered with the
@@ -1467,7 +1690,7 @@ def gate(root: Path, goal: Dict[str, Any], baseline: Dict[str, str], suite: List
     if not baseline:
         return {"ok": False, "target_ok": False, "regressions": [], "n_regressions": 0, "suite_n": 0, "secs": 0.0,
                 "target_pass": False, "siblings": 0, "siblings_failing": [], "tail": "", "abort": "empty baseline"}
-    res = run_pytest(root, suite)
+    res = run_pytest(root, suite, aborts=aborts)
     after = res["status"]
     why = ""
     if res.get("timeout") or res.get("rc") == -9:

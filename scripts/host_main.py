@@ -144,6 +144,13 @@ def _learn(root: Path, row: Dict[str, Any]) -> None:
         data = goal_source.load_index(root)
         row["real_queue"] = {"open": len(goal_source.ranked(root)), "done": len(data.get("done") or []),
                              "dropped": len(data.get("dropped") or {}), "scan_ts": data.get("scan_ts")}
+        # batch 10 item 0: open goals next_real will not pick, by reason (exhausted, abort_backoff, ...)
+        why = goal_source.why_blocked(root)
+        row["real_queue"].update({"selectable": why["selectable"], "blocked": why["blocked"],
+                                  "abort_reasons": why["abort_reasons"], "secs_per_file": why["secs_per_file"],
+                                  "gate_timeout_s": goal_source.gate_timeout(root, 16)})
+        if why.get("next_retry"):
+            row["real_queue"]["next_retry"] = why["next_retry"]
     except Exception as exc:
         row["real_queue_error"] = _e(exc)
     try:

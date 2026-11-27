@@ -589,9 +589,6 @@ def _fixture_stamp(root: Path) -> str:
     src = _fixture_src(root)
     names = sorted(p.name for p in src.glob("*.py")) if src.is_dir() else []
     return "v3:" + src.name + ":" + ",".join(names)
-    if not path.is_file():
-        return ""
-    return "v2:" + str(hash(path.read_text(encoding="utf-8")))
 
 
 def run(root: Path, ask: Callable[..., str], *, steps: int = 8) -> Dict[str, Any]:

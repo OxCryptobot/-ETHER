@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-27T17:16:51.546718+00:00",
+  "app_alive_ts": "2026-11-27T17:41:51.104608+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "lint_F821_product_loop_extract_functions",
+  "sota_goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -174,23 +174,8 @@
     "fix_test_eligible_rates_separates_raw_and_eligible"
   ],
   "env_kept": 96,
-  "env_disk": 180.8,
+  "env_disk": 187.3,
   "env_history": [
-    {
-      "ts": "2026-11-22T22:58:20.387677+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:58:57.337565+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:59:34.188903+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:00:16.326085+00:00",
       "kept": 92,
@@ -415,6 +400,21 @@
       "ts": "2026-11-27T17:17:50.586382+00:00",
       "kept": 96,
       "disk": 180.8
+    },
+    {
+      "ts": "2026-11-27T17:29:30.611063+00:00",
+      "kept": 96,
+      "disk": 186.4
+    },
+    {
+      "ts": "2026-11-27T17:40:41.968180+00:00",
+      "kept": 96,
+      "disk": 186.3
+    },
+    {
+      "ts": "2026-11-27T18:01:53.154768+00:00",
+      "kept": 96,
+      "disk": 187.3
     }
   ],
   "skills": [
@@ -424,16 +424,16 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-27T17:17:50.402907+00:00",
+    "generated": "2026-11-27T18:01:53.019777+00:00",
     "stale": false,
-    "attempts": 244,
+    "attempts": 250,
     "kept": 4,
-    "kept_per_attempt": 0.0164,
-    "kept_per_gpu_hour": 0.257,
-    "revert_rate": 0.168,
-    "dup_share": 0.1765,
+    "kept_per_attempt": 0.016,
+    "kept_per_gpu_hour": 0.247,
+    "revert_rate": 0.18,
+    "dup_share": 0.1781,
     "filler_rate": 0.9149,
-    "regressions_caught": 23,
+    "regressions_caught": 26,
     "arms": {
       "fix_test": {
         "default": {
@@ -445,15 +445,15 @@
           "pass_rate": 0.05
         },
         "no_context": {
-          "pulls": 69,
+          "pulls": 71,
           "pass_rate": 0.014
         },
         "repair_heavy": {
-          "pulls": 104,
-          "pass_rate": 0.01
+          "pulls": 106,
+          "pass_rate": 0.009
         },
         "repo_map_on": {
-          "pulls": 21,
+          "pulls": 22,
           "pass_rate": 0.0
         }
       },
@@ -465,8 +465,8 @@
       },
       "lint": {
         "default": {
-          "pulls": 6,
-          "pass_rate": 0.167
+          "pulls": 7,
+          "pass_rate": 0.143
         },
         "minimal": {
           "pulls": 3,
@@ -492,7 +492,9 @@
       "lint": "thompson"
     },
     "real_queue": {
-      "blocked": {},
+      "blocked": {
+        "exhausted": 1
+      },
       "done": 5,
       "dropped": {
         "infra": 1,
@@ -501,12 +503,12 @@
         "source_text_assert": 9,
         "too_many_sites": 3
       },
-      "next_retry": null,
-      "open": 93,
-      "selectable": 93
+      "next_retry": "2026-12-01T17:24:32+00:00",
+      "open": 92,
+      "selectable": 91
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0164,
+      "kept_per_attempt_other": 0.016,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
       "library": 4,
@@ -522,7 +524,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-27T17:01:42.770380+00:00",
+    "supervisor_ts": "2026-11-27T17:40:42.677437+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

@@ -99,22 +99,22 @@
     "fix_test_eligible_rates_separates_raw_and_eligible"
   ],
   "lessons": [
-    "2026-11-24 fix_test_audit_gem_outage_produces_an_explicit_failed_stage: no function",
-    "2026-11-24 fix_test_verify_solvable_reports_a_holdout_that_cannot_fail: regression",
-    "2026-11-27 lint_F821_repo_fail__fixture_stamp: tests passed, 0 regressions",
-    "2026-11-27 lint_F841_fabricate_sandbox_selftest: no function",
-    "2026-11-27 lint_F841_pipeline_Pipeline_run: no function",
     "2026-11-27 lint_F821_product_loop_extract_functions: regression",
     "2026-11-27 fix_test_eligible_rates_separates_raw_and_eligible: tests passed, 0 regressions",
-    "2026-11-27 lint_F821_product_loop_extract_functions: no function"
+    "2026-11-27 lint_F821_product_loop_extract_functions: no function",
+    "2026-11-27 fix_test_loop_runner_default_off_backward_compatible: regression",
+    "2026-11-27 fix_test_runner_service_is_not_started_off_windows: no edit: no change",
+    "2026-11-27 fix_test_grandidierite_gated: regression",
+    "2026-11-27 fix_test_honest_gate_rejects_generate_fallback: regression",
+    "2026-11-27 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed"
   ],
   "last": {
-    "goal": "lint_F821_product_loop_extract_functions",
+    "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
     "kept": false,
     "file": "",
-    "ts": "2026-11-27T17:17:50.341085+00:00"
+    "ts": "2026-11-27T18:01:52.936703+00:00"
   },
-  "kept_n": 1,
+  "kept_n": 0,
   "files": [
     "core/loop/flywheel.py",
     "core/loop/gem_step.py",
@@ -138,7 +138,6 @@
     "core/eligible_rates.py"
   ],
   "skipped": [
-    "describe_loop_pipeline_util",
     "describe_loop_plan_exec",
     "describe_loop_plan_stage",
     "describe_loop_plan_walk",
@@ -177,6 +176,7 @@
     "fix_test_vault_is_bounded",
     "fix_test_status_is_complete_on_a_clean_run",
     "fix_test_grading_does_not_write_to_the_host",
-    "fix_test_grading_runs_the_code_it_was_given"
+    "fix_test_grading_runs_the_code_it_was_given",
+    "fix_test_runner_service_is_not_started_off_windows"
   ]
 }

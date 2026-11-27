@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# Batch 10 fix 1: the host sets ETHER_* feature flags user-wide (setx), and they leaked into
+# the test run: ETHER_GOAL_LIVE_ONLY=1 made sota.run skip the fixture goal, so the batch 10
+# swarm tests saw 0 model calls on the 1650 host but passed on a clean machine. Tests must
+# see default flags; a test that wants a flag sets it with monkeypatch. Gate runs set
+# ETHER_TEST_STATE_ROOT and pass their own ETHER_* (SBFL paths etc.), so they are left alone.
+if "ETHER_TEST_STATE_ROOT" not in os.environ:
+    for _k in [k for k in os.environ if k.startswith("ETHER_") and not k.startswith("ETHER_TEST_")]:
+        os.environ.pop(_k, None)
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 

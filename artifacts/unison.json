@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-27T18:50:50.488304+00:00",
+  "app_alive_ts": "2026-11-27T19:26:03.989487+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,8 +73,8 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_bad_self_assert_does_not_fail_a_correct_implementation",
-  "sota_kept": false,
+  "sota_goal": "fix_test_rewrite_windows_python",
+  "sota_kept": true,
   "sota_goals": [
     "packed_count",
     "fits_empty",
@@ -172,21 +172,12 @@
     "fix_test_offbox_register_does_not_stamp_alive",
     "lint_F821_repo_fail__fixture_stamp",
     "fix_test_eligible_rates_separates_raw_and_eligible",
-    "fix_test_list_tree"
+    "fix_test_list_tree",
+    "fix_test_rewrite_windows_python"
   ],
-  "env_kept": 97,
-  "env_disk": 185.9,
+  "env_kept": 98,
+  "env_disk": 183.8,
   "env_history": [
-    {
-      "ts": "2026-11-22T23:02:43.318820+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T23:03:20.017106+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:03:56.566958+00:00",
       "kept": 92,
@@ -416,6 +407,16 @@
       "ts": "2026-11-27T19:10:35.471945+00:00",
       "kept": 97,
       "disk": 185.9
+    },
+    {
+      "ts": "2026-11-27T19:24:54.598080+00:00",
+      "kept": 97,
+      "disk": 184.8
+    },
+    {
+      "ts": "2026-11-27T19:37:39.948683+00:00",
+      "kept": 98,
+      "disk": 183.8
     }
   ],
   "skills": [
@@ -425,16 +426,16 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-27T19:10:35.323758+00:00",
+    "generated": "2026-11-27T19:37:39.795752+00:00",
     "stale": false,
-    "attempts": 258,
-    "kept": 5,
-    "kept_per_attempt": 0.0194,
-    "kept_per_gpu_hour": 0.292,
-    "revert_rate": 0.1899,
-    "dup_share": 0.175,
-    "filler_rate": 0.8958,
-    "regressions_caught": 30,
+    "attempts": 261,
+    "kept": 6,
+    "kept_per_attempt": 0.023,
+    "kept_per_gpu_hour": 0.345,
+    "revert_rate": 0.1916,
+    "dup_share": 0.1707,
+    "filler_rate": 0.8776,
+    "regressions_caught": 31,
     "arms": {
       "fix_test": {
         "default": {
@@ -446,8 +447,8 @@
           "pass_rate": 0.048
         },
         "no_context": {
-          "pulls": 77,
-          "pass_rate": 0.026
+          "pulls": 80,
+          "pass_rate": 0.037
         },
         "repair_heavy": {
           "pulls": 106,
@@ -487,7 +488,7 @@
         }
       }
     },
-    "top_arm_share": 0.311,
+    "top_arm_share": 0.308,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -496,7 +497,7 @@
       "blocked": {
         "exhausted": 1
       },
-      "done": 6,
+      "done": 7,
       "dropped": {
         "infra": 1,
         "no_repo_target": 5,
@@ -505,14 +506,14 @@
         "too_many_sites": 3
       },
       "next_retry": "2026-12-01T17:24:32+00:00",
-      "open": 91,
-      "selectable": 90
+      "open": 90,
+      "selectable": 89
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0194,
+      "kept_per_attempt_other": 0.023,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
-      "library": 5,
+      "library": 6,
       "mode": "record",
       "reuse_rate": 0.0,
       "shown": 0
@@ -525,7 +526,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-27T18:49:41.722256+00:00",
+    "supervisor_ts": "2026-11-27T19:24:55.456433+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

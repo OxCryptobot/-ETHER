@@ -26,11 +26,29 @@ LIVE_MARKERS = ("unaided", "qwen", "live_4b", "policy=model")
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-def _rewrite_argv(argv: List[str]) -> List[str]:
-    out = list(argv)
-    if out and out[0].replace("\\", "/").endswith("python.exe"):
-        out[0] = sys.executable
-    return out
+def _rewrite_argv(argv: list[str]) -> list[str]:
+    if len(argv) < 1:
+        return argv
+    
+    first_arg = argv[0]
+    
+    # Check for Windows Python executable paths (both .exe and .pyt variants)
+    if first_arg.endswith(".exe") or first_arg.endswith(".pyt"):
+        # Extract the path without the executable extension
+        base_path = first_arg.rsplit(".", 1)[0]
+        
+        # On Windows, Scripts folder usually contains python.exe
+        # We need to replace it with a generic python interpreter reference
+        # that doesn't end in .exe or .pyt
+        
+        if "Scripts" in base_path:
+            # Replace the specific path with a generic one
+            argv[0] = base_path + "/python"
+        else:
+            # Fallback for other paths, just remove extension
+            argv[0] = base_path
+    
+    return argv
 
 def is_fast(job: Dict[str, Any]) -> bool:
     klass = str(job.get("class") or "").lower()

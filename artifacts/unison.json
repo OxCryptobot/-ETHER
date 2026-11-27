@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-27T16:38:47.828065+00:00",
+  "app_alive_ts": "2026-11-27T17:16:51.546718+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,7 +73,7 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "lint_F841_fabricate_sandbox_selftest",
+  "sota_goal": "lint_F821_product_loop_extract_functions",
   "sota_kept": false,
   "sota_goals": [
     "packed_count",
@@ -170,21 +170,12 @@
     "describe_spine_state_io",
     "fix_test_dispatch_walked_marks_run_tests",
     "fix_test_offbox_register_does_not_stamp_alive",
-    "lint_F821_repo_fail__fixture_stamp"
+    "lint_F821_repo_fail__fixture_stamp",
+    "fix_test_eligible_rates_separates_raw_and_eligible"
   ],
-  "env_kept": 95,
-  "env_disk": 181.6,
+  "env_kept": 96,
+  "env_disk": 180.8,
   "env_history": [
-    {
-      "ts": "2026-11-22T22:57:06.664661+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
-    {
-      "ts": "2026-11-22T22:57:43.701539+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T22:58:20.387677+00:00",
       "kept": 92,
@@ -414,6 +405,16 @@
       "ts": "2026-11-27T16:46:52.973350+00:00",
       "kept": 95,
       "disk": 181.6
+    },
+    {
+      "ts": "2026-11-27T17:01:42.154801+00:00",
+      "kept": 95,
+      "disk": 179.5
+    },
+    {
+      "ts": "2026-11-27T17:17:50.586382+00:00",
+      "kept": 96,
+      "disk": 180.8
     }
   ],
   "skills": [
@@ -423,16 +424,16 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-27T16:46:52.796748+00:00",
+    "generated": "2026-11-27T17:17:50.402907+00:00",
     "stale": false,
-    "attempts": 240,
-    "kept": 3,
-    "kept_per_attempt": 0.0125,
-    "kept_per_gpu_hour": 0.198,
-    "revert_rate": 0.1667,
-    "dup_share": 0.1818,
-    "filler_rate": 0.9348,
-    "regressions_caught": 22,
+    "attempts": 244,
+    "kept": 4,
+    "kept_per_attempt": 0.0164,
+    "kept_per_gpu_hour": 0.257,
+    "revert_rate": 0.168,
+    "dup_share": 0.1765,
+    "filler_rate": 0.9149,
+    "regressions_caught": 23,
     "arms": {
       "fix_test": {
         "default": {
@@ -440,8 +441,8 @@
           "pass_rate": 0.0
         },
         "minimal": {
-          "pulls": 19,
-          "pass_rate": 0.0
+          "pulls": 20,
+          "pass_rate": 0.05
         },
         "no_context": {
           "pulls": 69,
@@ -464,19 +465,19 @@
       },
       "lint": {
         "default": {
-          "pulls": 5,
-          "pass_rate": 0.2
+          "pulls": 6,
+          "pass_rate": 0.167
         },
         "minimal": {
           "pulls": 3,
           "pass_rate": 0.0
         },
         "no_context": {
-          "pulls": 2,
+          "pulls": 3,
           "pass_rate": 0.0
         },
         "repair_heavy": {
-          "pulls": 2,
+          "pulls": 3,
           "pass_rate": 0.0
         },
         "repo_map_on": {
@@ -485,16 +486,14 @@
         }
       }
     },
-    "top_arm_share": 0.322,
+    "top_arm_share": 0.318,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
     },
     "real_queue": {
-      "blocked": {
-        "abort_backoff": 2
-      },
-      "done": 4,
+      "blocked": {},
+      "done": 5,
       "dropped": {
         "infra": 1,
         "no_repo_target": 5,
@@ -502,28 +501,28 @@
         "source_text_assert": 9,
         "too_many_sites": 3
       },
-      "next_retry": "2026-11-27T16:52:59+00:00",
-      "open": 94,
-      "selectable": 92
+      "next_retry": null,
+      "open": 93,
+      "selectable": 93
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.0125,
+      "kept_per_attempt_other": 0.0164,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
-      "library": 3,
+      "library": 4,
       "mode": "record",
       "reuse_rate": 0.0,
       "shown": 0
     }
   },
   "health": {
-    "health": "degraded",
-    "supervisor": "degraded",
-    "host": "degraded",
-    "worst": "sota_stale: no learning attempt recorded for 242102 s (sota.json last.ts)",
+    "health": "ok",
+    "supervisor": "ok",
+    "host": "ok",
+    "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-27T16:29:36.834239+00:00",
+    "supervisor_ts": "2026-11-27T17:01:42.770380+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

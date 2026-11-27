@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-27T16:30:38.619038+00:00",
+  "ts": "2026-11-27T17:02:44.543801+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -17,21 +17,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-27T16:30:45.645154+00:00",
+    "ts": "2026-11-27T17:02:52.281356+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-27T16:30:39.619029+00:00",
+    "ts": "2026-11-27T17:02:45.864742+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-27T16:15:33.319012+00:00"
+    "last_push_ts": "2026-11-27T16:46:53.176164+00:00"
   },
   "heal": {
-    "ts": "2026-11-27T16:30:44.436834+00:00",
+    "ts": "2026-11-27T17:02:51.137224+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -73,7 +73,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-27T16:30:44.860216+00:00",
+    "ts": "2026-11-27T17:02:51.543786+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -107,7 +107,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-27T16:30:45.503218+00:00",
+    "updated": "2026-11-27T17:02:52.177529+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -133,29 +133,26 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "lint_F821_repo_fail__fixture_stamp",
+  "next_goal": "fix_test_eligible_rates_separates_raw_and_eligible",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
-    "open": 95,
-    "done": 3,
+    "open": 94,
+    "done": 4,
     "dropped": 28,
-    "scan_ts": "2026-11-27T16:19:55.309467+00:00",
-    "selectable": 93,
-    "blocked": {
-      "abort_backoff": 2
-    },
+    "scan_ts": "2026-11-27T16:51:46.502922+00:00",
+    "selectable": 94,
+    "blocked": {},
     "abort_reasons": {
       "baseline timeout": 2
     },
-    "secs_per_file": 37.5,
-    "gate_timeout_s": 900,
-    "next_retry": "2026-11-27T16:52:59+00:00"
+    "secs_per_file": 18.149,
+    "gate_timeout_s": 581
   },
   "sota": {
-    "goal": "lint_F841_fabricate_sandbox_selftest",
+    "goal": "lint_F821_product_loop_extract_functions",
     "kind": "lint",
-    "file": "gems/grandidierite/fabricate.py",
+    "file": "core/kernel/product_loop.py",
     "ok": false,
     "honest": false,
     "note": "no function",
@@ -170,44 +167,44 @@
       }
     },
     "batch": [
-      "lint_F821_repo_fail__fixture_stamp"
+      "fix_test_eligible_rates_separates_raw_and_eligible"
     ],
     "tried": [
-      "lint_F821_repo_fail__fixture_stamp",
-      "lint_F841_fabricate_sandbox_selftest"
+      "fix_test_eligible_rates_separates_raw_and_eligible",
+      "lint_F821_product_loop_extract_functions"
     ],
     "kept_n": 1,
     "batch_size": 3
   },
   "learning": {
-    "trajectories": 326,
-    "graded": 323,
-    "passes": 46,
-    "spoiler_share": 0.257,
+    "trajectories": 330,
+    "graded": 327,
+    "passes": 47,
+    "spoiler_share": 0.254,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
     "by_kind": {
-      "fix_test": 2,
+      "fix_test": 3,
       "legacy": 43,
       "lint": 1
     }
   },
   "learning_published": {
     "ok": true,
-    "bytes": 11081,
-    "graded": 323
+    "bytes": 11033,
+    "graded": 327
   },
   "env": {
-    "ts": "2026-11-27T16:46:52.973350+00:00",
+    "ts": "2026-11-27T17:17:50.586382+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 181.6,
+    "disk_free_gb": 180.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-27T16:38:47.828065+00:00",
-    "kept": 95,
-    "last_goal": "lint_F841_fabricate_sandbox_selftest",
+    "alive_ts": "2026-11-27T17:16:51.546718+00:00",
+    "kept": 96,
+    "last_goal": "lint_F821_product_loop_extract_functions",
     "last_kept": false,
     "batch_size": 1
   },

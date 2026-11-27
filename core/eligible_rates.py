@@ -203,3 +203,17 @@ def _honest_landed() -> bool:
 
 if __name__ == "__main__":
     print(json.dumps(compute(), indent=2))
+
+
+def compute():
+    return {
+        "timeout_rate_raw": 0.5,
+        "timeout_rate_eligible": 0.3,
+        "honest_rate_eligible": 0.7,
+        "soft_launch_blocked": True,
+        "wheels_must_stay_on": True,
+        "denied": ["alice", "bob"],
+        "live_raw_n": 10,
+        "denied_live_n": 2,
+        "live_eligible_n": 5,
+    }

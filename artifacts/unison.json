@@ -7,7 +7,7 @@
     "watch": 7843,
     "retired": 8787
   },
-  "app_alive_ts": "2026-11-27T17:41:51.104608+00:00",
+  "app_alive_ts": "2026-11-27T18:19:56.938980+00:00",
   "ollama": true,
   "stale": false,
   "goal": "index",
@@ -73,8 +73,8 @@
     "2026-11-05 ignore: tests passed",
     "2026-11-05 index: tests passed"
   ],
-  "sota_goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
-  "sota_kept": false,
+  "sota_goal": "fix_test_list_tree",
+  "sota_kept": true,
   "sota_goals": [
     "packed_count",
     "fits_empty",
@@ -171,16 +171,12 @@
     "fix_test_dispatch_walked_marks_run_tests",
     "fix_test_offbox_register_does_not_stamp_alive",
     "lint_F821_repo_fail__fixture_stamp",
-    "fix_test_eligible_rates_separates_raw_and_eligible"
+    "fix_test_eligible_rates_separates_raw_and_eligible",
+    "fix_test_list_tree"
   ],
-  "env_kept": 96,
-  "env_disk": 187.3,
+  "env_kept": 97,
+  "env_disk": 185.4,
   "env_history": [
-    {
-      "ts": "2026-11-22T23:00:16.326085+00:00",
-      "kept": 92,
-      "disk": 225.4
-    },
     {
       "ts": "2026-11-22T23:00:52.777143+00:00",
       "kept": 92,
@@ -415,6 +411,11 @@
       "ts": "2026-11-27T18:01:53.154768+00:00",
       "kept": 96,
       "disk": 187.3
+    },
+    {
+      "ts": "2026-11-27T18:21:15.130198+00:00",
+      "kept": 97,
+      "disk": 185.4
     }
   ],
   "skills": [
@@ -424,15 +425,15 @@
   "learning": {
     "present": true,
     "schema": 2,
-    "generated": "2026-11-27T18:01:53.019777+00:00",
+    "generated": "2026-11-27T18:21:15.019819+00:00",
     "stale": false,
-    "attempts": 250,
-    "kept": 4,
-    "kept_per_attempt": 0.016,
-    "kept_per_gpu_hour": 0.247,
-    "revert_rate": 0.18,
-    "dup_share": 0.1781,
-    "filler_rate": 0.9149,
+    "attempts": 252,
+    "kept": 5,
+    "kept_per_attempt": 0.0198,
+    "kept_per_gpu_hour": 0.304,
+    "revert_rate": 0.1786,
+    "dup_share": 0.1733,
+    "filler_rate": 0.8958,
     "regressions_caught": 26,
     "arms": {
       "fix_test": {
@@ -445,8 +446,8 @@
           "pass_rate": 0.05
         },
         "no_context": {
-          "pulls": 71,
-          "pass_rate": 0.014
+          "pulls": 73,
+          "pass_rate": 0.027
         },
         "repair_heavy": {
           "pulls": 106,
@@ -486,7 +487,7 @@
         }
       }
     },
-    "top_arm_share": 0.318,
+    "top_arm_share": 0.316,
     "bandit_algo": {
       "fix_test": "thompson",
       "lint": "thompson"
@@ -495,7 +496,7 @@
       "blocked": {
         "exhausted": 1
       },
-      "done": 5,
+      "done": 6,
       "dropped": {
         "infra": 1,
         "no_repo_target": 5,
@@ -504,14 +505,14 @@
         "too_many_sites": 3
       },
       "next_retry": "2026-12-01T17:24:32+00:00",
-      "open": 92,
-      "selectable": 91
+      "open": 91,
+      "selectable": 90
     },
     "exemplars": {
-      "kept_per_attempt_other": 0.016,
+      "kept_per_attempt_other": 0.0198,
       "kept_per_attempt_shown": null,
       "kept_when_shown": 0,
-      "library": 4,
+      "library": 5,
       "mode": "record",
       "reuse_rate": 0.0,
       "shown": 0
@@ -524,7 +525,7 @@
     "worst": null,
     "pull_failures": 0,
     "pull_fix": null,
-    "supervisor_ts": "2026-11-27T17:40:42.677437+00:00",
+    "supervisor_ts": "2026-11-27T18:02:02.359100+00:00",
     "supervisor_stale": false
   },
   "capabilities": {

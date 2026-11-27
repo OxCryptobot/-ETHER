@@ -96,27 +96,27 @@
     "fix_test_dispatch_walked_marks_run_tests",
     "fix_test_offbox_register_does_not_stamp_alive",
     "lint_F821_repo_fail__fixture_stamp",
-    "fix_test_eligible_rates_separates_raw_and_eligible"
+    "fix_test_eligible_rates_separates_raw_and_eligible",
+    "fix_test_list_tree"
   ],
   "lessons": [
-    "2026-11-27 lint_F821_product_loop_extract_functions: regression",
-    "2026-11-27 fix_test_eligible_rates_separates_raw_and_eligible: tests passed, 0 regressions",
     "2026-11-27 lint_F821_product_loop_extract_functions: no function",
     "2026-11-27 fix_test_loop_runner_default_off_backward_compatible: regression",
     "2026-11-27 fix_test_runner_service_is_not_started_off_windows: no edit: no change",
     "2026-11-27 fix_test_grandidierite_gated: regression",
     "2026-11-27 fix_test_honest_gate_rejects_generate_fallback: regression",
-    "2026-11-27 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed"
+    "2026-11-27 fix_test_auto_fabricate_success_and_failure_paths_agree: tests failed",
+    "2026-11-27 fix_test_context_over_budget_without_compress: no edit: assignment MAX_CHARS_PER_QUERY is new and not used by the edit",
+    "2026-11-27 fix_test_list_tree: tests passed, 0 regressions"
   ],
   "last": {
-    "goal": "fix_test_auto_fabricate_success_and_failure_paths_agree",
-    "kept": false,
-    "file": "",
-    "ts": "2026-11-27T18:01:52.936703+00:00"
+    "goal": "fix_test_list_tree",
+    "kept": true,
+    "file": "scripts/ether_tools.py",
+    "ts": "2026-11-27T18:21:14.953715+00:00"
   },
-  "kept_n": 0,
+  "kept_n": 1,
   "files": [
-    "core/loop/flywheel.py",
     "core/loop/gem_step.py",
     "core/loop/gem_topo.py",
     "core/loop/gems_call.py",
@@ -135,7 +135,8 @@
     "core/loop/plan_exec.py",
     "scripts/runner_register.py",
     "core/kernel/repo_fail.py",
-    "core/eligible_rates.py"
+    "core/eligible_rates.py",
+    "scripts/ether_tools.py"
   ],
   "skipped": [
     "describe_loop_plan_exec",

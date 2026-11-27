@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-27T18:03:04.100402+00:00",
+  "ts": "2026-11-27T18:50:43.433252+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -17,21 +17,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-27T18:03:12.631485+00:00",
+    "ts": "2026-11-27T18:50:50.488304+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-27T18:03:05.411061+00:00",
+    "ts": "2026-11-27T18:50:44.487770+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-27T18:01:53.418920+00:00"
+    "last_push_ts": "2026-11-27T18:21:15.332089+00:00"
   },
   "heal": {
-    "ts": "2026-11-27T18:03:11.429578+00:00",
+    "ts": "2026-11-27T18:50:49.258513+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -73,7 +73,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-27T18:03:11.835286+00:00",
+    "ts": "2026-11-27T18:50:49.720063+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -107,7 +107,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-27T18:03:12.442799+00:00",
+    "updated": "2026-11-27T18:50:50.355005+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -133,76 +133,68 @@
     "n": 0,
     "jobs": []
   },
-  "next_goal": "fix_test_context_over_budget_without_compress",
+  "next_goal": "fix_test_pipeline_happy_path_mocked",
   "lost_kept": 0,
   "seed_depth": 0,
   "real_queue": {
-    "open": 92,
-    "done": 5,
+    "open": 91,
+    "done": 6,
     "dropped": 28,
-    "scan_ts": "2026-11-27T17:43:41.343095+00:00",
-    "selectable": 91,
+    "scan_ts": "2026-11-27T18:26:35.991523+00:00",
+    "selectable": 90,
     "blocked": {
       "exhausted": 1
     },
     "abort_reasons": {
       "baseline timeout": 1
     },
-    "secs_per_file": 10.167,
-    "gate_timeout_s": 325,
+    "secs_per_file": 13.359,
+    "gate_timeout_s": 427,
     "next_retry": "2026-12-01T17:24:32+00:00"
   },
   "sota": {
-    "goal": "fix_test_list_tree",
+    "goal": "fix_test_bad_self_assert_does_not_fail_a_correct_implementation",
     "kind": "fix_test",
-    "file": "scripts/ether_tools.py",
-    "ok": true,
-    "honest": true,
-    "tests_ok": true,
-    "regressions": 0,
-    "tx": [
-      "read",
-      "edit",
-      "test",
-      "guard",
-      "promote"
+    "file": "core/pipeline_prep.py",
+    "ok": false,
+    "honest": false,
+    "note": "regression",
+    "regressions": 4,
+    "siblings_failing": 0,
+    "restored": [
+      "core/pipeline_prep.py"
     ],
-    "attempt": 1,
-    "suite_n": 57,
-    "checked": true,
     "learn": {
       "arm": "no_context",
       "bucket": "repair_logic|complex",
-      "kind": "pass",
-      "reward": 0.75,
+      "kind": "fail",
+      "reward": -0.9,
       "promote": {
         "action": "hold",
         "arm": "default"
       }
     },
-    "batch": [
-      "fix_test_list_tree"
-    ],
+    "batch": [],
     "tried": [
-      "fix_test_context_over_budget_without_compress",
-      "fix_test_list_tree"
+      "fix_test_pipeline_happy_path_mocked",
+      "fix_test_bad_self_assert_does_not_fail_a_correct_implementation"
     ],
-    "kept_n": 1,
+    "kept_n": 0,
     "batch_size": 3,
     "scan": {
       "ok": true,
       "files": 8,
-      "failing": 1,
+      "failing": 3,
       "added": 0,
-      "goals": 93,
-      "secs": 69.1
+      "goals": 92,
+      "secs": 134.4
     }
   },
   "learning": {
-    "trajectories": 338,
-    "graded": 335,
+    "trajectories": 344,
+    "graded": 341,
     "passes": 48,
-    "spoiler_share": 0.248,
+    "spoiler_share": 0.243,
     "promoted": {},
     "explore_legacy": false,
     "explore_real": true,
@@ -214,21 +206,21 @@
   },
   "learning_published": {
     "ok": true,
-    "bytes": 11198,
-    "graded": 335
+    "bytes": 11305,
+    "graded": 341
   },
   "env": {
-    "ts": "2026-11-27T18:21:15.130198+00:00",
+    "ts": "2026-11-27T19:10:35.471945+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 185.4,
+    "disk_free_gb": 185.9,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-27T18:19:56.938980+00:00",
+    "alive_ts": "2026-11-27T18:50:50.488304+00:00",
     "kept": 97,
-    "last_goal": "fix_test_list_tree",
-    "last_kept": true,
-    "batch_size": 1
+    "last_goal": "fix_test_bad_self_assert_does_not_fail_a_correct_implementation",
+    "last_kept": false,
+    "batch_size": 0
   },
   "agent": {
     "ok": true,

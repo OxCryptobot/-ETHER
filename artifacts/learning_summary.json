@@ -9,18 +9,18 @@
     "regressions": 0
    },
    "minimal": {
-    "mean_reward": -0.818,
-    "pass_rate": 0.05,
+    "mean_reward": -0.821,
+    "pass_rate": 0.048,
     "passes": 1,
-    "pulls": 20,
+    "pulls": 21,
     "regressions": 2
    },
    "no_context": {
-    "mean_reward": -0.855,
-    "pass_rate": 0.027,
+    "mean_reward": -0.857,
+    "pass_rate": 0.026,
     "passes": 2,
-    "pulls": 73,
-    "regressions": 83
+    "pulls": 77,
+    "regressions": 95
    },
    "repair_heavy": {
     "mean_reward": -0.884,
@@ -72,7 +72,7 @@
     "mean_reward": -0.9,
     "pass_rate": 0.0,
     "passes": 0,
-    "pulls": 3,
+    "pulls": 4,
     "regressions": 0
    },
    "repo_map_on": {
@@ -108,10 +108,10 @@
       "secs_per_pull": 185.8
      },
      "minimal": {
-      "n": 6,
+      "n": 7,
       "passes": 1,
-      "post_mean": 0.25,
-      "secs_per_pull": 303.8
+      "post_mean": 0.222,
+      "secs_per_pull": 299.4
      },
      "no_context": {
       "n": 6,
@@ -132,13 +132,13 @@
       "secs_per_pull": 194.3
      }
     },
-    "entropy_bits": 2.2579,
+    "entropy_bits": 2.2536,
     "p_best": {
-     "default": 0.087,
-     "minimal": 0.77,
-     "no_context": 0.04,
-     "repair_heavy": 0.04,
-     "repo_map_on": 0.062
+     "default": 0.095,
+     "minimal": 0.745,
+     "no_context": 0.048,
+     "repair_heavy": 0.055,
+     "repo_map_on": 0.058
     }
    },
    "repair_logic|complex": {
@@ -156,10 +156,10 @@
       "secs_per_pull": 208.6
      },
      "no_context": {
-      "n": 67,
+      "n": 71,
       "passes": 2,
-      "post_mean": 0.043,
-      "secs_per_pull": 235.7
+      "post_mean": 0.041,
+      "secs_per_pull": 246.8
      },
      "repair_heavy": {
       "n": 98,
@@ -174,12 +174,12 @@
       "secs_per_pull": 198.4
      }
     },
-    "entropy_bits": 1.8094,
+    "entropy_bits": 1.8053,
     "p_best": {
      "default": 0.022,
      "minimal": 0.025,
-     "no_context": 0.745,
-     "repair_heavy": 0.17,
+     "no_context": 0.74,
+     "repair_heavy": 0.175,
      "repo_map_on": 0.037
     }
    }
@@ -207,10 +207,10 @@
       "secs_per_pull": 226.6
      },
      "repair_heavy": {
-      "n": 3,
+      "n": 4,
       "passes": 0,
-      "post_mean": 0.2,
-      "secs_per_pull": 244.7
+      "post_mean": 0.167,
+      "secs_per_pull": 270.6
      },
      "repo_map_on": {
       "n": 2,
@@ -219,19 +219,19 @@
       "secs_per_pull": 187.6
      }
     },
-    "entropy_bits": 2.1746,
+    "entropy_bits": 2.1868,
     "p_best": {
-     "default": 0.575,
-     "minimal": 0.1,
-     "no_context": 0.11,
-     "repair_heavy": 0.092,
-     "repo_map_on": 0.122
+     "default": 0.605,
+     "minimal": 0.098,
+     "no_context": 0.105,
+     "repair_heavy": 0.068,
+     "repo_map_on": 0.125
     }
    }
   }
  },
  "exemplars": {
-  "kept_per_attempt_other": 0.0198,
+  "kept_per_attempt_other": 0.0194,
   "kept_per_attempt_shown": null,
   "kept_when_shown": 0,
   "library": 5,
@@ -243,16 +243,16 @@
   "legacy": false,
   "real": true
  },
- "generated": "2026-11-27T18:21:15.019819+00:00",
+ "generated": "2026-11-27T19:10:35.323758+00:00",
  "metrics": {
   "arm_entropy_bits": {
-   "fix_test": 1.8974,
-   "lint": 2.1746
+   "fix_test": 1.9002,
+   "lint": 2.1868
   },
-  "attempts": 252,
+  "attempts": 258,
   "by_temp": {
    "0.0": {
-    "attempts": 91,
+    "attempts": 97,
     "kept": 5
    }
   },
@@ -262,15 +262,15 @@
     "kept": 1
    },
    "lint": {
-    "attempts": 18,
+    "attempts": 19,
     "kept": 1
    },
    "sbfl": {
-    "attempts": 133,
+    "attempts": 137,
     "kept": 0
    },
    "test_import": {
-    "attempts": 94,
+    "attempts": 95,
     "kept": 3
    },
    "test_import_assign": {
@@ -279,21 +279,21 @@
    }
   },
   "demotions": 0,
-  "dup_share": 0.1733,
+  "dup_share": 0.175,
   "filler_rate": 0.8958,
   "filler_rate_real": 0.0,
-  "gpu_hours": 16.47,
+  "gpu_hours": 17.124,
   "kept": 5,
-  "kept_per_attempt": 0.0198,
-  "kept_per_gpu_hour": 0.304,
+  "kept_per_attempt": 0.0194,
+  "kept_per_gpu_hour": 0.292,
   "kept_per_session": 1.25,
   "planted_attempts": 0,
   "planted_kept": 0,
   "promotions": 0,
-  "real_attempts": 252,
+  "real_attempts": 258,
   "real_kept": 5,
-  "regressions_caught": 26,
-  "revert_rate": 0.1786,
+  "regressions_caught": 30,
+  "revert_rate": 0.1899,
   "sessions": {
    "2026-11-22": {
     "attempts": 4,
@@ -308,7 +308,7 @@
     "kept": 0
    },
    "2026-11-27": {
-    "attempts": 14,
+    "attempts": 20,
     "kept": 3
    }
   },
@@ -332,117 +332,6 @@
   "selectable": 90
  },
  "recent": [
-  {
-   "algo": "thompson",
-   "arm": "repair_heavy",
-   "goal": "lint_F841_pipeline_Pipeline_run",
-   "goal_kind": "lint",
-   "kind": "fail",
-   "note": "no_function",
-   "prompt_chars": 2203,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 295.2,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-27T16:56:41.770546_00:00",
-   "via": null
-  },
-  {
-   "algo": "thompson",
-   "arm": "no_context",
-   "dup": false,
-   "goal": "lint_F821_product_loop_extract_functions",
-   "goal_kind": "lint",
-   "kind": "fail",
-   "note": "regression",
-   "prompt_chars": 433,
-   "regressions": 3,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 300.1,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-27T17:01:41.933138_00:00",
-   "via": null
-  },
-  {
-   "algo": "thompson",
-   "arm": "minimal",
-   "dup": false,
-   "goal": "fix_test_eligible_rates_separates_raw_and_eligible",
-   "goal_kind": "fix_test",
-   "kind": "pass",
-   "note": "",
-   "prompt_chars": 1598,
-   "regressions": 0,
-   "reward": 0.75,
-   "reward01": 1,
-   "secs": 735.4,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": true,
-   "ts": "2026-11-27T17:15:07.746002_00:00",
-   "via": "import_error"
-  },
-  {
-   "algo": "thompson",
-   "arm": "default",
-   "goal": "lint_F821_product_loop_extract_functions",
-   "goal_kind": "lint",
-   "kind": "fail",
-   "note": "no_function",
-   "prompt_chars": 1917,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 162.5,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-27T17:17:50.343085_00:00",
-   "via": null
-  },
-  {
-   "algo": "thompson",
-   "arm": "default",
-   "goal": "lint_F821_product_loop_extract_functions",
-   "goal_kind": "lint",
-   "kind": "fail",
-   "note": "no_function",
-   "prompt_chars": 1917,
-   "regressions": null,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 185.8,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-27T17:24:32.573418_00:00",
-   "via": null
-  },
-  {
-   "algo": "thompson",
-   "arm": "repo_map_on",
-   "dup": true,
-   "goal": "fix_test_loop_runner_default_off_backward_compatible",
-   "goal_kind": "fix_test",
-   "kind": "fail",
-   "note": "regression",
-   "prompt_chars": 1522,
-   "regressions": 1,
-   "reward": -0.9,
-   "reward01": 0,
-   "secs": 297.8,
-   "spoiler": false,
-   "temp": 0.0,
-   "tests_ok": false,
-   "ts": "2026-11-27T17:29:30.412167_00:00",
-   "via": "test_import"
-  },
   {
    "algo": "thompson",
    "arm": "repair_heavy",
@@ -556,16 +445,129 @@
    "tests_ok": true,
    "ts": "2026-11-27T18:21:14.969416_00:00",
    "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "minimal",
+   "dup": false,
+   "goal": "fix_test_every_arm_produces_a_distinguishable_prompt",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "no_edit:_no_change",
+   "prompt_chars": 2303,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 273.0,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T18:31:08.994243_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": true,
+   "goal": "fix_test_retry_reward_is_credited_to_the_arm_that_produced_it",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 1923,
+   "regressions": 6,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 436.7,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T18:38:25.783067_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "repair_heavy",
+   "goal": "lint_F841_fabricate_sandbox_selftest",
+   "goal_kind": "lint",
+   "kind": "fail",
+   "note": "no_function",
+   "prompt_chars": 1926,
+   "regressions": null,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 348.0,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T18:45:23.471906_00:00",
+   "via": null
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": false,
+   "goal": "fix_test_flex_replace_exact_and_stripped",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 1176,
+   "regressions": 1,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 257.0,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T18:49:40.557474_00:00",
+   "via": "test_import"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": false,
+   "goal": "fix_test_pipeline_happy_path_mocked",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 1239,
+   "regressions": 1,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 409.6,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T19:00:05.009223_00:00",
+   "via": "sbfl"
+  },
+  {
+   "algo": "thompson",
+   "arm": "no_context",
+   "dup": false,
+   "goal": "fix_test_bad_self_assert_does_not_fail_a_correct_implementation",
+   "goal_kind": "fix_test",
+   "kind": "fail",
+   "note": "regression",
+   "prompt_chars": 905,
+   "regressions": 4,
+   "reward": -0.9,
+   "reward01": 0,
+   "secs": 630.2,
+   "spoiler": false,
+   "temp": 0.0,
+   "tests_ok": false,
+   "ts": "2026-11-27T19:10:35.269477_00:00",
+   "via": "sbfl"
   }
  ],
  "schema": 2,
  "totals": {
-  "graded": 335,
+  "graded": 341,
   "passes": 48,
-  "real_graded": 252,
+  "real_graded": 258,
   "real_passes": 5,
-  "regressions_reverted": 26,
-  "spoiler_share": 0.248,
-  "trajectories": 338
+  "regressions_reverted": 30,
+  "spoiler_share": 0.243,
+  "trajectories": 344
  }
 }

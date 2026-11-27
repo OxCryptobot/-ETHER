@@ -1,5 +1,5 @@
 {
-  "ts": "2026-11-27T01:57:21.125881+00:00",
+  "ts": "2026-11-27T02:32:56.272095+00:00",
   "root": "C:\\Users\\Otcde\\ETHER",
   "os": "nt",
   "selfcheck": {
@@ -12,21 +12,21 @@
   },
   "alive": {
     "alive": true,
-    "ts": "2026-11-27T01:57:27.391317+00:00",
+    "ts": "2026-11-27T02:33:05.799057+00:00",
     "root": "C:\\Users\\Otcde\\ETHER",
     "ollama": true,
     "bin": "C:\\Users\\Otcde\\AppData\\Local\\Programs\\Ollama\\ollama.EXE"
   },
   "publish": {
-    "ts": "2026-11-27T02:01:10.948597+00:00",
+    "ts": "2026-11-27T02:35:00.392513+00:00",
     "os": "nt",
     "ok": true,
     "urgent": false,
     "note": "throttled",
-    "last_push_ts": "2026-11-27T01:37:51.679707+00:00"
+    "last_push_ts": "2026-11-27T02:16:13.293427+00:00"
   },
   "heal": {
-    "ts": "2026-11-27T01:57:26.259121+00:00",
+    "ts": "2026-11-27T02:33:04.454714+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -68,7 +68,7 @@
     "note": "supervisor_owns_loop"
   },
   "keepalive": {
-    "ts": "2026-11-27T01:57:26.647726+00:00",
+    "ts": "2026-11-27T02:33:04.949501+00:00",
     "os": "nt",
     "ok": true,
     "armed": true,
@@ -102,7 +102,7 @@
   },
   "ollama_start": true,
   "attach": {
-    "updated": "2026-11-27T01:57:27.286516+00:00",
+    "updated": "2026-11-27T02:33:05.663952+00:00",
     "ok": true,
     "fast_lane": "matrix-worker",
     "live_lane": "ollama_4b",
@@ -135,7 +135,7 @@
     "open": 95,
     "done": 3,
     "dropped": 28,
-    "scan_ts": "2026-11-27T01:42:19.168172+00:00"
+    "scan_ts": "2026-11-27T02:17:53.923229+00:00"
   },
   "sota": {
     "ok": false,
@@ -148,10 +148,10 @@
     "scan": {
       "ok": true,
       "files": 8,
-      "failing": 1,
+      "failing": 0,
       "added": 0,
       "goals": 96,
-      "secs": 215.1
+      "secs": 105.3
     }
   },
   "learning": {
@@ -174,13 +174,13 @@
     "graded": 321
   },
   "env": {
-    "ts": "2026-11-27T02:01:10.771333+00:00",
+    "ts": "2026-11-27T02:35:00.189789+00:00",
     "os": "nt",
     "root": "C:\\Users\\Otcde\\ETHER",
-    "disk_free_gb": 191.9,
+    "disk_free_gb": 191.8,
     "disk_total_gb": 475.3,
     "ollama": true,
-    "alive_ts": "2026-11-27T01:57:27.391317+00:00",
+    "alive_ts": "2026-11-27T02:33:05.799057+00:00",
     "kept": 94,
     "last_goal": "fix_test_verify_solvable_reports_a_holdout_that_cannot_fail",
     "last_kept": false,
@@ -225,7 +225,7 @@
     {
       "name": "sota_stale",
       "level": "degraded",
-      "detail": "no learning attempt recorded for 189998 s (sota.json last.ts)"
+      "detail": "no learning attempt recorded for 192027 s (sota.json last.ts)"
     }
   ]
 }
